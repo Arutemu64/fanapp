@@ -315,62 +315,108 @@ The `pgbackup` service (`ops` profile, in
 [`prodrigestivill/postgres-backup-local`](https://github.com/prodrigestivill/docker-postgres-backup-local),
 pinned to the same Postgres major as `db` — `pg_dump` refuses to dump a server
 newer than itself, so the two image tags **must** move together on every major
-bump. It takes a logical dump (`pg_dump`, plain SQL, gzipped) every 6h plus one
-on start, keeping 7 daily / 4 weekly / 6 monthly copies in the `pgbackup-data`
-volume under `/backups/{daily,weekly,monthly}/` (the newest daily is also linked
-as `/backups/last/`). `--schema=public --blobs` dumps the `public` schema and its
-large objects — `--schema` alone would drop large objects, which is why `--blobs`
-is paired with it.
+bump. It takes a logical dump of the whole database every 6h plus one on start,
+in `pg_dump`'s custom format (`-Fc`, zstd-compressed, `.dump`). Custom format is
+restored with `pg_restore`, which can load the whole database or pick single
+tables out of it
+([pg_dump docs](https://www.postgresql.org/docs/18/app-pgdump.html)).
+
+The dumps land in `backups/` next to `docker-compose.yml` on the host (a bind
+mount; `just deploy` creates it owner-only):
+
+| Folder | Holds |
+| --- | --- |
+| `backups/last/` | every dump from the last 24h, `<db>-YYYYMMDD-HHMMSS.dump` |
+| `backups/daily/` | the newest dump of each day, kept 7 days |
+| `backups/weekly/` | the newest dump of each ISO week, kept 4 weeks |
+| `backups/monthly/` | the newest dump of each month, kept 6 months |
+
+The `daily`/`weekly`/`monthly` files are hard links to the dump in `last/`, not
+copies, and each folder has a `<db>-latest.dump` symlink to its newest file.
 
 **Two limits to know before you rely on it.** These are logical dumps, so there
 is no point-in-time recovery — a restore loses everything written since the last
-6-hourly dump. And the dumps live in a Docker volume **on the same host as the
-database**: a lost or wiped host takes the backups with it. For off-host copies,
-sync `/backups` to object storage in another failure domain (3-2-1); that is not
-wired up yet.
+6-hourly dump. And `backups/` sits **on the same host as the database**: a lost
+or wiped host takes it with it unless you pull copies off it (below).
 
 The health of the backup loop is monitored — the `pgbackup` container reports
 unhealthy once the last dump is older than the schedule (see its `healthcheck` in
 Compose), so a silently failing backup shows up in `docker ps` and any prober
 watching container health.
 
-### Verify a backup periodically
+### Download the backups
 
-`docker ps` health only says a dump *ran*, not that it can be *loaded*. Confirm
-the archive is intact and restorable into a throwaway database — never against
-the live one:
+Pull them from your own machine — the server holds no credentials for wherever
+the copies end up, so a compromised server cannot reach them:
 
 ```sh
-# 1. Archive isn't truncated/corrupt (gzip integrity), and isn't suspiciously small
-docker compose exec pgbackup sh -c 'gzip -t /backups/last/*.sql.gz && ls -l /backups/last/'
-
-# 2. It actually restores: load the newest dump into a scratch Postgres and eyeball it
-BACKUP=$(docker compose exec -T pgbackup sh -c 'ls -t /backups/last/*.sql.gz | head -1')
-docker compose exec -T pgbackup sh -c "zcat $BACKUP" \
-  | docker run --rm -i --network fanapp_backend-network \
-      -e PGPASSWORD="$DB__PASSWORD" postgres:18.6-alpine \
-      psql -h db -U "$DB__USER" -d restore_check
+rsync -aH --exclude=last/ <user>@<server>:<deploy-dir>/backups/ ~/fanfan-backups/
 ```
 
-(Create the `restore_check` database first with `createdb`, and drop it after.)
-Check the row counts of a couple of core tables look right.
+- `-H` keeps the hard links, so each dump transfers once instead of up to four
+  times; `-a` alone does not preserve them
+  ([rsync(1)](https://download.samba.org/pub/rsync/rsync.1)).
+- `last/` is skipped because `daily/` already holds a hard link to the newest
+  dump; pulling it as well only piles up 6-hourly copies on your machine.
+- **Never add `--delete`.** Without it a wiped or tampered `backups/` on the
+  server cannot delete your copies. The flip side is that `~/fanfan-backups/`
+  only grows: prune it by hand.
+- Use the SSH user that ran `just deploy`: `backups/` is mode `700`, owned by
+  that user, so other accounts cannot read it.
+
+Optionally give the pull its own SSH key that can do nothing but read
+`backups/`, via rsync's read-only `rrsync` wrapper
+([rrsync(1)](https://download.samba.org/pub/rsync/rrsync.1)) and OpenSSH's
+`restrict` ([sshd(8)](https://man.openbsd.org/sshd.8)). In the server user's
+`~/.ssh/authorized_keys`:
+
+```text
+command="rrsync -ro <deploy-dir>/backups",restrict ssh-ed25519 AAAA... backup-pull
+```
+
+Paths are then relative to `backups/`, so pull with
+`rsync -aH --exclude=last/ -e "ssh -i ~/.ssh/backup-pull" <user>@<server>: ~/fanfan-backups/`.
+
+The dumps hold attendees' personal data, so keep the machine you pull to on an
+encrypted disk.
+
+### Verify a backup periodically
+
+`docker ps` health only says a dump *ran*, not that it can be *loaded*. Load the
+newest one into a throwaway database — never the live one — and check the row
+counts of a couple of core tables look right:
+
+```sh
+docker compose exec db createdb -U "$DB__USER" restore_check
+docker compose exec -T db pg_restore -U "$DB__USER" -d restore_check \
+  --single-transaction --exit-on-error < "backups/last/$DB__NAME-latest.dump"
+docker compose exec db psql -U "$DB__USER" -d restore_check   # look around
+docker compose exec db dropdb -U "$DB__USER" restore_check
+```
+
+`pg_restore -l < <file>` lists a dump's contents without loading it — a quick
+check that a downloaded file is a readable archive, but not proof it restores.
 
 ### Restore for real
 
 Only into a database you intend to overwrite. Stop the app services first so
-nothing writes mid-restore, then pipe the chosen dump back through `psql`:
+nothing writes mid-restore, recreate the database empty, then load the dump:
 
 ```sh
-docker compose stop api frontend migration scheduler stream
-docker compose exec -T pgbackup sh -c 'zcat /backups/last/<file>.sql.gz' \
-  | docker compose exec -T db psql -U "$DB__USER" -d "$DB__NAME"
-docker compose start api frontend migration scheduler stream
+docker compose stop api frontend migration scheduler stream pgbackup
+docker compose exec db dropdb -U "$DB__USER" --force "$DB__NAME"
+docker compose exec db createdb -U "$DB__USER" "$DB__NAME"
+docker compose exec -T db pg_restore -U "$DB__USER" -d "$DB__NAME" \
+  --single-transaction --exit-on-error < backups/daily/<file>.dump
+docker compose start api frontend migration scheduler stream pgbackup
 ```
 
-Because the dump is `--schema=public`, restore into a database that already
-exists with the right owner/roles (the dump carries table data and DDL, not
-global objects like roles). Pick an older copy from `/backups/daily`,
-`/backups/weekly` or `/backups/monthly` instead of `last/` to roll further back.
+`--single-transaction` makes the load all-or-nothing, so a failed restore leaves
+an empty database to retry into rather than a half-loaded one. Pick an older
+copy from `daily/`, `weekly/` or `monthly/` to roll further back — or a file
+from `~/fanfan-backups/`, piped in the same way. A restored dump carries table
+data and DDL but not roles; the database user comes from `.env`, as on a fresh
+install.
 
 ## Sizing and tuning for a small VPS
 

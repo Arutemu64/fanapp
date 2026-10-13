@@ -232,6 +232,8 @@ run-prod build="--build":
 
 # Server deploy: pull prebuilt images and (re)start
 deploy:
+    # Pre-create the pgbackup bind mount owner-only; left to Docker it is root-owned and world-readable.
+    mkdir -p -m 700 backups
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
 
