@@ -13,10 +13,9 @@
 
 	interface Props {
 		user: CurrentUserDto;
-		onUpdate?: () => void;
 	}
 
-	let { user, onUpdate }: Props = $props();
+	let { user }: Props = $props();
 	let avatarInitials = $derived(getAvatarInitials(user.username));
 
 	// Editing the profile is a mutation — online only. Cached identity still renders.
@@ -67,4 +66,4 @@
 	</Button>
 </div>
 
-<EditProfileModal {user} bind:open={editProfileModalOpen} {onUpdate} />
+<EditProfileModal {user} bind:open={editProfileModalOpen} />

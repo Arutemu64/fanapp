@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Mail } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { login } from '#lib/api/generated/index.js';
+	import { loginMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import PasswordInput from '#lib/components/PasswordInput.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -23,10 +23,7 @@
 
 	let { email = $bindable(''), onCodeLogin }: Props = $props();
 
-	type ActiveAction = 'password' | null;
-
 	let password = $state('');
-	let activeAction = $state<ActiveAction>(null);
 	let emailError = $state('');
 	let passwordError = $state('');
 	let formError = $state('');
@@ -35,7 +32,13 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	let busy = $derived(activeAction !== null);
+	// Pending until completeLogin has loaded the new identity and navigated, so
+	// the form stays busy until the app moves on.
+	const passwordLoginMutation = createMutation(() => ({
+		...loginMutation(),
+		onSuccess: () => completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен')
+	}));
+	let busy = $derived(passwordLoginMutation.isPending);
 
 	let normalizedEmail = $derived(normalizeEmail(email));
 
@@ -66,8 +69,8 @@
 		return !emailError && !passwordError;
 	}
 
-	async function submitPasswordLogin() {
-		if (activeAction !== null) {
+	function submitPasswordLogin() {
+		if (busy) {
 			return;
 		}
 
@@ -77,41 +80,29 @@
 
 		const trimmedEmail = normalizedEmail;
 
-		activeAction = 'password';
-
-		try {
-			const { error, response } = await login({
-				body: {
-					email: trimmedEmail,
-					password
+		passwordLoginMutation.mutate(
+			{ body: { email: trimmedEmail, password } },
+			{
+				onError: (error) => {
+					emailError = getApiFieldError(error, 'email') ?? '';
+					passwordError = getApiFieldError(error, 'password') ?? '';
+					if (emailError || passwordError) {
+						return;
+					}
+					formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
 				}
-			});
-
-			if (error || !response?.ok) {
-				console.error('Login error:', error);
-				emailError = getApiFieldError(error, 'email') ?? '';
-				passwordError = getApiFieldError(error, 'password') ?? '';
-				if (emailError || passwordError) {
-					return;
-				}
-				formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
-				return;
 			}
-
-			await completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен');
-		} finally {
-			activeAction = null;
-		}
+		);
 	}
 
 	function handlePasswordSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
-		if (activeAction !== null) {
+		if (busy) {
 			return;
 		}
 
-		void submitPasswordLogin();
+		submitPasswordLogin();
 	}
 </script>
 
@@ -172,7 +163,7 @@
 	</Field.FieldGroup>
 
 	<Button type="submit" class="w-full" disabled={busy}>
-		{#if activeAction === 'password'}
+		{#if busy}
 			<Spinner data-icon="inline-start" />
 			Входим…
 		{:else}

@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { AlertCircle, Award, Gift, Users } from '@lucide/svelte';
+	import { createMutation } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
 	import type { NominationContenderDto, UserBaseDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import { drawVotingContestWinner, setVotingTimeRange } from '#lib/api/generated/index.js';
+	import {
+		drawVotingContestWinnerMutation,
+		setVotingTimeRangeMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -27,12 +31,12 @@
 
 	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
-	let isSaving = $state(false);
+	const timeRangeMutation = createMutation(() => setVotingTimeRangeMutation());
 
 	// Seeded from the dashboard, then refreshed from each draw's response, so the
 	// displayed pool tracks who is currently eligible even as people finish voting.
 	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
-	let isDrawing = $state(false);
+	const drawMutation = createMutation(() => drawVotingContestWinnerMutation());
 	let winner = $state<UserBaseDto | null>(null);
 	let hasDrawn = $state(false);
 	let drawError = $state('');
@@ -52,53 +56,45 @@
 		return new Date(value).toISOString();
 	}
 
-	async function handleSave() {
-		isSaving = true;
-		try {
-			const { error, response } = await setVotingTimeRange({
+	function handleSave() {
+		timeRangeMutation.mutate(
+			{
 				body: {
 					voting_start: fromLocalInput(votingStart),
 					voting_end: fromLocalInput(votingEnd)
 				}
-			});
-
-			if (error || !response?.ok) {
-				toastService.error(error, 'Не удалось сохранить время голосования');
-				return;
+			},
+			{
+				onSuccess: () => toastService.add('Время голосования обновлено', 'success'),
+				onError: (error) => toastService.error(error, 'Не удалось сохранить время голосования')
 			}
-
-			toastService.add('Время голосования обновлено', 'success');
-		} finally {
-			isSaving = false;
-		}
+		);
 	}
 
-	async function handleClear() {
+	function handleClear() {
 		votingStart = '';
 		votingEnd = '';
-		await handleSave();
+		handleSave();
 	}
 
-	async function handleDraw() {
-		isDrawing = true;
+	function handleDraw() {
 		drawError = '';
-		try {
-			const { data: result, error, response } = await drawVotingContestWinner();
-
-			if (error || !response?.ok || !result) {
-				drawError = getApiErrorDetail(error) ?? 'Не удалось провести розыгрыш';
-				return;
+		drawMutation.mutate(
+			{},
+			{
+				// The draw is read-only: the server draws from the live pool and returns
+				// both the winner and the current pool size, so there is nothing to
+				// refetch — trust the response.
+				onSuccess: (result) => {
+					poolSize = result.pool_size;
+					winner = result.winner;
+					hasDrawn = true;
+				},
+				onError: (error) => {
+					drawError = getApiErrorDetail(error) ?? 'Не удалось провести розыгрыш';
+				}
 			}
-
-			// The draw is read-only: the server draws from the live pool and returns
-			// both the winner and the current pool size, so there is nothing to
-			// refetch — trust the response.
-			poolSize = result.pool_size;
-			winner = result.winner;
-			hasDrawn = true;
-		} finally {
-			isDrawing = false;
-		}
+		);
 	}
 </script>
 
@@ -125,18 +121,23 @@
 					id="voting-start"
 					type="datetime-local"
 					bind:value={votingStart}
-					disabled={isSaving}
+					disabled={timeRangeMutation.isPending}
 				/>
 			</Field.Field>
 			<Field.Field>
 				<Field.FieldLabel for="voting-end">Конец</Field.FieldLabel>
-				<Input id="voting-end" type="datetime-local" bind:value={votingEnd} disabled={isSaving} />
+				<Input
+					id="voting-end"
+					type="datetime-local"
+					bind:value={votingEnd}
+					disabled={timeRangeMutation.isPending}
+				/>
 			</Field.Field>
 		</Field.FieldGroup>
 
 		<div class="flex flex-wrap gap-2">
-			<Button type="button" disabled={isSaving} onclick={handleSave}>
-				{#if isSaving}
+			<Button type="button" disabled={timeRangeMutation.isPending} onclick={handleSave}>
+				{#if timeRangeMutation.isPending}
 					<Spinner data-icon="inline-start" />
 				{/if}
 				Сохранить
@@ -144,7 +145,7 @@
 			<Button
 				type="button"
 				variant="outline"
-				disabled={isSaving || (!votingStart && !votingEnd)}
+				disabled={timeRangeMutation.isPending || (!votingStart && !votingEnd)}
 				onclick={handleClear}
 			>
 				Сбросить
@@ -201,10 +202,10 @@
 		<Button
 			type="button"
 			class="w-full sm:w-auto"
-			disabled={isDrawing || !canDraw}
+			disabled={drawMutation.isPending || !canDraw}
 			onclick={handleDraw}
 		>
-			{#if isDrawing}
+			{#if drawMutation.isPending}
 				<Spinner data-icon="inline-start" />
 				Разыгрываем…
 			{:else}

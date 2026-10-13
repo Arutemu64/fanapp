@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { RotateCw } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import { onMount } from 'svelte';
 
-	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { loginWithCode, requestLoginCode } from '#lib/api/generated/index.js';
+	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import {
+		loginWithCodeMutation,
+		requestLoginCodeMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -25,10 +28,19 @@
 
 	let { email }: Props = $props();
 
-	type ActiveAction = 'code-request' | 'code-login' | null;
+	const eventsClient = getEventsClient();
+	const queryClient = useQueryClient();
+	const toastService = getToastService();
+
+	// Pending until completeLogin has loaded the new identity and navigated, so
+	// the form stays busy until the app moves on.
+	const loginMutation = createMutation(() => ({
+		...loginWithCodeMutation(),
+		onSuccess: () => completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен')
+	}));
+	const resendMutation = createMutation(() => requestLoginCodeMutation());
 
 	let loginCode = $state('');
-	let activeAction = $state<ActiveAction>(null);
 	let loginCodeError = $state('');
 	let formError = $state('');
 
@@ -43,18 +55,16 @@
 	const captchaGate = new CaptchaGate();
 
 	// Resend is in flight when its request runs or we're holding it for the captcha.
-	let isResending = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
+	let isResending = $derived(resendMutation.isPending || captchaGate.awaitingCaptcha);
 	// Any in-flight work in this form (verifying the code, or resending it).
-	let busy = $derived(activeAction !== null || captchaGate.awaitingCaptcha);
-
-	const eventsClient = getEventsClient();
-	const queryClient = useQueryClient();
-	const toastService = getToastService();
+	let busy = $derived(
+		loginMutation.isPending || resendMutation.isPending || captchaGate.awaitingCaptcha
+	);
 
 	// Fulfill a deferred resend the moment the invisible captcha solves.
 	function handleCaptchaSolved() {
 		if (captchaGate.awaitingCaptcha) {
-			void handleLoginCodeRequest();
+			handleLoginCodeRequest();
 		}
 	}
 
@@ -71,8 +81,8 @@
 		formError = '';
 	}
 
-	async function submitLoginCode() {
-		if (activeAction !== null) {
+	function submitLoginCode() {
+		if (loginMutation.isPending || resendMutation.isPending) {
 			return;
 		}
 
@@ -86,40 +96,33 @@
 			return;
 		}
 
-		activeAction = 'code-login';
 		loginCodeError = '';
 		formError = '';
 
-		try {
-			const { error, response } = await loginWithCode({
-				body: { email, code: loginCode }
-			});
-
-			if (error) {
-				// A rejected code is cleared so the next attempt starts from the first
-				// box; focus never left the input, so typing can resume at once.
-				const codeFieldError = getApiFieldError(error, 'code');
-				if (codeFieldError) {
-					loginCode = '';
-					loginCodeError = codeFieldError;
-					return;
+		loginMutation.mutate(
+			{ body: { email, code: loginCode } },
+			{
+				onError: (error) => {
+					// A rejected code is cleared so the next attempt starts from the first
+					// box; focus never left the input, so typing can resume at once.
+					const codeFieldError = getApiFieldError(error, 'code');
+					if (codeFieldError) {
+						loginCode = '';
+						loginCodeError = codeFieldError;
+						return;
+					}
+					if (getApiErrorCode(error) === 'INVALID_OTP_CODE') {
+						loginCode = '';
+						loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
+						return;
+					}
+					formError = getApiErrorDetail(error) ?? 'Не удалось выполнить вход';
 				}
-				if (response?.status === 400) {
-					loginCode = '';
-					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
-					return;
-				}
-				formError = getApiErrorDetail(error) ?? 'Не удалось выполнить вход';
-				return;
 			}
-
-			await completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен');
-		} finally {
-			activeAction = null;
-		}
+		);
 	}
 
-	async function handleLoginCodeRequest() {
+	function handleLoginCodeRequest() {
 		// The captcha runs invisibly. If its token isn't ready yet, start the
 		// challenge and hold the resend; handleCaptchaSolved re-runs this once the
 		// token arrives.
@@ -132,39 +135,34 @@
 		}
 
 		captchaGate.release();
-		activeAction = 'code-request';
 		loginCodeError = '';
 		formError = '';
 
-		try {
-			const { error, response } = await requestLoginCode({
-				body: { email, captcha_token: captchaToken }
-			});
-
-			if (error || !response?.ok) {
-				console.error('Login code request error:', error);
-				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
-				// The token is single-use, so fetch a fresh one before a retry.
-				resetCaptcha?.();
-				captchaToken = null;
-				return;
+		resendMutation.mutate(
+			{ body: { email, captcha_token: captchaToken } },
+			{
+				onSuccess: () => {
+					loginCode = '';
+					toastService.add('Код отправлен повторно', 'success');
+					// Each resend needs its own fresh token.
+					resetCaptcha?.();
+					captchaToken = null;
+					cooldown.start();
+				},
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
+					// The token is single-use, so fetch a fresh one before a retry.
+					resetCaptcha?.();
+					captchaToken = null;
+				}
 			}
-
-			loginCode = '';
-			toastService.add('Код отправлен повторно', 'success');
-			// Each resend needs its own fresh token.
-			resetCaptcha?.();
-			captchaToken = null;
-			cooldown.start();
-		} finally {
-			activeAction = null;
-		}
+		);
 	}
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		if (activeAction !== null) return;
-		void submitLoginCode();
+		if (loginMutation.isPending || resendMutation.isPending) return;
+		submitLoginCode();
 	}
 </script>
 
@@ -221,7 +219,7 @@
 	</div>
 
 	<Button type="submit" class="w-full" disabled={busy || loginCode.length < 6}>
-		{#if activeAction === 'code-login'}
+		{#if loginMutation.isPending}
 			<Spinner data-icon="inline-start" />
 			Проверяем…
 		{:else}

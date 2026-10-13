@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Bell, Settings } from '@lucide/svelte';
-	import { createInfiniteQuery, createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import {
+		createInfiniteQuery,
+		createMutation,
+		createQuery,
+		useQueryClient
+	} from '@tanstack/svelte-query';
 	import { onMount, tick } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -12,9 +17,12 @@
 		countUnreadNotificationsOptions,
 		countUnreadNotificationsQueryKey,
 		listUserNotificationsInfiniteOptions,
-		listUserNotificationsQueryKey
+		listUserNotificationsQueryKey,
+		markAllNotificationsReadMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { markAllNotificationsRead, markNotificationsRead } from '#lib/api/generated/index.js';
+	// A plain SDK call, not a mutation: read-on-view is a background sync no one
+	// submits, with its own retry bookkeeping (requestedReadIds below).
+	import { markNotificationsRead } from '#lib/api/generated/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
@@ -102,7 +110,6 @@
 	// before that the shared count still includes the on-screen items about to be
 	// marked, and the button would flash for a round-trip on every visit.
 	let openingReadSettled = $state(false);
-	let isMarkingAll = $state(false);
 
 	// Unread items the screen can't mark on view: older than every loaded page, or
 	// arrived while the app was in the background.
@@ -159,24 +166,28 @@
 		});
 	});
 
-	async function markAllRead() {
-		isMarkingAll = true;
-		const { error, response } = await markAllNotificationsRead();
-		isMarkingAll = false;
-
-		if (error || !response?.ok) {
-			toastService.error(error, 'Не удалось отметить уведомления прочитанными');
-			return;
+	const markAllReadMutation = createMutation(() => ({
+		...markAllNotificationsReadMutation(),
+		onSuccess: async () => {
+			// Zero the badge at once, then reconcile with the server: a notification
+			// committed between the mark-all and this callback is still unread, and only
+			// the refetch surfaces it. Cancelling first stops a count fetched before the
+			// mark-all from landing on top of the zero (TanStack's optimistic-update order).
+			const queryKey = countUnreadNotificationsQueryKey();
+			await queryClient.cancelQueries({ queryKey });
+			queryClient.setQueryData(queryKey, { count: 0 });
+			await queryClient.invalidateQueries({ queryKey });
 		}
+	}));
 
-		// Zero the badge at once, then reconcile with the server: a notification
-		// committed between the mark-all and this handler is still unread, and only
-		// the refetch surfaces it. Cancelling first stops a count fetched before the
-		// mark-all from landing on top of the zero (TanStack's optimistic-update order).
-		const queryKey = countUnreadNotificationsQueryKey();
-		await queryClient.cancelQueries({ queryKey });
-		queryClient.setQueryData(queryKey, { count: 0 });
-		await queryClient.invalidateQueries({ queryKey });
+	function markAllRead() {
+		markAllReadMutation.mutate(
+			{},
+			{
+				onError: (error) =>
+					toastService.error(error, 'Не удалось отметить уведомления прочитанными')
+			}
+		);
 	}
 
 	let listElement = $state<HTMLElement>();
@@ -273,7 +284,12 @@
 			</p>
 			<div class="-me-3 flex items-center">
 				{#if showMarkAll}
-					<Button variant="ghost" size="sm" onclick={markAllRead} disabled={isMarkingAll}>
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={markAllRead}
+						disabled={markAllReadMutation.isPending}
+					>
 						Прочитать все
 					</Button>
 				{/if}

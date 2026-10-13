@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { SyncRunStatus, SyncSource, SyncSourceStatusDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		getSyncSourcesOptions,
-		getSyncSourcesQueryKey
+		getSyncSourcesQueryKey,
+		requestSyncMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	// The generated operation shares the name of this component's own trigger
-	// handler below, so import it under a distinct name.
-	import { requestSync as requestSyncSource } from '#lib/api/generated/index.js';
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
@@ -26,6 +24,10 @@
 
 	// Kept live by sync_run_updated events (see the root layout).
 	const sourcesQuery = createQuery(() => getSyncSourcesOptions());
+	const syncMutation = createMutation(() => ({
+		...requestSyncMutation(),
+		onSettled: () => queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() })
+	}));
 
 	const SOURCE_LABELS: Record<SyncSource, string> = {
 		cosplay2: 'Cosplay2',
@@ -69,20 +71,17 @@
 		});
 	}
 
+	// `mutateAsync`, not `mutate`: two sources can be requested at once, and
+	// `mutate` only calls back for the latest call.
 	async function requestSync(source: SyncSource) {
 		requesting = [...requesting, source];
 		try {
-			const { error: apiError, response } = await requestSyncSource({
-				path: { source }
-			});
-			if (apiError || !response?.ok) {
-				toastService.error(apiError);
-				return;
-			}
+			await syncMutation.mutateAsync({ path: { source } });
 			toastService.add('Синхронизация запущена', 'success');
+		} catch (error) {
+			toastService.error(error);
 		} finally {
 			requesting = requesting.filter((item) => item !== source);
-			await queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() });
 		}
 	}
 </script>

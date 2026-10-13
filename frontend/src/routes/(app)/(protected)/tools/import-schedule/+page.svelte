@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import { getScheduleQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { importSchedule } from '#lib/api/generated/index.js';
+	import {
+		getScheduleQueryKey,
+		importScheduleMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -16,8 +18,12 @@
 
 	const queryClient = useQueryClient();
 
+	const importMutation = createMutation(() => ({
+		...importScheduleMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
+	}));
+
 	let selectedFiles = $state<FileList | undefined>(undefined);
-	let isUploading = $state(false);
 	let inlineError = $state('');
 	let successMessage = $state('');
 	let selectedFileName = $derived(selectedFiles?.[0]?.name ?? '');
@@ -30,7 +36,7 @@
 		successMessage = '';
 	}
 
-	async function handleSubmit(event: Event) {
+	function handleSubmit(event: Event) {
 		event.preventDefault();
 		const form = event.currentTarget as HTMLFormElement;
 		const selectedFile = selectedFiles?.[0] ?? null;
@@ -43,29 +49,22 @@
 			return;
 		}
 
-		isUploading = true;
-
-		try {
-			const { error, response } = await importSchedule({
-				body: { file: selectedFile }
-			});
-
-			if (error || !response?.ok) {
-				// Mapped by the error `code`, not the status: a rejected spreadsheet
-				// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
-				// fault, which is the whole point of showing an error here.
-				inlineError = getApiErrorDetail(error) ?? 'Не удалось импортировать программу';
-				return;
+		importMutation.mutate(
+			{ body: { file: selectedFile } },
+			{
+				onSuccess: () => {
+					successMessage = 'Файл загружен. Программа обновлена.';
+					selectedFiles = undefined;
+					form.reset();
+				},
+				onError: (error) => {
+					// Mapped by the error `code`, not the status: a rejected spreadsheet
+					// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
+					// fault, which is the whole point of showing an error here.
+					inlineError = getApiErrorDetail(error) ?? 'Не удалось импортировать программу';
+				}
 			}
-
-			successMessage = 'Файл загружен. Программа обновлена.';
-			selectedFiles = undefined;
-			form.reset();
-
-			await queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
-		} finally {
-			isUploading = false;
-		}
+		);
 	}
 </script>
 
@@ -89,7 +88,7 @@
 					accept={ACCEPTED_FILE_TYPES}
 					bind:files={selectedFiles}
 					class="w-full cursor-pointer file:cursor-pointer"
-					disabled={isUploading}
+					disabled={importMutation.isPending}
 					onchange={handleFileChange}
 				/>
 				<Field.FieldDescription>
@@ -115,8 +114,8 @@
 				</Alert.Root>
 			{/if}
 
-			<Button type="submit" class="w-full sm:w-auto" disabled={isUploading}>
-				{#if isUploading}
+			<Button type="submit" class="w-full sm:w-auto" disabled={importMutation.isPending}>
+				{#if importMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Импортируем…
 				{:else}

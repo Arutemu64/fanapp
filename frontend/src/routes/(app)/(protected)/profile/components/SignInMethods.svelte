@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$app/env/public';
 	import { Mail, Shield } from '@lucide/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto, SocialProvider } from '#lib/api/generated/index.js';
 
-	import { unlinkTelegramAccount, unlinkVkAccount } from '#lib/api/generated/index.js';
+	import {
+		getCurrentUserQueryKey,
+		unlinkTelegramAccountMutation,
+		unlinkVkAccountMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
@@ -21,10 +26,10 @@
 		user: CurrentUserDto;
 		/** Providers this deployment offers for linking (see /auth/oauth/providers). */
 		enabledProviders: SocialProvider[];
-		onUpdate?: () => void | Promise<void>;
 	}
 
-	let { user, enabledProviders, onUpdate }: Props = $props();
+	let { user, enabledProviders }: Props = $props();
+	const queryClient = useQueryClient();
 
 	// Email/password/unlink are all mutations — online only. The current state
 	// (which methods are set) still renders from the cached user.
@@ -59,18 +64,33 @@
 	// literal is picked here rather than an interpolated path the typed client can't
 	// check. Unlink is never gated by enablement — that is what keeps a disabled-but-
 	// linked provider removable.
+	const unlinkVkMutation = createMutation(() => ({
+		...unlinkVkAccountMutation(),
+		onSuccess: refreshUser
+	}));
+	const unlinkTelegramMutation = createMutation(() => ({
+		...unlinkTelegramAccountMutation(),
+		onSuccess: refreshUser
+	}));
+
+	// Connections ship with the current user, so its query is the one to refresh.
+	function refreshUser() {
+		return queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
+	}
+
+	// `mutateAsync`, not `mutate`: SocialConnectionRow awaits this to drive its
+	// confirm strip and spinner.
 	async function unlinkProvider(provider: SocialProvider) {
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
-		const { error, response } =
-			provider === 'vk' ? await unlinkVkAccount() : await unlinkTelegramAccount();
+		const unlinkMutation = provider === 'vk' ? unlinkVkMutation : unlinkTelegramMutation;
 
-		if (error || !response?.ok) {
+		try {
+			await unlinkMutation.mutateAsync({});
+		} catch (error) {
 			toastService.error(error);
 			return;
 		}
-
 		toastService.add(`${name} отвязан`, 'success');
-		await onUpdate?.();
 	}
 </script>
 
@@ -144,10 +164,6 @@
 	</MenuGroup>
 </SettingsSection>
 
-<ChangePasswordModal
-	bind:open={changePasswordModalOpen}
-	hasPassword={user.has_password}
-	onSuccess={onUpdate}
-/>
+<ChangePasswordModal bind:open={changePasswordModalOpen} hasPassword={user.has_password} />
 
-<ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} onSuccess={onUpdate} />
+<ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import { listOauthProvidersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -13,7 +13,6 @@
 	import SignInMethods from '../components/SignInMethods.svelte';
 
 	let { data }: PageProps = $props();
-	const queryClient = useQueryClient();
 	const userQuery = createQuery(() => currentUserOptions());
 	// Live from the query; the guard's snapshot covers the moment a session expiry
 	// has emptied it but not yet moved us to /login.
@@ -47,11 +46,6 @@
 		}
 	} as const;
 
-	// Refreshing the current user also refreshes connections — they ship together now.
-	async function refreshProfile() {
-		await queryClient.invalidateQueries({ queryKey: currentUserOptions().queryKey });
-	}
-
 	onMount(() => {
 		const linkError = data.oauthLinkError;
 
@@ -69,5 +63,5 @@
 	<title>Аккаунт · ФАН ФАН</title>
 </svelte:head>
 
-<ProfileHeader {user} onUpdate={refreshProfile} />
-<SignInMethods {user} {enabledProviders} onUpdate={refreshProfile} />
+<ProfileHeader {user} />
+<SignInMethods {user} {enabledProviders} />

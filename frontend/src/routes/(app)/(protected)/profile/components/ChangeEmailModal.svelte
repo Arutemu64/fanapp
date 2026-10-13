@@ -2,12 +2,17 @@
 	import type { PinInputCell } from 'bits-ui';
 
 	import { Mail } from '@lucide/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { onDestroy } from 'svelte';
 
 	import type { ChangeEmailInput } from '#lib/api/generated/index.js';
 
-	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { changeCurrentUserEmail, confirmEmailCode } from '#lib/api/generated/index.js';
+	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import {
+		changeCurrentUserEmailMutation,
+		confirmEmailCodeMutation,
+		getCurrentUserQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -23,21 +28,28 @@
 	interface Props {
 		open: boolean;
 		currentEmail?: string | null;
-		onSuccess?: () => void;
 	}
 
-	let { open = $bindable(false), currentEmail, onSuccess }: Props = $props();
+	let { open = $bindable(false), currentEmail }: Props = $props();
+	const queryClient = useQueryClient();
+
+	// Sends the code — first from the email step, then as «Отправить код ещё раз».
+	const changeEmailMutation = createMutation(() => changeCurrentUserEmailMutation());
+	// Not awaited: the refreshed user flips `currentEmail`, and with it this
+	// dialog's title, so the dialog closes first.
+	const confirmMutation = createMutation(() => ({
+		...confirmEmailCodeMutation(),
+		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() })
+	}));
+	let isBusy = $derived(changeEmailMutation.isPending || confirmMutation.isPending);
 
 	// Two-step flow: 'email' collects and sends the OTP, 'verify' confirms it.
 	let step = $state<'email' | 'verify'>('email');
 	let newEmail = $state('');
 	let emailError = $state('');
-	let isLoading = $state(false);
 
 	let verificationCode = $state('');
 	let verificationCodeError = $state('');
-	let isVerifying = $state(false);
-	let isRequestingVerification = $state(false);
 
 	const cooldown = new ResendCooldown();
 
@@ -56,31 +68,27 @@
 		formError = '';
 	}
 
-	async function sendOtp() {
-		if (isRequestingVerification) return;
+	function sendOtp() {
+		if (changeEmailMutation.isPending) return;
 
-		isRequestingVerification = true;
 		verificationCodeError = '';
 		formError = '';
-
-		try {
-			const body: ChangeEmailInput = { new_email: normalizeEmail(newEmail) };
-			const { error, response } = await changeCurrentUserEmail({ body });
-
-			if (error || !response?.ok) {
-				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
-				return;
+		changeEmailMutation.mutate(
+			{ body: { new_email: normalizeEmail(newEmail) } },
+			{
+				onSuccess: () => {
+					verificationCode = '';
+					toastService.add('Код для подтверждения отправлен на почту', 'success');
+					cooldown.start();
+				},
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
+				}
 			}
-
-			verificationCode = '';
-			toastService.add('Код для подтверждения отправлен на почту', 'success');
-			cooldown.start();
-		} finally {
-			isRequestingVerification = false;
-		}
+		);
 	}
 
-	async function handleSubmit(e: Event) {
+	function handleSubmit(e: Event) {
 		e.preventDefault();
 		emailError = '';
 
@@ -91,33 +99,32 @@
 			return;
 		}
 
-		isLoading = true;
-
 		const body: ChangeEmailInput = { new_email: trimmedEmail };
-		const { error, response } = await changeCurrentUserEmail({ body });
-
-		isLoading = false;
-
-		if (error) {
-			const emailFieldError = getApiFieldError(error, 'new_email');
-			if (emailFieldError) {
-				emailError = emailFieldError;
-				return;
+		changeEmailMutation.mutate(
+			{ body },
+			{
+				onSuccess: () => {
+					toastService.add('Код подтверждения отправлен на новый адрес.', 'success');
+					step = 'verify';
+					cooldown.start();
+				},
+				onError: (error) => {
+					const emailFieldError = getApiFieldError(error, 'new_email');
+					if (emailFieldError) {
+						emailError = emailFieldError;
+						return;
+					}
+					if (getApiErrorCode(error) === 'EMAIL_ALREADY_EXISTS') {
+						emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
+						return;
+					}
+					formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
+				}
 			}
-			if (response?.status === 409) {
-				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
-				return;
-			}
-			formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
-			return;
-		}
-
-		toastService.add('Код подтверждения отправлен на новый адрес.', 'success');
-		step = 'verify';
-		cooldown.start();
+		);
 	}
 
-	async function submitVerificationCode() {
+	function submitVerificationCode() {
 		verificationCodeError = '';
 
 		if (verificationCode.length !== 6) {
@@ -130,35 +137,29 @@
 			return;
 		}
 
-		isVerifying = true;
-
-		try {
-			const { error, response } = await confirmEmailCode({
-				body: { code: verificationCode }
-			});
-
-			if (error) {
-				const codeFieldError = getApiFieldError(error, 'code');
-				if (codeFieldError) {
-					verificationCodeError = codeFieldError;
-					return;
+		confirmMutation.mutate(
+			{ body: { code: verificationCode } },
+			{
+				onSuccess: () => {
+					toastService.add('Почта подтверждена', 'success');
+					verificationCode = '';
+					verificationCodeError = '';
+					open = false;
+				},
+				onError: (error) => {
+					const codeFieldError = getApiFieldError(error, 'code');
+					if (codeFieldError) {
+						verificationCodeError = codeFieldError;
+						return;
+					}
+					if (getApiErrorCode(error) === 'INVALID_OTP_CODE') {
+						verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
+						return;
+					}
+					formError = getApiErrorDetail(error) ?? 'Не удалось подтвердить код';
 				}
-				if (response?.status === 400) {
-					verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
-					return;
-				}
-				formError = getApiErrorDetail(error) ?? 'Не удалось подтвердить код';
-				return;
 			}
-
-			toastService.add('Почта подтверждена', 'success');
-			verificationCode = '';
-			verificationCodeError = '';
-			open = false;
-			if (onSuccess) onSuccess();
-		} finally {
-			isVerifying = false;
-		}
+		);
 	}
 
 	$effect(() => {
@@ -248,8 +249,8 @@
 					</Field.Field>
 				</Field.FieldGroup>
 
-				<Button type="submit" class="w-full" disabled={isLoading}>
-					{#if isLoading}
+				<Button type="submit" class="w-full" disabled={changeEmailMutation.isPending}>
+					{#if changeEmailMutation.isPending}
 						<Spinner data-icon="inline-start" />
 						Отправка кода…
 					{:else}
@@ -280,7 +281,7 @@
 					<InputOTP.Root
 						maxlength={6}
 						bind:value={verificationCode}
-						disabled={isVerifying || isRequestingVerification}
+						disabled={isBusy}
 						aria-invalid={Boolean(verificationCodeError)}
 						onValueChange={() => {
 							verificationCodeError = '';
@@ -310,12 +311,8 @@
 				</div>
 
 				<div class="flex flex-col gap-2 pt-2">
-					<Button
-						class="w-full"
-						disabled={isVerifying || isRequestingVerification}
-						onclick={submitVerificationCode}
-					>
-						{#if isVerifying}
+					<Button class="w-full" disabled={isBusy} onclick={submitVerificationCode}>
+						{#if confirmMutation.isPending}
 							<Spinner data-icon="inline-start" />
 							Проверяем…
 						{:else}
@@ -327,10 +324,10 @@
 						type="button"
 						variant="outline"
 						class="w-full"
-						disabled={isVerifying || isRequestingVerification || cooldown.remaining > 0}
+						disabled={isBusy || cooldown.remaining > 0}
 						onclick={sendOtp}
 					>
-						{#if isRequestingVerification}
+						{#if changeEmailMutation.isPending}
 							<Spinner data-icon="inline-start" />
 							Отправляем…
 						{:else if cooldown.remaining > 0}

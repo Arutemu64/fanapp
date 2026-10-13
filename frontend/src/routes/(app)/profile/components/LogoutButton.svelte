@@ -2,9 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { LogOut } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
-	import { logoutUser } from '#lib/api/generated/index.js';
+	import { logoutUserMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { currentUserOptions, forgetSession } from '#lib/api/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -17,9 +17,12 @@
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
 	const queryClient = useQueryClient();
+	const logoutMutation = createMutation(() => logoutUserMutation());
 
 	// Disables the button for the round-trip, so a second tap can't fire a second
-	// logout into a session the first one is already ending.
+	// logout into a session the first one is already ending. Not the mutation's
+	// isPending: it also spans the offline path, which sends no request, and the
+	// navigation home.
 	let isLoggingOut = $state(false);
 	// Asked once before leaving: logging out also wipes this device's cached data,
 	// so a stray tap costs more than a re-login (web.dev's sign-out guidance
@@ -48,9 +51,9 @@
 			return;
 		}
 
-		const { error, response } = await logoutUser();
-
-		if (error || !response?.ok) {
+		try {
+			await logoutMutation.mutateAsync({});
+		} catch (error) {
 			toastService.error(error);
 			return;
 		}

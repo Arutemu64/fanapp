@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { Mail } from '@lucide/svelte';
+	import { createMutation } from '@tanstack/svelte-query';
 	import { onDestroy } from 'svelte';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { requestLoginCode } from '#lib/api/generated/index.js';
+	import { requestLoginCodeMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -23,9 +24,7 @@
 
 	let { email = $bindable(''), onCodeSent, onPasswordLogin }: Props = $props();
 
-	type ActiveAction = 'code-request' | null;
-
-	let activeAction = $state<ActiveAction>(null);
+	const requestCodeMutation = createMutation(() => requestLoginCodeMutation());
 	let emailError = $state('');
 	let formError = $state('');
 
@@ -41,22 +40,16 @@
 
 	// In flight from the user's point of view: the request is running, or we're
 	// holding it until the background captcha resolves.
-	let isRequesting = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
+	let isRequesting = $derived(requestCodeMutation.isPending || captchaGate.awaitingCaptcha);
 
 	// Fulfill a deferred submit the moment the invisible captcha solves.
 	function handleCaptchaSolved() {
 		if (captchaGate.awaitingCaptcha) {
-			void handleLoginCodeRequest();
+			handleLoginCodeRequest();
 		}
 	}
 
-	// Set when the user leaves this step (back gesture or «Назад») — neither can
-	// be held off while a request runs, so a code that lands afterwards must not
-	// pull them back into the flow they just left.
-	let hasLeftStep = false;
-
 	onDestroy(() => {
-		hasLeftStep = true;
 		captchaGate.clear();
 	});
 
@@ -85,8 +78,8 @@
 		return true;
 	}
 
-	async function handleLoginCodeRequest() {
-		if (activeAction !== null) {
+	function handleLoginCodeRequest() {
+		if (requestCodeMutation.isPending) {
 			return;
 		}
 
@@ -109,39 +102,33 @@
 		captchaGate.release();
 		const trimmedEmail = normalizedEmail;
 
-		activeAction = 'code-request';
-
-		try {
-			const { error, response } = await requestLoginCode({
-				body: { email: trimmedEmail, captcha_token: captchaToken }
-			});
-
-			if (error || !response?.ok) {
-				console.error('Login code request error:', error);
-				const emailFieldError = getApiFieldError(error, 'email');
-				if (emailFieldError) {
-					emailError = emailFieldError;
-				} else {
-					formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+		requestCodeMutation.mutate(
+			{ body: { email: trimmedEmail, captcha_token: captchaToken } },
+			{
+				// A `mutate` callback on purpose: TanStack drops it once this step
+				// unmounts. The user can leave (back gesture or «Назад») while the
+				// request runs, and a code that lands afterwards must not pull them back
+				// into the flow they just left.
+				onSuccess: () => onCodeSent(trimmedEmail),
+				onError: (error) => {
+					const emailFieldError = getApiFieldError(error, 'email');
+					if (emailFieldError) {
+						emailError = emailFieldError;
+					} else {
+						formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+					}
+					// The token is single-use, so fetch a fresh one before a retry.
+					resetCaptcha?.();
+					captchaToken = null;
 				}
-				// The token is single-use, so fetch a fresh one before a retry.
-				resetCaptcha?.();
-				captchaToken = null;
-				return;
 			}
-
-			if (!hasLeftStep) {
-				onCodeSent(trimmedEmail);
-			}
-		} finally {
-			activeAction = null;
-		}
+		);
 	}
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		if (activeAction !== null) return;
-		void handleLoginCodeRequest();
+		if (requestCodeMutation.isPending) return;
+		handleLoginCodeRequest();
 	}
 </script>
 

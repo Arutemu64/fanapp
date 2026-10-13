@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createInfiniteQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { MailingDto, MailingStatus, UserRole } from '#lib/api/generated/index.js';
 
 	import {
+		cancelMailingMutation,
 		listBroadcastsInfiniteOptions,
 		listBroadcastsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { cancelMailing } from '#lib/api/generated/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
@@ -27,7 +27,19 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	let cancellingId = $state<string | null>(null);
+	// Toasts live on the mutation, not on each `mutate` call: a second row can be
+	// cancelled before the first answers, and `mutate` only calls back for the latest.
+	const cancelMutation = createMutation(() => ({
+		...cancelMailingMutation(),
+		onSuccess: () => toastService.add('Рассылка отменена', 'success'),
+		onError: (error) => toastService.error(error, 'Не удалось отменить рассылку'),
+		// Refresh from the server whether it succeeded or raced with another
+		// change, so the row reflects the real state.
+		onSettled: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })
+	}));
+	let cancellingId = $derived(
+		cancelMutation.isPending ? cancelMutation.variables?.path.mailing_id : null
+	);
 
 	// Each page over-fetches one item so a short page proves there is no next one.
 	const mailingsQuery = createInfiniteQuery(() => ({
@@ -87,23 +99,8 @@
 		return roles.map((role) => ROLE_LABELS[role]).join(', ');
 	}
 
-	async function cancel(mailing: MailingDto): Promise<void> {
-		cancellingId = mailing.id;
-		try {
-			const { error, response } = await cancelMailing({
-				path: { mailing_id: mailing.id }
-			});
-			if (error || !response?.ok) {
-				toastService.error(error, 'Не удалось отменить рассылку');
-			} else {
-				toastService.add('Рассылка отменена', 'success');
-			}
-			// Refresh from the server whether it succeeded or raced with another
-			// change, so the row reflects the real state.
-			await queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() });
-		} finally {
-			cancellingId = null;
-		}
+	function cancel(mailing: MailingDto) {
+		cancelMutation.mutate({ path: { mailing_id: mailing.id } });
 	}
 </script>
 

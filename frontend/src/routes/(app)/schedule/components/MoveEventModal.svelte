@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
-	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		getScheduleOptions,
-		getScheduleQueryKey
+		getScheduleQueryKey,
+		moveScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { moveScheduleEvent } from '#lib/api/generated/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -33,13 +33,22 @@
 	const scheduleQuery = createQuery(() => getScheduleOptions());
 	let schedule = $derived(scheduleQuery.data?.schedule ?? []);
 
+	// Read-your-writes: refetch our own schedule off the successful response
+	// rather than waiting for the schedule_updated SSE echo, which can arrive
+	// late or be dropped on a flaky operator connection. See EventStaffActions'
+	// reloadSchedule for the full rationale.
+	const moveMutation = createMutation(() => ({
+		...moveScheduleEventMutation(),
+		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
+	}));
+
 	let query = $state('');
 	let selectedId: string | null = $state(null);
 	let formError = $state('');
 	// Blocks re-entry while the move request is in flight. A move fans out an
 	// irreversible push to every subscriber, so a double-tap on a slow venue cell
 	// must not fire the request — and the mailing — twice.
-	let isSubmitting = $state(false);
+	let isSubmitting = $derived(moveMutation.isPending);
 
 	// Reset the picker each time the modal opens so a cancelled selection never lingers.
 	$effect(() => {
@@ -47,7 +56,6 @@
 			formError = '';
 			selectedId = null;
 			query = '';
-			isSubmitting = false;
 		}
 	});
 
@@ -63,36 +71,24 @@
 		selectedId = selectedId === ev.id ? null : ev.id;
 	}
 
-	async function handleSubmit() {
+	function handleSubmit() {
 		if (!selectedId || isSubmitting) return;
 
 		formError = '';
-		isSubmitting = true;
-		try {
-			const { error, response } = await moveScheduleEvent({
-				path: { event_id: event.id },
-				body: { place_after_event_id: selectedId }
-			});
-
-			if (error || !response?.ok) {
-				console.error('Error moving event:', error);
-				formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
-				return;
+		moveMutation.mutate(
+			{ path: { event_id: event.id }, body: { place_after_event_id: selectedId } },
+			{
+				onSuccess: () => {
+					toastService.add('Выступление перенесено', 'success');
+					open = false;
+					selectedId = null;
+					query = '';
+				},
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
+				}
 			}
-
-			// Read-your-writes: refetch our own schedule off the successful response
-			// rather than waiting for the schedule_updated SSE echo, which can arrive
-			// late or be dropped on a flaky operator connection. See EventCard's
-			// reloadSchedule for the full rationale.
-			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
-			toastService.add('Выступление перенесено', 'success');
-
-			open = false;
-			selectedId = null;
-			query = '';
-		} finally {
-			isSubmitting = false;
-		}
+		);
 	}
 </script>
 
