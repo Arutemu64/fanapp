@@ -20,6 +20,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		api.use(organizer());
 		api.use({
 			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
+				next_cursor: null,
 				mailings: [SENDING]
 			}),
 			[`POST /notifications/broadcast/${SENDING.id}/cancel`]: json({}, 204)
@@ -35,6 +36,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		// After cancel, the feed reloads (invalidate) — return the mailing cancelled.
 		api.use({
 			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
+				next_cursor: null,
 				mailings: [{ ...SENDING, status: 'cancelled' }]
 			})
 		});
@@ -53,7 +55,10 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		api.use(organizer());
 		// Baseline has no broadcast handler; mock an empty history explicitly.
 		api.use({
-			'GET /notifications/broadcast': json<ListBroadcastsOutput>({ mailings: [] })
+			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
+				next_cursor: null,
+				mailings: []
+			})
 		});
 
 		await page.goto('/tools/broadcast');

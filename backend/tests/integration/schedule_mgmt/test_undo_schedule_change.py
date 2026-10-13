@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
     UndoScheduleChange,
     UndoScheduleChangeInput,
@@ -94,7 +94,7 @@ async def test_undo_skipped_change_unskips_event(
     assert await changes_gateway.get_by_id(change.id) is None
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )

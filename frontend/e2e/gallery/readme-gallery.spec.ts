@@ -39,7 +39,7 @@ const visitorAtFestival: Handlers = {
 	'GET /schedule/': json({ schedule }),
 	'GET /schedule/subscriptions/': json({ subscriptions }),
 	'GET /voting/nominations/single': json(singleDefile),
-	'GET /notifications/': json({ notifications })
+	'GET /notifications/': json({ notifications, next_cursor: null })
 };
 
 // Playwright only writes PNG or JPEG, so the browser that took the shot re-encodes

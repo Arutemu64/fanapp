@@ -3,7 +3,7 @@ from collections.abc import Callable
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotifications,
     ListUserNotificationsInput,
@@ -32,7 +32,7 @@ async def _add_notification(
     The test runs in one wrapping transaction, so created_at (server-side
     func.now(), the transaction clock) is identical across these rows; the
     later-generated id (uuid7 here) then decides order under the gateway's
-    id.desc() tiebreaker — a regression guard for offset pages skipping rows.
+    id.desc() tiebreaker — a regression guard for the page cursor skipping rows.
     """
     notification_gateway = await dishka_request.get(NotificationGateway)
     uow = await dishka_request.get(UnitOfWork)
@@ -63,7 +63,7 @@ async def test_list_user_notifications_newest_first_stable_under_created_at_tie(
     login(visitor)
 
     result = await interactor(
-        ListUserNotificationsInput(pagination=Pagination(limit=100, offset=0))
+        ListUserNotificationsInput(pagination=CursorPagination(limit=100))
     )
 
     assert [n.id for n in result.notifications] == [second, first]
@@ -81,11 +81,17 @@ async def test_list_user_notifications_paginates_without_skips(
     login(visitor)
 
     first_page = await interactor(
-        ListUserNotificationsInput(pagination=Pagination(limit=1, offset=0))
+        ListUserNotificationsInput(pagination=CursorPagination(limit=1))
     )
     second_page = await interactor(
-        ListUserNotificationsInput(pagination=Pagination(limit=1, offset=1))
+        ListUserNotificationsInput(
+            pagination=CursorPagination.from_token(
+                limit=1, cursor=first_page.next_cursor
+            )
+        )
     )
 
     assert [n.id for n in first_page.notifications] == [second]
     assert [n.id for n in second_page.notifications] == [first]
+    assert first_page.next_cursor is not None
+    assert second_page.next_cursor is None

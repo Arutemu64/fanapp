@@ -4,7 +4,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Query
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.feedback.list_feedback import (
     ListFeedback,
     ListFeedbackInput,
@@ -16,6 +16,7 @@ from fanfan.application.interactors.feedback.submit_feedback import (
     SubmitFeedbackOutput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
 feedback_router = APIRouter(
@@ -55,7 +56,9 @@ async def submit_feedback(
 async def list_feedback(
     interactor: FromDishka[ListFeedback],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    cursor: PageCursorQuery = None,
 ) -> ListFeedbackOutput:
-    data = ListFeedbackInput(pagination=Pagination(limit=limit, offset=offset))
+    data = ListFeedbackInput(
+        pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
+    )
     return await interactor(data)

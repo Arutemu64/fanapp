@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination, cut_page
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
@@ -11,11 +11,12 @@ from fanfan.core.vo.permission import Permission
 
 
 class ListScheduleChangesInput(BaseModel):
-    pagination: Pagination
+    pagination: CursorPagination
 
 
 class ListScheduleChangesOutput(BaseModel):
     schedule_changes: list[ScheduleChangeFullDTO]
+    next_cursor: str | None
 
 
 class ListScheduleChanges:
@@ -36,9 +37,10 @@ class ListScheduleChanges:
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SCHEDULE_MANAGE
         )
-        schedule_changes = (
-            await self.schedule_change_gateway.read_list_schedule_changes(
-                pagination=data.pagination
-            )
+        rows = await self.schedule_change_gateway.read_list_schedule_changes(
+            pagination=data.pagination
         )
-        return ListScheduleChangesOutput(schedule_changes=schedule_changes)
+        schedule_changes, next_cursor = cut_page(rows, data.pagination)
+        return ListScheduleChangesOutput(
+            schedule_changes=schedule_changes, next_cursor=next_cursor
+        )

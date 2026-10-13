@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 import pytest
 
 from fanfan.application.dto.schedule_change import (
@@ -40,6 +42,7 @@ def _change(
         changed_event=changed_event,
         argument_event=argument_event,
         user=None,
+        created_at=datetime.now(UTC),
     )
 
 

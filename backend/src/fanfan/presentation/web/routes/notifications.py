@@ -4,7 +4,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path, Query
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.notifications.cancel_mailing import (
     CancelMailing,
     CancelMailingInput,
@@ -39,6 +39,7 @@ from fanfan.application.interactors.notifications.send_test_notification import 
 from fanfan.core.vo.mailing import MailingId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
 notifications_router = APIRouter(
@@ -61,9 +62,11 @@ notifications_router = APIRouter(
 async def list_user_notifications(
     interactor: FromDishka[ListUserNotifications],
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    cursor: PageCursorQuery = None,
 ) -> ListUserNotificationOutput:
-    data = ListUserNotificationsInput(pagination=Pagination(limit=limit, offset=offset))
+    data = ListUserNotificationsInput(
+        pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
+    )
     return await interactor(data)
 
 
@@ -171,9 +174,11 @@ async def send_broadcast(
 async def list_broadcasts(
     interactor: FromDishka[ListBroadcasts],
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    cursor: PageCursorQuery = None,
 ) -> ListBroadcastsOutput:
-    data = ListBroadcastsInput(pagination=Pagination(limit=limit, offset=offset))
+    data = ListBroadcastsInput(
+        pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
+    )
     return await interactor(data)
 
 

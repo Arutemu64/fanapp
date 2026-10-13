@@ -6,8 +6,9 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import NotificationORM
+from fanfan.adapters.db.pagination import rows_after
 from fanfan.application.dto.notification import NotificationDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
@@ -141,19 +142,25 @@ class SqlNotificationGateway(NotificationGateway):
         return _parse_dto(notification_orm) if notification_orm else None
 
     async def read_list_user_notifications(
-        self, user_id: UserId, pagination: Pagination
+        self, user_id: UserId, pagination: CursorPagination
     ) -> list[NotificationDTO]:
         stmt = (
             select(NotificationORM)
             .where(NotificationORM.user_id == user_id)
-            # id is a unique PK, so appending it gives a stable total order across
-            # offset pages — a broadcast fan-out inserts many rows in one
-            # transaction sharing created_at, which without a tiebreaker could
-            # shift between pages and let a notification slip through unseen.
+            # id is a unique PK, so appending it gives the total order the page
+            # cursor needs — a broadcast fan-out inserts many rows in one
+            # transaction sharing created_at, which without a tiebreaker would
+            # leave the cursor ambiguous and let a notification slip through unseen.
             # (Fan-out ids are deterministic uuid5, not time-ordered, so id only
             # breaks the tie; created_at carries the recency the feed sorts on.)
             .order_by(NotificationORM.created_at.desc(), NotificationORM.id.desc())
+            .limit(pagination.fetch_limit)
         )
-        stmt = stmt.limit(pagination.limit).offset(pagination.offset)
+        if pagination.after is not None:
+            stmt = stmt.where(
+                rows_after(
+                    NotificationORM.created_at, NotificationORM.id, pagination.after
+                )
+            )
         notifications = await self.session.scalars(stmt)
         return [_parse_dto(n) for n in notifications]

@@ -1,19 +1,13 @@
 <script lang="ts">
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
-	import type { ScheduleChangeFullDto } from '#lib/api/generated/index.js';
-
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { listScheduleChangesInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
-	import {
-		SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
-		SCHEDULE_CHANGES_PAGE_SIZE
-	} from '#lib/constants/scheduleChanges.js';
+	import { SCHEDULE_CHANGES_PAGE_SIZE } from '#lib/constants/scheduleChanges.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { dedupeById } from '#lib/utils/feed.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
@@ -21,27 +15,18 @@
 	const toastService = getToastService();
 
 	// Staff-only operational feed: it renders whatever is cached and refetches, but
-	// is not meant for offline use. Each page over-fetches one row so a short page
-	// proves there is no next one.
+	// is not meant for offline use.
 	const changesQuery = createInfiniteQuery(() => ({
 		...listScheduleChangesInfiniteOptions({
-			query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT }
+			query: { limit: SCHEDULE_CHANGES_PAGE_SIZE }
 		}),
-		initialPageParam: 0,
-		getNextPageParam: (lastPage, allPages) => {
-			if (lastPage.schedule_changes.length <= SCHEDULE_CHANGES_PAGE_SIZE) return undefined;
-			return allPages.length * SCHEDULE_CHANGES_PAGE_SIZE;
-		}
+		// An object page param is request overrides to hey-api, a string the cursor:
+		// an empty object asks for the first page.
+		initialPageParam: {},
+		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
 
-	// Rows can shift between page requests, so a row may arrive twice.
-	let changes = $derived.by(() => {
-		let rows: ScheduleChangeFullDto[] = [];
-		for (const page of changesQuery.data?.pages ?? []) {
-			rows = dedupeById(rows, page.schedule_changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE));
-		}
-		return rows;
-	});
+	let changes = $derived(changesQuery.data?.pages.flatMap((page) => page.schedule_changes) ?? []);
 
 	async function loadMore() {
 		const result = await changesQuery.fetchNextPage();

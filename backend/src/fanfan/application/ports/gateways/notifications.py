@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Protocol
 
 from fanfan.application.dto.notification import NotificationDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
@@ -40,5 +40,5 @@ class NotificationGateway(Protocol):
     ) -> NotificationDTO | None: ...
 
     async def read_list_user_notifications(
-        self, user_id: UserId, pagination: Pagination
+        self, user_id: UserId, pagination: CursorPagination
     ) -> list[NotificationDTO]: ...

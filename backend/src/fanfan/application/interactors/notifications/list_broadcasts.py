@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.mailing import MailingDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination, cut_page
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -9,11 +9,12 @@ from fanfan.core.vo.permission import Permission
 
 
 class ListBroadcastsInput(BaseModel):
-    pagination: Pagination
+    pagination: CursorPagination
 
 
 class ListBroadcastsOutput(BaseModel):
     mailings: list[MailingDTO]
+    next_cursor: str | None
 
 
 class ListBroadcasts:
@@ -34,5 +35,6 @@ class ListBroadcasts:
         await self.perm_service.ensure(
             user=current_user, permission=Permission.NOTIFICATIONS_SEND
         )
-        mailings = await self.mailing_gateway.read_broadcasts(data.pagination)
-        return ListBroadcastsOutput(mailings=mailings)
+        rows = await self.mailing_gateway.read_broadcasts(data.pagination)
+        mailings, next_cursor = cut_page(rows, data.pagination)
+        return ListBroadcastsOutput(mailings=mailings, next_cursor=next_cursor)

@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from fanfan.application.dto.mailing import MailingDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId, MailingStatus
 
@@ -20,4 +20,6 @@ class MailingGateway(Protocol):
     async def increment_sent(self, mailing_id: MailingId) -> tuple[int, int]: ...
 
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None: ...
-    async def read_broadcasts(self, pagination: Pagination) -> list[MailingDTO]: ...
+    async def read_broadcasts(
+        self, pagination: CursorPagination
+    ) -> list[MailingDTO]: ...

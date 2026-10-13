@@ -8,7 +8,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import ScheduleChangeORM
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
     MoveScheduleEvent,
     MoveScheduleEventInput,
@@ -96,7 +96,7 @@ async def test_move_reorders_event_and_records_change(
     assert saved_first.order == 2.5
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -155,7 +155,7 @@ async def test_move_records_previous_event_and_next_change(
     assert saved_second.order == 4
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -205,7 +205,7 @@ async def test_move_event_after_itself_raises(
     assert saved_event.order == 1
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -240,7 +240,7 @@ async def test_move_raises_when_moved_event_not_found(
 
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -278,7 +278,7 @@ async def test_move_raises_when_target_event_not_found(
     assert saved_event.order == 1
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -317,7 +317,7 @@ async def test_move_without_permission_raises_access_denied(
     assert saved_first.order == 1
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -368,7 +368,7 @@ async def test_move_twice_in_a_row_raises_too_fast(
     assert saved_third.order == 3
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     assert changes[0].changed_event is not None

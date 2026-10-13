@@ -1821,15 +1821,23 @@
             }
           },
           {
-            "name": "offset",
+            "name": "cursor",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           }
         ],
         "responses": {
@@ -2795,15 +2803,23 @@
             }
           },
           {
-            "name": "offset",
+            "name": "cursor",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           }
         ],
         "responses": {
@@ -3159,15 +3175,23 @@
             }
           },
           {
-            "name": "offset",
+            "name": "cursor",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           }
         ],
         "responses": {
@@ -3578,15 +3602,23 @@
             }
           },
           {
-            "name": "offset",
+            "name": "cursor",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           }
         ],
         "responses": {
@@ -4470,6 +4502,7 @@
               "INVALID_EMAIL",
               "INVALID_FESTIVAL_TIME_RANGE",
               "INVALID_OTP_CODE",
+              "INVALID_PAGE_CURSOR",
               "INVALID_SCHEDULE_FILE",
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
               "INVALID_VOTING_TIME_RANGE",
@@ -4832,11 +4865,23 @@
             },
             "type": "array",
             "title": "Mailings"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
           }
         },
         "type": "object",
         "required": [
-          "mailings"
+          "mailings",
+          "next_cursor"
         ],
         "title": "ListBroadcastsOutput"
       },
@@ -4848,11 +4893,23 @@
             },
             "type": "array",
             "title": "Feedback"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
           }
         },
         "type": "object",
         "required": [
-          "feedback"
+          "feedback",
+          "next_cursor"
         ],
         "title": "ListFeedbackOutput"
       },
@@ -4864,11 +4921,23 @@
             },
             "type": "array",
             "title": "Schedule Changes"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
           }
         },
         "type": "object",
         "required": [
-          "schedule_changes"
+          "schedule_changes",
+          "next_cursor"
         ],
         "title": "ListScheduleChangesOutput"
       },
@@ -4880,11 +4949,23 @@
             },
             "type": "array",
             "title": "Notifications"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
           }
         },
         "type": "object",
         "required": [
-          "notifications"
+          "notifications",
+          "next_cursor"
         ],
         "title": "ListUserNotificationOutput"
       },
@@ -5535,6 +5616,11 @@
                 "type": "null"
               }
             ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
@@ -5546,7 +5632,8 @@
           "next_event_changed",
           "changed_event",
           "argument_event",
-          "user"
+          "user",
+          "created_at"
         ],
         "title": "ScheduleChangeFullDTO"
       },

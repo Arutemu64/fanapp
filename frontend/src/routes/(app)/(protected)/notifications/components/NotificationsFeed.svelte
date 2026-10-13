@@ -29,16 +29,12 @@
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import {
-		NOTIFICATION_PAGE_REQUEST_LIMIT,
-		NOTIFICATION_PAGE_SIZE
-	} from '#lib/constants/notifications.js';
+	import { NOTIFICATION_PAGE_SIZE } from '#lib/constants/notifications.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { minuteClock } from '#lib/services/minuteClock.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { dedupeById } from '#lib/utils/feed.js';
 
 	import { groupByDay } from '../groupByDay.js';
 	import NotificationListItem from './NotificationListItem.svelte';
@@ -52,27 +48,20 @@
 	const unreadQuery = createQuery(() => countUnreadNotificationsOptions());
 	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
 
-	// Each page over-fetches one item so a short page proves there is no next one.
 	// New arrivals (SSE) invalidate the query, which refetches every loaded page.
 	const notificationsQuery = createInfiniteQuery(() => ({
 		...listUserNotificationsInfiniteOptions({
-			query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT }
+			query: { limit: NOTIFICATION_PAGE_SIZE }
 		}),
-		initialPageParam: 0,
-		getNextPageParam: (lastPage, allPages) => {
-			if (lastPage.notifications.length <= NOTIFICATION_PAGE_SIZE) return undefined;
-			return allPages.length * NOTIFICATION_PAGE_SIZE;
-		}
+		// An object page param is request overrides to hey-api, a string the cursor:
+		// an empty object asks for the first page.
+		initialPageParam: {},
+		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
 
-	// Items can shift between page requests, so one may arrive twice.
-	let notifications = $derived.by(() => {
-		let items: NotificationDto[] = [];
-		for (const page of notificationsQuery.data?.pages ?? []) {
-			items = dedupeById(items, page.notifications.slice(0, NOTIFICATION_PAGE_SIZE));
-		}
-		return items;
-	});
+	let notifications = $derived(
+		notificationsQuery.data?.pages.flatMap((page) => page.notifications) ?? []
+	);
 	let dayGroups = $derived(groupByDay(notifications, minuteClock.now));
 
 	// Nothing saved yet and no way to fetch it: a calm inline state that keeps the
