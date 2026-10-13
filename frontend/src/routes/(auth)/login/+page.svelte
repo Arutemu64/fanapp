@@ -70,7 +70,7 @@
 	// spinner while a pending navigation blocks starting a second one.
 	let openingProvider = $state<SocialProvider | null>(null);
 
-	// The email forms read `next` straight off the URL in completeLogin; a social
+	// The email forms read `next` straight off the URL in Session.loggedIn; a social
 	// login leaves for the provider, so the backend carries it through the OAuth
 	// state instead (and re-validates it there) and lands the user on it.
 	let nextPath = $derived(sanitizeNextPath(page.url.searchParams.get(LOGIN_NEXT_PARAM)));

@@ -1,5 +1,3 @@
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
 import {
 	type FetchQueryOptions,
 	type QueryClient,
@@ -17,7 +15,6 @@ import {
 	markReachable,
 	probeReachability
 } from '#lib/services/reachability.js';
-import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
@@ -39,7 +36,7 @@ export function currentUserOptions() {
 			// POST /auth/logout revokes the session — otherwise a still-valid cookie
 			// would let /me resurrect the account we just left. The flush
 			// (reachabilityMonitor) clears the intent once it succeeds; a fresh login
-			// clears it too (completeLogin).
+			// clears it too (Session.loggedIn).
 			if (isLogoutPending()) return null;
 
 			const { data, error, response } = await getCurrentUser({ signal });
@@ -73,17 +70,6 @@ export function queryForLoad<TData, TError, TQueryKey extends QueryKey>(
 	return Promise.race([query, budget]).finally(() => clearTimeout(timer));
 }
 
-/**
- * Drop what the previous account left in the cache once the app shows the
- * guest state — after logout and after a session expiry. Queries no screen is
- * using are removed, so the persisted cache stops holding them for the next
- * person on a shared device; the ones on screen refetch as the guest.
- */
-export function forgetSession(queryClient: QueryClient): void {
-	queryClient.removeQueries({ type: 'inactive' });
-	void queryClient.invalidateQueries();
-}
-
 // A 401 means the session may have ended; /me/ gives the verdict. Its own 401
 // ends the session — whenever it comes: a restored user whose session expired
 // while the app was closed, a refetch on focus, or the check any other 401
@@ -96,27 +82,15 @@ export function forgetSession(queryClient: QueryClient): void {
 const IDENTITY_PATH = '/me/';
 const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code']);
 
-async function endSession(queryClient: QueryClient): Promise<void> {
-	const { queryKey } = currentUserOptions();
-	// A guest was already a guest; this also makes a burst of 401s end it once.
-	if (!queryClient.getQueryData(queryKey)) return;
-	queryClient.setQueryData(queryKey, null);
-
-	// The (protected) guard only runs on navigation, so a screen already open
-	// behind it is left explicitly — to the same `next` login the guard builds.
-	if (page.route.id?.startsWith('/(app)/(protected)/')) {
-		const next = page.url.pathname + page.url.search;
-		await goto(`/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(next)}`);
-	}
-	forgetSession(queryClient);
-}
-
 /**
  * Watch every API response for reachability and session expiry. Call once from
  * the root layout; returns the teardown, which matters for dev HMR — without it
  * each cycle would stack another pair of interceptors on the shared client.
  */
-export function watchApiResponses(queryClient: QueryClient): () => void {
+export function watchApiResponses(
+	queryClient: QueryClient,
+	onSessionExpired: () => void
+): () => void {
 	// The response interceptor runs for every response the client receives, before
 	// it decides ok vs error — so it sees 4xx/5xx too, not just 2xx. `options.url`
 	// is the operation's path template (e.g. `/me/`), not the resolved URL, which
@@ -132,7 +106,7 @@ export function watchApiResponses(queryClient: QueryClient): () => void {
 			// Fire-and-forget so the failing response still settles immediately for its
 			// caller — forms keep their own inline 401 error handling.
 			if (options.url === IDENTITY_PATH) {
-				void endSession(queryClient);
+				onSessionExpired();
 			} else {
 				// Joins a /me/ fetch already in flight, so a burst of 401s asks once.
 				void queryClient.refetchQueries(

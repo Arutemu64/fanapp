@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Mail } from '@lucide/svelte';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { loginMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -10,9 +10,8 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { completeLogin } from '#lib/utils/auth.js';
 	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
 
 	interface Props {
@@ -28,15 +27,17 @@
 	let passwordError = $state('');
 	let formError = $state('');
 
-	const eventsClient = getEventsClient();
-	const queryClient = useQueryClient();
+	const session = getSession();
 	const toastService = getToastService();
 
-	// Pending until completeLogin has loaded the new identity and navigated, so
+	// Pending until session.loggedIn has loaded the new identity and navigated, so
 	// the form stays busy until the app moves on.
 	const passwordLoginMutation = createMutation(() => ({
 		...loginMutation(),
-		onSuccess: () => completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен')
+		onSuccess: async () => {
+			await session.loggedIn();
+			toastService.add('Вход выполнен', 'success');
+		}
 	}));
 	let busy = $derived(passwordLoginMutation.isPending);
 

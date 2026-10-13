@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { RotateCw } from '@lucide/svelte';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation } from '@tanstack/svelte-query';
 	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import { onMount } from 'svelte';
 
@@ -17,9 +17,8 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
-	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { completeLogin } from '#lib/utils/auth.js';
 	import { isValidOtp } from '#lib/utils/validation.js';
 
 	interface Props {
@@ -28,15 +27,17 @@
 
 	let { email }: Props = $props();
 
-	const eventsClient = getEventsClient();
-	const queryClient = useQueryClient();
+	const session = getSession();
 	const toastService = getToastService();
 
-	// Pending until completeLogin has loaded the new identity and navigated, so
+	// Pending until session.loggedIn has loaded the new identity and navigated, so
 	// the form stays busy until the app moves on.
 	const loginMutation = createMutation(() => ({
 		...loginWithCodeMutation(),
-		onSuccess: () => completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен')
+		onSuccess: async () => {
+			await session.loggedIn();
+			toastService.add('Вход выполнен', 'success');
+		}
 	}));
 	const resendMutation = createMutation(() => requestLoginCodeMutation());
 

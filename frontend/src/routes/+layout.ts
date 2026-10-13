@@ -54,7 +54,7 @@ const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // cache in it — lives for the whole session. It is load data rather than a
 // module singleton (TanStack's SvelteKit setup:
 // https://tanstack.com/query/latest/docs/framework/svelte/ssr), so it never
-// outlives the document; logout empties it explicitly (forgetSession).
+// outlives the document; logout empties it explicitly (Session).
 export const load: LayoutLoad = async () => {
 	const queryClient = new QueryClient({
 		defaultOptions: {
