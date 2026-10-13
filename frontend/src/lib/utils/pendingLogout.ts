@@ -41,18 +41,19 @@ export function clearLogoutPending(): void {
  * Fire a queued offline logout, if one is pending. Clears the intent on any
  * definitive outcome — a 2xx, or a 401/403 that means the session is already
  * gone. A network failure (still offline) or a 5xx leaves it pending so the next
- * reconnect retries. Safe to call concurrently: the endpoint is idempotent.
+ * reconnect retries, and so does an aborted `signal`. Safe to call concurrently:
+ * the endpoint is idempotent.
  */
-export async function flushPendingLogout(): Promise<void> {
+export async function flushPendingLogout(signal?: AbortSignal): Promise<void> {
 	if (!isLogoutPending()) return;
 
 	try {
-		const { response } = await logoutUser();
+		const { response } = await logoutUser({ signal });
 		if (response?.ok || response?.status === 401 || response?.status === 403) {
 			clearLogoutPending();
 		}
 		// Any other status (e.g. 5xx): keep the intent and retry on the next edge.
 	} catch {
-		// Still unreachable — keep the intent for the next reconnect.
+		// Still unreachable (or timed out) — keep the intent for the next reconnect.
 	}
 }

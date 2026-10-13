@@ -7,7 +7,7 @@
 	import { page } from '$app/state';
 	import { ArrowLeft, Mail } from '@lucide/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	import type { SocialProvider } from '#lib/api/generated/index.js';
 
@@ -71,6 +71,13 @@
 	// was heard. Tracking which provider is opening lets each button show its own
 	// spinner while a pending navigation blocks starting a second one.
 	let openingProvider = $state<SocialProvider | null>(null);
+	// Set once the user leaves the page (e.g. "continue without login") while a
+	// provider click still waits on a pending-logout revoke, so the late callback
+	// doesn't drag them off to the provider after all.
+	let pageLeft = false;
+	onDestroy(() => {
+		pageLeft = true;
+	});
 
 	// The email forms read `next` straight off the URL in Session.loggedIn; a social
 	// login leaves for the provider, so the backend carries it through the OAuth
@@ -98,7 +105,9 @@
 		if (!session.logoutPending) return;
 
 		event.preventDefault();
-		if (await session.settlePendingLogout()) {
+		const settled = await session.settlePendingLogout();
+		if (pageLeft) return;
+		if (settled) {
 			window.location.assign(providerStartUrl(provider));
 			return;
 		}

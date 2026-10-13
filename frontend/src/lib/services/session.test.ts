@@ -165,4 +165,16 @@ describe('Session.settlePendingLogout', () => {
 
 		expect(session.logoutPending).toBe(true);
 	});
+
+	it('gives up on a stalled revoke and keeps the intent, so the user can retry', async () => {
+		logoutUser.mockRejectedValue(new DOMException('signal timed out', 'TimeoutError'));
+		markLogoutPending();
+		const { session } = setup();
+
+		await expect(session.settlePendingLogout()).resolves.toBe(false);
+
+		const [options] = logoutUser.mock.lastCall as [{ signal?: AbortSignal }];
+		expect(options.signal).toBeInstanceOf(AbortSignal);
+		expect(session.logoutPending).toBe(true);
+	});
 });

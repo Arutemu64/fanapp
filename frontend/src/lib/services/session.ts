@@ -4,12 +4,17 @@ import { createContext } from 'svelte';
 
 import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions } from '#lib/api/index.js';
+import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
 import {
 	clearLogoutPending,
 	flushPendingLogout,
 	isLogoutPending,
 	markLogoutPending
 } from '#lib/utils/pendingLogout.js';
+
+// The user is waiting on the provider button, so a stalled revoke must give up
+// and let them retry instead of spinning until the browser's own TCP timeout.
+const SETTLE_LOGOUT_TIMEOUT_MS = 8000;
 
 /** The navigation a session change needs, so the module is testable without a router. */
 export interface SessionRouter {
@@ -109,10 +114,11 @@ export class Session {
 	 * revoke with the *new* session's cookie and end it. Clearing the intent
 	 * instead is wrong too: an abandoned OAuth flow would then let the still-valid
 	 * old cookie restore the account the user left. So revoke the old session now.
-	 * Resolves `false` when that couldn't be confirmed, and the caller stays put.
+	 * Resolves `false` when that couldn't be confirmed in time, and the caller
+	 * stays put; the intent is kept, so a retry or the next reconnect sends it.
 	 */
 	async settlePendingLogout(): Promise<boolean> {
-		await flushPendingLogout();
+		await flushPendingLogout(timeoutSignal(SETTLE_LOGOUT_TIMEOUT_MS));
 		return !isLogoutPending();
 	}
 
