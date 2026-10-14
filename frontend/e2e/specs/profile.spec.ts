@@ -155,8 +155,9 @@ test.describe('diagnostics', () => {
 		// Captured instead of read back: WebKit rejects `clipboard-write` as an
 		// unknown permission, so granting it cannot be shared across projects.
 		await page.addInitScript(() => {
-			navigator.clipboard.writeText = async (text: string) => {
+			navigator.clipboard.writeText = (text: string) => {
 				(window as { copiedText?: string }).copiedText = text;
+				return Promise.resolve();
 			};
 		});
 		api.use(loggedInAs());
