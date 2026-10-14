@@ -140,14 +140,20 @@ We own these files, so upstream fixes don't arrive on their own, and `shadcn-sve
 
 **How:**
 
-1. Start from a clean tree. Run `pnpm dlx shadcn-svelte@latest update --all --yes --no-deps-install` in `frontend/`. Leave dependency bumps to Renovate: `git checkout frontend/package.json`.
+1. Start from a clean tree. Run `pnpm dlx shadcn-svelte@latest update --all --yes --no-deps-install` in `frontend/`, then save `git diff frontend/package.json` and revert the file with `git checkout`. The CLI bumps every dependency it touches to the newest version, which usually falls inside the pnpm `minimumReleaseAge` window (`pnpm-workspace.yaml`), and it can add packages we have rejected (`cn`, `mode-watcher`). Renovate owns routine bumps.
 2. Strip formatting noise so only real changes remain: `pnpm exec eslint --fix src/lib/components/ui src/lib/utils.ts`, then `pnpm exec prettier --write` on the same paths.
 3. Read `git diff` file by file:
    - A hunk that removes a `Deviates from upstream:` tag, or the code under one, is upstream overwriting us. Restore it with `git checkout -- <file>`, then hand-port any real upstream change from that file.
    - Other hunks are candidate upstream changes. Check them against the [shadcn-svelte repo](https://github.com/huntabyte/shadcn-svelte): the component in `docs/src/lib/registry/ui/` and its `cn-*` style classes in `docs/src/lib/registry/styles/style-vega.css`. Use `git log -S "<class>"` there to see when and why a line changed.
 4. Don't trust the CLI's style flattening blindly. In 1.7.0 it baked a context-only rule (`.cn-card-content:has(> …)`, `flex flex-col gap-3`) into every `Card.Content`, left `cn-input-otp` unresolved (losing `gap-2`), dropped `cn-select-content-logical`, and swapped `cn()` in `utils.ts` for a new `cn` npm package. Compare against `style-vega.css` whenever a class appears or disappears.
 5. A new upstream file (e.g. `select-value.svelte`) can be taken as is. A new deviation you add while merging gets its tag.
-6. Run `just frontend-lint`, `just frontend-check` and `just frontend-test`, and let CI run E2E. If the change is visible, look at the affected screens.
+6. Check whether a merged change actually needs a newer dependency. The registry pins no versions, so the CLI's bump from step 1 says nothing either way. Look for:
+   - a new prop, snippet or export from `bits-ui` (`svelte-check` catches these as type errors)
+   - a new Lucide icon import
+   - a Tailwind variant such as `data-checked:` that comes from `shadcn-svelte/tailwind.css`, imported in `app.css`. Diff its `@custom-variant` list against upstream `packages/cli/src/tailwind.css`, because an undefined variant fails silently with no style and no error.
+
+   For the floor upstream builds against, see the dependency ranges in its `docs/package.json`. If a change does need a bump, make it in the same PR: `pnpm up <pkg>@<version>` with the oldest version that has what you need, clear of the release-age window, and update every pinned site per [docs/dependencies.md](dependencies.md). If no such version has cleared the window yet, hold that hunk back with a TODO rather than adding a `minimumReleaseAgeExclude` entry.
+7. Run `just frontend-lint`, `just frontend-check` and `just frontend-test`, and let CI run E2E. If the change is visible, look at the affected screens.
 
 ### Z-Index Scale
 
