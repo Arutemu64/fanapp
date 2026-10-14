@@ -15,6 +15,7 @@
 
 ## Deploy notes / version impact
 <!-- Migrations, new/renamed env vars, manual deploy steps? Suggested bump (MAJOR / MINOR / PATCH) and why. "None" is a valid answer. -->
+**Rollback:** <!-- two-way (plain revert is safe) or one-way (say what can't be undone: data, env, client cache) -->
 
 ## Checklist
 - [ ] User-facing copy in Russian; code comments in English
