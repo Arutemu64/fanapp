@@ -36,6 +36,28 @@ async function openEditProfile(page: Page) {
 	return dialog;
 }
 
+// Parks the row's first control at `offset` px from the top of the viewport (under a
+// bar), focuses it, and checks that focus scrolled it out from under: the control
+// itself is the topmost element at its top and bottom edge. Focusing a control that
+// sits off-screen proves nothing, since browsers centre it.
+async function focusAndExpectUnobscured(page: Page, eventId: string, offset: number) {
+	const control = page.locator(`[data-event-id="${eventId}"] button`).first();
+	await control.evaluate((element, offset) => {
+		window.scrollBy(0, element.getBoundingClientRect().top - offset);
+	}, offset);
+	await control.focus();
+	await expect
+		.poll(() =>
+			control.evaluate((element) => {
+				const box = element.getBoundingClientRect();
+				const x = box.left + box.width / 2;
+				const edges = [box.top + 1, box.bottom - 1];
+				return edges.every((y) => element.contains(document.elementFromPoint(x, y)));
+			})
+		)
+		.toBe(true);
+}
+
 // Long enough that the page scrolls well past the top bar on any project's viewport.
 const longSchedule: GetScheduleOutput['schedule'] = Array.from({ length: 60 }, (_, index) => ({
 	id: `event-${index + 1}`,
@@ -62,13 +84,6 @@ test.describe('native feel', () => {
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 		const title = page.getByRole('heading', { level: 1, name: 'Программа' });
 		await expect(title).toBeInViewport();
-		// Focus scrolled into view clears the sticky bar (WCAG 2.4.11).
-		const titleBox = await title.boundingBox();
-		const scrollPaddingTop = await page.evaluate(() =>
-			parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)
-		);
-		expect(scrollPaddingTop).toBeGreaterThanOrEqual((titleBox?.y ?? 0) + (titleBox?.height ?? 0));
-
 		// Not mouse.wheel: Playwright doesn't support it in mobile WebKit. A scrollBy fires
 		// the same `scroll` events the shell's hide-on-scroll listens to.
 		await page.evaluate(() => window.scrollBy(0, 1500));
@@ -90,6 +105,20 @@ test.describe('native feel', () => {
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrolledTo);
 		// A programmatic restore is no scroll gesture: the bar comes back with the page.
 		await expect(title).toBeInViewport();
+	});
+
+	// WCAG 2.4.11: a control that keyboard focus scrolls into view must not land under
+	// the top chrome, the schedule's sticky headers or the floating bottom nav.
+	test('keeps a focused control clear of the bars', async ({ page, api }) => {
+		api.use({ ...loggedInAs(), 'GET /schedule/': json({ schedule: longSchedule }) });
+		await page.goto('/schedule');
+		await expect(page.getByText('Выступление 60')).toBeAttached();
+
+		// Under the top chrome and the schedule's sticky headers.
+		await focusAndExpectUnobscured(page, 'event-30', 20);
+		// Under the floating bottom nav (phones) or at the bottom edge (desktop).
+		const viewportHeight = page.viewportSize()?.height ?? 0;
+		await focusAndExpectUnobscured(page, 'event-40', viewportHeight - 30);
 	});
 
 	test('slides down and up the hierarchy and fades between tabs, on phones only', async ({

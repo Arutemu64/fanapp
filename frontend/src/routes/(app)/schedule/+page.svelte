@@ -265,7 +265,7 @@
 				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
 					<div
 						data-event-id={node.event.id}
-						class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40"
+						class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
 					>
 						<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
 					</div>
@@ -372,7 +372,9 @@
 
 				<div class="divide-y divide-border">
 					{#each nomination.events as event (event.id)}
-						<div data-event-id={event.id} class="scroll-mt-28">
+						<!-- The margin reaches every descendant too: keyboard focus scrolls the focused
+							control into view, not its row, and it must clear the sticky headers. -->
+						<div data-event-id={event.id} class="scroll-mt-28 **:scroll-mt-28">
 							<EventCard {event} {currentEvent} {user} />
 						</div>
 					{/each}
