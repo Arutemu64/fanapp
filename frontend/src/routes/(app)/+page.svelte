@@ -14,9 +14,9 @@
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
+	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
 	import { mergeSubscriptions } from '#lib/utils/scheduleData.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
