@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ChevronUp, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { Search as SearchIcon, X } from '@lucide/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { onMount } from 'svelte';
+	import { tick } from 'svelte';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
@@ -20,6 +20,7 @@
 	import { mergeSubscriptions } from '#lib/utils/scheduleData.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
+	import CurrentEventBar from './components/CurrentEventBar.svelte';
 	import EventCard from './components/EventCard.svelte';
 	import ScheduleSkeleton from './components/ScheduleSkeleton.svelte';
 	import {
@@ -91,8 +92,10 @@
 			.filter((event) => !showOnlySubscribed || event.user_subscription !== null)
 	);
 
-	// Hide the FAB for the current event when the active filters remove that row from the page.
-	let visibleCurrentEvent = $derived(filtered.find((event) => event.is_current) ?? null);
+	// The current event's row can be filtered out while the event is still on stage.
+	let isCurrentEventFiltered = $derived(
+		currentEvent !== null && !filtered.some((event) => event.id === currentEvent.id)
+	);
 
 	// Group rows into block and nomination sections so we can make headers sticky.
 	// Built off the unfiltered schedule (recomputes only on reload); the filter
@@ -117,7 +120,7 @@
 	}
 
 	let pageRoot: HTMLDivElement | null = null;
-	let showScrollTopButton = $state(false);
+	let isCurrentRowOnScreen = $state(false);
 
 	function capturePageRoot(node: HTMLDivElement) {
 		pageRoot = node;
@@ -129,53 +132,53 @@
 		};
 	}
 
-	function getScrollContainer() {
-		// Matched by id, not tag: the layout's scrolling region is the SkipLink target, and
-		// its element has already changed once (section -> main) — which silently broke this.
-		// Looked up from the document, not this page's root: onMount runs while the
-		// skeleton may still stand in for the page.
-		return document.getElementById('main-content');
+	function findEventRow(eventId: string) {
+		return pageRoot?.querySelector<HTMLElement>(`[data-event-id="${eventId}"]`) ?? null;
 	}
 
-	function scrollToCurrentEvent() {
-		if (!visibleCurrentEvent || !pageRoot) return;
+	async function scrollToCurrentEvent() {
+		if (!currentEvent) return;
 
-		const element = pageRoot.querySelector<HTMLElement>(
-			`[data-event-id="${visibleCurrentEvent.id}"]`
-		);
+		// The bar stays up while a filter hides the row, so tapping it clears the
+		// filters first and waits for the row to render.
+		if (isCurrentEventFiltered) {
+			resetFilters();
+			await tick();
+		}
 
-		// No `behavior` in either scroll: the default ('auto') takes <main>'s CSS
-		// scroll-behavior, smooth normally and instant under reduced motion (app.css). An
-		// explicit 'smooth' would override that and animate for users who opted out
+		// No `behavior`: the default ('auto') takes <main>'s CSS scroll-behavior, smooth
+		// normally and instant under reduced motion (app.css). An explicit 'smooth' would
+		// override that and animate for users who opted out
 		// (https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo).
-		element?.scrollIntoView({ block: 'center' });
+		findEventRow(currentEvent.id)?.scrollIntoView({ block: 'center' });
 	}
 
-	function scrollToTop() {
-		getScrollContainer()?.scrollTo({ top: 0 });
-	}
+	// Watches the current row against the scroll region, so the bar steps aside while
+	// the row it points at is already visible. An observer rather than a scroll
+	// listener: no layout reads on every scroll frame. Re-runs when the current event,
+	// the filters (which mount and unmount rows) or the page root change.
+	$effect(() => {
+		const eventId = currentEvent?.id;
+		void groupedSchedule;
+		if (!eventId || !pageRoot) return;
 
-	// The button appears only once the way back is long: NN/g advises holding a
-	// back-to-top control until the user has scrolled down several screens
-	// (https://www.nngroup.com/articles/back-to-top/). Measured in screens, not pixels,
-	// so it scales with the phone; re-tapping the active tab covers shorter trips.
-	const SCROLL_TOP_AFTER_SCREENS = 2;
+		const row = findEventRow(eventId);
+		if (!row) {
+			isCurrentRowOnScreen = false;
+			return;
+		}
 
-	onMount(() => {
-		const scrollContainer = getScrollContainer();
+		// Matched by id, not tag: the layout's scrolling region is the SkipLink target, and
+		// its element has already changed once (section -> main).
+		const observer = new IntersectionObserver(
+			(entries) => {
+				isCurrentRowOnScreen = entries.some((entry) => entry.isIntersecting);
+			},
+			{ root: document.getElementById('main-content') }
+		);
+		observer.observe(row);
 
-		const updateScrollState = () => {
-			if (!scrollContainer) return;
-			const threshold = scrollContainer.clientHeight * SCROLL_TOP_AFTER_SCREENS;
-			showScrollTopButton = scrollContainer.scrollTop > threshold;
-		};
-
-		updateScrollState();
-		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
-
-		return () => {
-			scrollContainer?.removeEventListener('scroll', updateScrollState);
-		};
+		return () => observer.disconnect();
 	});
 </script>
 
@@ -307,40 +310,12 @@
 			{/each}
 		</div>
 
-		{#if visibleCurrentEvent || showScrollTopButton}
-			<!-- Lift FAB actions above the floating bottom mobile navigation so they stay
-			tappable. The right inset keeps them clear of a landscape phone's notch and
-			rounded corners; on desktop the bottom inset clears the home indicator. -->
-			<div
-				class="pointer-events-none fixed right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(var(--bottom-nav-clearance)+1rem)] z-30 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
-			>
-				<div class="flex flex-col items-end gap-2">
-					{#if showScrollTopButton}
-						<Button
-							variant="floating"
-							size="sm"
-							class="pointer-events-auto size-12 rounded-full px-0 lg:w-32 lg:rounded-full lg:px-3"
-							onclick={scrollToTop}
-							aria-label="Подняться наверх"
-						>
-							<ChevronUp class="size-5 shrink-0" />
-							<span class="sr-only lg:not-sr-only lg:ml-2">Наверх</span>
-						</Button>
-					{/if}
-
-					{#if visibleCurrentEvent}
-						<Button
-							size="sm"
-							class="pointer-events-auto size-12 rounded-full bg-success px-0 text-success-foreground shadow-lg hover:bg-success/90 lg:w-32 lg:rounded-full lg:px-3"
-							onclick={scrollToCurrentEvent}
-							aria-label="Перейти к текущему выступлению"
-						>
-							<Play class="size-5 shrink-0 fill-current" />
-							<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
-						</Button>
-					{/if}
-				</div>
-			</div>
+		{#if currentEvent}
+			<CurrentEventBar
+				event={currentEvent}
+				hidden={isCurrentRowOnScreen}
+				onjump={scrollToCurrentEvent}
+			/>
 		{/if}
 	</div>
 {/if}
@@ -398,9 +373,6 @@
 					</div>
 				{/if}
 
-				<!-- Row divider sits at full border strength, one step stronger than the
-				     in-card staff-strip separator (border-border/50), so event boundaries
-				     read as the primary split and the strip separator stays subordinate. -->
 				<div class="divide-y divide-border">
 					{#each nomination.events as event (event.id)}
 						<div data-event-id={event.id} class="scroll-mt-28">

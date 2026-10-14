@@ -286,14 +286,22 @@
 	 * to a plain viewport gap on desktop. Consumed by the Sonner offset in
 	 * src/lib/components/ui/sonner/sonner.svelte. The responsive bottom override lives
 	 * in the @media rule below.
+	 *
+	 * --bottom-accessory-clearance is the extra lift for a page-local bar that floats
+	 * over the bottom edge (the schedule's current-event bar). That bar sets it on
+	 * <html> while it is shown and removes it when it hides or unmounts, so the bottom
+	 * toasts and the update prompt stack above it instead of covering it.
 	 */
+	--bottom-accessory-clearance: 0px;
 	--toast-top-offset: calc(env(safe-area-inset-top) + 4rem);
-	--toast-bottom-offset: 1.5rem;
+	--toast-bottom-offset: calc(1.5rem + var(--bottom-accessory-clearance));
 }
 
 @media (width < 48rem) {
 	:root {
-		--toast-bottom-offset: calc(var(--bottom-nav-clearance) + 0.5rem);
+		--toast-bottom-offset: calc(
+			var(--bottom-nav-clearance) + 0.5rem + var(--bottom-accessory-clearance)
+		);
 	}
 }
 

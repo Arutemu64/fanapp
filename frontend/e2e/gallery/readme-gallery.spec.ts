@@ -81,7 +81,9 @@ test.beforeEach(async ({ page, api }) => {
 
 test('schedule', async ({ page }) => {
 	await page.goto('/schedule');
-	await expect(page.getByText('Эдвард Элрик — Стальной алхимик')).toBeVisible();
+	await expect(
+		page.getByRole('heading', { name: 'Эдвард Элрик — Стальной алхимик' })
+	).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'schedule');
 });
