@@ -27,8 +27,8 @@ VALID_ENTRY = ScheduleEventRow(
 )
 # The same entry as spreadsheet cells, keyed by column name. Derived from the
 # entry rather than written twice, so the row and the expected parse result
-# cannot drift apart. An event row leaves block_title blank.
-VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump() | {"block_title": None}
+# cannot drift apart. An event row may leave its type blank.
+VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump() | {"type": None}
 
 
 def valid_row(**overrides: object) -> tuple[object, ...]:
@@ -37,9 +37,10 @@ def valid_row(**overrides: object) -> tuple[object, ...]:
     return tuple(cells[column] for column in REQUIRED_COLUMNS)
 
 
-def block_row(block_title: str, **overrides: object) -> tuple[object, ...]:
-    """A block heading row: only block_title, unless overridden."""
-    cells = dict.fromkeys(REQUIRED_COLUMNS) | {"block_title": block_title} | overrides
+def block_row(title: str, **overrides: object) -> tuple[object, ...]:
+    """A block row: type and title only, unless overridden."""
+    cells = dict.fromkeys(REQUIRED_COLUMNS) | {"type": "block", "title": title}
+    cells |= overrides
     return tuple(cells[column] for column in REQUIRED_COLUMNS)
 
 
@@ -112,7 +113,7 @@ def test_parses_the_downloadable_template() -> None:
 
 def test_column_order_does_not_matter() -> None:
     sheet = build_sheet(
-        ["block_title", "duration", "number", "nomination_title", "title"],
+        ["type", "duration", "number", "nomination_title", "title"],
         [(None, 900, 1, "Вне конкурса", "Открытие фестиваля")],
     )
 
@@ -145,7 +146,7 @@ def test_rejects_a_file_that_is_not_a_spreadsheet() -> None:
 
 
 def test_reports_every_missing_column_at_once() -> None:
-    sheet = build_sheet(["number", "title", "block_title"], [(1, "Открытие", "Блок")])
+    sheet = build_sheet(["number", "title", "type"], [(1, "Открытие", None)])
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
         parse_schedule_from_excel(sheet)
@@ -192,17 +193,17 @@ def test_accepts_a_blank_nomination(blank: object) -> None:
     assert schedule == [VALID_ENTRY.model_copy(update={"nomination_title": None})]
 
 
-@pytest.mark.parametrize("blank", ["", "   "])
-def test_a_blank_block_title_is_an_event_row(blank: object) -> None:
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(block_title=blank)])
+@pytest.mark.parametrize("row_type", [None, "", "   ", "event", "Event"])
+def test_a_blank_or_event_type_is_an_event_row(row_type: object) -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(type=row_type)])
 
     assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
 
 
-def test_a_block_title_row_starts_a_block() -> None:
+def test_a_block_row_starts_a_block() -> None:
     sheet = build_sheet(
         REQUIRED_COLUMNS,
-        [block_row("  Косплей "), valid_row()],
+        [block_row("  Косплей ", type=" Block "), valid_row()],
     )
 
     assert parse_schedule_from_excel(sheet) == [
@@ -211,13 +212,34 @@ def test_a_block_title_row_starts_a_block() -> None:
     ]
 
 
+def test_rejects_an_unknown_type() -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(type="блок")])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert exc_info.value.details["reason"] == InvalidScheduleFileReason.INVALID_TYPE
+    assert exc_info.value.details["column"] == "type"
+    assert exc_info.value.details["row"] == 2
+
+
+def test_rejects_a_block_row_without_a_title() -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [block_row("  ")])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert exc_info.value.details["reason"] == InvalidScheduleFileReason.EMPTY_CELL
+    assert exc_info.value.details["column"] == "title"
+
+
 @pytest.mark.parametrize(
     ("column", "value"),
-    [("number", 1), ("title", "Дефиле"), ("duration", 60), ("nomination_title", "Х")],
+    [("number", 1), ("duration", 60), ("nomination_title", "Х")],
 )
 def test_rejects_a_block_row_with_event_cells(column: str, value: object) -> None:
-    # The old layout repeated block_title beside every event; reading such a
-    # file as blocks would turn every act into a heading.
+    # A block row is a heading, not an act: a number, duration or nomination on
+    # it means the type was set on the wrong row.
     sheet = build_sheet(REQUIRED_COLUMNS, [block_row("Косплей", **{column: value})])
 
     with pytest.raises(InvalidScheduleFile) as exc_info:

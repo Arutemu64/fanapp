@@ -203,8 +203,10 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 			return `${at}: ячейка пустая.`;
 		case 'INVALID_NUMBER':
 			return `${at}: нужно целое число.`;
+		case 'INVALID_TYPE':
+			return `${at}: укажи block для начала блока или оставь пустым для выступления.`;
 		case 'BLOCK_ROW_WITH_EVENT_DATA':
-			return `${at}: в строке блока заполни только block_title, остальные ячейки оставь пустыми.`;
+			return `${at}: в строке блока заполняются только type и title, эту ячейку оставь пустой.`;
 		case 'DUPLICATE_NUMBER':
 			return `Номер ${String(details.number)} встречается дважды (строка ${String(details.row)}). Номера должны быть уникальными.`;
 		case 'FILE_TOO_LARGE':

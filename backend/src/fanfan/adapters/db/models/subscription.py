@@ -17,7 +17,7 @@ class SubscriptionORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     event_id: Mapped[UUID] = mapped_column(
-        ForeignKey("schedule_entries.id", ondelete="CASCADE")
+        ForeignKey("schedule.id", ondelete="CASCADE")
     )
     counter: Mapped[int] = mapped_column()
 

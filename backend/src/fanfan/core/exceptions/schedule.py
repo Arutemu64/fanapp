@@ -27,9 +27,10 @@ class InvalidScheduleFileReason(enum.StrEnum):
     EMPTY_CELL = "EMPTY_CELL"
     INVALID_NUMBER = "INVALID_NUMBER"
     DUPLICATE_NUMBER = "DUPLICATE_NUMBER"
-    # A block_title row is a block heading on a line of its own; an event cell
-    # filled beside it means the organizer used the old one-block-per-row
-    # layout, which would otherwise import with every event silently blockless.
+    # A `type` cell other than blank, `event` or `block`.
+    INVALID_TYPE = "INVALID_TYPE"
+    # A block row carries only its title; a number, duration or nomination
+    # beside it is an event typed on the wrong row.
     BLOCK_ROW_WITH_EVENT_DATA = "BLOCK_ROW_WITH_EVENT_DATA"
     # Caught by the route before the file is even opened, not by the parser —
     # still travels as an InvalidScheduleFile so the client has one code to

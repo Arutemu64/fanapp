@@ -24,10 +24,15 @@ logger = logging.getLogger(__name__)
 # start times with `timedelta(seconds=duration)`). Minutes here would both
 # misreport every projection by 60x and make a sub-minute act unrepresentable.
 #
-# `block_title` is filled only on a row of its own that starts a block; the event
-# rows below it, up to the next such row, belong to that block.
-REQUIRED_COLUMNS = ("number", "title", "duration", "nomination_title", "block_title")
-EVENT_COLUMNS = ("number", "title", "duration", "nomination_title")
+# `type` says what a row is: blank or `event` for an event, `block` for the start
+# of a block, whose `title` is the block's name. The event rows below a block
+# row, up to the next one, belong to that block. Blank means event because
+# nearly every row is one.
+REQUIRED_COLUMNS = ("type", "number", "title", "duration", "nomination_title")
+EVENT_ROW_TYPE = "event"
+BLOCK_ROW_TYPE = "block"
+# Cells only an event row may fill; a block row carries just its title.
+EVENT_ONLY_COLUMNS = ("number", "duration", "nomination_title")
 
 
 def _read_int(value: object, *, column: str, row: int) -> int:
@@ -83,11 +88,10 @@ def _is_blank(value: object) -> bool:
 def _read_optional_text(value: object, *, column: str, row: int) -> str | None:
     """Read text from a cell that is allowed to be empty.
 
-    Breaks, the opening and the closing carry no nomination, and only a block's
-    own row carries a block title, so those cells may be left blank instead of
-    forcing the organizer to invent a placeholder. A blank cell (None, or a
-    string that is only whitespace) means "no value"; anything else is read as
-    ordinary text.
+    Breaks, the opening and the closing carry no nomination, so that cell may be
+    left blank instead of forcing the organizer to invent a placeholder. A blank
+    cell (None, or a string that is only whitespace) means "no value"; anything
+    else is read as ordinary text.
     """
     if _is_blank(value):
         return None
@@ -131,17 +135,30 @@ def _index_columns(header: list[object]) -> dict[str, int]:
     return columns
 
 
-def _read_block_row(
-    row: dict[str, object], block_title: str, row_index: int
-) -> ScheduleBlockRow:
-    for column in EVENT_COLUMNS:
+def _read_row_type(value: object, *, row: int) -> str:
+    row_type = _read_optional_text(value, column="type", row=row)
+    if row_type is None:
+        return EVENT_ROW_TYPE
+    # Matched case-insensitively: "Block" typed by hand means the same thing.
+    row_type = row_type.lower()
+    if row_type not in {EVENT_ROW_TYPE, BLOCK_ROW_TYPE}:
+        raise InvalidScheduleFile(
+            InvalidScheduleFileReason.INVALID_TYPE, column="type", row=row
+        )
+    return row_type
+
+
+def _read_block_row(row: dict[str, object], row_index: int) -> ScheduleBlockRow:
+    for column in EVENT_ONLY_COLUMNS:
         if not _is_blank(row[column]):
             raise InvalidScheduleFile(
                 InvalidScheduleFileReason.BLOCK_ROW_WITH_EVENT_DATA,
                 column=column,
                 row=row_index,
             )
-    return ScheduleBlockRow(title=block_title)
+    return ScheduleBlockRow(
+        title=_read_text(row["title"], column="title", row=row_index)
+    )
 
 
 def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
@@ -165,11 +182,8 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
     for row_index, values in data_rows:
         row = {column: values[index] for column, index in columns.items()}
 
-        block_title = _read_optional_text(
-            row["block_title"], column="block_title", row=row_index
-        )
-        if block_title is not None:
-            schedule.append(_read_block_row(row, block_title, row_index))
+        if _read_row_type(row["type"], row=row_index) == BLOCK_ROW_TYPE:
+            schedule.append(_read_block_row(row, row_index))
             continue
 
         # An empty number is allowed — breaks and other filler rows have none.

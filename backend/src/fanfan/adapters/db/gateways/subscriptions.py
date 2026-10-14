@@ -73,7 +73,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self.session.add(subscription_orm)
         with translate_integrity_error(
             {
-                "fk_subscriptions_event_id_schedule_entries": EventNotFound,
+                "fk_subscriptions_event_id_schedule": EventNotFound,
                 "uq_subscriptions_event_id": SubscriptionAlreadyExists,
             }
         ):

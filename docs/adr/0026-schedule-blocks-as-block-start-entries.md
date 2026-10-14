@@ -17,7 +17,7 @@ blocks on the day.
 ## Decision
 
 We will store a block as an entry of its own. The `schedule_events` table
-becomes `schedule_entries`, with a `kind` column (`event` | `block_start`,
+becomes `schedule`, with a `kind` column (`event` | `block_start`,
 VARCHAR + CHECK like every other enum). An event belongs to the nearest block
 start above it in `order`; events above the first block start belong to none.
 Block starts carry no number, duration, queue position or stage state (a CHECK
@@ -35,11 +35,11 @@ union discriminated by `kind`, and the client derives the sections.
   query over the table must too.
 - A block-less pause between two blocks is no longer expressible — it belongs
   to the block above it. The migration and the import accept that.
-- The import spreadsheet gives a block its own row (only `block_title` filled);
-  the old one-title-per-event layout is rejected with
-  `BLOCK_ROW_WITH_EVENT_DATA` rather than silently imported block-less. Block
-  rows are matched to existing block starts by title, so their ids survive a
-  re-import.
+- The import spreadsheet gains a `type` column (blank/`event`, or `block`) and
+  loses `block_title`: a block is a row of its own whose `title` is the block's
+  name. An old-layout file fails on the missing `type` column rather than
+  importing block-less. Block rows are matched to existing block starts by
+  title, so their ids survive a re-import.
 
 ## Alternatives considered
 

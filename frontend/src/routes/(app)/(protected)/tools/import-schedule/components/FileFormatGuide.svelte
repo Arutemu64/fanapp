@@ -10,13 +10,18 @@
 	// backend/src/fanfan/adapters/parsers/schedule.py).
 	const columns = [
 		{
+			name: 'type',
+			description:
+				'Что это за строка. Пусто или event — выступление, block — начало блока программы. Все выступления ниже, до следующего блока, входят в этот блок.'
+		},
+		{
 			name: 'number',
 			description:
 				'Номер выступления. Целое число, не должно повторяться. Можно оставить пустым — например, у перерыва.'
 		},
 		{
 			name: 'title',
-			description: 'Название выступления.'
+			description: 'Название выступления, а в строке блока — название блока, например «Косплей».'
 		},
 		{
 			name: 'duration',
@@ -27,11 +32,6 @@
 			name: 'nomination_title',
 			description:
 				'Номинация, например «Одиночное дефиле». Можно оставить пустой — у перерыва, открытия и закрытия номинации нет.'
-		},
-		{
-			name: 'block_title',
-			description:
-				'Начало блока программы, например «Косплей». Пишется на отдельной строке, где остальные ячейки пустые. Все выступления ниже, до следующего блока, входят в этот блок. У строк выступлений эта ячейка пустая.'
 		}
 	];
 </script>
@@ -64,11 +64,12 @@
 	</dl>
 
 	<p class="mt-3 text-xs leading-relaxed text-muted-foreground">
-		Все пять колонок обязательны, но ячейки в <span class="font-mono">number</span>,
-		<span class="font-mono">nomination_title</span> и <span class="font-mono">block_title</span>
-		можно оставлять пустыми. В строке выступления обязательны только
+		Все пять колонок обязательны, но ячейки в <span class="font-mono">type</span>,
+		<span class="font-mono">number</span> и <span class="font-mono">nomination_title</span> можно
+		оставлять пустыми. В строке выступления обязательны только
 		<span class="font-mono">title</span> и <span class="font-mono">duration</span>, в строке блока —
-		только <span class="font-mono">block_title</span>. Лишние колонки игнорируются.
+		<span class="font-mono">type</span> и <span class="font-mono">title</span>. Лишние колонки
+		игнорируются.
 	</p>
 
 	<Alert.Root variant="warning" class="mt-4">

@@ -57,7 +57,7 @@ async def test_delete_subscription_removes_own_subscription(
 
     event = _schedule_event(1, "Событие", 1)
     await schedule_gateway.add(event)
-    # Commit the event first: the subscription's FK to schedule_entries must see a
+    # Commit the event first: the subscription's FK to schedule must see a
     # persisted row.
     await uow.commit()
     subscription = Subscription(

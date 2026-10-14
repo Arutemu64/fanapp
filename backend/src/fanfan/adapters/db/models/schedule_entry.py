@@ -15,7 +15,7 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryKind
 
 
 class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM):
-    __tablename__ = "schedule_entries"
+    __tablename__ = "schedule"
 
     kind: Mapped[ScheduleEntryKind] = str_enum_column(
         ScheduleEntryKind, name="scheduleentrykind"
