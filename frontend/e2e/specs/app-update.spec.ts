@@ -1,3 +1,5 @@
+import type { Page } from '@playwright/test';
+
 import { expect, test } from '../fixtures';
 
 // A real deploy can't be staged under `vite preview`, so these swap
@@ -5,7 +7,7 @@ import { expect, test } from '../fixtures';
 // waiting worker. Posting `skipWaiting` to it fires `controllerchange`, as the
 // real worker does once it takes over, and records the hand-off in
 // sessionStorage so the reloaded page boots with nothing waiting.
-async function stageWaitingUpdate(page: import('@playwright/test').Page) {
+async function stageWaitingUpdate(page: Page) {
 	await page.addInitScript(() => {
 		const APPLIED = 'e2e:update-applied';
 		const container = new EventTarget();
@@ -36,7 +38,7 @@ async function stageWaitingUpdate(page: import('@playwright/test').Page) {
 	});
 }
 
-const wasApplied = (page: import('@playwright/test').Page) =>
+const wasApplied = (page: Page) =>
 	page.evaluate(() => sessionStorage.getItem('e2e:update-applied'));
 
 test.describe('app update', () => {
