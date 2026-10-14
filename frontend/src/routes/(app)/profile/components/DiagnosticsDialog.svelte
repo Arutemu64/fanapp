@@ -14,6 +14,7 @@
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import {
@@ -101,12 +102,13 @@
 		// Only a signed-in user has subscriptions on the server, and offline the
 		// question can't be asked.
 		if (subscription && user && reachability.current) {
-			try {
-				const { data } = await checkSubscription({ query: { endpoint: subscription.endpoint } });
-				serverRegistered = data?.subscribed ?? null;
-			} catch {
-				serverRegistered = null;
-			}
+			// Bounded so a stalled request can't hold back the rest of the report,
+			// which is all local; a timeout leaves the answer unknown.
+			const { data } = await checkSubscription({
+				query: { endpoint: subscription.endpoint },
+				signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+			});
+			serverRegistered = data?.subscribed ?? null;
 		}
 		return {
 			permission: browserPush.permission(),
@@ -161,6 +163,11 @@
 	// online only: offline it would leave nothing to open the app with. The session
 	// cookie is not touched, so the user stays signed in.
 	async function resetAndReload() {
+		// The connection can drop while the confirmation is open.
+		if (!reachability.current) {
+			toastService.add('Нет связи. Сброс доступен только с интернетом', 'error');
+			return;
+		}
 		isResetting = true;
 		try {
 			queryClient.clear();
@@ -226,7 +233,7 @@
 				Сбросить кэш и перезагрузить
 			</Button>
 			{#if !reachability.current}
-				<p class="text-center text-xs text-muted-foreground">
+				<p class="text-center text-sm leading-relaxed text-muted-foreground">
 					Сброс доступен только с интернетом&nbsp;— без него приложение не откроется.
 				</p>
 			{/if}
@@ -244,7 +251,9 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
-			<AlertDialog.Action onclick={resetAndReload}>Сбросить</AlertDialog.Action>
+			<AlertDialog.Action disabled={!reachability.current} onclick={resetAndReload}>
+				Сбросить
+			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

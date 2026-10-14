@@ -6,8 +6,6 @@
 
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '#lib/api/generated/index.js';
 
-	// Aliased so it doesn't clash with this component's own handler of the same name.
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		getCurrentUserQueryKey,
 		sendTestNotificationMutation,
@@ -15,6 +13,7 @@
 		unsubscribeMutation,
 		updateCurrentUserSettingsMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	// Aliased so it doesn't clash with this component's own handler of the same name.
 	import { checkSubscription as checkPushSubscription } from '#lib/api/generated/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -189,11 +188,7 @@
 						'success'
 					);
 				},
-				onError: (error) =>
-					toastService.add(
-						getApiErrorDetail(error) ?? 'Не удалось отправить тестовое уведомление',
-						'error'
-					)
+				onError: (error) => toastService.error(error, 'Не удалось отправить тестовое уведомление')
 			}
 		);
 	}
