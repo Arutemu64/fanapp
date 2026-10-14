@@ -184,6 +184,10 @@ export type CurrentUserDto = {
 	 */
 	email: string | null;
 	/**
+	 * Avatar Seed
+	 */
+	avatar_seed: string;
+	/**
 	 * Has Password
 	 */
 	has_password: boolean;
@@ -1264,6 +1268,10 @@ export type UpdateCurrentUserInput = {
 	 * Username
 	 */
 	username?: string | null;
+	/**
+	 * Avatar Seed
+	 */
+	avatar_seed?: string | null;
 };
 
 /**
@@ -1327,6 +1335,10 @@ export type UserDetailsDto = {
 	 */
 	email: string | null;
 	/**
+	 * Avatar Seed
+	 */
+	avatar_seed: string;
+	/**
 	 * Ticket Number
 	 */
 	ticket_number: string | null;
@@ -1361,6 +1373,10 @@ export type UserListItemDto = {
 	 * Email
 	 */
 	email: string | null;
+	/**
+	 * Avatar Seed
+	 */
+	avatar_seed: string;
 	/**
 	 * Ticket Number
 	 */

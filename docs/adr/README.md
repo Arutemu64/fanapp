@@ -68,3 +68,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0021](0021-tanstack-query-for-server-state.md) | TanStack Query for server state, persisted to IndexedDB | Accepted; mutations superseded by [0022](0022-createmutation-for-writes.md) |
 | [0022](0022-createmutation-for-writes.md) | `createMutation` for writes, online-only | Accepted |
 | [0023](0023-keyset-cursor-pagination-for-feeds.md) | Keyset cursor pagination for the infinite feeds | Accepted |
+| [0024](0024-dicebear-avatars-from-a-stored-seed.md) | DiceBear avatars drawn in the browser from a stored seed | Accepted |

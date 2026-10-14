@@ -35,6 +35,23 @@ async def test_update_current_user_changes_username(
     assert reloaded.username == Username("newname")
 
 
+async def test_update_current_user_changes_avatar_seed(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+) -> None:
+    interactor = await dishka_request.get(UpdateCurrentUser)
+    user_gateway = await dishka_request.get(UserGateway)
+    login(visitor)
+
+    await interactor(UpdateCurrentUserInput(avatar_seed="fresh-seed_1"))
+
+    reloaded = await user_gateway.get_by_id(visitor.id)
+    assert reloaded is not None
+    assert reloaded.avatar_seed == "fresh-seed_1"
+    assert reloaded.username == visitor.username
+
+
 async def test_update_current_user_unchanged_username_is_noop(
     dishka_request: AsyncContainer,
     visitor: User,

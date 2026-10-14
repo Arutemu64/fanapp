@@ -9,7 +9,7 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import UsernameAlreadyTaken, UsernameProfanity
 from fanfan.core.models.user import User
 from fanfan.core.vo.fields import USERNAME_PATTERN
-from fanfan.core.vo.user import Username
+from fanfan.core.vo.user import AVATAR_SEED_PATTERN, Username
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,9 @@ class UpdateCurrentUserInput(BaseModel):
     username: str | None = Field(
         None, min_length=3, max_length=25, pattern=USERNAME_PATTERN
     )
+    # Proposed by the client so the profile editor can preview a face before
+    # saving; the pattern keeps it to a harmless token.
+    avatar_seed: str | None = Field(None, pattern=AVATAR_SEED_PATTERN)
 
 
 class UpdateCurrentUser:
@@ -54,6 +57,10 @@ class UpdateCurrentUser:
             and data_to_update["username"] != current_user.username
         ):
             await self._update_username(current_user, data_to_update["username"])
+            user_updated_flag = True
+        avatar_seed = data_to_update.get("avatar_seed")
+        if avatar_seed and avatar_seed != current_user.avatar_seed:
+            current_user.set_avatar_seed(avatar_seed)
             user_updated_flag = True
         if user_updated_flag:
             await self.user_gateway.save(current_user)

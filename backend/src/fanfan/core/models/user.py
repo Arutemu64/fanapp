@@ -3,7 +3,7 @@ from typing import Self
 
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.email import Email
-from fanfan.core.vo.user import UserId, Username, UserRole
+from fanfan.core.vo.user import UserId, Username, UserRole, generate_avatar_seed
 
 
 @dataclass(slots=True, kw_only=True)
@@ -22,6 +22,7 @@ class User(AggregateRoot):
     role: UserRole
 
     email: Email | None = None
+    avatar_seed: str = field(default_factory=generate_avatar_seed)
 
     settings: UserSettings = field(default_factory=UserSettings)
 
@@ -48,6 +49,9 @@ class User(AggregateRoot):
 
     def set_role(self, role: UserRole) -> None:
         self.role = role
+
+    def set_avatar_seed(self, avatar_seed: str) -> None:
+        self.avatar_seed = avatar_seed
 
     def update_settings(
         self,

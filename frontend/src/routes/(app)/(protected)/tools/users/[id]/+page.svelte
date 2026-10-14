@@ -6,14 +6,10 @@
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 	import { canManageUsers } from '#lib/utils/permissions.js';
-	import {
-		buildSocialProfileUrl,
-		getAvatarInitials,
-		getRoleLabel,
-		getSocialProviderLabel
-	} from '#lib/utils/users.js';
+	import { buildSocialProfileUrl, getRoleLabel, getSocialProviderLabel } from '#lib/utils/users.js';
 
 	import type { PageProps } from './$types';
 
@@ -34,12 +30,7 @@
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-4">
-			<span
-				class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary"
-				aria-hidden="true"
-			>
-				{getAvatarInitials(profile.username)}
-			</span>
+			<UserAvatar seed={profile.avatar_seed} class="size-14" />
 			<div class="min-w-0">
 				<h2 class="text-xl font-bold break-words text-foreground sm:text-2xl">
 					{profile.username}

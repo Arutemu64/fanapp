@@ -180,3 +180,32 @@ test.describe('diagnostics', () => {
 		expect(api.unmatched).toEqual([]);
 	});
 });
+
+test.describe('avatar', () => {
+	test('previews a new avatar from the refresh button and saves its seed', async ({
+		page,
+		api
+	}) => {
+		let patched: unknown;
+		api.use({
+			...loggedInAs(),
+			'PATCH /me/': (route) => {
+				patched = route.request().postDataJSON() as unknown;
+				return json({});
+			}
+		});
+		await page.goto('/profile/account');
+		await page.getByRole('button', { name: 'Редактировать' }).click();
+
+		const dialog = page.getByRole('dialog', { name: 'Редактирование профиля' });
+		const avatar = dialog.locator('img');
+		const before = await avatar.getAttribute('src');
+
+		await dialog.getByRole('button', { name: 'Другой аватар' }).click();
+		await expect(avatar).not.toHaveAttribute('src', before ?? '');
+
+		await dialog.getByRole('button', { name: 'Сохранить' }).click();
+		await expect.poll(() => patched).toEqual({ avatar_seed: expect.stringMatching(/^[\w-]{12}$/) });
+		expect(api.unmatched).toEqual([]);
+	});
+});

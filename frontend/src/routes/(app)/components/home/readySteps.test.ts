@@ -76,6 +76,7 @@ function member(overrides: Partial<CurrentUserDto> = {}): CurrentUserDto {
 		username: 'visitor',
 		role: 'visitor',
 		email: null,
+		avatar_seed: 'testSeed',
 		has_password: true,
 		ticket: null,
 		permissions: [],

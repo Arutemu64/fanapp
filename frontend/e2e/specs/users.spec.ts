@@ -11,6 +11,7 @@ const ANNA: UserListItemDto = {
 	username: 'anna_cosplay',
 	role: 'participant',
 	email: 'anna@example.com',
+	avatar_seed: 'annaSeed0001',
 	ticket_number: 'FAN-ABC123',
 	created_at: '2026-10-10T12:00:00Z'
 };
@@ -20,6 +21,7 @@ const BORIS: UserListItemDto = {
 	username: 'boris',
 	role: 'visitor',
 	email: null,
+	avatar_seed: 'borisSeed001',
 	ticket_number: null,
 	created_at: '2026-10-09T12:00:00Z'
 };

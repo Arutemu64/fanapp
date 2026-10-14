@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { User } from '@lucide/svelte';
+	import { RefreshCw, User } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
@@ -16,7 +16,9 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { createAvatarSeed } from '#lib/utils/avatar.js';
 
 	interface Props {
 		user: CurrentUserDto;
@@ -33,6 +35,7 @@
 	}));
 
 	let username = $state('');
+	let avatarSeed = $state('');
 
 	let usernameError = $state('');
 	let formError = $state('');
@@ -41,6 +44,7 @@
 		if (open) {
 			untrack(() => {
 				username = user.username ?? '';
+				avatarSeed = user.avatar_seed;
 				usernameError = '';
 				formError = '';
 			});
@@ -88,7 +92,7 @@
 	}
 
 	function hasChanges(): boolean {
-		return !!username && username !== user.username;
+		return (!!username && username !== user.username) || avatarSeed !== user.avatar_seed;
 	}
 
 	function isValid(): boolean {
@@ -112,6 +116,7 @@
 
 		const body: UpdateCurrentUserInput = {};
 		if (username && username !== user.username) body.username = username;
+		if (avatarSeed !== user.avatar_seed) body.avatar_seed = avatarSeed;
 
 		updateProfileMutation.mutate(
 			{ body },
@@ -141,7 +146,7 @@
 				<User class="size-5 text-muted-foreground" />
 				Редактирование профиля
 			</Dialog.Title>
-			<Dialog.Description class="sr-only">Измени имя пользователя.</Dialog.Description>
+			<Dialog.Description class="sr-only">Измени аватар и имя пользователя.</Dialog.Description>
 		</Dialog.Header>
 
 		<form onsubmit={handleSubmit} class="flex flex-col gap-4">
@@ -150,6 +155,21 @@
 					<Alert.Description>{formError}</Alert.Description>
 				</Alert.Root>
 			{/if}
+
+			<!-- A new face is only previewed here; it is saved with the form, so closing keeps the old one. -->
+			<div class="relative mx-auto">
+				<UserAvatar seed={avatarSeed} class="size-32 sm:size-36" />
+				<Button
+					type="button"
+					variant="secondary"
+					size="icon"
+					class="absolute right-0 bottom-0 size-11 rounded-full border border-border shadow-sm"
+					aria-label="Другой аватар"
+					onclick={() => (avatarSeed = createAvatarSeed())}
+				>
+					<RefreshCw aria-hidden="true" />
+				</Button>
+			</div>
 
 			<Field.Field data-invalid={usernameError ? true : undefined}>
 				<Field.FieldLabel for="username">Имя пользователя</Field.FieldLabel>

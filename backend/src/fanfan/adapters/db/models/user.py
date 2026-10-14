@@ -28,6 +28,8 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     username: Mapped[str] = mapped_column()
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
+    # Input to the client-side DiceBear avatar generator; see generate_avatar_seed.
+    avatar_seed: Mapped[str] = mapped_column()
     # Notification preferences live in columns (not the settings JSON) so they
     # can be filtered on directly — see read_all_by_receive_all_announcements.
     # Deliberately NOT indexed: the column defaults to true, so the fan-out

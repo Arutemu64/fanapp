@@ -4783,6 +4783,10 @@
             ],
             "title": "Email"
           },
+          "avatar_seed": {
+            "type": "string",
+            "title": "Avatar Seed"
+          },
           "has_password": {
             "type": "boolean",
             "title": "Has Password"
@@ -4821,6 +4825,7 @@
           "username",
           "role",
           "email",
+          "avatar_seed",
           "has_password",
           "ticket",
           "permissions",
@@ -6597,6 +6602,18 @@
               }
             ],
             "title": "Username"
+          },
+          "avatar_seed": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{4,32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Seed"
           }
         },
         "type": "object",
@@ -6703,6 +6720,10 @@
             ],
             "title": "Email"
           },
+          "avatar_seed": {
+            "type": "string",
+            "title": "Avatar Seed"
+          },
           "ticket_number": {
             "anyOf": [
               {
@@ -6740,6 +6761,7 @@
           "username",
           "role",
           "email",
+          "avatar_seed",
           "ticket_number",
           "created_at",
           "social_links",
@@ -6773,6 +6795,10 @@
             ],
             "title": "Email"
           },
+          "avatar_seed": {
+            "type": "string",
+            "title": "Avatar Seed"
+          },
           "ticket_number": {
             "anyOf": [
               {
@@ -6796,6 +6822,7 @@
           "username",
           "role",
           "email",
+          "avatar_seed",
           "ticket_number",
           "created_at"
         ],

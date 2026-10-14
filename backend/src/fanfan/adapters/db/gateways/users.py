@@ -47,6 +47,7 @@ def _from_model(model: User) -> UserORM:
         username=model.username,
         hashed_password=model.hashed_password,
         email=model.email.value if model.email else None,
+        avatar_seed=model.avatar_seed,
         role=model.role,
         # Queryable notification flags go to columns; the JSON bag is an
         # extension point for future non-queryable prefs (currently empty).
@@ -63,6 +64,7 @@ def _to_model(orm: UserORM) -> User:
         username=Username(orm.username),
         hashed_password=orm.hashed_password,
         email=Email(orm.email) if orm.email else None,
+        avatar_seed=orm.avatar_seed,
         role=UserRole(orm.role),
         settings=UserSettings(
             receive_all_announcements=orm.receive_all_announcements,
@@ -86,6 +88,7 @@ def _parse_list_item_dto(orm: UserORM) -> UserListItemDTO:
         username=orm.username,
         role=orm.role,
         email=orm.email,
+        avatar_seed=orm.avatar_seed,
         ticket_number=orm.ticket.barcode if orm.ticket else None,
         created_at=orm.created_at,
     )
@@ -97,6 +100,7 @@ def _parse_details_dto(orm: UserORM) -> UserDetailsDTO:
         username=orm.username,
         role=orm.role,
         email=orm.email,
+        avatar_seed=orm.avatar_seed,
         ticket_number=orm.ticket.barcode if orm.ticket else None,
         created_at=orm.created_at,
         social_links=[
@@ -118,6 +122,7 @@ def _parse_current_user_dto(orm: UserORM) -> CurrentUserDTO:
         username=orm.username,
         role=orm.role,
         email=orm.email,
+        avatar_seed=orm.avatar_seed,
         has_password=bool(orm.hashed_password),
         ticket=UserTicketDTO(
             id=TicketId(orm.ticket.id),
