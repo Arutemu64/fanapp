@@ -106,9 +106,7 @@
 	     column's left edge reads as lopsided. -->
 	<div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
 		{#if showStaleNotice}
-			<StaleDataNotice
-				message="Нет связи. Показан сохранённый профиль — обновится при подключении."
-			/>
+			<StaleDataNotice message="Показан сохранённый профиль." />
 		{/if}
 
 		{#if user}

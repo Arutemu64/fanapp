@@ -11,8 +11,7 @@
 	// below is disabled: offlineWriteGate's `title` hint never shows on a touch
 	// screen (https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/title).
 	let showStaleNotice = $derived(!reachability.current);
-	const staleNoticeMessage =
-		'Нет связи. Показан сохранённый профиль — изменения доступны только онлайн.';
+	const staleNoticeMessage = 'Показан сохранённый профиль. Изменения доступны только онлайн.';
 </script>
 
 <!-- The /profile hub itself lives outside (protected) so guests can open it; only

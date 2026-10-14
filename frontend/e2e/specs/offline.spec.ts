@@ -18,6 +18,33 @@ test.describe('offline', { tag: '@critical' }, () => {
 		expect(api.unmatched).toEqual([]);
 	});
 
+	test('the connection banner re-checks on tap and confirms the recovery', async ({
+		page,
+		api
+	}) => {
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
+
+		// The app trusts an `offline` event at once. Dispatched by hand rather than via
+		// context.setOffline, which would also fail the build's own chunk loads (and a
+		// mocked route still fulfils under it); the aborted health check keeps the
+		// app's probes from recovering under the test.
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
+
+		// The strip holds for at least 4s, so the button is still there even if the
+		// background poll happens to win the race to the healthy endpoint.
+		api.use({ 'GET /debug/health': json({ status: 'healthy' }) });
+		await page.getByRole('button', { name: 'Повторить' }).click();
+
+		// Shown once the offline wording has had its minimum time on screen.
+		await expect(page.getByRole('status').getByText('Связь восстановлена')).toBeAttached({
+			timeout: 10_000
+		});
+		await expect(page.getByRole('button', { name: 'Повторить' })).toHaveCount(0);
+	});
+
 	test('a cold start with no saved identity shows the offline state, not login', async ({
 		page,
 		api

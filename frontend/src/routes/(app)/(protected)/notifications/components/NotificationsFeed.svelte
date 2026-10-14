@@ -223,7 +223,7 @@
 
 {#if showStaleNotice}
 	<StaleDataNotice
-		message="Нет связи. Показаны сохранённые уведомления — обновятся при подключении."
+		message="Показаны сохранённые уведомления."
 		cachedAt={notificationsQuery.dataUpdatedAt}
 	/>
 {/if}
