@@ -163,7 +163,8 @@ async def test_sync_tickets_imports_resale_of_refunded_ticket_id(
 
     result = await interactor()
 
-    assert result.new_tickets_count == 2
+    # The refunded first sale is stored already revoked, never linkable.
+    assert result.new_tickets_count == 1
     assert result.revoked_tickets_count == 1
     first_sale = await ticket_gateway.get_by_barcode("first-sale")
     resale = await ticket_gateway.get_by_barcode("resale")

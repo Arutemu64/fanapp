@@ -27,7 +27,9 @@ class TicketImportService:
     def __init__(self, ticket_gateway: TicketGateway) -> None:
         self.ticket_gateway = ticket_gateway
 
-    async def import_ticket(self, external: ExternalTicket) -> bool:
+    async def import_ticket(
+        self, external: ExternalTicket, *, refunded: bool = False
+    ) -> bool:
         existing = await self.ticket_gateway.get_by_ticketscloud_sale(
             order_id=external.order_id, ticket_id=external.external_id
         )
@@ -58,6 +60,8 @@ class TicketImportService:
             ticketscloud_ticket_id=external.external_id,
             ticketscloud_order_id=external.order_id,
         )
+        if refunded:
+            ticket.revoke(datetime.now(UTC))
         await self.ticket_gateway.add(ticket)
         logger.info("New ticket added", extra={"ticket_id": str(ticket.id)})
         return True
