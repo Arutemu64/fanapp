@@ -2,7 +2,10 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.sources.tickets import TicketsSource
+from fanfan.application.ports.sources.tickets import (
+    RevokedExternalTicket,
+    TicketsSource,
+)
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.tickets_import import TicketImportService
 
@@ -15,7 +18,7 @@ COMMIT_BATCH_SIZE = 200
 
 class SyncTicketsOutput(BaseModel):
     new_tickets_count: int
-    removed_tickets_count: int
+    revoked_tickets_count: int
 
 
 class SyncTickets:
@@ -30,10 +33,25 @@ class SyncTickets:
         self.uow = uow
 
     async def __call__(self) -> SyncTicketsOutput:
-        new_tickets_count, removed_tickets_count = 0, 0
+        # Refunds are read before any ticket is committed, so a sale refunded
+        # before its first import is stored already revoked and never sits
+        # linkable between the import and revocation passes.
+        refunded = {revoked async for revoked in self.source.fetch_revoked_tickets()}
+
+        new_tickets_count = 0
+        revoked_tickets_count = 0
         seen_since_commit = 0
         async for external in self.source.fetch_all_tickets():
-            if await self.ticket_import_service.import_ticket(external):
+            sale = RevokedExternalTicket(
+                order_id=external.order_id, external_id=external.external_id
+            )
+            is_refunded = sale in refunded
+            imported = await self.ticket_import_service.import_ticket(
+                external, refunded=is_refunded
+            )
+            if imported and is_refunded:
+                revoked_tickets_count += 1
+            elif imported:
                 new_tickets_count += 1
             seen_since_commit += 1
             if seen_since_commit >= COMMIT_BATCH_SIZE:
@@ -44,10 +62,15 @@ class SyncTickets:
                     extra={"new_tickets": new_tickets_count},
                 )
         await self.uow.commit()
-        # TODO: removed_tickets_count is always 0 — refunds/cancellations aren't
-        # detected because `fetch_all_tickets` only yields currently-active
-        # tickets, giving no signal for which locally-stored tickets disappeared.
+
+        # Revoke after importing: the import pass fills in the order id on rows
+        # stored before it was tracked, so revocation can match them exactly.
+        for revoked in refunded:
+            if await self.ticket_import_service.revoke_ticket(revoked):
+                revoked_tickets_count += 1
+        await self.uow.commit()
+
         return SyncTicketsOutput(
             new_tickets_count=new_tickets_count,
-            removed_tickets_count=removed_tickets_count,
+            revoked_tickets_count=revoked_tickets_count,
         )

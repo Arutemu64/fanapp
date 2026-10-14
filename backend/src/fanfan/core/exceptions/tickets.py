@@ -17,6 +17,10 @@ class TicketAlreadyUsed(Conflict, TicketException):
     code = "TICKET_ALREADY_USED"
 
 
+class TicketRevoked(Conflict, TicketException):
+    code = "TICKET_REVOKED"
+
+
 # Not raised by the backend yet, but the frontend already maps its code; mark it
 # Conflict (precondition not met) so it returns 409, not 500, once it is used.
 class TicketNotLinked(Conflict, TicketException):

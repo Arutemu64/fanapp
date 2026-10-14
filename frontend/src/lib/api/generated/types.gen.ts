@@ -285,6 +285,7 @@ export type ErrorMessage = {
 		| 'TICKET_BARCODE_COLLISION'
 		| 'TICKET_NOT_FOUND'
 		| 'TICKET_NOT_LINKED'
+		| 'TICKET_REVOKED'
 		| 'TOO_MANY_ATTEMPTS'
 		| 'TOO_MANY_LOGIN_ATTEMPTS'
 		| 'TOO_MANY_OTP_ATTEMPTS'
@@ -1201,10 +1202,6 @@ export type TCloudWebhookOrderRef = {
  */
 export type TCloudWebhookPayload = {
 	data: TCloudWebhookOrderRef;
-	/**
-	 * Type
-	 */
-	type: string;
 };
 
 /**
