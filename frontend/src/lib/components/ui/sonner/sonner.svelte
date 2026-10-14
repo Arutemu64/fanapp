@@ -11,6 +11,10 @@
 	let { ...restProps }: SonnerProps = $props();
 	const theme = getThemeService();
 
+	// Deviates from upstream: everything below — theme from our theme service (no
+	// mode-watcher), toast lanes and offsets, swipe directions, Russian ARIA labels,
+	// the close badge and the status-tinted icons.
+	//
 	// Two toast lanes share this one Toaster via per-toast `position` (set in
 	// toasts.svelte.ts): action feedback at bottom-center (the default below),
 	// push notifications at top-right. A single object offset covers both — a

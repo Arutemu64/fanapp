@@ -15,6 +15,9 @@
 	} = $props();
 </script>
 
+<!-- Deviates from upstream: default/sm heights are h-11/h-10, not vega's h-9/h-8,
+	matching the Button and Input tap targets. -->
+
 <SelectPrimitive.Trigger
 	bind:ref
 	data-slot="select-trigger"

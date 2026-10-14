@@ -12,11 +12,10 @@
 		...restProps
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
 		size?: 'default' | 'sm';
-		// Opt a card into a semantic container (e.g. `article` for a self-contained
-		// content tile). Stays per-instance and defaults to `div` because most cards
-		// — form panels, the login/error card — are not articles. Local addition
-		// upstream lacks (shadcn ships Card as a bare div, issue #10301 open); a
-		// `shadcn-svelte update` will drop this prop — keep it on merge.
+		// Deviates from upstream: opt a card into a semantic container (e.g. `article`
+		// for a self-contained content tile). Stays per-instance and defaults to `div`
+		// because most cards — form panels, the login/error card — are not articles.
+		// Upstream ships Card as a bare div (shadcn issue #10301 open).
 		as?: 'div' | 'article' | 'section';
 	} = $props();
 </script>

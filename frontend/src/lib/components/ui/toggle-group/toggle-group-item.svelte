@@ -8,6 +8,9 @@
 
 	import { getToggleGroupCtx } from './toggle-group.svelte';
 
+	// Deviates from upstream: upstream imports `ToggleVariants` from the toggle
+	// barrel, but typed ESLint can't resolve a type re-exported from a .svelte
+	// module and fails no-redundant-type-constituents. A local alias avoids that.
 	type ToggleVariants = VariantProps<typeof toggleVariants>;
 
 	let {
