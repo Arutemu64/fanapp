@@ -437,7 +437,6 @@ export type {
 	UnlinkUserTicketData,
 	UnlinkUserTicketError,
 	UnlinkUserTicketErrors,
-	UnlinkUserTicketOutput,
 	UnlinkUserTicketResponse,
 	UnlinkUserTicketResponses,
 	UnlinkVkAccountData,

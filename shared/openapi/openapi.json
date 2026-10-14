@@ -4443,7 +4443,7 @@
           "Users"
         ],
         "summary": "Unlink a user's ticket",
-        "description": "Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Requires users:manage.",
+        "description": "Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Idempotent. Requires users:manage.",
         "operationId": "unlink_user_ticket",
         "security": [
           {
@@ -4465,15 +4465,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Ticket unlinked; reports how many votes were deleted.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UnlinkUserTicketOutput"
-                }
-              }
-            }
+          "204": {
+            "description": "Ticket unlinked and votes deleted."
           },
           "422": {
             "description": "Request validation error.",
@@ -4497,16 +4490,6 @@
           },
           "403": {
             "description": "Missing users:manage.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The user has no ticket.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6528,19 +6511,6 @@
           "new_tickets_count"
         ],
         "title": "TCloudWebhookResponse"
-      },
-      "UnlinkUserTicketOutput": {
-        "properties": {
-          "deleted_votes": {
-            "type": "integer",
-            "title": "Deleted Votes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "deleted_votes"
-        ],
-        "title": "UnlinkUserTicketOutput"
       },
       "UnreadNotificationsCountOutput": {
         "properties": {

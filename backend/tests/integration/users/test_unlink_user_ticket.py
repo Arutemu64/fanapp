@@ -14,7 +14,6 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.exceptions.tickets import TicketNotLinked
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
@@ -67,9 +66,8 @@ async def test_frees_ticket_drops_votes_and_keeps_role(
     assert ticket is not None
 
     login(users_manager)
-    result = await interactor(UnlinkUserTicketInput(user_id=visitor_with_ticket.id))
+    await interactor(UnlinkUserTicketInput(user_id=visitor_with_ticket.id))
 
-    assert result.deleted_votes == 1
     assert await vote_gateway.count_user_votes(visitor_with_ticket.id) == 0
     assert await ticket_gateway.get_by_user_id(visitor_with_ticket.id) is None
     freed = await ticket_gateway.get_by_barcode(barcode=ticket.barcode)
@@ -80,7 +78,7 @@ async def test_frees_ticket_drops_votes_and_keeps_role(
     assert user.role is UserRole.VISITOR
 
 
-async def test_user_without_ticket_is_refused(
+async def test_unlinking_again_is_a_no_op(
     dishka_request: AsyncContainer,
     users_manager: User,
     visitor: User,
@@ -89,8 +87,7 @@ async def test_user_without_ticket_is_refused(
     interactor = await dishka_request.get(UnlinkUserTicket)
     login(users_manager)
 
-    with pytest.raises(TicketNotLinked):
-        await interactor(UnlinkUserTicketInput(user_id=visitor.id))
+    await interactor(UnlinkUserTicketInput(user_id=visitor.id))
 
 
 async def test_requires_users_manage(

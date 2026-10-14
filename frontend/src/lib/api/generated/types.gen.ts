@@ -1231,16 +1231,6 @@ export type TCloudWebhookResponse = {
 };
 
 /**
- * UnlinkUserTicketOutput
- */
-export type UnlinkUserTicketOutput = {
-	/**
-	 * Deleted Votes
-	 */
-	deleted_votes: number;
-};
-
-/**
  * UnreadNotificationsCountOutput
  */
 export type UnreadNotificationsCountOutput = {
@@ -3954,10 +3944,6 @@ export type UnlinkUserTicketErrors = {
 	 */
 	403: ErrorMessage;
 	/**
-	 * The user has no ticket.
-	 */
-	409: ErrorMessage;
-	/**
 	 * Request validation error.
 	 */
 	422: ValidationErrorResponse;
@@ -3967,9 +3953,9 @@ export type UnlinkUserTicketError = UnlinkUserTicketErrors[keyof UnlinkUserTicke
 
 export type UnlinkUserTicketResponses = {
 	/**
-	 * Ticket unlinked; reports how many votes were deleted.
+	 * Ticket unlinked and votes deleted.
 	 */
-	200: UnlinkUserTicketOutput;
+	204: void;
 };
 
 export type UnlinkUserTicketResponse = UnlinkUserTicketResponses[keyof UnlinkUserTicketResponses];

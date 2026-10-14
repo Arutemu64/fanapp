@@ -2,7 +2,6 @@
 	import { Unlink } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
-	import { getApiErrorCode } from '#lib/api/errors.js';
 	import {
 		getUserQueryKey,
 		listUsersQueryKey,
@@ -11,7 +10,6 @@
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { pluralize } from '#lib/utils/formatters.js';
 
 	interface Props {
 		userId: string;
@@ -24,39 +22,23 @@
 	const toastService = getToastService();
 	let confirmOpen = $state(false);
 
-	// The role is deliberately left alone by the backend, so the toast says so:
-	// the organiser decides whether it should go with the ticket.
-	const ROLE_HINT = 'Роль не менялась — если нужно, смени её вручную.';
-
-	function invalidateUser() {
-		return Promise.all([
-			queryClient.invalidateQueries({ queryKey: getUserQueryKey({ path: { user_id: userId } }) }),
-			queryClient.invalidateQueries({ queryKey: listUsersQueryKey() })
-		]);
-	}
-
 	// Toasts sit on the mutation, not on the mutate() call: the refetch drops the
 	// ticket and with it this button, and call-level callbacks are skipped once
 	// their component has unmounted (docs/api.md).
 	const unlinkMutation = createMutation(() => ({
 		...unlinkUserTicketMutation(),
-		onSuccess: ({ deleted_votes: deleted }) => {
-			let message = 'Билет отвязан.';
-			if (deleted > 0) {
-				const votes = pluralize(deleted, 'голос', 'голоса', 'голосов');
-				message = `Билет отвязан, удалено ${deleted} ${votes}.`;
-			}
-			toastService.add(`${message} ${ROLE_HINT}`, 'success');
-			return invalidateUser();
+		onSuccess: () => {
+			// The backend leaves the role alone, so the organiser is told to change it.
+			toastService.add(
+				'Билет отвязан, голоса удалены. Роль не менялась — если нужно, смени её вручную.',
+				'success'
+			);
+			return Promise.all([
+				queryClient.invalidateQueries({ queryKey: getUserQueryKey({ path: { user_id: userId } }) }),
+				queryClient.invalidateQueries({ queryKey: listUsersQueryKey() })
+			]);
 		},
-		onError: (error) => {
-			// The shared copy for this code speaks to the ticket's owner.
-			if (getApiErrorCode(error) === 'TICKET_NOT_LINKED') {
-				toastService.add('У пользователя уже нет билета', 'error');
-				return invalidateUser();
-			}
-			toastService.error(error, 'Не удалось отвязать билет');
-		}
+		onError: (error) => toastService.error(error, 'Не удалось отвязать билет')
 	}));
 </script>
 

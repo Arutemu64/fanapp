@@ -1,6 +1,5 @@
 import type {
 	ListUsersOutput,
-	UnlinkUserTicketOutput,
 	UserDetailsDto,
 	UserListItemDto
 } from '../../src/lib/api/generated/types.gen';
@@ -101,7 +100,7 @@ test.describe('organizer user directory', () => {
 			[`GET /users/${ANNA.id}`]: () => json<UserDetailsDto>(details),
 			[`DELETE /users/${ANNA.id}/ticket`]: () => {
 				details = { ...details, ticket_number: null };
-				return json<UnlinkUserTicketOutput>({ deleted_votes: 3 });
+				return { status: 204, body: '' };
 			}
 		});
 		await page.goto(`/tools/users/${ANNA.id}`);
@@ -111,7 +110,7 @@ test.describe('organizer user directory', () => {
 
 		await expect(
 			page.getByText(
-				'Билет отвязан, удалено 3 голоса. Роль не менялась — если нужно, смени её вручную.'
+				'Билет отвязан, голоса удалены. Роль не менялась — если нужно, смени её вручную.'
 			)
 		).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Отвязать билет' })).toBeHidden();

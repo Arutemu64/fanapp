@@ -2292,7 +2292,7 @@ export const grantUserPermissionMutation = (
 /**
  * Unlink a user's ticket
  *
- * Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Requires users:manage.
+ * Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Idempotent. Requires users:manage.
  */
 export const unlinkUserTicketMutation = (
 	options?: Partial<Options<UnlinkUserTicketData>>
