@@ -159,11 +159,22 @@
 	</head>
 
 	<body class="bg-background" data-sveltekit-preload-data="hover">
-		<div id="app-splash" role="status">
+		<!-- aria-live duplicates the role's implicit politeness for older screen readers. -->
+		<div id="app-splash" role="status" aria-live="polite">
 			<!-- favicon.svg is in the service-worker precache, so the mark shows offline too. -->
 			<img class="app-splash__mark" src="/favicon.svg" alt="" width="64" height="64" />
-			<span class="app-splash__label">Загрузка…</span>
+			<span class="app-splash__label"></span>
 		</div>
+		<script>
+			// Screen readers announce changes to a live region, not the text it loads
+			// with, so the label starts empty and is filled once the region is exposed.
+			// Same 400ms as the mark's fade-in: a warm start stays silent too.
+			// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions
+			setTimeout(function () {
+				var label = document.querySelector('#app-splash .app-splash__label');
+				if (label) label.textContent = 'Загрузка…';
+			}, 400);
+		</script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
