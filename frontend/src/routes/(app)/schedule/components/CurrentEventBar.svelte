@@ -16,6 +16,20 @@
 	let { event, hidden, onjump }: Props = $props();
 
 	let eventNumber = $derived(formatEventNumber(event.number));
+
+	let barHeight = $state(0);
+
+	// Toasts and the update prompt live in the root layout, outside this page, so the
+	// bar hands them its height through a CSS variable on <html> (app.css) rather than
+	// shared state. Cleared on hide and on unmount, so leaving the page drops the lift.
+	$effect(() => {
+		if (hidden) return;
+
+		const root = document.documentElement;
+		root.style.setProperty('--bottom-accessory-clearance', `calc(${barHeight}px + 0.5rem)`);
+
+		return () => root.style.removeProperty('--bottom-accessory-clearance');
+	});
 </script>
 
 <!-- The iOS 26 tab-bar accessory shape (Music's MiniPlayer): a slim bar floating
@@ -31,6 +45,7 @@
 		hidden && 'translate-y-2 opacity-0'
 	]}
 	inert={hidden}
+	bind:clientHeight={barHeight}
 >
 	<Button
 		variant="floating"
