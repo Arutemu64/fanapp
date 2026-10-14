@@ -32,6 +32,7 @@ import {
 	getVotingDashboard,
 	getVotingNomination,
 	getVotingStatus,
+	grantUserPermission,
 	healthCheck,
 	importSchedule,
 	linkTicket,
@@ -54,9 +55,11 @@ import {
 	processTcloudOrder,
 	requestLoginCode,
 	requestSync,
+	revokeUserPermission,
 	sendBroadcast,
 	sendTestNotification,
 	setEventAsCurrent,
+	setUserRole,
 	setVotingTimeRange,
 	startAccountLink,
 	startSocialLogin,
@@ -65,6 +68,7 @@ import {
 	uncheckCurrentEvent,
 	undoScheduleChange,
 	unlinkTelegramAccount,
+	unlinkUserTicket,
 	unlinkVkAccount,
 	unsubscribe,
 	updateCurrentUser,
@@ -142,6 +146,9 @@ import type {
 	GetVotingStatusData,
 	GetVotingStatusError,
 	GetVotingStatusResponse,
+	GrantUserPermissionData,
+	GrantUserPermissionError,
+	GrantUserPermissionResponse,
 	HealthCheckData,
 	HealthCheckError,
 	HealthCheckResponse,
@@ -202,6 +209,9 @@ import type {
 	RequestSyncData,
 	RequestSyncError,
 	RequestSyncResponse,
+	RevokeUserPermissionData,
+	RevokeUserPermissionError,
+	RevokeUserPermissionResponse,
 	SendBroadcastData,
 	SendBroadcastError,
 	SendBroadcastResponse,
@@ -211,6 +221,9 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentError,
 	SetEventAsCurrentResponse,
+	SetUserRoleData,
+	SetUserRoleError,
+	SetUserRoleResponse,
 	SetVotingTimeRangeData,
 	SetVotingTimeRangeError,
 	SetVotingTimeRangeResponse,
@@ -233,6 +246,9 @@ import type {
 	UnlinkTelegramAccountData,
 	UnlinkTelegramAccountError,
 	UnlinkTelegramAccountResponse,
+	UnlinkUserTicketData,
+	UnlinkUserTicketError,
+	UnlinkUserTicketResponse,
 	UnlinkVkAccountData,
 	UnlinkVkAccountError,
 	UnlinkVkAccountResponse,
@@ -2073,7 +2089,7 @@ export const listUsersQueryKey = (options?: Options<ListUsersData>) =>
 /**
  * List users
  *
- * Paginated, searchable directory of all users. Search matches a case-insensitive substring of the username or email. Requires users:read.
+ * Newest-first, filterable directory of all users. Search matches a case-insensitive substring of the username, email or ticket number; the filters combine with AND. Requires users:read.
  */
 export const listUsersOptions = (options?: Options<ListUsersData>) =>
 	queryOptions<
@@ -2101,7 +2117,7 @@ export const listUsersInfiniteQueryKey = (
 /**
  * List users
  *
- * Paginated, searchable directory of all users. Search matches a case-insensitive substring of the username or email. Requires users:read.
+ * Newest-first, filterable directory of all users. Search matches a case-insensitive substring of the username, email or ticket number; the filters combine with AND. Requires users:read.
  */
 export const listUsersInfiniteOptions = (options?: Options<ListUsersData>) => {
 	const opts = infiniteQueryOptions<
@@ -2109,7 +2125,7 @@ export const listUsersInfiniteOptions = (options?: Options<ListUsersData>) => {
 		ListUsersError,
 		InfiniteData<ListUsersResponse>,
 		QueryKey<Options<ListUsersData>>,
-		number | Pick<QueryKey<Options<ListUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
+		string | null | Pick<QueryKey<Options<ListUsersData>>[0], 'body' | 'headers' | 'path' | 'query'>
 	>(
 		// @ts-ignore
 		{
@@ -2123,7 +2139,7 @@ export const listUsersInfiniteOptions = (options?: Options<ListUsersData>) => {
 						? pageParam
 						: {
 								query: {
-									offset: pageParam
+									cursor: pageParam
 								}
 							};
 				const params = createInfiniteParams(queryKey, page);
@@ -2174,7 +2190,7 @@ export const getUserQueryKey = (options: Options<GetUserData>) =>
 /**
  * Get user details
  *
- * Profile basics and linked external accounts for one user. Requires users:read.
+ * Profile basics, linked external accounts and granted permissions for one user. Requires users:read.
  */
 export const getUserOptions = (options: Options<GetUserData>) =>
 	queryOptions<GetUserResponse, GetUserError, GetUserResponse, ReturnType<typeof getUserQueryKey>>({
@@ -2189,3 +2205,115 @@ export const getUserOptions = (options: Options<GetUserData>) =>
 		},
 		queryKey: getUserQueryKey(options)
 	});
+
+/**
+ * Change a user's role
+ *
+ * Sets another user's role. Requires users:manage; an organiser cannot change their own role.
+ */
+export const setUserRoleMutation = (
+	options?: Partial<Options<SetUserRoleData>>
+): MutationOptions<SetUserRoleResponse, SetUserRoleError, Options<SetUserRoleData>> => {
+	const mutationOptions: MutationOptions<
+		SetUserRoleResponse,
+		SetUserRoleError,
+		Options<SetUserRoleData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await setUserRole({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Revoke a permission
+ *
+ * Revokes one permission from another user; idempotent. Requires the superuser grant. The superuser grant itself is CLI-only.
+ */
+export const revokeUserPermissionMutation = (
+	options?: Partial<Options<RevokeUserPermissionData>>
+): MutationOptions<
+	RevokeUserPermissionResponse,
+	RevokeUserPermissionError,
+	Options<RevokeUserPermissionData>
+> => {
+	const mutationOptions: MutationOptions<
+		RevokeUserPermissionResponse,
+		RevokeUserPermissionError,
+		Options<RevokeUserPermissionData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await revokeUserPermission({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Grant a permission
+ *
+ * Grants one permission to another user; idempotent. Requires the superuser grant. The superuser grant itself is CLI-only.
+ */
+export const grantUserPermissionMutation = (
+	options?: Partial<Options<GrantUserPermissionData>>
+): MutationOptions<
+	GrantUserPermissionResponse,
+	GrantUserPermissionError,
+	Options<GrantUserPermissionData>
+> => {
+	const mutationOptions: MutationOptions<
+		GrantUserPermissionResponse,
+		GrantUserPermissionError,
+		Options<GrantUserPermissionData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await grantUserPermission({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Unlink a user's ticket
+ *
+ * Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Idempotent. Requires users:manage.
+ */
+export const unlinkUserTicketMutation = (
+	options?: Partial<Options<UnlinkUserTicketData>>
+): MutationOptions<
+	UnlinkUserTicketResponse,
+	UnlinkUserTicketError,
+	Options<UnlinkUserTicketData>
+> => {
+	const mutationOptions: MutationOptions<
+		UnlinkUserTicketResponse,
+		UnlinkUserTicketError,
+		Options<UnlinkUserTicketData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await unlinkUserTicket({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};

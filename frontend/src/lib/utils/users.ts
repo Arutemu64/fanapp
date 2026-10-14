@@ -1,7 +1,8 @@
+// The one place the role names live, so every screen says the same thing.
 const roleLabels: Record<string, string> = {
-	visitor: 'Посетитель',
+	visitor: 'Зритель',
 	participant: 'Участник',
-	helper: 'Волонтер',
+	helper: 'Волонтёр',
 	org: 'Организатор'
 };
 

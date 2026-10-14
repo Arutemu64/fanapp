@@ -1,10 +1,11 @@
 from typing import Protocol
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.user import (
     CurrentUserDTO,
     UserBaseDTO,
     UserDetailsDTO,
+    UserListFilter,
     UserListItemDTO,
 )
 from fanfan.core.models.user import User
@@ -36,13 +37,12 @@ class UserGateway(Protocol):
 
     async def read_schedule_editors(self) -> list[UserBaseDTO]: ...
 
-    # `search` filters by a case-insensitive substring of username or email;
-    # None (or blank) returns everyone. count_users applies the same filter so
-    # the two agree for pagination.
+    # Newest first, read with pagination.fetch_limit for cut_page. count_users
+    # applies the same filter, so the total matches what the pages add up to.
     async def read_users_page(
-        self, *, pagination: Pagination, search: str | None
+        self, *, pagination: CursorPagination, user_filter: UserListFilter
     ) -> list[UserListItemDTO]: ...
 
-    async def count_users(self, *, search: str | None) -> int: ...
+    async def count_users(self, *, user_filter: UserListFilter) -> int: ...
 
     async def read_user_details(self, user_id: UserId) -> UserDetailsDTO | None: ...

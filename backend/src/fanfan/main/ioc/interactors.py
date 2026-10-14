@@ -143,6 +143,11 @@ from fanfan.application.interactors.tickets.sync_tickets import SyncTickets
 from fanfan.application.interactors.users.create_user import CreateUser
 from fanfan.application.interactors.users.get_user import GetUser
 from fanfan.application.interactors.users.list_users import ListUsers
+from fanfan.application.interactors.users.set_user_permission import (
+    SetUserPermission,
+)
+from fanfan.application.interactors.users.set_user_role import SetUserRole
+from fanfan.application.interactors.users.unlink_user_ticket import UnlinkUserTicket
 from fanfan.application.interactors.voting.add_vote import AddVote
 from fanfan.application.interactors.voting.cancel_vote import (
     CancelVote,
@@ -213,6 +218,9 @@ class InteractorsProvider(Provider):
         ListFeedback,
         ListUsers,
         GetUser,
+        SetUserRole,
+        SetUserPermission,
+        UnlinkUserTicket,
         CreateUser,
         AuthenticateUser,
         GetCurrentUser,

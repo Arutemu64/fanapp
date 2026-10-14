@@ -27,3 +27,4 @@ class Permission(enum.StrEnum):
     FEEDBACK_READ = "feedback:read"
     VOTING_MANAGE = "voting:manage"
     USERS_READ = "users:read"
+    USERS_MANAGE = "users:manage"

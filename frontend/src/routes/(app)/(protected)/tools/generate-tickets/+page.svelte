@@ -2,6 +2,8 @@
 	import { ClipboardCopy } from '@lucide/svelte';
 	import { createMutation } from '@tanstack/svelte-query';
 
+	import type { UserRole } from '#lib/api/generated/index.js';
+
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { generateTicketsMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
@@ -12,26 +14,17 @@
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { USER_ROLES } from '#lib/constants/users.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { getRoleLabel } from '#lib/utils/users.js';
 
 	const toastService = getToastService();
-
-	type Role = 'visitor' | 'participant' | 'helper' | 'org';
-
-	const ROLE_OPTIONS: { value: Role; name: string }[] = [
-		{ value: 'visitor', name: 'Зритель' },
-		{ value: 'participant', name: 'Участник' },
-		{ value: 'helper', name: 'Волонтёр' },
-		{ value: 'org', name: 'Организатор' }
-	];
 
 	const MIN_AMOUNT = 1;
 	const MAX_AMOUNT = 100;
 
-	let selectedRole = $state<Role>('visitor');
-	let selectedRoleLabel = $derived(
-		ROLE_OPTIONS.find((option) => option.value === selectedRole)?.name ?? 'Выбери роль'
-	);
+	let selectedRole = $state<UserRole>('visitor');
+	let selectedRoleLabel = $derived(getRoleLabel(selectedRole));
 	// A `type="number"` binding yields a number, or an empty value when the field is
 	// cleared — never a string. Validated as an integer in range on submit.
 	let amountInput = $state<number | undefined>(10);
@@ -132,9 +125,9 @@
 					</Select.Trigger>
 					<Select.Content>
 						<Select.Group>
-							{#each ROLE_OPTIONS as option (option.value)}
-								<Select.Item value={option.value} label={option.name}>
-									{option.name}
+							{#each USER_ROLES as role (role)}
+								<Select.Item value={role} label={getRoleLabel(role)}>
+									{getRoleLabel(role)}
 								</Select.Item>
 							{/each}
 						</Select.Group>

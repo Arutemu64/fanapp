@@ -3904,7 +3904,7 @@
           "Users"
         ],
         "summary": "List users",
-        "description": "Paginated, searchable directory of all users. Search matches a case-insensitive substring of the username or email. Requires users:read.",
+        "description": "Newest-first, filterable directory of all users. Search matches a case-insensitive substring of the username, email or ticket number; the filters combine with AND. Requires users:read.",
         "operationId": "list_users",
         "security": [
           {
@@ -3925,15 +3925,23 @@
             }
           },
           {
-            "name": "offset",
+            "name": "cursor",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
-            }
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           },
           {
             "name": "search",
@@ -3950,6 +3958,38 @@
                 }
               ],
               "title": "Search"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/UserRole"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "name": "has_ticket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Ticket"
             }
           }
         ],
@@ -4060,7 +4100,7 @@
           "Users"
         ],
         "summary": "Get user details",
-        "description": "Profile basics and linked external accounts for one user. Requires users:read.",
+        "description": "Profile basics, linked external accounts and granted permissions for one user. Requires users:read.",
         "operationId": "get_user",
         "security": [
           {
@@ -4124,6 +4164,350 @@
           },
           "404": {
             "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user_id}/role": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Change a user's role",
+        "description": "Sets another user's role. Requires users:manage; an organiser cannot change their own role.",
+        "operationId": "set_user_role",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the user to change.",
+              "title": "User Id"
+            },
+            "description": "ID of the user to change."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_set_user_role"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Role changed."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing users:manage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Tried to change own role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user_id}/permissions/{permission}": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Grant a permission",
+        "description": "Grants one permission to another user; idempotent. Requires the superuser grant. The superuser grant itself is CLI-only.",
+        "operationId": "grant_user_permission",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the user to change.",
+              "title": "User Id"
+            },
+            "description": "ID of the user to change."
+          },
+          {
+            "name": "permission",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Permission",
+              "description": "Permission to grant."
+            },
+            "description": "Permission to grant."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Permission granted."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing the superuser grant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Own permissions, or the superuser grant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Revoke a permission",
+        "description": "Revokes one permission from another user; idempotent. Requires the superuser grant. The superuser grant itself is CLI-only.",
+        "operationId": "revoke_user_permission",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the user to change.",
+              "title": "User Id"
+            },
+            "description": "ID of the user to change."
+          },
+          {
+            "name": "permission",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Permission",
+              "description": "Permission to revoke."
+            },
+            "description": "Permission to revoke."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Permission revoked."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing the superuser grant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Own permissions, or the superuser grant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user_id}/ticket": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Unlink a user's ticket",
+        "description": "Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Idempotent. Requires users:manage.",
+        "operationId": "unlink_user_ticket",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the user to change.",
+              "title": "User Id"
+            },
+            "description": "ID of the user to change."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Ticket unlinked and votes deleted."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing users:manage.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4223,6 +4607,18 @@
           "password"
         ],
         "title": "Body_login"
+      },
+      "Body_set_user_role": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "Body_set_user_role"
       },
       "ChangeEmailInput": {
         "properties": {
@@ -4506,6 +4902,7 @@
               "ALREADY_VOTED_IN_THIS_NOMINATION",
               "APP_SETTINGS_NOT_FOUND",
               "AUTHENTICATION_ERROR",
+              "CANNOT_CHANGE_OWN_ACCESS",
               "CANNOT_REMOVE_LAST_SIGN_IN_METHOD",
               "CAPTCHA_VERIFICATION_FAILED",
               "CURRENT_EVENT_NOT_ALLOWED",
@@ -4531,6 +4928,7 @@
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",
               "PARTICIPANT_NOT_FOUND",
+              "PERMISSION_NOT_ASSIGNABLE",
               "PUSH_SUBSCRIPTION_ALREADY_EXISTS",
               "PUSH_SUBSCRIPTION_NOT_FOUND",
               "SAME_EVENTS_ARE_NOT_ALLOWED",
@@ -5001,12 +5399,24 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
           }
         },
         "type": "object",
         "required": [
           "users",
-          "total"
+          "total",
+          "next_cursor"
         ],
         "title": "ListUsersOutput"
       },
@@ -5470,7 +5880,8 @@
           "demo:seed",
           "feedback:read",
           "voting:manage",
-          "users:read"
+          "users:read",
+          "users:manage"
         ],
         "title": "Permission"
       },
@@ -6303,12 +6714,24 @@
             ],
             "title": "Ticket Number"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "social_links": {
             "items": {
               "$ref": "#/components/schemas/UserSocialLinkDTO"
             },
             "type": "array",
             "title": "Social Links"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array",
+            "title": "Permissions"
           }
         },
         "type": "object",
@@ -6318,7 +6741,9 @@
           "role",
           "email",
           "ticket_number",
-          "social_links"
+          "created_at",
+          "social_links",
+          "permissions"
         ],
         "title": "UserDetailsDTO"
       },
@@ -6358,6 +6783,11 @@
               }
             ],
             "title": "Ticket Number"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
           }
         },
         "type": "object",
@@ -6366,7 +6796,8 @@
           "username",
           "role",
           "email",
-          "ticket_number"
+          "ticket_number",
+          "created_at"
         ],
         "title": "UserListItemDTO"
       },

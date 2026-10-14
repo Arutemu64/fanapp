@@ -94,5 +94,8 @@ class SqlVoteGateway(VoteGateway):
             or 0
         )
 
+    async def delete_all_by_user(self, user_id: UserId) -> None:
+        await self.session.execute(delete(VoteORM).where(VoteORM.user_id == user_id))
+
     async def delete(self, vote: Vote) -> None:
         await self.session.execute(delete(VoteORM).where(VoteORM.id == vote.id))

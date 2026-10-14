@@ -161,3 +161,13 @@ async def users_reader(dishka_request: AsyncContainer) -> User:
     Create a user granted users:read.
     """
     return await _org_user_with(dishka_request, "users_reader", Permission.USERS_READ)
+
+
+@pytest_asyncio.fixture
+async def users_manager(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted users:manage.
+    """
+    return await _org_user_with(
+        dishka_request, "users_manager", Permission.USERS_MANAGE
+    )
