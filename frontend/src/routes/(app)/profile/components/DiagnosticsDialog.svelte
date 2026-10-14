@@ -1,0 +1,250 @@
+<script lang="ts">
+	import { Copy, RotateCcw, Stethoscope } from '@lucide/svelte';
+	import { type QueryClient, useQueryClient } from '@tanstack/svelte-query';
+	import { del } from 'idb-keyval';
+	import { untrack } from 'svelte';
+
+	import type { CurrentUserDto } from '#lib/api/generated/index.js';
+
+	import { checkSubscription } from '#lib/api/generated/index.js';
+	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { browserPush } from '#lib/services/pushBrowser.js';
+	import { getPwaService } from '#lib/services/pwa.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { getRoleLabel } from '#lib/utils/users.js';
+
+	import {
+		buildSections,
+		CACHE_LABELS,
+		type CacheEntry,
+		type DiagnosticsSnapshot,
+		formatReport,
+		type PushDiagnostics,
+		type ServiceWorkerStatus,
+		type StorageDiagnostics
+	} from '../diagnostics.js';
+
+	interface Props {
+		open: boolean;
+		user: CurrentUserDto | null;
+		version: string;
+		build: string;
+	}
+
+	let { open = $bindable(false), user, version, build }: Props = $props();
+
+	const queryClient = useQueryClient();
+	const pwa = getPwaService();
+	const toastService = getToastService();
+
+	// createAsyncStoragePersister's default key; the root layout leaves it unset.
+	const PERSISTED_CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
+
+	let snapshot = $state.raw<DiagnosticsSnapshot | null>(null);
+	let capturedAt = $state(0);
+	let sections = $derived(snapshot ? buildSections(snapshot, capturedAt) : []);
+	let confirmResetOpen = $state(false);
+	let isResetting = $state(false);
+
+	// Gathered on open rather than kept live: it is a snapshot for a report, and
+	// reading it once keeps the Push and Storage API calls off the profile screen.
+	// Untracked so only `open` re-runs it, not the reachability it records.
+	$effect(() => {
+		if (open) untrack(() => void refresh());
+	});
+
+	async function refresh() {
+		const [serviceWorker, push, storage] = await Promise.all([
+			readServiceWorker(),
+			readPush(),
+			readStorage()
+		]);
+		capturedAt = Date.now();
+		snapshot = {
+			version,
+			build,
+			account: user ? `@${user.username} · ${getRoleLabel(user.role)}` : null,
+			installed: pwa.isInstalled,
+			userAgent: navigator.userAgent,
+			serverReachable: reachability.current,
+			deviceOnline: reachability.deviceOnline,
+			serviceWorker,
+			push,
+			storage,
+			cache: readCache(queryClient)
+		};
+	}
+
+	async function readServiceWorker(): Promise<ServiceWorkerStatus> {
+		if (!('serviceWorker' in navigator)) return 'unsupported';
+		const registration = await navigator.serviceWorker.getRegistration().catch(() => undefined);
+		if (!registration) return 'none';
+		if (registration.waiting) return 'update-waiting';
+		if (registration.active) return 'active';
+		return 'installing';
+	}
+
+	async function readPush(): Promise<PushDiagnostics> {
+		if (!browserPush.isSupported()) {
+			return {
+				permission: 'unsupported',
+				subscribed: false,
+				pushService: null,
+				serverRegistered: null
+			};
+		}
+		const subscription = await browserPush.getSubscription().catch(() => null);
+		let serverRegistered: boolean | null = null;
+		// Only a signed-in user has subscriptions on the server, and offline the
+		// question can't be asked.
+		if (subscription && user && reachability.current) {
+			try {
+				const { data } = await checkSubscription({ query: { endpoint: subscription.endpoint } });
+				serverRegistered = data?.subscribed ?? null;
+			} catch {
+				serverRegistered = null;
+			}
+		}
+		return {
+			permission: browserPush.permission(),
+			subscribed: subscription !== null,
+			pushService: subscription ? new URL(subscription.endpoint).host : null,
+			serverRegistered
+		};
+	}
+
+	// https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate
+	async function readStorage(): Promise<StorageDiagnostics> {
+		const storage = navigator.storage as StorageManager | undefined;
+		const [estimate, persisted] = await Promise.all([
+			storage?.estimate?.().catch(() => undefined),
+			storage?.persisted?.().catch(() => undefined)
+		]);
+		return {
+			usageBytes: estimate?.usage ?? null,
+			quotaBytes: estimate?.quota ?? null,
+			persisted: persisted ?? null
+		};
+	}
+
+	function readCache(client: QueryClient): CacheEntry[] {
+		const newestById: Record<string, number> = {};
+		for (const query of client.getQueryCache().getAll()) {
+			const [{ _id }] = query.queryKey as [{ _id: string }];
+			if (!(_id in CACHE_LABELS) || query.state.data === undefined) continue;
+			const updatedAt = query.state.dataUpdatedAt;
+			newestById[_id] = Math.max(newestById[_id] ?? 0, updatedAt);
+		}
+		const entries: CacheEntry[] = [];
+		for (const [id, label] of Object.entries(CACHE_LABELS)) {
+			const updatedAt = newestById[id];
+			if (updatedAt) entries.push({ label, updatedAt });
+		}
+		return entries;
+	}
+
+	async function copyReport() {
+		if (!snapshot) return;
+		try {
+			await navigator.clipboard.writeText(formatReport(snapshot, capturedAt));
+			toastService.add('Отчёт скопирован. Вставь его в обратную связь', 'success');
+		} catch (error) {
+			console.error('Failed to copy diagnostics report:', error);
+			toastService.add('Не удалось скопировать. Сделай скриншот этого окна', 'error');
+		}
+	}
+
+	// The reload after this fetches everything afresh, which is why it is offered
+	// online only: offline it would leave nothing to open the app with. The session
+	// cookie is not touched, so the user stays signed in.
+	async function resetAndReload() {
+		isResetting = true;
+		try {
+			queryClient.clear();
+			await del(PERSISTED_CACHE_KEY);
+			if ('caches' in window) {
+				const keys = await caches.keys();
+				await Promise.all(keys.map((key) => caches.delete(key)));
+			}
+			if ('serviceWorker' in navigator) {
+				const registrations = await navigator.serviceWorker.getRegistrations();
+				await Promise.all(registrations.map((registration) => registration.unregister()));
+			}
+		} catch (error) {
+			// Whatever was cleared stays cleared; the reload still gets a fresh bundle.
+			console.error('Diagnostics reset failed part-way:', error);
+		}
+		location.reload();
+	}
+</script>
+
+<Dialog.Root bind:open>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<Stethoscope class="size-5 text-muted-foreground" />
+				Диагностика
+			</Dialog.Title>
+			<Dialog.Description>
+				Если что-то не работает, скопируй отчёт и отправь его в обратную связь.
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<div class="flex flex-col gap-4">
+			{#each sections as section (section.title)}
+				<section>
+					<h3 class="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+						{section.title}
+					</h3>
+					<dl class="divide-y divide-border rounded-xl border border-border text-sm">
+						{#each section.rows as row (row.label)}
+							<div class="flex items-baseline justify-between gap-3 px-3 py-2">
+								<dt class="text-muted-foreground">{row.label}</dt>
+								<dd class="min-w-0 text-right font-medium break-words">{row.value}</dd>
+							</div>
+						{/each}
+					</dl>
+				</section>
+			{/each}
+		</div>
+
+		<Dialog.Footer class="flex flex-col gap-2 sm:flex-col">
+			<Button class="w-full" disabled={!snapshot} onclick={copyReport}>
+				<Copy data-icon="inline-start" />
+				Скопировать отчёт
+			</Button>
+			<Button
+				variant="outline"
+				class="w-full"
+				disabled={!reachability.current || isResetting}
+				onclick={() => (confirmResetOpen = true)}
+			>
+				<RotateCcw data-icon="inline-start" />
+				Сбросить кэш и перезагрузить
+			</Button>
+			{#if !reachability.current}
+				<p class="text-center text-xs text-muted-foreground">
+					Сброс доступен только с интернетом&nbsp;— без него приложение не откроется.
+				</p>
+			{/if}
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<AlertDialog.Root bind:open={confirmResetOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>Сбросить кэш?</AlertDialog.Title>
+			<AlertDialog.Description>
+				Приложение забудет сохранённую программу и загрузит всё заново. Из аккаунта ты не выйдешь.
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
+			<AlertDialog.Action onclick={resetAndReload}>Сбросить</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

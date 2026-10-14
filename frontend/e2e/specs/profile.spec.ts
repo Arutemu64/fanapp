@@ -149,3 +149,30 @@ test.describe('logging out', () => {
 		expect(api.countCalls('POST /auth/logout')).toBe(1);
 	});
 });
+
+test.describe('diagnostics', () => {
+	test('opens from five taps on the version line and copies a report', async ({
+		page,
+		context,
+		api
+	}) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		api.use(loggedInAs());
+		await page.goto('/profile');
+
+		const version = page.getByRole('button', { name: /Версия 1\.0\.0/ });
+		await version.click({ clickCount: 4 });
+		await expect(page.getByRole('dialog', { name: 'Диагностика' })).toHaveCount(0);
+		await version.click();
+
+		const dialog = page.getByRole('dialog', { name: 'Диагностика' });
+		await expect(dialog).toContainText('Сервер доступен');
+		await expect(dialog).toContainText('0123456');
+
+		await dialog.getByRole('button', { name: 'Скопировать отчёт' }).click();
+		const report = await page.evaluate(() => navigator.clipboard.readText());
+		expect(report).toContain('Аккаунт: @test_visitor');
+		expect(report).toContain('Сборка целиком: 0123456789abcdef0123456789abcdef01234567');
+		expect(api.unmatched).toEqual([]);
+	});
+});
