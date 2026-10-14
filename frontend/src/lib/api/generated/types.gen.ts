@@ -289,10 +289,12 @@ export type ErrorMessage = {
 		| 'SUBSCRIPTION_ALREADY_EXISTS'
 		| 'SUBSCRIPTION_NOT_FOUND'
 		| 'SYNC_ALREADY_RUNNING'
+		| 'TEST_NOTIFICATION_TOO_FAST'
 		| 'TICKET_ALREADY_USED'
 		| 'TICKET_BARCODE_COLLISION'
 		| 'TICKET_NOT_FOUND'
 		| 'TICKET_NOT_LINKED'
+		| 'TICKET_REVOKED'
 		| 'TOO_MANY_ATTEMPTS'
 		| 'TOO_MANY_LOGIN_ATTEMPTS'
 		| 'TOO_MANY_OTP_ATTEMPTS'
@@ -1214,10 +1216,6 @@ export type TCloudWebhookOrderRef = {
  */
 export type TCloudWebhookPayload = {
 	data: TCloudWebhookOrderRef;
-	/**
-	 * Type
-	 */
-	type: string;
 };
 
 /**
@@ -3195,6 +3193,10 @@ export type SendTestNotificationErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationErrorResponse;
+	/**
+	 * Rate limited — editing too fast.
+	 */
+	429: ErrorMessage;
 };
 
 export type SendTestNotificationError =

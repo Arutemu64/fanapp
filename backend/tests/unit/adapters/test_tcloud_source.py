@@ -9,8 +9,14 @@ from fanfan.adapters.api.ticketscloud.dto.order import (
     OrderStatus,
 )
 from fanfan.adapters.api.ticketscloud.dto.pagination import Pagination
+from fanfan.adapters.api.ticketscloud.dto.refund import (
+    Refund,
+    RefundsResponse,
+    RefundStatus,
+)
 from fanfan.adapters.api.ticketscloud.dto.ticket import Ticket
 from fanfan.adapters.api.ticketscloud.source import TCloudSource
+from fanfan.application.ports.sources.tickets import RevokedExternalTicket
 from fanfan.core.vo.user import UserRole
 
 pytestmark = pytest.mark.unit
@@ -20,20 +26,7 @@ EVENT_UNKNOWN = "event-unknown"
 
 
 def _ticket(ticket_id: str, *, barcode: str | None) -> Ticket:
-    return Ticket(
-        id=ticket_id,
-        serial="S",
-        number=1,
-        barcode=barcode,
-        status="ok",
-        price="0",
-        nominal="0",
-        discount="0",
-        extra="",
-        full="",
-        set="",
-        tariff=None,
-    )
+    return Ticket(id=ticket_id, barcode=barcode)
 
 
 def _order(
@@ -62,23 +55,42 @@ class FakeTCloudClient(TCloudClient):
     """
 
     def __init__(
-        self, pages: list[list[Order]], orders_by_id: dict[str, Order] | None = None
+        self,
+        pages: list[list[Order]],
+        orders_by_id: dict[str, Order] | None = None,
+        refund_pages: list[list[Refund]] | None = None,
     ) -> None:
         self._pages = pages
         self._orders_by_id = orders_by_id or {}
+        self._refund_pages = refund_pages or [[]]
+        self.order_statuses: list[OrderStatus] = []
+        self.refund_statuses: list[RefundStatus] = []
 
-    async def get_orders(self, page: int = 1, page_size: int = 200) -> OrdersResponse:
+    async def get_orders(
+        self, status: OrderStatus, page: int = 1, page_size: int = 200
+    ) -> OrdersResponse:
+        self.order_statuses.append(status)
         data = self._pages[page - 1]
         return OrdersResponse(
             data=data,
             pagination=Pagination(
                 page=page, page_size=page_size, total=len(self._pages)
             ),
-            total_count=sum(len(p) for p in self._pages),
         )
 
     async def get_order(self, order_id: str) -> Order | None:
         return self._orders_by_id.get(order_id)
+
+    async def get_refunds(
+        self, status: RefundStatus, page: int = 1, page_size: int = 200
+    ) -> RefundsResponse:
+        self.refund_statuses.append(status)
+        return RefundsResponse(
+            data=self._refund_pages[page - 1],
+            pagination=Pagination(
+                page=page, page_size=page_size, total=len(self._refund_pages)
+            ),
+        )
 
 
 async def test_fetch_order_tickets_filters_and_maps_role() -> None:
@@ -96,6 +108,7 @@ async def test_fetch_order_tickets_filters_and_maps_role() -> None:
     tickets = await source.fetch_order_tickets("o1")
 
     assert len(tickets) == 1
+    assert tickets[0].order_id == "o1"
     assert tickets[0].external_id == "t1"
     assert tickets[0].barcode == "B1"
     assert tickets[0].role is UserRole.HELPER
@@ -139,9 +152,34 @@ async def test_fetch_all_tickets_paginates_and_streams() -> None:
             ),
         ],
     ]
-    source = TCloudSource(FakeTCloudClient(pages=pages), _config())
+    client = FakeTCloudClient(pages=pages)
+    source = TCloudSource(client, _config())
 
     collected = [ticket async for ticket in source.fetch_all_tickets()]
 
     # t3 dropped (order not DONE); t1 and t2 streamed across both pages.
     assert [t.external_id for t in collected] == ["t1", "t2"]
+    assert client.order_statuses == [OrderStatus.DONE, OrderStatus.DONE]
+
+
+async def test_fetch_revoked_tickets_reads_every_approved_refund_page() -> None:
+    def refund(refund_id: str, order_id: str, tickets: list[str]) -> Refund:
+        return Refund(id=refund_id, order=order_id, tickets=tickets)
+
+    client = FakeTCloudClient(
+        pages=[[]],
+        refund_pages=[
+            [refund("r1", "o1", ["t1", "t2"])],
+            [refund("r2", "o2", ["t3"])],
+        ],
+    )
+    source = TCloudSource(client, _config())
+
+    revoked = [ticket async for ticket in source.fetch_revoked_tickets()]
+
+    assert revoked == [
+        RevokedExternalTicket(order_id="o1", external_id="t1"),
+        RevokedExternalTicket(order_id="o1", external_id="t2"),
+        RevokedExternalTicket(order_id="o2", external_id="t3"),
+    ]
+    assert client.refund_statuses == [RefundStatus.APPROVED, RefundStatus.APPROVED]

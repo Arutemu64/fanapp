@@ -93,16 +93,16 @@ aren't re-audited). Any of these can become a plan on request.
   file is `services/cooldown.svelte.ts`. One-line fix.
 
 **Direction (options for the maintainer, not defects):**
-- **Ticket revocation/refund lifecycle** — three converging TODOs
-  (`tickets_import.py:22-27`, `sync_tickets.py:47`, `webhooks.py:26-28`); the
-  ticket flow is additive-only today. Wants a design/spike plan (TicketsCloud
-  reuses ids, so naive deletion is unsafe). HIGH-confidence grounding.
+- ~~**Ticket revocation/refund lifecycle**~~ — RESOLVED (#810): imported
+  tickets are keyed by sale (order id + ticket id), and each sync revokes the
+  sales named by approved refund requests; a revoked ticket blocks new links
+  only. See `docs/backend.md` (ACL section).
 - **Schedule export** — import exists, export doesn't; organizers edit live but
   can't get the schedule back out. The parser's column contract already defines
   the shape. MED confidence.
-- **Webhook event-type routing** — `webhooks.py` parses `payload.type` but
-  ignores it; one dispatch away, and the natural home for the revocation branch.
-  Sequence with the revocation work, not speculatively.
+- ~~**Webhook event-type routing**~~ — RESOLVED by dropping `type` rather than
+  branching on it: the webhook format is undocumented, so only the order id is
+  read and the order's state is resolved from the API.
 
 **Cleared (not findings):** no god modules; CORS is an explicit allowlist (never
 `*`); the notification `{@html}` sink is sanitized at a single `nh3` chokepoint;

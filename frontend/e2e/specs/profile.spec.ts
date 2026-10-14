@@ -149,3 +149,34 @@ test.describe('logging out', () => {
 		expect(api.countCalls('POST /auth/logout')).toBe(1);
 	});
 });
+
+test.describe('diagnostics', () => {
+	test('opens from five taps on the version line and copies a report', async ({ page, api }) => {
+		// Captured instead of read back: WebKit rejects `clipboard-write` as an
+		// unknown permission, so granting it cannot be shared across projects.
+		await page.addInitScript(() => {
+			navigator.clipboard.writeText = (text: string) => {
+				(window as { copiedText?: string }).copiedText = text;
+				return Promise.resolve();
+			};
+		});
+		api.use(loggedInAs());
+		await page.goto('/profile');
+
+		const version = page.getByRole('button', { name: /Версия 1\.0\.0/ });
+		await version.click({ clickCount: 4 });
+		await expect(page.getByRole('dialog', { name: 'Диагностика' })).toHaveCount(0);
+		await version.click();
+
+		const dialog = page.getByRole('dialog', { name: 'Диагностика' });
+		await expect(dialog).toContainText('Сервер доступен');
+		await expect(dialog).toContainText('0123456');
+
+		await dialog.getByRole('button', { name: 'Скопировать отчёт' }).click();
+		await expect(page.getByText('Отчёт скопирован')).toBeVisible();
+		const report = await page.evaluate(() => (window as { copiedText?: string }).copiedText);
+		expect(report).toContain('Аккаунт: @test_visitor');
+		expect(report).toContain('Сборка целиком: 0123456789abcdef0123456789abcdef01234567');
+		expect(api.unmatched).toEqual([]);
+	});
+});

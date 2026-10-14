@@ -28,6 +28,7 @@
 	import { isOrg } from '#lib/utils/permissions.js';
 	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
 
+	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
 	import LogoutButton from './components/LogoutButton.svelte';
 	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
@@ -73,6 +74,22 @@
 	// outside Docker) hides the line rather than showing a blank one.
 	const appVersion = __APP_VERSION__;
 	const buildId = __APP_BUILD__.slice(0, 7);
+
+	// Five taps on the version line open the diagnostics sheet: out of the way of
+	// an attendee who never needs it, easy to talk someone through at the info desk.
+	const DIAGNOSTICS_TAPS = 5;
+	const DIAGNOSTICS_TAP_WINDOW_MS = 2000;
+	let versionTaps: number[] = [];
+	let diagnosticsOpen = $state(false);
+
+	function handleVersionTap() {
+		const now = Date.now();
+		versionTaps = [...versionTaps, now].filter((at) => now - at < DIAGNOSTICS_TAP_WINDOW_MS);
+		if (versionTaps.length >= DIAGNOSTICS_TAPS) {
+			versionTaps = [];
+			diagnosticsOpen = true;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -227,10 +244,14 @@
 			<Heart class="inline size-3.5 text-red-400" />
 		</p>
 		{#if appVersion}
-			<p class="mt-0.5">
+			<!-- A button so a keyboard reaches the diagnostics too, styled as the plain
+			     line it was so the gesture stays out of sight. -->
+			<button type="button" class="mt-0.5 cursor-default select-none" onclick={handleVersionTap}>
 				Версия {appVersion}
 				{#if buildId}· {buildId}{/if}
-			</p>
+			</button>
 		{/if}
 	</footer>
 </div>
+
+<DiagnosticsDialog bind:open={diagnosticsOpen} {user} version={appVersion} build={__APP_BUILD__} />

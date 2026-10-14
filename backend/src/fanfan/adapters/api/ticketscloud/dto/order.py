@@ -33,4 +33,3 @@ class OrderResponse:
 class OrdersResponse:
     data: list[Order]
     pagination: Pagination
-    total_count: int

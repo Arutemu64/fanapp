@@ -10,7 +10,7 @@ Widening the allowed set touches no existing row, so there is nothing to
 backfill.
 
 Revision ID: b1c2d3e4f5a6
-Revises: 03832aef92cd
+Revises: 5bd294fc9eaa
 Create Date: 2026-10-14 09:00:00.000000
 
 """
@@ -20,7 +20,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "b1c2d3e4f5a6"
-down_revision = "03832aef92cd"
+down_revision = "5bd294fc9eaa"
 branch_labels = None
 depends_on = None
 

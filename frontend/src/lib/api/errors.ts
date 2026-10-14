@@ -250,6 +250,7 @@ const ERROR_MESSAGES = {
 	TICKET_BARCODE_COLLISION: 'Не удалось создать билеты, попробуй ещё раз',
 	TICKET_NOT_FOUND: 'Билет не найден',
 	TICKET_NOT_LINKED: 'Сначала привяжи билет',
+	TICKET_REVOKED: 'По этому билету оформлен возврат',
 	USER_ALREADY_EXISTS: 'Этот адрес уже используется',
 	USER_ALREADY_HAS_PROVIDER_LINKED: 'К твоему профилю уже подключён аккаунт этого сервиса',
 	USER_ALREADY_HAS_TICKET_LINKED: 'У тебя уже привязан билет',
@@ -265,6 +266,7 @@ const ERROR_MESSAGES = {
 const RETRY_AFTER_CODES = [
 	'EMAIL_CODE_REQUEST_TOO_FAST',
 	'SCHEDULE_EDIT_TOO_FAST',
+	'TEST_NOTIFICATION_TOO_FAST',
 	'TOO_MANY_ATTEMPTS',
 	'TOO_MANY_OTP_ATTEMPTS',
 	'TOO_MANY_LOGIN_ATTEMPTS'

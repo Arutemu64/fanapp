@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 import pytest
 from dishka import AsyncContainer
@@ -13,6 +14,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.tickets import (
     TicketAlreadyUsed,
     TicketNotFound,
+    TicketRevoked,
     UserAlreadyHasTicketLinked,
 )
 from fanfan.core.models.ticket import Ticket
@@ -197,3 +199,31 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
 
     with pytest.raises(UserAlreadyHasTicketLinked):
         await interactor(LinkTicketInput(barcode="123456"))
+
+
+async def test_link_revoked_ticket_is_rejected(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(LinkTicket)
+    ticket_gateway = await dishka_request.get(TicketGateway)
+
+    ticket = Ticket(
+        id=generate_ticket_id(),
+        barcode="REFUNDED-1",
+        role=UserRole.PARTICIPANT,
+        used_by_user_id=None,
+        issued_by_user_id=None,
+        ticketscloud_ticket_id="ext-1",
+        ticketscloud_order_id="order-1",
+        revoked_at=datetime.now(UTC),
+    )
+    await ticket_gateway.add(ticket)
+    await uow.commit()
+
+    login(visitor)
+
+    with pytest.raises(TicketRevoked):
+        await interactor(LinkTicketInput(barcode="REFUNDED-1"))

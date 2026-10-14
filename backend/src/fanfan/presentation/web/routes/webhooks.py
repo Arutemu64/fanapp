@@ -22,10 +22,9 @@ class TCloudWebhookOrderRef(BaseModel):
 
 
 class TCloudWebhookPayload(BaseModel):
+    # The webhook format is undocumented, so the event type is not read either:
+    # whatever happened to the order is resolved from the API by its id.
     data: TCloudWebhookOrderRef
-    # TODO: Validate/branch on this — every event type is currently processed
-    # as a ticket order because TicketsCloud has only ever sent one kind so far.
-    type: str
 
 
 class TCloudWebhookResponse(BaseModel):

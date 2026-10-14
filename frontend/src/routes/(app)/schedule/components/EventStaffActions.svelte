@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Eye, EyeOff, Play, Shuffle, XCircle } from '@lucide/svelte';
+	import { Ellipsis, Eye, EyeOff, Play, Shuffle, XCircle } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
@@ -10,6 +10,8 @@
 		uncheckCurrentEventMutation,
 		updateScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
@@ -32,12 +34,16 @@
 	const toastService = getToastService();
 
 	const offlineGate = offlineWriteGate();
-	// Staff-action labels, hoisted so each button's title stays a single ternary
-	// (offline hint vs. action) rather than a nested one in the markup.
 	let currentActionLabel = $derived(event.is_current ? 'Снять отметку' : 'Отметить текущим');
 	let skipActionLabel = $derived(isSkipped ? 'Вернуть' : 'Пропустить');
 
+	let actionsOpen = $state(false);
 	let moveModal = $state(false);
+
+	function runFromSheet(action: () => void) {
+		actionsOpen = false;
+		action();
+	}
 
 	// Confirmation dialog for management actions. Each one broadcasts an
 	// irreversible push, so the action only runs after the staffer confirms.
@@ -177,66 +183,90 @@
 	}
 </script>
 
-<div class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-border/50 pt-2.5">
-	<!-- Icon-only staff actions: 44px square tap targets keep mobile usable while the strip stays compact on dense rows. Labels live in aria-label/title. -->
-	<!-- Mark-current is the hot, repeated live-show action, so it carries a primary tint while move/skip stay quiet ghosts. -->
-	<!-- Hidden on skipped events: a skipped event can't go on stage (backend rejects it), so don't offer the action. Still shown when it's somehow current, to keep the unmark affordance available. -->
-	{#if event.is_current || !isSkipped}
-		<button
-			type="button"
-			onclick={askToggleCurrent}
-			disabled={offlineGate.disabled || isCurrentTogglePending}
-			aria-label={currentActionLabel}
-			title={offlineGate.disabled ? offlineGate.title : currentActionLabel}
-			class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-		>
-			{#if event.is_current}
-				<XCircle class="size-5" />
-			{:else}
-				<Play class="size-5" />
-			{/if}
-		</button>
-	{/if}
+<!-- One ⋯ button beside the bell instead of an always-visible strip: these are
+	occasional actions, and three icon buttons on every row crowded the list the whole
+	audience reads. An overflow menu fits secondary, less frequent actions
+	(https://www.nngroup.com/articles/contextual-menus/). -->
+<button
+	type="button"
+	onclick={() => (actionsOpen = true)}
+	disabled={offlineGate.disabled}
+	aria-label="Управление выступлением"
+	aria-haspopup="dialog"
+	title={offlineGate.disabled ? offlineGate.title : 'Управление выступлением'}
+	class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+>
+	<Ellipsis class="size-5" />
+</button>
 
-	<button
-		type="button"
-		onclick={() => (moveModal = true)}
-		disabled={offlineGate.disabled}
-		aria-label="Перенести"
-		title={offlineGate.disabled ? offlineGate.title : 'Перенести'}
-		class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-	>
-		<Shuffle class="size-5" />
-	</button>
+<!-- A Dialog, so phones get the repo's bottom sheet and wider screens a centred
+	dialog (docs/frontend.md). Mounted only while open: the button renders once per
+	schedule row for staff. Each action closes the sheet before opening its own
+	dialog, so two modals never stack. -->
+{#if actionsOpen}
+	<Dialog.Root bind:open={actionsOpen}>
+		<Dialog.Content>
+			<Dialog.Header>
+				<Dialog.Title>{event.title}</Dialog.Title>
+				<Dialog.Description>Изменения сразу увидят все участники</Dialog.Description>
+			</Dialog.Header>
 
-	<button
-		type="button"
-		onclick={askToggleSkip}
-		disabled={offlineGate.disabled || skipMutation.isPending}
-		aria-label={skipActionLabel}
-		title={offlineGate.disabled ? offlineGate.title : skipActionLabel}
-		class={[
-			'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
-			isSkipped
-				? 'text-muted-foreground hover:bg-accent hover:text-foreground'
-				: 'text-destructive hover:bg-destructive/10'
-		]}
-	>
-		{#if isSkipped}
-			<Eye class="size-5" />
-		{:else}
-			<EyeOff class="size-5" />
-		{/if}
-	</button>
-</div>
+			<div class="flex flex-col gap-1">
+				<!-- Hidden on skipped events: a skipped event can't go on stage (backend rejects it), so don't offer the action. Still shown when it's somehow current, to keep the unmark affordance available. -->
+				{#if event.is_current || !isSkipped}
+					<Button
+						variant="ghost"
+						class="h-11 justify-start"
+						disabled={offlineGate.disabled || isCurrentTogglePending}
+						title={offlineGate.title}
+						onclick={() => runFromSheet(askToggleCurrent)}
+					>
+						{#if event.is_current}
+							<XCircle data-icon="inline-start" />
+						{:else}
+							<Play data-icon="inline-start" />
+						{/if}
+						{currentActionLabel}
+					</Button>
+				{/if}
 
-<!-- Mounted only while open, like EventCard's own dialogs: the strip renders once
+				<Button
+					variant="ghost"
+					class="h-11 justify-start"
+					disabled={offlineGate.disabled}
+					title={offlineGate.title}
+					onclick={() => runFromSheet(() => (moveModal = true))}
+				>
+					<Shuffle data-icon="inline-start" />
+					Перенести
+				</Button>
+
+				<Button
+					variant="ghost"
+					class={['h-11 justify-start', !isSkipped && 'text-destructive hover:text-destructive']}
+					disabled={offlineGate.disabled || skipMutation.isPending}
+					title={offlineGate.title}
+					onclick={() => runFromSheet(askToggleSkip)}
+				>
+					{#if isSkipped}
+						<Eye data-icon="inline-start" />
+					{:else}
+						<EyeOff data-icon="inline-start" />
+					{/if}
+					{skipActionLabel}
+				</Button>
+			</div>
+		</Dialog.Content>
+	</Dialog.Root>
+{/if}
+
+<!-- Mounted only while open, like EventCard's own dialogs: the menu renders once
 	per schedule row for staff. -->
 {#if moveModal}
 	<MoveEventModal bind:open={moveModal} {event} />
 {/if}
 
-<!-- Shared confirm dialog for the staff strip's broadcast actions. -->
+<!-- Shared confirm dialog for the broadcast actions. -->
 {#if confirmOpen && confirmConfig}
 	<ConfirmActionModal
 		bind:open={confirmOpen}

@@ -229,7 +229,7 @@ adapters for real; fake the ports that reach other external systems.**
 | `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
 | `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / NATS) |
-| `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see |
+| `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see and the refunded sales it should revoke |
 | `CosplaySource` (Cosplay2) | **fake** (`FakeCosplaySource`) | external HTTP; test supplies nominations/participants, or sets `raises` to exercise the failure path |
 
 Fakes live in `tests/fakes/` and record what they received so tests can assert

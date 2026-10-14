@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Self
 
-from fanfan.core.exceptions.tickets import TicketAlreadyUsed
+from fanfan.core.exceptions.tickets import TicketAlreadyUsed, TicketRevoked
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.ticket import TicketId, generate_ticket_barcode, generate_ticket_id
 from fanfan.core.vo.user import UserId, UserRole
@@ -15,7 +16,13 @@ class Ticket(AggregateRoot):
     used_by_user_id: UserId | None
     issued_by_user_id: UserId | None
 
+    # A TicketsCloud ticket id names a seat/slot that is sold again after a
+    # refund, so one sale is identified by the order and ticket ids together.
     ticketscloud_ticket_id: str | None
+    ticketscloud_order_id: str | None = None
+    # Set when the sale was refunded. Revocation only blocks new links: a user
+    # who already linked the ticket keeps it and their role.
+    revoked_at: datetime | None = None
 
     @classmethod
     def issue(cls, *, role: UserRole, issued_by_user_id: UserId) -> Self:
@@ -40,7 +47,13 @@ class Ticket(AggregateRoot):
     def is_used_by(self, user_id: UserId) -> bool:
         return self.used_by_user_id == user_id
 
+    @property
+    def is_revoked(self) -> bool:
+        return self.revoked_at is not None
+
     def set_as_used(self, user_id: UserId) -> None:
+        if self.is_revoked:
+            raise TicketRevoked
         if self.is_used:
             raise TicketAlreadyUsed
         self.used_by_user_id = user_id
@@ -49,3 +62,7 @@ class Ticket(AggregateRoot):
         # Freed rather than deleted: the barcode can be linked again, by the
         # same person or by whoever the organiser hands it to.
         self.used_by_user_id = None
+
+    def revoke(self, now: datetime) -> None:
+        if self.revoked_at is None:
+            self.revoked_at = now

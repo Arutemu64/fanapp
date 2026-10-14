@@ -52,7 +52,14 @@ export default defineConfig({
 		// carry. The SmartCaptcha widget refuses 127.0.0.1 and blocks the email
 		// login step. Sentry posts sampled performance traces to the DSN's
 		// /api/<project>/envelope/ path, which the API mock catches as unmatched.
-		env: { PUBLIC_SMARTCAPTCHA_CLIENT_KEY: '', PUBLIC_SENTRY_DSN: '' }
+		// A release number puts the profile footer's version line on screen, which
+		// is also the diagnostics sheet's hidden trigger.
+		env: {
+			PUBLIC_SMARTCAPTCHA_CLIENT_KEY: '',
+			PUBLIC_SENTRY_DSN: '',
+			APP_VERSION: '1.0.0',
+			APP_BUILD: '0123456789abcdef0123456789abcdef01234567'
+		}
 	},
 	projects: [
 		{
