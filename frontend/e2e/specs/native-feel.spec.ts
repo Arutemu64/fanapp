@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test';
 
-import { expect, loggedInAs, test } from '../fixtures';
+import type { GetScheduleOutput } from '../../src/lib/api/generated/types.gen';
+
+import { expect, json, loggedInAs, test } from '../fixtures';
 
 // The phone-only "native feel" layer: page transitions and the bottom-sheet dialog. Each check
 // also pins that the desktop project keeps the plain behaviour.
@@ -34,7 +36,54 @@ async function openEditProfile(page: Page) {
 	return dialog;
 }
 
+// Long enough that the page scrolls well past the top bar on any project's viewport.
+const longSchedule: GetScheduleOutput['schedule'] = Array.from({ length: 60 }, (_, index) => ({
+	id: `event-${index + 1}`,
+	number: index + 1,
+	title: `Выступление ${index + 1}`,
+	duration: 180,
+	order: index + 1,
+	is_current: false,
+	is_skipped: false,
+	nomination_title: 'Одиночное дефиле',
+	block_title: 'Блок 1',
+	queue: index + 1
+}));
+
 test.describe('native feel', () => {
+	// The document is the scroll region: SvelteKit restores it on back/forward, and the
+	// shell adds the tab-bar convention of returning a re-entered tab to where it was left.
+	test('hides the top bar on scroll and keeps a tab where it was left', async ({
+		page,
+		api
+	}, testInfo) => {
+		api.use({ ...loggedInAs(), 'GET /schedule/': json({ schedule: longSchedule }) });
+		await page.goto('/schedule');
+		await expect(page.getByText('Выступление 60')).toBeAttached();
+		const title = page.getByRole('heading', { level: 1, name: 'Программа' });
+		await expect(title).toBeInViewport();
+
+		await page.mouse.wheel(0, 1500);
+		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+		if (isDesktop(testInfo.project.name)) {
+			await expect(title).toBeInViewport();
+		} else {
+			await expect(title).not.toBeInViewport();
+		}
+		const scrolledTo = await page.evaluate(() => window.scrollY);
+
+		const tabs = page.getByRole('navigation', { name: 'Разделы' });
+		await tabs.getByRole('link', { name: 'Карта' }).click();
+		await expect(page).toHaveURL('/map');
+		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+		await tabs.getByRole('link', { name: 'Программа' }).click();
+		await expect(page).toHaveURL('/schedule');
+		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrolledTo);
+		// A programmatic restore is no scroll gesture: the bar comes back with the page.
+		await expect(title).toBeInViewport();
+	});
+
 	test('slides down and up the hierarchy and fades between tabs, on phones only', async ({
 		page,
 		api

@@ -10,7 +10,7 @@
 	import SkipLink from '#lib/components/SkipLink.svelte';
 	import { TAB_ROOTS } from '#lib/data/nav.js';
 
-	import type { LayoutProps, Snapshot } from './$types';
+	import type { LayoutProps } from './$types';
 
 	import AppBottomNav from './components/AppBottomNav.svelte';
 	import AppNavbar from './components/AppNavbar.svelte';
@@ -24,51 +24,24 @@
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
 
-	// <main> is the scroll region and lives in this layout, so it persists across
-	// navigation — SvelteKit's scroll handling only manages the window, never this
-	// element. Two mechanisms cover the two axes of return:
-	//   - snapshot captures the container's offset per history entry and restores
-	//     it on back/forward — the framework's tool for exactly this ("scroll
-	//     positions on sidebars" in the docs), persisted to sessionStorage so it
-	//     survives a reload.
-	//   - scrollPositions remembers each primary tab's offset so re-entering a tab
-	//     by a fresh tap (a push, which snapshots never restore) lands where you
-	//     left it, the native bottom-tab-bar convention. Any other forward
-	//     navigation — opening a detail page — resets to the top.
-	// The two never fire on the same navigation: snapshot restores on popstate,
-	// the tab restore on a push. behavior:'instant' overrides the element's
-	// scroll-smooth, which would otherwise animate the jump.
-	let mainElement = $state<HTMLElement | null>(null);
-
-	// Per-tab scroll offsets keyed by pathname. A plain component-scoped object,
-	// never a module singleton, so it is discarded when a logout unmounts this
-	// layout rather than leaking into the next session.
+	// The document is the scroll region, so SvelteKit's own scroll handling restores the
+	// offset on back/forward (and across a reload) and resets it on a fresh push. The one
+	// thing it doesn't do is the native bottom-tab-bar convention: re-entering a primary
+	// tab by a fresh tap lands where you left it. scrollPositions remembers each tab's
+	// offset for that, and afterNavigate below applies it on top of SvelteKit's reset.
+	// A plain component-scoped object, never a module singleton, so it is discarded when a
+	// logout unmounts this layout rather than leaking into the next session.
 	const scrollPositions: Record<string, number> = {};
 
-	export const snapshot: Snapshot<number> = {
-		capture: () => mainElement?.scrollTop ?? 0,
-		restore: (top) => restoreScroll(top)
-	};
+	// Not the CSS scroll-behavior on <html>: SvelteKit's navigation scroll reset would
+	// animate with it.
+	let scrollBehavior: ScrollBehavior = $derived(
+		prefersReducedMotion.current ? 'instant' : 'smooth'
+	);
 
-	// Programmatic scroll restore (snapshot back/forward, or a tab re-entry below).
-	// A restore is not a user gesture, so it shows the bar and re-baselines the
-	// hide-on-scroll tracker to the restored offset — otherwise the `scroll` event the
-	// jump fires would read as a full-height downward scroll and hide the bar with no
-	// input. snapshot.restore and afterNavigate can run in either order on popstate, so
-	// both must leave the same baseline; this is the single place that guarantees it.
-	function restoreScroll(top: number) {
-		mainElement?.scrollTo({ top, behavior: 'instant' });
-		navbarHidden = false;
-		// The applied offset, not the requested one: a page now too short for `top` clamps
-		// it, and if that leaves scrollTop unchanged no `scroll` event would correct this.
-		contentScrolled = (mainElement?.scrollTop ?? 0) > 0;
-		lastScrollTop = top;
-	}
-
-	// Smooth (via the element's scroll-smooth, honoured because behavior is
-	// omitted) so re-tapping the active tab eases to the top like a native tab bar.
-	function scrollMainToTop() {
-		mainElement?.scrollTo({ top: 0 });
+	// Re-tapping the active tab eases to the top, like a native tab bar.
+	function scrollPageToTop() {
+		window.scrollTo({ top: 0, behavior: scrollBehavior });
 		revealNavbar();
 	}
 
@@ -76,25 +49,21 @@
 	// own height, reveal it on any scroll back up, so content gets the viewport while
 	// the page title stays one flick away — the standard mobile "hidey bar". Reveal is
 	// deliberately faster than hide (see chromeTransitionMs) so the nav snaps back the
-	// instant you flick up. The bottom nav (primary navigation) stays put. We track
-	// <main>, not the window, because <main> is the scroll region in this shell.
+	// instant you flick up. The bottom nav (primary navigation) stays put.
 	//
-	// The chrome overlays <main> (absolute, out of flow) rather than sharing its flex
-	// column, and we slide it with `top`, never `transform`. Two constraints force this:
-	//   - Out of flow so hiding the bar can't resize <main>. When the bar shared the flow
-	//     and gave its space back on hide, the scroll region grew, which clamped scrollTop
-	//     near the bottom and fired a spurious upward `scroll` event — reveal, regrow,
-	//     re-hide: the resize/reveal loop that made the bar blink and stutter.
+	// The chrome is sticky, and we slide it with `top`, never `transform`:
+	//   - Sticky keeps its place in the flow whether shown or hidden, so hiding the bar
+	//     never changes the document's height. A bar that gave its space back on hide
+	//     would shift the content, which fires a spurious upward `scroll` event — reveal,
+	//     regrow, re-hide: a resize/reveal loop that makes the bar blink and stutter.
 	//   - `top` on this wrapper, not `transform`: a transform on the wrapper (an ancestor
 	//     of the blurred bar) re-roots the backdrop and kills the blur. Transforming the
 	//     bar element alone would keep the blur, but it would leave the connection banner
 	//     stranded below instead of sliding it up — and the moving bar must repaint its
 	//     backdrop each frame regardless, so the compositor win a transform normally buys
-	//     doesn't apply here anyway. Moving one out-of-flow wrapper via `top` costs a
-	//     cheap layout of just that element; <main> never reflows.
+	//     doesn't apply here anyway.
 	// `navbarHeight` (the bar alone) is how far we slide up on hide; `chromeHeight` (bar +
-	// connection banner, bind:offsetHeight below) is <main>'s top padding so content clears
-	// whatever chrome is showing.
+	// connection banner) sets where the page's own sticky headers rest beneath it.
 	const HIDE_NAVBAR_AFTER_PX = 64; // never hide while the bar's own content is still on screen
 	const SCROLL_DELTA_PX = 6; // ignore inertia/subpixel jitter that would flicker the bar
 	let navbarHidden = $state(false);
@@ -122,20 +91,32 @@
 	// glides away rather than snapping. This asymmetry is the "headroom" feel.
 	let chromeTransitionMs = $derived(chromeHidden ? 240 : 120);
 
+	// Where the page's sticky headers rest: just under whatever chrome is showing.
+	let stickyTop = $derived(chromeHidden ? chromeHeight - navbarHeight : chromeHeight);
+
 	function revealNavbar() {
 		navbarHidden = false;
-		lastScrollTop = mainElement?.scrollTop ?? 0;
+		lastScrollTop = window.scrollY;
+	}
+
+	// A programmatic scroll (SvelteKit's restore or reset, a tab re-entry) is not a user
+	// gesture, so it shows the bar and re-baselines the hide-on-scroll tracker to the new
+	// offset — otherwise the `scroll` event the jump fires would read as a full-height
+	// downward scroll and hide the bar with no input.
+	function syncChromeToScroll() {
+		revealNavbar();
+		contentScrolled = window.scrollY > 0;
 	}
 
 	// Coalesce the scroll listener to one rAF per frame: many `scroll` events fire per
-	// animation frame during momentum/inertial scrolling on mobile, so reading scrollTop
+	// animation frame during momentum/inertial scrolling on mobile, so reading scrollY
 	// and flipping state once per frame — off the event — keeps the work off the critical
 	// path and the scroll smooth. See https://developer.chrome.com/blog/inside-browser-part4.
-	function handleMainScroll() {
+	function handleScroll() {
 		if (scrollFrame) return;
 		scrollFrame = requestAnimationFrame(() => {
 			scrollFrame = 0;
-			const top = mainElement?.scrollTop ?? 0;
+			const top = window.scrollY;
 			// Before the jitter guard: a slow drift back to 0 must still clear the hairline.
 			contentScrolled = top > 0;
 			const delta = top - lastScrollTop;
@@ -153,21 +134,19 @@
 		if (navigation.shallow) return;
 		const from = navigation.from?.url.pathname;
 		if (from && TAB_ROOTS.has(from)) {
-			scrollPositions[from] = mainElement?.scrollTop ?? 0;
+			scrollPositions[from] = window.scrollY;
 		}
 	});
 
+	// Runs after SvelteKit has restored (back/forward) or reset (push) the scroll.
 	afterNavigate((navigation) => {
 		if (navigation.shallow) return;
-		// Back/forward is handled by snapshot.restore above.
-		if (navigation.type === 'popstate') {
-			revealNavbar();
-			return;
-		}
-		// A fresh push: restore a primary tab to where it was left, else reset.
 		const to = navigation.to?.url.pathname ?? '';
-		const top = TAB_ROOTS.has(to) ? (scrollPositions[to] ?? 0) : 0;
-		restoreScroll(top);
+		const savedTop = scrollPositions[to];
+		if (navigation.type !== 'popstate' && TAB_ROOTS.has(to) && savedTop) {
+			window.scrollTo({ top: savedTop, behavior: 'instant' });
+		}
+		syncChromeToScroll();
 	});
 
 	// Native-style page transitions via the View Transitions API: a shared-axis slide
@@ -177,8 +156,10 @@
 	// so the md+ shell keeps its instant swap. Browsers without the API also keep it.
 	// https://svelte.dev/blog/view-transitions
 	// onNavigate runs once the destination's load has resolved, and `complete` settles
-	// only after afterNavigate and the snapshot restore above have run, so the new
-	// state is captured at its restored scroll offset.
+	// only after SvelteKit's scroll handling and afterNavigate above have run, so the new
+	// state is captured at its restored scroll offset. The page itself animates as the
+	// default `root` snapshot, which is viewport-sized; the bars carry their own names so
+	// they hold still.
 	let transitionId = 0;
 
 	onNavigate((navigation) => {
@@ -221,24 +202,25 @@
 	});
 </script>
 
+<svelte:window onscroll={handleScroll} />
+
 <!-- Side safe-area padding keeps the shell out from under the notch and rounded
 	corners of a landscape phone now that app.html opts into viewport-fit=cover; it
 	resolves to 0 on a desktop or a portrait phone. -->
 <div
-	class="flex h-dvh w-full overflow-hidden bg-background pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
+	class="flex min-h-dvh w-full bg-background pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
 >
 	<SkipLink />
 
-	<AppSidebar {activeUrl} scrollToTop={scrollMainToTop} />
+	<AppSidebar {activeUrl} scrollToTop={scrollPageToTop} />
 
-	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
-		content must not also swallow the top bar and the connection banner. -->
-	<div class="relative flex flex-1 flex-col overflow-hidden">
-		<!-- Top chrome overlays <main> instead of sharing its flex flow, so hiding the bar
-			never resizes the scroll region (see the hide-on-scroll note above for why that
-			loop is what made the bar blink). The column's overflow-hidden clips it as it
-			slides to a negative `top`; sliding `top` rather than transforming keeps the bar's
-			backdrop blur intact, and the connection banner below it rides up with it.
+	<!-- overflow-x-clip, not overflow-hidden: clip guards against a wide child scrolling the
+		page sideways without making this column a scroll container, which would break every
+		sticky element inside it (the chrome, the schedule's headers). -->
+	<div class="relative flex min-w-0 flex-1 flex-col overflow-x-clip">
+		<!-- Top chrome: the bar and the connection banner, sliding together (see the
+			hide-on-scroll note above). transition-duration is set per state (fast reveal,
+			slower hide).
 			The blur is on this wrapper, not the bar inside it: view-transition-name makes the
 			wrapper a Backdrop Root, so a descendant's backdrop-filter would see only the
 			wrapper's own (empty) backdrop and blur nothing
@@ -246,11 +228,10 @@
 			Under reduced transparency the wrapper turns opaque rather than just unblurred: the
 			connection banner's tint is only /10, so without a solid fill behind it the page
 			would show through the banner.
-			transition-duration is set per state (fast reveal, slower hide). Dropdowns render
-			in the native Popover top layer regardless of the wrapper. See handleMainScroll. -->
+			Dropdowns render in the native Popover top layer regardless of the wrapper. -->
 		<div
 			bind:offsetHeight={chromeHeight}
-			class="absolute inset-x-0 top-0 z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
+			class="sticky z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
@@ -260,41 +241,36 @@
 			<ConnectionBanner />
 		</div>
 
-		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". padding-top
-			clears the overlaid chrome; because the bar only hides once you've scrolled past it,
-			that padding has already left the viewport by the time the bar is gone.
+		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1".
 
-			--sticky-top is the top offset that in-flow sticky descendants (the schedule's block
-			and nomination headers) must use instead of a bare top-0. A sticky element's offset is
-			measured from the scroll container's padding edge, so top-0 would pin it at padding-top
-			(chromeHeight) below the viewport — right under the chrome while it's shown, but a blank
-			gap once the chrome has slid away. Shifting it up by navbarHeight when the bar is hidden
-			cancels that: the header rests at the viewport top (or just below the connection banner,
-			which stays), tracking the chrome's slide via the same duration. -->
+			--sticky-top is the top offset that sticky descendants (the schedule's block and
+			nomination headers) must use instead of a bare top-0, which would tuck them under
+			the chrome. It tracks the chrome's slide via the same duration, so a header rests
+			at the viewport top (or just below the connection banner, which stays) once the
+			bar has slid away. -->
 		<main
-			bind:this={mainElement}
-			onscroll={handleMainScroll}
 			id="main-content"
 			tabindex="-1"
-			style:padding-top={`${chromeHeight}px`}
-			style:--sticky-top={chromeHidden ? `-${navbarHeight}px` : '0px'}
+			style:--sticky-top={`${stickyTop}px`}
 			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
-			class="relative flex flex-1 flex-col overflow-y-auto scroll-smooth [view-transition-name:page] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+			class="flex flex-1 flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
 			<!-- Bottom padding lets the last row scroll 1rem clear of the floating mobile bottom nav;
 				md:p-6 resets it on desktop where the bottom nav is hidden.
-				grow (in <main>'s flex column) stretches this column to at least the visible height.
-				<main>'s height is definite, so the grown height is too, and a page can fill it with
-				min-h-full to pin trailing content (the profile footer) to the bottom on a short
-				page (https://drafts.csswg.org/css-flexbox-1/#definite-sizes). w-full because a
-				flex item with auto side margins would otherwise shrink to its content. -->
+				grow (in <main>'s flex column) stretches this column to at least the visible
+				height. A page that pins trailing content to the bottom on a short page (the
+				profile footer) marks its root data-fill-column, and this column turns into a
+				flex column so that root can grow into the space: a percentage min-height has
+				nothing definite to resolve against here. Opt-in rather than always flex, since
+				a flex item with auto side margins shrinks to its content. w-full for the same
+				reason. -->
 			<div
-				class="mx-auto w-full max-w-5xl grow p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
+				class="mx-auto w-full max-w-5xl grow p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] has-[>[data-fill-column]]:flex has-[>[data-fill-column]]:flex-col md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
 				{@render children()}
 			</div>
 		</main>
 	</div>
 
-	<AppBottomNav {activeUrl} scrollToTop={scrollMainToTop} />
+	<AppBottomNav {activeUrl} scrollToTop={scrollPageToTop} />
 </div>

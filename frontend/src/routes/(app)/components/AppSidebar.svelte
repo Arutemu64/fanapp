@@ -20,7 +20,7 @@
      sizes, so phones need no hamburger drawer and this sidebar carries nothing extra. -->
 <nav
 	aria-label="Разделы"
-	class="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
+	class="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
 >
 	<a href={resolve('')} class="mb-6 flex items-center justify-center ps-0">
 		<!-- The mark is pure black shapes on transparent (incl. a black "2026" pill with
