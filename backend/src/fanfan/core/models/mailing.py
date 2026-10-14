@@ -24,6 +24,10 @@ class Mailing(AggregateRoot):
     # opt-ins, event subscribers) — so it distinguishes the two mailing kinds.
     body: str | None
     roles: list[UserRole] | None
+    # Recipients the fan-out will create notifications for. Set once by
+    # begin_fan_out; `sent_count` is deliberately not aggregate state (see
+    # register_delivery).
+    total_count: int
 
     @classmethod
     def create(cls, by_user_id: UserId) -> Mailing:
@@ -33,6 +37,7 @@ class Mailing(AggregateRoot):
             by_user_id=by_user_id,
             body=None,
             roles=None,
+            total_count=0,
         )
 
     def queue_broadcast(self, body: str, roles: list[UserRole]) -> None:
@@ -44,6 +49,23 @@ class Mailing(AggregateRoot):
         self.body = body
         self.roles = roles
         self.record_event(BroadcastQueued(mailing_id=self.id, body=body, roles=roles))
+
+    def record_summary(self, body: str) -> None:
+        self.body = body
+
+    def begin_fan_out(self, total_count: int) -> None:
+        """Fix the recipient count and open the fan-out.
+
+        No recipients means there is nothing to wait for, so the mailing is
+        finished at once; otherwise it moves to SENDING and the last delivery
+        finishes it (see register_delivery).
+        """
+        self.ensure_active()
+        self.total_count = total_count
+        if total_count > 0:
+            self.start_sending()
+        else:
+            self.mark_finished()
 
     def start_sending(self) -> None:
         # Guard first: a mailing cancelled between creation and fan-out must not
@@ -97,6 +119,14 @@ class Mailing(AggregateRoot):
         # confirms the CANCELLED status; recording it here (vs publishing) keeps
         # the status flip and the event in one transaction via the outbox.
         self.record_event(MailingCancelled(mailing_id=self.id))
+
+    def confirm_cancelled(self) -> None:
+        """Settle a cancellation the consumer is reacting to; idempotent.
+
+        Unlike cancel(), this never raises: MailingCancelled is delivered
+        at-least-once, so a redelivery finds the mailing already CANCELLED.
+        """
+        self.status = MailingStatus.CANCELLED
 
     def ensure_active(self) -> None:
         if self.status is MailingStatus.CANCELLED:

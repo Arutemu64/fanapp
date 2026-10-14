@@ -60,8 +60,8 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     login(visitor)
 
     mailing = Mailing.create(by_user_id=visitor.id)
+    mailing.begin_fan_out(1)
     await mailing_gateway.add(mailing)
-    await mailing_gateway.set_total(mailing_id=mailing.id, total_count=1)
     await uow.commit()
 
     notification = _broadcast_notification(mailing, visitor)
@@ -94,11 +94,8 @@ async def test_create_notification_flips_mailing_to_finished_on_last_delivery(
     login(visitor)
 
     mailing = Mailing.create(by_user_id=visitor.id)
+    mailing.begin_fan_out(2)
     await mailing_gateway.add(mailing)
-    await mailing_gateway.set_total(mailing_id=mailing.id, total_count=2)
-    await mailing_gateway.set_status(
-        mailing_id=mailing.id, status=MailingStatus.SENDING
-    )
     await uow.commit()
 
     await interactor(

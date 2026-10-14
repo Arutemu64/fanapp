@@ -47,9 +47,7 @@ class CancelMailing:
         # Flip the status synchronously (get() returns a detached domain object,
         # so the transition is not otherwise persisted): this stops in-flight
         # sends via ensure_active() without waiting for the async event consumer.
-        await self.mailing_gateway.set_status(
-            mailing_id=mailing.id, status=mailing.status
-        )
+        await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
         logger.info(

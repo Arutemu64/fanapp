@@ -73,8 +73,6 @@ class CreateNotification:
             if mailing.register_delivery(
                 sent_count=sent_count, total_count=total_count
             ):
-                await self.mailing_gateway.set_status(
-                    mailing_id=mailing.id, status=mailing.status
-                )
+                await self.mailing_gateway.save(mailing)
         await self.uow.commit()
         return notification.id
