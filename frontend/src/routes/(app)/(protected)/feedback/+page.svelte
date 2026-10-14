@@ -12,6 +12,7 @@
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import type { PageProps } from './$types';
 
@@ -23,14 +24,15 @@
 
 	let feedbackText = $state('');
 	const feedbackMutation = createMutation(() => submitFeedbackMutation());
+	const offlineGate = offlineWriteGate();
 
 	let feedbackError = $state('');
 	let submitError = $state('');
 
 	let charsLeft = $derived(MAX_LENGTH - feedbackText.length);
 	// Opened offline and still offline: clears on reconnect without a reload, and
-	// a connection that drops mid-draft keeps the form (its submit fails into a
-	// toast) rather than unmounting what was typed.
+	// a connection that drops mid-draft keeps the form (its submit is gated and
+	// explains itself) rather than unmounting what was typed.
 	let showOffline = $derived(data.offlineUnavailable && !reachability.current);
 
 	function validateForm() {
@@ -94,7 +96,7 @@
 			description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
 		/>
 
-		<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
+		<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 			<Field.Field data-invalid={feedbackError ? true : undefined}>
 				<Field.FieldLabel for="feedback-text">Твой отзыв</Field.FieldLabel>
 				<Textarea
@@ -124,7 +126,12 @@
 				</Alert.Root>
 			{/if}
 
-			<Button type="submit" class="w-full sm:w-auto" disabled={feedbackMutation.isPending}>
+			<Button
+				type="submit"
+				class="w-full sm:w-auto"
+				disabled={feedbackMutation.isPending}
+				aria-disabled={offlineGate.blocked}
+			>
 				{#if feedbackMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Отправка…

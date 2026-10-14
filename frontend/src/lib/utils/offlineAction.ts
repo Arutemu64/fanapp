@@ -1,37 +1,48 @@
 import { reachability } from '#lib/services/reachability.js';
+import { getToastService } from '#lib/services/toasts.svelte.js';
 
 /**
- * Hint shown on a write control that is disabled because the backend is
- * unreachable. Mirrors the page-level "…доступно только онлайн" empty states
- * (voting, feedback, tools) so a disabled button and a blocked page speak with
- * one voice.
+ * Shown when someone taps a write control while the backend is unreachable.
+ * Mirrors the page-level "…доступно только онлайн" empty states (voting,
+ * feedback, tools) so a blocked control and a blocked page speak with one voice.
  */
 const OFFLINE_ACTION_HINT = 'Доступно только онлайн';
 
 /**
- * Reactive gate for write controls on pages that stay *readable* offline
- * (profile, schedule): the cached content is worth showing, but the mutations on
- * top of it are online-only (docs §"PWA & Offline Support" — "Mutations stay
- * online-only"). Rather than let a tap fail into an error toast, the trigger
- * degrades to a disabled state with a hint.
+ * Gate for write controls that must stay online-only (ADR-0022) on pages that
+ * remain usable offline: the cached content is worth showing, but the mutations
+ * on top of it would fail.
  *
- * The returned getters read reactive reachability, so binding
- * `disabled={gate.disabled}` in markup re-evaluates on connectivity changes.
+ * Offline the control is dimmed with `aria-disabled` rather than `disabled`, and
+ * a tap explains itself with a toast instead of acting. Native `disabled` can't be
+ * focused and swallows the tap, and its `title` hint never shows on a touch
+ * screen, so the user is left guessing why it's dead
+ * (https://smart-interface-design-patterns.com/articles/disabled-buttons/).
  *
- * One shared gate keeps every write control consistent and impossible to forget:
- * a new button opts in with a single `disabled`/`title` pair rather than
- * hand-rolled per-control logic. Whole-surface mutation pages (feedback, tools,
- * voting) are handled differently — a single page-level online-only state — since
- * they have nothing to read offline.
+ * Call during component init (it reads the toast context). A control opts in
+ * with one pair: `aria-disabled={gate.blocked}` and `onclick={gate.guard(handler)}`
+ * (or `onsubmit`, `onCheckedChange`). Whole-surface mutation pages (feedback,
+ * tools, voting) opened offline show a page-level online-only state instead.
  */
 export function offlineWriteGate() {
+	const toastService = getToastService();
+
 	return {
-		get disabled(): boolean {
+		get blocked(): boolean {
 			return !reachability.current;
 		},
-		/** `title` for the control: the hint while offline, `undefined` when online. */
-		get title(): string | undefined {
-			return reachability.current ? undefined : OFFLINE_ACTION_HINT;
+		guard<A extends unknown[]>(action: (...args: A) => void): (...args: A) => void {
+			return (...args) => {
+				if (reachability.current) {
+					action(...args);
+					return;
+				}
+				// A guarded form submit or link click must not fall through to the
+				// browser's own navigation.
+				const [first] = args;
+				if (first instanceof Event) first.preventDefault();
+				toastService.add(OFFLINE_ACTION_HINT, 'info');
+			};
 		}
 	};
 }

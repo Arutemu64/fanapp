@@ -18,6 +18,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '#lib/utils/formatters.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import type { PageProps } from './$types';
 
@@ -124,6 +125,10 @@
 		}
 	}
 
+	// A connection that drops mid-form keeps what was typed; the submit explains
+	// itself instead of sending.
+	const offlineGate = offlineWriteGate();
+
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
@@ -181,7 +186,10 @@
 
 <SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
 
-<form class="mx-auto flex w-full max-w-2xl flex-col gap-5" onsubmit={handleSubmit}>
+<form
+	class="mx-auto flex w-full max-w-2xl flex-col gap-5"
+	onsubmit={offlineGate.guard(handleSubmit)}
+>
 	{#if submitError}
 		<Alert.Root variant="destructive">
 			<AlertCircle class="size-4" />
@@ -269,7 +277,12 @@
 		</Field.Field>
 	</Card.Root>
 
-	<Button type="submit" class="w-full sm:w-auto" disabled={saveMutation.isPending || !hasChanges}>
+	<Button
+		type="submit"
+		class="w-full sm:w-auto"
+		disabled={saveMutation.isPending || !hasChanges}
+		aria-disabled={offlineGate.blocked}
+	>
 		{#if saveMutation.isPending}
 			<Spinner data-icon="inline-start" />
 			Сохраняем…

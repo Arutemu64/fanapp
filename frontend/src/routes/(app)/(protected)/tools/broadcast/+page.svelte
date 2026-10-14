@@ -14,6 +14,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import BroadcastHistory from './components/BroadcastHistory.svelte';
 
@@ -73,6 +74,10 @@
 		handleRoleChange();
 	}
 
+	// A connection that drops mid-form keeps what was typed; the submit explains
+	// itself instead of sending.
+	const offlineGate = offlineWriteGate();
+
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
@@ -118,7 +123,7 @@
 		description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
 	/>
 
-	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
+	<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 		<Field.Field data-invalid={bodyError ? true : undefined}>
 			<Field.FieldLabel for="broadcast-body">Текст уведомления</Field.FieldLabel>
 			<Textarea
@@ -200,7 +205,12 @@
 			</Alert.Root>
 		{/if}
 
-		<Button type="submit" class="w-full sm:w-auto" disabled={broadcastMutation.isPending}>
+		<Button
+			type="submit"
+			class="w-full sm:w-auto"
+			disabled={broadcastMutation.isPending}
+			aria-disabled={offlineGate.blocked}
+		>
 			{#if broadcastMutation.isPending}
 				<Spinner data-icon="inline-start" />
 				Отправка…

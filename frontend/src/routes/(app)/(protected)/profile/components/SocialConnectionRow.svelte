@@ -74,13 +74,15 @@
 
 	{#if !connected}
 		<Item.Actions>
+			<!-- A link: online the browser follows it, so the guarded action is empty and
+			     the guard only stops the navigation offline. -->
 			<Button
-				href={offlineGate.disabled ? undefined : connectHref}
+				href={connectHref}
 				variant="outline"
 				size="sm"
 				class="min-h-11"
-				disabled={offlineGate.disabled}
-				title={offlineGate.title}
+				aria-disabled={offlineGate.blocked}
+				onclick={offlineGate.guard(() => {})}
 			>
 				Подключить
 			</Button>
@@ -93,9 +95,9 @@
 				variant="outline"
 				size="sm"
 				class="min-h-11"
-				disabled={!hasEmail || offlineGate.disabled}
-				title={offlineGate.title}
-				onclick={() => (isConfirming = true)}
+				disabled={!hasEmail}
+				aria-disabled={offlineGate.blocked}
+				onclick={offlineGate.guard(() => (isConfirming = true))}
 			>
 				Отвязать
 			</Button>
@@ -109,9 +111,9 @@
 					variant="destructive"
 					size="sm"
 					class="min-h-11 flex-1"
-					disabled={isUnlinking || !hasEmail || offlineGate.disabled}
-					title={offlineGate.title}
-					onclick={confirmUnlink}
+					disabled={isUnlinking || !hasEmail}
+					aria-disabled={offlineGate.blocked}
+					onclick={offlineGate.guard(() => void confirmUnlink())}
 				>
 					{#if isUnlinking}
 						<Spinner data-icon="inline-start" />

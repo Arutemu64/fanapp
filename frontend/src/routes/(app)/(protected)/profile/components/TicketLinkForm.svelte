@@ -81,7 +81,7 @@
 			</p>
 		</div>
 	{:else}
-		<form class="flex flex-col gap-3" onsubmit={handleLinkTicket}>
+		<form class="flex flex-col gap-3" onsubmit={offlineGate.guard(handleLinkTicket)}>
 			<Field.Field data-invalid={submitError ? true : undefined}>
 				<Field.FieldLabel for="ticket-barcode">Номер билета</Field.FieldLabel>
 				<Field.FieldDescription id="ticket-barcode-hint">
@@ -99,7 +99,7 @@
 					spellcheck={false}
 					aria-invalid={submitError ? true : undefined}
 					aria-describedby={barcodeDescribedBy}
-					disabled={linkMutation.isPending || offlineGate.disabled}
+					disabled={linkMutation.isPending}
 					oninput={() => (submitError = '')}
 				/>
 				{#if submitError}
@@ -109,8 +109,8 @@
 			<Button
 				type="submit"
 				class="w-full"
-				disabled={linkMutation.isPending || offlineGate.disabled}
-				title={offlineGate.title}
+				disabled={linkMutation.isPending}
+				aria-disabled={offlineGate.blocked}
 			>
 				{#if linkMutation.isPending}
 					<Spinner data-icon="inline-start" />

@@ -16,6 +16,7 @@
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { USER_ROLES } from '#lib/constants/users.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	const toastService = getToastService();
@@ -61,6 +62,10 @@
 			validateAmount();
 		}
 	}
+
+	// A connection that drops mid-form keeps what was typed; the submit explains
+	// itself instead of sending.
+	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -110,7 +115,7 @@
 		description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
 	/>
 
-	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
+	<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 		<Field.FieldGroup class="gap-6">
 			<Field.Field>
 				<Field.FieldLabel for="ticket-role">Роль</Field.FieldLabel>
@@ -166,7 +171,12 @@
 			</Alert.Root>
 		{/if}
 
-		<Button type="submit" class="w-full sm:w-auto" disabled={generateMutation.isPending}>
+		<Button
+			type="submit"
+			class="w-full sm:w-auto"
+			disabled={generateMutation.isPending}
+			aria-disabled={offlineGate.blocked}
+		>
 			{#if generateMutation.isPending}
 				<Spinner data-icon="inline-start" />
 				Генерируем…

@@ -18,6 +18,99 @@ test.describe('offline', { tag: '@critical' }, () => {
 		expect(api.unmatched).toEqual([]);
 	});
 
+	test('the connection banner re-checks on tap and confirms the recovery', async ({
+		page,
+		api
+	}) => {
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
+
+		// The app trusts an `offline` event at once. Dispatched by hand rather than via
+		// context.setOffline, which would also fail the build's own chunk loads (and a
+		// mocked route still fulfils under it); the aborted health check keeps the
+		// app's probes from recovering under the test.
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
+
+		// The strip holds for at least 4s, so the button is still there even if the
+		// background poll happens to win the race to the healthy endpoint.
+		api.use({ 'GET /debug/health': json({ status: 'healthy' }) });
+		await page.getByRole('button', { name: 'Повторить' }).click();
+
+		// Shown once the offline wording has had its minimum time on screen.
+		await expect(page.getByRole('status').getByText('Связь восстановлена')).toBeAttached({
+			timeout: 10_000
+		});
+		await expect(page.getByRole('button', { name: 'Повторить' })).toHaveCount(0);
+	});
+
+	test('after reconnecting, the banner says it is updating until the screen has reloaded', async ({
+		page,
+		api
+	}) => {
+		await page.clock.install();
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
+
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
+
+		// Past the 60s staleTime, so reconnecting refetches what Home shows, and past
+		// the offline wording's minimum time on screen.
+		await page.clock.fastForward('01:05');
+
+		// Hold one of Home's refetches open to watch the catch-up state.
+		let release = () => {};
+		const released = new Promise<void>((resolve) => (release = resolve));
+		api.use({
+			'GET /debug/health': json({ status: 'healthy' }),
+			'GET /voting/status': async () => {
+				await released;
+				return json({
+					can_vote: false,
+					status: 'not_authenticated',
+					voting_start: null,
+					voting_end: null
+				});
+			}
+		});
+		await page.getByRole('button', { name: 'Повторить' }).click();
+
+		await expect(page.getByRole('status').getByText('Обновляем…')).toBeAttached();
+		release();
+		await expect(page.getByRole('status').getByText('Связь восстановлена')).toBeAttached();
+	});
+
+	test('an online-only switch explains itself offline instead of saving', async ({ page, api }) => {
+		let patched = false;
+		api.use({
+			...loggedInAs(),
+			'PATCH /me/settings': () => {
+				patched = true;
+				return json({});
+			}
+		});
+		await page.goto('/profile/notifications');
+		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
+		await expect(allAnnouncements).toBeChecked();
+
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(allAnnouncements).toHaveAttribute('aria-disabled', 'true');
+
+		// Dimmed, not disabled: it still takes focus and the press, and says why nothing
+		// happens. Driven from the keyboard because Playwright won't click (or click the
+		// label of) an aria-disabled control.
+		await allAnnouncements.focus();
+		await page.keyboard.press('Space');
+
+		await expect(page.getByText('Доступно только онлайн', { exact: true })).toBeVisible();
+		await expect(allAnnouncements).toBeChecked();
+		expect(patched).toBe(false);
+	});
+
 	test('a cold start with no saved identity shows the offline state, not login', async ({
 		page,
 		api
