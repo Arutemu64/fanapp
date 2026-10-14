@@ -68,14 +68,16 @@ export default defineConfig(({ mode }) => {
 			}),
 			// Compiles messages/*.json into src/lib/paraglide/ on every dev edit and
 			// build. Client-only locale resolution: an explicit pick (localStorage)
-			// wins, then the browser's language list, then Russian — no URL prefix (the
+			// wins, then the browser's language list, then English for a browser that
+			// lists neither supported language (custom-englishFallback, registered in
+			// hooks.client.ts); Russian is only the last resort — no URL prefix (the
 			// SPA has one URL space and nginx serves one shell for it) and no cookie
 			// (there is no server to read it). See ADR-0027. `pnpm paraglide` compiles the same output for the
 			// tools that run without Vite (svelte-check, ESLint).
 			paraglideVitePlugin({
 				project: './project.inlang',
 				outdir: './src/lib/paraglide',
-				strategy: ['localStorage', 'preferredLanguage', 'baseLocale'],
+				strategy: ['localStorage', 'preferredLanguage', 'custom-englishFallback', 'baseLocale'],
 				emitTsDeclarations: true
 			}),
 			tailwindcss(),

@@ -39,7 +39,7 @@ test.describe('in a desktop browser that cannot install', () => {
 
 	test('hides the install row', async ({ page }) => {
 		await page.goto('/profile');
-		await expect(page.getByText('Тема', { exact: true })).toBeVisible();
+		await expect(page.getByRole('group', { name: 'Тема оформления' })).toBeVisible();
 
 		// The library's fallback reports availability on a 1 s timer, so give it
 		// longer than that before asserting the row never appeared.

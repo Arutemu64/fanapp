@@ -87,7 +87,7 @@
 				// Match <html lang> to the locale Paraglide will resolve before first
 				// paint, so screen readers and hyphenation pick the right language from
 				// the start. Same order as its strategy (vite.config.ts): the stored
-				// pick, then the first browser language the app supports, else Russian.
+				// pick, then the first browser language the app supports, else English.
 				var locale = null;
 				try {
 					locale = localStorage.getItem('PARAGLIDE_LOCALE');
@@ -100,7 +100,7 @@
 						if (base === 'ru' || base === 'en') locale = base;
 					}
 				}
-				if (locale === 'en') document.documentElement.lang = 'en';
+				document.documentElement.lang = locale === 'ru' ? 'ru' : 'en';
 				if (isDark) {
 					document.documentElement.classList.add('dark');
 					// Seed the shell tint to match the resolved theme before first paint,

@@ -25,13 +25,16 @@ We will use [Paraglide JS](https://paraglidejs.com) 2.x (`@inlang/paraglide-js`)
 - Messages live in `frontend/messages/{ru,en}.json`, Russian as the base locale,
   compiled by the Vite plugin into `src/lib/paraglide/` (gitignored). Components
   call `m.key()`; each key is a tree-shaken function with typed parameters.
-- Locale strategy is `['localStorage', 'preferredLanguage', 'baseLocale']`: an
-  explicit pick in the profile hub wins, then the first language in the browser's
-  list that the app supports, then Russian. Foreign guests (an English-speaking
-  or Chinese attendee) won't know the app has English, so it opens in their
-  language without being asked. The pick comes first, or the switch could never
-  stick for someone whose browser says otherwise. A browser that lists only
-  unsupported languages (say, `zh-CN` alone) gets Russian.
+- Locale strategy is `['localStorage', 'preferredLanguage',
+  'custom-englishFallback', 'baseLocale']`: an explicit pick in the profile hub
+  wins, then the first language in the browser's list that the app supports,
+  then English for a browser that lists neither Russian nor English. Foreign
+  guests (an English-speaking or Chinese attendee) won't know the app has
+  English, so it opens in a language they can read without being asked. The pick
+  comes first, or the switch could never stick for someone whose browser says
+  otherwise. Russian is only the last resort (`baseLocale`, also the source
+  language of the catalogs). The fallback strategy is registered in
+  `hooks.client.ts`, which runs before any route asks for a locale.
 - `setLocale()` keeps its default of reloading the page. Messages stay plain
   function calls (no reactive state), and module-level `Intl` formatters and
   lookup tables stay correct because the locale cannot change within a page load.

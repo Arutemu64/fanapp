@@ -8,7 +8,18 @@ import {
 import * as Sentry from '@sentry/sveltekit';
 
 import { m } from '#lib/paraglide/messages.js';
+import { defineCustomClientStrategy } from '#lib/paraglide/runtime.js';
 import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
+
+// A browser that lists neither Russian nor English (a Chinese or Ukrainian-only
+// setup, say) gets English: the app can't be read in its language either way, and
+// English is the likelier second language. It sits after `preferredLanguage` in
+// the strategy (vite.config.ts), so it only answers when nothing matched. Defined
+// here because this module runs before any route code asks for a locale.
+defineCustomClientStrategy('custom-englishFallback', {
+	getLocale: () => 'en',
+	setLocale: () => {}
+});
 
 // Server errors belong to the backend, which reports them with a full stack
 // trace and request context; a frontend mirror is a duplicate with none of that,

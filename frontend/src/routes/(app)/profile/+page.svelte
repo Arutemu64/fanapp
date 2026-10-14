@@ -197,29 +197,26 @@
 					{/snippet}
 				</Item.Root>
 			{/if}
-			<!-- An icon like every other hub row: the install row above shares this card,
-			     and a list that gives icons to only some rows reads as two layouts. -->
+			<!-- One line per setting: the control carries its own labels, so a title
+			     row above it would only spend height the footer below needs to stay
+			     above the bottom nav without scrolling. An icon like every other hub
+			     row: the install row above shares this card, and a list that gives
+			     icons to only some rows reads as two layouts. -->
 			<Item.Root class="rounded-none">
 				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
 					<Palette class="size-5" aria-hidden="true" />
 				</Item.Media>
-				<Item.Content>
-					<Item.Title class="text-base">{m.profile_theme()}</Item.Title>
-				</Item.Content>
-				<Item.Footer>
+				<Item.Content class="min-w-0">
 					<ThemeToggle />
-				</Item.Footer>
+				</Item.Content>
 			</Item.Root>
 			<Item.Root class="rounded-none">
 				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
 					<Languages class="size-5" aria-hidden="true" />
 				</Item.Media>
-				<Item.Content>
-					<Item.Title class="text-base">{m.language()}</Item.Title>
-				</Item.Content>
-				<Item.Footer>
+				<Item.Content class="min-w-0">
 					<LanguageToggle />
-				</Item.Footer>
+				</Item.Content>
 			</Item.Root>
 		</MenuGroup>
 

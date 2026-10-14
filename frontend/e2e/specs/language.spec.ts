@@ -1,7 +1,7 @@
 import { expect, test } from '../fixtures';
 
 // The language is the first of: an explicit pick (localStorage, applied after a
-// reload), the browser's language list, Russian. The suite's browser is ru-RU
+// reload), the browser's language list, English for a browser that lists neither. The suite's browser is ru-RU
 // (playwright.config.ts), so the first describe runs as a Russian reader.
 test.describe('interface language', () => {
 	test('stays Russian by default', async ({ page, api }) => {
@@ -81,7 +81,16 @@ test.describe('browser language', () => {
 	test.describe('unsupported browser language', () => {
 		test.use({ locale: 'zh-CN' });
 
-		test('falls back to Russian', async ({ page, api }) => {
+		test('falls back to English', async ({ page, api }) => {
+			await page.goto('/profile');
+
+			await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+			await expect(page.getByRole('main').getByRole('link', { name: 'Sign in' })).toBeVisible();
+			expect(api.unmatched).toEqual([]);
+		});
+
+		test('still honors a saved Russian pick', async ({ page, api }) => {
+			await page.addInitScript(() => localStorage.setItem('PARAGLIDE_LOCALE', 'ru'));
 			await page.goto('/profile');
 
 			await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
