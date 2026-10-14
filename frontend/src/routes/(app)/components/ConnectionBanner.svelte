@@ -48,14 +48,19 @@
 	});
 </script>
 
-{#if message}
-	<div
-		role="status"
-		aria-live="polite"
-		transition:slide={{ duration: 200 }}
-		class="flex items-center gap-2.5 border-b border-warning/30 bg-warning/10 px-4 py-2 text-sm text-warning sm:px-6"
-	>
-		<AlertCircle class="h-4 w-4 shrink-0" aria-hidden="true" />
-		<p class="flex-1 leading-snug">{message}</p>
-	</div>
-{/if}
+<!-- The live region stays mounted and only its content comes and goes: screen readers
+	announce changes inside an existing live region, and JAWS/NVDA stay silent for a
+	role="status" inserted together with its text
+	(https://github.com/FreedomScientific/standards-support/issues/696). Empty, it has
+	no height, so the chrome above <main> doesn't grow. -->
+<div role="status">
+	{#if message}
+		<div
+			transition:slide={{ duration: 200 }}
+			class="flex items-center gap-2.5 border-b border-warning/30 bg-warning/10 px-4 py-2 text-sm text-warning sm:px-6"
+		>
+			<AlertCircle class="h-4 w-4 shrink-0" aria-hidden="true" />
+			<p class="flex-1 leading-snug">{message}</p>
+		</div>
+	{/if}
+</div>
