@@ -153,6 +153,7 @@ We own these files, so upstream fixes don't arrive on their own, and `shadcn-sve
    - a Tailwind variant such as `data-checked:` that comes from `shadcn-svelte/tailwind.css`, imported in `app.css`. Diff its `@custom-variant` list against upstream `packages/cli/src/tailwind.css`, because an undefined variant fails silently with no style and no error.
 
    For the floor upstream builds against, see the dependency ranges in its `docs/package.json`. If a change does need a bump, make it in the same PR: `pnpm up <pkg>@<version>` with the oldest version that has what you need, clear of the release-age window, and update every pinned site per [docs/dependencies.md](dependencies.md). If no such version has cleared the window yet, hold that hunk back with a TODO rather than adding a `minimumReleaseAgeExclude` entry.
+
 7. Run `just frontend-lint`, `just frontend-check` and `just frontend-test`, and let CI run E2E. If the change is visible, look at the affected screens.
 
 ### Z-Index Scale
