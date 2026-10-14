@@ -8,7 +8,7 @@ from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
-from fanfan.core.vo.mailing import MailingId, MailingStatus
+from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.user import UserId, UserRole
 
 
@@ -19,6 +19,7 @@ def _from_model(model: Mailing) -> MailingORM:
         by_user_id=model.by_user_id,
         body=model.body,
         roles=[r.value for r in model.roles] if model.roles is not None else None,
+        total_count=model.total_count,
     )
 
 
@@ -29,6 +30,7 @@ def _to_model(orm: MailingORM) -> Mailing:
         by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
         body=orm.body,
         roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
+        total_count=orm.total_count,
     )
 
 
@@ -67,21 +69,15 @@ class SqlMailingGateway(MailingGateway):
         self.uow.register(mailing)
         return mailing
 
-    async def set_status(self, mailing_id: MailingId, status: MailingStatus) -> None:
-        stmt = (
-            update(MailingORM).where(MailingORM.id == mailing_id).values(status=status)
-        )
-        await self.session.execute(stmt)
-
-    async def set_body(self, mailing_id: MailingId, body: str) -> None:
-        stmt = update(MailingORM).where(MailingORM.id == mailing_id).values(body=body)
-        await self.session.execute(stmt)
-
-    async def set_total(self, mailing_id: MailingId, total_count: int) -> None:
+    async def save(self, mailing: Mailing) -> None:
         stmt = (
             update(MailingORM)
-            .where(MailingORM.id == mailing_id)
-            .values(total_count=total_count)
+            .where(MailingORM.id == mailing.id)
+            .values(
+                status=mailing.status,
+                body=mailing.body,
+                total_count=mailing.total_count,
+            )
         )
         await self.session.execute(stmt)
 

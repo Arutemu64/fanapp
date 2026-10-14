@@ -114,10 +114,8 @@ async def test_cancel_finished_mailing_raises_not_cancellable(
     login(broadcaster)
 
     mailing = Mailing.create(by_user_id=broadcaster.id)
+    mailing.status = MailingStatus.FINISHED
     await mailing_gateway.add(mailing)
-    await mailing_gateway.set_status(
-        mailing_id=mailing.id, status=MailingStatus.FINISHED
-    )
     await uow.commit()
 
     with pytest.raises(MailingNotCancellable):

@@ -52,18 +52,10 @@ class ProcessBroadcast:
             logger.info("Broadcast %s was cancelled before fan-out", mailing.id)
             return
 
-        await self.mailing_gateway.set_total(
-            mailing_id=mailing.id, total_count=len(users)
-        )
-        # No recipients means the mailing is already done; otherwise it moves to
+        # With no recipients the mailing finishes at once; otherwise it moves to
         # SENDING and CreateNotification flips it to FINISHED on the last insert.
-        if users:
-            mailing.start_sending()
-        else:
-            mailing.mark_finished()
-        await self.mailing_gateway.set_status(
-            mailing_id=mailing.id, status=mailing.status
-        )
+        mailing.begin_fan_out(len(users))
+        await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
         events = [
