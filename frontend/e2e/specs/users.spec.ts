@@ -63,7 +63,8 @@ test.describe('organizer user directory', () => {
 		await page.getByRole('option', { name: 'Участник' }).click();
 
 		await expect(page).toHaveURL(/role=participant/);
-		await expect(page.getByRole('status')).toHaveText('1 пользователь');
+		// Scoped to <main>: the shell's connection banner is a status region too.
+		await expect(page.getByRole('main').getByRole('status')).toHaveText('1 пользователь');
 		await expect(page.getByRole('link', { name: /boris/ })).toBeHidden();
 		expect(listRequests.at(-1)?.get('role')).toBe('participant');
 		expect(api.unmatched).toEqual([]);

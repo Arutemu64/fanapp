@@ -96,9 +96,10 @@
 	<title>Профиль · ФАН ФАН</title>
 </svelte:head>
 
-<!-- min-h-full fills the (app) shell's content column, so on a page shorter than the
-	screen mt-auto drops the footer to the bottom instead of leaving it mid-screen. -->
-<div class="flex min-h-full flex-col">
+<!-- data-fill-column lets this grow to fill the (app) shell's content column, so on a page
+	shorter than the screen mt-auto drops the footer to the bottom instead of leaving it
+	mid-screen. -->
+<div data-fill-column class="flex grow flex-col">
 	<!-- Capped like a settings column: on a desktop the rows would otherwise stretch the
 	     full content width and push each value and chevron far from its label. Centred,
 	     because the shell centres its content column and a narrower block hugging that

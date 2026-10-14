@@ -2,6 +2,7 @@
 	import { Search as SearchIcon, X } from '@lucide/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { tick } from 'svelte';
+	import { prefersReducedMotion } from 'svelte/motion';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
@@ -146,14 +147,15 @@
 			await tick();
 		}
 
-		// No `behavior`: the default ('auto') takes <main>'s CSS scroll-behavior, smooth
-		// normally and instant under reduced motion (app.css). An explicit 'smooth' would
-		// override that and animate for users who opted out
-		// (https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo).
-		findEventRow(currentEvent.id)?.scrollIntoView({ block: 'center' });
+		// An explicit 'smooth' animates even for users who opted out of motion, so it
+		// follows the preference (https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView).
+		findEventRow(currentEvent.id)?.scrollIntoView({
+			block: 'center',
+			behavior: prefersReducedMotion.current ? 'instant' : 'smooth'
+		});
 	}
 
-	// Watches the current row against the scroll region, so the bar steps aside while
+	// Watches the current row against the viewport, so the bar steps aside while
 	// the row it points at is already visible. An observer rather than a scroll
 	// listener: no layout reads on every scroll frame. Re-runs when the current event,
 	// the filters (which mount and unmount rows) or the page root change.
@@ -168,14 +170,9 @@
 			return;
 		}
 
-		// Matched by id, not tag: the layout's scrolling region is the SkipLink target, and
-		// its element has already changed once (section -> main).
-		const observer = new IntersectionObserver(
-			(entries) => {
-				isCurrentRowOnScreen = entries.some((entry) => entry.isIntersecting);
-			},
-			{ root: document.getElementById('main-content') }
-		);
+		const observer = new IntersectionObserver((entries) => {
+			isCurrentRowOnScreen = entries.some((entry) => entry.isIntersecting);
+		});
 		observer.observe(row);
 
 		return () => observer.disconnect();
@@ -268,7 +265,7 @@
 				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
 					<div
 						data-event-id={node.event.id}
-						class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40"
+						class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
 					>
 						<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
 					</div>
@@ -332,7 +329,7 @@
 		     (DESIGN "No boxes in boxes"). Size/weight carry the hierarchy; the count stays
 		     gray because it is not a state (Color-Earns-Its-Place). -->
 		<!-- top / transition come from the (app) layout's <main> (--sticky-top): a bare top-0
-			would leave a gap under the hidden top bar. See the note there. -->
+			would tuck the header under the top bar. See the note there. -->
 		<div
 			class="sticky z-20 bg-background/95 backdrop-blur transition-[top] ease-out motion-reduce:transition-none reduced-transparency:bg-background"
 			style:top="var(--sticky-top, 0px)"
@@ -375,7 +372,9 @@
 
 				<div class="divide-y divide-border">
 					{#each nomination.events as event (event.id)}
-						<div data-event-id={event.id} class="scroll-mt-28">
+						<!-- The margin reaches every descendant too: keyboard focus scrolls the focused
+							control into view, not its row, and it must clear the sticky headers. -->
+						<div data-event-id={event.id} class="scroll-mt-28 **:scroll-mt-28">
 							<EventCard {event} {currentEvent} {user} />
 						</div>
 					{/each}

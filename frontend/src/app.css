@@ -162,20 +162,6 @@
 		@apply font-sans;
 	}
 
-	/*
-	 * In the installed app there is no browser chrome to pull or bounce, so a root
-	 * rubber-band or Chrome's pull-to-refresh just drags the whole shell — bars
-	 * included — off the screen. <main> is the scroll region, and its own overscroll
-	 * stays native; this only stops it chaining into the root. A browser tab keeps
-	 * pull-to-refresh. https://firt.dev/pwa-design-tips/
-	 */
-	@media (display-mode: standalone) {
-		html,
-		body {
-			overscroll-behavior: none;
-		}
-	}
-
 	/* disable chrome cancel button */
 	input[type='search']::-webkit-search-cancel-button {
 		display: none;
@@ -356,9 +342,11 @@
  * Page transitions, started by onNavigate in (app)/+layout.svelte on phones only,
  * which sets data-nav-transition for the run (direction: navTransition.ts). Material's
  * shared-axis pattern, kept inside DESIGN.md's 250ms: the old page fades out fast,
- * the new one fades in after it, while both shift 2rem along the axis. Only <main>
- * (`page`) moves; the top chrome and bottom nav are named groups of their own, so they
- * hold still and just cross-fade what changed (title, back arrow, active tab).
+ * the new one fades in after it, while both shift 2rem along the axis. Only the page
+ * (the default `root` snapshot, viewport-sized) moves; the top chrome and bottom nav
+ * are named groups of their own, so they hold still and just cross-fade what changed
+ * (title, back arrow, active tab). Between the fade-out and the fade-in the canvas
+ * shows, which is body's bg-background propagated to it, so the gap never flashes.
  * https://m2.material.io/develop/android/theming/motion
  */
 @keyframes nav-fade-out {
@@ -402,33 +390,33 @@
 	animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
-html[data-nav-transition]::view-transition-old(page) {
+html[data-nav-transition]::view-transition-old(root) {
 	animation: 80ms cubic-bezier(0.4, 0, 1, 1) both nav-fade-out;
 }
 
-html[data-nav-transition]::view-transition-new(page) {
+html[data-nav-transition]::view-transition-new(root) {
 	animation: 170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in;
 }
 
-html[data-nav-transition='forward']::view-transition-old(page) {
+html[data-nav-transition='forward']::view-transition-old(root) {
 	animation:
 		80ms cubic-bezier(0.4, 0, 1, 1) both nav-fade-out,
 		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-to-start;
 }
 
-html[data-nav-transition='forward']::view-transition-new(page) {
+html[data-nav-transition='forward']::view-transition-new(root) {
 	animation:
 		170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in,
 		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-from-end;
 }
 
-html[data-nav-transition='back']::view-transition-old(page) {
+html[data-nav-transition='back']::view-transition-old(root) {
 	animation:
 		80ms cubic-bezier(0.4, 0, 1, 1) both nav-fade-out,
 		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-to-end;
 }
 
-html[data-nav-transition='back']::view-transition-new(page) {
+html[data-nav-transition='back']::view-transition-new(root) {
 	animation:
 		170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in,
 		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-from-start;
