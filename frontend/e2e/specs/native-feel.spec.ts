@@ -62,6 +62,12 @@ test.describe('native feel', () => {
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 		const title = page.getByRole('heading', { level: 1, name: 'Программа' });
 		await expect(title).toBeInViewport();
+		// Focus scrolled into view clears the sticky bar (WCAG 2.4.11).
+		const titleBox = await title.boundingBox();
+		const scrollPaddingTop = await page.evaluate(() =>
+			parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)
+		);
+		expect(scrollPaddingTop).toBeGreaterThanOrEqual((titleBox?.y ?? 0) + (titleBox?.height ?? 0));
 
 		await page.mouse.wheel(0, 1500);
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);

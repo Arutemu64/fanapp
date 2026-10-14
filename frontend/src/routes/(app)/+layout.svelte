@@ -94,6 +94,23 @@
 	// Where the page's sticky headers rest: just under whatever chrome is showing.
 	let stickyTop = $derived(chromeHidden ? chromeHeight - navbarHeight : chromeHeight);
 
+	// Keyboard focus, find-in-page and anchor jumps scroll their target into view; the
+	// scroll padding keeps it clear of the sticky chrome and the floating bottom nav,
+	// which would otherwise cover it (WCAG 2.4.11 Focus Not Obscured, technique C43:
+	// https://www.w3.org/WAI/WCAG22/Techniques/css/C43). Set on <html> because the
+	// document is the scroll container, and removed with the shell that needs it.
+	$effect(() => {
+		const root = document.documentElement;
+		root.style.scrollPaddingTop = `${stickyTop}px`;
+		root.style.scrollPaddingBottom = isDesktop.current
+			? ''
+			: 'calc(var(--bottom-nav-clearance) + var(--bottom-accessory-clearance))';
+		return () => {
+			root.style.removeProperty('scroll-padding-top');
+			root.style.removeProperty('scroll-padding-bottom');
+		};
+	});
+
 	function revealNavbar() {
 		navbarHidden = false;
 		lastScrollTop = window.scrollY;
