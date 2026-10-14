@@ -69,15 +69,12 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    """Document current behavior: the interactor does not validate the event.
+    """An unknown event id is rejected before anything is written.
 
-    CreateSubscription injects a ScheduleEntryGateway but never uses it, so it
-    performs no application-level check that event_id refers to a real event.
-    The subscription still cannot be created for a non-existent event because
-    the subscriptions.event_id foreign key rejects the INSERT and the gateway
-    translates that violation into EventNotFound. So the guard exists only at the
-    database layer; lifting it (or an explicit check) into the interactor is a
-    candidate for a future plan. If that validation is added, update this test.
+    CreateSubscription looks the id up with ``get_event``, which finds neither a
+    missing id nor a block start. The subscriptions.event_id foreign key, which
+    the gateway translates to the same EventNotFound, only backs that check up
+    for an event deleted between the lookup and the insert.
     """
     interactor = await dishka_request.get(CreateSubscription)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
