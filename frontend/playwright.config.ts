@@ -58,6 +58,8 @@ export default defineConfig({
 		// /api/<project>/envelope/ path, which the API mock catches as unmatched.
 		// A release number puts the profile footer's version line on screen, which
 		// is also the diagnostics sheet's hidden trigger.
+		// The hand-started server in e2e/README.md "A faster loop" repeats these;
+		// change both together.
 		env: {
 			PUBLIC_SMARTCAPTCHA_CLIENT_KEY: '',
 			PUBLIC_SENTRY_DSN: '',

@@ -24,10 +24,14 @@ inert in `vite dev` (docs/frontend.md §2).
 The build alone is about a minute. While you're editing **specs** (not app code),
 keep a server running in a second terminal and Playwright reuses it instead of
 rebuilding (`reuseExistingServer` is on outside CI). Restart it after you change
-app code, or the tests run against the stale build:
+app code, or the tests run against the stale build. Playwright applies
+`webServer.env` only to a server it starts itself, so this command repeats those
+overrides; without them the captcha blocks login and the diagnostics test fails:
 
 ```sh
-cd frontend && pnpm build && pnpm preview --port 4173 --strictPort
+cd frontend && PUBLIC_SMARTCAPTCHA_CLIENT_KEY= PUBLIC_SENTRY_DSN= \
+	APP_VERSION=1.0.0 APP_BUILD=0123456789abcdef0123456789abcdef01234567 \
+	pnpm build && pnpm preview --port 4173 --strictPort
 ```
 
 Then narrow the run ([CLI flags](https://playwright.dev/docs/test-cli)):
