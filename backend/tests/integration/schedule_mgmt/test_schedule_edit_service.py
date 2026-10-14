@@ -26,6 +26,7 @@ async def test_edit_invalidates_cache_after_commit(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     service = await dishka_request.get(ScheduleEditService)
     get_schedule = await dishka_request.get(GetSchedule)
@@ -47,9 +48,27 @@ async def test_edit_invalidates_cache_after_commit(
             )
         )
 
+    # Same session on both reads, so the etag alone cannot tell invalidate-before-
+    # commit from invalidate-after-commit; record the call order instead.
+    calls: list[str] = []
+    commit = service.uow.commit
+    invalidate = service.schedule_cache.invalidate
+
+    async def recording_commit() -> None:
+        await commit()
+        calls.append("commit")
+
+    async def recording_invalidate() -> None:
+        calls.append("invalidate")
+        await invalidate()
+
+    monkeypatch.setattr(service.uow, "commit", recording_commit)
+    monkeypatch.setattr(service.schedule_cache, "invalidate", recording_invalidate)
+
     before = await get_schedule()  # populates the cache
     await service.edit(Permission.SCHEDULE_IMPORT, add_event)
 
+    assert calls == ["commit", "invalidate"]
     after = await get_schedule()
     assert after.etag != before.etag
 
