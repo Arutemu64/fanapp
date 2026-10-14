@@ -280,6 +280,7 @@ export type ErrorMessage = {
 		| 'SUBSCRIPTION_ALREADY_EXISTS'
 		| 'SUBSCRIPTION_NOT_FOUND'
 		| 'SYNC_ALREADY_RUNNING'
+		| 'TEST_NOTIFICATION_TOO_FAST'
 		| 'TICKET_ALREADY_USED'
 		| 'TICKET_BARCODE_COLLISION'
 		| 'TICKET_NOT_FOUND'
@@ -3169,6 +3170,10 @@ export type SendTestNotificationErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationErrorResponse;
+	/**
+	 * Rate limited — editing too fast.
+	 */
+	429: ErrorMessage;
 };
 
 export type SendTestNotificationError =

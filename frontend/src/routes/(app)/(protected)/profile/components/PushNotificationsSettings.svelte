@@ -188,7 +188,7 @@
 						'success'
 					);
 				},
-				onError: () => toastService.add('Не удалось отправить тестовое уведомление', 'error')
+				onError: (error) => toastService.error(error, 'Не удалось отправить тестовое уведомление')
 			}
 		);
 	}

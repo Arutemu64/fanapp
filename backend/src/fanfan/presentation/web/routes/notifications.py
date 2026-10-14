@@ -37,7 +37,7 @@ from fanfan.application.interactors.notifications.send_test_notification import 
     SendTestNotification,
 )
 from fanfan.core.vo.mailing import MailingId
-from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
@@ -130,10 +130,11 @@ async def mark_notifications_read(
     summary="Send test notification",
     description=(
         "Creates a test notification for the authenticated user and sends it through "
-        "all connected channels."
+        "all connected channels. One test per user per minute."
     ),
     responses={
         204: {"description": "Test notification created successfully."},
+        **RATE_LIMIT_RESPONSES,
     },
 )
 @inject

@@ -1210,7 +1210,7 @@ export const markNotificationsRead = <ThrowOnError extends boolean = false>(
 /**
  * Send test notification
  *
- * Creates a test notification for the authenticated user and sends it through all connected channels.
+ * Creates a test notification for the authenticated user and sends it through all connected channels. One test per user per minute.
  */
 export const sendTestNotification = <ThrowOnError extends boolean = false>(
 	options?: Options<SendTestNotificationData, ThrowOnError>
