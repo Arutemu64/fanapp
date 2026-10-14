@@ -15,8 +15,6 @@ class RefundStatus(StrEnum):
 class Refund:
     id: str
     order: str
-    event: str
-    status: RefundStatus
     tickets: list[str]  # list of ticket ids
 
 
@@ -24,4 +22,3 @@ class Refund:
 class RefundsResponse:
     data: list[Refund]
     pagination: Pagination
-    total_count: int

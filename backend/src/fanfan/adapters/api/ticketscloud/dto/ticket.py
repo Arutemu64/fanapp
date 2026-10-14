@@ -1,17 +1,11 @@
 from dataclasses import dataclass
 
 
+# Only the fields the sync reads. adaptix requires every declared field and
+# skips unknown keys, so each extra field here is one more way for a single
+# vendor payload to fail a whole sweep.
 @dataclass(slots=True, frozen=True)
 class Ticket:
     id: str
-    serial: str
-    number: int
+    # Assigned only once the order is done.
     barcode: str | None
-    status: str
-    price: str
-    nominal: str
-    discount: str
-    extra: str
-    full: str
-    set: str
-    tariff: str | None

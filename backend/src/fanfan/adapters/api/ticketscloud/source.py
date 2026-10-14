@@ -47,21 +47,23 @@ class TCloudSource(TicketsSource):
         async def iterator() -> AsyncIterator[ExternalTicket]:
             # Reuse the first page to read the total page count, then request
             # the rest starting from page 2 so page 1 is not fetched twice.
+            # Only done orders carry barcodes, so the vendor filters the rest
+            # out; _extract_tickets still checks, since get_order does not filter.
             first_page = await self.client.get_orders(
-                page=1, page_size=DEFAULT_PAGE_SIZE
+                status=OrderStatus.DONE, page=1, page_size=DEFAULT_PAGE_SIZE
             )
             logger.info(
                 "TicketsCloud sync started",
-                extra={"order_count": first_page.total_count},
+                extra={"page_count": first_page.pagination.total},
             )
             for page in range(1, first_page.pagination.total + 1):
-                result = (
-                    first_page
-                    if page == 1
-                    else await self.client.get_orders(
-                        page=page, page_size=DEFAULT_PAGE_SIZE
+                result = first_page
+                if page > 1:
+                    result = await self.client.get_orders(
+                        status=OrderStatus.DONE,
+                        page=page,
+                        page_size=DEFAULT_PAGE_SIZE,
                     )
-                )
                 for order in result.data:
                     for ticket in self._extract_tickets(order):
                         yield ticket

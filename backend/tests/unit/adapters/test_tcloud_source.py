@@ -26,20 +26,7 @@ EVENT_UNKNOWN = "event-unknown"
 
 
 def _ticket(ticket_id: str, *, barcode: str | None) -> Ticket:
-    return Ticket(
-        id=ticket_id,
-        serial="S",
-        number=1,
-        barcode=barcode,
-        status="ok",
-        price="0",
-        nominal="0",
-        discount="0",
-        extra="",
-        full="",
-        set="",
-        tariff=None,
-    )
+    return Ticket(id=ticket_id, barcode=barcode)
 
 
 def _order(
@@ -76,16 +63,19 @@ class FakeTCloudClient(TCloudClient):
         self._pages = pages
         self._orders_by_id = orders_by_id or {}
         self._refund_pages = refund_pages or [[]]
+        self.order_statuses: list[OrderStatus] = []
         self.refund_statuses: list[RefundStatus] = []
 
-    async def get_orders(self, page: int = 1, page_size: int = 200) -> OrdersResponse:
+    async def get_orders(
+        self, status: OrderStatus, page: int = 1, page_size: int = 200
+    ) -> OrdersResponse:
+        self.order_statuses.append(status)
         data = self._pages[page - 1]
         return OrdersResponse(
             data=data,
             pagination=Pagination(
                 page=page, page_size=page_size, total=len(self._pages)
             ),
-            total_count=sum(len(p) for p in self._pages),
         )
 
     async def get_order(self, order_id: str) -> Order | None:
@@ -100,7 +90,6 @@ class FakeTCloudClient(TCloudClient):
             pagination=Pagination(
                 page=page, page_size=page_size, total=len(self._refund_pages)
             ),
-            total_count=sum(len(p) for p in self._refund_pages),
         )
 
 
@@ -163,23 +152,19 @@ async def test_fetch_all_tickets_paginates_and_streams() -> None:
             ),
         ],
     ]
-    source = TCloudSource(FakeTCloudClient(pages=pages), _config())
+    client = FakeTCloudClient(pages=pages)
+    source = TCloudSource(client, _config())
 
     collected = [ticket async for ticket in source.fetch_all_tickets()]
 
     # t3 dropped (order not DONE); t1 and t2 streamed across both pages.
     assert [t.external_id for t in collected] == ["t1", "t2"]
+    assert client.order_statuses == [OrderStatus.DONE, OrderStatus.DONE]
 
 
 async def test_fetch_revoked_tickets_reads_every_approved_refund_page() -> None:
     def refund(refund_id: str, order_id: str, tickets: list[str]) -> Refund:
-        return Refund(
-            id=refund_id,
-            order=order_id,
-            event=EVENT_HELPER,
-            status=RefundStatus.APPROVED,
-            tickets=tickets,
-        )
+        return Refund(id=refund_id, order=order_id, tickets=tickets)
 
     client = FakeTCloudClient(
         pages=[[]],
