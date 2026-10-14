@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { ExternalLink, Link2 } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
+	import { getUserOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
+	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 	import {
 		buildSocialProfileUrl,
 		getAvatarInitials,
@@ -13,8 +16,13 @@
 
 	import type { PageProps } from './$types';
 
+	import UserAccessCard from './components/UserAccessCard.svelte';
+
 	let { data }: PageProps = $props();
-	let profile = $derived(data.profile);
+	// Live from the query, so a role or permission change shows once its refetch
+	// lands; the load's copy covers the first paint.
+	const profileQuery = createQuery(() => getUserOptions({ path: { user_id: data.profile.id } }));
+	let profile = $derived(profileQuery.data ?? data.profile);
 </script>
 
 <svelte:head>
@@ -54,6 +62,10 @@
 				</dd>
 			</div>
 			<div class="flex flex-col gap-0.5">
+				<dt class="text-xs text-muted-foreground">Зарегистрирован</dt>
+				<dd class="text-foreground">{formatFestivalDateTime(profile.created_at)}</dd>
+			</div>
+			<div class="flex flex-col gap-0.5">
 				<dt class="text-xs text-muted-foreground">Номер билета</dt>
 				<dd class="font-mono text-xs break-all text-foreground select-all">
 					{profile.ticket_number ?? '—'}
@@ -61,6 +73,8 @@
 			</div>
 		</dl>
 	</Card.Root>
+
+	<UserAccessCard {profile} currentUser={data.user} />
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">

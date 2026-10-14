@@ -8,15 +8,18 @@ from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.models import (
     NominationORM,
     ParticipantORM,
+    TicketORM,
     UserORM,
     VoteORM,
 )
 from fanfan.adapters.db.models.permission import UserPermissionORM
-from fanfan.application.dto.page import Pagination
+from fanfan.adapters.db.pagination import rows_after
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.user import (
     CurrentUserDTO,
     UserBaseDTO,
     UserDetailsDTO,
+    UserListFilter,
     UserListItemDTO,
     UserSettingsDTO,
     UserSocialIdentityDTO,
@@ -84,6 +87,7 @@ def _parse_list_item_dto(orm: UserORM) -> UserListItemDTO:
         role=orm.role,
         email=orm.email,
         ticket_number=orm.ticket.barcode if orm.ticket else None,
+        created_at=orm.created_at,
     )
 
 
@@ -94,6 +98,7 @@ def _parse_details_dto(orm: UserORM) -> UserDetailsDTO:
         role=orm.role,
         email=orm.email,
         ticket_number=orm.ticket.barcode if orm.ticket else None,
+        created_at=orm.created_at,
         social_links=[
             UserSocialLinkDTO(
                 provider=identity.provider,
@@ -103,6 +108,7 @@ def _parse_details_dto(orm: UserORM) -> UserDetailsDTO:
             )
             for identity in orm.social_identities
         ],
+        permissions=[Permission(p.permission) for p in orm.permissions],
     )
 
 
@@ -205,6 +211,7 @@ class SqlUserGateway(UserGateway):
                 joinedload(UserORM.ticket),
                 selectinload(UserORM.permissions),
                 selectinload(UserORM.social_identities),
+                selectinload(UserORM.permissions),
             )
         )
         user_orm = await self.session.scalar(stmt)
@@ -281,24 +288,24 @@ class SqlUserGateway(UserGateway):
         return [_parse_base_dto(u) for u in users_orm]
 
     async def read_users_page(
-        self, *, pagination: Pagination, search: str | None
+        self, *, pagination: CursorPagination, user_filter: UserListFilter
     ) -> list[UserListItemDTO]:
         stmt = select(UserORM).options(joinedload(UserORM.ticket))
-        stmt = self._apply_user_search(stmt, search)
-        # Order by username case-insensitively, with id (uuid7) as the tiebreaker
-        # so rows sharing a username spelling keep a stable order across pages.
-        stmt = (
-            stmt.order_by(func.lower(UserORM.username), UserORM.id)
-            .limit(pagination.limit)
-            .offset(pagination.offset)
+        stmt = self._apply_user_filter(stmt, user_filter)
+        if pagination.after is not None:
+            stmt = stmt.where(
+                rows_after(UserORM.created_at, UserORM.id, pagination.after)
+            )
+        stmt = stmt.order_by(UserORM.created_at.desc(), UserORM.id.desc()).limit(
+            pagination.fetch_limit
         )
         result = await self.session.execute(stmt)
         users_orm = result.scalars().unique()
         return [_parse_list_item_dto(u) for u in users_orm]
 
-    async def count_users(self, *, search: str | None) -> int:
+    async def count_users(self, *, user_filter: UserListFilter) -> int:
         stmt = select(func.count(UserORM.id))
-        stmt = self._apply_user_search(stmt, search)
+        stmt = self._apply_user_filter(stmt, user_filter)
         return await self.session.scalar(stmt) or 0
 
     async def read_user_details(self, user_id: UserId) -> UserDetailsDTO | None:
@@ -308,18 +315,28 @@ class SqlUserGateway(UserGateway):
             .options(
                 joinedload(UserORM.ticket),
                 selectinload(UserORM.social_identities),
+                selectinload(UserORM.permissions),
             )
         )
         user_orm = await self.session.scalar(stmt)
         return _parse_details_dto(user_orm) if user_orm else None
 
     @staticmethod
-    def _apply_user_search[SelectT: Select[Any]](
-        stmt: SelectT, search: str | None
+    def _apply_user_filter[SelectT: Select[Any]](
+        stmt: SelectT, user_filter: UserListFilter
     ) -> SelectT:
+        if user_filter.role is not None:
+            stmt = stmt.where(UserORM.role == user_filter.role)
+        if user_filter.has_ticket is True:
+            stmt = stmt.where(UserORM.ticket.has())
+        elif user_filter.has_ticket is False:
+            stmt = stmt.where(~UserORM.ticket.has())
+
         # Blank query means "no filter". ILIKE gives a case-insensitive substring
-        # match on username or email; %/_ in the term are escaped so a literal
-        # '100%' searches for that text rather than acting as a wildcard.
+        # match on username, email or ticket number; %/_ in the term are escaped
+        # so a literal '100%' searches for that text rather than acting as a
+        # wildcard.
+        search = user_filter.search
         if not search or not search.strip():
             return stmt
         escaped = (
@@ -327,5 +344,7 @@ class SqlUserGateway(UserGateway):
         )
         pattern = f"%{escaped}%"
         return stmt.where(
-            UserORM.username.ilike(pattern) | UserORM.email.ilike(pattern)
+            UserORM.username.ilike(pattern)
+            | UserORM.email.ilike(pattern)
+            | UserORM.ticket.has(TicketORM.barcode.ilike(pattern))
         )

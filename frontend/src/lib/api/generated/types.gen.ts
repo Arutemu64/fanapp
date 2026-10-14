@@ -66,6 +66,13 @@ export type BodyLogin = {
 };
 
 /**
+ * Body_set_user_role
+ */
+export type BodySetUserRole = {
+	role: UserRole;
+};
+
+/**
  * ChangeEmailInput
  */
 export type ChangeEmailInput = {
@@ -245,6 +252,7 @@ export type ErrorMessage = {
 		| 'ALREADY_VOTED_IN_THIS_NOMINATION'
 		| 'APP_SETTINGS_NOT_FOUND'
 		| 'AUTHENTICATION_ERROR'
+		| 'CANNOT_CHANGE_OWN_ACCESS'
 		| 'CANNOT_REMOVE_LAST_SIGN_IN_METHOD'
 		| 'CAPTCHA_VERIFICATION_FAILED'
 		| 'CURRENT_EVENT_NOT_ALLOWED'
@@ -270,6 +278,7 @@ export type ErrorMessage = {
 		| 'NOMINATION_NOT_FOUND'
 		| 'OUTDATED_SCHEDULE_CHANGE'
 		| 'PARTICIPANT_NOT_FOUND'
+		| 'PERMISSION_NOT_ASSIGNABLE'
 		| 'PUSH_SUBSCRIPTION_ALREADY_EXISTS'
 		| 'PUSH_SUBSCRIPTION_NOT_FOUND'
 		| 'SAME_EVENTS_ARE_NOT_ALLOWED'
@@ -549,6 +558,10 @@ export type ListUsersOutput = {
 	 * Total
 	 */
 	total: number;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
 };
 
 /**
@@ -823,7 +836,8 @@ export type Permission =
 	| 'demo:seed'
 	| 'feedback:read'
 	| 'voting:manage'
-	| 'users:read';
+	| 'users:read'
+	| 'users:manage';
 
 /**
  * PublicConfigDTO
@@ -1319,9 +1333,17 @@ export type UserDetailsDto = {
 	 */
 	ticket_number: string | null;
 	/**
+	 * Created At
+	 */
+	created_at: string;
+	/**
 	 * Social Links
 	 */
 	social_links: Array<UserSocialLinkDto>;
+	/**
+	 * Permissions
+	 */
+	permissions: Array<Permission>;
 };
 
 /**
@@ -1345,6 +1367,10 @@ export type UserListItemDto = {
 	 * Ticket Number
 	 */
 	ticket_number: string | null;
+	/**
+	 * Created At
+	 */
+	created_at: string;
 };
 
 /**
@@ -3615,13 +3641,23 @@ export type ListUsersData = {
 		 */
 		limit?: number;
 		/**
-		 * Offset
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
 		 */
-		offset?: number;
+		cursor?: string | null;
 		/**
 		 * Search
 		 */
 		search?: string | null;
+		/**
+		 * Role
+		 */
+		role?: UserRole | null;
+		/**
+		 * Has Ticket
+		 */
+		has_ticket?: boolean | null;
 	};
 	url: '/users/';
 };
@@ -3728,3 +3764,158 @@ export type GetUserResponses = {
 };
 
 export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
+
+export type SetUserRoleData = {
+	body: BodySetUserRole;
+	path: {
+		/**
+		 * User Id
+		 *
+		 * ID of the user to change.
+		 */
+		user_id: string;
+	};
+	query?: never;
+	url: '/users/{user_id}/role';
+};
+
+export type SetUserRoleErrors = {
+	/**
+	 * Tried to change own role.
+	 */
+	400: ErrorMessage;
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Missing users:manage.
+	 */
+	403: ErrorMessage;
+	/**
+	 * User not found.
+	 */
+	404: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type SetUserRoleError = SetUserRoleErrors[keyof SetUserRoleErrors];
+
+export type SetUserRoleResponses = {
+	/**
+	 * Role changed.
+	 */
+	204: void;
+};
+
+export type SetUserRoleResponse = SetUserRoleResponses[keyof SetUserRoleResponses];
+
+export type RevokeUserPermissionData = {
+	body?: never;
+	path: {
+		/**
+		 * User Id
+		 *
+		 * ID of the user to change.
+		 */
+		user_id: string;
+		/**
+		 * Permission to revoke.
+		 */
+		permission: Permission;
+	};
+	query?: never;
+	url: '/users/{user_id}/permissions/{permission}';
+};
+
+export type RevokeUserPermissionErrors = {
+	/**
+	 * Own permissions, or the superuser grant.
+	 */
+	400: ErrorMessage;
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Missing the superuser grant.
+	 */
+	403: ErrorMessage;
+	/**
+	 * User not found.
+	 */
+	404: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type RevokeUserPermissionError =
+	RevokeUserPermissionErrors[keyof RevokeUserPermissionErrors];
+
+export type RevokeUserPermissionResponses = {
+	/**
+	 * Permission revoked.
+	 */
+	204: void;
+};
+
+export type RevokeUserPermissionResponse =
+	RevokeUserPermissionResponses[keyof RevokeUserPermissionResponses];
+
+export type GrantUserPermissionData = {
+	body?: never;
+	path: {
+		/**
+		 * User Id
+		 *
+		 * ID of the user to change.
+		 */
+		user_id: string;
+		/**
+		 * Permission to grant.
+		 */
+		permission: Permission;
+	};
+	query?: never;
+	url: '/users/{user_id}/permissions/{permission}';
+};
+
+export type GrantUserPermissionErrors = {
+	/**
+	 * Own permissions, or the superuser grant.
+	 */
+	400: ErrorMessage;
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Missing the superuser grant.
+	 */
+	403: ErrorMessage;
+	/**
+	 * User not found.
+	 */
+	404: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GrantUserPermissionError = GrantUserPermissionErrors[keyof GrantUserPermissionErrors];
+
+export type GrantUserPermissionResponses = {
+	/**
+	 * Permission granted.
+	 */
+	204: void;
+};
+
+export type GrantUserPermissionResponse =
+	GrantUserPermissionResponses[keyof GrantUserPermissionResponses];

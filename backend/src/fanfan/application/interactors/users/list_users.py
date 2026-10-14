@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from fanfan.application.dto.page import Pagination
-from fanfan.application.dto.user import UserListItemDTO
+from fanfan.application.dto.page import CursorPagination, cut_page
+from fanfan.application.dto.user import UserListFilter, UserListItemDTO
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -9,19 +9,20 @@ from fanfan.core.vo.permission import Permission
 
 
 class ListUsersInput(BaseModel):
-    pagination: Pagination
-    search: str | None = None
+    pagination: CursorPagination
+    user_filter: UserListFilter = UserListFilter()
 
 
 class ListUsersOutput(BaseModel):
     users: list[UserListItemDTO]
-    # Total matching the current search, so the client can render page controls
-    # without walking every page.
+    # Total matching the current filter, so the client can say how many it
+    # found without walking every page.
     total: int
+    next_cursor: str | None
 
 
 class ListUsers:
-    """Paginated, searchable directory of all users for organisers."""
+    """Newest-first, filterable directory of all users for organisers."""
 
     def __init__(
         self,
@@ -39,8 +40,9 @@ class ListUsers:
             user=current_user, permission=Permission.USERS_READ
         )
 
-        users = await self.user_gateway.read_users_page(
-            pagination=data.pagination, search=data.search
+        rows = await self.user_gateway.read_users_page(
+            pagination=data.pagination, user_filter=data.user_filter
         )
-        total = await self.user_gateway.count_users(search=data.search)
-        return ListUsersOutput(users=users, total=total)
+        users, next_cursor = cut_page(rows, data.pagination)
+        total = await self.user_gateway.count_users(user_filter=data.user_filter)
+        return ListUsersOutput(users=users, total=total, next_cursor=next_cursor)

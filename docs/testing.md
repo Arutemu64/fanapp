@@ -302,7 +302,8 @@ providers plus test overrides:
 
 Reusable user fixtures (`visitor`, `visitor_with_ticket`, `superuser`, and one
 per permission: `sync_operator`, `demo_seeder`, `settings_editor`,
-`voting_manager`, `schedule_editor`, `feedback_reader`, `users_reader`) live in `tests/fixtures/users.py` and are registered as a plugin in
+`voting_manager`, `schedule_editor`, `feedback_reader`, `users_reader`,
+`users_manager`) live in `tests/fixtures/users.py` and are registered as a plugin in
 `tests/conftest.py`. The shared plumbing fixtures (`login`, `outbox`,
 `uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
 fixtures* above. Add shared setup in these places rather than copying it

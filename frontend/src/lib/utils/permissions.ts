@@ -19,6 +19,7 @@ const SYNC_RUN: Permission = 'sync:run';
 const FEEDBACK_READ: Permission = 'feedback:read';
 const VOTING_MANAGE: Permission = 'voting:manage';
 const USERS_READ: Permission = 'users:read';
+const USERS_MANAGE: Permission = 'users:manage';
 
 export function hasPermission(user: CurrentUserDto | null, permission: Permission): boolean {
 	if (!user) {
@@ -75,3 +76,30 @@ export function canManageVoting(user: CurrentUserDto | null): boolean {
 export function canReadUsers(user: CurrentUserDto | null): boolean {
 	return hasPermission(user, USERS_READ);
 }
+
+export function canManageUsers(user: CurrentUserDto | null): boolean {
+	return hasPermission(user, USERS_MANAGE);
+}
+
+// Handing out permissions takes the superuser grant itself: whoever may grant
+// them can give any of them to a second account of their own.
+export function canManagePermissions(user: CurrentUserDto | null): boolean {
+	return hasPermission(user, WILDCARD);
+}
+
+// A Record over the generated union, so a permission the backend adds fails
+// `pnpm check` here until it has a label. Insertion order is display order.
+export const PERMISSION_LABELS: Record<Permission, string> = {
+	'*': 'Полный доступ',
+	'schedule:manage': 'Управление программой',
+	'schedule:import': 'Импорт программы',
+	'notifications:send': 'Рассылка уведомлений',
+	'settings:manage': 'Настройки фестиваля',
+	'tickets:generate': 'Генерация билетов',
+	'sync:run': 'Синхронизация',
+	'demo:seed': 'Демо-данные',
+	'feedback:read': 'Чтение отзывов',
+	'voting:manage': 'Управление голосованием',
+	'users:read': 'Просмотр пользователей',
+	'users:manage': 'Смена ролей пользователей'
+};

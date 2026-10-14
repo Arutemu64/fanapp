@@ -244,6 +244,12 @@ dedicated CLI container, and no `just` recipe: this is a rare admin operation,
 not a dev-loop task, so it stays a plain CLI command with one documented home
 here rather than a thin wrapper on a second surface.
 
+Once one superuser exists, everyday grants move to the app: a `*` holder toggles
+another organiser's permissions on their card under **Инструменты →
+Пользователи**, and a `users:manage` holder changes roles there. The web never
+grants or revokes `*` itself and never edits the caller's own access, so minting
+a superuser still takes shell access.
+
 ### Pinning a build, and rolling back
 
 By default `just deploy` tracks the latest `main` build (the `latest` tag). Pin a

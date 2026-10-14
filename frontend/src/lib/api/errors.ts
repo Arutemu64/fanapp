@@ -219,6 +219,7 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: 'В этой номинации голос уже учтён',
+	CANNOT_CHANGE_OWN_ACCESS: 'Свою роль и права может изменить только другой организатор',
 	CANNOT_REMOVE_LAST_SIGN_IN_METHOD:
 		'Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт',
 	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
@@ -238,6 +239,7 @@ const ERROR_MESSAGES = {
 	MAILING_NOT_CANCELLABLE: 'Рассылку уже нельзя отменить — она завершена',
 	MAILING_NOT_FOUND: 'Рассылка не найдена',
 	OUTDATED_SCHEDULE_CHANGE: 'Программа уже изменилась, обнови страницу',
+	PERMISSION_NOT_ASSIGNABLE: 'Полный доступ выдаётся только через сервер',
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
 	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
 	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',

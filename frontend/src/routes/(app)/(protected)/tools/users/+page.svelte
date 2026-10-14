@@ -1,59 +1,131 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { ArrowLeft, ArrowRight, Search as SearchIcon, Users, X } from '@lucide/svelte';
+	import { page } from '$app/state';
+	import { Search as SearchIcon, X } from '@lucide/svelte';
+	import { createInfiniteQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
+	import type { ListUsersData } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { listUsersInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
+	import ErrorState from '#lib/components/ErrorState.svelte';
+	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
-	import { USERS_PAGE_SIZE } from '#lib/constants/users.js';
+	import * as Select from '#lib/components/ui/select/index.js';
+	import { USER_ROLES, USERS_PAGE_SIZE } from '#lib/constants/users.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { pluralize } from '#lib/utils/formatters.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
-	import type { PageProps } from './$types';
+	import SectionSpinner from '../../../components/SectionSpinner.svelte';
+	import UserRow from './components/UserRow.svelte';
+	import { buildUserFiltersQuery, parseUserFilters, type UserFilters } from './userFilters';
 
-	let { data }: PageProps = $props();
+	const toastService = getToastService();
+
+	let filters = $derived(parseUserFilters(page.url.searchParams));
+	let hasActiveFilters = $derived(
+		filters.search !== '' || filters.role !== null || filters.hasTicket !== null
+	);
 
 	// Local, editable mirror of the URL search term so the input stays responsive
-	// while the real query runs server-side after a short debounce (below).
-	// Seeded once (untrack) from the initial term; typing then drives navigation.
-	let searchValue = $state(untrack(() => data.search));
+	// while the request waits for a short debounce (below). Seeded once (untrack);
+	// typing then drives navigation.
+	let searchValue = $state(untrack(() => filters.search));
 
-	let totalPages = $derived(Math.max(1, Math.ceil(data.total / USERS_PAGE_SIZE)));
-	let rangeStart = $derived(data.total === 0 ? 0 : (data.page - 1) * USERS_PAGE_SIZE + 1);
-	let rangeEnd = $derived(Math.min(data.page * USERS_PAGE_SIZE, data.total));
+	const usersQuery = createInfiniteQuery(() => {
+		const query: NonNullable<ListUsersData['query']> = { limit: USERS_PAGE_SIZE };
+		if (filters.search) query.search = filters.search;
+		if (filters.role) query.role = filters.role;
+		if (filters.hasTicket !== null) query.has_ticket = filters.hasTicket;
+		return {
+			...listUsersInfiniteOptions({ query }),
+			// An object page param is request overrides to hey-api, a string the
+			// cursor: an empty object asks for the first page.
+			initialPageParam: {},
+			getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
+			// Keep the current list on screen while a new filter loads, instead of
+			// flashing a spinner on every keystroke.
+			placeholderData: keepPreviousData
+		};
+	});
 
-	function buildQuery(page: number, search: string): string {
-		const parts: string[] = [];
-		if (search) {
-			parts.push(`q=${encodeURIComponent(search)}`);
-		}
-		if (page > 1) {
-			parts.push(`page=${page}`);
-		}
-		const query = parts.join('&');
-		return query ? `?${query}` : '';
+	let users = $derived(usersQuery.data?.pages.flatMap((usersPage) => usersPage.users) ?? []);
+	let total = $derived(usersQuery.data?.pages[0]?.total ?? 0);
+	let resultsSummary = $derived(
+		`${total} ${pluralize(total, 'пользователь', 'пользователя', 'пользователей')}`
+	);
+
+	function applyFilters(next: UserFilters) {
+		// `replace` keeps the history stack from filling with every intermediate
+		// filter; `reset: false` leaves scroll and focus alone, so the keyboard stays
+		// open on the search field.
+		void goto(`${resolve('tools/users')}${buildUserFiltersQuery(next)}`, {
+			replace: true,
+			reset: false
+		});
 	}
 
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 	function onSearchInput(value: string) {
 		clearTimeout(searchTimer);
-		// Debounce so a new request fires once the user pauses, not on every
-		// keystroke. A search always resets to the first page. `replace` keeps
-		// the history stack from filling with every intermediate query.
-		searchTimer = setTimeout(() => {
-			void goto(`${resolve('tools/users')}${buildQuery(1, value.trim())}`, {
-				replace: true,
-				reset: false
-			});
-		}, 300);
+		// Debounce so a request fires once the user pauses, not on every keystroke.
+		searchTimer = setTimeout(() => applyFilters({ ...filters, search: value }), 300);
 	}
 
-	function goToPage(page: number) {
-		void goto(`${resolve('tools/users')}${buildQuery(page, data.search)}`);
+	function clearSearch() {
+		clearTimeout(searchTimer);
+		searchValue = '';
+		applyFilters({ ...filters, search: '' });
+	}
+
+	function resetFilters() {
+		clearTimeout(searchTimer);
+		searchValue = '';
+		applyFilters({ search: '', role: null, hasTicket: null });
+	}
+
+	const ALL = 'all';
+	const ticketOptions = [
+		{ value: ALL, label: 'Билет: любой' },
+		{ value: 'yes', label: 'С билетом' },
+		{ value: 'no', label: 'Без билета' }
+	];
+
+	let roleValue = $derived(filters.role ?? ALL);
+	let roleLabel = $derived(filters.role ? getRoleLabel(filters.role) : 'Все роли');
+	let ticketValue = $derived.by(() => {
+		if (filters.hasTicket === null) return ALL;
+		return filters.hasTicket ? 'yes' : 'no';
+	});
+	let ticketLabel = $derived(
+		ticketOptions.find((option) => option.value === ticketValue)?.label ?? ''
+	);
+
+	function onRoleChange(value: string) {
+		const role = USER_ROLES.find((candidate) => candidate === value) ?? null;
+		applyFilters({ ...filters, role });
+	}
+
+	function onTicketChange(value: string) {
+		let hasTicket: boolean | null = null;
+		if (value === 'yes') hasTicket = true;
+		if (value === 'no') hasTicket = false;
+		applyFilters({ ...filters, hasTicket });
+	}
+
+	async function loadMore() {
+		const result = await usersQuery.fetchNextPage();
+		if (result.isFetchNextPageError) {
+			toastService.add('Не удалось загрузить пользователей', 'error');
+		}
 	}
 </script>
 
@@ -61,110 +133,109 @@
 	<title>Пользователи · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro
-	description="Список всех пользователей. Найди по имени или почте и открой карточку."
-/>
+<div class="mx-auto flex w-full max-w-2xl flex-col gap-4">
+	<SectionIntro description="Найди человека по имени, почте или номеру билета. Новые — сверху." />
 
-<div class="mx-auto flex w-full max-w-3xl flex-col gap-4">
-	<div class="relative flex items-center">
-		<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-		<Input
-			bind:value={searchValue}
-			placeholder="Поиск по имени или почте"
-			class="pr-8 pl-9"
-			oninput={() => onSearchInput(searchValue)}
-		/>
-		{#if searchValue}
-			<button
-				type="button"
-				class="absolute right-2 text-muted-foreground hover:text-foreground"
-				onclick={() => {
-					searchValue = '';
-					onSearchInput('');
-				}}
-				aria-label="Очистить поиск"
-			>
-				<X class="size-4" />
-			</button>
-		{/if}
+	<div class="flex flex-col gap-3">
+		<div class="relative flex items-center">
+			<SearchIcon
+				class="pointer-events-none absolute left-3 size-4 text-muted-foreground"
+				aria-hidden="true"
+			/>
+			<Input
+				type="search"
+				bind:value={searchValue}
+				placeholder="Имя, почта или билет"
+				aria-label="Поиск пользователей"
+				autocomplete="off"
+				autocapitalize="off"
+				spellcheck={false}
+				enterkeyhint="search"
+				class="pr-10 pl-9 [&::-webkit-search-cancel-button]:hidden"
+				oninput={() => onSearchInput(searchValue)}
+			/>
+			{#if searchValue}
+				<button
+					type="button"
+					class="absolute right-0 flex size-11 items-center justify-center text-muted-foreground hover:text-foreground"
+					onclick={clearSearch}
+					aria-label="Очистить поиск"
+				>
+					<X class="size-4" />
+				</button>
+			{/if}
+		</div>
+
+		<!-- Two selects side by side rather than rows of chips: four roles and three
+		     ticket states fit one line on a phone, and the current choice stays
+		     readable on the trigger. -->
+		<div class="grid grid-cols-2 gap-2">
+			<Select.Root type="single" value={roleValue} onValueChange={onRoleChange}>
+				<Select.Trigger class="w-full" aria-label="Роль">{roleLabel}</Select.Trigger>
+				<Select.Content>
+					<Select.Item value={ALL} label="Все роли">Все роли</Select.Item>
+					{#each USER_ROLES as role (role)}
+						<Select.Item value={role} label={getRoleLabel(role)}>
+							{getRoleLabel(role)}
+						</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+			<Select.Root type="single" value={ticketValue} onValueChange={onTicketChange}>
+				<Select.Trigger class="w-full" aria-label="Билет">{ticketLabel}</Select.Trigger>
+				<Select.Content>
+					{#each ticketOptions as option (option.value)}
+						<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
+					{/each}
+				</Select.Content>
+			</Select.Root>
+		</div>
+
+		<div class="flex min-h-9 items-center justify-between gap-3">
+			<p class="text-xs text-muted-foreground" aria-live="polite" role="status">
+				{usersQuery.data ? resultsSummary : ''}
+			</p>
+			{#if hasActiveFilters}
+				<Button variant="ghost" size="sm" onclick={resetFilters}>Сбросить</Button>
+			{/if}
+		</div>
 	</div>
 
-	{#if data.users.length > 0}
-		<div class="relative w-full overflow-x-auto rounded-lg border border-border">
-			<table class="w-full text-left text-sm">
-				<thead
-					class="border-b border-border bg-muted/50 text-xs font-medium text-muted-foreground uppercase"
-				>
-					<tr>
-						<th class="px-4 py-3">Имя</th>
-						<th class="px-4 py-3">Почта</th>
-						<th class="px-4 py-3">Билет</th>
-						<th class="px-4 py-3">Роль</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-border">
-					{#each data.users as listedUser (listedUser.id)}
-						<tr class="transition-colors hover:bg-muted/50">
-							<td class="px-4 py-3 font-medium">
-								<!-- The username is the link to the detail page: a real anchor
-								     keeps the row reachable and openable by keyboard. -->
-								<a
-									href={resolve(`tools/users/${listedUser.id}`)}
-									class="text-primary hover:underline"
-								>
-									{listedUser.username}
-								</a>
-							</td>
-							<td class="px-4 py-3 text-muted-foreground">
-								{listedUser.email ?? '—'}
-							</td>
-							<td class="px-4 py-3 font-mono text-xs text-muted-foreground">
-								{listedUser.ticket_number ?? '—'}
-							</td>
-							<td class="px-4 py-3">
-								<Badge variant="secondary">
-									{getRoleLabel(listedUser.role)}
-								</Badge>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<p class="text-xs text-muted-foreground">
-				Показаны {rangeStart}–{rangeEnd} из {data.total}
-			</p>
-			<div class="flex items-center justify-center gap-2">
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={data.page <= 1}
-					onclick={() => goToPage(data.page - 1)}
-				>
-					<ArrowLeft aria-hidden="true" data-icon="inline-start" />
-					Назад
-				</Button>
-				<span class="text-xs text-muted-foreground">
-					{data.page} / {totalPages}
-				</span>
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={data.page >= totalPages}
-					onclick={() => goToPage(data.page + 1)}
-				>
-					Вперёд
-					<ArrowRight aria-hidden="true" data-icon="inline-end" />
-				</Button>
-			</div>
-		</div>
-	{:else}
+	{#if usersQuery.data === undefined}
+		{#if usersQuery.isError}
+			<ErrorState
+				variant="inline"
+				onRetry={() => void usersQuery.refetch()}
+				error={{
+					status: 500,
+					message: getApiErrorDetail(usersQuery.error) ?? 'Не удалось загрузить пользователей'
+				}}
+			/>
+		{:else}
+			<SectionSpinner />
+		{/if}
+	{:else if users.length === 0}
 		<EmptyState
-			icon={Users}
 			title="Никого не нашлось"
-			message={data.search ? 'Попробуй изменить запрос.' : 'Пользователей пока нет.'}
+			message={hasActiveFilters
+				? 'Попробуй изменить запрос или фильтры.'
+				: 'Пользователей пока нет.'}
 		/>
+	{:else}
+		<div class={['transition-opacity', usersQuery.isPlaceholderData && 'opacity-60']}>
+			<MenuGroup class="divide-y divide-border">
+				{#each users as listedUser (listedUser.id)}
+					<UserRow user={listedUser} />
+				{/each}
+			</MenuGroup>
+
+			{#if usersQuery.hasNextPage}
+				<LoadMoreButton
+					loading={usersQuery.isFetchingNextPage}
+					busy={usersQuery.isFetching}
+					onclick={loadMore}
+				/>
+			{/if}
+		</div>
 	{/if}
 </div>

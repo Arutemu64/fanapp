@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 from fanfan.core.vo.permission import (
@@ -14,14 +16,25 @@ class UserBaseDTO(BaseModel):
     role: UserRole
 
 
+class UserListFilter(BaseModel):
+    # Narrows the organiser user directory. Every field is optional and they
+    # combine with AND; `search` is a case-insensitive substring of the username,
+    # email or linked ticket number.
+    search: str | None = None
+    role: UserRole | None = None
+    has_ticket: bool | None = None
+
+
 class UserListItemDTO(BaseModel):
     # A row in the organiser user directory (users:read). Email is carried so it
-    # shows in the table and is matched by the server-side search.
+    # shows in the list and is matched by the server-side search; created_at is
+    # the sort key the page cursor points into.
     id: UserId
     username: str
     role: UserRole
     email: EmailStr | None
     ticket_number: str | None
+    created_at: datetime
 
 
 class UserSocialLinkDTO(BaseModel):
@@ -36,14 +49,16 @@ class UserSocialLinkDTO(BaseModel):
 
 
 class UserDetailsDTO(BaseModel):
-    # Full organiser view of one user (users:read): the profile basics plus the
-    # linked external accounts with their ids.
+    # Full organiser view of one user (users:read): the profile basics, the
+    # linked external accounts with their ids, and the granted permissions.
     id: UserId
     username: str
     role: UserRole
     email: EmailStr | None
     ticket_number: str | None
+    created_at: datetime
     social_links: list[UserSocialLinkDTO]
+    permissions: list[Permission]
 
 
 class UserTicketDTO(BaseModel):

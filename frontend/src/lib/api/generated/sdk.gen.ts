@@ -81,6 +81,9 @@ import type {
 	GetVotingStatusData,
 	GetVotingStatusErrors,
 	GetVotingStatusResponses,
+	GrantUserPermissionData,
+	GrantUserPermissionErrors,
+	GrantUserPermissionResponses,
 	HealthCheckData,
 	HealthCheckErrors,
 	HealthCheckResponses,
@@ -144,6 +147,9 @@ import type {
 	RequestSyncData,
 	RequestSyncErrors,
 	RequestSyncResponses,
+	RevokeUserPermissionData,
+	RevokeUserPermissionErrors,
+	RevokeUserPermissionResponses,
 	SendBroadcastData,
 	SendBroadcastErrors,
 	SendBroadcastResponses,
@@ -153,6 +159,9 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentErrors,
 	SetEventAsCurrentResponses,
+	SetUserRoleData,
+	SetUserRoleErrors,
+	SetUserRoleResponses,
 	SetVotingTimeRangeData,
 	SetVotingTimeRangeErrors,
 	SetVotingTimeRangeResponses,
@@ -1476,7 +1485,7 @@ export const requestSync = <ThrowOnError extends boolean = false>(
 /**
  * List users
  *
- * Paginated, searchable directory of all users. Search matches a case-insensitive substring of the username or email. Requires users:read.
+ * Newest-first, filterable directory of all users. Search matches a case-insensitive substring of the username, email or ticket number; the filters combine with AND. Requires users:read.
  */
 export const listUsers = <ThrowOnError extends boolean = false>(
 	options?: Options<ListUsersData, ThrowOnError>
@@ -1516,7 +1525,7 @@ export const countOnlineUsers = <ThrowOnError extends boolean = false>(
 /**
  * Get user details
  *
- * Profile basics and linked external accounts for one user. Requires users:read.
+ * Profile basics, linked external accounts and granted permissions for one user. Requires users:read.
  */
 export const getUser = <ThrowOnError extends boolean = false>(
 	options: Options<GetUserData, ThrowOnError>
@@ -1530,5 +1539,77 @@ export const getUser = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/users/{user_id}',
+		...options
+	});
+
+/**
+ * Change a user's role
+ *
+ * Sets another user's role. Requires users:manage; an organiser cannot change their own role.
+ */
+export const setUserRole = <ThrowOnError extends boolean = false>(
+	options: Options<SetUserRoleData, ThrowOnError>
+): RequestResult<SetUserRoleResponses, SetUserRoleErrors, ThrowOnError> =>
+	(options.client ?? client).put<SetUserRoleResponses, SetUserRoleErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/users/{user_id}/role',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Revoke a permission
+ *
+ * Revokes one permission from another user; idempotent. Requires the superuser grant. The superuser grant itself is CLI-only.
+ */
+export const revokeUserPermission = <ThrowOnError extends boolean = false>(
+	options: Options<RevokeUserPermissionData, ThrowOnError>
+): RequestResult<RevokeUserPermissionResponses, RevokeUserPermissionErrors, ThrowOnError> =>
+	(options.client ?? client).delete<
+		RevokeUserPermissionResponses,
+		RevokeUserPermissionErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/users/{user_id}/permissions/{permission}',
+		...options
+	});
+
+/**
+ * Grant a permission
+ *
+ * Grants one permission to another user; idempotent. Requires the superuser grant. The superuser grant itself is CLI-only.
+ */
+export const grantUserPermission = <ThrowOnError extends boolean = false>(
+	options: Options<GrantUserPermissionData, ThrowOnError>
+): RequestResult<GrantUserPermissionResponses, GrantUserPermissionErrors, ThrowOnError> =>
+	(options.client ?? client).put<
+		GrantUserPermissionResponses,
+		GrantUserPermissionErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/users/{user_id}/permissions/{permission}',
 		...options
 	});
