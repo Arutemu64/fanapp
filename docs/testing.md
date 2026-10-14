@@ -427,7 +427,8 @@ the job instead of silently dropping the project.
 own job — it needs a browser and builds the app, unlike the plain `pnpm` steps),
 gated on the frontend paths filter. It downloads browsers on every run rather than
 caching them, per [Playwright's CI guide](https://playwright.dev/docs/ci), and runs
-with one worker for stability.
+two workers on the 4-vCPU runner (the guide's default is one, for stability;
+`playwright.config.ts` records why we raised it and when to drop back).
 It isn't marked required in branch protection yet: let a browser tier prove stable
 under CI timing first, then gate it. Like the backend integration suite, treat it
 as a tool to *see* a UI change work, not a local gate you must run before pushing.
