@@ -12,7 +12,7 @@ from fanfan.core.vo.schedule_change import (
     ScheduleChangeType,
     generate_schedule_change_id,
 )
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.user import UserId
 
 
@@ -21,8 +21,8 @@ class ScheduleChange(AggregateRoot):
     id: ScheduleChangeId
     type: ScheduleChangeType
 
-    changed_event_id: ScheduleEventId | None
-    argument_event_id: ScheduleEventId | None
+    changed_event_id: ScheduleEntryId | None
+    argument_event_id: ScheduleEntryId | None
 
     mailing_id: MailingId | None
     user_id: UserId | None
@@ -32,8 +32,8 @@ class ScheduleChange(AggregateRoot):
     def set_as_current(
         cls,
         *,
-        changed_event_id: ScheduleEventId | None,
-        previous_event_id: ScheduleEventId | None,
+        changed_event_id: ScheduleEntryId | None,
+        previous_event_id: ScheduleEntryId | None,
         mailing_id: MailingId | None,
         user_id: UserId | None,
     ) -> Self:
@@ -53,8 +53,8 @@ class ScheduleChange(AggregateRoot):
     def moved(
         cls,
         *,
-        event_id: ScheduleEventId,
-        previous_event_id: ScheduleEventId | None,
+        event_id: ScheduleEntryId,
+        previous_event_id: ScheduleEntryId | None,
         mailing_id: MailingId | None,
         user_id: UserId | None,
         next_event_changed: bool,
@@ -75,7 +75,7 @@ class ScheduleChange(AggregateRoot):
     def skipped(
         cls,
         *,
-        event_id: ScheduleEventId,
+        event_id: ScheduleEntryId,
         mailing_id: MailingId | None,
         user_id: UserId | None,
         next_event_changed: bool,
@@ -92,7 +92,7 @@ class ScheduleChange(AggregateRoot):
     def unskipped(
         cls,
         *,
-        event_id: ScheduleEventId,
+        event_id: ScheduleEntryId,
         mailing_id: MailingId | None,
         user_id: UserId | None,
         next_event_changed: bool,
@@ -110,7 +110,7 @@ class ScheduleChange(AggregateRoot):
         cls,
         *,
         change_type: ScheduleChangeType,
-        event_id: ScheduleEventId,
+        event_id: ScheduleEntryId,
         mailing_id: MailingId | None,
         user_id: UserId | None,
         next_event_changed: bool,

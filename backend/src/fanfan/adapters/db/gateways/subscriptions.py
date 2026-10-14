@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
+from fanfan.adapters.db.models import ScheduleEntryORM, SubscriptionORM
 from fanfan.application.dto.subscription import (
     SubscriptionEventDTO,
     SubscriptionFullDTO,
@@ -14,7 +14,7 @@ from fanfan.core.exceptions.subscriptions import SubscriptionAlreadyExists
 from fanfan.core.models.subscription import (
     Subscription,
 )
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
 
@@ -32,7 +32,7 @@ def _to_model(orm: SubscriptionORM) -> Subscription:
     return Subscription(
         id=SubscriptionId(orm.id),
         user_id=UserId(orm.user_id),
-        event_id=ScheduleEventId(orm.event_id),
+        event_id=ScheduleEntryId(orm.event_id),
         counter=orm.counter,
     )
 
@@ -43,7 +43,7 @@ def _parse_full_dto(subscription_orm: SubscriptionORM) -> SubscriptionFullDTO:
         user_id=UserId(subscription_orm.user_id),
         counter=subscription_orm.counter,
         event=SubscriptionEventDTO(
-            id=ScheduleEventId(subscription_orm.event.id),
+            id=ScheduleEntryId(subscription_orm.event.id),
             number=subscription_orm.event.number,
             title=subscription_orm.event.title,
             order=subscription_orm.event.order,
@@ -55,10 +55,10 @@ def _parse_full_dto(subscription_orm: SubscriptionORM) -> SubscriptionFullDTO:
 def _select_subscription_full_dto() -> Select[SubscriptionORM]:
     return (
         select(SubscriptionORM)
-        .join(ScheduleEventORM)
+        .join(ScheduleEntryORM)
         .options(
             joinedload(SubscriptionORM.event).options(
-                undefer(ScheduleEventORM.queue),
+                undefer(ScheduleEntryORM.queue),
             )
         )
     )
@@ -73,7 +73,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self.session.add(subscription_orm)
         with translate_integrity_error(
             {
-                "fk_subscriptions_event_id_schedule_events": EventNotFound,
+                "fk_subscriptions_event_id_schedule_entries": EventNotFound,
                 "uq_subscriptions_event_id": SubscriptionAlreadyExists,
             }
         ):
@@ -97,12 +97,12 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self, current_event_queue: int
     ) -> list[SubscriptionFullDTO]:
         stmt = _select_subscription_full_dto().where(
-            ScheduleEventORM.is_skipped.isnot(True),  # noqa: FBT003
+            ScheduleEntryORM.is_skipped.isnot(True),  # noqa: FBT003
             # Fire once the event is within `counter` positions of the stage.
-            SubscriptionORM.counter >= (ScheduleEventORM.queue - current_event_queue),
+            SubscriptionORM.counter >= (ScheduleEntryORM.queue - current_event_queue),
             # Excludes past events (negative diff); the counter check above
             # doesn't reject those on its own.
-            (ScheduleEventORM.queue - current_event_queue) >= 0,
+            (ScheduleEntryORM.queue - current_event_queue) >= 0,
         )
 
         results = await self.session.scalars(stmt)
@@ -115,7 +115,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         stmt = (
             _select_subscription_full_dto()
             .where(SubscriptionORM.user_id == user_id)
-            .order_by(ScheduleEventORM.order)
+            .order_by(ScheduleEntryORM.order)
         )
         results = await self.session.scalars(stmt)
         return [_parse_full_dto(subscription_orm) for subscription_orm in results]

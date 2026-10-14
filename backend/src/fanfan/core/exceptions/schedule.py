@@ -27,6 +27,10 @@ class InvalidScheduleFileReason(enum.StrEnum):
     EMPTY_CELL = "EMPTY_CELL"
     INVALID_NUMBER = "INVALID_NUMBER"
     DUPLICATE_NUMBER = "DUPLICATE_NUMBER"
+    # A block_title row is a block heading on a line of its own; an event cell
+    # filled beside it means the organizer used the old one-block-per-row
+    # layout, which would otherwise import with every event silently blockless.
+    BLOCK_ROW_WITH_EVENT_DATA = "BLOCK_ROW_WITH_EVENT_DATA"
     # Caught by the route before the file is even opened, not by the parser —
     # still travels as an InvalidScheduleFile so the client has one code to
     # handle for "this upload can't become a schedule" regardless of which
@@ -52,6 +56,12 @@ class CurrentEventNotAllowed(ConstraintViolation, ScheduleException):
 
 class SkippedEventNotAllowed(ConstraintViolation, ScheduleException):
     code = "SKIPPED_EVENT_NOT_ALLOWED"
+
+
+class BlockStartNotAllowed(ConstraintViolation, ScheduleException):
+    """A stage operation (current, skip, move) aimed at a block start."""
+
+    code = "BLOCK_START_NOT_ALLOWED"
 
 
 class SameEventsAreNotAllowed(ConstraintViolation, ScheduleException):

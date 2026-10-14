@@ -1,12 +1,15 @@
+from collections.abc import Callable
+
 import pytest
 
 from fanfan.core.exceptions.schedule import (
+    BlockStartNotAllowed,
     CurrentEventNotAllowed,
     SameEventsAreNotAllowed,
     SkippedEventNotAllowed,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 
 pytestmark = pytest.mark.unit
 
@@ -17,9 +20,9 @@ def _event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -27,7 +30,7 @@ def _event(
         is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -104,3 +107,40 @@ def test_place_before_first_when_no_events() -> None:
     event.place_before_first(None)
 
     assert event.order == 1
+
+
+def _block_start(order: float) -> ScheduleEntry:
+    return ScheduleEntry.block_start(
+        entry_id=generate_schedule_entry_id(), title="Косплей", order=order
+    )
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        ScheduleEntry.set_current,
+        ScheduleEntry.skip,
+        lambda block: block.place_after(_event(1, 1), None),
+        lambda block: block.place_before_first(None),
+    ],
+)
+def test_stage_operations_refuse_a_block_start(
+    operation: Callable[[ScheduleEntry], None],
+) -> None:
+    block = _block_start(5)
+
+    with pytest.raises(BlockStartNotAllowed):
+        operation(block)
+
+    assert block.order == 5
+    assert block.is_current is False
+    assert block.is_skipped is False
+
+
+def test_an_event_moves_after_a_block_start() -> None:
+    # Placing an event right after a block start is how it changes blocks.
+    event = _event(1, 99)
+
+    event.place_after(_block_start(10), _event(2, 20))
+
+    assert event.order == 15

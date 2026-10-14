@@ -13,14 +13,15 @@ from fanfan.core.vo.schedule_change import (
     ScheduleChangeType,
     generate_schedule_change_id,
 )
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 
 pytestmark = pytest.mark.unit
 
 
 def _event(number: int | None, title: str) -> ScheduleChangeEventDTO:
     return ScheduleChangeEventDTO(
-        id=generate_schedule_event_id(),
+        id=generate_schedule_entry_id(),
+        kind=ScheduleEntryKind.EVENT,
         number=number,
         title=title,
         order=1.0,

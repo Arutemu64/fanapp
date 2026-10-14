@@ -12,12 +12,12 @@ from fanfan.application.interactors.demo.seed_demo_data import (
 from fanfan.application.ports.gateways import UserPermissionGateway
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 
 # Seeded by the initial-data migration; the actor for CLI/scheduler/NATS work.
@@ -36,7 +36,7 @@ async def test_seed_populates_schedule_and_voting(
 ) -> None:
     login(demo_seeder)
     interactor = await dishka_request.get(SeedDemoData)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
 
@@ -61,7 +61,7 @@ async def test_seed_is_idempotent(
     # A second run must refresh the demo rows in place, not duplicate them.
     login(demo_seeder)
     interactor = await dishka_request.get(SeedDemoData)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
 
     await interactor()
@@ -79,13 +79,13 @@ async def test_seed_leaves_an_existing_programme_untouched(
     # The schedule has a unique `order` column and no per-row natural key, so
     # seeding must skip a programme that already has events rather than collide.
     login(demo_seeder)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
-    existing = ScheduleEvent(
-        id=generate_schedule_event_id(),
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    existing = ScheduleEntry(
+        id=generate_schedule_entry_id(),
+        kind=ScheduleEntryKind.EVENT,
         number=1,
         title="Реальное выступление",
         duration=300,
-        block_title="Программа",
         nomination_title=None,
         order=100.0,
         is_current=False,

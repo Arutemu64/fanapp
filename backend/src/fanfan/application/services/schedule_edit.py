@@ -7,8 +7,8 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -48,7 +48,7 @@ class ScheduleEditService:
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
         settings_gateway: AppSettingsGateway,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         changes_gateway: ScheduleChangeGateway,
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
@@ -129,7 +129,7 @@ class ScheduleEditService:
     async def _ensure_announcement_cooldown(self, cooldown_seconds: int) -> None:
         """Reject an announced edit that comes too soon after the previous one.
 
-        Must run after ``ScheduleEventGateway.lock_for_edit``: under that lock no
+        Must run after ``ScheduleEntryGateway.lock_for_edit``: under that lock no
         other edit can record a change between this check and the commit, so the
         cooldown commits together with the edit and a failed edit never spends it.
         Every announced edit records a ScheduleChange, which is what makes the

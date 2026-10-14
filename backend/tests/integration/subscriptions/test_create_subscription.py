@@ -8,13 +8,17 @@ from fanfan.application.interactors.subscriptions.create_subscription import (
     CreateSubscription,
     CreateSubscriptionInput,
 )
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.schedule import EventNotFound
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
-from fanfan.core.vo.schedule_event import ScheduleEventId, generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import (
+    ScheduleEntryId,
+    ScheduleEntryKind,
+    generate_schedule_entry_id,
+)
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -22,9 +26,9 @@ pytestmark = [
 ]
 
 
-def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+def _schedule_event(number: int, title: str, order: float) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=title,
         duration=15,
@@ -32,7 +36,7 @@ def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
         is_current=False,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -43,7 +47,7 @@ async def test_create_subscription_persists_for_current_user(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(CreateSubscription)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     login(visitor)
 
@@ -69,7 +73,7 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
 ) -> None:
     """Document current behavior: the interactor does not validate the event.
 
-    CreateSubscription injects a ScheduleEventGateway but never uses it, so it
+    CreateSubscription injects a ScheduleEntryGateway but never uses it, so it
     performs no application-level check that event_id refers to a real event.
     The subscription still cannot be created for a non-existent event because
     the subscriptions.event_id foreign key rejects the INSERT and the gateway
@@ -81,7 +85,7 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     login(visitor)
 
-    missing_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    missing_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
 
     with pytest.raises(EventNotFound):
         await interactor(CreateSubscriptionInput(event_id=missing_event_id, counter=1))

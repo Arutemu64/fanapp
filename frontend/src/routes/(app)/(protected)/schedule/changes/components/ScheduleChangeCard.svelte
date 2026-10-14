@@ -65,6 +65,14 @@
 		unskipped: 'border-border bg-muted text-muted-foreground'
 	};
 
+	// A move records the entry the event landed after; a block start there means
+	// the event went to the top of that block.
+	let argumentLabel = $derived.by(() => {
+		if (change.type !== 'moved') return 'Связанное выступление:';
+		if (change.argument_event?.kind === 'block_start') return 'В начало блока:';
+		return 'После:';
+	});
+
 	function formatEvent(event: ScheduleChangeEventDto | null | undefined): string {
 		if (!event) return '';
 		// Breaks carry no public number — the title is all there is to show.
@@ -98,7 +106,7 @@
 				{#if change.argument_event}
 					<p>
 						<span class="font-bold text-muted-foreground">
-							{change.type === 'moved' ? 'После:' : 'Связанное выступление:'}
+							{argumentLabel}
 						</span>
 						<span class="text-foreground">
 							{formatEvent(change.argument_event)}

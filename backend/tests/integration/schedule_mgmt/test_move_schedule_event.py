@@ -15,7 +15,7 @@ from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
 )
 from fanfan.application.ports.gateways import (
     ScheduleChangeGateway,
-    ScheduleEventGateway,
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -23,16 +23,18 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.schedule import (
+    BlockStartNotAllowed,
     EventNotFound,
     SameEventsAreNotAllowed,
     ScheduleEditTooFast,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
-from fanfan.core.vo.schedule_event import (
-    ScheduleEventId,
-    generate_schedule_event_id,
+from fanfan.core.vo.schedule_entry import (
+    ScheduleEntryId,
+    ScheduleEntryKind,
+    generate_schedule_entry_id,
 )
 from tests.integration.conftest import as_outbox
 
@@ -47,9 +49,9 @@ def _schedule_event(
     order: float,
     *,
     is_current: bool = False,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -57,7 +59,7 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -69,7 +71,7 @@ async def test_move_reorders_event_and_records_change(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -128,7 +130,7 @@ async def test_move_records_previous_event_and_next_change(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -181,7 +183,7 @@ async def test_move_event_after_itself_raises(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -220,7 +222,7 @@ async def test_move_raises_when_moved_event_not_found(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -228,7 +230,7 @@ async def test_move_raises_when_moved_event_not_found(
     await schedule_gateway.add(anchor)
     await uow.commit()
 
-    unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    unknown_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
     with pytest.raises(EventNotFound):
         await interactor(
             MoveScheduleEventInput(
@@ -255,7 +257,7 @@ async def test_move_raises_when_target_event_not_found(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -263,7 +265,7 @@ async def test_move_raises_when_target_event_not_found(
     await schedule_gateway.add(event)
     await uow.commit()
 
-    unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    unknown_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
     with pytest.raises(EventNotFound):
         await interactor(
             MoveScheduleEventInput(
@@ -293,7 +295,7 @@ async def test_move_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
@@ -332,7 +334,7 @@ async def test_move_twice_in_a_row_raises_too_fast(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -387,7 +389,7 @@ async def test_move_is_allowed_again_once_the_cooldown_has_passed(
     # The cooldown is measured from the newest recorded change, so backdating
     # it past announcement_timeout stands in for waiting the window out.
     interactor = await dishka_request.get(MoveScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
     first = _schedule_event(1, 1)
@@ -415,3 +417,66 @@ async def test_move_is_allowed_again_once_the_cooldown_has_passed(
     moved_third = await schedule_gateway.get_by_id(third.id)
     assert moved_third is not None
     assert moved_third.order > 4
+
+
+async def test_move_to_the_top_of_a_block_records_the_block_start(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    opening = _schedule_event(4, 0.5)
+    first = _schedule_event(1, 1)
+    moved = _schedule_event(2, 2)
+    block = ScheduleEntry.block_start(
+        entry_id=generate_schedule_entry_id(), title="Караоке", order=3
+    )
+    in_block = _schedule_event(3, 4)
+    for entry in (opening, first, moved, block, in_block):
+        await schedule_gateway.add(entry)
+    await uow.commit()
+
+    await interactor(
+        MoveScheduleEventInput(event_id=moved.id, place_after_event_id=block.id)
+    )
+
+    # Between the block start and the block's first event: now in the block.
+    saved = await schedule_gateway.get_by_id(moved.id)
+    assert saved is not None
+    assert saved.order == 3.5
+
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=CursorPagination(limit=100)
+    )
+    # The anchor recorded for undo is the true previous entry, not the first.
+    assert changes[0].argument_event is not None
+    assert changes[0].argument_event.id == first.id
+
+
+async def test_a_block_start_cannot_be_moved(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(schedule_editor)
+
+    block = ScheduleEntry.block_start(
+        entry_id=generate_schedule_entry_id(), title="Караоке", order=1
+    )
+    event = _schedule_event(1, 2)
+    for entry in (block, event):
+        await schedule_gateway.add(entry)
+    await uow.commit()
+
+    with pytest.raises(BlockStartNotAllowed):
+        await interactor(
+            MoveScheduleEventInput(event_id=block.id, place_after_event_id=event.id)
+        )

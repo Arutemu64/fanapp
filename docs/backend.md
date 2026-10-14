@@ -61,13 +61,16 @@ The columns an organizer must supply are named in three coupled places — chang
 2. The downloadable template, regenerated with `just backend-generate-schedule-template` (script: `scripts/generate_schedule_template.py`, output: `frontend/static/schedule-template.xlsx`). `tests/unit/adapters/test_schedule_parser.py` parses the committed file, so a forgotten regeneration fails there rather than reaching an organizer.
 3. The on-screen column list in `frontend/src/routes/(app)/(protected)/tools/import-schedule/components/FileFormatGuide.svelte`.
 
-Every column must appear in the header, but `number` is the one cell that may be
-left empty: breaks and other filler rows carry no public number, so
-`ScheduleEvent.number` is `int | None` all the way out to the API. `number` is
-also the only identity a spreadsheet row has, so `ImportSchedule` can match a
-numberless row to nothing — it is imported as a **new** event, and the
-numberless events already in the schedule are deleted as orphans like any other
-row missing from the file.
+Every column must appear in the header. A row is either an **event** or a
+**block start** (ADR-0026): a row with `block_title` filled starts a block and
+must leave every other cell blank (`BLOCK_ROW_WITH_EVENT_DATA` otherwise); an
+event row leaves `block_title` blank and belongs to the block above it. On an
+event row `number` may be left empty: breaks and other filler rows carry no
+public number, so `ScheduleEntry.number` is `int | None` all the way out to the
+API. `number` is also the only identity an event row has, so `ImportSchedule`
+can match a numberless row to nothing — it is imported as a **new** event, and
+the numberless events already in the schedule are deleted as orphans like any
+other row missing from the file. Block rows are matched by title.
 
 ## Core Domain & Interactors
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be free of all I/O frameworks and outer layers — no FastAPI, SQLAlchemy, no `adapters/`/`application/`/`presentation/` imports. **Pydantic is the one allowed exception, and only in two narrow spots**: `core/events/base.py` (`AppEvent` is a `BaseModel` so domain events serialize cleanly over NATS) and `core/vo/fields.py` (validation helpers for value objects). Do not reach for Pydantic elsewhere in `core/` — plain dataclasses are the default for entities and value objects.
@@ -101,7 +104,7 @@ Authentication is **enforced inside interactors**, not via FastAPI `Depends`: th
   * `UUIDPrimaryKeyMixin` (`models/mixins/pk.py`) — the time-ordered uuid7 `id`. On nearly every model; `AppSettingsORM` is the deliberate exception (singleton `int` PK).
   * `UpdatedAtMixin` (`models/mixins/timestamps.py`) — the `updated_at` column. **Opt-in**: mix it into a model only if the table actually receives UPDATEs. Append-only / audit tables (`votes`, `feedback`, `schedule_changes`, `user_flags`, `user_permissions`, `push_subscriptions`) omit it — an `updated_at` that can never move is just noise. (`created_at` stays everywhere; only `updated_at` is opt-in.)
   * `OrderMixin` (`models/mixins/order.py`) — the deferred-unique float `order` column plus its per-table sequence.
-* **Table names are plural and fully spelled** (`users`, `tickets`, `schedule_events`, `push_subscriptions`, …). `feedback` (uncountable) and `app_settings` (singleton) are the only non-plural names. Renaming a table means renaming its constraints/indexes/sequence too, so the naming-convention names stay in sync — see the `model convention cleanup` migration for the pattern.
+* **Table names are plural and fully spelled** (`users`, `tickets`, `schedule_entries`, `push_subscriptions`, …). `feedback` (uncountable) and `app_settings` (singleton) are the only non-plural names. Renaming a table means renaming its constraints/indexes/sequence too, so the naming-convention names stay in sync — see the `model convention cleanup` migration for the pattern.
 * **Enum columns store the value, not the member name**: domain enums are `StrEnum`s (`core/vo/`), and every persisted enum column is declared with the `str_enum_column(EnumCls, name=..., length=...)` helper (`models/base.py`) rather than a hand-rolled `Enum(...)`. The helper fixes `native_enum=False`, `create_constraint=True`, and `values_callable=lambda e: [m.value for m in e]`: SQLAlchemy's default persists the member *name* (`"VISITOR"`); `values_callable` flips it to the *value* (`"visitor"`) so the DB matches what the API, DTOs and frontend already use. Pass `server_default` (and `default`) as the value too (`UserRole.VISITOR.value`). Keep this uniform — a column that stores names is drift, not a variant.
 * **Every `relationship()` is declared `lazy="raise"`**: under `AsyncSession` an implicit lazy load is IO that cannot run outside `await` (it fails with `MissingGreenlet` at whatever line first touches the attribute), so touching an unloaded relationship raises instead. A query whose rows reach a mapping function that reads a relationship must eager-load it — `joinedload()` for many-to-one, `selectinload()` for collections — ([SQLAlchemy: preventing implicit IO](https://docs.sqlalchemy.org/21/orm/extensions/asyncio.html#preventing-implicit-io-when-using-asyncsession)). The flush is unaffected: raiseload does not apply inside the unit of work.
 * **Annotate every function — parameters and return.** `ty` skips an unannotated function entirely, checking neither its body nor inferring its return type, so every caller sees Unknown. Ruff's `ANN` group enforces this, and `ANN401` keeps an explicit `Any` costing a `noqa` that says why. A forwarding `*args`/`**kwargs` is the one exemption (`allow-star-arg-any`).

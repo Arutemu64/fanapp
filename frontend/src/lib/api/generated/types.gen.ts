@@ -256,6 +256,7 @@ export type ErrorMessage = {
 		| 'ALREADY_VOTED_IN_THIS_NOMINATION'
 		| 'APP_SETTINGS_NOT_FOUND'
 		| 'AUTHENTICATION_ERROR'
+		| 'BLOCK_START_NOT_ALLOWED'
 		| 'CANNOT_CHANGE_OWN_ACCESS'
 		| 'CANNOT_REMOVE_LAST_SIGN_IN_METHOD'
 		| 'CAPTCHA_VERIFICATION_FAILED'
@@ -381,7 +382,7 @@ export type GetScheduleOutput = {
 	/**
 	 * Schedule
 	 */
-	schedule: Array<ScheduleEventFullDto>;
+	schedule: Array<ScheduleEntryDto>;
 };
 
 /**
@@ -895,6 +896,28 @@ export type RequestLoginCodeInput = {
 };
 
 /**
+ * ScheduleBlockStartDTO
+ */
+export type ScheduleBlockStartDto = {
+	/**
+	 * Kind
+	 */
+	kind: 'block_start';
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Order
+	 */
+	order: number;
+};
+
+/**
  * ScheduleChangeEventDTO
  */
 export type ScheduleChangeEventDto = {
@@ -902,6 +925,7 @@ export type ScheduleChangeEventDto = {
 	 * Id
 	 */
 	id: string;
+	kind: ScheduleEntryKind;
 	/**
 	 * Number
 	 */
@@ -976,10 +1000,34 @@ export type ScheduleChangeUserDto = {
 	username: string;
 };
 
+export type ScheduleEntryDto =
+	| ({
+			kind: 'event';
+	  } & ScheduleEventFullDto)
+	| ({
+			kind: 'block_start';
+	  } & ScheduleBlockStartDto);
+
+/**
+ * ScheduleEntryKind
+ *
+ * What a row of the programme is.
+ *
+ * EVENT: something that happens on stage — an act, a break, the opening.
+ * BLOCK_START: the heading of a programme block. Every entry after it, up to
+ * the next block start, belongs to that block, so moving an event across
+ * a block start moves it into the other block.
+ */
+export type ScheduleEntryKind = 'event' | 'block_start';
+
 /**
  * ScheduleEventFullDTO
  */
 export type ScheduleEventFullDto = {
+	/**
+	 * Kind
+	 */
+	kind: 'event';
 	/**
 	 * Id
 	 */
@@ -1012,10 +1060,6 @@ export type ScheduleEventFullDto = {
 	 * Nomination Title
 	 */
 	nomination_title: string | null;
-	/**
-	 * Block Title
-	 */
-	block_title: string | null;
 	/**
 	 * Queue
 	 */

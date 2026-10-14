@@ -203,6 +203,8 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 			return `${at}: ячейка пустая.`;
 		case 'INVALID_NUMBER':
 			return `${at}: нужно целое число.`;
+		case 'BLOCK_ROW_WITH_EVENT_DATA':
+			return `${at}: в строке блока заполни только block_title, остальные ячейки оставь пустыми.`;
 		case 'DUPLICATE_NUMBER':
 			return `Номер ${String(details.number)} встречается дважды (строка ${String(details.row)}). Номера должны быть уникальными.`;
 		case 'FILE_TOO_LARGE':
@@ -219,6 +221,7 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: 'В этой номинации голос уже учтён',
+	BLOCK_START_NOT_ALLOWED: 'Это начало блока, а не выступление',
 	CANNOT_CHANGE_OWN_ACCESS: 'Свою роль и права может изменить только другой организатор',
 	CANNOT_REMOVE_LAST_SIGN_IN_METHOD:
 		'Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт',

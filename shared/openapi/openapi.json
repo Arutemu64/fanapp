@@ -4907,6 +4907,7 @@
               "ALREADY_VOTED_IN_THIS_NOMINATION",
               "APP_SETTINGS_NOT_FOUND",
               "AUTHENTICATION_ERROR",
+              "BLOCK_START_NOT_ALLOWED",
               "CANNOT_CHANGE_OWN_ACCESS",
               "CANNOT_REMOVE_LAST_SIGN_IN_METHOD",
               "CAPTCHA_VERIFICATION_FAILED",
@@ -5064,7 +5065,7 @@
         "properties": {
           "schedule": {
             "items": {
-              "$ref": "#/components/schemas/ScheduleEventFullDTO"
+              "$ref": "#/components/schemas/ScheduleEntryDTO"
             },
             "type": "array",
             "title": "Schedule"
@@ -5949,12 +5950,45 @@
         ],
         "title": "RequestLoginCodeInput"
       },
+      "ScheduleBlockStartDTO": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "block_start",
+            "title": "Kind"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "title",
+          "order"
+        ],
+        "title": "ScheduleBlockStartDTO"
+      },
       "ScheduleChangeEventDTO": {
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid",
             "title": "Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ScheduleEntryKind"
           },
           "number": {
             "anyOf": [
@@ -5979,6 +6013,7 @@
         "type": "object",
         "required": [
           "id",
+          "kind",
           "number",
           "title",
           "order"
@@ -6103,8 +6138,39 @@
         ],
         "title": "ScheduleChangeUserDTO"
       },
+      "ScheduleEntryDTO": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ScheduleEventFullDTO"
+          },
+          {
+            "$ref": "#/components/schemas/ScheduleBlockStartDTO"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "block_start": "#/components/schemas/ScheduleBlockStartDTO",
+            "event": "#/components/schemas/ScheduleEventFullDTO"
+          }
+        }
+      },
+      "ScheduleEntryKind": {
+        "type": "string",
+        "enum": [
+          "event",
+          "block_start"
+        ],
+        "title": "ScheduleEntryKind",
+        "description": "What a row of the programme is.\n\nEVENT: something that happens on stage — an act, a break, the opening.\nBLOCK_START: the heading of a programme block. Every entry after it, up to\n    the next block start, belongs to that block, so moving an event across\n    a block start moves it into the other block."
+      },
       "ScheduleEventFullDTO": {
         "properties": {
+          "kind": {
+            "type": "string",
+            "const": "event",
+            "title": "Kind"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -6152,17 +6218,6 @@
             ],
             "title": "Nomination Title"
           },
-          "block_title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Block Title"
-          },
           "queue": {
             "anyOf": [
               {
@@ -6177,6 +6232,7 @@
         },
         "type": "object",
         "required": [
+          "kind",
           "id",
           "number",
           "title",
@@ -6185,7 +6241,6 @@
           "is_current",
           "is_skipped",
           "nomination_title",
-          "block_title",
           "queue"
         ],
         "title": "ScheduleEventFullDTO"

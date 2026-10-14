@@ -11,19 +11,19 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 )
 from fanfan.application.ports.gateways import ScheduleChangeGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
@@ -36,9 +36,9 @@ pytestmark = [
 
 def _schedule_event(
     number: int, title: str, order: float, *, is_current: bool = False
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=title,
         duration=15,
@@ -46,7 +46,7 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -68,7 +68,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     editor nor the global-announcement branch fires — only subscriptions do.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     user_gateway = await dishka_request.get(UserGateway)
@@ -148,7 +148,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     same recipient.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     broker = await dishka_request.get(FakeEventBroker)
@@ -204,7 +204,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     is settled as failed so it does not sit in the queue forever.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)

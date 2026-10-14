@@ -2,9 +2,9 @@ import hashlib
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.schedule import ScheduleEventFullDTO
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.dto.schedule import ScheduleEntryDTO
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.schedule_cache import (
     CachedSchedule,
@@ -13,7 +13,7 @@ from fanfan.application.ports.schedule_cache import (
 
 
 class GetScheduleOutput(BaseModel):
-    schedule: list[ScheduleEventFullDTO]
+    schedule: list[ScheduleEntryDTO]
 
 
 def _compute_etag(payload: str) -> str:
@@ -23,16 +23,16 @@ def _compute_etag(payload: str) -> str:
     return f'"{digest}"'
 
 
-async def render_schedule(schedule_gateway: ScheduleEventGateway) -> CachedSchedule:
-    events = await schedule_gateway.read_list_schedule()
-    payload = GetScheduleOutput(schedule=events).model_dump_json()
+async def render_schedule(schedule_gateway: ScheduleEntryGateway) -> CachedSchedule:
+    entries = await schedule_gateway.read_list_schedule()
+    payload = GetScheduleOutput(schedule=entries).model_dump_json()
     return CachedSchedule(etag=_compute_etag(payload), payload=payload)
 
 
 class GetSchedule:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_cache: ScheduleCacheGateway,
     ) -> None:
         self.schedule_gateway = schedule_gateway

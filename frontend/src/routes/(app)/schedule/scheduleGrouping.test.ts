@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ScheduleBlockStartDto } from '#lib/api/generated/index.js';
 import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 import { buildScheduleGroups, filterScheduleGroups, type ScheduleNode } from './scheduleGrouping';
@@ -8,6 +9,7 @@ function event(
 	overrides: Partial<ScheduleEventWithSubscription> & Pick<ScheduleEventWithSubscription, 'id'>
 ): ScheduleEventWithSubscription {
 	return {
+		kind: 'event',
 		number: null,
 		title: 'Выступление',
 		duration: 300,
@@ -15,11 +17,14 @@ function event(
 		is_current: false,
 		is_skipped: false,
 		nomination_title: null,
-		block_title: null,
 		queue: null,
 		user_subscription: null,
 		...overrides
 	};
+}
+
+function block(id: string, title: string): ScheduleBlockStartDto {
+	return { kind: 'block_start', id, title, order: 0 };
 }
 
 // Flatten a grouped tree into a comparable summary so assertions can avoid
@@ -43,12 +48,14 @@ function summarize(nodes: ScheduleNode[]) {
 }
 
 describe('buildScheduleGroups', () => {
-	it('groups consecutive rows by block, then nomination', () => {
+	it('groups the events after a block start by nomination', () => {
 		const schedule = [
-			event({ id: '1', block_title: 'Блок A', nomination_title: 'Ном 1' }),
-			event({ id: '2', block_title: 'Блок A', nomination_title: 'Ном 1' }),
-			event({ id: '3', block_title: 'Блок A', nomination_title: 'Ном 2' }),
-			event({ id: '4', block_title: 'Блок B', nomination_title: 'Ном 3' })
+			block('a', 'Блок A'),
+			event({ id: '1', nomination_title: 'Ном 1' }),
+			event({ id: '2', nomination_title: 'Ном 1' }),
+			event({ id: '3', nomination_title: 'Ном 2' }),
+			block('b', 'Блок B'),
+			event({ id: '4', nomination_title: 'Ном 3' })
 		];
 
 		expect(summarize(buildScheduleGroups(schedule))).toEqual([
@@ -70,67 +77,54 @@ describe('buildScheduleGroups', () => {
 		]);
 	});
 
-	it('starts a new block group when the same title reappears non-consecutively', () => {
+	it('keys each block by its block start, so same-titled blocks stay distinct', () => {
 		const nodes = buildScheduleGroups([
-			event({ id: '1', block_title: 'Блок A' }),
-			event({ id: '2', block_title: 'Блок B' }),
-			event({ id: '3', block_title: 'Блок A' })
+			block('a1', 'Блок A'),
+			event({ id: '1' }),
+			block('b', 'Блок B'),
+			event({ id: '2' }),
+			block('a2', 'Блок A'),
+			event({ id: '3' })
 		]);
 
-		expect(nodes.map((node) => (node.kind === 'block' ? node.title : null))).toEqual([
-			'Блок A',
-			'Блок B',
-			'Блок A'
-		]);
-		// Keys are positional, so the two "Блок A" runs stay distinct sections.
-		expect(new Set(nodes.map((node) => node.key)).size).toBe(3);
+		expect(nodes.map((node) => node.key)).toEqual(['block-a1', 'block-b', 'block-a2']);
 	});
 
-	it('lifts a block-less row out as an interlude between block sections', () => {
+	it('lifts the events above the first block start out as interludes', () => {
 		const nodes = buildScheduleGroups([
-			event({ id: '1', block_title: 'Косплей', nomination_title: 'Ном 1' }),
-			event({ id: 'break', block_title: null, nomination_title: null, title: 'Перерыв' }),
-			event({ id: '2', block_title: 'Караоке', nomination_title: 'Ном 2' })
+			event({ id: 'opening', nomination_title: 'Осталась зря' }),
+			block('a', 'Косплей'),
+			event({ id: '1', nomination_title: 'Ном 1' })
 		]);
 
+		// A stray nomination on an interlude is ignored — there is no block for it.
 		expect(summarize(nodes)).toEqual([
+			{ kind: 'interlude', eventId: 'opening' },
 			{
 				kind: 'block',
 				title: 'Косплей',
 				eventCount: 1,
 				nominations: [{ title: 'Ном 1', eventIds: ['1'] }]
-			},
-			{ kind: 'interlude', eventId: 'break' },
-			{
-				kind: 'block',
-				title: 'Караоке',
-				eventCount: 1,
-				nominations: [{ title: 'Ном 2', eventIds: ['2'] }]
 			}
 		]);
 	});
 
-	it('treats a blank block as an interlude and ignores a stray nomination on it', () => {
-		// A row with no block is an interlude even if it carries a nomination —
-		// there is no block for that nomination to sit under.
+	it('keeps a nomination-less event inside its block as a null-titled group', () => {
 		const nodes = buildScheduleGroups([
-			event({ id: '1', block_title: '   ', nomination_title: 'Осталась зря' })
-		]);
-
-		expect(summarize(nodes)).toEqual([{ kind: 'interlude', eventId: '1' }]);
-	});
-
-	it('renders a null-titled nomination group for a blank nomination inside a block', () => {
-		const nodes = buildScheduleGroups([
-			event({ id: '1', block_title: 'Косплей', nomination_title: null })
+			block('a', 'Косплей'),
+			event({ id: '1', nomination_title: 'Ном 1' }),
+			event({ id: 'break', nomination_title: null, title: 'Перерыв' })
 		]);
 
 		expect(summarize(nodes)).toEqual([
 			{
 				kind: 'block',
 				title: 'Косплей',
-				eventCount: 1,
-				nominations: [{ title: null, eventIds: ['1'] }]
+				eventCount: 2,
+				nominations: [
+					{ title: 'Ном 1', eventIds: ['1'] },
+					{ title: null, eventIds: ['break'] }
+				]
 			}
 		]);
 	});
@@ -141,18 +135,30 @@ describe('buildScheduleGroups', () => {
 });
 
 describe('filterScheduleGroups', () => {
-	const schedule = [
-		event({ id: '1', block_title: 'Блок A', nomination_title: 'Ном 1' }),
-		event({ id: '2', block_title: 'Блок A', nomination_title: 'Ном 2' }),
-		event({ id: 'break', block_title: null, title: 'Перерыв' }),
-		event({ id: '3', block_title: 'Блок B', nomination_title: 'Ном 3' })
+	const events = [
+		event({ id: 'opening', title: 'Открытие' }),
+		event({ id: '1', nomination_title: 'Ном 1' }),
+		event({ id: '2', nomination_title: 'Ном 2' }),
+		event({ id: '3', nomination_title: 'Ном 3' })
 	];
-	const allNodes = buildScheduleGroups(schedule);
+	const [opening, first, second, third] = events as [
+		ScheduleEventWithSubscription,
+		ScheduleEventWithSubscription,
+		ScheduleEventWithSubscription,
+		ScheduleEventWithSubscription
+	];
+	const allNodes = buildScheduleGroups([
+		opening,
+		block('a', 'Блок A'),
+		first,
+		second,
+		block('b', 'Блок B'),
+		third,
+		block('empty', 'Пустой блок')
+	]);
 
 	it('drops emptied nominations and blocks while keeping node keys stable', () => {
-		const filtered = schedule.filter((e) => e.id === '1');
-
-		const result = filterScheduleGroups(allNodes, filtered);
+		const result = filterScheduleGroups(allNodes, [first]);
 
 		expect(summarize(result)).toEqual([
 			{
@@ -163,27 +169,22 @@ describe('filterScheduleGroups', () => {
 			}
 		]);
 		// The surviving block reuses its pre-filter key so Svelte keeps its rows.
-		expect(result.map((node) => node.key)).toEqual(
-			allNodes.filter((node) => node.kind === 'block' && node.title === 'Блок A').map((n) => n.key)
-		);
+		expect(result.map((node) => node.key)).toEqual(['block-a']);
 	});
 
 	it('keeps an interlude only when its event survives the filter', () => {
-		const withBreak = filterScheduleGroups(
-			allNodes,
-			schedule.filter((e) => e.id === 'break')
+		expect(summarize(filterScheduleGroups(allNodes, [opening]))).toEqual([
+			{ kind: 'interlude', eventId: 'opening' }
+		]);
+		expect(filterScheduleGroups(allNodes, [first]).some((node) => node.kind === 'interlude')).toBe(
+			false
 		);
-		expect(summarize(withBreak)).toEqual([{ kind: 'interlude', eventId: 'break' }]);
-
-		const withoutBreak = filterScheduleGroups(
-			allNodes,
-			schedule.filter((e) => e.id === '1')
-		);
-		expect(withoutBreak.some((node) => node.kind === 'interlude')).toBe(false);
 	});
 
-	it('returns every node unchanged when nothing is filtered out', () => {
-		expect(summarize(filterScheduleGroups(allNodes, schedule))).toEqual(summarize(allNodes));
+	it('drops a block that holds no events even when nothing is filtered out', () => {
+		const result = filterScheduleGroups(allNodes, events);
+
+		expect(result.map((node) => node.key)).toEqual(['interlude-opening', 'block-a', 'block-b']);
 	});
 
 	it('returns no nodes when everything is filtered out', () => {

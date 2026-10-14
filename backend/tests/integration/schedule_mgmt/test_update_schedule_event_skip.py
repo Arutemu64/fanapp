@@ -11,7 +11,7 @@ from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip imp
 )
 from fanfan.application.ports.gateways import (
     ScheduleChangeGateway,
-    ScheduleEventGateway,
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -23,12 +23,13 @@ from fanfan.core.exceptions.schedule import (
     EventNotFound,
     ScheduleEditTooFast,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
-from fanfan.core.vo.schedule_event import (
-    ScheduleEventId,
-    generate_schedule_event_id,
+from fanfan.core.vo.schedule_entry import (
+    ScheduleEntryId,
+    ScheduleEntryKind,
+    generate_schedule_entry_id,
 )
 from tests.integration.conftest import as_outbox
 
@@ -44,9 +45,9 @@ def _schedule_event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -54,7 +55,7 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -66,7 +67,7 @@ async def test_skip_marks_event_and_records_change(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -117,7 +118,7 @@ async def test_unskip_marks_event_and_records_change(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -157,7 +158,7 @@ async def test_skip_current_event_raises_and_records_nothing(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -196,7 +197,7 @@ async def test_skip_raises_when_event_not_found(
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
-    unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    unknown_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
     with pytest.raises(EventNotFound):
         await interactor(
             UpdateScheduleEventSkipInput(event_id=unknown_event_id, is_skipped=True)
@@ -220,7 +221,7 @@ async def test_skip_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
@@ -254,7 +255,7 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 

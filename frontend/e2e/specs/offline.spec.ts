@@ -70,6 +70,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 			'GET /schedule/': json<GetScheduleOutput>({
 				schedule: [
 					{
+						kind: 'event',
 						id: 'event-1',
 						number: 1,
 						title: 'Одиночное дефиле',
@@ -78,7 +79,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 						is_current: true,
 						is_skipped: false,
 						nomination_title: null,
-						block_title: null,
 						queue: 1
 					}
 				]

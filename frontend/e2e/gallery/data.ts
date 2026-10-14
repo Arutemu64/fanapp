@@ -1,13 +1,16 @@
 import type {
 	GetVotingNominationOutput,
 	NotificationDto,
+	ScheduleEntryDto,
 	ScheduleEventFullDto,
 	SubscriptionFullDto
 } from '../../src/lib/api/generated/types.gen';
 
 // The demo festival behind the README gallery: the acts and nominations of the
 // backend's demo seed (seed_demo_data.py), so the gallery and the README hero
-// show one programme. Blocks are numbered sections, as at the real festival.
+// show one programme. Blocks are numbered sections, as at the real festival: each
+// starts at a block start entry and runs until the next, so the break falls at the
+// end of Блок 1.
 
 // The capture pins the browser clock here (page.clock.setFixedTime), so relative
 // times like «34 минуты назад» and the festival/voting windows render the same
@@ -24,18 +27,19 @@ const ACTS: Act[] = [
 	['Эдвард Элрик — Стальной алхимик', 'Блок 1', 'Одиночное дефиле', 180],
 	['Сейлор Мун — Сейлор Мун', 'Блок 1', 'Одиночное дефиле', 180],
 	['Тандзиро Камадо — Клинок, рассекающий демонов', 'Блок 1', 'Одиночное дефиле', 180],
-	['Перерыв', null, null, 900],
+	['Перерыв', 'Блок 1', null, 900],
 	['Команда 7 — Наруто', 'Блок 2', 'Групповое дефиле', 300],
 	['Отряд разведки — Атака титанов', 'Блок 2', 'Групповое дефиле', 300],
 	['Класс 1-А — Моя геройская академия', 'Блок 2', 'Групповое дефиле', 300],
 	['Караоке-баттл', 'Блок 3', 'Караоке', 1800],
-	['Награждение и закрытие', null, null, 1200]
+	['Награждение и закрытие', 'Блок 3', null, 1200]
 ];
 
 const CURRENT_NUMBER = 3;
 
 export const schedule: ScheduleEventFullDto[] = ACTS.map(
-	([title, block, nomination, duration], index) => ({
+	([title, , nomination, duration], index) => ({
+		kind: 'event',
 		id: `event-${index + 1}`,
 		number: index + 1,
 		title,
@@ -44,10 +48,23 @@ export const schedule: ScheduleEventFullDto[] = ACTS.map(
 		is_current: index + 1 === CURRENT_NUMBER,
 		is_skipped: false,
 		nomination_title: nomination,
-		block_title: block,
 		queue: index + 1
 	})
 );
+
+// The events with a block start ahead of each block, as GET /schedule/ serves them.
+export const scheduleEntries: ScheduleEntryDto[] = schedule.flatMap((event, index) => {
+	const block = ACTS[index]?.[1] ?? null;
+	const previousBlock = ACTS[index - 1]?.[1] ?? null;
+	if (block === null || block === previousBlock) return [event];
+	const blockStart: ScheduleEntryDto = {
+		kind: 'block_start',
+		id: `block-${index + 1}`,
+		title: block,
+		order: event.order - 0.5
+	};
+	return [blockStart, event];
+});
 
 function subscription(number: number, counter: number): SubscriptionFullDto {
 	const event = schedule.find((row) => row.number === number);

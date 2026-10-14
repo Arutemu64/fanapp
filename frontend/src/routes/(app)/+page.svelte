@@ -17,7 +17,7 @@
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { mergeSubscriptions } from '#lib/utils/scheduleData.js';
+	import { mergeSubscriptions, scheduleEvents } from '#lib/utils/scheduleData.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
 	import { getFestivalPhase, nextBoundary } from './components/home/festivalPhase';
@@ -51,7 +51,9 @@
 	let config = $derived(configQuery.data ?? FALLBACK_CONFIG);
 	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
-	let schedule = $derived(mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions));
+	let schedule = $derived(
+		scheduleEvents(mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions))
+	);
 	// Voting status is a live read: a stale "open" offline would lead to a ballot
 	// that can't be submitted, so offline it is treated as unknown and every
 	// voting surface on this page hides.

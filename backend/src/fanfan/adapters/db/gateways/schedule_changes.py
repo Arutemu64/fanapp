@@ -17,7 +17,7 @@ from fanfan.core.models.schedule_change import (
 )
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.user import UserId
 
 
@@ -39,10 +39,10 @@ def _to_model(orm: ScheduleChangeORM) -> ScheduleChange:
         type=orm.type,
         mailing_id=MailingId(orm.mailing_id) if orm.mailing_id is not None else None,
         user_id=UserId(orm.user_id) if orm.user_id is not None else None,
-        changed_event_id=ScheduleEventId(orm.changed_event_id)
+        changed_event_id=ScheduleEntryId(orm.changed_event_id)
         if orm.changed_event_id is not None
         else None,
-        argument_event_id=ScheduleEventId(orm.argument_event_id)
+        argument_event_id=ScheduleEntryId(orm.argument_event_id)
         if orm.argument_event_id is not None
         else None,
         next_event_changed=orm.next_event_changed,
@@ -63,7 +63,8 @@ def _parse_full_dto(
         else None,
         next_event_changed=schedule_change_orm.next_event_changed,
         changed_event=ScheduleChangeEventDTO(
-            id=ScheduleEventId(schedule_change_orm.changed_event.id),
+            id=ScheduleEntryId(schedule_change_orm.changed_event.id),
+            kind=schedule_change_orm.changed_event.kind,
             number=schedule_change_orm.changed_event.number,
             title=schedule_change_orm.changed_event.title,
             order=schedule_change_orm.changed_event.order,
@@ -71,7 +72,8 @@ def _parse_full_dto(
         if schedule_change_orm.changed_event
         else None,
         argument_event=ScheduleChangeEventDTO(
-            id=ScheduleEventId(schedule_change_orm.argument_event.id),
+            id=ScheduleEntryId(schedule_change_orm.argument_event.id),
+            kind=schedule_change_orm.argument_event.kind,
             number=schedule_change_orm.argument_event.number,
             title=schedule_change_orm.argument_event.title,
             order=schedule_change_orm.argument_event.order,

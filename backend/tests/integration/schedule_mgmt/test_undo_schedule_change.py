@@ -11,7 +11,7 @@ from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
 )
 from fanfan.application.ports.gateways import (
     ScheduleChangeGateway,
-    ScheduleEventGateway,
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -24,12 +24,12 @@ from fanfan.core.exceptions.schedule import (
 )
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import (
     ScheduleChangeId,
 )
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 from tests.integration.conftest import as_outbox
 
 pytestmark = [
@@ -44,9 +44,9 @@ def _schedule_event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -54,7 +54,7 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -66,7 +66,7 @@ async def test_undo_skipped_change_unskips_event(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -116,7 +116,7 @@ async def test_undo_unskipped_change_skips_event(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -157,7 +157,7 @@ async def test_undo_moved_change_places_event_back_on_top(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -206,7 +206,7 @@ async def test_undo_set_as_current_restores_previous_event(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -254,7 +254,7 @@ async def test_undo_set_as_current_raises_when_current_moved_on(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -312,7 +312,7 @@ async def test_undo_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)

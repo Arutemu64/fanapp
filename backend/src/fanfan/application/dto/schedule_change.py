@@ -4,12 +4,15 @@ from pydantic import BaseModel
 
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId, ScheduleEntryKind
 from fanfan.core.vo.user import UserId
 
 
 class ScheduleChangeEventDTO(BaseModel):
-    id: ScheduleEventId
+    id: ScheduleEntryId
+    # A move records the entry it landed after, which is a block start when the
+    # event was moved to the top of a block.
+    kind: ScheduleEntryKind
     number: int | None
     title: str
     order: float

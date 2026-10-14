@@ -2,6 +2,20 @@
 
 Companion web app for the FAN FAN anime convention: visitors follow the programme, vote and get notified; organizers run the programme and message visitors.
 
+## Programme
+
+**Entry**:
+One row of the programme, in order: an event or a block start.
+_Avoid_: Row, item
+
+**Event**:
+An entry for something on stage — an act, a break, the opening. Only events are numbered, timed, queued, made current, skipped, moved or subscribed to. The screens call one «выступление».
+_Avoid_: Performance, act (in code)
+
+**Block**:
+A titled section of the programme: a block start and every event after it up to the next block start. An event's block is wherever it sits, so moving it across a block start moves it into that block.
+_Avoid_: Section, group
+
 ## Notifications
 
 **Notification**:

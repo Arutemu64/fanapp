@@ -14,8 +14,8 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -59,7 +59,7 @@ class SendScheduleChangeNotifications:
         self,
         template_renderer: TemplateRenderer,
         changes_gateway: ScheduleChangeGateway,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         user_gateway: UserGateway,
         subscription_gateway: SubscriptionGateway,
         mailing_gateway: MailingGateway,
@@ -150,13 +150,9 @@ class SendScheduleChangeNotifications:
             "global_announcement.jinja2",
             {
                 "current_event_number": current_event.number,
-                "current_event_block_title": current_event.block_title,
                 "current_event_nomination_title": current_event.nomination_title,
                 "current_event_title": current_event.title,
                 "next_event_number": next_event.number if next_event else None,
-                "next_event_block_title": next_event.block_title
-                if next_event
-                else None,
                 "next_event_nomination_title": next_event.nomination_title
                 if next_event
                 else None,

@@ -30,19 +30,24 @@ COLUMN_WIDTHS = {
 # is real (walk on, pose, walk off), and it is the case a minutes column could
 # not express at all.
 #
-# The opening, the break and the closing leave `number`, `nomination_title` and
-# `block_title` all blank on purpose: those cells may be empty, and an organizer
-# is far likelier to copy the shape from the template than to read it in the
-# guide. The break sits *between* the Косплей and Караоке blocks, modelling the
-# recommended shape — a block-less row renders as an interlude between sections,
-# so keeping mid-block pauses out of this sample avoids teaching a split block.
-# `None` for a text cell is written as a blank cell below.
+# Block rows carry only `block_title`: each starts a block that runs until the
+# next one, so the sample shows the heading-on-its-own-line shape an organizer
+# copies far more readily than reading it in the guide. The opening sits above
+# the first block and so belongs to none; the break sits at the end of the
+# Косплей block, where a pause between two blocks necessarily lands.
+#
+# The opening, the break and the closing leave `number` and `nomination_title`
+# blank on purpose: those cells may be empty. `None` for a cell is written as a
+# blank cell below.
 SAMPLE_ROWS = [
     (None, "Открытие фестиваля", 900, None, None),
-    (1, "Дефиле «Наруто»", 45, "Одиночное дефиле", "Косплей"),
-    (2, "Сценка «Стальной алхимик»", 480, "Групповое дефиле", "Косплей"),
+    (None, None, None, None, "Косплей"),
+    (1, "Дефиле «Наруто»", 45, "Одиночное дефиле", None),
+    (2, "Сценка «Стальной алхимик»", 480, "Групповое дефиле", None),
     (None, "Перерыв", 600, None, None),
-    (3, "Вокал: «Унесённые призраками»", 210, "Вокал", "Караоке"),
+    (None, None, None, None, "Караоке"),
+    (3, "Вокал: «Унесённые призраками»", 210, "Вокал", None),
+    (None, None, None, None, "Закрытие"),
     (None, "Награждение и закрытие", 1200, None, None),
 ]
 
@@ -62,16 +67,17 @@ def main() -> None:
 
     for row_index, row in enumerate(SAMPLE_ROWS, start=1):
         number, title, duration, nomination_title, block_title = row
+        if block_title is not None:
+            worksheet.write_string(row_index, 4, block_title)
+            continue
         if number is not None:
             worksheet.write_number(row_index, 0, number, number_format)
         worksheet.write_string(row_index, 1, title)
         worksheet.write_number(row_index, 2, duration, number_format)
         # Left blank for interludes (breaks, opening, closing) — a blank cell is
-        # what the parser reads back as "no nomination / no block".
+        # what the parser reads back as "no nomination".
         if nomination_title is not None:
             worksheet.write_string(row_index, 3, nomination_title)
-        if block_title is not None:
-            worksheet.write_string(row_index, 4, block_title)
 
     worksheet.freeze_panes(1, 0)
     workbook.close()

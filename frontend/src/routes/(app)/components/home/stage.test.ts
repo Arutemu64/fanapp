@@ -8,6 +8,7 @@ function event(
 	overrides: Partial<ScheduleEventWithSubscription> & Pick<ScheduleEventWithSubscription, 'id'>
 ): ScheduleEventWithSubscription {
 	return {
+		kind: 'event',
 		number: null,
 		title: 'Выступление',
 		duration: 300,
@@ -15,7 +16,6 @@ function event(
 		is_current: false,
 		is_skipped: false,
 		nomination_title: null,
-		block_title: null,
 		queue: null,
 		user_subscription: null,
 		...overrides

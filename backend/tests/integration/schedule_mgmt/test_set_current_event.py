@@ -11,7 +11,7 @@ from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event imp
 )
 from fanfan.application.ports.gateways import (
     ScheduleChangeGateway,
-    ScheduleEventGateway,
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -19,12 +19,13 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.schedule import EventNotFound, ScheduleEditTooFast
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
-from fanfan.core.vo.schedule_event import (
-    ScheduleEventId,
-    generate_schedule_event_id,
+from fanfan.core.vo.schedule_entry import (
+    ScheduleEntryId,
+    ScheduleEntryKind,
+    generate_schedule_entry_id,
 )
 from tests.integration.conftest import as_outbox
 
@@ -42,10 +43,10 @@ def _schedule_event(
     is_current: bool = False,
     duration: int = 15,
     nomination_title: str | None = None,
-    block_title: str | None = None,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
+        kind=ScheduleEntryKind.EVENT,
         number=number,
         title=title,
         duration=duration,
@@ -53,7 +54,6 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=nomination_title,
-        block_title=block_title,
     )
 
 
@@ -65,7 +65,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -79,7 +79,6 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
         2,
         duration=20,
         nomination_title="Номинация",
-        block_title="Блок",
     )
     await schedule_gateway.add(previous_current_event)
     await schedule_gateway.add(new_current_event)
@@ -128,7 +127,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -169,7 +168,7 @@ async def test_set_current_event_can_unset_current_event(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -210,7 +209,7 @@ async def test_set_current_event_raises_when_event_not_found(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -218,7 +217,7 @@ async def test_set_current_event_raises_when_event_not_found(
     await schedule_gateway.add(previous_current_event)
     await uow.commit()
 
-    unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    unknown_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
 
     with pytest.raises(EventNotFound):
         await interactor(SetCurrentScheduleEventInput(event_id=unknown_event_id))
@@ -247,7 +246,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
@@ -279,7 +278,7 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 

@@ -4,7 +4,10 @@
 	import { tick } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 
-	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
+	import type {
+		ScheduleEntryWithSubscription,
+		ScheduleEventWithSubscription
+	} from '#lib/types/schedule.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
@@ -18,7 +21,11 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { mergeSubscriptions } from '#lib/utils/scheduleData.js';
+	import {
+		blockTitleByEventId,
+		mergeSubscriptions,
+		scheduleEvents
+	} from '#lib/utils/scheduleData.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
 	import CurrentEventBar from './components/CurrentEventBar.svelte';
@@ -41,9 +48,10 @@
 
 	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
-	let schedule: ScheduleEventWithSubscription[] = $derived(
+	let entries: ScheduleEntryWithSubscription[] = $derived(
 		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions)
 	);
+	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
 	// Nothing saved yet and no way to fetch it: a calm inline state that keeps the
 	// app shell usable, not an error.
 	let offlineMiss = $derived(scheduleQuery.data === undefined && !reachability.current);
@@ -78,14 +86,15 @@
 
 	// Rebuilt only when the schedule reloads, so a keystroke re-runs token
 	// comparisons instead of re-normalizing every field of every row.
-	let searchIndex = $derived(
-		createSearchIndex(schedule, (event) => [
+	let searchIndex = $derived.by(() => {
+		const blockTitles = blockTitleByEventId(entries);
+		return createSearchIndex(schedule, (event) => [
 			event.number,
 			event.title,
-			event.block_title,
+			blockTitles.get(event.id),
 			event.nomination_title
-		])
-	);
+		]);
+	});
 
 	let filtered: ScheduleEventWithSubscription[] = $derived(
 		searchIndex
@@ -102,7 +111,7 @@
 	// Built off the unfiltered schedule (recomputes only on reload); the filter
 	// pass below reuses these groups so a keystroke never re-groups. See
 	// scheduleGrouping.ts for the keying contract that keeps rows stable.
-	let allGroups = $derived(buildScheduleGroups(schedule));
+	let allGroups = $derived(buildScheduleGroups(entries));
 	let groupedSchedule = $derived(filterScheduleGroups(allGroups, filtered));
 
 	let resultsSummary = $derived(
@@ -260,7 +269,7 @@
 		<div class="flex flex-col gap-6">
 			{#each groupedSchedule as node (node.key)}
 				{#if node.kind === 'interlude'}
-					<!-- A block-less row (break, opening, closing) sits between block sections
+					<!-- A row above the first block (the opening) sits outside the block sections
 				     as a lighter, dashed row so it reads as an interlude, not a block card.
 				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
 					<div

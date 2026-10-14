@@ -4,17 +4,17 @@ import pytest
 from dishka import AsyncContainer
 
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
-from fanfan.application.ports.gateways import ScheduleEventGateway
+from fanfan.application.ports.gateways import ScheduleEntryGateway
 from fanfan.application.services.schedule_edit import (
     ChangeFactory,
     ScheduleEditService,
 )
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_change import ScheduleChange
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -30,13 +30,13 @@ async def test_edit_invalidates_cache_after_commit(
 ) -> None:
     service = await dishka_request.get(ScheduleEditService)
     get_schedule = await dishka_request.get(GetSchedule)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
     async def add_event(_: User) -> None:
         await schedule_gateway.add(
-            ScheduleEvent(
-                id=generate_schedule_event_id(),
+            ScheduleEntry(
+                id=generate_schedule_entry_id(),
                 number=1,
                 title="Событие",
                 duration=15,
@@ -44,7 +44,7 @@ async def test_edit_invalidates_cache_after_commit(
                 is_current=False,
                 is_skipped=False,
                 nomination_title=None,
-                block_title=None,
+                kind=ScheduleEntryKind.EVENT,
             )
         )
 

@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.services.schedule_edit import (
     AnnouncedChangeContext,
@@ -14,20 +14,20 @@ from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 logger = logging.getLogger(__name__)
 
 
 class MoveScheduleEventInput(BaseModel):
-    event_id: ScheduleEventId
-    place_after_event_id: ScheduleEventId
+    event_id: ScheduleEntryId
+    place_after_event_id: ScheduleEntryId
 
 
 class MoveScheduleEvent:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_edit: ScheduleEditService,
     ) -> None:
         self.schedule_gateway = schedule_gateway

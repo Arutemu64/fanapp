@@ -12,15 +12,15 @@ from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event imp
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
 )
-from fanfan.application.ports.gateways import ScheduleEventGateway
+from fanfan.application.ports.gateways import ScheduleEntryGateway
 from fanfan.application.ports.schedule_cache import (
     CachedSchedule,
     ScheduleCacheGateway,
 )
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry
 from fanfan.core.models.user import User
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 
@@ -30,9 +30,9 @@ pytestmark = [
 ]
 
 
-def _schedule_event(number: int, order: float) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+def _schedule_event(number: int, order: float) -> ScheduleEntry:
+    return ScheduleEntry(
+        id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -40,7 +40,7 @@ def _schedule_event(number: int, order: float) -> ScheduleEvent:
         is_current=False,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
+        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -49,7 +49,7 @@ async def test_get_schedule_serves_cached_payload_between_reads(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(GetSchedule)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
 
     await schedule_gateway.add(_schedule_event(1, 1.0))
     await uow.commit()
@@ -76,7 +76,7 @@ async def test_schedule_edit_invalidates_cache(
 ) -> None:
     get_schedule = await dishka_request.get(GetSchedule)
     set_current = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
     event = _schedule_event(1, 1.0)
@@ -100,7 +100,7 @@ async def test_publish_schedule_updated_warms_cache_before_broadcast(
 ) -> None:
     get_schedule = await dishka_request.get(GetSchedule)
     publish = await dishka_request.get(PublishScheduleUpdated)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     schedule_cache = await dishka_request.get(ScheduleCacheGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
 

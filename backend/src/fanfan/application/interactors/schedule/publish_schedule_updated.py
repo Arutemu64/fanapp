@@ -2,8 +2,8 @@ import logging
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.schedule.get_schedule import render_schedule
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
@@ -24,7 +24,7 @@ class PublishScheduleUpdated:
 
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_cache: ScheduleCacheGateway,
         uow: UnitOfWork,
         realtime: RealtimeGateway,
