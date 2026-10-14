@@ -6,7 +6,10 @@ from fanfan.application.interactors.tickets.sync_tickets import (
     SyncTickets,
 )
 from fanfan.application.ports.gateways.tickets import TicketGateway
-from fanfan.application.ports.sources.tickets import ExternalTicket
+from fanfan.application.ports.sources.tickets import (
+    ExternalTicket,
+    RevokedExternalTicket,
+)
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.ticket import generate_ticket_id
@@ -23,8 +26,11 @@ def _external(
     external_id: str,
     barcode: str,
     role: UserRole = UserRole.VISITOR,
+    order_id: str = "order-1",
 ) -> ExternalTicket:
-    return ExternalTicket(external_id=external_id, barcode=barcode, role=role)
+    return ExternalTicket(
+        order_id=order_id, external_id=external_id, barcode=barcode, role=role
+    )
 
 
 async def test_sync_tickets_imports_new_tickets(
@@ -43,10 +49,10 @@ async def test_sync_tickets_imports_new_tickets(
     result = await interactor()
 
     assert result.new_tickets_count == 3
-    assert result.removed_tickets_count == 0
+    assert result.revoked_tickets_count == 0
 
     for external in source.tickets:
-        saved = await ticket_gateway.get_by_ticketscloud_ticket_id(external.external_id)
+        saved = await ticket_gateway.get_by_barcode(external.barcode)
         assert saved is not None
         assert saved.barcode == external.barcode
         assert saved.role == external.role
@@ -71,12 +77,13 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
         used_by_user_id=None,
         issued_by_user_id=None,
         ticketscloud_ticket_id="ext-1",
+        ticketscloud_order_id="order-1",
     )
     await ticket_gateway.add(existing)
     await uow.commit()
 
     # The source re-yields ext-1 (now with different data) plus a brand new
-    # ticket. Import keys off the external id, so ext-1 must be left untouched
+    # ticket. Import keys off the sale, so ext-1 must be left untouched
     # and only ext-2 counts as new.
     source.tickets = [
         _external("ext-1", "changed-barcode", UserRole.VISITOR),
@@ -88,13 +95,17 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
     assert result.new_tickets_count == 1
 
     # The existing ticket is not overwritten by the re-synced payload.
-    saved_existing = await ticket_gateway.get_by_ticketscloud_ticket_id("ext-1")
+    saved_existing = await ticket_gateway.get_by_ticketscloud_sale(
+        order_id="order-1", ticket_id="ext-1"
+    )
     assert saved_existing is not None
     assert saved_existing.id == existing.id
     assert saved_existing.barcode == "original-barcode"
     assert saved_existing.role == UserRole.PARTICIPANT
 
-    saved_new = await ticket_gateway.get_by_ticketscloud_ticket_id("ext-2")
+    saved_new = await ticket_gateway.get_by_ticketscloud_sale(
+        order_id="order-1", ticket_id="ext-2"
+    )
     assert saved_new is not None
     assert saved_new.barcode == "barcode-2"
 
@@ -110,7 +121,7 @@ async def test_sync_tickets_with_empty_source_imports_nothing(
     result = await interactor()
 
     assert result.new_tickets_count == 0
-    assert result.removed_tickets_count == 0
+    assert result.revoked_tickets_count == 0
 
 
 async def test_sync_tickets_commits_in_batches_persisting_all_tickets(
@@ -130,6 +141,98 @@ async def test_sync_tickets_commits_in_batches_persisting_all_tickets(
     assert result.new_tickets_count == total
     # Spot-check that tickets on both sides of the batch boundary persisted.
     for i in (0, COMMIT_BATCH_SIZE - 1, COMMIT_BATCH_SIZE, total - 1):
-        saved = await ticket_gateway.get_by_ticketscloud_ticket_id(f"ext-{i}")
+        saved = await ticket_gateway.get_by_barcode(f"barcode-{i}")
         assert saved is not None
         assert saved.barcode == f"barcode-{i}"
+
+
+async def test_sync_tickets_imports_resale_of_refunded_ticket_id(
+    dishka_request: AsyncContainer,
+) -> None:
+    # TicketsCloud sells a refunded ticket id again under a new order with a
+    # new barcode; both sales must be stored and only the refunded one revoked.
+    interactor = await dishka_request.get(SyncTickets)
+    source = await dishka_request.get(FakeTicketsSource)
+    ticket_gateway = await dishka_request.get(TicketGateway)
+
+    source.tickets = [
+        _external("ext-1", "first-sale", order_id="order-1"),
+        _external("ext-1", "resale", order_id="order-2"),
+    ]
+    source.revoked = [RevokedExternalTicket(order_id="order-1", external_id="ext-1")]
+
+    result = await interactor()
+
+    assert result.new_tickets_count == 2
+    assert result.revoked_tickets_count == 1
+    first_sale = await ticket_gateway.get_by_barcode("first-sale")
+    resale = await ticket_gateway.get_by_barcode("resale")
+    assert first_sale is not None
+    assert first_sale.is_revoked
+    assert resale is not None
+    assert not resale.is_revoked
+
+
+async def test_sync_tickets_backfills_order_id_and_revokes_legacy_ticket(
+    dishka_request: AsyncContainer,
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(SyncTickets)
+    source = await dishka_request.get(FakeTicketsSource)
+    ticket_gateway = await dishka_request.get(TicketGateway)
+
+    # Imported before the order id was stored.
+    legacy = Ticket(
+        id=generate_ticket_id(),
+        barcode="legacy-barcode",
+        role=UserRole.VISITOR,
+        used_by_user_id=None,
+        issued_by_user_id=None,
+        ticketscloud_ticket_id="ext-1",
+    )
+    await ticket_gateway.add(legacy)
+    await uow.commit()
+
+    source.tickets = [_external("ext-1", "legacy-barcode", order_id="order-1")]
+    source.revoked = [RevokedExternalTicket(order_id="order-1", external_id="ext-1")]
+
+    result = await interactor()
+
+    assert result.new_tickets_count == 0
+    assert result.revoked_tickets_count == 1
+    saved = await ticket_gateway.get_by_barcode("legacy-barcode")
+    assert saved is not None
+    assert saved.id == legacy.id
+    assert saved.ticketscloud_order_id == "order-1"
+    assert saved.is_revoked
+
+
+async def test_sync_tickets_revokes_legacy_ticket_missing_from_sweep(
+    dishka_request: AsyncContainer,
+    uow: UnitOfWork,
+) -> None:
+    # The refunded order may no longer list the ticket, so the legacy row never
+    # gets its order id; the refund still revokes it by ticket id.
+    interactor = await dishka_request.get(SyncTickets)
+    source = await dishka_request.get(FakeTicketsSource)
+    ticket_gateway = await dishka_request.get(TicketGateway)
+
+    legacy = Ticket(
+        id=generate_ticket_id(),
+        barcode="legacy-barcode",
+        role=UserRole.VISITOR,
+        used_by_user_id=None,
+        issued_by_user_id=None,
+        ticketscloud_ticket_id="ext-1",
+    )
+    await ticket_gateway.add(legacy)
+    await uow.commit()
+
+    source.revoked = [RevokedExternalTicket(order_id="order-1", external_id="ext-1")]
+
+    result = await interactor()
+
+    assert result.revoked_tickets_count == 1
+    saved = await ticket_gateway.get_by_barcode("legacy-barcode")
+    assert saved is not None
+    assert saved.is_revoked

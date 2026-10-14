@@ -15,7 +15,7 @@ COMMIT_BATCH_SIZE = 200
 
 class SyncTicketsOutput(BaseModel):
     new_tickets_count: int
-    removed_tickets_count: int
+    revoked_tickets_count: int
 
 
 class SyncTickets:
@@ -30,7 +30,7 @@ class SyncTickets:
         self.uow = uow
 
     async def __call__(self) -> SyncTicketsOutput:
-        new_tickets_count, removed_tickets_count = 0, 0
+        new_tickets_count = 0
         seen_since_commit = 0
         async for external in self.source.fetch_all_tickets():
             if await self.ticket_import_service.import_ticket(external):
@@ -44,10 +44,21 @@ class SyncTickets:
                     extra={"new_tickets": new_tickets_count},
                 )
         await self.uow.commit()
-        # TODO: removed_tickets_count is always 0 — refunds/cancellations aren't
-        # detected because `fetch_all_tickets` only yields currently-active
-        # tickets, giving no signal for which locally-stored tickets disappeared.
+
+        # Revoke after importing: the import pass fills in the order id on rows
+        # stored before it was tracked, so revocation can match them exactly.
+        revoked_tickets_count = 0
+        seen_since_commit = 0
+        async for revoked in self.source.fetch_revoked_tickets():
+            if await self.ticket_import_service.revoke_ticket(revoked):
+                revoked_tickets_count += 1
+            seen_since_commit += 1
+            if seen_since_commit >= COMMIT_BATCH_SIZE:
+                await self.uow.commit()
+                seen_since_commit = 0
+        await self.uow.commit()
+
         return SyncTicketsOutput(
             new_tickets_count=new_tickets_count,
-            removed_tickets_count=removed_tickets_count,
+            revoked_tickets_count=revoked_tickets_count,
         )

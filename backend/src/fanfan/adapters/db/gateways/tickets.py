@@ -21,6 +21,8 @@ def _from_model(model: Ticket) -> TicketORM:
         used_by_user_id=model.used_by_user_id,
         issued_by_user_id=model.issued_by_user_id,
         ticketscloud_ticket_id=model.ticketscloud_ticket_id,
+        ticketscloud_order_id=model.ticketscloud_order_id,
+        revoked_at=model.revoked_at,
     )
 
 
@@ -36,6 +38,8 @@ def _to_model(orm: TicketORM) -> Ticket:
         if orm.issued_by_user_id is not None
         else None,
         ticketscloud_ticket_id=orm.ticketscloud_ticket_id,
+        ticketscloud_order_id=orm.ticketscloud_order_id,
+        revoked_at=orm.revoked_at,
     )
 
 
@@ -60,12 +64,31 @@ class SqlTicketGateway(TicketGateway):
         ticket_orm = await self.session.scalar(stmt)
         return _to_model(ticket_orm) if ticket_orm else None
 
-    async def get_by_ticketscloud_ticket_id(
-        self, ticketscloud_ticket_id: str
+    async def get_by_ticketscloud_sale(
+        self, order_id: str, ticket_id: str
     ) -> Ticket | None:
         stmt = (
             select(TicketORM)
-            .where(TicketORM.ticketscloud_ticket_id == ticketscloud_ticket_id)
+            .where(
+                TicketORM.ticketscloud_order_id == order_id,
+                TicketORM.ticketscloud_ticket_id == ticket_id,
+            )
+            .with_for_update()
+        )
+        ticket_orm = await self.session.scalar(stmt)
+        return _to_model(ticket_orm) if ticket_orm else None
+
+    async def get_legacy_by_ticketscloud_ticket_id(
+        self, ticket_id: str
+    ) -> Ticket | None:
+        # Rows imported before the order id was stored. The ticket id used to be
+        # unique, so at most one such row exists per ticket id.
+        stmt = (
+            select(TicketORM)
+            .where(
+                TicketORM.ticketscloud_ticket_id == ticket_id,
+                TicketORM.ticketscloud_order_id.is_(None),
+            )
             .with_for_update()
         )
         ticket_orm = await self.session.scalar(stmt)

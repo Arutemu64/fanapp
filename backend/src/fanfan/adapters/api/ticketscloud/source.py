@@ -4,7 +4,12 @@ from collections.abc import AsyncIterator, Iterator
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
 from fanfan.adapters.api.ticketscloud.dto.order import Order, OrderStatus
-from fanfan.application.ports.sources.tickets import ExternalTicket, TicketsSource
+from fanfan.adapters.api.ticketscloud.dto.refund import RefundStatus
+from fanfan.application.ports.sources.tickets import (
+    ExternalTicket,
+    RevokedExternalTicket,
+    TicketsSource,
+)
 from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
@@ -18,6 +23,7 @@ class TCloudSource(TicketsSource):
     Interprets vendor orders into the neutral tickets the application stores:
     only DONE orders with a barcode yield a ticket, and the vendor event id is
     mapped to a domain role here so the boundary speaks the domain's language.
+    An approved refund request is what revokes a sold ticket.
     """
 
     def __init__(self, client: TCloudClient, config: TCloudConfig) -> None:
@@ -31,6 +37,7 @@ class TCloudSource(TicketsSource):
         for order_ticket in order.tickets:
             if order_ticket.barcode:
                 yield ExternalTicket(
+                    order_id=order.id,
                     external_id=order_ticket.id,
                     barcode=order_ticket.barcode,
                     role=role,
@@ -58,6 +65,28 @@ class TCloudSource(TicketsSource):
                 for order in result.data:
                     for ticket in self._extract_tickets(order):
                         yield ticket
+
+        return iterator()
+
+    def fetch_revoked_tickets(self) -> AsyncIterator[RevokedExternalTicket]:
+        async def iterator() -> AsyncIterator[RevokedExternalTicket]:
+            # Only an approved refund has returned the money; a new or
+            # in-progress request can still be rejected.
+            page = 1
+            total_pages = 1
+            while page <= total_pages:
+                result = await self.client.get_refunds(
+                    status=RefundStatus.APPROVED,
+                    page=page,
+                    page_size=DEFAULT_PAGE_SIZE,
+                )
+                total_pages = result.pagination.total
+                for refund in result.data:
+                    for ticket_id in refund.tickets:
+                        yield RevokedExternalTicket(
+                            order_id=refund.order, external_id=ticket_id
+                        )
+                page += 1
 
         return iterator()
 

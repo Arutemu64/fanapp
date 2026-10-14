@@ -14,6 +14,7 @@ class RefundStatus(StrEnum):
 @dataclass(slots=True, frozen=True)
 class Refund:
     id: str
+    order: str
     event: str
     status: RefundStatus
     tickets: list[str]  # list of ticket ids

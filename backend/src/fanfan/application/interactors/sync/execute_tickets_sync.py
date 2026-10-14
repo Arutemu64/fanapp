@@ -57,4 +57,8 @@ class ExecuteTicketsSync:
             await self.tracker.fail(run, SYNC_FAILED_ERROR)
             return
 
-        await self.tracker.finish(run, f"Новых билетов: {output.new_tickets_count}")
+        await self.tracker.finish(
+            run,
+            f"Новых билетов: {output.new_tickets_count}, "
+            f"возвратов: {output.revoked_tickets_count}",
+        )

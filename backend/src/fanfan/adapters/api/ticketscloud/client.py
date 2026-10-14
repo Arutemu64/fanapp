@@ -9,7 +9,7 @@ from fanfan.adapters.api.ticketscloud.dto.order import (
     OrderResponse,
     OrdersResponse,
 )
-from fanfan.adapters.api.ticketscloud.dto.refund import RefundsResponse
+from fanfan.adapters.api.ticketscloud.dto.refund import RefundsResponse, RefundStatus
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,13 @@ class TCloudClient(BaseApiClient):
             "resources/orders", OrdersResponse, page=page, page_size=page_size
         )
 
-    async def get_refunds(self, page: int = 1, page_size: int = 200) -> RefundsResponse:
+    async def get_refunds(
+        self, status: RefundStatus, page: int = 1, page_size: int = 200
+    ) -> RefundsResponse:
         return await self._get(
             "resources/refund_requests",
             RefundsResponse,
+            status=status.value,
             page=page,
             page_size=page_size,
         )
