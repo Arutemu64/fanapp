@@ -27,13 +27,8 @@
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
 	}));
 
+	// No reset on open: EventCard mounts this modal only while it is open.
 	let formError = $state('');
-
-	$effect(() => {
-		if (open) {
-			formError = '';
-		}
-	});
 
 	function handleUnsubscribe() {
 		if (!event.user_subscription) {

@@ -243,6 +243,11 @@ Every modal is a `Dialog.Root` + `Dialog.Content`, and the title is a real `Dial
 
 Open state is a `$bindable` prop on the modal component (`bind:open`); for a click-to-open trigger use `Dialog.Trigger`. There is **no `autoclose`** — close explicitly with `onclick={() => (open = false)}` or a `Dialog.Close`.
 
+**Form state starts fresh on every open, without an effect.** Don't reset fields in an `$effect` on `open`; the Svelte docs call syncing state in effects an anti-pattern ([`$effect`, "When not to use"](https://svelte.dev/docs/svelte/$effect#When-not-to-use-$effect)). Tie the state's lifetime to the open dialog instead:
+
+- **A modal mounted per row** (the schedule's subscribe/unsubscribe/move dialogs) is already wrapped in `{#if open}` by its parent, so the whole component, state included, is new each time.
+- **A modal mounted once** (the profile's edit-profile, password and email dialogs) keeps its mutation in the modal and moves the form into a `…Form.svelte` child rendered inside `Dialog.Content`, which bits-ui unmounts on close. The mutation stays in the modal so `isPending` keeps guarding against a double submit across a close and reopen; the form awaits it through an `onSave`-style prop (`mutateAsync`, per [ADR-0022](adr/0022-createmutation-for-writes.md)). A field seeded from a prop snapshots it with `untrack`, so a background refetch doesn't overwrite what's being typed.
+
 ### Confirmations: AlertDialog
 
 A modal that confirms an action — especially an irreversible one (the schedule broadcasts fire un-recallable pushes) — uses `AlertDialog`, not `Dialog`. It carries `role="alertdialog"` and, unlike `Dialog`, **does not dismiss on an outside click** (bits-ui defaults `interactOutsideBehavior` to `"ignore"`), so the user must make an explicit choice. Focus lands on the first focusable control, so put `AlertDialog.Cancel` before the confirm in the DOM — the safe choice gets focus (WAI-ARIA APG).
