@@ -21,7 +21,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | --- | --- | --- |
 | Backend / FastAPI | `fastapi`, `clean-ddd-hexagonal` | [docs/backend.md](docs/backend.md) (start at "Rules at a glance") |
 | ORM models / migrations / SQL queries | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review`, `supabase-postgres-best-practices` | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management" |
-| `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices` | [docs/frontend.md](docs/frontend.md) |
+| `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices`; run `svelte-autofixer` on every file you touch (see "Svelte AI tooling") | [docs/frontend.md](docs/frontend.md) |
 | UI components (shadcn-svelte) | `shadcn-svelte` | [docs/frontend.md](docs/frontend.md) §3, §7–8 |
 | Styling / layout | `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4, [.agents/context/DESIGN.md](.agents/context/DESIGN.md) (design intent & named rules) |
 | Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md), [.agents/context/DESIGN.md](.agents/context/DESIGN.md) |
@@ -120,7 +120,7 @@ Two mechanisms enforce the rules above without relying on anyone remembering the
 
 ## Subagents
 
-`.claude/agents/` holds four project subagents. Each runs in its own context
+`.claude/agents/` holds three project subagents. Each runs in its own context
 window and reports back a summary, so verbose work stays out of the main
 conversation — that buys context headroom, not a smaller token bill: total usage
 goes *up*, and the win is that the parent session doesn't degrade under a full
@@ -130,7 +130,6 @@ context.
 | --- | --- | --- |
 | `gate-runner` | Runs the lint/typecheck/test/drift gates, returns a compact pass/fail + trimmed failures. Fixes nothing. | sonnet |
 | `migration-reviewer` | Read-only safety review of a migration against the deployed database. Severity-tagged findings + a verdict. | opus |
-| `svelte-editor` | Implements a scoped `.svelte`/`.svelte.ts` change and leaves the frontend gates green. | inherit |
 | `ru-copy` | Writes and revises the Russian user-facing strings, across components, notifications and both halves of each email. | opus |
 
 Delegate verbose or well-bounded work (gate runs, a migration review, a
@@ -144,6 +143,31 @@ Editing one of these: keep the body short and the output format explicit, push
 procedure into a skill via `skills:` rather than the prompt, and restrict
 `tools:` to what the job needs — a reviewer without `Edit` cannot quietly
 "fix" what it was asked to report.
+
+### Svelte AI tooling
+
+Svelte work uses the official tooling from [`sveltejs/ai-tools`](https://svelte.dev/docs/ai/overview),
+wired in two places because a cloud session doesn't install plugins a repo
+enables ([cloud-environments: what carries over](https://code.claude.com/docs/en/cloud-environments#what-carries-over-from-your-setup)):
+
+* **Locally** — `.claude/settings.json` enables the `svelte` plugin (MCP server,
+  both skills, and the `svelte-file-editor` subagent). Delegate scoped
+  `.svelte`/`.svelte.ts` edits to that subagent. It doesn't run our gates or
+  know our copy rules, so the caller still runs `just frontend-lint` +
+  `just frontend-check` and routes new strings through `ru-copy`.
+* **Everywhere, cloud included** — `.mcp.json` declares the same `svelte` MCP
+  server (`list-sections`, `get-documentation`, `svelte-autofixer`) and the two
+  skills are vendored. Keep its command identical to the plugin's: Claude Code
+  dedupes a plugin server against a project one by command
+  ([MCP scope precedence](https://code.claude.com/docs/en/mcp#scope-hierarchy-and-precedence)).
+  Without the subagent, load `svelte-code-writer` and call the tools inline.
+
+`svelte-autofixer` **issues** are errors to fix. Its **suggestions** are
+heuristics — "`bind:this` → attachment" fires on every vendored shadcn `ui/`
+component, and timers/observers legitimately assign state in `$effect`; act on
+one only when the Svelte docs' alternative fits. The CLI (`@sveltejs/mcp`
+0.1.x) accepts only a major for `--svelte-version` (`5`), not the full version
+the vendored skill describes.
 
 ## Staying in sync
 

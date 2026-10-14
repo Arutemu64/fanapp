@@ -7,6 +7,14 @@
         "serve",
         "--mcp"
       ]
+    },
+    "svelte": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sveltejs/mcp"
+      ]
     }
   }
 }
