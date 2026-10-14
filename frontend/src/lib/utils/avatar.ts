@@ -6,6 +6,10 @@ import definition from '@dicebear/styles/initial-face.json';
 // the hosted DiceBear API so avatars work offline and no user seed leaves the app.
 const style = new Style(definition);
 
+// Bounded because an organiser scrolling the users directory and a reroll that gets
+// cancelled each draw faces nobody will ask for again. Map iterates in insertion
+// order, so the first key is the oldest.
+const DATA_URI_CACHE_LIMIT = 200;
 const dataUriCache = new Map<string, string>();
 
 /** Deterministic SVG data URI for a seed: the same seed always draws the same face. */
@@ -13,6 +17,9 @@ export function getAvatarDataUri(seed: string): string {
 	let uri = dataUriCache.get(seed);
 	if (!uri) {
 		uri = new Avatar(style, { seed }).toDataUri();
+		if (dataUriCache.size >= DATA_URI_CACHE_LIMIT) {
+			dataUriCache.delete(dataUriCache.keys().next().value!);
+		}
 		dataUriCache.set(seed, uri);
 	}
 	return uri;
