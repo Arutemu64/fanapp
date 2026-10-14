@@ -213,6 +213,8 @@ Every modal is a `Dialog.Root` + `Dialog.Content`, and the title is a real `Dial
 
 Open state is a `$bindable` prop on the modal component (`bind:open`); for a click-to-open trigger use `Dialog.Trigger`. There is **no `autoclose`** — close explicitly with `onclick={() => (open = false)}` or a `Dialog.Close`.
 
+**Form state lives in a child of `Dialog.Content`, not in the modal shell.** bits-ui unmounts the content when the dialog closes, so a form component rendered inside it starts fresh on every open — no `$effect(() => { if (open) reset() })`, which Svelte's docs steer away from for syncing state ([`$effect`](https://svelte.dev/docs/svelte/$effect)). Split a form modal into `XModal.svelte` (`Dialog.Root` + `Dialog.Content` + the `open` binding) and `XForm.svelte` (state, mutation, the whole body including `Dialog.Header`), which takes an `onclose` callback. Two consequences: toasts go in the `createMutation` options' `onSuccess`, because the per-call callbacks of `mutate()` are dropped once the form is unmounted mid-request; and a mutation whose double-submit would be harmful (`MoveEventModal`, an irreversible push) stays in the shell so `isPending` survives a close and reopen.
+
 ### Confirmations: AlertDialog
 
 A modal that confirms an action — especially an irreversible one (the schedule broadcasts fire un-recallable pushes) — uses `AlertDialog`, not `Dialog`. It carries `role="alertdialog"` and, unlike `Dialog`, **does not dismiss on an outside click** (bits-ui defaults `interactOutsideBehavior` to `"ignore"`), so the user must make an explicit choice. Focus lands on the first focusable control, so put `AlertDialog.Cancel` before the confirm in the DOM — the safe choice gets focus (WAI-ARIA APG).

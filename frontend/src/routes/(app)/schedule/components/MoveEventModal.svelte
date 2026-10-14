@@ -1,22 +1,16 @@
 <script lang="ts">
-	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
-	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
-		getScheduleOptions,
 		getScheduleQueryKey,
 		moveScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
-	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
-	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { createSearchIndex } from '#lib/utils/search.js';
+
+	import MoveEventForm from './MoveEventForm.svelte';
 
 	interface Props {
 		open: boolean;
@@ -27,167 +21,44 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	// The move picker searches the whole programme. It reads that off the cached
-	// schedule query rather than a prop, so the full array isn't drilled through
-	// every EventCard row just to reach this rarely-opened dialog.
-	const scheduleQuery = createQuery(() => getScheduleOptions());
-	let schedule = $derived(scheduleQuery.data?.schedule ?? []);
-
+	// The request is owned here, not by the form, so it outlives the form: a move
+	// fans out an irreversible push to every subscriber, so dismissing the dialog
+	// mid-flight must neither lose the confirmation toast nor let a reopened form
+	// fire a second request — and a second mailing. `isPending` stays true across
+	// reopens; the toast is an options-level callback because the per-call ones are
+	// dropped once the form is gone.
 	// Read-your-writes: refetch our own schedule off the successful response
 	// rather than waiting for the schedule_updated SSE echo, which can arrive
 	// late or be dropped on a flaky operator connection. See EventStaffActions'
 	// reloadSchedule for the full rationale.
 	const moveMutation = createMutation(() => ({
 		...moveScheduleEventMutation(),
-		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
+		onSuccess: () => {
+			toastService.add('Выступление перенесено', 'success');
+			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
+		}
 	}));
 
-	let query = $state('');
-	let selectedId: string | null = $state(null);
-	let formError = $state('');
-	// Blocks re-entry while the move request is in flight. A move fans out an
-	// irreversible push to every subscriber, so a double-tap on a slow venue cell
-	// must not fire the request — and the mailing — twice.
-	let isSubmitting = $derived(moveMutation.isPending);
-
-	// Reset the picker each time the modal opens so a cancelled selection never lingers.
-	$effect(() => {
-		if (open) {
-			formError = '';
-			selectedId = null;
-			query = '';
-		}
-	});
-
-	// Shared matcher folds ё/е and matches space-separated tokens in any order.
-	// Indexed once per schedule so typing through a few hundred events stays cheap.
-	let searchIndex = $derived(
-		createSearchIndex(schedule, (ev) => [ev.number, ev.title, ev.block_title, ev.nomination_title])
-	);
-
-	let filtered = $derived(searchIndex.filter(query));
-
-	function handleSelect(ev: ScheduleEventFullDto) {
-		selectedId = selectedId === ev.id ? null : ev.id;
-	}
-
-	function handleSubmit() {
-		if (!selectedId || isSubmitting) return;
-
-		formError = '';
+	function move(
+		placeAfterEventId: string,
+		handlers: { onSuccess: () => void; onError: (error: unknown) => void }
+	) {
 		moveMutation.mutate(
-			{ path: { event_id: event.id }, body: { place_after_event_id: selectedId } },
-			{
-				onSuccess: () => {
-					toastService.add('Выступление перенесено', 'success');
-					open = false;
-					selectedId = null;
-					query = '';
-				},
-				onError: (error) => {
-					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
-				}
-			}
+			{ path: { event_id: event.id }, body: { place_after_event_id: placeAfterEventId } },
+			handlers
 		);
 	}
 </script>
 
+<!-- The form owns the picker state and mounts with the dialog content, so every
+     open starts with no selection or search without an effect to reset it. -->
 <Dialog.Root bind:open>
 	<Dialog.Content class="sm:max-w-md">
-		<Dialog.Header>
-			<Dialog.Title class="flex items-center gap-2">
-				<ArrowUpDown class="size-5 text-muted-foreground" />
-				Перенести выступление
-			</Dialog.Title>
-		</Dialog.Header>
-
-		<div class="flex flex-col gap-4 sm:gap-5">
-			{#if formError}
-				<Alert.Root variant="destructive">
-					<Alert.Description>{formError}</Alert.Description>
-				</Alert.Root>
-			{/if}
-
-			<Dialog.Description class="sm:text-base">
-				Выбери выступление, <strong class="text-foreground">после</strong> которого разместить:
-				<strong class="text-primary">{event.title}</strong>
-			</Dialog.Description>
-
-			<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
-			<Alert.Root variant="warning">
-				<BellRing class="shrink-0" />
-				<Alert.Description>
-					Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.
-				</Alert.Description>
-			</Alert.Root>
-
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					name="schedule_move_search"
-					aria-label="Поиск выступления для переноса"
-					placeholder="Поиск выступления…"
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-					bind:value={query}
-					oninput={() => (formError = '')}
-				/>
-				{#if query}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (query = '')}
-						aria-label="Очистить поиск"
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
-			</div>
-
-			<div class="max-h-48 overflow-y-auto rounded-lg border border-border sm:max-h-60">
-				{#each filtered as ev (ev.id)}
-					<button
-						type="button"
-						class={[
-							'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3 sm:text-base',
-							selectedId === ev.id && 'bg-primary/20'
-						]}
-						onclick={() => handleSelect(ev)}
-					>
-						{#if ev.number !== null}
-							<span class="font-medium text-foreground">№{ev.number}</span>
-							<span class="text-muted-foreground"> — {ev.title}</span>
-						{:else}
-							<!-- No number to lead with (a break), so the title carries the row. -->
-							<span class="font-medium text-foreground">{ev.title}</span>
-						{/if}
-					</button>
-				{:else}
-					<div class="px-3 py-4 text-center text-sm text-muted-foreground sm:py-5 sm:text-base">
-						Нет совпадений
-					</div>
-				{/each}
-			</div>
-		</div>
-
-		<Dialog.Footer class="flex flex-row justify-end gap-2">
-			<Button
-				type="button"
-				variant="outline"
-				onclick={() => (open = false)}
-				disabled={isSubmitting}
-			>
-				Отмена
-			</Button>
-			<Button type="button" onclick={handleSubmit} disabled={!selectedId || isSubmitting}>
-				{#if isSubmitting}
-					<Spinner data-icon="inline-start" />
-					Перенос…
-				{:else}
-					Перенести
-				{/if}
-			</Button>
-		</Dialog.Footer>
+		<MoveEventForm
+			{event}
+			isSubmitting={moveMutation.isPending}
+			onmove={move}
+			onclose={() => (open = false)}
+		/>
 	</Dialog.Content>
 </Dialog.Root>
