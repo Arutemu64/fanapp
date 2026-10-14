@@ -59,7 +59,7 @@
 
 	// Return here after logging in: the guest opened the Profile tab, so that is
 	// where they expect to land.
-	const loginHref = `${resolve('login')}?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`;
+	const loginHref = resolve(`login?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`);
 
 	// Both baked in at build time (vite.config.ts `define`). The release number is
 	// what an attendee can read out in a bug report ("у меня всё сломалось"); the
@@ -143,7 +143,6 @@
 			<MenuGroup>
 				<Item.Root class="rounded-none">
 					{#snippet child({ props })}
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- loginHref is resolve('/login') plus a query string, which the rule can't follow through a variable. -->
 						<a href={loginHref} {...props}>
 							<Item.Media>
 								<Avatar.Root class="size-12">
