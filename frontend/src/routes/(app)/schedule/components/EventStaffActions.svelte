@@ -217,7 +217,8 @@
 					<Button
 						variant="ghost"
 						class="h-11 justify-start"
-						disabled={isCurrentTogglePending}
+						disabled={offlineGate.disabled || isCurrentTogglePending}
+						title={offlineGate.title}
 						onclick={() => runFromSheet(askToggleCurrent)}
 					>
 						{#if event.is_current}
@@ -232,6 +233,8 @@
 				<Button
 					variant="ghost"
 					class="h-11 justify-start"
+					disabled={offlineGate.disabled}
+					title={offlineGate.title}
 					onclick={() => runFromSheet(() => (moveModal = true))}
 				>
 					<Shuffle data-icon="inline-start" />
@@ -241,7 +244,8 @@
 				<Button
 					variant="ghost"
 					class={['h-11 justify-start', !isSkipped && 'text-destructive hover:text-destructive']}
-					disabled={skipMutation.isPending}
+					disabled={offlineGate.disabled || skipMutation.isPending}
+					title={offlineGate.title}
 					onclick={() => runFromSheet(askToggleSkip)}
 				>
 					{#if isSkipped}
