@@ -3,6 +3,7 @@
 
 	import '../app.css';
 
+	import { beforeNavigate } from '$app/navigation';
 	import * as Sentry from '@sentry/sveltekit';
 	import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
@@ -18,7 +19,7 @@
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { currentUserOptions, watchApiResponses } from '#lib/api/index.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
-	import UpdatePrompt from '#lib/components/UpdatePrompt.svelte';
+	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
 	import { isReachable } from '#lib/services/reachability.js';
@@ -47,6 +48,21 @@
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
+	const appUpdate = setAppUpdateService();
+
+	// A waiting build is applied at the next page change rather than with a
+	// prompt over the screen: a link tap is a natural break, and a full load there
+	// costs nothing a client-side navigation would have kept. Only link taps to
+	// another page — a goto() that rewrites a filter's query string, or a back
+	// gesture (cancelling a popstate makes SvelteKit rewind history first), would
+	// turn into a jarring reload.
+	beforeNavigate((navigation) => {
+		if (!appUpdate.available) return;
+		if (navigation.type !== 'link' || navigation.willUnload || !navigation.to) return;
+		if (navigation.to.url.pathname === navigation.from?.url.pathname) return;
+		navigation.cancel();
+		appUpdate.apply(navigation.to.url.href);
+	});
 
 	onMount(() => {
 		// Remove the static boot splash (in app.html) now that the app has mounted.
@@ -72,6 +88,7 @@
 		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
 		// re-creating this layout doesn't stack duplicates.
 		const stopMonitor = startReachabilityMonitor();
+		const stopUpdates = appUpdate.start();
 		const stopWatching = watchApiResponses(queryClient, () => void session.expired());
 
 		eventsClient.on('schedule_updated', handleScheduleUpdated);
@@ -81,6 +98,7 @@
 
 		return () => {
 			stopMonitor();
+			stopUpdates();
 			stopWatching();
 			eventsClient.off('schedule_updated', handleScheduleUpdated);
 			eventsClient.off('config_updated', handleConfigUpdated);
@@ -175,6 +193,3 @@
 	name="ФАН ФАН"
 	icon="/icons/icon-512.png"
 ></pwa-install>
-
-<!-- Prompts the user to reload when a new build has been cached by the SW. -->
-<UpdatePrompt />

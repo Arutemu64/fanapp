@@ -90,10 +90,11 @@ if (!dev) {
 		})
 	);
 
-	// Take control of open pages after a controlled update (the in-app prompt
+	// Take control of open pages after a controlled update (AppUpdateService
 	// reloads them on `controllerchange`). We do NOT call skipWaiting here: a new
-	// worker waits until the user accepts the prompt, which posts the `skipWaiting`
-	// message handled below — never swapping assets mid-session.
+	// worker waits until the app posts the `skipWaiting` message handled below —
+	// at the user's next page change or their tap on the update row — never
+	// swapping assets mid-screen.
 	clientsClaim();
 }
 
@@ -128,9 +129,9 @@ async function hasVisibleAppClient() {
 	return windowClients.some((client) => client.visibilityState === 'visible');
 }
 
-// The new worker waits by default so the user is never interrupted mid-session.
-// The in-app "new version" prompt posts this message when the user accepts,
-// which activates the waiting worker and triggers a reload.
+// The new worker waits by default so the user is never interrupted mid-screen.
+// AppUpdateService posts this message at a page change or on the update row's
+// tap, which activates the waiting worker and triggers a reload.
 self.addEventListener('message', (event) => {
 	if (event.data === 'skipWaiting') {
 		void self.skipWaiting();
