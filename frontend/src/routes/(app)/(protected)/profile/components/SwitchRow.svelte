@@ -10,8 +10,9 @@
 		description: string;
 		checked: boolean;
 		disabled?: boolean;
-		/** Hover hint for a disabled switch (desktop only — touch never shows it). */
-		disabledHint?: string;
+		/** Dimmed but still tappable, so a guarded `onCheckedChange` can explain why
+		 *  (offlineWriteGate). */
+		blocked?: boolean;
 		onCheckedChange: (checked: boolean) => void;
 		/** Extra content under the description, outside the label — links and buttons go here. */
 		children?: Snippet;
@@ -23,7 +24,7 @@
 		description,
 		checked,
 		disabled = false,
-		disabledHint,
+		blocked = false,
 		onCheckedChange,
 		children
 	}: Props = $props();
@@ -42,7 +43,10 @@
 -->
 <div class="flex items-start justify-between gap-3 p-3 sm:p-4">
 	<div class="min-w-0 flex-1">
-		<label for={id} class={['block', disabled ? 'cursor-not-allowed' : 'cursor-pointer']}>
+		<label
+			for={id}
+			class={['block', disabled || blocked ? 'cursor-not-allowed' : 'cursor-pointer']}
+		>
 			<span id={titleId} class="block text-sm font-medium text-foreground">{title}</span>
 			<span id={descriptionId} class="mt-1 block text-sm leading-relaxed text-muted-foreground">
 				{description}
@@ -58,6 +62,6 @@
 		aria-labelledby={titleId}
 		aria-describedby={descriptionId}
 		{disabled}
-		title={disabledHint}
+		aria-disabled={blocked}
 	/>
 </div>

@@ -206,11 +206,11 @@
 				title="На этом устройстве"
 				description="Приходят как обычные уведомления телефона, даже когда приложение закрыто."
 				checked={pushDevice.state === 'on'}
-				disabled={pushDevice.isBusy || pushDevice.state === 'unsupported' || offlineGate.disabled}
-				disabledHint={offlineGate.title}
-				onCheckedChange={() => {
+				disabled={pushDevice.isBusy || pushDevice.state === 'unsupported'}
+				blocked={offlineGate.blocked}
+				onCheckedChange={offlineGate.guard(() => {
 					void toggleSubscription();
-				}}
+				})}
 			>
 				{#if pushDevice.state === 'unsupported'}
 					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -227,9 +227,9 @@
 				title="ВКонтакте"
 				description={vkDescription}
 				checked={receiveVk}
-				disabled={settingsMutation.isPending || !hasVkAccount || offlineGate.disabled}
-				disabledHint={offlineGate.title}
-				onCheckedChange={toggleReceiveVk}
+				disabled={settingsMutation.isPending || !hasVkAccount}
+				blocked={offlineGate.blocked}
+				onCheckedChange={offlineGate.guard(toggleReceiveVk)}
 			>
 				<div class="flex flex-wrap gap-x-4">
 					{#if !hasVkAccount}
@@ -259,9 +259,9 @@
 				title="Все анонсы"
 				description="Получать уведомления о начале каждого выступления."
 				checked={receiveAll}
-				disabled={settingsMutation.isPending || offlineGate.disabled}
-				disabledHint={offlineGate.title}
-				onCheckedChange={toggleReceiveAll}
+				disabled={settingsMutation.isPending}
+				blocked={offlineGate.blocked}
+				onCheckedChange={offlineGate.guard(toggleReceiveAll)}
 			/>
 		</MenuGroup>
 	</SettingsSection>
@@ -273,9 +273,9 @@
 		<Button
 			variant="outline"
 			class="w-full sm:w-auto"
-			disabled={testMutation.isPending || offlineGate.disabled}
-			title={offlineGate.title}
-			onclick={sendTestNotification}
+			disabled={testMutation.isPending}
+			aria-disabled={offlineGate.blocked}
+			onclick={offlineGate.guard(sendTestNotification)}
 		>
 			{#if testMutation.isPending}
 				<Spinner data-icon="inline-start" />

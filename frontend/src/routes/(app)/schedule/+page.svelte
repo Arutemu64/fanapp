@@ -200,7 +200,7 @@
 	<div {@attach capturePageRoot} class="flex flex-col gap-4">
 		{#if showStaleNotice}
 			<StaleDataNotice
-				message="Нет связи. Показана сохранённая программа — обновится при подключении."
+				message="Показана сохранённая программа."
 				cachedAt={scheduleQuery.dataUpdatedAt}
 			/>
 		{/if}
