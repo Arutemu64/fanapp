@@ -1201,10 +1201,6 @@ export type TCloudWebhookOrderRef = {
  */
 export type TCloudWebhookPayload = {
 	data: TCloudWebhookOrderRef;
-	/**
-	 * Type
-	 */
-	type: string;
 };
 
 /**

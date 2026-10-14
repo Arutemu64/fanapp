@@ -6076,16 +6076,11 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/TCloudWebhookOrderRef"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
           }
         },
         "type": "object",
         "required": [
-          "data",
-          "type"
+          "data"
         ],
         "title": "TCloudWebhookPayload"
       },
