@@ -18,6 +18,7 @@
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	interface Props {
 		change: ScheduleChangeFullDto;
@@ -28,6 +29,7 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
+	const offlineGate = offlineWriteGate();
 	const undoMutation = createMutation(() => ({
 		...undoScheduleChangeMutation(),
 		onSuccess: () => {
@@ -128,7 +130,13 @@
 			<span class="text-xs text-muted-foreground">
 				ID: {change.id}
 			</span>
-			<Button variant="outline" size="sm" onclick={undoChange} disabled={undoMutation.isPending}>
+			<Button
+				variant="outline"
+				size="sm"
+				onclick={offlineGate.guard(undoChange)}
+				disabled={undoMutation.isPending}
+				aria-disabled={offlineGate.blocked}
+			>
 				{#if undoMutation.isPending}
 					<Spinner data-icon="inline-start" />
 				{:else}
