@@ -8,7 +8,7 @@
 	const theme = getThemeService();
 
 	const options: { mode: ThemeMode; label: string; Icon: Component }[] = [
-		{ mode: 'system', label: 'Системная', Icon: Monitor },
+		{ mode: 'system', label: 'Авто', Icon: Monitor },
 		{ mode: 'light', label: 'Светлая', Icon: Sun },
 		{ mode: 'dark', label: 'Тёмная', Icon: Moon }
 	];
