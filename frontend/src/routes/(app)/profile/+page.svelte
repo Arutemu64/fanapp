@@ -27,6 +27,7 @@
 	import { isOrg } from '#lib/utils/permissions.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
+	import AccentPicker from './components/AccentPicker.svelte';
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
 	import LogoutButton from './components/LogoutButton.svelte';
 	import MenuLink from './components/MenuLink.svelte';
@@ -197,8 +198,9 @@
 				<Item.Content>
 					<Item.Title class="text-base">Тема</Item.Title>
 				</Item.Content>
-				<Item.Footer>
+				<Item.Footer class="flex-col items-stretch gap-3">
 					<ThemeToggle />
+					<AccentPicker />
 				</Item.Footer>
 			</Item.Root>
 		</MenuGroup>

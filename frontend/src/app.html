@@ -76,6 +76,15 @@
 				try {
 					m = localStorage.getItem('theme-mode');
 				} catch (e) {}
+				// Accent preset (profile > Тема). Ids mirror ACCENTS in theme.svelte.ts and
+				// the :root[data-accent] blocks in app.css; an unknown value is ignored.
+				var accent = null;
+				try {
+					accent = localStorage.getItem('theme-accent');
+				} catch (e) {}
+				if (['teal', 'violet', 'blue', 'green', 'orange'].indexOf(accent) !== -1) {
+					document.documentElement.dataset.accent = accent;
+				}
 				var isDark =
 					m === 'dark' ||
 					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
