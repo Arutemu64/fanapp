@@ -1660,7 +1660,7 @@ export const markNotificationsReadMutation = (
 /**
  * Send test notification
  *
- * Creates a test notification for the authenticated user and sends it through all connected channels.
+ * Creates a test notification for the authenticated user and sends it through all connected channels. One test per user per minute.
  */
 export const sendTestNotificationMutation = (
 	options?: Partial<Options<SendTestNotificationData>>

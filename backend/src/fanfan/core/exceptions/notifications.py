@@ -1,4 +1,4 @@
-from fanfan.core.exceptions.base import AppException, Conflict, NotFound
+from fanfan.core.exceptions.base import AppException, Conflict, NotFound, RateLimited
 
 
 class NotificationException(AppException):
@@ -24,6 +24,13 @@ class MailingNotCancellable(Conflict, NotificationException):
     # The mailing already reached a terminal non-cancelled state (finished or
     # failed), so there is nothing left to cancel.
     code = "MAILING_NOT_CANCELLABLE"
+
+
+class TestNotificationTooFast(RateLimited, NotificationException):
+    code = "TEST_NOTIFICATION_TOO_FAST"
+
+    def __init__(self, retry_after: int) -> None:
+        super().__init__(details={"retry_after": retry_after})
 
 
 class UserNotReachable(NotificationException):
