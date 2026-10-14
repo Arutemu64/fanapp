@@ -1,3 +1,9 @@
+import type {
+	GetScheduleOutput,
+	GetVotingStateOutput,
+	PublicConfigDto
+} from '../../src/lib/api/generated/types.gen';
+
 import { expect, test } from '../fixtures';
 import { json } from '../mocks/api';
 import { loggedInAs } from '../mocks/personas';
@@ -49,9 +55,46 @@ test.describe('offline', { tag: '@critical' }, () => {
 		page,
 		api
 	}) => {
+		// Every API response marks the backend reachable, so a first-load response
+		// still on its way into the page when the `offline` event fires flips the app
+		// straight back online, and the banner never offers «Повторить». The heading
+		// renders before Home's data does, so wait for something each of Home's
+		// queries puts on screen instead: the act on stage (/config + /schedule/),
+		// the voting card (/voting/status) and the guest's account step (/me/).
+		const hour = 3_600_000;
+		api.use({
+			'GET /config': json<PublicConfigDto>({
+				festival_start: new Date(Date.now() - hour).toISOString(),
+				festival_end: new Date(Date.now() + 24 * hour).toISOString()
+			}),
+			'GET /schedule/': json<GetScheduleOutput>({
+				schedule: [
+					{
+						id: 'event-1',
+						number: 1,
+						title: 'Одиночное дефиле',
+						duration: 300,
+						order: 1,
+						is_current: true,
+						is_skipped: false,
+						nomination_title: null,
+						block_title: null,
+						queue: 1
+					}
+				]
+			}),
+			'GET /voting/status': json<GetVotingStateOutput>({
+				can_vote: false,
+				status: 'not_authenticated',
+				voting_start: new Date(Date.now() - hour).toISOString(),
+				voting_end: new Date(Date.now() + 24 * hour).toISOString()
+			})
+		});
 		await page.clock.install();
 		await page.goto('/');
-		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
+		await expect(page.getByText('Одиночное дефиле')).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Голосование открыто' })).toBeVisible();
+		await expect(page.getByText('Создать аккаунт')).toBeVisible();
 
 		api.use({ 'GET /debug/health': (route) => route.abort() });
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
