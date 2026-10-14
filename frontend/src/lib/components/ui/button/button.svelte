@@ -6,9 +6,9 @@
 	import { cn, type WithElementRef } from '#lib/utils.js';
 
 	export const buttonVariants = tv({
-		// aria-disabled dims like disabled but keeps pointer events: an offline-gated
-		// button (offlineWriteGate) must still get the tap that explains why it's dead.
-		// Deviates from vega defaults — keep on a shadcn-svelte update.
+		// Deviates from upstream: aria-disabled dims like disabled but keeps pointer
+		// events — an offline-gated button (offlineWriteGate) must still get the tap
+		// that explains why it's dead.
 		base: "rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 		variants: {
 			variant: {
@@ -19,33 +19,33 @@
 					'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
 				ghost:
 					'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
-				// Light mode text is red-700, not the semantic destructive (red-600): on the
-				// destructive/10 tint red-600 measures 4.0:1, under WCAG AA's 4.5:1 for body-size
-				// labels; red-700 is 5.4:1. Dark keeps the token, which already clears AA there.
-				// Deviates from vega defaults — keep on a shadcn-svelte update.
+				// Deviates from upstream: light mode text is red-700, not the semantic
+				// destructive (red-600): on the destructive/10 tint red-600 measures 4.0:1, under
+				// WCAG AA's 4.5:1 for body-size labels; red-700 is 5.4:1. Dark keeps the token,
+				// which already clears AA there.
 				destructive:
 					'bg-destructive/10 text-red-700 dark:text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
-				// Brand-tinted, for an action repeated down a list (a vote per row) where a
+				// Deviates from upstream (project variant): brand-tinted, for an action repeated down a list (a vote per row) where a
 				// column of solid fills would drown the page's one primary action. Light text
 				// is primary-700, not the token: primary-600 on the /10 tint measures 4.4:1,
 				// under AA's 4.5:1; primary-700 is 5.8:1 (4.9:1 on hover). Dark keeps the
-				// token on a /15 tint (5.1:1, 4.7:1 on hover). Project addition, not shadcn.
+				// token on a /15 tint (5.1:1, 4.7:1 on hover).
 				tonal:
 					'bg-primary/10 text-primary-700 hover:bg-primary/20 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/20',
-				// For a button that floats over scrolling content (the schedule's current-event bar). It
-				// wears the bottom-nav pill's glass so the two read as one layer: `outline` is
-				// near-transparent in dark (input/30), and the content beneath read through it.
-				// Project addition, not shadcn.
+				// Deviates from upstream (project variant): for a button that floats over
+				// scrolling content (the schedule's current-event bar). It wears the bottom-nav
+				// pill's glass so the two read as one layer: `outline` is near-transparent in
+				// dark (input/30), and the content beneath read through it.
 				floating:
 					'border-border/60 bg-background/85 shadow-lg shadow-black/5 backdrop-blur-lg backdrop-saturate-150 hover:bg-muted hover:text-foreground reduced-transparency:bg-background reduced-transparency:backdrop-blur-none',
 				link: 'text-primary underline-offset-4 hover:underline'
 			},
 			size: {
-				// Sizes run one rung above upstream shadcn so a phone-first tap target is met
+				// Deviates from upstream: sizes run one rung above upstream shadcn so a phone-first tap target is met
 				// in the base: default/icon = 44px (h-11), sm/icon-sm = 40px, lg/icon-lg = 48px
 				// (Apple HIG 44pt / Material 48dp; DESIGN.md "44px non-negotiable"). xs/icon-xs
 				// stay 24px (WCAG 2.2 AA floor) as a deliberate dense desktop-only opt-in, never
-				// a mobile tap target. Deviates from vega defaults — keep on a shadcn-svelte update.
+				// a mobile tap target.
 				default:
 					'h-11 gap-1.5 px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
 				xs: "h-6 gap-1 rounded-[min(var(--radius-md),8px)] px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",

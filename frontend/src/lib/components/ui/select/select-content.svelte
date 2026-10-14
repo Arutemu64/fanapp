@@ -24,6 +24,9 @@
 	} = $props();
 </script>
 
+<!-- Deviates from upstream: overscroll-contain, so scrolling a long list to its end
+	doesn't chain into scrolling the page behind it. -->
+
 <SelectPortal {...portalProps}>
 	<SelectPrimitive.Content
 		bind:ref

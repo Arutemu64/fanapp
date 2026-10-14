@@ -17,8 +17,7 @@
 <!--
 	The `after:` pseudo extends the tap target beyond the 16px visual box (which is
 	under the WCAG 2.2 AA 24px minimum) without changing the layout — same technique
-	as `switch.svelte`. `relative` anchors the pseudo to the box. Deviates from the
-	upstream shadcn checkbox; keep it on a `shadcn-svelte update` merge.
+	as `switch.svelte`. `relative` anchors the pseudo to the box.
 -->
 <CheckboxPrimitive.Root
 	bind:ref

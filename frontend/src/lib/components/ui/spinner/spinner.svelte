@@ -14,6 +14,7 @@
 		color,
 		stroke,
 		className: legacyClassName,
+		// Deviates from upstream: Russian default label.
 		'aria-label': ariaLabel = 'Загрузка',
 		...restProps
 	}: SVGAttributes<SVGSVGElement> = $props();

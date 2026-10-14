@@ -25,6 +25,10 @@
 		showCloseButton?: boolean;
 	} = $props();
 
+	// Deviates from upstream: below `sm` the dialog is a bottom sheet that rides
+	// above the on-screen keyboard (docs/frontend.md "Modals"), and the close
+	// button's label is Russian.
+	//
 	// On a phone the sheet is fixed to the layout viewport's bottom edge, which an
 	// on-screen keyboard covers without moving it (see keyboardInset). While the
 	// sheet is open, track the covered strip and lift the sheet's content above

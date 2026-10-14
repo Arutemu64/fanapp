@@ -8,7 +8,7 @@
 				default: 'bg-card text-card-foreground',
 				destructive:
 					'bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current',
-				// Signature tinted status notices (DESIGN.md §5 "Notices"): a soft /10 fill,
+				// Deviates from upstream (project variants): signature tinted status notices (DESIGN.md §5 "Notices"): a soft /10 fill,
 				// a /30 border and the status text colour, all mode-aware via the semantic
 				// tokens so no `dark:` is needed. Lives here, not repeated per instance.
 				// The description takes the full token, not the /90 the destructive variant
@@ -43,11 +43,11 @@
 		variant?: AlertVariant;
 	} = $props();
 
-	// Only an error interrupts the screen reader (assertive `alert`); a success,
-	// warning or info notice is advisory, so it waits its turn (polite `status`).
+	// Deviates from upstream: only an error interrupts the screen reader (assertive
+	// `alert`); a success, warning or info notice is advisory, so it waits its turn
+	// (polite `status`). A caller's own `role` in restProps still wins, being spread
+	// after this.
 	// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/status_role
-	// Deviates from vega defaults — keep on a shadcn-svelte update. A caller's own
-	// `role` in restProps still wins, being spread after this.
 	const role = $derived(variant === 'destructive' ? 'alert' : 'status');
 </script>
 

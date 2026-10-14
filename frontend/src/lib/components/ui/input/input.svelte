@@ -21,6 +21,9 @@
 	}: Props = $props();
 </script>
 
+<!-- Deviates from upstream: h-11 (44px) instead of vega's h-9, the phone-first tap
+	target the Button sizes also meet. -->
+
 {#if type === 'file'}
 	<input
 		bind:this={ref}

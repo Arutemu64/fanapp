@@ -14,8 +14,8 @@
 	} = $props();
 </script>
 
-<!-- aria-disabled dims like data-disabled but stays toggleable, for offlineWriteGate's
-	explain-on-tap. Deviates from upstream — keep on a shadcn-svelte update. -->
+<!-- Deviates from upstream: aria-disabled dims like data-disabled but stays
+	toggleable, for offlineWriteGate's explain-on-tap. -->
 <SwitchPrimitive.Root
 	bind:ref
 	bind:checked

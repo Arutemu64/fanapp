@@ -126,6 +126,29 @@ So:
 - **`Button` sizes meet the 44px touch target in the base**, one rung above the upstream shadcn defaults (see the comment in `button.svelte`): `default`/`icon` are 44px, `sm`/`icon-sm` 40px, `lg`/`icon-lg` 48px — this is a phone-first app, so a plain `<Button>` is already tappable and needs **no** `min-h-11`. `xs`/`icon-xs` stay 24px (WCAG 2.2 AA min) as a deliberate opt-in for dense desktop-only chrome — never a mobile tap target. Existing `class="min-h-11"` on instances is redundant on a `default` button (harmless) and only still forces the extra 4px on an `sm` one; don't add it to new buttons.
 - Need a different app-wide default (say every `Card` flatter)? Edit `card.svelte` once, or the relevant token in `app.css` — one edit, not a sweep across every call site.
 
+### Syncing `ui/` with upstream shadcn-svelte
+
+We own these files, so upstream fixes don't arrive on their own, and `shadcn-svelte update` **overwrites** them: it doesn't merge. A sync is a diff that you read and merge by hand. The process follows the "diff against upstream, then reapply" workflow from [Vercel Academy](https://vercel.com/academy/shadcn-ui/updating-and-maintaining-components) and [21st.dev](https://21st.dev/blog/keeping-copied-components-updated). We don't keep a pristine upstream copy in the repo; the tags below take its place.
+
+**Tag every deviation.** Any edit that makes a `ui/` file differ from what the registry ships gets a comment that starts with `Deviates from upstream:` and says why (a project variant, a 44px tap target, a Russian label, a lint workaround). The tag is how the next sync tells our intent from a stale upstream line, so `grep -rn "Deviates from upstream" frontend/src/lib/components/ui` lists everything to keep. Systemic differences need no tag: the `#lib` alias, Prettier and ESLint import order.
+
+**When to sync.** Sync when one of these happens, not on a schedule:
+
+- bits-ui or Tailwind gets a major bump
+- a bug upstream may already have fixed
+- an occasional review of the behaviour-heavy components (Dialog, Select)
+
+**How:**
+
+1. Start from a clean tree. Run `pnpm dlx shadcn-svelte@latest update --all --yes --no-deps-install` in `frontend/`. Leave dependency bumps to Renovate: `git checkout frontend/package.json`.
+2. Strip formatting noise so only real changes remain: `pnpm exec eslint --fix src/lib/components/ui src/lib/utils.ts`, then `pnpm exec prettier --write` on the same paths.
+3. Read `git diff` file by file:
+   - A hunk that removes a `Deviates from upstream:` tag, or the code under one, is upstream overwriting us. Restore it with `git checkout -- <file>`, then hand-port any real upstream change from that file.
+   - Other hunks are candidate upstream changes. Check them against the [shadcn-svelte repo](https://github.com/huntabyte/shadcn-svelte): the component in `docs/src/lib/registry/ui/` and its `cn-*` style classes in `docs/src/lib/registry/styles/style-vega.css`. Use `git log -S "<class>"` there to see when and why a line changed.
+4. Don't trust the CLI's style flattening blindly. In 1.7.0 it baked a context-only rule (`.cn-card-content:has(> …)`, `flex flex-col gap-3`) into every `Card.Content`, left `cn-input-otp` unresolved (losing `gap-2`), dropped `cn-select-content-logical`, and swapped `cn()` in `utils.ts` for a new `cn` npm package. Compare against `style-vega.css` whenever a class appears or disappears.
+5. A new upstream file (e.g. `select-value.svelte`) can be taken as is. A new deviation you add while merging gets its tag.
+6. Run `just frontend-lint`, `just frontend-check` and `just frontend-test`, and let CI run E2E. If the change is visible, look at the affected screens.
+
 ### Z-Index Scale
 
 The cross-component ladder is defined once as CSS variables in `app.css`
