@@ -8,6 +8,7 @@ function event(
 	overrides: Partial<ScheduleEventWithSubscription> & Pick<ScheduleEventWithSubscription, 'id'>
 ): ScheduleEventWithSubscription {
 	return {
+		type: 'event',
 		number: null,
 		title: 'Выступление',
 		duration: 300,
@@ -15,8 +16,7 @@ function event(
 		is_current: false,
 		is_skipped: false,
 		nomination_title: null,
-		block_title: null,
-		queue: null,
+		position: null,
 		user_subscription: null,
 		...overrides
 	};
@@ -101,18 +101,18 @@ describe('getStageSnapshot', () => {
 });
 
 describe('actsUntil', () => {
-	const current = event({ id: 'now', queue: 4 });
+	const current = event({ id: 'now', position: 4 });
 
-	it('counts queue positions between the act and the one on stage', () => {
-		expect(actsUntil(event({ id: 'a', queue: 7 }), current)).toBe(3);
+	it('counts positions between the act and the one on stage', () => {
+		expect(actsUntil(event({ id: 'a', position: 7 }), current)).toBe(3);
 	});
 
-	it('is null without a current act or a queue position', () => {
-		expect(actsUntil(event({ id: 'a', queue: 7 }), null)).toBeNull();
-		expect(actsUntil(event({ id: 'break', queue: null }), current)).toBeNull();
+	it('is null without a current act or a position', () => {
+		expect(actsUntil(event({ id: 'a', position: 7 }), null)).toBeNull();
+		expect(actsUntil(event({ id: 'break', position: null }), current)).toBeNull();
 	});
 
 	it('is null for an act that is not ahead', () => {
-		expect(actsUntil(event({ id: 'a', queue: 4 }), current)).toBeNull();
+		expect(actsUntil(event({ id: 'a', position: 4 }), current)).toBeNull();
 	});
 });

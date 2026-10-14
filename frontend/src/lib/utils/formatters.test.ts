@@ -66,11 +66,11 @@ describe('formatDuration', () => {
 	});
 });
 
-// The label is just the queue distance ("how many acts away") — the schedule
+// The label is just the position distance ("how many acts away") — the schedule
 // carries no predicted clock time (ADR-0014). These cases pin the three-form
 // Russian pluralization of the distance.
 describe('formatUntil', () => {
-	it('pluralizes the queue distance', () => {
+	it('pluralizes the position distance', () => {
 		expect(formatUntil(1)).toBe('Осталось 1 выступление');
 		expect(formatUntil(3)).toBe('Осталось 3 выступления');
 		expect(formatUntil(5)).toBe('Осталось 5 выступлений');

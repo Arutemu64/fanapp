@@ -1,12 +1,13 @@
 import logging
+from collections.abc import Awaitable, Callable
 
 from pydantic import BaseModel
 
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.services.schedule_edit import ScheduleEditService
 from fanfan.core.exceptions.schedule import (
@@ -14,11 +15,11 @@ from fanfan.core.exceptions.schedule import (
     OutdatedScheduleChange,
     ScheduleChangeNotFound,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEntry, ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class UndoScheduleChange:
     def __init__(
         self,
         changes_gateway: ScheduleChangeGateway,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_edit: ScheduleEditService,
     ) -> None:
         self.changes_gateway = changes_gateway
@@ -60,7 +61,7 @@ class UndoScheduleChange:
     async def _handle_moved(
         self,
         changed_event: ScheduleEvent,
-        place_after_event: ScheduleEvent | None,
+        place_after_event: ScheduleEntry | None,
     ) -> None:
         if place_after_event:
             place_before_event = await self.schedule_gateway.get_next_by_order(
@@ -71,23 +72,27 @@ class UndoScheduleChange:
             else:
                 changed_event.place_after(place_after_event, None)
         else:
-            first_event = await self.schedule_gateway.get_by_queue(1)
-            changed_event.place_before_first(first_event)
+            # The very first entry, not the first event: the move started ahead
+            # of everything, so the event must land ahead of any block start too.
+            first_entry = await self.schedule_gateway.get_first()
+            changed_event.place_before_first(first_entry)
 
         await self.schedule_gateway.save(changed_event)
 
-    async def _require_event(
-        self, event_id: ScheduleEventId | None
-    ) -> ScheduleEvent | None:
-        # A null id means the change simply had no event in that slot. A non-null
+    @staticmethod
+    async def _require[T](
+        load: Callable[[ScheduleEntryId], Awaitable[T | None]],
+        entry_id: ScheduleEntryId | None,
+    ) -> T | None:
+        # A null id means the change simply had no entry in that slot. A non-null
         # id that resolves to nothing is an inconsistent state, so fail loud
         # instead of silently skipping the revert below.
-        if event_id is None:
+        if entry_id is None:
             return None
-        event = await self.schedule_gateway.get_by_id(event_id)
-        if event is None:
+        entry = await load(entry_id)
+        if entry is None:
             raise EventNotFound
-        return event
+        return entry
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
         async def mutate(_: User) -> None:
@@ -97,16 +102,23 @@ class UndoScheduleChange:
             if schedule_change is None:
                 raise ScheduleChangeNotFound
 
-            changed_event = await self._require_event(schedule_change.changed_event_id)
-            argument_event = await self._require_event(
-                schedule_change.argument_event_id
+            changed_event = await self._require(
+                self.schedule_gateway.get_event, schedule_change.changed_event_id
             )
 
+            # The argument is the previously current event for SET_AS_CURRENT,
+            # but any entry for MOVED: the one the event landed after.
             if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
-                await self._handle_set_as_current(changed_event, argument_event)
+                previous_event = await self._require(
+                    self.schedule_gateway.get_event, schedule_change.related_entry_id
+                )
+                await self._handle_set_as_current(changed_event, previous_event)
 
             if schedule_change.type is ScheduleChangeType.MOVED and changed_event:
-                await self._handle_moved(changed_event, argument_event)
+                place_after_entry = await self._require(
+                    self.schedule_gateway.get_entry, schedule_change.related_entry_id
+                )
+                await self._handle_moved(changed_event, place_after_entry)
 
             if schedule_change.type is ScheduleChangeType.SKIPPED and changed_event:
                 changed_event.unskip()

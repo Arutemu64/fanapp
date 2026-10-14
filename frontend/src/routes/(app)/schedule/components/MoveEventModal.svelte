@@ -2,7 +2,7 @@
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
-	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
+	import type { ScheduleEntryDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
@@ -16,6 +16,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { blockTitleByEventId } from '#lib/utils/scheduleData.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
 	interface Props {
@@ -54,14 +55,20 @@
 
 	// Shared matcher folds ё/е and matches space-separated tokens in any order.
 	// Indexed once per schedule so typing through a few hundred events stays cheap.
-	let searchIndex = $derived(
-		createSearchIndex(schedule, (ev) => [ev.number, ev.title, ev.block_title, ev.nomination_title])
-	);
+	// Block starts are targets too: placing an event after one moves it to the
+	// top of that block, which is how an event changes blocks.
+	let searchIndex = $derived.by(() => {
+		const blockTitles = blockTitleByEventId(schedule);
+		return createSearchIndex(schedule, (entry) => {
+			if (entry.type === 'block_start') return [entry.title];
+			return [entry.number, entry.title, blockTitles.get(entry.id), entry.nomination_title];
+		});
+	});
 
 	let filtered = $derived(searchIndex.filter(query));
 
-	function handleSelect(ev: ScheduleEventFullDto) {
-		selectedId = selectedId === ev.id ? null : ev.id;
+	function handleSelect(entry: ScheduleEntryDto) {
+		selectedId = selectedId === entry.id ? null : entry.id;
 	}
 
 	function handleSubmit() {
@@ -69,7 +76,7 @@
 
 		formError = '';
 		moveMutation.mutate(
-			{ path: { event_id: event.id }, body: { place_after_event_id: selectedId } },
+			{ path: { event_id: event.id }, body: { place_after_entry_id: selectedId } },
 			{
 				onSuccess: () => {
 					toastService.add('Выступление перенесено', 'success');
@@ -103,7 +110,8 @@
 
 			<Dialog.Description class="sm:text-base">
 				Выбери выступление, <strong class="text-foreground">после</strong> которого разместить:
-				<strong class="text-primary">{event.title}</strong>
+				<strong class="text-primary">{event.title}</strong>. Чтобы перенести в другой блок, выбери
+				его начало.
 			</Dialog.Description>
 
 			<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
@@ -139,21 +147,25 @@
 			</div>
 
 			<div class="max-h-48 overflow-y-auto rounded-lg border border-border sm:max-h-60">
-				{#each filtered as ev (ev.id)}
+				{#each filtered as entry (entry.id)}
 					<button
 						type="button"
 						class={[
 							'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3 sm:text-base',
-							selectedId === ev.id && 'bg-primary/20'
+							entry.type === 'block_start' && 'bg-muted/60',
+							selectedId === entry.id && 'bg-primary/20'
 						]}
-						onclick={() => handleSelect(ev)}
+						onclick={() => handleSelect(entry)}
 					>
-						{#if ev.number !== null}
-							<span class="font-medium text-foreground">№{ev.number}</span>
-							<span class="text-muted-foreground"> — {ev.title}</span>
+						{#if entry.type === 'block_start'}
+							<span class="text-muted-foreground">В начало блока </span>
+							<span class="font-semibold text-foreground">{entry.title}</span>
+						{:else if entry.number !== null}
+							<span class="font-medium text-foreground">№{entry.number}</span>
+							<span class="text-muted-foreground"> — {entry.title}</span>
 						{:else}
 							<!-- No number to lead with (a break), so the title carries the row. -->
-							<span class="font-medium text-foreground">{ev.title}</span>
+							<span class="font-medium text-foreground">{entry.title}</span>
 						{/if}
 					</button>
 				{:else}

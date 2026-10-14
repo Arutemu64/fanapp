@@ -16,7 +16,7 @@ class SubscriptionGateway(Protocol):
     async def delete(self, subscription: Subscription) -> None: ...
 
     async def read_upcoming_subscriptions(
-        self, current_event_queue: int
+        self, current_event_position: int
     ) -> list[SubscriptionFullDTO]: ...
 
     async def read_subscriptions_by_user(

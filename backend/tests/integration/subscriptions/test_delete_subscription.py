@@ -8,16 +8,16 @@ from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
     DeleteSubscriptionInput,
 )
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.subscriptions import SubscriptionNotFound
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import (
     SubscriptionId,
     generate_subscription_id,
@@ -32,7 +32,7 @@ pytestmark = [
 
 def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
     return ScheduleEvent(
-        id=generate_schedule_event_id(),
+        id=generate_schedule_entry_id(),
         number=number,
         title=title,
         duration=15,
@@ -40,7 +40,6 @@ def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
         is_current=False,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
     )
 
 
@@ -51,13 +50,13 @@ async def test_delete_subscription_removes_own_subscription(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(DeleteSubscription)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     login(visitor)
 
     event = _schedule_event(1, "Событие", 1)
     await schedule_gateway.add(event)
-    # Commit the event first: the subscription's FK to schedule_events must see a
+    # Commit the event first: the subscription's FK to schedule must see a
     # persisted row.
     await uow.commit()
     subscription = Subscription(
@@ -100,7 +99,7 @@ async def test_delete_subscription_of_another_user_raises_access_denied(
     rejected with AccessDenied, and the subscription is left intact.
     """
     interactor = await dishka_request.get(DeleteSubscription)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     user_gateway = await dishka_request.get(UserGateway)
 

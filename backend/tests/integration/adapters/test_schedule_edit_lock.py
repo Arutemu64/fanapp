@@ -3,9 +3,9 @@ from dishka import AsyncContainer
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from fanfan.adapters.db.gateways.schedule_events import (
+from fanfan.adapters.db.gateways.schedule_entries import (
     SCHEDULE_EDIT_LOCK_KEY,
-    SqlScheduleEventGateway,
+    SqlScheduleEntryGateway,
 )
 
 pytestmark = [
@@ -32,7 +32,7 @@ async def test_edit_lock_is_held_until_the_transaction_ends(
     # Its own session, not the test fixture's: that one never really commits.
     engine = await dishka_request.get(AsyncEngine)
     async with AsyncSession(engine) as session:
-        await SqlScheduleEventGateway(session).lock_for_edit()
+        await SqlScheduleEntryGateway(session).lock_for_edit()
         assert not await _rival_can_lock(engine)
 
         await session.commit()

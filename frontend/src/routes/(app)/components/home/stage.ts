@@ -15,7 +15,7 @@ export interface StageSnapshot {
 	upNext: ScheduleEventWithSubscription[];
 	/** The viewer's nearest subscribed act beyond `upNext`, which already shows its own. */
 	nextSubscribed: ScheduleEventWithSubscription | null;
-	/** The act on stage, for queue distances; null before the first one is marked. */
+	/** The act on stage, for position distances; null before the first one is marked. */
 	current: ScheduleEventWithSubscription | null;
 }
 
@@ -44,15 +44,15 @@ export function getStageSnapshot(schedule: ScheduleEventWithSubscription[]): Sta
 }
 
 /**
- * How many acts away `event` is from the one on stage, by queue position — the
+ * How many acts away `event` is from the one on stage, by position — the
  * same drift-proof distance the schedule rows show (ADR-0014). Null when either
- * has no queue position or the event isn't ahead.
+ * has no position or the event isn't ahead.
  */
 export function actsUntil(
 	event: ScheduleEventWithSubscription,
 	current: ScheduleEventWithSubscription | null
 ): number | null {
-	if (current === null || event.queue === null || current.queue === null) return null;
-	const distance = event.queue - current.queue;
+	if (current === null || event.position === null || current.position === null) return null;
+	const distance = event.position - current.position;
 	return distance > 0 ? distance : null;
 }

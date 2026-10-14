@@ -59,18 +59,21 @@ async function focusAndExpectUnobscured(page: Page, eventId: string, offset: num
 }
 
 // Long enough that the page scrolls well past the top bar on any project's viewport.
-const longSchedule: GetScheduleOutput['schedule'] = Array.from({ length: 60 }, (_, index) => ({
-	id: `event-${index + 1}`,
-	number: index + 1,
-	title: `Выступление ${index + 1}`,
-	duration: 180,
-	order: index + 1,
-	is_current: false,
-	is_skipped: false,
-	nomination_title: 'Одиночное дефиле',
-	block_title: 'Блок 1',
-	queue: index + 1
-}));
+const longSchedule: GetScheduleOutput['schedule'] = [
+	{ type: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
+	...Array.from({ length: 60 }, (_, index) => ({
+		type: 'event' as const,
+		id: `event-${index + 1}`,
+		number: index + 1,
+		title: `Выступление ${index + 1}`,
+		duration: 180,
+		order: index + 1,
+		is_current: false,
+		is_skipped: false,
+		nomination_title: 'Одиночное дефиле',
+		position: index + 1
+	}))
+];
 
 test.describe('native feel', () => {
 	// The document is the scroll region: SvelteKit restores it on back/forward, and the

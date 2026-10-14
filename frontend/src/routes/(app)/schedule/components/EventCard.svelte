@@ -66,14 +66,12 @@
 		return diff >= 0 ? diff : null;
 	}
 
-	let queueUntil = $derived(currentEvent ? aheadOf(event.queue, currentEvent.queue) : null);
+	let actsAhead = $derived(currentEvent ? aheadOf(event.position, currentEvent.position) : null);
 
-	// Queue distance only ("how many acts away"): the schedule carries no predicted
+	// Position distance only ("how many acts away"): the schedule carries no predicted
 	// clock time (ADR-0014), and the distance decrements as the current-event
 	// pointer advances (one set-current SSE per act reloads the schedule).
-	let untilLabel = $derived(
-		queueUntil === null || queueUntil <= 0 ? null : formatUntil(queueUntil)
-	);
+	let untilLabel = $derived(actsAhead === null || actsAhead <= 0 ? null : formatUntil(actsAhead));
 
 	function handleSubscribe() {
 		if (!user) {

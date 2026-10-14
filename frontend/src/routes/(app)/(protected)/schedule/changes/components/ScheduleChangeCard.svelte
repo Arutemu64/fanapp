@@ -3,7 +3,7 @@
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type {
-		ScheduleChangeEventDto,
+		ScheduleChangeEntryDto,
 		ScheduleChangeFullDto,
 		ScheduleChangeType
 	} from '#lib/api/generated/index.js';
@@ -65,7 +65,15 @@
 		unskipped: 'border-border bg-muted text-muted-foreground'
 	};
 
-	function formatEvent(event: ScheduleChangeEventDto | null | undefined): string {
+	// A move records where the event stood before it, for undo: the entry it sat
+	// right after, which is a block start when the event opened its block.
+	let relatedLabel = $derived.by(() => {
+		if (change.type !== 'moved') return 'Связанное выступление:';
+		if (change.related_entry?.type === 'block_start') return 'Было в начале блока:';
+		return 'Было после:';
+	});
+
+	function formatEvent(event: ScheduleChangeEntryDto | null | undefined): string {
 		if (!event) return '';
 		// Breaks carry no public number — the title is all there is to show.
 		if (event.number === null) return event.title;
@@ -95,13 +103,13 @@
 					</p>
 				{/if}
 
-				{#if change.argument_event}
+				{#if change.related_entry}
 					<p>
 						<span class="font-bold text-muted-foreground">
-							{change.type === 'moved' ? 'После:' : 'Связанное выступление:'}
+							{relatedLabel}
 						</span>
 						<span class="text-foreground">
-							{formatEvent(change.argument_event)}
+							{formatEvent(change.related_entry)}
 						</span>
 					</p>
 				{/if}

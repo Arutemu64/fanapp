@@ -381,7 +381,7 @@ export type GetScheduleOutput = {
 	/**
 	 * Schedule
 	 */
-	schedule: Array<ScheduleEventFullDto>;
+	schedule: Array<ScheduleEntryDto>;
 };
 
 /**
@@ -649,9 +649,9 @@ export type MarkNotificationsReadInput = {
  */
 export type MoveScheduleEventRequest = {
 	/**
-	 * Place After Event Id
+	 * Place After Entry Id
 	 */
-	place_after_event_id: string;
+	place_after_entry_id: string;
 };
 
 /**
@@ -895,13 +895,36 @@ export type RequestLoginCodeInput = {
 };
 
 /**
- * ScheduleChangeEventDTO
+ * ScheduleBlockStartDTO
  */
-export type ScheduleChangeEventDto = {
+export type ScheduleBlockStartDto = {
+	/**
+	 * Type
+	 */
+	type: 'block_start';
 	/**
 	 * Id
 	 */
 	id: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Order
+	 */
+	order: number;
+};
+
+/**
+ * ScheduleChangeEntryDTO
+ */
+export type ScheduleChangeEntryDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	type: ScheduleEntryType;
 	/**
 	 * Number
 	 */
@@ -937,8 +960,8 @@ export type ScheduleChangeFullDto = {
 	 * Next Event Changed
 	 */
 	next_event_changed: boolean;
-	changed_event: ScheduleChangeEventDto | null;
-	argument_event: ScheduleChangeEventDto | null;
+	changed_event: ScheduleChangeEntryDto | null;
+	related_entry: ScheduleChangeEntryDto | null;
 	user: ScheduleChangeUserDto | null;
 	/**
 	 * Created At
@@ -949,16 +972,16 @@ export type ScheduleChangeFullDto = {
 /**
  * ScheduleChangeType
  *
- * How to read a `ScheduleChange`'s `changed_event_id`/`argument_event_id`.
+ * How to read a `ScheduleChange`'s `changed_event_id`/`related_entry_id`.
  *
  * SET_AS_CURRENT: `changed_event_id` is the new current event (None if the
- * current event was unchecked); `argument_event_id` is the event that was
+ * current event was unchecked); `related_entry_id` is the event that was
  * current before this change.
- * MOVED: `argument_event_id` is the event `changed_event_id` was placed
- * after. To undo, place `changed_event_id` back after
- * `argument_event_id` — or at the top of the order if
- * `argument_event_id` is None.
- * SKIPPED / UNSKIPPED: `argument_event_id` is unused.
+ * MOVED: `related_entry_id` is the entry `changed_event_id` sat right after
+ * before the move — a block start when the event opened its block. To
+ * undo, place `changed_event_id` back after `related_entry_id` — or at
+ * the top of the order if `related_entry_id` is None.
+ * SKIPPED / UNSKIPPED: `related_entry_id` is unused.
  */
 export type ScheduleChangeType = 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
 
@@ -976,10 +999,34 @@ export type ScheduleChangeUserDto = {
 	username: string;
 };
 
+export type ScheduleEntryDto =
+	| ({
+			type: 'event';
+	  } & ScheduleEventFullDto)
+	| ({
+			type: 'block_start';
+	  } & ScheduleBlockStartDto);
+
+/**
+ * ScheduleEntryType
+ *
+ * What a row of the programme is.
+ *
+ * EVENT: something that happens on stage — an act, a break, the opening.
+ * BLOCK_START: the heading of a programme block. Every entry after it, up to
+ * the next block start, belongs to that block, so moving an event across
+ * a block start moves it into the other block.
+ */
+export type ScheduleEntryType = 'event' | 'block_start';
+
 /**
  * ScheduleEventFullDTO
  */
 export type ScheduleEventFullDto = {
+	/**
+	 * Type
+	 */
+	type: 'event';
 	/**
 	 * Id
 	 */
@@ -1013,13 +1060,9 @@ export type ScheduleEventFullDto = {
 	 */
 	nomination_title: string | null;
 	/**
-	 * Block Title
+	 * Position
 	 */
-	block_title: string | null;
-	/**
-	 * Queue
-	 */
-	queue: number | null;
+	position: number | null;
 };
 
 /**
@@ -1118,9 +1161,9 @@ export type SubscriptionEventDto = {
 	 */
 	order: number;
 	/**
-	 * Queue
+	 * Position
 	 */
-	queue: number | null;
+	position: number | null;
 };
 
 /**

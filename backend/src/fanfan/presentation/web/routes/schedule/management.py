@@ -16,7 +16,7 @@ from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip imp
     UpdateScheduleEventSkip,
     UpdateScheduleEventSkipInput,
 )
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.schemas.schedule import (
@@ -50,7 +50,7 @@ management_router = APIRouter(
 )
 @inject
 async def set_event_as_current(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
+    event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
     await interactor(SetCurrentScheduleEventInput(event_id=event_id))
@@ -93,13 +93,13 @@ async def uncheck_current_event(
 )
 @inject
 async def move_schedule_event(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
+    event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
     data: MoveScheduleEventRequest,
     interactor: FromDishka[MoveScheduleEvent],
 ) -> None:
     await interactor(
         MoveScheduleEventInput(
-            event_id=event_id, place_after_event_id=data.place_after_event_id
+            event_id=event_id, place_after_entry_id=data.place_after_entry_id
         )
     )
 
@@ -122,7 +122,7 @@ async def move_schedule_event(
 )
 @inject
 async def update_schedule_event(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
+    event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
     data: UpdateScheduleEventRequest,
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:

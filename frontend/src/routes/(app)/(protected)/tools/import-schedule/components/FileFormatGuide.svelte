@@ -10,13 +10,18 @@
 	// backend/src/fanfan/adapters/parsers/schedule.py).
 	const columns = [
 		{
+			name: 'type',
+			description:
+				'Что это за строка. Пусто или event — выступление, block — начало блока программы. Все выступления ниже, до следующего блока, входят в этот блок.'
+		},
+		{
 			name: 'number',
 			description:
 				'Номер выступления. Целое число, не должно повторяться. Можно оставить пустым — например, у перерыва.'
 		},
 		{
 			name: 'title',
-			description: 'Название выступления.'
+			description: 'Название выступления, а в строке блока — название блока, например «Косплей».'
 		},
 		{
 			name: 'duration',
@@ -27,11 +32,6 @@
 			name: 'nomination_title',
 			description:
 				'Номинация, например «Одиночное дефиле». Можно оставить пустой — у перерыва, открытия и закрытия номинации нет.'
-		},
-		{
-			name: 'block_title',
-			description:
-				'Блок программы, например «Косплей». Можно оставить пустым — строка без блока (перерыв, открытие, закрытие) встаёт между блоками.'
 		}
 	];
 </script>
@@ -46,8 +46,8 @@
 
 	<p class="text-sm leading-relaxed text-muted-foreground sm:text-base">
 		Программа берётся с первого листа книги. В первой строке — заголовки колонок, ниже по строке на
-		каждое выступление. Названия колонок пишутся латиницей ровно так, как в списке ниже; порядок
-		колонок любой.
+		каждое выступление и на начало каждого блока. Названия колонок пишутся латиницей ровно так, как
+		в списке ниже; порядок колонок любой.
 	</p>
 
 	<dl class="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
@@ -64,11 +64,12 @@
 	</dl>
 
 	<p class="mt-3 text-xs leading-relaxed text-muted-foreground">
-		Все пять колонок обязательны, но ячейки в <span class="font-mono">number</span>,
-		<span class="font-mono">nomination_title</span> и <span class="font-mono">block_title</span>
-		можно оставлять пустыми. В каждой строке обязательны только <span class="font-mono">title</span>
-		и
-		<span class="font-mono">duration</span>. Лишние колонки игнорируются.
+		Все пять колонок обязательны, но ячейки в <span class="font-mono">type</span>,
+		<span class="font-mono">number</span> и <span class="font-mono">nomination_title</span> можно
+		оставлять пустыми. В строке выступления обязательны только
+		<span class="font-mono">title</span> и <span class="font-mono">duration</span>, в строке блока —
+		<span class="font-mono">type</span> и <span class="font-mono">title</span>. Лишние колонки
+		игнорируются.
 	</p>
 
 	<Alert.Root variant="warning" class="mt-4">
@@ -77,7 +78,8 @@
 			<span class="font-semibold">Файл полностью заменяет программу.</span>
 			Выступления сопоставляются по колонке <span class="font-mono">number</span>: совпавшие
 			обновятся, а те, которых в файле нет, будут удалены. Строки без номера сопоставить не с чем —
-			они каждый раз добавляются заново. Порядок строк задаёт порядок в программе.
+			они каждый раз добавляются заново. Блоки сопоставляются по названию. Порядок строк задаёт
+			порядок в программе.
 		</Alert.Description>
 	</Alert.Root>
 

@@ -6,25 +6,46 @@ from fanfan.core.exceptions.schedule import (
     SkippedEventNotAllowed,
 )
 from fanfan.core.models.base import AggregateRoot
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 
-@dataclass(slots=True, kw_only=True)
-class ScheduleEvent(AggregateRoot):
-    id: ScheduleEventId
+@dataclass(slots=True, kw_only=True, eq=False)
+class BaseScheduleEntry(AggregateRoot):
+    """What every row of the programme has: an identity, a title and a place."""
+
+    id: ScheduleEntryId
+    title: str
+    order: float
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, BaseScheduleEntry) and self.id == other.id
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+
+@dataclass(slots=True, kw_only=True, eq=False)
+class ScheduleBlockStart(BaseScheduleEntry):
+    """The head of a block: every event after it, up to the next one, is in it.
+
+    Nothing happens on stage here, so it has no number, time, position or
+    stage state, and none of the stage operations. It never moves either: moving
+    an event across a block start is what carries the event into another block.
+    """
+
+
+@dataclass(slots=True, kw_only=True, eq=False)
+class ScheduleEvent(BaseScheduleEntry):
     # The public number printed in the programme. Optional because not every row
     # on stage gets one — breaks and other filler are announced by title alone.
     number: int | None
-    title: str
     # Planned stage time in seconds. Seconds rather than minutes because acts
     # shorter than a minute are real, and rounding a per-event duration would
     # accumulate error across the programme.
     duration: int
-    order: float
     is_current: bool
     is_skipped: bool
     nomination_title: str | None
-    block_title: str | None
 
     def set_current(self) -> None:
         # A skipped event cannot be announced as currently on stage.
@@ -46,37 +67,32 @@ class ScheduleEvent(AggregateRoot):
 
     def place_after(
         self,
-        previous_event: ScheduleEvent,
-        next_event: ScheduleEvent | None,
+        previous_entry: ScheduleEntry,
+        next_entry: ScheduleEntry | None,
     ) -> None:
-        if self == previous_event:
+        if self == previous_entry:
             raise SameEventsAreNotAllowed
         self.order = (
-            (previous_event.order + next_event.order) / 2
-            if next_event
-            else previous_event.order + 1
+            (previous_entry.order + next_entry.order) / 2
+            if next_entry
+            else previous_entry.order + 1
         )
 
-    def place_before_first(self, first_event: ScheduleEvent | None) -> None:
-        self.order = first_event.order - 1 if first_event else 1
+    def place_before_first(self, first_entry: ScheduleEntry | None) -> None:
+        self.order = first_entry.order - 1 if first_entry else 1
 
     def update_details(
         self,
         *,
         title: str,
         duration: int,
-        block_title: str | None,
         nomination_title: str | None,
         order: float,
     ) -> None:
         self.title = title
         self.duration = duration
-        self.block_title = block_title
         self.nomination_title = nomination_title
         self.order = order
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, ScheduleEvent) and self.id == other.id
 
-    def __hash__(self) -> int:
-        return hash(self.id)
+type ScheduleEntry = ScheduleEvent | ScheduleBlockStart

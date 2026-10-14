@@ -1,18 +1,18 @@
 from pydantic import BaseModel
 
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
 
 
 class SubscriptionEventDTO(BaseModel):
-    id: ScheduleEventId
+    id: ScheduleEntryId
     number: int | None
     title: str
     order: float
 
     # Calculated values
-    queue: int | None
+    position: int | None
 
 
 class SubscriptionFullDTO(BaseModel):

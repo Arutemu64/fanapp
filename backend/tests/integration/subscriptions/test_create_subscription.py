@@ -8,13 +8,16 @@ from fanfan.application.interactors.subscriptions.create_subscription import (
     CreateSubscription,
     CreateSubscriptionInput,
 )
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.schedule import EventNotFound
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
 from fanfan.core.models.user import User
-from fanfan.core.vo.schedule_event import ScheduleEventId, generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import (
+    ScheduleEntryId,
+    generate_schedule_entry_id,
+)
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -24,7 +27,7 @@ pytestmark = [
 
 def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
     return ScheduleEvent(
-        id=generate_schedule_event_id(),
+        id=generate_schedule_entry_id(),
         number=number,
         title=title,
         duration=15,
@@ -32,7 +35,6 @@ def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
         is_current=False,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
     )
 
 
@@ -43,7 +45,7 @@ async def test_create_subscription_persists_for_current_user(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(CreateSubscription)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     login(visitor)
 
@@ -67,24 +69,42 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    """Document current behavior: the interactor does not validate the event.
+    """An unknown event id is rejected before anything is written.
 
-    CreateSubscription injects a ScheduleEventGateway but never uses it, so it
-    performs no application-level check that event_id refers to a real event.
-    The subscription still cannot be created for a non-existent event because
-    the subscriptions.event_id foreign key rejects the INSERT and the gateway
-    translates that violation into EventNotFound. So the guard exists only at the
-    database layer; lifting it (or an explicit check) into the interactor is a
-    candidate for a future plan. If that validation is added, update this test.
+    CreateSubscription looks the id up with ``get_event``, which finds neither a
+    missing id nor a block start. The subscriptions.event_id foreign key, which
+    the gateway translates to the same EventNotFound, only backs that check up
+    for an event deleted between the lookup and the insert.
     """
     interactor = await dishka_request.get(CreateSubscription)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     login(visitor)
 
-    missing_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    missing_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
 
     with pytest.raises(EventNotFound):
         await interactor(CreateSubscriptionInput(event_id=missing_event_id, counter=1))
 
     await uow.rollback()
     assert await subscription_gateway.read_subscriptions_by_user(visitor.id) == []
+
+
+async def test_create_subscription_rejects_a_block_start(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # The FK would accept it, but a block start has no position to remind about.
+    interactor = await dishka_request.get(CreateSubscription)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(visitor)
+
+    block = ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Косплей", order=1
+    )
+    await schedule_gateway.add(block)
+    await uow.commit()
+
+    with pytest.raises(EventNotFound):
+        await interactor(CreateSubscriptionInput(event_id=block.id, counter=5))

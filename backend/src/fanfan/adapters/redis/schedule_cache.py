@@ -1,8 +1,11 @@
+import hashlib
+import json
 from collections.abc import Awaitable
 from typing import cast
 
 from redis.asyncio import Redis
 
+from fanfan.application.interactors.schedule.get_schedule import GetScheduleOutput
 from fanfan.application.ports.schedule_cache import (
     CachedSchedule,
     ScheduleCacheGateway,
@@ -15,7 +18,13 @@ from fanfan.application.ports.schedule_cache import (
 # is far longer than any live-show edit gap, so it never masks a real change.
 _CACHE_TTL_SECONDS = 3600
 
-_KEY = "schedule:cache"
+# Keyed by the payload's JSON schema, so a deploy that changes its shape reads
+# a fresh key instead of serving the previous release's payload — which the new
+# frontend cannot parse — until the TTL runs out. The old key just expires.
+_PAYLOAD_SHAPE = hashlib.sha256(
+    json.dumps(GetScheduleOutput.model_json_schema(), sort_keys=True).encode()
+).hexdigest()[:12]
+_KEY = f"schedule:cache:{_PAYLOAD_SHAPE}"
 _ETAG_FIELD = "etag"
 _PAYLOAD_FIELD = "payload"
 

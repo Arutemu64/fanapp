@@ -9,7 +9,7 @@ import { expect, json, loggedInAs, test } from '../fixtures';
 import { ApiMock } from '../mocks/api';
 import { baselineHandlers } from '../mocks/defaults';
 import { installSseDouble } from '../mocks/sse';
-import { GALLERY_NOW, notifications, schedule, singleDefile, subscriptions } from './data';
+import { GALLERY_NOW, notifications, scheduleEntries, singleDefile, subscriptions } from './data';
 
 // One test per README image: the gallery, then the hero. Run with
 // `just readme-gallery`, then review the image diff in docs/assets/ before committing.
@@ -36,7 +36,7 @@ const visitorAtFestival: Handlers = {
 		voting_start: new Date(now - HOUR_MS).toISOString(),
 		voting_end: new Date(now + 4 * HOUR_MS).toISOString()
 	}),
-	'GET /schedule/': json({ schedule }),
+	'GET /schedule/': json({ schedule: scheduleEntries }),
 	'GET /schedule/subscriptions/': json({ subscriptions }),
 	'GET /voting/nominations/single': json(singleDefile),
 	'GET /notifications/': json({ notifications, next_cursor: null })

@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.services.schedule_edit import (
     AnnouncedChangeContext,
@@ -14,19 +14,19 @@ from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 logger = logging.getLogger(__name__)
 
 
 class SetCurrentScheduleEventInput(BaseModel):
-    event_id: ScheduleEventId | None
+    event_id: ScheduleEntryId | None
 
 
 class SetCurrentScheduleEvent:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_edit: ScheduleEditService,
     ) -> None:
         self.schedule_gateway = schedule_gateway
@@ -40,7 +40,7 @@ class SetCurrentScheduleEvent:
                 await self.schedule_gateway.save(previous_current_event)
 
             if data.event_id is not None:
-                event = await self.schedule_gateway.get_by_id(data.event_id)
+                event = await self.schedule_gateway.get_event(data.event_id)
                 if event is None:
                     raise EventNotFound
                 event.set_current()

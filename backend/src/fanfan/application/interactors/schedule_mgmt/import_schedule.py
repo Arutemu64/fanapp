@@ -5,16 +5,20 @@ from pydantic import BaseModel
 from fanfan.application.interactors.schedule.publish_schedule_updated import (
     PublishScheduleUpdated,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.services.schedule_edit import ScheduleEditService
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import (
+    ScheduleBlockStart,
+    ScheduleEntry,
+    ScheduleEvent,
+)
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
-# Events start at 100 and step by 100 so an organizer can later drop rows between
+# Entries start at 100 and step by 100 so an organizer can later drop rows between
 # them without renumbering (order is a float column). The demo seed reuses these.
 ORDER_INIT = 100.0
 ORDER_STEP = 100.0
@@ -22,7 +26,7 @@ ORDER_STEP = 100.0
 logger = logging.getLogger(__name__)
 
 
-class ScheduleEntry(BaseModel):
+class ScheduleEventRow(BaseModel):
     # None for rows the organizer left numberless (breaks and other filler).
     number: int | None
     title: str
@@ -30,20 +34,45 @@ class ScheduleEntry(BaseModel):
     # adapters/parsers/schedule.py. Sub-minute acts are expected, so this is
     # never rounded to whole minutes anywhere along the way.
     duration: int
-    # None for rows with no competition nomination / programme block — breaks,
-    # the opening and the closing. See _read_optional_text in the parser.
+    # None for rows with no competition nomination — breaks, the opening and
+    # the closing. See _read_optional_text in the parser.
     nomination_title: str | None
-    block_title: str | None
+
+
+class ScheduleBlockRow(BaseModel):
+    # Starts a block: every row after it, up to the next block row, is in it.
+    title: str
+
+
+type ScheduleRow = ScheduleEventRow | ScheduleBlockRow
+
+
+def build_schedule_entry(row: ScheduleRow, order: float) -> ScheduleEntry:
+    """A fresh entry for a row; the import and the demo seed share it."""
+    if isinstance(row, ScheduleBlockRow):
+        return ScheduleBlockStart(
+            id=generate_schedule_entry_id(), title=row.title, order=order
+        )
+    return ScheduleEvent(
+        id=generate_schedule_entry_id(),
+        number=row.number,
+        title=row.title,
+        duration=row.duration,
+        nomination_title=row.nomination_title,
+        order=order,
+        is_current=False,
+        is_skipped=False,
+    )
 
 
 class ImportScheduleInput(BaseModel):
-    schedule: list[ScheduleEntry]
+    schedule: list[ScheduleRow]
 
 
 class ImportSchedule:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_edit: ScheduleEditService,
         publish_schedule_updated: PublishScheduleUpdated,
     ) -> None:
@@ -52,72 +81,87 @@ class ImportSchedule:
         self.publish_schedule_updated = publish_schedule_updated
 
     @staticmethod
-    def _match_existing_event(
-        entry: ScheduleEntry, candidates: list[ScheduleEvent]
-    ) -> ScheduleEvent | None:
-        """Find the event this row updates, or None to create a new one.
+    def _match_existing_entry(
+        row: ScheduleRow, candidates: list[ScheduleEntry]
+    ) -> ScheduleEntry | None:
+        """Find the entry this row updates, or None to create a new one.
 
-        Number is the only identity a spreadsheet row carries, so a numberless
-        row (a break) matches nothing and is imported as a fresh event — the
-        numberless events already in the schedule are left to be deleted as
-        orphans. Titles are not a fallback: several breaks share one title, so
-        matching on it would shuffle rows between each other.
+        Number is the only identity an event row carries, so a numberless row (a
+        break) matches nothing and is imported as a fresh event — the numberless
+        events already in the schedule are left to be deleted as orphans.
+        Titles are not a fallback for events: several breaks share one title,
+        so matching on it would shuffle rows between each other.
+
+        A block row has no number, so it matches a block start by title. That
+        keeps the block's id, and with it the schedule changes that recorded a
+        move to the block's start, across a re-import.
         """
-        if entry.number is None:
+        if isinstance(row, ScheduleBlockRow):
+            return next(
+                (
+                    e
+                    for e in candidates
+                    if isinstance(e, ScheduleBlockStart) and e.title == row.title
+                ),
+                None,
+            )
+
+        if row.number is None:
             return None
 
-        return next((e for e in candidates if e.number == entry.number), None)
+        return next(
+            (
+                e
+                for e in candidates
+                if isinstance(e, ScheduleEvent) and e.number == row.number
+            ),
+            None,
+        )
 
     async def __call__(self, data: ImportScheduleInput) -> None:
         async def mutate(current_user: User) -> None:
-            orphaned_events = await self.schedule_gateway.list_all()
+            orphaned_entries = await self.schedule_gateway.list_all()
             order = ORDER_INIT
-            for entry in data.schedule:
-                existing_event = self._match_existing_event(entry, orphaned_events)
-                if existing_event:
-                    existing_event.update_details(
-                        title=entry.title,
-                        duration=entry.duration,
-                        block_title=entry.block_title,
-                        nomination_title=entry.nomination_title,
-                        order=order,
-                    )
-                    await self.schedule_gateway.save(existing_event)
-                    orphaned_events.remove(existing_event)
+            for row in data.schedule:
+                existing_entry = self._match_existing_entry(row, orphaned_entries)
+                if existing_entry is None:
+                    new_entry = build_schedule_entry(row, order)
+                    await self.schedule_gateway.add(new_entry)
                     logger.info(
-                        "Schedule event updated during import",
+                        "Schedule entry added during import",
                         extra={
-                            "event_id": str(existing_event.id),
+                            "entry_id": str(new_entry.id),
                             "actor_id": str(current_user.id),
                         },
                     )
                 else:
-                    new_event = ScheduleEvent(
-                        id=generate_schedule_event_id(),
-                        number=entry.number,
-                        title=entry.title,
-                        duration=entry.duration,
-                        block_title=entry.block_title,
-                        nomination_title=entry.nomination_title,
-                        order=order,
-                        is_current=False,
-                        is_skipped=False,
-                    )
-                    await self.schedule_gateway.add(new_event)
+                    # Matching pairs an event row only with an event and a
+                    # block row only with a block start, whose title matched.
+                    if isinstance(existing_entry, ScheduleBlockStart):
+                        existing_entry.order = order
+                    elif isinstance(row, ScheduleEventRow):
+                        existing_entry.update_details(
+                            title=row.title,
+                            duration=row.duration,
+                            nomination_title=row.nomination_title,
+                            order=order,
+                        )
+                    await self.schedule_gateway.save(existing_entry)
+                    orphaned_entries.remove(existing_entry)
                     logger.info(
-                        "Schedule event added during import",
+                        "Schedule entry updated during import",
                         extra={
-                            "event_id": str(new_event.id),
+                            "entry_id": str(existing_entry.id),
                             "actor_id": str(current_user.id),
                         },
                     )
                 order += ORDER_STEP
-            for e in orphaned_events:
+            for e in orphaned_entries:
                 await self.schedule_gateway.delete(e)
                 logger.info(
-                    "Orphaned schedule event deleted during import",
+                    "Orphaned schedule entry deleted during import",
                     extra={
-                        "event_id": str(e.id),
+                        "entry_id": str(e.id),
                         "actor_id": str(current_user.id),
                     },
                 )

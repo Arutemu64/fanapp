@@ -5,21 +5,23 @@ from datetime import UTC, datetime, timedelta
 from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ORDER_INIT,
     ORDER_STEP,
+    ScheduleBlockRow,
+    ScheduleEventRow,
+    ScheduleRow,
+    build_schedule_entry,
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
-from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.vo.nomination import NominationCode, generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
 
 logger = logging.getLogger(__name__)
 
@@ -42,16 +44,6 @@ class _DemoNomination:
     code: str
     title: str
     participants: tuple[_DemoParticipant, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class _DemoEvent:
-    number: int
-    title: str
-    # Planned stage time in seconds, the unit ScheduleEvent.duration expects.
-    duration: int
-    block_title: str
-    nomination_title: str | None
 
 
 # Three votable nominations with a handful of entries each — enough to exercise
@@ -98,82 +90,77 @@ DEMO_NOMINATIONS: tuple[_DemoNomination, ...] = (
 
 # A short festival day: an opening, the two defile blocks whose entries mirror
 # the votable nominations above, a concert block and a closing ceremony.
-DEMO_SCHEDULE: tuple[_DemoEvent, ...] = (
-    _DemoEvent(
+DEMO_SCHEDULE: tuple[ScheduleRow, ...] = (
+    ScheduleBlockRow(title="Открытие"),
+    ScheduleEventRow(
         number=1,
         title="Торжественное открытие фестиваля",
         duration=900,
-        block_title="Открытие",
         nomination_title=None,
     ),
-    _DemoEvent(
+    ScheduleBlockRow(title="Одиночное дефиле"),
+    ScheduleEventRow(
         number=2,
         title="Хацунэ Мику — Vocaloid",
         duration=180,
-        block_title="Одиночное дефиле",
         nomination_title="Одиночное дефиле",
     ),
-    _DemoEvent(
+    ScheduleEventRow(
         number=3,
         title="Эдвард Элрик — Стальной алхимик",
         duration=180,
-        block_title="Одиночное дефиле",
         nomination_title="Одиночное дефиле",
     ),
-    _DemoEvent(
+    ScheduleEventRow(
         number=4,
         title="Сейлор Мун — Сейлор Мун",
         duration=180,
-        block_title="Одиночное дефиле",
         nomination_title="Одиночное дефиле",
     ),
-    _DemoEvent(
+    ScheduleEventRow(
         number=5,
         title="Тандзиро Камадо — Клинок, рассекающий демонов",
         duration=180,
-        block_title="Одиночное дефиле",
         nomination_title="Одиночное дефиле",
     ),
-    _DemoEvent(
+    ScheduleBlockRow(title="Перерыв"),
+    ScheduleEventRow(
         number=6,
         title="Перерыв",
         duration=600,
-        block_title="Перерыв",
         nomination_title=None,
     ),
-    _DemoEvent(
+    ScheduleBlockRow(title="Групповое дефиле"),
+    ScheduleEventRow(
         number=7,
         title="Команда 7 — Наруто",
         duration=300,
-        block_title="Групповое дефиле",
         nomination_title="Групповое дефиле",
     ),
-    _DemoEvent(
+    ScheduleEventRow(
         number=8,
         title="Отряд разведки — Атака титанов",
         duration=300,
-        block_title="Групповое дефиле",
         nomination_title="Групповое дефиле",
     ),
-    _DemoEvent(
+    ScheduleEventRow(
         number=9,
         title="Класс 1-А — Моя геройская академия",
         duration=300,
-        block_title="Групповое дефиле",
         nomination_title="Групповое дефиле",
     ),
-    _DemoEvent(
+    ScheduleBlockRow(title="Концертная программа"),
+    ScheduleEventRow(
         number=10,
         title="Караоке-баттл",
         duration=1200,
-        block_title="Концертная программа",
         nomination_title="Караоке",
     ),
-    _DemoEvent(
+    ScheduleBlockRow(title="Закрытие"),
+    ScheduleEventRow(
         number=11,
         title="Награждение и закрытие",
         duration=1200,
-        block_title="Закрытие",
         nomination_title=None,
     ),
 )
@@ -189,7 +176,7 @@ class SeedDemoData:
 
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         nomination_gateway: NominationGateway,
         participant_gateway: ParticipantGateway,
         settings_gateway: AppSettingsGateway,
@@ -214,21 +201,10 @@ class SeedDemoData:
             logger.info("Schedule already has events, skipping demo programme")
             return
         order = ORDER_INIT
-        for entry in DEMO_SCHEDULE:
-            event = ScheduleEvent(
-                id=generate_schedule_event_id(),
-                number=entry.number,
-                title=entry.title,
-                duration=entry.duration,
-                block_title=entry.block_title,
-                nomination_title=entry.nomination_title,
-                order=order,
-                is_current=False,
-                is_skipped=False,
-            )
-            await self.schedule_gateway.add(event)
+        for row in DEMO_SCHEDULE:
+            await self.schedule_gateway.add(build_schedule_entry(row, order))
             order += ORDER_STEP
-        logger.info("Demo programme seeded", extra={"events": len(DEMO_SCHEDULE)})
+        logger.info("Demo programme seeded", extra={"entries": len(DEMO_SCHEDULE)})
 
     async def _seed_voting(self) -> None:
         # Upsert by the reserved cosplay2_id so a re-run refreshes the demo rows
