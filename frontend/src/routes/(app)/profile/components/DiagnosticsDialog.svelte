@@ -150,7 +150,7 @@
 		if (!snapshot) return;
 		try {
 			await navigator.clipboard.writeText(formatReport(snapshot, capturedAt));
-			toastService.add('Отчёт скопирован. Вставь его в обратную связь', 'success');
+			toastService.add('Отчёт скопирован. Отправь его организаторам', 'success');
 		} catch (error) {
 			console.error('Failed to copy diagnostics report:', error);
 			toastService.add('Не удалось скопировать. Сделай скриншот этого окна', 'error');
@@ -189,7 +189,7 @@
 				Диагностика
 			</Dialog.Title>
 			<Dialog.Description>
-				Если что-то не работает, скопируй отчёт и отправь его в обратную связь.
+				Если что-то не работает, скопируй отчёт и отправь организаторам.
 			</Dialog.Description>
 		</Dialog.Header>
 
