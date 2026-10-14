@@ -17,7 +17,7 @@ export interface PushBrowser {
  * distributed base64url (`-`/`_`, no padding), which `atob` cannot read, so pad
  * and translate back to standard base64 first.
  */
-export function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 	const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 
@@ -37,6 +37,8 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuf
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
 	return navigator.serviceWorker.getRegistration();
 }
+
+const ACTIVATION_TIMEOUT_MS = 10_000;
 
 export const browserPush: PushBrowser = {
 	// No Push API means push is off here: iOS Safari only exposes it to a Home
@@ -62,8 +64,17 @@ export const browserPush: PushBrowser = {
 			throw new Error('No service worker registered');
 		}
 		// A registration can still be installing; `subscribe` needs an active worker.
-		// `ready` is safe here because a registration exists, so it will resolve.
-		await navigator.serviceWorker.ready;
+		// `ready` waits for it but never settles if that install fails, so bound it
+		// to keep the switch from staying busy forever.
+		await Promise.race([
+			navigator.serviceWorker.ready,
+			new Promise<never>((_, reject) => {
+				setTimeout(
+					() => reject(new Error('Service worker did not activate')),
+					ACTIVATION_TIMEOUT_MS
+				);
+			})
+		]);
 		return registration.pushManager.subscribe({
 			userVisibleOnly: true,
 			applicationServerKey: urlBase64ToUint8Array(vapidKey)
