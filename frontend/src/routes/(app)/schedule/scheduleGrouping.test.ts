@@ -9,7 +9,7 @@ function event(
 	overrides: Partial<ScheduleEventWithSubscription> & Pick<ScheduleEventWithSubscription, 'id'>
 ): ScheduleEventWithSubscription {
 	return {
-		kind: 'event',
+		type: 'event',
 		number: null,
 		title: 'Выступление',
 		duration: 300,
@@ -17,14 +17,14 @@ function event(
 		is_current: false,
 		is_skipped: false,
 		nomination_title: null,
-		queue: null,
+		position: null,
 		user_subscription: null,
 		...overrides
 	};
 }
 
 function block(id: string, title: string): ScheduleBlockStartDto {
-	return { kind: 'block_start', id, title, order: 0 };
+	return { type: 'block_start', id, title, order: 0 };
 }
 
 // Flatten a grouped tree into a comparable summary so assertions can avoid

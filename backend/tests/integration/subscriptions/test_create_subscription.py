@@ -12,7 +12,7 @@ from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGate
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.schedule import EventNotFound
-from fanfan.core.models.schedule_entry import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_entry import (
     ScheduleEntryId,
@@ -90,3 +90,24 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
 
     await uow.rollback()
     assert await subscription_gateway.read_subscriptions_by_user(visitor.id) == []
+
+
+async def test_create_subscription_rejects_a_block_start(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # The FK would accept it, but a block start has no position to remind about.
+    interactor = await dishka_request.get(CreateSubscription)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(visitor)
+
+    block = ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Косплей", order=1
+    )
+    await schedule_gateway.add(block)
+    await uow.commit()
+
+    with pytest.raises(EventNotFound):
+        await interactor(CreateSubscriptionInput(event_id=block.id, counter=5))

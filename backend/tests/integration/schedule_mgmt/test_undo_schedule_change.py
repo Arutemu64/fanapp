@@ -172,7 +172,7 @@ async def test_undo_moved_change_places_event_back_on_top(
     # ahead of the current first event.
     change = ScheduleChange.moved(
         event_id=moved.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=mailing.id,
         user_id=schedule_editor.id,
         next_event_changed=False,

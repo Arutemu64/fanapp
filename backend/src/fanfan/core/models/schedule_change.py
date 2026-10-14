@@ -22,7 +22,7 @@ class ScheduleChange(AggregateRoot):
     type: ScheduleChangeType
 
     changed_event_id: ScheduleEntryId | None
-    argument_event_id: ScheduleEntryId | None
+    related_entry_id: ScheduleEntryId | None
 
     mailing_id: MailingId | None
     user_id: UserId | None
@@ -41,7 +41,7 @@ class ScheduleChange(AggregateRoot):
             id=generate_schedule_change_id(),
             type=ScheduleChangeType.SET_AS_CURRENT,
             changed_event_id=changed_event_id,
-            argument_event_id=previous_event_id,
+            related_entry_id=previous_event_id,
             mailing_id=mailing_id,
             user_id=user_id,
             next_event_changed=True,
@@ -54,7 +54,7 @@ class ScheduleChange(AggregateRoot):
         cls,
         *,
         event_id: ScheduleEntryId,
-        previous_event_id: ScheduleEntryId | None,
+        previous_entry_id: ScheduleEntryId | None,
         mailing_id: MailingId | None,
         user_id: UserId | None,
         next_event_changed: bool,
@@ -63,7 +63,7 @@ class ScheduleChange(AggregateRoot):
             id=generate_schedule_change_id(),
             type=ScheduleChangeType.MOVED,
             changed_event_id=event_id,
-            argument_event_id=previous_event_id,
+            related_entry_id=previous_entry_id,
             mailing_id=mailing_id,
             user_id=user_id,
             next_event_changed=next_event_changed,
@@ -119,7 +119,7 @@ class ScheduleChange(AggregateRoot):
             id=generate_schedule_change_id(),
             type=change_type,
             changed_event_id=event_id,
-            argument_event_id=None,
+            related_entry_id=None,
             mailing_id=mailing_id,
             user_id=user_id,
             next_event_changed=next_event_changed,

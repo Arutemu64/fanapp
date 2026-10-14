@@ -11,6 +11,7 @@ from fanfan.application.ports.gateways.subscriptions import (
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
+from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.subscription import SubscriptionId, generate_subscription_id
@@ -47,6 +48,11 @@ class CreateSubscription:
         data: CreateSubscriptionInput,
     ) -> CreateSubscriptionOutput:
         current_user = await self.current_user_provider.require_user()
+        # The foreign key accepts any schedule row, block starts included, so
+        # only this lookup keeps a subscription off something with no position
+        # to remind about. A delete racing past it still lands on the FK.
+        if await self.schedule_gateway.get_event(data.event_id) is None:
+            raise EventNotFound
         subscription = Subscription(
             id=generate_subscription_id(),
             user_id=current_user.id,

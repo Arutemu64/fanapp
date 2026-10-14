@@ -60,7 +60,7 @@
 	let searchIndex = $derived.by(() => {
 		const blockTitles = blockTitleByEventId(schedule);
 		return createSearchIndex(schedule, (entry) => {
-			if (entry.kind === 'block_start') return [entry.title];
+			if (entry.type === 'block_start') return [entry.title];
 			return [entry.number, entry.title, blockTitles.get(entry.id), entry.nomination_title];
 		});
 	});
@@ -76,7 +76,7 @@
 
 		formError = '';
 		moveMutation.mutate(
-			{ path: { event_id: event.id }, body: { place_after_event_id: selectedId } },
+			{ path: { event_id: event.id }, body: { place_after_entry_id: selectedId } },
 			{
 				onSuccess: () => {
 					toastService.add('Выступление перенесено', 'success');
@@ -152,12 +152,12 @@
 						type="button"
 						class={[
 							'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3 sm:text-base',
-							entry.kind === 'block_start' && 'bg-muted/60',
+							entry.type === 'block_start' && 'bg-muted/60',
 							selectedId === entry.id && 'bg-primary/20'
 						]}
 						onclick={() => handleSelect(entry)}
 					>
-						{#if entry.kind === 'block_start'}
+						{#if entry.type === 'block_start'}
 							<span class="text-muted-foreground">В начало блока </span>
 							<span class="font-semibold text-foreground">{entry.title}</span>
 						{:else if entry.number !== null}

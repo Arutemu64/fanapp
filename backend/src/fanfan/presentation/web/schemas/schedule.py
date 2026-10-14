@@ -4,7 +4,7 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 
 class MoveScheduleEventRequest(BaseModel):
-    place_after_event_id: ScheduleEntryId
+    place_after_entry_id: ScheduleEntryId
 
 
 class UpdateScheduleEventRequest(BaseModel):

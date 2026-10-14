@@ -55,7 +55,7 @@ export function buildScheduleGroups(schedule: ScheduleEntryWithSubscription[]): 
 	let blockGroup: ScheduleBlockGroup | null = null;
 
 	for (const entry of schedule) {
-		if (entry.kind === 'block_start') {
+		if (entry.type === 'block_start') {
 			blockGroup = {
 				kind: 'block',
 				key: `block-${entry.id}`,

@@ -3,9 +3,9 @@ import type { GetScheduleOutput } from '../../src/lib/api/generated/types.gen';
 import { expect, json, loggedInAs, test } from '../fixtures';
 
 const schedule: GetScheduleOutput['schedule'] = [
-	{ kind: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
+	{ type: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
 	...[1, 2].map((number) => ({
-		kind: 'event' as const,
+		type: 'event' as const,
 		id: `event-${number}`,
 		number,
 		title: `Выступление ${number}`,
@@ -14,7 +14,7 @@ const schedule: GetScheduleOutput['schedule'] = [
 		is_current: false,
 		is_skipped: false,
 		nomination_title: 'Одиночное дефиле',
-		queue: number
+		position: number
 	}))
 ];
 
@@ -34,7 +34,7 @@ test.describe('schedule', () => {
 						id: 'subscription-1',
 						user_id: 'user',
 						counter: 2,
-						event: { id: 'event-1', number: 1, title: 'Выступление 1', order: 1, queue: 1 }
+						event: { id: 'event-1', number: 1, title: 'Выступление 1', order: 1, position: 1 }
 					}
 				]
 			})

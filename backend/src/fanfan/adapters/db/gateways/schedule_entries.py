@@ -18,7 +18,7 @@ from fanfan.core.models.schedule_entry import (
     ScheduleEntry,
     ScheduleEvent,
 )
-from fanfan.core.vo.schedule_entry import ScheduleEntryId, ScheduleEntryKind
+from fanfan.core.vo.schedule_entry import ScheduleEntryId, ScheduleEntryType
 
 SCHEDULE_EDIT_LOCK_KEY = "schedule:edit"
 
@@ -73,13 +73,13 @@ def _to_model(orm: ScheduleEntryORM) -> ScheduleEntry:
 def _parse_event_dto(
     event_orm: ScheduleEntryORM,
     *,
-    queue: int | None,
+    position: int | None,
 ) -> ScheduleEventFullDTO:
-    # queue is passed in explicitly: single-row reads supply the undeferred
+    # position is passed in explicitly: single-row reads supply the undeferred
     # column_property value, while the list query supplies it from its single
     # joined ranking subquery.
     return ScheduleEventFullDTO(
-        kind=ScheduleEntryKind.EVENT,
+        type=ScheduleEntryType.EVENT,
         id=ScheduleEntryId(event_orm.id),
         number=event_orm.number,
         title=event_orm.title,
@@ -88,28 +88,28 @@ def _parse_event_dto(
         is_current=event_orm.is_current,
         is_skipped=event_orm.is_skipped,
         nomination_title=event_orm.nomination_title,
-        queue=queue,
+        position=position,
     )
 
 
 def _parse_entry_dto(
     entry_orm: ScheduleEntryORM,
     *,
-    queue: int | None,
+    position: int | None,
 ) -> ScheduleEntryDTO:
     if isinstance(entry_orm, ScheduleBlockStartORM):
         return ScheduleBlockStartDTO(
-            kind=ScheduleEntryKind.BLOCK_START,
+            type=ScheduleEntryType.BLOCK_START,
             id=ScheduleEntryId(entry_orm.id),
             title=entry_orm.title,
             order=entry_orm.order,
         )
-    return _parse_event_dto(entry_orm, queue=queue)
+    return _parse_event_dto(entry_orm, position=position)
 
 
 def _select_schedule_event_full_dto() -> Select[ScheduleEventORM]:
     return select(ScheduleEventORM).options(
-        undefer(ScheduleEventORM.queue),
+        undefer(ScheduleEventORM.position),
     )
 
 
@@ -189,7 +189,11 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         return _event_to_model(event_orm) if event_orm else None
 
     async def list_all(self) -> list[ScheduleEntry]:
-        stmt = select(ScheduleEntryORM).with_for_update()
+        # In order, so the import matches a repeated block title to the same
+        # block start on every run instead of whichever row Postgres returns.
+        stmt = (
+            select(ScheduleEntryORM).order_by(ScheduleEntryORM.order).with_for_update()
+        )
         entry_orms = await self.session.scalars(stmt)
         return [_to_model(e) for e in entry_orms]
 
@@ -243,7 +247,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         )
         event_orm = await self.session.scalar(stmt)
         if event_orm:
-            return _parse_event_dto(event_orm, queue=event_orm.queue)
+            return _parse_event_dto(event_orm, position=event_orm.position)
         return None
 
     async def read_current_event(self) -> ScheduleEventFullDTO | None:
@@ -252,21 +256,22 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         )
         event_orm = await self.session.scalar(stmt)
         if event_orm:
-            return _parse_event_dto(event_orm, queue=event_orm.queue)
+            return _parse_event_dto(event_orm, position=event_orm.position)
         return None
 
     async def read_list_schedule(self) -> list[ScheduleEntryDTO]:
-        # The whole schedule is read at once, so queue comes from a single
+        # The whole schedule is read at once, so position comes from a single
         # ranking subquery joined once here, rather than the per-row correlated
         # column_property (which would re-run the window for every one of the
         # ~hundreds of rows).
         ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
-            select(ScheduleEntryORM, ranked.c.queue)
+            select(ScheduleEntryORM, ranked.c.position)
             .outerjoin(ranked, ScheduleEntryORM.id == ranked.c.id)
             .order_by(ScheduleEntryORM.order)
         )
         results = (await self.session.execute(stmt)).all()
         return [
-            _parse_entry_dto(entry_orm, queue=queue) for entry_orm, queue in results
+            _parse_entry_dto(entry_orm, position=position)
+            for entry_orm, position in results
         ]

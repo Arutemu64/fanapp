@@ -9,7 +9,7 @@ def generate_schedule_entry_id() -> ScheduleEntryId:
     return ScheduleEntryId(uuid7())
 
 
-class ScheduleEntryKind(enum.StrEnum):
+class ScheduleEntryType(enum.StrEnum):
     """What a row of the programme is.
 
     EVENT: something that happens on stage — an act, a break, the opening.

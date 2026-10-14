@@ -28,7 +28,7 @@ class BaseScheduleEntry(AggregateRoot):
 class ScheduleBlockStart(BaseScheduleEntry):
     """The head of a block: every event after it, up to the next one, is in it.
 
-    Nothing happens on stage here, so it has no number, time, queue position or
+    Nothing happens on stage here, so it has no number, time, position or
     stage state, and none of the stage operations. It never moves either: moving
     an event across a block start is what carries the event into another block.
     """

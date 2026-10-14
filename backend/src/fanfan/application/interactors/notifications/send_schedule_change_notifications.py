@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
 from fanfan.application.dto.schedule_change import (
-    ScheduleChangeEventDTO,
+    ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
 )
 from fanfan.application.ports.events_broker import EventBroker
@@ -76,7 +76,7 @@ class SendScheduleChangeNotifications:
         self.events_broker = events_broker
 
     @staticmethod
-    def _event_label(event: ScheduleChangeEventDTO) -> str:
+    def _event_label(event: ScheduleChangeEntryDTO) -> str:
         """Name an event inside a notification body.
 
         A numberless event (a break) is named by its title instead — it is the
@@ -92,14 +92,14 @@ class SendScheduleChangeNotifications:
         schedule_change: ScheduleChangeFullDTO,
     ) -> str | None:
         changed_event = schedule_change.changed_event
-        argument_event = schedule_change.argument_event
+        related_entry = schedule_change.related_entry
         match schedule_change.type:
             case ScheduleChangeType.SET_AS_CURRENT:
                 if changed_event:
                     return f"Выступление {cls._event_label(changed_event)} началось"
-                if argument_event:
+                if related_entry:
                     return (
-                        f"Выступление {cls._event_label(argument_event)} "
+                        f"Выступление {cls._event_label(related_entry)} "
                         f"больше не текущее"
                     )
             case ScheduleChangeType.MOVED:
@@ -181,20 +181,20 @@ class SendScheduleChangeNotifications:
         self,
         schedule_change: ScheduleChangeFullDTO,
         current_event: ScheduleEventFullDTO,
-        changed_event: ScheduleChangeEventDTO,
+        changed_event: ScheduleChangeEntryDTO,
         reason_msg: str | None,
     ) -> list[NotificationQueued]:
         events: list[NotificationQueued] = []
         # Queue always exists for the (non-skipped) current event.
-        current_event_queue = cast("int", current_event.queue)
+        current_event_position = cast("int", current_event.position)
 
         upcoming_subscriptions = (
             await self.subscription_gateway.read_upcoming_subscriptions(
-                current_event_queue=current_event_queue
+                current_event_position=current_event_position
             )
         )
         for s in upcoming_subscriptions:
-            if s.event.queue is None:
+            if s.event.position is None:
                 continue
             if current_event.order <= changed_event.order <= s.event.order:
                 body = await self.template_renderer.render(
@@ -202,7 +202,8 @@ class SendScheduleChangeNotifications:
                     {
                         "event_number": s.event.number,
                         "event_title": s.event.title,
-                        "queue_difference": s.event.queue - current_event_queue,
+                        "position_difference": s.event.position
+                        - current_event_position,
                         "reason_msg": reason_msg,
                     },
                 )

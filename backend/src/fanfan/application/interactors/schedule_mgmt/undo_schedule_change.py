@@ -110,13 +110,13 @@ class UndoScheduleChange:
             # but any entry for MOVED: the one the event landed after.
             if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
                 previous_event = await self._require(
-                    self.schedule_gateway.get_event, schedule_change.argument_event_id
+                    self.schedule_gateway.get_event, schedule_change.related_entry_id
                 )
                 await self._handle_set_as_current(changed_event, previous_event)
 
             if schedule_change.type is ScheduleChangeType.MOVED and changed_event:
                 place_after_entry = await self._require(
-                    self.schedule_gateway.get_entry, schedule_change.argument_event_id
+                    self.schedule_gateway.get_entry, schedule_change.related_entry_id
                 )
                 await self._handle_moved(changed_event, place_after_entry)
 

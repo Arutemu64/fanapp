@@ -2,7 +2,7 @@
 
 Turns ``schedule_events`` into ``schedule``, a table of entries: a block is no
 longer a ``block_title`` repeated on each of its events but an entry of its own
-(``kind = 'block_start'``) at the head of the block. An event belongs to the
+(``type = 'block_start'``) at the head of the block. An event belongs to the
 nearest block start above it, so moving an event across one moves it between
 blocks. The table is named for the whole programme now that its rows are no
 longer all events — a collective noun, like ``feedback``.
@@ -13,12 +13,15 @@ maps fk_subscriptions_event_id_schedule to a domain error, so that name
 must match).
 
 The deployed table holds a real programme, so the backfill does not assume it is
-empty: ``kind`` goes in with a server default that marks every existing row an
+empty: ``type`` goes in with a server default that marks every existing row an
 event, and one block start is inserted ahead of each run of consecutive rows
 sharing a ``block_title`` — the same runs the schedule page grouped into block
 sections. A blank title (NULL or whitespace) started no section there and starts
 none here. One behaviour cannot carry over: a block-less row between two blocks
 (a break) used to sit outside both and now belongs to the block above it.
+
+``schedule_changes.argument_event_id`` becomes ``related_entry_id``: for a move
+it now names an entry that may be a block start, and "argument" said nothing.
 
 Downgrade restores ``block_title`` on every event from its nearest block start
 and drops the block starts. Schedule changes that recorded a move to the top of
@@ -39,7 +42,7 @@ down_revision = "c2d3e4f5a6b7"
 branch_labels = None
 depends_on = None
 
-_KIND_CHECK = "ck_schedule_scheduleentrykind"
+_TYPE_CHECK = "ck_schedule_scheduleentrytype"
 _BLOCK_START_CHECK = "ck_schedule_block_start_has_no_stage_state"
 
 # (table, old name, new name) for every constraint naming the renamed table.
@@ -60,7 +63,7 @@ _CONSTRAINT_RENAMES = (
     (
         "schedule_changes",
         "fk_schedule_changes_argument_event_id_schedule_events",
-        "fk_schedule_changes_argument_event_id_schedule",
+        "fk_schedule_changes_related_entry_id_schedule",
     ),
 )
 
@@ -70,18 +73,25 @@ def upgrade() -> None:
     for table, old_name, new_name in _CONSTRAINT_RENAMES:
         op.execute(f"ALTER TABLE {table} RENAME CONSTRAINT {old_name} TO {new_name}")
     op.execute("ALTER SEQUENCE schedule_events_order_seq RENAME TO schedule_order_seq")
+    op.alter_column(
+        "schedule_changes", "argument_event_id", new_column_name="related_entry_id"
+    )
+    op.execute(
+        "ALTER INDEX ix_schedule_changes_argument_event_id "
+        "RENAME TO ix_schedule_changes_related_entry_id"
+    )
 
     # The server default fills every existing row in one fast metadata-only
-    # change (Postgres 11+), then goes: the app always states the kind.
+    # change (Postgres 11+), then goes: the app always states the type.
     op.add_column(
         "schedule",
-        sa.Column("kind", sa.String(length=32), nullable=False, server_default="event"),
+        sa.Column("type", sa.String(length=32), nullable=False, server_default="event"),
     )
-    op.alter_column("schedule", "kind", server_default=None)
+    op.alter_column("schedule", "type", server_default=None)
     op.create_check_constraint(
-        op.f(_KIND_CHECK),
+        op.f(_TYPE_CHECK),
         "schedule",
-        sa.column("kind").in_(["event", "block_start"]),
+        sa.column("type").in_(["event", "block_start"]),
     )
 
     # A run starts wherever a row's block differs from the row above it. Its
@@ -98,7 +108,7 @@ def upgrade() -> None:
                 LAG("order") OVER (ORDER BY "order") AS previous_order
             FROM schedule
         )
-        INSERT INTO schedule (id, kind, title, "order")
+        INSERT INTO schedule (id, type, title, "order")
         SELECT
             uuidv7(),
             'block_start',
@@ -116,7 +126,7 @@ def upgrade() -> None:
     op.create_check_constraint(
         op.f(_BLOCK_START_CHECK),
         "schedule",
-        "kind = 'event' OR "
+        "type = 'event' OR "
         "(number IS NULL AND is_current IS FALSE AND is_skipped IS FALSE)",
     )
 
@@ -130,17 +140,24 @@ def downgrade() -> None:
         SET block_title = (
             SELECT block.title
             FROM schedule AS block
-            WHERE block.kind = 'block_start' AND block."order" < event."order"
+            WHERE block.type = 'block_start' AND block."order" < event."order"
             ORDER BY block."order" DESC
             LIMIT 1
         )
-        WHERE event.kind = 'event'
+        WHERE event.type = 'event'
         """
     )
-    op.execute("DELETE FROM schedule WHERE kind = 'block_start'")
-    op.drop_constraint(op.f(_KIND_CHECK), "schedule", type_="check")
-    op.drop_column("schedule", "kind")
+    op.execute("DELETE FROM schedule WHERE type = 'block_start'")
+    op.drop_constraint(op.f(_TYPE_CHECK), "schedule", type_="check")
+    op.drop_column("schedule", "type")
 
+    op.execute(
+        "ALTER INDEX ix_schedule_changes_related_entry_id "
+        "RENAME TO ix_schedule_changes_argument_event_id"
+    )
+    op.alter_column(
+        "schedule_changes", "related_entry_id", new_column_name="argument_event_id"
+    )
     op.execute("ALTER SEQUENCE schedule_order_seq RENAME TO schedule_events_order_seq")
     for table, old_name, new_name in _CONSTRAINT_RENAMES:
         op.execute(f"ALTER TABLE {table} RENAME CONSTRAINT {new_name} TO {old_name}")

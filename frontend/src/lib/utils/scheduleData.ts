@@ -20,7 +20,7 @@ export function mergeSubscriptions(
 	);
 
 	return schedule.map((entry) => {
-		if (entry.kind === 'block_start') return entry;
+		if (entry.type === 'block_start') return entry;
 		return { ...entry, user_subscription: byEventId.get(entry.id) ?? null };
 	});
 }
@@ -29,7 +29,7 @@ export function mergeSubscriptions(
 export function scheduleEvents(
 	entries: ScheduleEntryWithSubscription[]
 ): ScheduleEventWithSubscription[] {
-	return entries.filter((entry) => entry.kind === 'event');
+	return entries.filter((entry) => entry.type === 'event');
 }
 
 /**
@@ -41,7 +41,7 @@ export function blockTitleByEventId(entries: ScheduleEntryDto[]): Map<string, st
 	let blockTitle: string | null = null;
 
 	for (const entry of entries) {
-		if (entry.kind === 'block_start') {
+		if (entry.type === 'block_start') {
 			blockTitle = entry.title;
 		} else if (blockTitle !== null) {
 			titles.set(entry.id, blockTitle);

@@ -274,13 +274,13 @@ export function formatDayHeading(value: string | number | Date, now: number = Da
 }
 
 /**
- * Countdown label for an upcoming event: the drift-proof queue distance ("how
+ * Countdown label for an upcoming event: the drift-proof position distance ("how
  * many acts away"). The schedule carries no predicted clock time — every value
  * is derived purely from stored columns so the payload stays cacheable (ADR-0014)
- * — so the queue distance is the whole label, and it stays exact as acts advance.
+ * — so the position distance is the whole label, and it stays exact as acts advance.
  */
-export function formatUntil(queueUntil: number): string {
-	return `Осталось ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
+export function formatUntil(actsAhead: number): string {
+	return `Осталось ${actsAhead} ${pluralize(actsAhead, 'выступление', 'выступления', 'выступлений')}`;
 }
 
 const RUSSIAN_PLURAL_RULES = new Intl.PluralRules('ru-RU');

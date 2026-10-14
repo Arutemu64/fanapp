@@ -99,7 +99,7 @@ async def move_schedule_event(
 ) -> None:
     await interactor(
         MoveScheduleEventInput(
-            event_id=event_id, place_after_event_id=data.place_after_event_id
+            event_id=event_id, place_after_entry_id=data.place_after_entry_id
         )
     )
 

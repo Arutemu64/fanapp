@@ -60,9 +60,9 @@ async function focusAndExpectUnobscured(page: Page, eventId: string, offset: num
 
 // Long enough that the page scrolls well past the top bar on any project's viewport.
 const longSchedule: GetScheduleOutput['schedule'] = [
-	{ kind: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
+	{ type: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
 	...Array.from({ length: 60 }, (_, index) => ({
-		kind: 'event' as const,
+		type: 'event' as const,
 		id: `event-${index + 1}`,
 		number: index + 1,
 		title: `Выступление ${index + 1}`,
@@ -71,7 +71,7 @@ const longSchedule: GetScheduleOutput['schedule'] = [
 		is_current: false,
 		is_skipped: false,
 		nomination_title: 'Одиночное дефиле',
-		queue: index + 1
+		position: index + 1
 	}))
 ];
 

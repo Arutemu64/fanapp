@@ -14,7 +14,7 @@ class UUIDPrimaryKeyMixin:
 
     The column name is given explicitly ("id") rather than left to be inferred
     from the attribute key. A same-class ``column_property`` can reference
-    ``cls.id`` while the mapping is still being built (e.g. ScheduleEntryORM.queue
+    ``cls.id`` while the mapping is still being built (e.g. ScheduleEventORM.position
     correlates a subquery on it); an inferred name isn't assigned yet at that
     point, which would raise "Cannot initialize a sub-selectable ... until its
     'name' has been assigned". An explicit name sidesteps the ordering entirely.

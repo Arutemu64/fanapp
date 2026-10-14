@@ -57,11 +57,11 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 ) -> None:
     """Subscription fan-out honours the window and carries the queue difference.
 
-    Layout by (order, queue): current=(1,1), B=(2,2), C=(3,3). A MOVED change
+    Layout by (order, position): current=(1,1), B=(2,2), C=(3,3). A MOVED change
     targets C. The window condition is
     current.order <= changed.order <= subscription.event.order, so:
       * a subscriber to C (order 3) is inside the window and is notified, with
-        queue_difference = C.queue - current.queue = 3 - 1 = 2;
+        position_difference = C.position - current.position = 3 - 1 = 2;
       * a subscriber to B (order 2) is outside it (3 > 2) and is not notified.
     The change carries no user and next_event_changed=False, so neither the
     editor nor the global-announcement branch fires — only subscriptions do.
@@ -110,7 +110,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 
     change = ScheduleChange.moved(
         event_id=event_c.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=None,
         user_id=None,
         next_event_changed=False,
@@ -127,7 +127,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     event = published[0]
     assert event.notification.user_id == visitor.id
     assert event.notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
-    # queue_difference = 3 - 1 = 2 is rendered into the body.
+    # position_difference = 3 - 1 = 2 is rendered into the body.
     assert "2 выступления" in event.notification.body
     assert "Событие C" in event.notification.body
 
@@ -169,7 +169,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     )
     change = ScheduleChange.moved(
         event_id=event_c.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=None,
         user_id=None,
         next_event_changed=False,
@@ -229,7 +229,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     await mailing_gateway.add(mailing)
     change = ScheduleChange.moved(
         event_id=event_c.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=mailing.id,
         user_id=None,
         next_event_changed=False,

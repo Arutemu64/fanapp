@@ -271,3 +271,33 @@ async def test_import_without_permission_raises_access_denied(
     assert await schedule_gateway.get_event(existing.id) is not None
     # A rejected import must not send every client off to refetch.
     assert realtime.published == []
+
+
+async def test_reimport_keeps_repeated_block_titles_on_their_own_ids(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # Two blocks share a title. Matching goes in schedule order, so an unchanged
+    # re-import pairs each row with the block start it already was, and a move
+    # recorded against either one still undoes into the right block.
+    interactor = await dishka_request.get(ImportSchedule)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(schedule_editor)
+
+    rows = [
+        ScheduleBlockRow(title="Косплей"),
+        _entry(1, "Дефиле"),
+        ScheduleBlockRow(title="Караоке"),
+        _entry(2, "Песня"),
+        ScheduleBlockRow(title="Косплей"),
+        _entry(3, "Сценка"),
+    ]
+    await interactor(ImportScheduleInput(schedule=rows))
+    before = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
+
+    await interactor(ImportScheduleInput(schedule=rows))
+    after = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
+
+    assert [e.id for e in after] == [e.id for e in before]

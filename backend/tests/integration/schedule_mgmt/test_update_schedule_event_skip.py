@@ -93,7 +93,7 @@ async def test_skip_marks_event_and_records_change(
     assert change.type == ScheduleChangeType.SKIPPED
     assert change.changed_event is not None
     assert change.changed_event.id == second.id
-    assert change.argument_event is None
+    assert change.related_entry is None
     assert change.next_event_changed is True
     assert change.user is not None
     assert change.user.id == schedule_editor.id

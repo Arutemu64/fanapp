@@ -12,7 +12,7 @@ class SubscriptionEventDTO(BaseModel):
     order: float
 
     # Calculated values
-    queue: int | None
+    position: int | None
 
 
 class SubscriptionFullDTO(BaseModel):

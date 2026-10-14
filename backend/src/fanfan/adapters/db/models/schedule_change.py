@@ -23,7 +23,7 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
     changed_event_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
-    argument_event_id: Mapped[UUID | None] = mapped_column(
+    related_entry_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
@@ -38,10 +38,10 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
         foreign_keys=[changed_event_id],
         lazy="raise",
     )
-    # Any entry: a move records the one it landed after, which can be a block
-    # start when the event went to the top of a block.
-    argument_event: Mapped[ScheduleEntryORM | None] = relationship(
-        foreign_keys=[argument_event_id],
+    # Any entry: a move records the one the event sat right after before it
+    # moved, which is a block start when the event opened its block.
+    related_entry: Mapped[ScheduleEntryORM | None] = relationship(
+        foreign_keys=[related_entry_id],
         lazy="raise",
     )
     user: Mapped[UserORM | None] = relationship(foreign_keys=user_id, lazy="raise")

@@ -85,7 +85,7 @@ async def test_move_reorders_event_and_records_change(
     await interactor(
         MoveScheduleEventInput(
             event_id=first.id,
-            place_after_event_id=second.id,
+            place_after_entry_id=second.id,
         )
     )
 
@@ -104,7 +104,7 @@ async def test_move_reorders_event_and_records_change(
     assert change.changed_event.id == first.id
     # The moved event had no event before it in order, so there is no anchor
     # to record for undo.
-    assert change.argument_event is None
+    assert change.related_entry is None
     assert change.next_event_changed is False
     assert change.user is not None
     assert change.user.id == schedule_editor.id
@@ -144,7 +144,7 @@ async def test_move_records_previous_event_and_next_change(
     await interactor(
         MoveScheduleEventInput(
             event_id=second.id,
-            place_after_event_id=third.id,
+            place_after_entry_id=third.id,
         )
     )
 
@@ -163,8 +163,8 @@ async def test_move_records_previous_event_and_next_change(
     assert change.changed_event.id == second.id
     # "current" was the only event before "second" in order, so it is recorded
     # as the anchor to restore on undo.
-    assert change.argument_event is not None
-    assert change.argument_event.id == current.id
+    assert change.related_entry is not None
+    assert change.related_entry.id == current.id
     assert change.next_event_changed is True
 
     assert [
@@ -194,7 +194,7 @@ async def test_move_event_after_itself_raises(
         await interactor(
             MoveScheduleEventInput(
                 event_id=event.id,
-                place_after_event_id=event.id,
+                place_after_entry_id=event.id,
             )
         )
     await uow.rollback()
@@ -232,7 +232,7 @@ async def test_move_raises_when_moved_event_not_found(
         await interactor(
             MoveScheduleEventInput(
                 event_id=unknown_event_id,
-                place_after_event_id=anchor.id,
+                place_after_entry_id=anchor.id,
             )
         )
     await uow.rollback()
@@ -267,7 +267,7 @@ async def test_move_raises_when_target_event_not_found(
         await interactor(
             MoveScheduleEventInput(
                 event_id=event.id,
-                place_after_event_id=unknown_event_id,
+                place_after_entry_id=unknown_event_id,
             )
         )
     await uow.rollback()
@@ -307,7 +307,7 @@ async def test_move_without_permission_raises_access_denied(
         await interactor(
             MoveScheduleEventInput(
                 event_id=first.id,
-                place_after_event_id=second.id,
+                place_after_entry_id=second.id,
             )
         )
 
@@ -349,14 +349,14 @@ async def test_move_twice_in_a_row_raises_too_fast(
     await interactor(
         MoveScheduleEventInput(
             event_id=first.id,
-            place_after_event_id=second.id,
+            place_after_entry_id=second.id,
         )
     )
     with pytest.raises(ScheduleEditTooFast):
         await interactor(
             MoveScheduleEventInput(
                 event_id=third.id,
-                place_after_event_id=fourth.id,
+                place_after_entry_id=fourth.id,
             )
         )
 
@@ -398,7 +398,7 @@ async def test_move_is_allowed_again_once_the_cooldown_has_passed(
     await uow.commit()
 
     await interactor(
-        MoveScheduleEventInput(event_id=first.id, place_after_event_id=second.id)
+        MoveScheduleEventInput(event_id=first.id, place_after_entry_id=second.id)
     )
     session = await dishka_request.get(AsyncSession)
     await session.execute(
@@ -408,7 +408,7 @@ async def test_move_is_allowed_again_once_the_cooldown_has_passed(
     )
 
     await interactor(
-        MoveScheduleEventInput(event_id=third.id, place_after_event_id=fourth.id)
+        MoveScheduleEventInput(event_id=third.id, place_after_entry_id=fourth.id)
     )
 
     moved_third = await schedule_gateway.get_event(third.id)
@@ -439,7 +439,7 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
     await uow.commit()
 
     await interactor(
-        MoveScheduleEventInput(event_id=moved.id, place_after_event_id=block.id)
+        MoveScheduleEventInput(event_id=moved.id, place_after_entry_id=block.id)
     )
 
     # Between the block start and the block's first event: now in the block.
@@ -451,8 +451,8 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
         pagination=CursorPagination(limit=100)
     )
     # The anchor recorded for undo is the true previous entry, not the first.
-    assert changes[0].argument_event is not None
-    assert changes[0].argument_event.id == first.id
+    assert changes[0].related_entry is not None
+    assert changes[0].related_entry.id == first.id
 
 
 async def test_a_block_start_is_not_an_event_to_move(
@@ -476,5 +476,5 @@ async def test_a_block_start_is_not_an_event_to_move(
     # Block starts never move; to the stage tools they are not events at all.
     with pytest.raises(EventNotFound):
         await interactor(
-            MoveScheduleEventInput(event_id=block.id, place_after_event_id=event.id)
+            MoveScheduleEventInput(event_id=block.id, place_after_entry_id=event.id)
         )

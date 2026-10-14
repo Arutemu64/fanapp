@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 
 from fanfan.application.dto.schedule_change import (
-    ScheduleChangeEventDTO,
+    ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
 )
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
@@ -13,15 +13,15 @@ from fanfan.core.vo.schedule_change import (
     ScheduleChangeType,
     generate_schedule_change_id,
 )
-from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
+from fanfan.core.vo.schedule_entry import ScheduleEntryType, generate_schedule_entry_id
 
 pytestmark = pytest.mark.unit
 
 
-def _event(number: int | None, title: str) -> ScheduleChangeEventDTO:
-    return ScheduleChangeEventDTO(
+def _event(number: int | None, title: str) -> ScheduleChangeEntryDTO:
+    return ScheduleChangeEntryDTO(
         id=generate_schedule_entry_id(),
-        kind=ScheduleEntryKind.EVENT,
+        type=ScheduleEntryType.EVENT,
         number=number,
         title=title,
         order=1.0,
@@ -31,8 +31,8 @@ def _event(number: int | None, title: str) -> ScheduleChangeEventDTO:
 def _change(
     change_type: ScheduleChangeType,
     *,
-    changed_event: ScheduleChangeEventDTO | None = None,
-    argument_event: ScheduleChangeEventDTO | None = None,
+    changed_event: ScheduleChangeEntryDTO | None = None,
+    related_entry: ScheduleChangeEntryDTO | None = None,
 ) -> ScheduleChangeFullDTO:
     return ScheduleChangeFullDTO(
         id=generate_schedule_change_id(),
@@ -41,7 +41,7 @@ def _change(
         user_id=None,
         next_event_changed=False,
         changed_event=changed_event,
-        argument_event=argument_event,
+        related_entry=related_entry,
         user=None,
         created_at=datetime.now(UTC),
     )
@@ -86,7 +86,7 @@ def test_numberless_event_is_named_by_its_title(
 def test_unset_current_names_the_event_that_was_on_stage() -> None:
     change = _change(
         ScheduleChangeType.SET_AS_CURRENT,
-        argument_event=_event(None, "Перерыв"),
+        related_entry=_event(None, "Перерыв"),
     )
 
     assert (
