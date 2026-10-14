@@ -16,6 +16,7 @@
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
@@ -52,8 +53,8 @@
 
 	let resultsSummary = $derived(
 		filtered.length === participants.length
-			? `Всего участников: ${participants.length}`
-			: `Показано ${filtered.length} из ${participants.length}`
+			? m.voting_participants_total({ count: participants.length })
+			: m.voting_participants_filtered({ shown: filtered.length, total: participants.length })
 	);
 
 	let votedParticipant = $derived(
@@ -71,15 +72,15 @@
 </script>
 
 <svelte:head>
-	<title>{nomination ? `${nomination.title} · ` : ''}Голосование · ФАН ФАН</title>
+	<title>{nomination ? `${nomination.title} · ` : ''}{m.nav_voting()} · {m.brand_name()}</title>
 </svelte:head>
 
 {#if !nomination}
 	<!-- Voting is online-only, so there is no saved copy to show — say so plainly
 	     instead of crashing on a missing nomination. -->
 	<OfflineUnavailableState
-		title="Голосование доступно только онлайн"
-		message="Подключись к интернету, чтобы голосовать за участников."
+		title={m.voting_online_only_title()}
+		message={m.voting_online_only_message()}
 	/>
 {:else}
 	{#if showVoteHint || nomination?.works_url}
@@ -89,7 +90,7 @@
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				{#if showVoteHint}
 					<p class="text-sm text-muted-foreground sm:text-base">
-						Выбери участника, чтобы отдать голос
+						{m.voting_pick_hint()}
 					</p>
 				{/if}
 				{#if nomination?.works_url}
@@ -102,7 +103,7 @@
 						class="shrink-0 self-start"
 					>
 						<ExternalLink data-icon="inline-start" />
-						Смотреть работы
+						{m.voting_see_works()}
 					</Button>
 				{/if}
 			</div>
@@ -132,8 +133,8 @@
 			<Input
 				bind:value={searchQuery}
 				name="participant_search"
-				aria-label="Поиск участников в номинации"
-				placeholder="Поиск по имени или номеру…"
+				aria-label={m.voting_search_label()}
+				placeholder={m.voting_search_placeholder()}
 				autocomplete="off"
 				spellcheck={false}
 				class="pr-8 pl-9"
@@ -143,7 +144,7 @@
 					type="button"
 					class="absolute right-2 text-muted-foreground hover:text-foreground"
 					onclick={() => (searchQuery = '')}
-					aria-label="Очистить поиск"
+					aria-label={m.common_clear_search()}
 				>
 					<X class="size-4" />
 				</button>
@@ -178,15 +179,23 @@
 		<!-- Two distinct states: a search that matched nothing (recoverable —
 		     offer the reset), and a nomination with no participants at all,
 		     where clearing the search would do nothing. -->
-		<EmptyState icon={Users} title="Ничего не нашлось" message="Попробуй изменить запрос">
+		<EmptyState
+			icon={Users}
+			title={m.voting_nothing_found()}
+			message={m.voting_nothing_found_hint()}
+		>
 			<button
 				onclick={() => (searchQuery = '')}
 				class="mt-3 text-sm font-medium text-primary hover:underline"
 			>
-				Очистить поиск
+				{m.common_clear_search()}
 			</button>
 		</EmptyState>
 	{:else}
-		<EmptyState icon={Users} title="Участников пока нет" message="Появятся ближе к фестивалю" />
+		<EmptyState
+			icon={Users}
+			title={m.voting_no_participants()}
+			message={m.voting_no_participants_hint()}
+		/>
 	{/if}
 {/if}

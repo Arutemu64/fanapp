@@ -14,7 +14,7 @@ also reused as `WHERE` expressions (`get_by_queue`, subscription-distance
 filters), so keeping them in SQL earns its place.
 
 What was missing is any **real-world anchor**. Nothing recorded when an event
-actually went on stage, so predicted times could not reflect show *drift* — an
+actually went on stage, so predicted times could not reflect show _drift_ — an
 act starting late or overrunning. Both the schedule screen and the subscription
 push approximated "how far ahead" from the static, drift-blind `time_until`
 (cumulative planned duration from the schedule start), which shifts only when a
@@ -23,7 +23,7 @@ overloaded, easy-to-misread value had already produced a unit bug (subtracting a
 queue index from a duration).
 
 Handling drift needs an absolute predicted start (`≈ 14:35`) anchored to the
-*actual* start of the current event and clamped to the wall clock. That value
+_actual_ start of the current event and clamped to the wall clock. That value
 depends on `now`, which a SQL column property cannot express without threading a
 bind parameter through every query — and it still could not express the
 "clamp to now on overrun" rule cleanly.
@@ -37,7 +37,7 @@ core domain.
 
 - The anchor is the current event's `actual_start_time`; each later non-skipped
   event's `expected_start_time = max(anchor + Σ(durations + transition_buffer),
-  now)`. The `max(..., now)` term is what reflects an overrunning current act.
+now)`. The `max(..., now)` term is what reflects an overrunning current act.
 - `transition_buffer` (seconds between events) is an app-level setting on
   `LimitsConfig`, not a per-event column.
 - The domain stays clock-free: `ScheduleEvent.set_current(now)` receives the

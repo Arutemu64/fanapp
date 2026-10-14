@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { m } from '#lib/paraglide/messages.js';
+
 import {
 	formatDayHeading,
 	formatDuration,
@@ -8,7 +10,6 @@ import {
 	formatRelativeTime,
 	formatUntil,
 	fromEventDateTimeLocal,
-	pluralize,
 	previousDayKey,
 	toEventDateTimeLocal
 } from './formatters';
@@ -98,23 +99,31 @@ describe('festival start helpers', () => {
 	});
 });
 
-describe('pluralize', () => {
-	const forms = ['событие', 'события', 'событий'] as const;
+// Plural forms live in the messages (CLDR categories via `Intl.PluralRules`), so
+// these pin both languages' rules: Russian's one/few/many split, English's two.
+describe('plural messages', () => {
+	it.each([
+		[0, '0 минут'],
+		[1, '1 минута'],
+		[2, '2 минуты'],
+		[5, '5 минут'],
+		[11, '11 минут'],
+		[12, '12 минут'],
+		[21, '21 минута'],
+		[22, '22 минуты'],
+		[25, '25 минут'],
+		[111, '111 минут'],
+		[1.5, '1.5 минуты']
+	])('ru %d → %s', (count, expected) => {
+		expect(m.duration_minutes({ count }, { locale: 'ru' })).toBe(expected);
+	});
 
 	it.each([
-		[0, 'событий'],
-		[1, 'событие'],
-		[2, 'события'],
-		[5, 'событий'],
-		[11, 'событий'],
-		[12, 'событий'],
-		[21, 'событие'],
-		[22, 'события'],
-		[25, 'событий'],
-		[111, 'событий'],
-		[1.5, 'события']
-	])('%d → %s', (count, expected) => {
-		expect(pluralize(count, ...forms)).toBe(expected);
+		[1, '1 minute'],
+		[2, '2 minutes'],
+		[21, '21 minutes']
+	])('en %d → %s', (count, expected) => {
+		expect(m.duration_minutes({ count }, { locale: 'en' })).toBe(expected);
 	});
 });
 

@@ -54,7 +54,7 @@ track/category ([Sched](https://sched.com/guide/custom-and-default-session-field
 
 - `scripts/generate_schedule_template.py`: leave `nomination_title` **and**
   `block_title` blank on the break/opening/closing sample rows, and order the
-  rows so the break sits *between* blocks, modelling the recommended shape:
+  rows so the break sits _between_ blocks, modelling the recommended shape:
 
   1. `Открытие фестиваля` — interlude (no number, no block, no nomination)
   2. `Дефиле «Наруто»` — Косплей / Одиночное дефиле
@@ -65,6 +65,7 @@ track/category ([Sched](https://sched.com/guide/custom-and-default-session-field
 
   Regenerate with `just backend-generate-schedule-template`; the parser test
   feeds the committed file back through `parse_schedule_from_excel`.
+
 - `FileFormatGuide.svelte`: update the per-column descriptions for
   `nomination_title`/`block_title` (optional, e.g. пусто у перерыва и
   открытия/закрытия) and rewrite the footnote — blank cells are now allowed in
@@ -75,7 +76,7 @@ track/category ([Sched](https://sched.com/guide/custom-and-default-session-field
 
 Two rules, keyed on **block presence** rather than a two-field AND:
 
-1. **No `block_title` → interlude.** Renders as a top-level row *between* block
+1. **No `block_title` → interlude.** Renders as a top-level row _between_ block
    sections. Block is the top-level grouping key, so a row without one has
    nowhere to nest. A stray `nomination_title` on such a row is simply not shown
    as a header.
@@ -83,8 +84,8 @@ Two rules, keyed on **block presence** rather than a two-field AND:
    block header, no nomination sub-header** (a bare row inside the block).
 
 This gives organizers a deliberate choice and designs away the mid-block
-double-header problem: a break *between* blocks leaves block blank (→ interlude);
-a pause *inside* a block gets that block with a blank nomination (→ stays inside,
+double-header problem: a break _between_ blocks leaves block blank (→ interlude);
+a pause _inside_ a block gets that block with a blank nomination (→ stays inside,
 no stray header). The guide states this explicitly.
 
 `buildScheduleGroups` returns an ordered list of `ScheduleBlockGroup |
@@ -98,7 +99,7 @@ schedule so filtering never re-identifies a group).
 ### 4. Frontend rendering
 
 - Interlude nodes reuse `EventCard` through a new `variant: 'default' |
-  'interlude'` prop so mark-current, skip, the `Сейчас` highlight, and the
+'interlude'` prop so mark-current, skip, the `Сейчас` highlight, and the
   duration/countdown meta all keep working. `variant="interlude"` drops the
   number column (interludes stand alone, not in the numbered list). The subscribe
   bell and the staff strip both stay — subscribing to the opening/closing is

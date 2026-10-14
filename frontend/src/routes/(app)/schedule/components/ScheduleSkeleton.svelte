@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	// Placeholder that mirrors the schedule's real structure — filter bar, then
 	// block sections of card rows (leading number box, two text lines, trailing
@@ -14,7 +15,7 @@
 </script>
 
 <div class="flex flex-col gap-4" role="status" aria-live="polite">
-	<span class="sr-only">Загрузка программы…</span>
+	<span class="sr-only">{m.schedule_loading()}</span>
 
 	<!-- Filter bar: search field + scope toggle -->
 	<div class="flex flex-col gap-3">

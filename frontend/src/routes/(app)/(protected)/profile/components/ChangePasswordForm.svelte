@@ -9,6 +9,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		hasPassword: boolean;
@@ -38,7 +39,10 @@
 		e.preventDefault();
 
 		if (!isValid) {
-			newPasswordError = `Новый пароль должен быть от ${MIN_PASSWORD_LENGTH} до ${MAX_PASSWORD_LENGTH} символов`;
+			newPasswordError = m.password_length_error({
+				min: MIN_PASSWORD_LENGTH,
+				max: MAX_PASSWORD_LENGTH
+			});
 			return;
 		}
 
@@ -50,7 +54,7 @@
 		try {
 			await onSave(body);
 		} catch (error) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
+			formError = getApiErrorDetail(error) ?? m.password_change_failed();
 		}
 	}
 </script>
@@ -65,24 +69,26 @@
 	<Field.FieldGroup class="gap-4">
 		{#if hasPassword}
 			<Field.Field>
-				<Field.FieldLabel for="old_password">Старый пароль</Field.FieldLabel>
+				<Field.FieldLabel for="old_password">{m.password_old_label()}</Field.FieldLabel>
 				<PasswordInput
 					id="old_password"
 					name="current_password"
 					autocomplete="current-password"
-					revealLabel="старый пароль"
+					showLabel={m.password_show_old()}
+					hideLabel={m.password_hide_old()}
 					bind:value={oldPassword}
 					oninput={() => (formError = '')}
 				/>
 			</Field.Field>
 		{/if}
 		<Field.Field data-invalid={newPasswordError ? true : undefined}>
-			<Field.FieldLabel for="new_password">Новый пароль</Field.FieldLabel>
+			<Field.FieldLabel for="new_password">{m.password_new_label()}</Field.FieldLabel>
 			<PasswordInput
 				id="new_password"
 				name="new_password"
 				autocomplete="new-password"
-				revealLabel="новый пароль"
+				showLabel={m.password_show_new()}
+				hideLabel={m.password_hide_new()}
 				maxlength={MAX_PASSWORD_LENGTH}
 				color={newPasswordError ? 'red' : undefined}
 				bind:value={newPassword}
@@ -107,7 +113,7 @@
 					{:else}
 						<XCircle class="size-4 shrink-0" />
 					{/if}
-					Минимум {MIN_PASSWORD_LENGTH} символов
+					{m.password_min_length({ count: MIN_PASSWORD_LENGTH })}
 				</li>
 			</ul>
 		</Field.Field>
@@ -116,9 +122,9 @@
 	<Button type="submit" class="w-full" disabled={pending}>
 		{#if pending}
 			<Spinner data-icon="inline-start" />
-			Сохранение…
+			{m.common_saving()}
 		{:else}
-			{hasPassword ? 'Сменить пароль' : 'Установить пароль'}
+			{hasPassword ? m.password_change() : m.password_set()}
 		{/if}
 	</Button>
 </form>

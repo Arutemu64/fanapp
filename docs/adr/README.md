@@ -3,8 +3,8 @@
 This directory holds the project's Architecture Decision Records — short,
 immutable documents that capture **why** a significant architectural choice was
 made, the context around it, and the consequences we accepted. `AGENTS.md` and
-the guides in [`docs/`](../) describe how the system works *today*; ADRs explain
-*why it got that way* and *what we rejected* — the reasoning that would
+the guides in [`docs/`](../) describe how the system works _today_; ADRs explain
+_why it got that way_ and _what we rejected_ — the reasoning that would
 otherwise live only in someone's head.
 
 ## When to write an ADR
@@ -29,7 +29,7 @@ focused on a **single** decision. Copy [`template.md`](template.md) to start.
 
 ## Lifecycle
 
-ADRs are **immutable once Accepted**. To change a past decision, write a *new*
+ADRs are **immutable once Accepted**. To change a past decision, write a _new_
 ADR that supersedes the old one, and update the old one's status to
 `Superseded by ADR-NNNN`. Never rewrite the reasoning of an accepted record —
 git history and the supersession chain are the archive.
@@ -43,31 +43,32 @@ permanent — it is how other ADRs and commits reference the decision.
 
 ## Index
 
-| ADR | Title | Status |
-| --- | --- | --- |
-| [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
-| [0002](0002-hexagonal-ddd-layering.md) | Hexagonal + DDD layering with enforced boundaries | Accepted |
-| [0003](0003-persistence-gateways-over-repositories.md) | Persistence gateways over repositories (no CQRS split) | Accepted |
-| [0004](0004-transactional-outbox-for-domain-events.md) | Transactional outbox for domain-event delivery | Accepted |
-| [0005](0005-ports-as-protocol-with-explicit-adapter-subclassing.md) | Ports as `Protocol` with explicit adapter subclassing | Accepted |
-| [0006](0006-dishka-for-dependency-injection.md) | Dishka for dependency injection | Accepted |
-| [0007](0007-client-rendered-spa-frontend.md) | Client-rendered SvelteKit SPA frontend | Accepted |
-| [0008](0008-schedule-timing-computed-in-application-layer.md) | Absolute schedule times computed in the application layer | Superseded by [0014](0014-cache-the-schedule-in-redis-with-etag.md) |
-| [0009](0009-yandex-smartcaptcha-over-cloudflare-turnstile.md) | Yandex SmartCaptcha over Cloudflare Turnstile | Accepted |
-| [0010](0010-http-triggered-background-jobs.md) | HTTP-triggered background jobs use a status row, outbox and durable consumer | Accepted |
-| [0011](0011-vitest-for-frontend-unit-tests.md) | Vitest for frontend unit tests | Accepted |
-| [0012](0012-single-oauth-callback-keyed-on-the-oidc-subject.md) | One OAuth callback per provider, identity keyed on the OIDC subject | Accepted |
-| [0013](0013-provider-agnostic-social-identity-flows.md) | Provider-agnostic social identity flows, last-sign-in-method unlink rule | Accepted |
-| [0014](0014-cache-the-schedule-in-redis-with-etag.md) | Cache the schedule in Redis with an ETag; drop request-time schedule timing | Accepted |
-| [0015](0015-listen-notify-wakes-the-outbox-relay.md) | LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop | Accepted |
-| [0016](0016-workbox-precaching-via-vite-pwa.md) | Workbox precaching via vite-pwa for the service worker | Superseded by [0020](0020-workbox-precache-list-from-app-manifest.md) |
-| [0017](0017-hey-api-for-the-frontend-api-client.md) | `@hey-api/openapi-ts` for the frontend API client | Accepted; per-call client superseded by [0021](0021-tanstack-query-for-server-state.md) |
-| [0018](0018-psycopg-3-as-the-postgres-driver.md) | psycopg 3 as the PostgreSQL driver | Accepted |
-| [0019](0019-photoswipe-for-the-map-viewer.md) | PhotoSwipe for the map viewer | Accepted |
-| [0020](0020-workbox-precache-list-from-app-manifest.md) | Workbox precache list from `$app/manifest`, without vite-pwa | Accepted |
-| [0021](0021-tanstack-query-for-server-state.md) | TanStack Query for server state, persisted to IndexedDB | Accepted; mutations superseded by [0022](0022-createmutation-for-writes.md) |
-| [0022](0022-createmutation-for-writes.md) | `createMutation` for writes, online-only | Accepted |
-| [0023](0023-keyset-cursor-pagination-for-feeds.md) | Keyset cursor pagination for the infinite feeds | Accepted; users-directory alternative superseded by [0024](0024-keyset-paging-for-the-users-directory.md) |
-| [0024](0024-keyset-paging-for-the-users-directory.md) | Keyset paging for the users directory; bounded sets stay unpaged | Accepted |
-| [0025](0025-dicebear-avatars-from-a-stored-seed.md) | DiceBear avatars drawn in the browser from a stored seed | Accepted |
-| [0026](0026-schedule-blocks-as-block-start-entries.md) | Schedule blocks as block-start entries | Accepted |
+| ADR                                                                 | Title                                                                        | Status                                                                                                    |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [0001](0001-record-architecture-decisions.md)                       | Record architecture decisions                                                | Accepted                                                                                                  |
+| [0002](0002-hexagonal-ddd-layering.md)                              | Hexagonal + DDD layering with enforced boundaries                            | Accepted                                                                                                  |
+| [0003](0003-persistence-gateways-over-repositories.md)              | Persistence gateways over repositories (no CQRS split)                       | Accepted                                                                                                  |
+| [0004](0004-transactional-outbox-for-domain-events.md)              | Transactional outbox for domain-event delivery                               | Accepted                                                                                                  |
+| [0005](0005-ports-as-protocol-with-explicit-adapter-subclassing.md) | Ports as `Protocol` with explicit adapter subclassing                        | Accepted                                                                                                  |
+| [0006](0006-dishka-for-dependency-injection.md)                     | Dishka for dependency injection                                              | Accepted                                                                                                  |
+| [0007](0007-client-rendered-spa-frontend.md)                        | Client-rendered SvelteKit SPA frontend                                       | Accepted                                                                                                  |
+| [0008](0008-schedule-timing-computed-in-application-layer.md)       | Absolute schedule times computed in the application layer                    | Superseded by [0014](0014-cache-the-schedule-in-redis-with-etag.md)                                       |
+| [0009](0009-yandex-smartcaptcha-over-cloudflare-turnstile.md)       | Yandex SmartCaptcha over Cloudflare Turnstile                                | Accepted                                                                                                  |
+| [0010](0010-http-triggered-background-jobs.md)                      | HTTP-triggered background jobs use a status row, outbox and durable consumer | Accepted                                                                                                  |
+| [0011](0011-vitest-for-frontend-unit-tests.md)                      | Vitest for frontend unit tests                                               | Accepted                                                                                                  |
+| [0012](0012-single-oauth-callback-keyed-on-the-oidc-subject.md)     | One OAuth callback per provider, identity keyed on the OIDC subject          | Accepted                                                                                                  |
+| [0013](0013-provider-agnostic-social-identity-flows.md)             | Provider-agnostic social identity flows, last-sign-in-method unlink rule     | Accepted                                                                                                  |
+| [0014](0014-cache-the-schedule-in-redis-with-etag.md)               | Cache the schedule in Redis with an ETag; drop request-time schedule timing  | Accepted                                                                                                  |
+| [0015](0015-listen-notify-wakes-the-outbox-relay.md)                | LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop             | Accepted                                                                                                  |
+| [0016](0016-workbox-precaching-via-vite-pwa.md)                     | Workbox precaching via vite-pwa for the service worker                       | Superseded by [0020](0020-workbox-precache-list-from-app-manifest.md)                                     |
+| [0017](0017-hey-api-for-the-frontend-api-client.md)                 | `@hey-api/openapi-ts` for the frontend API client                            | Accepted; per-call client superseded by [0021](0021-tanstack-query-for-server-state.md)                   |
+| [0018](0018-psycopg-3-as-the-postgres-driver.md)                    | psycopg 3 as the PostgreSQL driver                                           | Accepted                                                                                                  |
+| [0019](0019-photoswipe-for-the-map-viewer.md)                       | PhotoSwipe for the map viewer                                                | Accepted                                                                                                  |
+| [0020](0020-workbox-precache-list-from-app-manifest.md)             | Workbox precache list from `$app/manifest`, without vite-pwa                 | Accepted                                                                                                  |
+| [0021](0021-tanstack-query-for-server-state.md)                     | TanStack Query for server state, persisted to IndexedDB                      | Accepted; mutations superseded by [0022](0022-createmutation-for-writes.md)                               |
+| [0022](0022-createmutation-for-writes.md)                           | `createMutation` for writes, online-only                                     | Accepted                                                                                                  |
+| [0023](0023-keyset-cursor-pagination-for-feeds.md)                  | Keyset cursor pagination for the infinite feeds                              | Accepted; users-directory alternative superseded by [0024](0024-keyset-paging-for-the-users-directory.md) |
+| [0024](0024-keyset-paging-for-the-users-directory.md)               | Keyset paging for the users directory; bounded sets stay unpaged             | Accepted                                                                                                  |
+| [0025](0025-dicebear-avatars-from-a-stored-seed.md)                 | DiceBear avatars drawn in the browser from a stored seed                     | Accepted                                                                                                  |
+| [0026](0026-schedule-blocks-as-block-start-entries.md)              | Schedule blocks as block-start entries                                       | Accepted                                                                                                  |
+| [0027](0027-paraglide-for-frontend-i18n.md)                         | Paraglide JS for frontend i18n; client-side locale, reload on switch         | Accepted                                                                                                  |

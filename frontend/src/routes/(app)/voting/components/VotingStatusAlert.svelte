@@ -5,6 +5,7 @@
 	import type { GetVotingStateOutput, VotingStatus } from '#lib/api/generated/index.js';
 
 	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		votingState?: GetVotingStateOutput;
@@ -23,13 +24,13 @@
 	function getStatusMessage(status: VotingStatus): string {
 		switch (status) {
 			case 'open':
-				return 'Голосование открыто. Ты можешь голосовать за участников.';
+				return m.voting_status_open();
 			case 'not_authenticated':
-				return 'Войди в аккаунт, чтобы участвовать в голосовании.';
+				return m.voting_status_login();
 			case 'no_ticket':
-				return 'Чтобы голосовать, привяжи билет.';
+				return m.voting_status_link_ticket();
 			case 'disabled':
-				return 'Голосование сейчас закрыто.';
+				return m.voting_status_closed();
 			default:
 				return '';
 		}
@@ -42,7 +43,9 @@
 		<Alert.Description class="flex items-center gap-1">
 			<span>{getStatusMessage(votingState.status)}</span>
 			{#if votingState.status === 'no_ticket'}
-				<a href={resolve('profile/ticket')} class="font-medium underline">Привязать билет</a>
+				<a href={resolve('profile/ticket')} class="font-medium underline"
+					>{m.voting_link_ticket_link()}</a
+				>
 			{/if}
 		</Alert.Description>
 	</Alert.Root>

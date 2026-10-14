@@ -2,8 +2,9 @@
 	import { prefersReducedMotion } from 'svelte/motion';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
-	import { formatEventNumber, formatFestivalDateTime, pluralize } from '#lib/utils/formatters.js';
+	import { formatEventNumber, formatFestivalDateTime } from '#lib/utils/formatters.js';
 
 	import type { FestivalPhase } from './festivalPhase';
 	import type { FeaturedAct } from './stage';
@@ -17,7 +18,7 @@
 
 	let { phase, festivalStart, featured }: Props = $props();
 
-	let featuredLabel = $derived(featured?.live ? 'Сейчас на сцене' : 'Скоро начало');
+	let featuredLabel = $derived(featured?.live ? m.hero_on_stage() : m.hero_starting_soon());
 	let featuredNumber = $derived(formatEventNumber(featured?.event.number));
 
 	// Program start, on the venue clock. Configurable via GET /config and passed in
@@ -44,10 +45,10 @@
 	let seconds = $derived(Math.floor((remaining % MINUTE) / SECOND));
 
 	let units = $derived([
-		{ id: 'days', value: days, label: pluralize(days, 'день', 'дня', 'дней') },
-		{ id: 'hours', value: hours, label: pluralize(hours, 'час', 'часа', 'часов') },
-		{ id: 'minutes', value: minutes, label: pluralize(minutes, 'минута', 'минуты', 'минут') },
-		{ id: 'seconds', value: seconds, label: pluralize(seconds, 'секунда', 'секунды', 'секунд') }
+		{ id: 'days', value: days, label: m.hero_unit_days({ count: days }) },
+		{ id: 'hours', value: hours, label: m.hero_unit_hours({ count: hours }) },
+		{ id: 'minutes', value: minutes, label: m.hero_unit_minutes({ count: minutes }) },
+		{ id: 'seconds', value: seconds, label: m.hero_unit_seconds({ count: seconds }) }
 	]);
 
 	function pad(value: number): string {
@@ -112,7 +113,7 @@
 	<div class="flex flex-col gap-3 p-4 pt-16 sm:p-6 sm:pt-24">
 		{#if phase === 'before'}
 			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white/85 uppercase">
-				До начала фестиваля
+				{m.hero_until_start()}
 			</h2>
 			<!-- Hide the live-ticking grid from screen readers; the static start date conveys it -->
 			<div class="grid max-w-md grid-cols-4 gap-2" aria-hidden="true">
@@ -144,7 +145,7 @@
 					</div>
 				{/each}
 			</div>
-			<p class="sr-only">Начало: {festivalDate}</p>
+			<p class="sr-only">{m.hero_starts_at({ date: festivalDate })}</p>
 		{:else if phase === 'during' && featured}
 			<h2
 				id="hero-heading"
@@ -182,16 +183,15 @@
 				</div>
 			</div>
 		{:else if phase === 'during'}
-			<h2 id="hero-heading" class="text-lg font-semibold">Фестиваль идёт</h2>
+			<h2 id="hero-heading" class="text-lg font-semibold">{m.hero_during()}</h2>
 		{:else}
-			<h2 id="hero-heading" class="text-lg font-semibold">Фестиваль завершён</h2>
+			<h2 id="hero-heading" class="text-lg font-semibold">{m.hero_ended()}</h2>
 			<p class="max-w-prose text-sm leading-relaxed text-white/85">
-				Спасибо, что были с нами. До встречи в следующем году. Поделись впечатлениями&nbsp;—
-				расскажи, как для тебя прошёл фестиваль.
+				{m.hero_ended_text()}
 			</p>
 			<!-- Guests land on the auth-gated feedback page, which bounces them to
 				 login and returns them here after (LOGIN_NEXT_PARAM). -->
-			<Button href="/feedback" size="sm" class="self-start">Оставить отзыв</Button>
+			<Button href="/feedback" size="sm" class="self-start">{m.hero_leave_feedback()}</Button>
 		{/if}
 	</div>
 </section>

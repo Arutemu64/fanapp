@@ -2,7 +2,7 @@
 
 The rule: **one external dependency, one pinned version, everywhere.** When the
 same Docker image or tool is pinned in more than one file, every site names the
-*same exact* version and they all move together in a single change. A floating
+_same exact_ version and they all move together in a single change. A floating
 tag or a stray unpinned install (`pip install --upgrade uv`) silently
 reintroduces drift, and drift here means a test, a migration or a lint gate runs
 against a different build than production.
@@ -13,22 +13,22 @@ mismatch unexplained.
 
 ## The shared pins
 
-| Dependency | Pinned in |
-| --- | --- |
-| `postgres:18.6-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
-| `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
-| `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
-| `gitleaks` | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job) |
-| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input) |
-| `node` | `mise.toml`, `frontend/Dockerfile`, `.claude/setup.sh`, CI (`setup-node`) |
-| `python` (exact runtime pin) | `mise.toml`, `backend/.python-version` |
+| Dependency                   | Pinned in                                                                                                                                                         |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postgres:18.6-alpine`       | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py`                                                            |
+| `uv`                         | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
+| `hadolint`                   | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim                                                                      |
+| `gitleaks`                   | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job)                                                                                   |
+| `pnpm`                       | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input)               |
+| `node`                       | `mise.toml`, `frontend/Dockerfile`, `.claude/setup.sh`, CI (`setup-node`)                                                                                         |
+| `python` (exact runtime pin) | `mise.toml`, `backend/.python-version`                                                                                                                            |
 
 Prefer an exact pin over a floating tag so every consumer resolves identically.
 
 `backend/pyproject.toml`'s `requires-python` is deliberately **not** a lockstep
 site. It is a compatibility floor — the minimum interpreter the code needs
 ([PEP 621](https://packaging.python.org/en/latest/specifications/pyproject-toml/#requires-python)
-defines it as version *requirements*, not the build you run) — so it stays at
+defines it as version _requirements_, not the build you run) — so it stays at
 the minor (`>=3.14`) while the two exact pins above move per patch. Pinning it to
 the latest patch is what turned a trailing `.python-version` from harmless drift
 into a hard failure: [PR #565](https://github.com/Arutemu64/fanapp/pull/565)
@@ -59,7 +59,7 @@ site needs no group, just its own review PR.
 
 [`renovate.jsonc`](../renovate.jsonc) automates the bump-together part:
 
-* **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
+- **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
   `python`) consolidate each shared pin into a single PR, so no site is left
   behind. A shared pin whose sites are read by different managers — and so by
   different datasources — needs its group most: the exact `python` pin is read
@@ -67,7 +67,7 @@ site needs no group, just its own review PR.
   different versions. The `requires-python` floor (pep621) is matched by the same
   group but frozen by a follow-on `rangeStrategy: replace` rule, so it never
   chases the patch and never re-tightens onto a lagging `.python-version`.
-* **`customManagers`** (regex) cover the pins the built-in managers cannot see:
+- **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
   `.claude/setup.sh` shim; the uv, pnpm and node pins in `.claude/setup.sh`
@@ -77,7 +77,7 @@ site needs no group, just its own review PR.
   in `backend/pyproject.toml`; and the uv version in the `backend/Dockerfile`
   builder tag, which the `dockerfile` manager is switched off for (next
   bullet).
-* **The uv builder image is aged through GitHub releases, not GHCR.** GHCR
+- **The uv builder image is aged through GitHub releases, not GHCR.** GHCR
   returns no release timestamps
   ([Renovate docs](https://docs.renovatebot.com/key-concepts/minimum-release-age/)),
   and since Renovate 42 `minimumReleaseAgeBehaviour` defaults to
@@ -88,11 +88,11 @@ site needs no group, just its own review PR.
   already uses, so the two always pick the same version. `timestamp-optional`
   for the image would not fix it: with no age check the image jumps to the
   newest tag while the aged sites stay one release behind.
-* **`uv_build` is matched as `uv-build`.** The `pep621` manager normalizes
+- **`uv_build` is matched as `uv-build`.** The `pep621` manager normalizes
   PyPI names per PEP 503 before rules see them, and `matchPackageNames` matches
   that normalized `packageName`, so the `uv_build` spelling from `pyproject.toml`
   never joined the `uv` group and its floor drifted in a branch of its own.
-* **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
+- **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
   only, so a pin like `ENV PNPM_VERSION` in `frontend/Dockerfile` is invisible
   to it and drifts behind the other sites. It carries a
@@ -104,17 +104,17 @@ site needs no group, just its own review PR.
   the file a reader is already looking at. The comment must sit on the line
   **directly above** the `ENV`/`ARG`; a blank line between them breaks the
   match.
-* **Version inputs to setup actions need no custom manager.** The
+- **Version inputs to setup actions need no custom manager.** The
   `github-actions` manager reads supported `uses … with` inputs itself, so the
   `setup-uv`, `pnpm/action-setup` and `setup-node` version inputs in `ci.yml`
   are extracted natively — as `astral-sh/uv`, `pnpm` and `node`, which is why
   the `uv` group matches `astral-sh/uv` as well as `uv`. Adding a regex manager
   for one of those lines gives the same string two owners with two datasources,
   and then two disagreeing answers about the latest version. The pnpm input
-  still has to *exist* in the workflow, though: action-setup v6 cannot read
+  still has to _exist_ in the workflow, though: action-setup v6 cannot read
   `packageManager` from the subdirectory `frontend/package.json`
   ([pnpm/action-setup#227](https://github.com/pnpm/action-setup/issues/227)).
-* Third-party GitHub Actions are pinned to commit SHAs
+- Third-party GitHub Actions are pinned to commit SHAs
   (`helpers:pinGitHubActionDigests`) with a `# vX` tag comment.
 
 **Adding a new pin site for an already-tracked dependency means extending the
@@ -124,7 +124,7 @@ the other sites and silently reintroduces the drift this rule exists to prevent.
 ### The backstop: CI builds the images
 
 Grouping is best-effort, not a guarantee. A group only carries the sites that
-had an update *when Renovate cut the branch*, and its members come from
+had an update _when Renovate cut the branch_, and its members come from
 different datasources (PyPI, GitHub releases, the GHCR tag list) that learn
 about a release at different moments — so a member can be left at the old
 version in an otherwise correct-looking PR. [PR #360](https://github.com/Arutemu64/fanapp/pull/360)
@@ -137,7 +137,7 @@ reads from GitHub releases.
 
 So `ci.yml` has an `images` job that builds both images (without pushing) on any
 change to `backend/**`, `frontend/**` or a `Dockerfile`. Before it existed the
-only real build ran in `docker-publish.yml` *after* merge, which meant a broken
+only real build ran in `docker-publish.yml` _after_ merge, which meant a broken
 build was discovered as a red `main` that could no longer publish. **Review a
 shared-pin PR against the table above rather than trusting the diff to be
 complete** — the `images` job catches a drifted pin only when the drift actually
@@ -172,9 +172,9 @@ are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
 `packageRules` are applied in order and a later rule overrides an earlier one.
 Two consequences to keep in mind when editing:
 
-* The shipped-bundle carve-out must stay **below** the `devDependencies`
+- The shipped-bundle carve-out must stay **below** the `devDependencies`
   automerge rule it is carving out of, or it silently does nothing.
-* The shared-pin groups stay **last**, so nothing above them can claim a pinned
+- The shared-pin groups stay **last**, so nothing above them can claim a pinned
   dependency for a different `groupName`.
 
 ## Versioning the app
@@ -182,7 +182,7 @@ Two consequences to keep in mind when editing:
 The same "one version, one place" rule applies to the app's own version. There
 are exactly **two** identifiers, and they answer different questions.
 
-### Release version — *which release is this?*
+### Release version — _which release is this?_
 
 One number for the whole repo, held in `backend/pyproject.toml` (`[project]
 version`) and mirrored by a `vX.Y.Z` git tag.
@@ -215,14 +215,14 @@ not a compatibility promise, and it is keyed to the one boundary that does
 exist — **the deploy**, meaning an image against the server's `.env` and
 database.
 
-| Bump | When |
-| --- | --- |
-| PATCH | `just deploy` and nothing else: fixes, dependency bumps, refactors, copy. |
-| MINOR | Same, but attendees see something new — a feature, a page, a notification type. |
+| Bump  | When                                                                                                                                |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| PATCH | `just deploy` and nothing else: fixes, dependency bumps, refactors, copy.                                                           |
+| MINOR | Same, but attendees see something new — a feature, a page, a notification type.                                                     |
 | MAJOR | `just deploy` alone is **not** enough: a new required env var, a migration that cannot be rolled back, changed deployment topology. |
 
 MAJOR is the one that earns its keep: it is the only version signal that changes
-what a human has to *do*, and the failure it guards against — deploying blind
+what a human has to _do_, and the failure it guards against — deploying blind
 into a broken app on the morning of the convention — is a real one here.
 
 (`2.0.0` is an exception to that rule and says so: the 1.x line was the original
@@ -254,8 +254,8 @@ number from Conventional-Commits `type:` prefixes. We lint the PR title's shape
 (`.github/workflows/pr-title.yml` — the PR title is what squash-merge lands, so
 that, not individual commits, is what gets linted; see AGENTS.md "Commit & PR
 titles"), but nothing consumes the prefixes. The bump that matters most, MAJOR,
-is exactly the one no tool can infer — it marks *"`just deploy` alone is not
-enough"*, a judgment about deploy steps, not a diff. So the number stays a human
+is exactly the one no tool can infer — it marks _"`just deploy` alone is not
+enough"_, a judgment about deploy steps, not a diff. So the number stays a human
 call.
 
 If the release chore ever grates enough to automate, the title lint is already
@@ -265,18 +265,18 @@ and tag. semantic-release (fully hands-off, wrong for images that sometimes need
 manual MAJOR steps) and Changesets (monorepo/library-shaped) do not fit a single
 deployed app.
 
-### Build id — *which build is running?*
+### Build id — _which build is running?_
 
 The commit SHA. This, not the release version, is what a deploy pins and what
 ties an error to an exact bundle: every build between two releases carries the
 same release number.
 
-| Where | How it gets there |
-| --- | --- |
-| Image tag (`sha-1a2b3c4`) | `type=sha` in the publish workflow; pinned via `IMAGE_TAG` |
-| Backend Sentry release | `APP_BUILD` build arg → `/app/BUILD_ID` file → `common/version.py` |
-| Frontend Sentry release | `APP_BUILD` build arg → source-map upload release (`vite.config.ts`) |
-| Profile footer | `APP_BUILD` build arg → `__APP_BUILD__` constant, baked into the bundle |
+| Where                     | How it gets there                                                       |
+| ------------------------- | ----------------------------------------------------------------------- |
+| Image tag (`sha-1a2b3c4`) | `type=sha` in the publish workflow; pinned via `IMAGE_TAG`              |
+| Backend Sentry release    | `APP_BUILD` build arg → `/app/BUILD_ID` file → `common/version.py`      |
+| Frontend Sentry release   | `APP_BUILD` build arg → source-map upload release (`vite.config.ts`)    |
+| Profile footer            | `APP_BUILD` build arg → `__APP_BUILD__` constant, baked into the bundle |
 
 All four come from the same `github.sha`, so one deploy is one release across
 both services. Sentry
@@ -311,7 +311,7 @@ footer drops the SHA and Sentry gets no release, which is the honest answer for
 a build that has no published identity. A host build outside Docker
 (`just frontend-dev`) has neither, and the footer line hides itself.
 
-### What is deliberately *not* versioned
+### What is deliberately _not_ versioned
 
 The HTTP API has no `/v1` URL prefix and does not need one. Path versioning
 exists to let an old client keep working against a new server; with a single

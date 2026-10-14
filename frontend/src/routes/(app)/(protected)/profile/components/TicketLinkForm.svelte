@@ -10,10 +10,12 @@
 		getVotingStatusQueryKey,
 		linkTicketMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import RichText from '#lib/components/RichText.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
@@ -50,7 +52,7 @@
 		submitError = '';
 
 		if (!barcode.trim()) {
-			submitError = 'Введи номер билета';
+			submitError = m.ticket_enter_number();
 			return;
 		}
 
@@ -58,41 +60,44 @@
 			{ body: { barcode: barcode.trim() } },
 			{
 				onSuccess: () => {
-					toastService.add('Билет привязан', 'success');
+					toastService.add(m.ticket_linked_toast(), 'success');
 					barcode = '';
 				},
 				onError: (error) => {
-					submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
+					submitError = getApiErrorDetail(error) ?? m.ticket_link_failed();
 				}
 			}
 		);
 	}
 </script>
 
-<SettingsSection description="Привяжи билет, чтобы получить доступ к голосованию.">
+{#snippet code(text: string)}
+	<span class="font-mono font-medium">{text}</span>
+{/snippet}
+
+<SettingsSection description={m.ticket_description()}>
 	{#if user.ticket}
 		<div class="rounded-lg bg-success/10 p-4">
 			<div class="flex items-center gap-2">
 				<CheckCircle2 class="size-5 text-success" />
-				<span class="font-medium text-success">Билет привязан</span>
+				<span class="font-medium text-success">{m.ticket_linked_toast()}</span>
 			</div>
 			<p class="mt-2 text-sm text-success">
-				Номер: <span class="font-mono font-medium">{user.ticket.barcode}</span>
+				<RichText text={m.ticket_number_value({ barcode: user.ticket.barcode })} tags={{ code }} />
 			</p>
 		</div>
 	{:else}
 		<form class="flex flex-col gap-3" onsubmit={offlineGate.guard(handleLinkTicket)}>
 			<Field.Field data-invalid={submitError ? true : undefined}>
-				<Field.FieldLabel for="ticket-barcode">Номер билета</Field.FieldLabel>
+				<Field.FieldLabel for="ticket-barcode">{m.ticket_number_label()}</Field.FieldLabel>
 				<Field.FieldDescription id="ticket-barcode-hint">
-					Введи номер под штрихкодом бумажного или электронного билета. Если билета нет — попроси
-					специальный код у оргкомитета или волонтёра.
+					{m.ticket_number_hint()}
 				</Field.FieldDescription>
 				<Input
 					id="ticket-barcode"
 					name="ticket_barcode"
 					bind:value={barcode}
-					placeholder="Например, 1234567890"
+					placeholder={m.ticket_number_placeholder()}
 					autocomplete="off"
 					autocapitalize="off"
 					enterkeyhint="go"
@@ -114,9 +119,9 @@
 			>
 				{#if linkMutation.isPending}
 					<Spinner data-icon="inline-start" />
-					Привязка…
+					{m.ticket_linking()}
 				{:else}
-					Привязать билет
+					{m.ready_ticket_title()}
 				{/if}
 			</Button>
 		</form>

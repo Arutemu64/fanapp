@@ -138,6 +138,9 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('push', (event: PushEvent) => {
+	// Russian-only fallback for a payload that carries no text: the backend always
+	// sends a title and body, and a service worker can't read the page's locale
+	// (no localStorage there), so it has no way to pick a language.
 	let data: PushNotificationPayload = {
 		title: 'ФАН ФАН',
 		body: 'Новое уведомление',

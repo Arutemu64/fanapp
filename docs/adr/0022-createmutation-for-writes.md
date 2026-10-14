@@ -33,8 +33,9 @@ generated options. Its invalidation goes in the mutation's own callbacks:
 
 ```ts
 const subscribeMutation = createMutation(() => ({
-	...newSubscriptionMutation(),
-	onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
+  ...newSubscriptionMutation(),
+  onSuccess: () =>
+    queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() }),
 }));
 ```
 

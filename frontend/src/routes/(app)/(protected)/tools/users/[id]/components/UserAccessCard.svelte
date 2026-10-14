@@ -22,6 +22,7 @@
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { USER_ROLES } from '#lib/constants/users.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import {
 		canManagePermissions,
@@ -52,7 +53,7 @@
 	);
 	let hasWildcard = $derived(profile.permissions.includes('*'));
 	let grantedLabels = $derived(
-		profile.permissions.map((permission) => PERMISSION_LABELS[permission])
+		profile.permissions.map((permission) => PERMISSION_LABELS[permission]())
 	);
 
 	function invalidateUser() {
@@ -83,9 +84,9 @@
 			{
 				onSuccess: () => {
 					selectedRole = null;
-					toastService.add(`Роль изменена: ${getRoleLabel(role)}`, 'success');
+					toastService.add(m.user_role_changed({ role: getRoleLabel(role) }), 'success');
 				},
-				onError: (error) => toastService.error(error, 'Не удалось изменить роль')
+				onError: (error) => toastService.error(error, m.user_role_change_failed())
 			}
 		);
 	}
@@ -113,7 +114,7 @@
 				await revokeMutation.mutateAsync(variables);
 			}
 		} catch (error) {
-			toastService.error(error, 'Не удалось изменить права');
+			toastService.error(error, m.user_permissions_change_failed());
 		} finally {
 			pendingPermissions = pendingPermissions.filter((pending) => pending !== permission);
 		}
@@ -123,17 +124,17 @@
 <Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 	<div class="flex items-center gap-2">
 		<ShieldCheck class="size-5 text-primary" aria-hidden="true" />
-		<h2 class="text-base font-semibold text-foreground sm:text-lg">Доступ</h2>
+		<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.user_access()}</h2>
 	</div>
 
 	{#if isSelf}
 		<p class="text-sm text-muted-foreground">
-			Это ты. Свою роль и права может изменить только другой организатор.
+			{m.user_self_note()}
 		</p>
 	{/if}
 
 	<div class="flex flex-col gap-2">
-		<h3 id="user-role-label" class="text-xs text-muted-foreground">Роль</h3>
+		<h3 id="user-role-label" class="text-xs text-muted-foreground">{m.user_role()}</h3>
 		{#if canEditRole}
 			<div class="flex flex-col gap-2 sm:flex-row">
 				<Select.Root
@@ -153,11 +154,11 @@
 					</Select.Content>
 				</Select.Root>
 				{#if pickedRole !== profile.role}
-					<Button onclick={saveRole} disabled={roleMutation.isPending}>Сохранить роль</Button>
+					<Button onclick={saveRole} disabled={roleMutation.isPending}>{m.user_save_role()}</Button>
 				{/if}
 			</div>
 			<p class="text-xs text-muted-foreground">
-				Роль открывает разделы приложения. Права на каждый инструмент выдаются отдельно.
+				{m.user_role_hint()}
 			</p>
 		{:else}
 			<div><Badge variant="secondary">{getRoleLabel(profile.role)}</Badge></div>
@@ -165,9 +166,9 @@
 	</div>
 
 	<div class="flex flex-col gap-2 border-t border-border pt-4">
-		<h3 class="text-xs text-muted-foreground">Права</h3>
+		<h3 class="text-xs text-muted-foreground">{m.user_permissions()}</h3>
 		{#if hasWildcard}
-			<p class="text-sm text-foreground">Полный доступ: этому человеку открыты все инструменты.</p>
+			<p class="text-sm text-foreground">{m.user_full_access()}</p>
 		{/if}
 
 		{#if canEditPermissions}
@@ -175,7 +176,8 @@
 				{#each ASSIGNABLE_PERMISSIONS as permission (permission)}
 					{@const id = `permission-${permission.replace(':', '-')}`}
 					<li class="flex min-h-11 items-center justify-between gap-3 py-2">
-						<label for={id} class="text-sm text-foreground">{PERMISSION_LABELS[permission]}</label>
+						<label for={id} class="text-sm text-foreground">{PERMISSION_LABELS[permission]()}</label
+						>
 						<!-- Controlled: the switch shows the server's state, so a refused or
 						     failed change never leaves it flipped. -->
 						<Switch
@@ -196,7 +198,7 @@
 				{/each}
 			</div>
 		{:else if !hasWildcard}
-			<p class="text-sm text-muted-foreground">Нет прав на инструменты.</p>
+			<p class="text-sm text-muted-foreground">{m.user_no_permissions()}</p>
 		{/if}
 	</div>
 </Card.Root>

@@ -6,6 +6,9 @@
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	// Deviates from upstream: built-in accessible names go through Paraglide
+	// instead of fixed English text, so they follow the interface language.
+	import { m } from '#lib/paraglide/messages.js';
 	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
 	import { keyboardInset } from '#lib/utils/keyboardInset.js';
 
@@ -98,7 +101,7 @@
 				{#snippet child({ props })}
 					<Button variant="ghost" class="absolute top-4 right-4" size="icon-sm" {...props}>
 						<XIcon />
-						<span class="sr-only">Закрыть</span>
+						<span class="sr-only">{m.common_close()}</span>
 					</Button>
 				{/snippet}
 			</DialogPrimitive.Close>

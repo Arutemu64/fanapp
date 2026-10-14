@@ -6,13 +6,9 @@
 
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import {
-		formatDuration,
-		formatEventNumber,
-		formatUntil,
-		pluralize
-	} from '#lib/utils/formatters.js';
+	import { formatDuration, formatEventNumber, formatUntil } from '#lib/utils/formatters.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { canManageSchedule } from '#lib/utils/permissions.js';
 
@@ -75,7 +71,7 @@
 
 	function handleSubscribe() {
 		if (!user) {
-			toastService.add('Войди в аккаунт, чтобы подписаться', 'error');
+			toastService.add(m.event_login_to_subscribe(), 'error');
 			return;
 		}
 		subscribeModal = true;
@@ -134,7 +130,7 @@
 									></span>
 									<span class="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
 								</span>
-								Сейчас
+								{m.event_now()}
 							</Badge>
 						{/if}
 
@@ -144,7 +140,7 @@
 								class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 							>
 								<Ban class="size-3.5" />
-								Пропущено
+								{m.event_skipped()}
 							</Badge>
 						{/if}
 					</div>
@@ -171,13 +167,7 @@
 						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
 						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 							<BellRing class="mt-px size-3.5 shrink-0" />
-							Напомним за {event.user_subscription.counter}
-							{pluralize(
-								event.user_subscription.counter,
-								'выступление',
-								'выступления',
-								'выступлений'
-							)}
+							{m.event_remind_before({ count: event.user_subscription.counter })}
 						</span>
 					{/if}
 				</div>
@@ -195,7 +185,7 @@
 							? 'text-primary hover:bg-primary/10'
 							: 'text-muted-foreground hover:bg-accent hover:text-foreground'
 					]}
-					aria-label={event.user_subscription ? 'Отписаться' : 'Подписаться'}
+					aria-label={event.user_subscription ? m.event_unsubscribe() : m.event_subscribe()}
 					aria-pressed={event.user_subscription !== null}
 				>
 					{#if event.user_subscription}

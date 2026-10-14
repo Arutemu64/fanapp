@@ -15,6 +15,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { USER_ROLES } from '#lib/constants/users.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
@@ -50,7 +51,7 @@
 	function validateAmount(): boolean {
 		const parsed = parseAmount();
 		if (parsed === null || parsed < MIN_AMOUNT || parsed > MAX_AMOUNT) {
-			amountError = `Введи число от ${MIN_AMOUNT} до ${MAX_AMOUNT}`;
+			amountError = m.tickets_amount_error({ min: MIN_AMOUNT, max: MAX_AMOUNT });
 			return false;
 		}
 		amountError = '';
@@ -81,7 +82,7 @@
 			{
 				onSuccess: (data) => {
 					generatedBarcodes = data.barcodes;
-					toastService.add(`Готово! Создано билетов: ${data.barcodes.length}`, 'success');
+					toastService.add(m.tickets_generated({ count: data.barcodes.length }), 'success');
 				},
 				onError: (error) => {
 					const amountFieldError = getApiFieldError(error, 'amount');
@@ -89,7 +90,7 @@
 						amountError = amountFieldError;
 						return;
 					}
-					submitError = getApiErrorDetail(error) ?? 'Не удалось сгенерировать билеты';
+					submitError = getApiErrorDetail(error) ?? m.tickets_generate_failed();
 				}
 			}
 		);
@@ -98,27 +99,25 @@
 	async function copyBarcodes() {
 		try {
 			await navigator.clipboard.writeText(barcodesText);
-			toastService.add('Скопировано. Вставь в таблицу', 'success');
+			toastService.add(m.tickets_copied(), 'success');
 		} catch (err) {
 			console.error('Failed to copy barcodes:', err);
-			toastService.add('Не удалось скопировать. Выдели текст и скопируй вручную.', 'error');
+			toastService.add(m.tickets_copy_failed(), 'error');
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Генерация билетов · ФАН ФАН</title>
+	<title>{m.tool_tickets_title()} · {m.brand_name()}</title>
 </svelte:head>
 
 <div class="mx-auto w-full max-w-2xl">
-	<SectionIntro
-		description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
-	/>
+	<SectionIntro description={m.tickets_description()} />
 
 	<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 		<Field.FieldGroup class="gap-6">
 			<Field.Field>
-				<Field.FieldLabel for="ticket-role">Роль</Field.FieldLabel>
+				<Field.FieldLabel for="ticket-role">{m.tickets_role_label()}</Field.FieldLabel>
 				<Select.Root
 					type="single"
 					name="role"
@@ -138,11 +137,11 @@
 						</Select.Group>
 					</Select.Content>
 				</Select.Root>
-				<Field.FieldDescription>Эту роль получит тот, кто привяжет билет.</Field.FieldDescription>
+				<Field.FieldDescription>{m.tickets_role_hint()}</Field.FieldDescription>
 			</Field.Field>
 
 			<Field.Field data-invalid={amountError ? true : undefined}>
-				<Field.FieldLabel for="ticket-amount">Количество</Field.FieldLabel>
+				<Field.FieldLabel for="ticket-amount">{m.tickets_amount_label()}</Field.FieldLabel>
 				<Input
 					id="ticket-amount"
 					type="number"
@@ -159,7 +158,7 @@
 					<Field.FieldError>{amountError}</Field.FieldError>
 				{:else}
 					<Field.FieldDescription>
-						От {MIN_AMOUNT} до {MAX_AMOUNT} билетов за один раз.
+						{m.tickets_amount_hint({ min: MIN_AMOUNT, max: MAX_AMOUNT })}
 					</Field.FieldDescription>
 				{/if}
 			</Field.Field>
@@ -179,9 +178,9 @@
 		>
 			{#if generateMutation.isPending}
 				<Spinner data-icon="inline-start" />
-				Генерируем…
+				{m.tickets_generating()}
 			{:else}
-				Сгенерировать
+				{m.tickets_generate()}
 			{/if}
 		</Button>
 	</form>
@@ -190,11 +189,11 @@
 		<div class="mt-6 flex flex-col gap-3 border-t border-border pt-6">
 			<div class="flex items-center justify-between gap-3">
 				<span class="text-sm font-medium text-foreground">
-					Готовые билеты: {generatedBarcodes.length}
+					{m.tickets_ready({ count: generatedBarcodes.length })}
 				</span>
 				<Button type="button" variant="outline" size="sm" onclick={copyBarcodes}>
 					<ClipboardCopy data-icon="inline-start" />
-					Копировать
+					{m.tickets_copy()}
 				</Button>
 			</div>
 			<Textarea
@@ -204,8 +203,7 @@
 				class="resize-none font-mono text-sm"
 			/>
 			<p class="text-xs text-muted-foreground">
-				Каждый билет — на отдельной строке. Скопируй и вставь в таблицу Excel: номера встанут в один
-				столбец.
+				{m.tickets_paste_hint()}
 			</p>
 		</div>
 	{/if}

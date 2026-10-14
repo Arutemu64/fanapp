@@ -6,14 +6,13 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { probeReachability, reachability } from '#lib/services/reachability.js';
 
 	// Material Design 3 snackbar minimum; prevents flash on brief blips.
 	const MIN_DISPLAY_MS = 4000;
 	// Long enough to read two words, short enough not to linger on a working app.
 	const RESTORED_DISPLAY_MS = 3000;
-	const UPDATING_MESSAGE = 'Обновляем…';
-	const RESTORED_MESSAGE = 'Связь восстановлена';
 
 	// Only one state reaches the user: whether the backend is reachable. The SSE
 	// stream's own reconnects stay silent — it only carries change signals, the
@@ -28,7 +27,7 @@
 	// portal, dead VPN) — never blame the user's internet for a server outage.
 	let offlineMessage = $derived.by(() => {
 		if (isOnline) return null;
-		return deviceOnline ? 'Нет связи с сервером' : 'Нет интернета';
+		return deviceOnline ? m.error_state_no_server() : m.error_state_no_internet();
 	});
 
 	// What the strip shows, held separately from `offlineMessage`: the offline wording
@@ -50,8 +49,8 @@
 
 	let shownMessage = $derived.by(() => {
 		if (phase === 'offline') return lastOfflineMessage;
-		if (phase === 'catching-up') return UPDATING_MESSAGE;
-		if (phase === 'restored') return RESTORED_MESSAGE;
+		if (phase === 'catching-up') return m.connection_updating();
+		if (phase === 'restored') return m.connection_restored();
 		return '';
 	});
 
@@ -141,7 +140,7 @@
 				{#if retrying}
 					<Spinner data-icon="inline-start" aria-hidden="true" />
 				{/if}
-				Повторить
+				{m.connection_retry()}
 			</Button>
 		{/if}
 	</div>

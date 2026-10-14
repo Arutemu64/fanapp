@@ -6,6 +6,7 @@
 
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	interface Props {
@@ -16,7 +17,7 @@
 
 	// The ticket number is what staff check at the door, so it leads the second
 	// line; the email fills in for someone without a ticket.
-	let details = $derived(user.ticket_number ?? user.email ?? 'Нет билета и почты');
+	let details = $derived(user.ticket_number ?? user.email ?? m.user_no_ticket_or_email());
 </script>
 
 <!-- The whole row is one link, so the tap target is the full width rather than

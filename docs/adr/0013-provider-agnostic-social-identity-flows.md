@@ -17,7 +17,7 @@ duplication is now live and every future provider would multiply it.
 ADR-0012 also flagged a rule that only breaks with a second provider: unlinking
 required the user to have an email. With one provider that was a fine proxy for
 "keep a way in". With two it is wrong — a user holding both Telegram and VK but
-no email was blocked from unlinking *either*, even though removing one still
+no email was blocked from unlinking _either_, even though removing one still
 leaves the other as a way to sign in. Password and email-code login both key off
 the email address (`AuthenticateUser.get_by_email`), so email is the single
 non-social sign-in method; a linked provider is the other.
@@ -55,7 +55,7 @@ remaining sign-in method.**
 - The unlink rule is now correct for N providers and states its own intent. It is
   a genuine behaviour change from ADR-0012's "email required", not a rename.
 - `count_by_user` is a plain (unlocked) count. Two concurrent unlinks of
-  *different* providers by an email-less user could each see count > 1 and both
+  _different_ providers by an email-less user could each see count > 1 and both
   delete, leaving zero. The window needs two simultaneous requests for one
   account and the UI gates unlinks one at a time behind a confirm tap, so the
   risk is accepted rather than serialized (which would invite a deadlock between

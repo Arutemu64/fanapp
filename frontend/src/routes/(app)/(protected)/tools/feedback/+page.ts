@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 
 import type { BackTarget } from '#lib/types/navigation.js';
 
+import { m } from '#lib/paraglide/messages.js';
 import { canReadFeedback } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
@@ -13,11 +14,11 @@ export const load: PageLoad = async ({ parent }) => {
 	// FEEDBACK_READ check here so a user without the grant isn't shown a page the
 	// list request would reject.
 	if (!canReadFeedback(user)) {
-		error(403, 'У тебя нет доступа к отзывам');
+		error(403, m.feedback_admin_forbidden());
 	}
 
 	return {
-		title: 'Отзывы',
-		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget
+		title: m.tool_feedback_title(),
+		back: { href: 'tools', label: m.tools_back() } satisfies BackTarget
 	};
 };

@@ -2,14 +2,17 @@
 	import { Eye, EyeOff, Lock } from '@lucide/svelte';
 
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		value: string;
 		id: string;
 		name: string;
 		autocomplete: 'current-password' | 'new-password';
-		// Noun used in the toggle's aria-label, e.g. "Показать {revealLabel}".
-		revealLabel?: string;
+		// Accessible names of the reveal toggle in each state. Whole phrases, not a
+		// noun spliced into a template, so each language keeps its own word order.
+		showLabel?: string;
+		hideLabel?: string;
 		placeholder?: string;
 		required?: boolean;
 		disabled?: boolean;
@@ -26,7 +29,8 @@
 		id,
 		name,
 		autocomplete,
-		revealLabel = 'пароль',
+		showLabel = m.password_show(),
+		hideLabel = m.password_hide(),
 		placeholder = '••••••••',
 		required = false,
 		disabled = false,
@@ -65,7 +69,7 @@
 			size="icon-sm"
 			{disabled}
 			onclick={() => (show = !show)}
-			aria-label={show ? `Скрыть ${revealLabel}` : `Показать ${revealLabel}`}
+			aria-label={show ? hideLabel : showLabel}
 			aria-pressed={show}
 		>
 			{#if show}

@@ -9,6 +9,7 @@
 		updateCurrentUserMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import EditProfileForm from './EditProfileForm.svelte';
@@ -33,7 +34,7 @@
 	// (ADR-0022).
 	async function save(body: UpdateCurrentUserInput) {
 		await updateProfileMutation.mutateAsync({ body });
-		toastService.add('Профиль обновлён', 'success');
+		toastService.add(m.profile_updated(), 'success');
 		open = false;
 	}
 </script>
@@ -43,9 +44,9 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<User class="size-5 text-muted-foreground" />
-				Редактирование профиля
+				{m.profile_edit_title()}
 			</Dialog.Title>
-			<Dialog.Description class="sr-only">Измени аватар и имя пользователя.</Dialog.Description>
+			<Dialog.Description class="sr-only">{m.profile_edit_description()}</Dialog.Description>
 		</Dialog.Header>
 
 		<EditProfileForm

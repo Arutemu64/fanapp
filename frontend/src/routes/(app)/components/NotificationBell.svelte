@@ -9,6 +9,7 @@
 
 	import { countUnreadNotificationsOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { NOTIFICATION_BADGE_MAX } from '#lib/constants/notifications.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
@@ -31,7 +32,9 @@
 	// Announce the count to screen readers so the unread state isn't conveyed by
 	// the badge color alone.
 	let bellLabel = $derived(
-		unreadCount > 0 ? `Открыть уведомления, непрочитанных: ${unreadCount}` : 'Открыть уведомления'
+		unreadCount > 0
+			? m.notification_bell_open_unread({ count: unreadCount })
+			: m.notification_bell_open()
 	);
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();

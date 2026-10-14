@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	// Placeholder that mirrors the notifications feed — an intro line, a day heading,
 	// then a stack of list-item cards (round icon, title line, timestamp) — so the layout
@@ -13,7 +14,7 @@
 </script>
 
 <div role="status" aria-live="polite">
-	<span class="sr-only">Загрузка уведомлений…</span>
+	<span class="sr-only">{m.notifications_loading()}</span>
 
 	<!-- Intro line (the real page shows the new-count summary here) -->
 	<Skeleton class="mb-4 h-4 w-40 rounded-full" />

@@ -13,6 +13,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import FileFormatGuide from './components/FileFormatGuide.svelte';
@@ -50,7 +51,7 @@
 		successMessage = '';
 
 		if (!selectedFile) {
-			inlineError = 'Выбери Excel-файл для импорта';
+			inlineError = m.import_choose_file();
 			return;
 		}
 
@@ -58,7 +59,7 @@
 			{ body: { file: selectedFile } },
 			{
 				onSuccess: () => {
-					successMessage = 'Файл загружен. Программа обновлена.';
+					successMessage = m.import_success();
 					selectedFiles = undefined;
 					form.reset();
 				},
@@ -66,7 +67,7 @@
 					// Mapped by the error `code`, not the status: a rejected spreadsheet
 					// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
 					// fault, which is the whole point of showing an error here.
-					inlineError = getApiErrorDetail(error) ?? 'Не удалось импортировать программу';
+					inlineError = getApiErrorDetail(error) ?? m.import_failed();
 				}
 			}
 		);
@@ -74,18 +75,18 @@
 </script>
 
 <svelte:head>
-	<title>Импорт программы · ФАН ФАН</title>
+	<title>{m.tool_import_title()} · {m.brand_name()}</title>
 </svelte:head>
 
 <div class="mx-auto w-full max-w-2xl">
-	<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
+	<SectionIntro description={m.import_intro()} />
 
 	<FileFormatGuide />
 
 	<div class="border-t border-border pt-6">
 		<form class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
 			<Field.Field>
-				<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
+				<Field.FieldLabel for="schedule-file">{m.import_file_label()}</Field.FieldLabel>
 				<Input
 					id="schedule-file"
 					type="file"
@@ -98,9 +99,9 @@
 				/>
 				<Field.FieldDescription>
 					{#if selectedFileName}
-						Выбран файл: {selectedFileName}
+						{m.import_selected_file({ name: selectedFileName })}
 					{:else}
-						Поддерживаются файлы .xls и .xlsx.
+						{m.import_supported()}
 					{/if}
 				</Field.FieldDescription>
 			</Field.Field>
@@ -127,9 +128,9 @@
 			>
 				{#if importMutation.isPending}
 					<Spinner data-icon="inline-start" />
-					Импортируем…
+					{m.import_importing()}
 				{:else}
-					Импортировать
+					{m.import_import()}
 				{/if}
 			</Button>
 		</form>

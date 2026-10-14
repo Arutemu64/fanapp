@@ -7,6 +7,7 @@ import { SvelteSet } from 'svelte/reactivity';
 import type { NotificationDto } from '#lib/api/generated/index.js';
 
 import { getApiErrorDetail } from '#lib/api/errors.js';
+import { m } from '#lib/paraglide/messages.js';
 import { toAppPath } from '#lib/utils/nav.js';
 
 export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
@@ -59,7 +60,7 @@ export class ToastService {
 	// Takes the SDK's `error` as-is. A non-JSON error body (a proxy's HTML 502
 	// page) arrives as a plain string, so a string is never shown verbatim — use
 	// add(message, 'error') for copy you wrote yourself.
-	error(err: unknown, fallback = 'Не удалось выполнить действие. Попробуй ещё раз.') {
+	error(err: unknown, fallback = m.toast_action_failed()) {
 		this.add(getApiErrorDetail(err) ?? fallback, 'error');
 	}
 
@@ -84,7 +85,7 @@ export class ToastService {
 			position: 'top-right',
 			action: path
 				? {
-						label: 'Открыть',
+						label: m.toast_open(),
 						onClick: () => {
 							void goto(resolve(path));
 						}

@@ -5,7 +5,7 @@ description: Repo mechanics for the app's Russian user-facing copy — plural fo
 
 # FAN FAN Russian copy — mechanics
 
-Every user-facing string is Russian; code comments and docstrings are English.
+Every user-facing string is a Paraglide message — Russian is the base locale (`frontend/messages/ru.json`), with an English twin in `en.json`; code comments and docstrings are English. Frontend plurals are variant messages (see `docs/frontend.md` §6), not `pluralize()`.
 That much is in AGENTS.md.
 
 **Voice, register and terminology live in [`.agents/redpolitika.md`](../../../.agents/redpolitika.md)** —
@@ -21,13 +21,15 @@ This skill covers only the repo mechanics those skills can't know:
 
 - **Plurals need all three forms** — 1 / 2–4 / 5+ (`минута` / `минуты` / `минут`,
   `выступление` / `выступления` / `выступлений`). A bare `+ ' мин.'` is a bug
-  waiting for the number 2. Frontend: `pluralize()` in `lib/utils/formatters.ts`.
-  Jinja: the `events_pluralize` macro pattern in the notification templates.
+  waiting for the number 2. Frontend: a variant message with a `plural` selector
+  and `one` / `few` / `many` / `*` branches in `ru.json`. Jinja: the
+  `events_pluralize` macro pattern in the notification templates.
 - **Ё is written always** (`ещё`, `её`, `всё`, `учёт`) — see `redpolitika.md`.
 - **Use the typographic dash** `—`, not a hyphen, in prose, and bind it to the
   word before with a non-breaking space so a wrapped line never opens with a
-  dash: `&nbsp;—` in markup and attribute strings, `\u00A0—` in a JS string
-  (never a literal U+00A0, which is invisible in review).
+  dash: `&nbsp;—` in markup and attribute strings, `\u00A0—` in a JS string and
+  `\u00a0—` in a messages JSON file (never a literal U+00A0, which is invisible
+  in review).
 - **Each email is two files**, an HTML template and a `.txt.jinja2` plain-text
   alternative (`email_login_code`, `email_confirmation_code`). Change the copy in
   both, or the two halves of one message disagree — and render them before

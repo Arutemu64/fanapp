@@ -16,6 +16,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '#lib/utils/formatters.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
@@ -60,7 +61,7 @@
 
 	function validateFestivalStart() {
 		if (!festivalStart) {
-			festivalStartError = 'Укажи дату и время начала фестиваля';
+			festivalStartError = m.settings_start_required();
 			return false;
 		}
 
@@ -78,7 +79,7 @@
 
 	function validateFestivalEnd() {
 		if (!festivalEnd) {
-			festivalEndError = 'Укажи дату и время конца фестиваля';
+			festivalEndError = m.settings_end_required();
 			return false;
 		}
 
@@ -86,7 +87,7 @@
 		// ordering check, and an end at or before the start collapses the home page's
 		// "during" phase entirely — the countdown would jump straight to the farewell.
 		if (festivalStart && festivalEnd <= festivalStart) {
-			festivalEndError = 'Конец фестиваля должен быть позже начала';
+			festivalEndError = m.error_invalid_festival_time_range();
 			return false;
 		}
 
@@ -104,12 +105,12 @@
 
 	function validateAnnouncementTimeout() {
 		if (announcementTimeout === undefined || Number.isNaN(announcementTimeout)) {
-			announcementTimeoutError = 'Укажи таймаут анонсов';
+			announcementTimeoutError = m.settings_timeout_required();
 			return false;
 		}
 
 		if (!Number.isInteger(announcementTimeout) || announcementTimeout < 1) {
-			announcementTimeoutError = 'Введи целое число не меньше 1';
+			announcementTimeoutError = m.settings_timeout_integer();
 			return false;
 		}
 
@@ -164,7 +165,7 @@
 					festivalStartError = '';
 					festivalEndError = '';
 					announcementTimeoutError = '';
-					toastService.add('Настройки фестиваля сохранены', 'success');
+					toastService.add(m.settings_saved(), 'success');
 				},
 				onError: (error) => {
 					festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
@@ -173,7 +174,7 @@
 					if (festivalStartError || festivalEndError || announcementTimeoutError) {
 						return;
 					}
-					submitError = getApiErrorDetail(error) ?? 'Не удалось сохранить настройки фестиваля';
+					submitError = getApiErrorDetail(error) ?? m.settings_save_failed();
 				}
 			}
 		);
@@ -181,10 +182,10 @@
 </script>
 
 <svelte:head>
-	<title>Настройки фестиваля · ФАН ФАН</title>
+	<title>{m.tool_settings_title()} · {m.brand_name()}</title>
 </svelte:head>
 
-<SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
+<SectionIntro description={m.settings_intro()} />
 
 <form
 	class="mx-auto flex w-full max-w-2xl flex-col gap-5"
@@ -198,11 +199,11 @@
 	{/if}
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-base font-semibold text-foreground sm:text-lg">Фестиваль</h2>
+		<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.settings_festival()}</h2>
 
 		<Field.FieldGroup class="gap-4">
 			<Field.Field data-invalid={festivalStartError ? true : undefined}>
-				<Field.FieldLabel for="festival-start">Начало фестиваля (МСК)</Field.FieldLabel>
+				<Field.FieldLabel for="festival-start">{m.settings_start_label()}</Field.FieldLabel>
 				<Input
 					id="festival-start"
 					name="festival_start"
@@ -218,13 +219,13 @@
 					<Field.FieldError>{festivalStartError}</Field.FieldError>
 				{:else}
 					<Field.FieldDescription>
-						Дата и время по московскому времени. От неё считается обратный отсчёт на главной.
+						{m.settings_start_hint()}
 					</Field.FieldDescription>
 				{/if}
 			</Field.Field>
 
 			<Field.Field data-invalid={festivalEndError ? true : undefined}>
-				<Field.FieldLabel for="festival-end">Конец фестиваля (МСК)</Field.FieldLabel>
+				<Field.FieldLabel for="festival-end">{m.settings_end_label()}</Field.FieldLabel>
 				<Input
 					id="festival-end"
 					name="festival_end"
@@ -240,8 +241,7 @@
 					<Field.FieldError>{festivalEndError}</Field.FieldError>
 				{:else}
 					<Field.FieldDescription>
-						После него на главной вместо отсчёта появится прощание. Сдвинь позже, если фестиваль
-						затянулся.
+						{m.settings_end_hint()}
 					</Field.FieldDescription>
 				{/if}
 			</Field.Field>
@@ -249,10 +249,12 @@
 	</Card.Root>
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-base font-semibold text-foreground sm:text-lg">Программа</h2>
+		<h2 class="text-base font-semibold text-foreground sm:text-lg">
+			{m.settings_schedule_section()}
+		</h2>
 
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
-			<Field.FieldLabel for="announcement-timeout">Таймаут анонсов, сек</Field.FieldLabel>
+			<Field.FieldLabel for="announcement-timeout">{m.settings_timeout_label()}</Field.FieldLabel>
 			<Input
 				id="announcement-timeout"
 				name="announcement_timeout"
@@ -271,7 +273,7 @@
 				<Field.FieldError>{announcementTimeoutError}</Field.FieldError>
 			{:else}
 				<Field.FieldDescription>
-					Минимум 1 секунда. Ограничение помогает не отправлять анонсы слишком часто.
+					{m.settings_timeout_hint()}
 				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
@@ -285,9 +287,9 @@
 	>
 		{#if saveMutation.isPending}
 			<Spinner data-icon="inline-start" />
-			Сохраняем…
+			{m.settings_saving()}
 		{:else}
-			Сохранить
+			{m.common_save()}
 		{/if}
 	</Button>
 </form>

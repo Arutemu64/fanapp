@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import adapter from '@sveltejs/adapter-static';
 import { enhancedImages } from '@sveltejs/enhanced-img';
@@ -64,6 +65,18 @@ export default defineConfig(({ mode }) => {
 					// own detection, the git HEAD SHA, still applies on the host.
 					name: env.APP_BUILD || undefined
 				}
+			}),
+			// Compiles messages/*.json into src/lib/paraglide/ on every dev edit and
+			// build. Client-only locale resolution: the choice lives in localStorage and
+			// falls back to Russian — no URL prefix (the SPA has one URL space and
+			// nginx serves one shell for it) and no cookie (there is no server to read
+			// it). See ADR-0027. `pnpm paraglide` compiles the same output for the
+			// tools that run without Vite (svelte-check, ESLint).
+			paraglideVitePlugin({
+				project: './project.inlang',
+				outdir: './src/lib/paraglide',
+				strategy: ['localStorage', 'baseLocale'],
+				emitTsDeclarations: true
 			}),
 			tailwindcss(),
 			// Processes <enhanced:img> on the map page into AVIF/WebP + resized

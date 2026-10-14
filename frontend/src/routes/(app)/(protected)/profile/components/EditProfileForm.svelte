@@ -11,6 +11,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { createAvatarSeed } from '#lib/utils/avatar.js';
 
 	interface Props {
@@ -40,19 +41,19 @@
 
 	function validateUsername(value: string): string {
 		if (!value) {
-			return 'Введи имя пользователя';
+			return m.username_required();
 		}
 
 		if (value.length < USERNAME_MIN_LENGTH) {
-			return `Минимум ${USERNAME_MIN_LENGTH} символа`;
+			return m.username_min({ count: USERNAME_MIN_LENGTH });
 		}
 
 		if (value.length > USERNAME_MAX_LENGTH) {
-			return `Максимум ${USERNAME_MAX_LENGTH} символов`;
+			return m.username_max({ count: USERNAME_MAX_LENGTH });
 		}
 
 		if (!USERNAME_PATTERN.test(value)) {
-			return 'Начинается с буквы; далее буквы, цифры и подчёркивание';
+			return m.username_pattern();
 		}
 
 		return '';
@@ -108,7 +109,7 @@
 				usernameError = usernameFieldError;
 				return;
 			}
-			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
+			formError = getApiErrorDetail(error) ?? m.profile_update_failed();
 		}
 	}
 </script>
@@ -128,7 +129,7 @@
 			variant="secondary"
 			size="icon"
 			class="absolute right-0 bottom-0 size-11 rounded-full border border-border shadow-sm"
-			aria-label="Другой аватар"
+			aria-label={m.profile_other_avatar()}
 			onclick={() => (avatarSeed = createAvatarSeed())}
 		>
 			<RefreshCw aria-hidden="true" />
@@ -136,14 +137,14 @@
 	</div>
 
 	<Field.Field data-invalid={usernameError ? true : undefined}>
-		<Field.FieldLabel for="username">Имя пользователя</Field.FieldLabel>
+		<Field.FieldLabel for="username">{m.username_label()}</Field.FieldLabel>
 		<div class="relative flex items-center">
 			<User class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 			<Input
 				id="username"
 				name="username"
 				type="text"
-				placeholder="Например, sakura_chan"
+				placeholder={m.username_placeholder()}
 				autocomplete="nickname"
 				autocapitalize="off"
 				spellcheck={false}
@@ -158,18 +159,18 @@
 			<Field.FieldError>{usernameError}</Field.FieldError>
 		{/if}
 		<ul class="flex flex-col gap-1 text-xs text-muted-foreground">
-			<li>от 3 до 25 символов</li>
-			<li>начинается с буквы (латиница или кириллица)</li>
-			<li>далее буквы, цифры и подчёркивание</li>
+			<li>{m.username_rule_length()}</li>
+			<li>{m.username_rule_start()}</li>
+			<li>{m.username_rule_rest()}</li>
 		</ul>
 	</Field.Field>
 
 	<Button type="submit" class="w-full" disabled={pending}>
 		{#if pending}
 			<Spinner data-icon="inline-start" />
-			Сохранение…
+			{m.common_saving()}
 		{:else}
-			Сохранить
+			{m.common_save()}
 		{/if}
 	</Button>
 </form>

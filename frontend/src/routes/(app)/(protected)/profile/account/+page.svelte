@@ -4,6 +4,7 @@
 
 	import { listOauthProvidersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { currentUserOptions } from '#lib/api/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '#lib/utils/oauthErrors.js';
 
@@ -30,18 +31,18 @@
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
 	const linkErrorToasts = {
-		cancelled: { message: 'Подключение отменено.', type: 'info' },
-		failed: { message: 'Не удалось подключить аккаунт. Попробуй ещё раз.', type: 'error' },
+		cancelled: { message: m.account_link_cancelled(), type: 'info' },
+		failed: { message: m.account_link_failed(), type: 'error' },
 		linked_to_another_account: {
-			message: 'Этот аккаунт уже подключён к другому профилю.',
+			message: m.account_link_linked_elsewhere(),
 			type: 'error'
 		},
 		user_already_has_provider: {
-			message: 'К твоему аккаунту уже подключён аккаунт этого сервиса.',
+			message: m.account_link_provider_taken(),
 			type: 'error'
 		},
 		session_changed: {
-			message: 'Вход в аккаунт сменился, пока шло подключение. Попробуй ещё раз.',
+			message: m.account_link_session_changed(),
 			type: 'error'
 		}
 	} as const;
@@ -60,7 +61,7 @@
 </script>
 
 <svelte:head>
-	<title>Аккаунт · ФАН ФАН</title>
+	<title>{m.account_title()} · {m.brand_name()}</title>
 </svelte:head>
 
 <ProfileHeader {user} />

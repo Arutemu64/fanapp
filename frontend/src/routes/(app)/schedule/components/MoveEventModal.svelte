@@ -10,11 +10,13 @@
 		getScheduleQueryKey,
 		moveScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import RichText from '#lib/components/RichText.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { blockTitleByEventId } from '#lib/utils/scheduleData.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
@@ -79,25 +81,33 @@
 			{ path: { event_id: event.id }, body: { place_after_entry_id: selectedId } },
 			{
 				onSuccess: () => {
-					toastService.add('Выступление перенесено', 'success');
+					toastService.add(m.move_done(), 'success');
 					open = false;
 					selectedId = null;
 					query = '';
 				},
 				onError: (error) => {
-					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
+					formError = getApiErrorDetail(error) ?? m.move_failed();
 				}
 			}
 		);
 	}
 </script>
 
+{#snippet strong(text: string)}
+	<strong class="text-foreground">{text}</strong>
+{/snippet}
+
+{#snippet accent(text: string)}
+	<strong class="text-primary">{text}</strong>
+{/snippet}
+
 <Dialog.Root bind:open>
 	<Dialog.Content class="sm:max-w-md">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<ArrowUpDown class="size-5 text-muted-foreground" />
-				Перенести выступление
+				{m.move_title()}
 			</Dialog.Title>
 		</Dialog.Header>
 
@@ -109,16 +119,14 @@
 			{/if}
 
 			<Dialog.Description class="sm:text-base">
-				Выбери выступление, <strong class="text-foreground">после</strong> которого разместить:
-				<strong class="text-primary">{event.title}</strong>. Чтобы перенести в другой блок, выбери
-				его начало.
+				<RichText text={m.move_description({ title: event.title })} tags={{ strong, accent }} />
 			</Dialog.Description>
 
 			<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
 			<Alert.Root variant="warning">
 				<BellRing class="shrink-0" />
 				<Alert.Description>
-					Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.
+					{m.confirm_notify_warning()}
 				</Alert.Description>
 			</Alert.Root>
 
@@ -126,8 +134,8 @@
 				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 				<Input
 					name="schedule_move_search"
-					aria-label="Поиск выступления для переноса"
-					placeholder="Поиск выступления…"
+					aria-label={m.move_search_label()}
+					placeholder={m.move_search_placeholder()}
 					autocomplete="off"
 					spellcheck={false}
 					class="pr-8 pl-9"
@@ -139,7 +147,7 @@
 						type="button"
 						class="absolute right-2 text-muted-foreground hover:text-foreground"
 						onclick={() => (query = '')}
-						aria-label="Очистить поиск"
+						aria-label={m.common_clear_search()}
 					>
 						<X class="size-4" />
 					</button>
@@ -158,7 +166,7 @@
 						onclick={() => handleSelect(entry)}
 					>
 						{#if entry.type === 'block_start'}
-							<span class="text-muted-foreground">В начало блока </span>
+							<span class="text-muted-foreground">{m.move_block_start()}</span>
 							<span class="font-semibold text-foreground">{entry.title}</span>
 						{:else if entry.number !== null}
 							<span class="font-medium text-foreground">№{entry.number}</span>
@@ -170,7 +178,7 @@
 					</button>
 				{:else}
 					<div class="px-3 py-4 text-center text-sm text-muted-foreground sm:py-5 sm:text-base">
-						Нет совпадений
+						{m.move_no_matches()}
 					</div>
 				{/each}
 			</div>
@@ -183,14 +191,14 @@
 				onclick={() => (open = false)}
 				disabled={isSubmitting}
 			>
-				Отмена
+				{m.common_cancel()}
 			</Button>
 			<Button type="button" onclick={handleSubmit} disabled={!selectedId || isSubmitting}>
 				{#if isSubmitting}
 					<Spinner data-icon="inline-start" />
-					Перенос…
+					{m.move_submitting()}
 				{:else}
-					Перенести
+					{m.staff_move()}
 				{/if}
 			</Button>
 		</Dialog.Footer>

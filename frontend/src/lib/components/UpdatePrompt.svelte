@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	// A waiting service worker means a newer build is cached and ready. We never
 	// activate it mid-session (that could swap assets under the user); instead we
@@ -147,9 +148,9 @@
 				>
 					<RotateCw class="size-4" aria-hidden="true" />
 				</div>
-				<div class="text-sm leading-snug font-medium">Доступна новая версия приложения.</div>
+				<div class="text-sm leading-snug font-medium">{m.update_available()}</div>
 			</div>
-			<Button size="sm" class="w-full" onclick={applyUpdate}>Обновить</Button>
+			<Button size="sm" class="w-full" onclick={applyUpdate}>{m.update_apply()}</Button>
 		</div>
 	</div>
 {/if}

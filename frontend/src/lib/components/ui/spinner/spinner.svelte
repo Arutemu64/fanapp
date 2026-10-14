@@ -3,6 +3,9 @@
 
 	import Loader2Icon from '@lucide/svelte/icons/loader-2';
 
+	// Deviates from upstream: built-in accessible names go through Paraglide
+	// instead of fixed English text, so they follow the interface language.
+	import { m } from '#lib/paraglide/messages.js';
 	import { cn } from '#lib/utils.js';
 
 	let {
@@ -15,7 +18,7 @@
 		stroke,
 		className: legacyClassName,
 		// Deviates from upstream: Russian default label.
-		'aria-label': ariaLabel = 'Загрузка',
+		'aria-label': ariaLabel = m.loading(),
 		...restProps
 	}: SVGAttributes<SVGSVGElement> = $props();
 </script>

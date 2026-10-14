@@ -1,6 +1,7 @@
 import { resolve } from '$app/paths';
 import { error, redirect } from '@sveltejs/kit';
 
+import { m } from '#lib/paraglide/messages.js';
 import { isReachable } from '#lib/services/reachability.js';
 import { isOrg } from '#lib/utils/permissions.js';
 
@@ -13,7 +14,7 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 	// hold and marks the ones they lack as locked, so an org with no tool
 	// permissions still sees the section. Each page enforces its own permission.
 	if (!isOrg(user)) {
-		error(403, 'У тебя нет доступа к этому разделу');
+		error(403, m.tools_forbidden());
 	}
 
 	// Every tool is an online-only mutation surface (import, broadcast, settings,

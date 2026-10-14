@@ -1,5 +1,7 @@
 import type { CurrentUserDto, Permission } from '#lib/api/generated/index.js';
 
+import { m } from '#lib/paraglide/messages.js';
+
 // Permission identifiers, from the backend `Permission` enum via the OpenAPI
 // spec (just frontend-generate-api). Typing each constant as Permission is the
 // drift guard: if the backend renames or removes a permission, its literal stops
@@ -89,17 +91,17 @@ export function canManagePermissions(user: CurrentUserDto | null): boolean {
 
 // A Record over the generated union, so a permission the backend adds fails
 // `pnpm check` here until it has a label. Insertion order is display order.
-export const PERMISSION_LABELS: Record<Permission, string> = {
-	'*': 'Полный доступ',
-	'schedule:manage': 'Управление программой',
-	'schedule:import': 'Импорт программы',
-	'notifications:send': 'Рассылка уведомлений',
-	'settings:manage': 'Настройки фестиваля',
-	'tickets:generate': 'Генерация билетов',
-	'sync:run': 'Синхронизация',
-	'demo:seed': 'Демо-данные',
-	'feedback:read': 'Чтение отзывов',
-	'voting:manage': 'Управление голосованием',
-	'users:read': 'Просмотр пользователей',
-	'users:manage': 'Смена ролей пользователей'
+export const PERMISSION_LABELS: Record<Permission, () => string> = {
+	'*': m.permission_all,
+	'schedule:manage': m.permission_schedule_manage,
+	'schedule:import': m.permission_schedule_import,
+	'notifications:send': m.permission_notifications_send,
+	'settings:manage': m.permission_settings_manage,
+	'tickets:generate': m.permission_tickets_generate,
+	'sync:run': m.permission_sync_run,
+	'demo:seed': m.permission_demo_seed,
+	'feedback:read': m.permission_feedback_read,
+	'voting:manage': m.permission_voting_manage,
+	'users:read': m.permission_users_read,
+	'users:manage': m.permission_users_manage
 };

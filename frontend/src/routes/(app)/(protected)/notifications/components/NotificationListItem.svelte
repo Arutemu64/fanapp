@@ -15,6 +15,7 @@
 
 	import type { NotificationDto, NotificationType } from '#lib/api/generated/index.js';
 
+	import { m } from '#lib/paraglide/messages.js';
 	import { minuteClock } from '#lib/services/minuteClock.js';
 	import { formatRelativeTime } from '#lib/utils/formatters.js';
 	import { toAppPath } from '#lib/utils/nav.js';
@@ -110,7 +111,7 @@
 {#snippet title()}
 	<!-- The unseen dot is visual only; this gives screen readers the same cue. -->
 	{#if isNew}
-		<span class="sr-only">Новое:</span>
+		<span class="sr-only">{m.notification_new_sr()}</span>
 	{/if}
 	{notification.title}
 {/snippet}

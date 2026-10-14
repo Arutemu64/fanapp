@@ -5,7 +5,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to 
 ## Never
 
 * **Never** import outward from `core/` or `application/` — no ORM models, concrete adapters, presentation routers, no FastAPI/SQLAlchemy in `core/`. Infrastructure reaches the inner layers only through ports in `application/ports/`. Enforced by `just backend-import-lint`.
-* **Never** ship user-facing English. Every label, placeholder, error, toast and empty state is **Russian**. Code comments and docstrings are **English**.
+* **Never** hard-code user-facing text in the frontend. Every label, placeholder, error, toast and empty state is a Paraglide message in `frontend/messages/{ru,en}.json` — **Russian** is the base locale and the voice reference, **English** a full translation, and a key exists in both ([docs/frontend.md](docs/frontend.md) §6). Text the backend sends (emails, notifications, schedule data) stays Russian. Code comments and docstrings are **English**.
 * **Never** delete or weaken a comment that carries a *why* — a constraint, upstream bug, ADR or rejected alternative — unless the code it describes is gone. Such a comment encodes something you cannot see from the diff; if it looks wrong, verify before dropping it. A comment that only restates the line under it carries nothing and may go; name the removal in the PR so a reviewer can confirm nothing was lost.
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
@@ -26,6 +26,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Styling / layout | `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4, [.agents/context/DESIGN.md](.agents/context/DESIGN.md) (design intent & named rules) |
 | Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md), [.agents/context/DESIGN.md](.agents/context/DESIGN.md) |
 | Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
+| Any frontend string (messages, plurals, English) | — | [docs/frontend.md](docs/frontend.md) §6 "Language & Copy", [ADR-0027](docs/adr/0027-paraglide-for-frontend-i18n.md) |
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Server state (TanStack Query: queries, mutations, cache, persistence) | `tanstack-query-best-practices` (written for React: map `useQuery`/`useMutation` to Svelte's thunk `createQuery`/`createMutation`; ADR-0021's and ADR-0022's departures from the defaults win) | [docs/frontend.md](docs/frontend.md) §2, [docs/api.md](docs/api.md), [ADR-0021](docs/adr/0021-tanstack-query-for-server-state.md), [ADR-0022](docs/adr/0022-createmutation-for-writes.md) |
@@ -88,9 +89,11 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
 │   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
-├── frontend/src/
-│   ├── routes/          # Pages & layouts
-│   └── lib/             # assets/ components/ api/ types/ services/ utils/ constants/ data/ testing/
+├── frontend/
+│   ├── messages/        # Paraglide message catalogs: ru.json (base) + en.json
+│   └── src/
+│       ├── routes/      # Pages & layouts
+│       └── lib/         # assets/ components/ api/ types/ services/ utils/ constants/ data/ testing/ (paraglide/ is generated, gitignored)
 ├── shared/openapi/      # Shared OpenAPI spec
 ├── config/              # Committed, non-secret infra config
 └── secrets/             # Gitignored runtime secrets (VAPID PEM); mounted read-only

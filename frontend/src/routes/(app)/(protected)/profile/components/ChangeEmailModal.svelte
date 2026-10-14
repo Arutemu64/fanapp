@@ -10,6 +10,7 @@
 		getCurrentUserQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import ChangeEmailForm from './ChangeEmailForm.svelte';
@@ -37,11 +38,7 @@
 	}));
 
 	// Screen-reader description for the dialog (visually the form speaks for itself).
-	let dialogDescription = $derived(
-		currentEmail
-			? 'Измени адрес электронной почты — понадобится код из письма.'
-			: 'Добавь адрес электронной почты — понадобится код из письма.'
-	);
+	let dialogDescription = $derived(currentEmail ? m.email_modal_change() : m.email_modal_add());
 
 	async function sendCode(body: ChangeEmailInput) {
 		await changeEmailMutation.mutateAsync({ body });
@@ -49,7 +46,7 @@
 
 	async function confirm(code: string) {
 		await confirmMutation.mutateAsync({ body: { code } });
-		toastService.add('Почта подтверждена', 'success');
+		toastService.add(m.email_confirmed(), 'success');
 		open = false;
 	}
 </script>
@@ -59,7 +56,7 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Mail class="size-5 text-muted-foreground" />
-				{currentEmail ? 'Изменить эл. почту' : 'Добавить эл. почту'}
+				{currentEmail ? m.email_modal_title_change() : m.email_modal_title_add()}
 			</Dialog.Title>
 			<Dialog.Description class="sr-only">{dialogDescription}</Dialog.Description>
 		</Dialog.Header>

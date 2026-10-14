@@ -2,6 +2,8 @@ import { error as kitError } from '@sveltejs/kit';
 
 import type { ErrorMessage } from '#lib/api/generated/index.js';
 
+import { m } from '#lib/paraglide/messages.js';
+
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
 // dictionary and the compile-time drift guard at the bottom of this file.
@@ -68,38 +70,38 @@ function getFieldLabel(path: Array<string | number>): string | null {
 		return null;
 	}
 
-	const labels: Record<string, string> = {
-		email: 'эл. почта',
-		new_email: 'эл. почта',
-		password: 'пароль',
-		old_password: 'текущий пароль',
-		new_password: 'новый пароль',
-		code: 'код',
-		barcode: 'номер билета',
-		username: 'имя пользователя',
-		text: 'текст',
-		amount: 'количество'
+	const labels: Record<string, () => string> = {
+		email: m.field_email,
+		new_email: m.field_email,
+		password: m.field_password,
+		old_password: m.field_current_password,
+		new_password: m.field_new_password,
+		code: m.field_code,
+		barcode: m.field_ticket_number,
+		username: m.field_username,
+		text: m.field_text,
+		amount: m.field_amount
 	};
 
-	return labels[fieldName] ?? null;
+	return labels[fieldName]?.() ?? null;
 }
 
-// Pydantic error "type" -> short Russian reason. Kept lowercase so it reads
-// naturally when appended after a field label ("поле «пароль»: ...").
-const VALIDATION_TYPE_MESSAGES: Record<string, string> = {
-	missing: 'не заполнено',
-	string_too_short: 'слишком короткое значение',
-	string_too_long: 'слишком длинное значение',
-	string_pattern_mismatch: 'неверный формат',
-	value_error: 'неверный формат',
-	greater_than: 'значение слишком маленькое',
-	greater_than_equal: 'значение слишком маленькое',
-	less_than: 'значение слишком большое',
-	less_than_equal: 'значение слишком большое',
-	int_parsing: 'нужно число',
-	int_type: 'нужно число',
-	float_parsing: 'нужно число',
-	float_type: 'нужно число'
+// Pydantic error "type" -> short reason. Kept lowercase so it reads naturally
+// when appended after a field label ("Проверь поле «пароль»: ...").
+const VALIDATION_TYPE_MESSAGES: Record<string, () => string> = {
+	missing: m.validation_missing,
+	string_too_short: m.validation_too_short,
+	string_too_long: m.validation_too_long,
+	string_pattern_mismatch: m.validation_bad_format,
+	value_error: m.validation_bad_format,
+	greater_than: m.validation_too_small,
+	greater_than_equal: m.validation_too_small,
+	less_than: m.validation_too_large,
+	less_than_equal: m.validation_too_large,
+	int_parsing: m.validation_need_number,
+	int_type: m.validation_need_number,
+	float_parsing: m.validation_need_number,
+	float_type: m.validation_need_number
 };
 
 function capitalize(text: string): string {
@@ -109,22 +111,22 @@ function capitalize(text: string): string {
 function getValidationMessage(details: ApiErrorDetails): string {
 	const firstError = getValidationErrors(details)[0];
 	if (!firstError) {
-		return 'Проверь заполнение формы';
+		return m.validation_check_form();
 	}
 
 	const fieldLabel = getFieldLabel(firstError.loc);
-	const reason = VALIDATION_TYPE_MESSAGES[firstError.type];
+	const reason = VALIDATION_TYPE_MESSAGES[firstError.type]?.();
 
 	if (fieldLabel && reason) {
-		return `Проверь поле «${fieldLabel}»: ${reason}`;
+		return m.validation_check_field({ field: fieldLabel, reason });
 	}
 	if (fieldLabel) {
-		return `Проверь поле «${fieldLabel}»`;
+		return m.validation_check_field_only({ field: fieldLabel });
 	}
 	if (reason) {
 		return capitalize(reason);
 	}
-	return 'Проверь заполнение формы';
+	return m.validation_check_form();
 }
 
 /**
@@ -154,28 +156,28 @@ export function getApiFieldError(error: unknown, field: string): string | null {
 		return null;
 	}
 
-	const reason = VALIDATION_TYPE_MESSAGES[fieldError.type] ?? 'неверный формат';
+	const reason = VALIDATION_TYPE_MESSAGES[fieldError.type]?.() ?? m.validation_bad_format();
 	return capitalize(reason);
 }
 
 function formatRetryAfter(value: unknown): string {
 	if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-		return `Попробуй ещё раз через ${Math.ceil(value)} сек.`;
+		return m.retry_after_seconds({ seconds: Math.ceil(value) });
 	}
 
-	return 'Попробуй ещё раз позже.';
+	return m.retry_later();
 }
 
 function getAccessDeniedMessage(details: ApiErrorDetails): string {
 	switch (details.reason) {
 		case 'VOTING_TICKET_REQUIRED':
-			return 'Чтобы голосовать, привяжи билет в профиле.';
+			return m.access_denied_voting_ticket_required();
 		case 'VOTING_DISABLED':
-			return 'Голосование сейчас закрыто.';
+			return m.access_denied_voting_disabled();
 		case 'MAILING_DELETE_FORBIDDEN':
-			return 'Нельзя удалить эту рассылку.';
+			return m.access_denied_mailing_delete_forbidden();
 		default:
-			return 'Нет доступа к этому действию.';
+			return m.access_denied_default();
 	}
 }
 
@@ -192,79 +194,85 @@ function formatColumnList(value: unknown): string {
 // can point the organizer at the cell to fix instead of just saying the file is
 // wrong. Reasons come from InvalidScheduleFileReason in core/exceptions/schedule.py.
 function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
-	const at = `Строка ${String(details.row)}, колонка «${String(details.column)}»`;
+	const location = m.schedule_file_location({
+		row: String(details.row),
+		column: String(details.column)
+	});
 
 	switch (details.reason) {
 		case 'MISSING_COLUMNS':
-			return `В файле нет колонок: ${formatColumnList(details.columns)}. Скачай шаблон и сверь заголовки.`;
+			return m.schedule_file_missing_columns({ columns: formatColumnList(details.columns) });
 		case 'EMPTY_FILE':
-			return 'В файле нет ни одного выступления.';
+			return m.schedule_file_empty();
 		case 'EMPTY_CELL':
-			return `${at}: ячейка пустая.`;
+			return m.schedule_file_empty_cell({ location });
 		case 'INVALID_NUMBER':
-			return `${at}: нужно целое число.`;
+			return m.schedule_file_invalid_number({ location });
 		case 'INVALID_TYPE':
-			return `${at}: укажи block для начала блока или оставь пустым для выступления.`;
+			return m.schedule_file_invalid_type({ location });
 		case 'BLOCK_ROW_WITH_EVENT_DATA':
-			return `${at}: в строке блока заполняются только type и title, эту ячейку оставь пустой.`;
+			return m.schedule_file_block_row_with_event_data({ location });
 		case 'DUPLICATE_NUMBER':
-			return `Номер ${String(details.number)} встречается дважды (строка ${String(details.row)}). Номера должны быть уникальными.`;
+			return m.schedule_file_duplicate_number({
+				number: String(details.number),
+				row: String(details.row)
+			});
 		case 'FILE_TOO_LARGE':
-			return 'Файл слишком большой. Максимальный размер — 5 МБ.';
+			return m.schedule_file_too_large();
 		case 'UNSUPPORTED_FILE_TYPE':
-			return 'Нужен файл в формате .xlsx.';
+			return m.schedule_file_unsupported_type();
 		default:
-			return 'Не удалось прочитать файл. Нужен .xlsx или .xls с нужными колонками.';
+			return m.schedule_file_unreadable();
 	}
 }
 
-// Dictionary: error code -> user-facing message. `satisfies` keeps the literal
+// Dictionary: error code -> message function (lazy, so the locale is read at
+// call time, not import time). `satisfies` keeps the literal
 // keys (so the drift guard below can see which codes are covered) while checking
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
-	ALREADY_VOTED_IN_THIS_NOMINATION: 'В этой номинации голос уже учтён',
-	CANNOT_CHANGE_OWN_ACCESS: 'Свою роль и права может изменить только другой организатор',
-	CANNOT_REMOVE_LAST_SIGN_IN_METHOD:
-		'Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт',
-	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
-	CURRENT_EVENT_NOT_ALLOWED: 'Это выступление нельзя отметить как текущее',
-	EMAIL_ALREADY_EXISTS: 'Этот адрес уже используется',
-	EMAIL_DELIVERY_FAILED: 'Не удалось отправить код. Попробуй позже',
-	EVENT_NOT_FOUND: 'Выступление не найдено',
-	INCORRECT_PASSWORD: 'Неверный текущий пароль',
-	INVALID_CREDENTIALS: 'Неверная почта или пароль',
-	INVALID_EMAIL: 'Неверный адрес эл. почты',
-	INVALID_FESTIVAL_TIME_RANGE: 'Конец фестиваля должен быть позже начала',
-	INVALID_OTP_CODE: 'Неверный или устаревший код',
-	INVALID_TELEGRAM_AUTH_PAYLOAD: 'Не удалось подтвердить Telegram',
-	INVALID_VOTING_TIME_RANGE: 'Конец голосования должен быть позже начала',
-	LINK_INITIATOR_MISMATCH: 'Вход в аккаунт сменился, пока шло подключение. Попробуй ещё раз',
-	MAILING_CANCELLED: 'Рассылка уже отменена',
-	MAILING_NOT_CANCELLABLE: 'Рассылку уже нельзя отменить — она завершена',
-	MAILING_NOT_FOUND: 'Рассылка не найдена',
-	OUTDATED_SCHEDULE_CHANGE: 'Программа уже изменилась, обнови страницу',
-	PERMISSION_NOT_ASSIGNABLE: 'Полный доступ выдаётся только через сервер',
-	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
-	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
-	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',
-	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: 'Этот аккаунт уже подключён к другому профилю',
-	SUBSCRIPTION_ALREADY_EXISTS: 'Подписка на это выступление уже оформлена',
-	SYNC_ALREADY_RUNNING: 'Синхронизация уже выполняется, подожди немного',
-	TICKET_ALREADY_USED: 'Этот билет уже использован',
-	TICKET_BARCODE_COLLISION: 'Не удалось создать билеты, попробуй ещё раз',
-	TICKET_NOT_FOUND: 'Билет не найден',
-	TICKET_NOT_LINKED: 'Сначала привяжи билет',
-	TICKET_REVOKED: 'По этому билету оформлен возврат',
-	USER_ALREADY_EXISTS: 'Этот адрес уже используется',
-	USER_ALREADY_HAS_PROVIDER_LINKED: 'К твоему профилю уже подключён аккаунт этого сервиса',
-	USER_ALREADY_HAS_TICKET_LINKED: 'У тебя уже привязан билет',
-	USER_HAS_NO_EMAIL: 'Сначала добавь почту к аккаунту',
-	USER_NOT_AUTHENTICATED: 'Нужно войти в аккаунт',
-	USER_NOT_FOUND: 'Аккаунт не найден',
-	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято',
-	USERNAME_PROFANITY: 'В имени пользователя есть недопустимые слова. Выбери другое',
-	VOTE_NOT_FOUND: 'Голос не найден'
-} satisfies Partial<Record<ApiErrorCode, string>>;
+	ALREADY_VOTED_IN_THIS_NOMINATION: m.error_already_voted_in_this_nomination,
+	CANNOT_CHANGE_OWN_ACCESS: m.error_cannot_change_own_access,
+	CANNOT_REMOVE_LAST_SIGN_IN_METHOD: m.error_cannot_remove_last_sign_in_method,
+	CAPTCHA_VERIFICATION_FAILED: m.error_captcha_verification_failed,
+	CURRENT_EVENT_NOT_ALLOWED: m.error_current_event_not_allowed,
+	EMAIL_ALREADY_EXISTS: m.error_email_already_exists,
+	EMAIL_DELIVERY_FAILED: m.error_email_delivery_failed,
+	EVENT_NOT_FOUND: m.error_event_not_found,
+	INCORRECT_PASSWORD: m.error_incorrect_password,
+	INVALID_CREDENTIALS: m.error_invalid_credentials,
+	INVALID_EMAIL: m.error_invalid_email,
+	INVALID_FESTIVAL_TIME_RANGE: m.error_invalid_festival_time_range,
+	INVALID_OTP_CODE: m.error_invalid_otp_code,
+	INVALID_TELEGRAM_AUTH_PAYLOAD: m.error_invalid_telegram_auth_payload,
+	INVALID_VOTING_TIME_RANGE: m.error_invalid_voting_time_range,
+	LINK_INITIATOR_MISMATCH: m.error_link_initiator_mismatch,
+	MAILING_CANCELLED: m.error_mailing_cancelled,
+	MAILING_NOT_CANCELLABLE: m.error_mailing_not_cancellable,
+	MAILING_NOT_FOUND: m.error_mailing_not_found,
+	OUTDATED_SCHEDULE_CHANGE: m.error_outdated_schedule_change,
+	PERMISSION_NOT_ASSIGNABLE: m.error_permission_not_assignable,
+	PUSH_SUBSCRIPTION_ALREADY_EXISTS: m.error_push_subscription_already_exists,
+	SAME_EVENTS_ARE_NOT_ALLOWED: m.error_same_events_are_not_allowed,
+	SKIPPED_EVENT_NOT_ALLOWED: m.error_skipped_event_not_allowed,
+	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: m.error_social_account_linked_to_another_user,
+	SUBSCRIPTION_ALREADY_EXISTS: m.error_subscription_already_exists,
+	SYNC_ALREADY_RUNNING: m.error_sync_already_running,
+	TICKET_ALREADY_USED: m.error_ticket_already_used,
+	TICKET_BARCODE_COLLISION: m.error_ticket_barcode_collision,
+	TICKET_NOT_FOUND: m.error_ticket_not_found,
+	TICKET_NOT_LINKED: m.error_ticket_not_linked,
+	TICKET_REVOKED: m.error_ticket_revoked,
+	USER_ALREADY_EXISTS: m.error_user_already_exists,
+	USER_ALREADY_HAS_PROVIDER_LINKED: m.error_user_already_has_provider_linked,
+	USER_ALREADY_HAS_TICKET_LINKED: m.error_user_already_has_ticket_linked,
+	USER_HAS_NO_EMAIL: m.error_user_has_no_email,
+	USER_NOT_AUTHENTICATED: m.error_user_not_authenticated,
+	USER_NOT_FOUND: m.error_user_not_found,
+	USERNAME_ALREADY_TAKEN: m.error_username_already_taken,
+	USERNAME_PROFANITY: m.error_username_profanity,
+	VOTE_NOT_FOUND: m.error_vote_not_found
+} satisfies Partial<Record<ApiErrorCode, () => string>>;
 
 // Codes carrying a `retry_after` detail; all share the same formatted message.
 const RETRY_AFTER_CODES = [
@@ -294,8 +302,6 @@ const _GENERIC_FALLBACK_CODES = [
 	'SUBSCRIPTION_NOT_FOUND'
 ] as const satisfies readonly ApiErrorCode[];
 
-const CONNECTION_FAILED_MESSAGE = 'Не удалось связаться с сервером. Попробуй ещё раз.';
-
 // The generated client never throws: a request that got no response comes back
 // as `{ error }` holding what `fetch` rejected with — a TypeError for a network
 // failure (each engine words it differently, so the type is the only stable
@@ -309,13 +315,13 @@ export function isConnectionFailure(error: unknown): boolean {
 }
 
 /**
- * Russian copy for a failed API call: the mapped `code` of an error response,
+ * User-facing copy for a failed API call: the mapped `code` of an error response,
  * or the connection message when the request never got an answer. `null` means
  * there is nothing specific to say, so the caller shows its own fallback.
  */
 export function getApiErrorDetail(error: unknown): string | null {
 	if (isConnectionFailure(error)) {
-		return CONNECTION_FAILED_MESSAGE;
+		return m.error_connection_failed();
 	}
 
 	const payload = getApiErrorPayload(error);
@@ -325,9 +331,9 @@ export function getApiErrorDetail(error: unknown): string | null {
 
 	// Dictionary covers most codes. Cast because payload.code is an unverified
 	// wire string, not a known ApiErrorCode.
-	const simple = (ERROR_MESSAGES as Record<string, string | undefined>)[payload.code];
+	const simple = (ERROR_MESSAGES as Record<string, (() => string) | undefined>)[payload.code];
 	if (simple) {
-		return simple;
+		return simple();
 	}
 
 	const details = payload.details ?? {};
@@ -349,9 +355,9 @@ export function getApiErrorDetail(error: unknown): string | null {
 /**
  * Throw a SvelteKit error from a failed API call, so a `load` failure
  * speaks the same language as a form/toast failure. Maps the API error `code` to
- * the shared Russian copy and reuses the real HTTP status; `code` rides along on
+ * the shared copy and reuses the real HTTP status; `code` rides along on
  * `App.Error` for the error page and Sentry. Usage:
- * `if (apiError) throwApiError(apiError, response, 'Не удалось загрузить …');`
+ * `if (apiError) throwApiError(apiError, response, m.schedule_load_failed());`
  */
 export function throwApiError(
 	apiError: unknown,

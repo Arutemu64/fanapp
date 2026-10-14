@@ -12,6 +12,11 @@ bun.lockb
 .svelte-kit/
 build/
 
+# Paraglide output (compiled from messages/*.json by `pnpm paraglide` and the Vite
+# plugin; gitignored by its own .gitignore) — never formatted or committed.
+src/lib/paraglide/
+project.inlang/cache/
+
 # Generated API client (just frontend-generate-api) is emitted through
 # Prettier by @hey-api/openapi-ts, so it stays formatted — kept OUT of this
 # ignore list on purpose so the format gate and drift check see the same bytes.

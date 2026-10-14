@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 
+	import * as Sentry from '@sentry/sveltekit';
+
 	import '../app.css';
 
-	import * as Sentry from '@sentry/sveltekit';
 	import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
 
@@ -19,6 +20,7 @@
 	import { currentUserOptions, watchApiResponses } from '#lib/api/index.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '#lib/components/UpdatePrompt.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
 	import { isReachable } from '#lib/services/reachability.js';
@@ -153,7 +155,7 @@
 
 <!-- Fallback title; pages override via their own <svelte:head><title>. -->
 <svelte:head>
-	<title>ФАН ФАН</title>
+	<title>{m.brand_name()}</title>
 </svelte:head>
 
 <QueryClientProvider client={queryClient}>
@@ -172,7 +174,7 @@
 	manual-chrome
 	manual-apple
 	manifest-url="/manifest.json"
-	name="ФАН ФАН"
+	name={m.brand_name()}
 	icon="/icons/icon-512.png"
 ></pwa-install>
 

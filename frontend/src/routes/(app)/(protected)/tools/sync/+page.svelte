@@ -15,7 +15,9 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { intlLocale } from '#lib/utils/locale.js';
 
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 
@@ -34,16 +36,16 @@
 		tcloud: 'TicketsCloud'
 	};
 
-	const SOURCE_DESCRIPTIONS: Record<SyncSource, string> = {
-		cosplay2: 'Номинации и участники косплей-конкурса',
-		tcloud: 'Билеты зрителей, участников и волонтёров'
+	const SOURCE_DESCRIPTIONS: Record<SyncSource, () => string> = {
+		cosplay2: m.sync_cosplay2,
+		tcloud: m.sync_tcloud
 	};
 
-	const STATUS_LABELS: Record<SyncRunStatus, string> = {
-		pending: 'В очереди',
-		running: 'Выполняется',
-		finished: 'Готово',
-		failed: 'Ошибка'
+	const STATUS_LABELS: Record<SyncRunStatus, () => string> = {
+		pending: m.sync_status_pending,
+		running: m.sync_status_running,
+		finished: m.sync_status_finished,
+		failed: m.sync_status_failed
 	};
 
 	// Sources the user has just triggered, so the button shows a spinner before
@@ -61,9 +63,9 @@
 
 	function formatTimestamp(value: string | null | undefined): string {
 		if (!value) {
-			return 'ещё не запускалась';
+			return m.sync_never();
 		}
-		return new Date(value).toLocaleString('ru-RU', {
+		return new Date(value).toLocaleString(intlLocale, {
 			day: 'numeric',
 			month: 'long',
 			hour: '2-digit',
@@ -77,7 +79,7 @@
 		requesting = [...requesting, source];
 		try {
 			await syncMutation.mutateAsync({ path: { source } });
-			toastService.add('Синхронизация запущена', 'success');
+			toastService.add(m.sync_started(), 'success');
 		} catch (error) {
 			toastService.error(error);
 		} finally {
@@ -87,12 +89,10 @@
 </script>
 
 <svelte:head>
-	<title>Синхронизация · ФАН ФАН</title>
+	<title>{m.tool_sync_title()} · {m.brand_name()}</title>
 </svelte:head>
 
-<SectionIntro
-	description="Данные подтягиваются автоматически по расписанию. Запусти вручную, если нужно увидеть свежие данные прямо сейчас."
-/>
+<SectionIntro description={m.sync_intro()} />
 
 {#if sourcesQuery.data === undefined}
 	{#if sourcesQuery.isError}
@@ -101,8 +101,7 @@
 			onRetry={() => void sourcesQuery.refetch()}
 			error={{
 				status: 500,
-				message:
-					getApiErrorDetail(sourcesQuery.error) ?? 'Не удалось загрузить состояние синхронизации'
+				message: getApiErrorDetail(sourcesQuery.error) ?? m.sync_load_failed()
 			}}
 		/>
 	{:else}
@@ -118,7 +117,7 @@
 							{SOURCE_LABELS[source.source]}
 						</h2>
 						<p class="mt-1 text-sm text-muted-foreground">
-							{SOURCE_DESCRIPTIONS[source.source]}
+							{SOURCE_DESCRIPTIONS[source.source]()}
 						</p>
 					</div>
 					{#if source.last_run}
@@ -132,16 +131,16 @@
 									'border-info/30 bg-info/10 text-info'
 							]}
 						>
-							{STATUS_LABELS[source.last_run.status]}
+							{STATUS_LABELS[source.last_run.status]()}
 						</Badge>
 					{/if}
 				</div>
 
 				<div class="mt-4 flex flex-col gap-1 text-sm text-muted-foreground">
 					<p>
-						Последняя синхронизация: {formatTimestamp(
-							source.last_run?.finished_at ?? source.last_run?.started_at
-						)}
+						{m.sync_last({
+							when: formatTimestamp(source.last_run?.finished_at ?? source.last_run?.started_at)
+						})}
 					</p>
 					{#if source.last_run?.result}
 						<p class="text-foreground">{source.last_run.result}</p>
@@ -161,13 +160,13 @@
 						>
 							{#if isBusy(source)}
 								<Spinner data-icon="inline-start" />
-								Синхронизируем…
+								{m.sync_running()}
 							{:else}
-								Синхронизировать
+								{m.sync_run()}
 							{/if}
 						</Button>
 					{:else}
-						<p class="text-sm text-muted-foreground">Интеграция не настроена на этом сервере.</p>
+						<p class="text-sm text-muted-foreground">{m.sync_unavailable()}</p>
 					{/if}
 				</div>
 			</Card.Root>

@@ -10,6 +10,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
@@ -36,7 +37,7 @@
 		...loginMutation(),
 		onSuccess: async () => {
 			await session.loggedIn();
-			toastService.add('Вход выполнен', 'success');
+			toastService.add(m.login_done(), 'success');
 		}
 	}));
 	let busy = $derived(passwordLoginMutation.isPending);
@@ -58,13 +59,13 @@
 		passwordError = '';
 
 		if (!normalizedEmail) {
-			emailError = 'Введи адрес эл. почты';
+			emailError = m.login_email_required();
 		} else if (!isValidEmail(normalizedEmail)) {
-			emailError = 'Введи адрес в формате name@example.com';
+			emailError = m.email_invalid_format();
 		}
 
 		if (!password.trim()) {
-			passwordError = 'Введи пароль';
+			passwordError = m.login_password_required();
 		}
 
 		return !emailError && !passwordError;
@@ -90,7 +91,7 @@
 					if (emailError || passwordError) {
 						return;
 					}
-					formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
+					formError = getApiErrorDetail(error) ?? m.error_invalid_credentials();
 				}
 			}
 		);
@@ -118,7 +119,7 @@
 		disabled while signing in — see CodeLoginForm for why. -->
 	<Field.FieldGroup class="gap-4">
 		<Field.Field data-invalid={emailError ? true : undefined}>
-			<Field.FieldLabel for="password-email">Эл. почта</Field.FieldLabel>
+			<Field.FieldLabel for="password-email">{m.email_label_short()}</Field.FieldLabel>
 			<div class="relative flex items-center">
 				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 				<Input
@@ -145,7 +146,7 @@
 		</Field.Field>
 
 		<Field.Field data-invalid={passwordError ? true : undefined}>
-			<Field.FieldLabel for="password">Пароль</Field.FieldLabel>
+			<Field.FieldLabel for="password">{m.sign_in_password()}</Field.FieldLabel>
 			<PasswordInput
 				id="password"
 				name="password"
@@ -166,9 +167,9 @@
 	<Button type="submit" class="w-full" disabled={busy}>
 		{#if busy}
 			<Spinner data-icon="inline-start" />
-			Входим…
+			{m.login_signing_in()}
 		{:else}
-			Войти
+			{m.profile_login()}
 		{/if}
 	</Button>
 
@@ -180,7 +181,7 @@
 			onclick={() => onCodeLogin?.()}
 			disabled={busy}
 		>
-			Войти по коду без пароля
+			{m.login_with_code_instead()}
 		</button>
 	</div>
 </form>

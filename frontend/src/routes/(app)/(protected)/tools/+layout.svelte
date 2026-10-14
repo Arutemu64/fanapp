@@ -1,5 +1,6 @@
 <script lang="ts">
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
 
 	import type { LayoutProps } from './$types';
@@ -17,8 +18,8 @@
 	     server state and none of it is worth reading offline. One state for the
 	     section beats a doomed tool grid or a failing sub-page. -->
 	<OfflineUnavailableState
-		title="Инструменты доступны только онлайн"
-		message="Подключись к интернету, чтобы пользоваться инструментами организатора."
+		title={m.tools_online_only_title()}
+		message={m.tools_online_only_message()}
 	/>
 {:else}
 	{@render children()}

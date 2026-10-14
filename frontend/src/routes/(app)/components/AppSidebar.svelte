@@ -4,6 +4,7 @@
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '#lib/assets/logo.svg';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
@@ -19,14 +20,14 @@
      (feedback, the org toolbox, theme, logout) lives on the Profile page on both
      sizes, so phones need no hamburger drawer and this sidebar carries nothing extra. -->
 <nav
-	aria-label="Разделы"
+	aria-label={m.nav_sections()}
 	class="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
 >
 	<a href={resolve('')} class="mb-6 flex items-center justify-center ps-0">
 		<!-- The mark is pure black shapes on transparent (incl. a black "2026" pill with
 			white text); `dark:invert` flips it to white shapes / a white pill with black
 			text with no separate dark asset to maintain. -->
-		<img src={logo} alt="ФАН ФАН" class="h-11 w-auto dark:invert" />
+		<img src={logo} alt={m.brand_name()} class="h-11 w-auto dark:invert" />
 	</a>
 	<div class="flex flex-col gap-1">
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
@@ -60,7 +61,7 @@
 							: 'text-muted-foreground group-hover:text-foreground'
 					]}
 				/>
-				<span>{label}</span>
+				<span>{label()}</span>
 			</a>
 		{/each}
 	</div>

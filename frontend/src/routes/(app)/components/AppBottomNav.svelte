@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
@@ -40,7 +41,7 @@
      first tap on a tab never waits on a chunk; data still waits for the tap
      (preload-data="hover" on <body> fires on touchstart). -->
 <nav
-	aria-label="Разделы"
+	aria-label={m.nav_sections()}
 	data-sveltekit-preload-code="viewport"
 	class="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-gap) z-(--z-overlay) px-2 select-none [-webkit-touch-callout:none] min-[25rem]:px-3 md:hidden"
 >
@@ -65,7 +66,7 @@
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{@const { label, href, outlineIcon: Icon } = item}
 			{@const active = isNavItemActive(activeUrl, item)}
-			<!-- "Голосование" must fit one fifth of the pill: measured in-app it is ~62px at
+			<!-- "Голосование" (Russian) must fit one fifth of the pill: measured in-app it is ~62px at
 			     10px, ~67px at 11px, ~73px at 12px. A tab gets ~67px on a 360px phone and
 			     ~74px from 400px (where the pill's side margin grows from 8px to 12px). So
 			     labels are 12px from 400px up (Material 3's nav-bar Label Medium), 11px with
@@ -106,7 +107,7 @@
 							: 'text-muted-foreground group-hover:text-foreground'
 					]}
 				>
-					{label}
+					{label()}
 				</span>
 			</a>
 		{/each}

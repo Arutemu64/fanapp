@@ -2,6 +2,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { currentUserOptions } from '#lib/api/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	import type { PageProps } from './$types';
 
@@ -15,7 +16,7 @@
 </script>
 
 <svelte:head>
-	<title>Билет · ФАН ФАН</title>
+	<title>{m.profile_menu_ticket()} · {m.brand_name()}</title>
 </svelte:head>
 
 <TicketLinkForm {user} />

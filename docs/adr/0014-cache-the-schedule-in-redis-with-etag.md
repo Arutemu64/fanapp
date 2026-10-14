@@ -54,7 +54,7 @@ Drop the request-time schedule timing and cache the rendered schedule in Redis.
   semantics stay in presentation; the interactor never touches `Request`.
 - **Invalidate explicitly and synchronously.** Every schedule-mutating interactor
   (import, move, set-current, skip, undo) calls `schedule_cache.invalidate()`
-  *after* `uow.commit()`. That is what makes the operator's read-your-writes
+  _after_ `uow.commit()`. That is what makes the operator's read-your-writes
   refetch — and every SSE-driven refetch — recompute from committed state instead
   of serving a pre-edit body. A long TTL on the entry is a safety net only, for
   out-of-band writes (the demo seeder) and the rare read that repopulates with a

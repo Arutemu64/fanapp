@@ -3,6 +3,7 @@
 
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		open: boolean;
@@ -30,9 +31,7 @@
 
 	// Loud for new broadcasts (push can't be undone); quiet for reverting actions.
 	let notifyMessage = $derived(
-		notifyTone === 'warning'
-			? 'Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.'
-			: 'Подписчики получат уведомление об изменении.'
+		notifyTone === 'warning' ? m.confirm_notify_warning() : m.confirm_notify_quiet()
 	);
 </script>
 
@@ -63,7 +62,7 @@
 		{/if}
 
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
+			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
 			<AlertDialog.Action
 				variant={confirmColor === 'red' ? 'destructive' : 'default'}
 				onclick={onconfirm}

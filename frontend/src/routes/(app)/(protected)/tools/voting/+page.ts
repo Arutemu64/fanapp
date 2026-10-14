@@ -5,6 +5,7 @@ import type { BackTarget } from '#lib/types/navigation.js';
 import { throwApiError } from '#lib/api/errors.js';
 import { getVotingDashboardOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { queryForLoad } from '#lib/api/index.js';
+import { m } from '#lib/paraglide/messages.js';
 import { canManageVoting } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
@@ -15,7 +16,7 @@ export const load: PageLoad = async ({ parent }) => {
 	// Mirror the backend voting:manage check before hitting the API, so the page
 	// is not shown to users the endpoint would reject with a 403.
 	if (!canManageVoting(user)) {
-		error(403, 'У тебя нет доступа к управлению голосованием');
+		error(403, m.voting_admin_forbidden());
 	}
 
 	// The voting-window form is seeded once from this, so it waits for a fresh
@@ -23,13 +24,11 @@ export const load: PageLoad = async ({ parent }) => {
 	const dashboard = await queryForLoad(queryClient, {
 		...getVotingDashboardOptions(),
 		staleTime: 0
-	}).catch((apiError: unknown) =>
-		throwApiError(apiError, undefined, 'Не удалось загрузить панель голосования')
-	);
+	}).catch((apiError: unknown) => throwApiError(apiError, undefined, m.voting_admin_load_failed()));
 
 	return {
-		title: 'Голосование',
-		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
+		title: m.nav_voting(),
+		back: { href: 'tools', label: m.tools_back() } satisfies BackTarget,
 		dashboard
 	};
 };

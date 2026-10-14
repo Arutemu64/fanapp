@@ -12,6 +12,7 @@
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
@@ -34,8 +35,10 @@
 	const toastService = getToastService();
 
 	const offlineGate = offlineWriteGate();
-	let currentActionLabel = $derived(event.is_current ? 'Снять отметку' : 'Отметить текущим');
-	let skipActionLabel = $derived(isSkipped ? 'Вернуть' : 'Пропустить');
+	let currentActionLabel = $derived(
+		event.is_current ? m.staff_unmark_current() : m.staff_mark_current()
+	);
+	let skipActionLabel = $derived(isSkipped ? m.staff_restore() : m.staff_skip());
 
 	let actionsOpen = $state(false);
 	let moveModal = $state(false);
@@ -97,7 +100,7 @@
 		markCurrentMutation.mutate(
 			{ path: { event_id: event.id } },
 			{
-				onSuccess: () => toastService.add('Выступление отмечено как текущее', 'success'),
+				onSuccess: () => toastService.add(m.staff_marked_current_done(), 'success'),
 				onError: (error) => toastService.error(error)
 			}
 		);
@@ -107,7 +110,7 @@
 		unmarkCurrentMutation.mutate(
 			{},
 			{
-				onSuccess: () => toastService.add('Отметка снята', 'success'),
+				onSuccess: () => toastService.add(m.staff_unmarked_done(), 'success'),
 				onError: (error) => toastService.error(error)
 			}
 		);
@@ -125,9 +128,7 @@
 			{ path: { event_id: event.id }, body: { is_skipped: skip } },
 			{
 				onSuccess: () => {
-					const toastMessage = skip
-						? 'Выступление помечено как пропущенное'
-						: 'Выступление возвращено в программу';
+					const toastMessage = skip ? m.staff_skipped_done() : m.staff_restored_done();
 					toastService.add(toastMessage, 'success');
 				},
 				onError: (error) => {
@@ -141,17 +142,17 @@
 	function askToggleCurrent() {
 		confirmConfig = event.is_current
 			? {
-					title: 'Снять отметку',
-					message: 'Снять отметку текущего выступления?',
-					confirmLabel: 'Снять',
+					title: m.staff_unmark_current(),
+					message: m.staff_unmark_message(),
+					confirmLabel: m.staff_unmark_confirm(),
 					color: 'primary',
 					notifyTone: 'muted',
 					run: handleUnmarkCurrent
 				}
 			: {
-					title: 'Отметить текущим',
-					message: `Отметить «${event.title}» как текущее выступление?`,
-					confirmLabel: 'Отметить',
+					title: m.staff_mark_current(),
+					message: m.staff_mark_message({ title: event.title }),
+					confirmLabel: m.staff_mark_confirm(),
 					color: 'primary',
 					notifyTone: 'warning',
 					run: handleMarkCurrent
@@ -162,9 +163,9 @@
 	function askToggleSkip() {
 		confirmConfig = isSkipped
 			? {
-					title: 'Вернуть выступление',
-					message: `Вернуть «${event.title}» в программу?`,
-					confirmLabel: 'Вернуть',
+					title: m.staff_restore_title(),
+					message: m.staff_restore_message({ title: event.title }),
+					confirmLabel: m.staff_restore(),
 					color: 'primary',
 					notifyTone: 'muted',
 					// Lock the direction to what the dialog shows now, so a concurrent
@@ -172,9 +173,9 @@
 					run: () => handleSkip(false)
 				}
 			: {
-					title: 'Пропустить выступление',
-					message: `Пропустить «${event.title}»? Оно будет помечено как пропущенное.`,
-					confirmLabel: 'Пропустить',
+					title: m.staff_skip_title(),
+					message: m.staff_skip_message({ title: event.title }),
+					confirmLabel: m.staff_skip(),
 					color: 'red',
 					notifyTone: 'warning',
 					run: () => handleSkip(true)
@@ -191,9 +192,9 @@
 	type="button"
 	onclick={offlineGate.guard(() => (actionsOpen = true))}
 	aria-disabled={offlineGate.blocked}
-	aria-label="Управление выступлением"
+	aria-label={m.staff_manage()}
 	aria-haspopup="dialog"
-	title="Управление выступлением"
+	title={m.staff_manage()}
 	class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 >
 	<Ellipsis class="size-5" />
@@ -208,7 +209,7 @@
 		<Dialog.Content>
 			<Dialog.Header>
 				<Dialog.Title>{event.title}</Dialog.Title>
-				<Dialog.Description>Изменения сразу увидят все участники</Dialog.Description>
+				<Dialog.Description>{m.staff_manage_hint()}</Dialog.Description>
 			</Dialog.Header>
 
 			<div class="flex flex-col gap-1">
@@ -237,7 +238,7 @@
 					onclick={offlineGate.guard(() => runFromSheet(() => (moveModal = true)))}
 				>
 					<Shuffle data-icon="inline-start" />
-					Перенести
+					{m.staff_move()}
 				</Button>
 
 				<Button

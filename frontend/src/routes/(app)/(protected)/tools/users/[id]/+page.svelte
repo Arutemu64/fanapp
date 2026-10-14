@@ -7,6 +7,7 @@
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 	import { canManageUsers } from '#lib/utils/permissions.js';
 	import { buildSocialProfileUrl, getRoleLabel, getSocialProviderLabel } from '#lib/utils/users.js';
@@ -24,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>{profile.username} · ФАН ФАН</title>
+	<title>{profile.username} · {m.brand_name()}</title>
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
@@ -49,17 +50,17 @@
 				</dd>
 			</div>
 			<div class="flex flex-col gap-0.5">
-				<dt class="text-xs text-muted-foreground">Почта</dt>
+				<dt class="text-xs text-muted-foreground">{m.user_email()}</dt>
 				<dd class="break-all text-foreground">
 					{profile.email ?? '—'}
 				</dd>
 			</div>
 			<div class="flex flex-col gap-0.5">
-				<dt class="text-xs text-muted-foreground">Зарегистрирован</dt>
+				<dt class="text-xs text-muted-foreground">{m.user_registered()}</dt>
 				<dd class="text-foreground">{formatFestivalDateTime(profile.created_at)}</dd>
 			</div>
 			<div class="flex flex-col gap-0.5">
-				<dt class="text-xs text-muted-foreground">Номер билета</dt>
+				<dt class="text-xs text-muted-foreground">{m.user_ticket_number()}</dt>
 				<dd class="font-mono text-xs break-all text-foreground select-all">
 					{profile.ticket_number ?? '—'}
 				</dd>
@@ -76,7 +77,7 @@
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Link2 class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-base font-semibold text-foreground sm:text-lg">Привязанные аккаунты</h2>
+			<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.user_linked_accounts()}</h2>
 		</div>
 
 		{#if profile.social_links.length > 0}
@@ -101,7 +102,7 @@
 								rel="external noopener noreferrer"
 								class="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
 							>
-								Открыть
+								{m.user_open()}
 								<ExternalLink class="size-4" aria-hidden="true" />
 							</a>
 						{/if}
@@ -109,7 +110,7 @@
 				{/each}
 			</ul>
 		{:else}
-			<EmptyState message="Нет привязанных аккаунтов." />
+			<EmptyState message={m.user_no_linked_accounts()} />
 		{/if}
 	</Card.Root>
 </div>

@@ -1,12 +1,6 @@
+import { m } from '#lib/paraglide/messages.js';
 import { reachability } from '#lib/services/reachability.js';
 import { getToastService } from '#lib/services/toasts.svelte.js';
-
-/**
- * Shown when someone taps a write control while the backend is unreachable.
- * Mirrors the page-level "…доступно только онлайн" empty states (voting,
- * feedback, tools) so a blocked control and a blocked page speak with one voice.
- */
-const OFFLINE_ACTION_HINT = 'Доступно только онлайн';
 
 /**
  * Gate for write controls that must stay online-only (ADR-0022) on pages that
@@ -41,7 +35,9 @@ export function offlineWriteGate() {
 				// browser's own navigation.
 				const [first] = args;
 				if (first instanceof Event) first.preventDefault();
-				toastService.add(OFFLINE_ACTION_HINT, 'info');
+				// Shown when a write control is tapped while the backend is unreachable;
+				// same voice as the page-level online-only empty states.
+				toastService.add(m.offline_action_hint(), 'info');
 			};
 		}
 	};

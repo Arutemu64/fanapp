@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { m } from '#lib/paraglide/messages.js';
 	interface Props {
 		targetId?: string;
 		label?: string;
 	}
 
-	let { targetId = 'main-content', label = 'Перейти к содержимому' }: Props = $props();
+	let { targetId = 'main-content', label = m.skip_to_content() }: Props = $props();
 
 	function skipToContent() {
 		const target = document.getElementById(targetId);

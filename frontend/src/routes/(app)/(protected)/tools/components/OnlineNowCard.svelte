@@ -3,7 +3,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { countOnlineUsersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { pluralize } from '#lib/utils/formatters.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	// Coarse on purpose: the figure is a rough "how many are here now", and a
 	// user's presence marker ages out server-side within ~45s, so a tighter poll
@@ -33,10 +33,9 @@
 			{#if count === undefined}
 				<span class="text-muted-foreground">…</span>
 			{:else}
-				{count}
-				{pluralize(count, 'человек', 'человека', 'человек')}
+				{m.online_now_people({ count })}
 			{/if}
 		</p>
-		<p class="text-xs text-muted-foreground">сейчас в приложении</p>
+		<p class="text-xs text-muted-foreground">{m.online_now_label()}</p>
 	</div>
 </div>

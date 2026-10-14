@@ -29,6 +29,7 @@
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { NOTIFICATION_PAGE_SIZE } from '#lib/constants/notifications.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { minuteClock } from '#lib/services/minuteClock.js';
@@ -168,8 +169,7 @@
 		markAllReadMutation.mutate(
 			{},
 			{
-				onError: (error) =>
-					toastService.error(error, 'Не удалось отметить уведомления прочитанными')
+				onError: (error) => toastService.error(error, m.notifications_mark_read_failed())
 			}
 		);
 	}
@@ -184,7 +184,7 @@
 		const idsBefore = new Set(notifications.map((notification) => notification.id));
 		const result = await notificationsQuery.fetchNextPage();
 		if (result.isFetchNextPageError) {
-			toastService.add('Не удалось загрузить уведомления', 'error');
+			toastService.add(m.notifications_load_failed(), 'error');
 			return;
 		}
 
@@ -205,7 +205,7 @@
 	}
 
 	function announceNotification(notification: NotificationDto) {
-		liveAnnouncement = `Новое уведомление: ${notification.title}`;
+		liveAnnouncement = m.notifications_live_announcement({ title: notification.title });
 	}
 
 	onMount(() => {
@@ -221,10 +221,7 @@
 <p class="sr-only" aria-live="polite" aria-atomic="true">{liveAnnouncement}</p>
 
 {#if offlineMiss}
-	<EmptyState
-		title="Уведомления недоступны офлайн"
-		message="Появятся после подключения к интернету"
-	/>
+	<EmptyState title={m.notifications_offline_title()} message={m.notifications_offline_message()} />
 {:else if notificationsQuery.data === undefined}
 	{#if notificationsQuery.isError}
 		<ErrorState
@@ -232,7 +229,7 @@
 			onRetry={() => void notificationsQuery.refetch()}
 			error={{
 				status: 500,
-				message: getApiErrorDetail(notificationsQuery.error) ?? 'Не удалось загрузить уведомления'
+				message: getApiErrorDetail(notificationsQuery.error) ?? m.notifications_load_failed()
 			}}
 		/>
 	{:else}
@@ -241,12 +238,12 @@
 {:else if notifications.length === 0}
 	<EmptyState
 		icon={Bell}
-		title="Уведомлений пока нет"
-		message="Здесь появятся напоминания о&nbsp;выступлениях из подписок, изменения в&nbsp;программе и&nbsp;рассылки организаторов."
+		title={m.notifications_empty_title()}
+		message={m.notifications_empty_message()}
 	>
 		<Button variant="outline" href={resolve('profile/notifications')}>
 			<Settings data-icon="inline-start" />
-			Настроить уведомления
+			{m.notifications_configure()}
 		</Button>
 	</EmptyState>
 {:else}
@@ -254,9 +251,9 @@
 		<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
 			<p class="text-sm text-muted-foreground">
 				{#if newCount > 0}
-					Новых: {newCount}
+					{m.notifications_new_count({ count: newCount })}
 				{:else if unreadCount === 0}
-					Все уведомления прочитаны
+					{m.notifications_all_read()}
 				{/if}
 			</p>
 			<div class="-me-3 flex items-center">
@@ -267,12 +264,12 @@
 						onclick={markAllRead}
 						disabled={markAllReadMutation.isPending}
 					>
-						Прочитать все
+						{m.notifications_mark_all_read()}
 					</Button>
 				{/if}
 				<Button variant="ghost" size="sm" href={resolve('profile/notifications')}>
 					<Settings data-icon="inline-start" />
-					Настройки
+					{m.notifications_settings()}
 				</Button>
 			</div>
 		</div>

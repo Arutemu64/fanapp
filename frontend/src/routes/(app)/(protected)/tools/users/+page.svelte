@@ -19,8 +19,8 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { USER_ROLES, USERS_PAGE_SIZE } from '#lib/constants/users.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { pluralize } from '#lib/utils/formatters.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
@@ -58,9 +58,7 @@
 
 	let users = $derived(usersQuery.data?.pages.flatMap((usersPage) => usersPage.users) ?? []);
 	let total = $derived(usersQuery.data?.pages[0]?.total ?? 0);
-	let resultsSummary = $derived(
-		`${total} ${pluralize(total, 'пользователь', 'пользователя', 'пользователей')}`
-	);
+	let resultsSummary = $derived(m.users_count({ count: total }));
 
 	function applyFilters(next: UserFilters) {
 		// `replace` keeps the history stack from filling with every intermediate
@@ -94,13 +92,13 @@
 
 	const ALL = 'all';
 	const ticketOptions = [
-		{ value: ALL, label: 'Билет: любой' },
-		{ value: 'yes', label: 'С билетом' },
-		{ value: 'no', label: 'Без билета' }
+		{ value: ALL, label: m.users_ticket_any() },
+		{ value: 'yes', label: m.users_ticket_yes() },
+		{ value: 'no', label: m.users_ticket_no() }
 	];
 
 	let roleValue = $derived(filters.role ?? ALL);
-	let roleLabel = $derived(filters.role ? getRoleLabel(filters.role) : 'Все роли');
+	let roleLabel = $derived(filters.role ? getRoleLabel(filters.role) : m.users_all_roles());
 	let ticketValue = $derived.by(() => {
 		if (filters.hasTicket === null) return ALL;
 		return filters.hasTicket ? 'yes' : 'no';
@@ -124,17 +122,17 @@
 	async function loadMore() {
 		const result = await usersQuery.fetchNextPage();
 		if (result.isFetchNextPageError) {
-			toastService.add('Не удалось загрузить пользователей', 'error');
+			toastService.add(m.users_load_failed(), 'error');
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Пользователи · ФАН ФАН</title>
+	<title>{m.tool_users_title()} · {m.brand_name()}</title>
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-4">
-	<SectionIntro description="Найди человека по имени, почте или номеру билета. Новые — сверху." />
+	<SectionIntro description={m.users_intro()} />
 
 	<div class="flex flex-col gap-3">
 		<div class="relative flex items-center">
@@ -145,8 +143,8 @@
 			<Input
 				type="search"
 				bind:value={searchValue}
-				placeholder="Имя, почта или билет"
-				aria-label="Поиск пользователей"
+				placeholder={m.users_search_placeholder()}
+				aria-label={m.users_search_label()}
 				autocomplete="off"
 				autocapitalize="off"
 				spellcheck={false}
@@ -159,7 +157,7 @@
 					type="button"
 					class="absolute right-0 flex size-11 items-center justify-center text-muted-foreground hover:text-foreground"
 					onclick={clearSearch}
-					aria-label="Очистить поиск"
+					aria-label={m.common_clear_search()}
 				>
 					<X class="size-4" />
 				</button>
@@ -171,9 +169,10 @@
 		     readable on the trigger. -->
 		<div class="grid grid-cols-2 gap-2">
 			<Select.Root type="single" value={roleValue} onValueChange={onRoleChange}>
-				<Select.Trigger class="w-full" aria-label="Роль">{roleLabel}</Select.Trigger>
+				<Select.Trigger class="w-full" aria-label={m.users_role_label()}>{roleLabel}</Select.Trigger
+				>
 				<Select.Content>
-					<Select.Item value={ALL} label="Все роли">Все роли</Select.Item>
+					<Select.Item value={ALL} label={m.users_all_roles()}>{m.users_all_roles()}</Select.Item>
 					{#each USER_ROLES as role (role)}
 						<Select.Item value={role} label={getRoleLabel(role)}>
 							{getRoleLabel(role)}
@@ -182,7 +181,9 @@
 				</Select.Content>
 			</Select.Root>
 			<Select.Root type="single" value={ticketValue} onValueChange={onTicketChange}>
-				<Select.Trigger class="w-full" aria-label="Билет">{ticketLabel}</Select.Trigger>
+				<Select.Trigger class="w-full" aria-label={m.users_ticket_label()}
+					>{ticketLabel}</Select.Trigger
+				>
 				<Select.Content>
 					{#each ticketOptions as option (option.value)}
 						<Select.Item value={option.value} label={option.label}>{option.label}</Select.Item>
@@ -196,7 +197,7 @@
 				{usersQuery.data ? resultsSummary : ''}
 			</p>
 			{#if hasActiveFilters}
-				<Button variant="ghost" size="sm" onclick={resetFilters}>Сбросить</Button>
+				<Button variant="ghost" size="sm" onclick={resetFilters}>{m.common_reset()}</Button>
 			{/if}
 		</div>
 	</div>
@@ -208,7 +209,7 @@
 				onRetry={() => void usersQuery.refetch()}
 				error={{
 					status: 500,
-					message: getApiErrorDetail(usersQuery.error) ?? 'Не удалось загрузить пользователей'
+					message: getApiErrorDetail(usersQuery.error) ?? m.users_load_failed()
 				}}
 			/>
 		{:else}
@@ -216,10 +217,8 @@
 		{/if}
 	{:else if users.length === 0}
 		<EmptyState
-			title="Никого не нашлось"
-			message={hasActiveFilters
-				? 'Попробуй изменить запрос или фильтры.'
-				: 'Пользователей пока нет.'}
+			title={m.users_nobody()}
+			message={hasActiveFilters ? m.users_nobody_filters() : m.users_none_yet()}
 		/>
 	{:else}
 		<div class={['transition-opacity', usersQuery.isPlaceholderData && 'opacity-60']}>

@@ -1,5 +1,7 @@
 import type { Picture } from '@sveltejs/enhanced-img';
 
+import { m } from '#lib/paraglide/messages.js';
+
 export interface MapEntry {
 	id: string;
 	picture: Picture;
@@ -11,13 +13,13 @@ export interface MapEntry {
 }
 
 // The caption and alt text are the only per-file metadata that can't be
-// derived from the file: both are human-authored Russian, and alt is required
+// derived from the file: both are human-authored per language, and alt is required
 // for accessibility. Intrinsic dimensions, formats and responsive sizes come
 // from <enhanced:img> at build time, so dropping in a map of any proportions
 // needs only its entry here.
-const TEXT: Record<string, { label: string; alt: string }> = {
-	'map_1.png': { label: '1 этаж', alt: 'Карта 1 этажа' },
-	'map_2.png': { label: '2 и 3 этажи', alt: 'Карта 2 и 3 этажа' }
+const TEXT: Record<string, { label: () => string; alt: () => string }> = {
+	'map_1.png': { label: m.map_floor_1_label, alt: m.map_floor_1_alt },
+	'map_2.png': { label: m.map_floors_2_3_label, alt: m.map_floors_2_3_alt }
 };
 
 // enhanced-img processes each match at build into a Picture (AVIF/WebP + sized
@@ -41,8 +43,8 @@ export const maps: MapEntry[] = Object.entries(modules)
 		return {
 			id: filename.replace(/\.[^.]+$/, ''),
 			picture,
-			label: text.label,
-			alt: text.alt,
+			label: text.label(),
+			alt: text.alt(),
 			filename
 		};
 	})

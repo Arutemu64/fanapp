@@ -84,6 +84,14 @@
 				// OS and drag the shell tint dark with it. theme.svelte.ts keeps it in sync
 				// afterwards. https://developer.chrome.com/blog/auto-dark-theme
 				document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+				// Match <html lang> to the locale Paraglide will resolve (localStorage
+				// key PARAGLIDE_LOCALE, Russian when unset) before first paint, so screen
+				// readers and hyphenation pick the right language from the start.
+				var locale = null;
+				try {
+					locale = localStorage.getItem('PARAGLIDE_LOCALE');
+				} catch (e) {}
+				if (locale === 'en') document.documentElement.lang = 'en';
 				if (isDark) {
 					document.documentElement.classList.add('dark');
 					// Seed the shell tint to match the resolved theme before first paint,

@@ -9,8 +9,8 @@
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { pluralize } from '#lib/utils/formatters.js';
 
 	interface Props {
 		participant: ParticipantFullDto;
@@ -47,7 +47,7 @@
 		voteMutation.mutate(
 			{ body: { participant_id: participant.id } },
 			{
-				onSuccess: () => toastService.add('Голос учтён', 'success'),
+				onSuccess: () => toastService.add(m.voting_vote_counted(), 'success'),
 				onError: (error) => toastService.error(error)
 			}
 		);
@@ -80,7 +80,7 @@
 					class="inline-flex items-center gap-1 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
 				>
 					<CheckCircle2 class="size-3.5" />
-					Твой голос
+					{m.voting_your_vote()}
 				</Badge>
 			</div>
 		{/if}
@@ -90,8 +90,7 @@
 			aria-live="polite"
 		>
 			<ThumbsUp class="mt-px size-3.5 shrink-0" aria-hidden="true" />
-			{votesCount}
-			{pluralize(votesCount, 'голос', 'голоса', 'голосов')}
+			{m.voting_votes_count({ count: votesCount })}
 		</p>
 	</div>
 
@@ -104,12 +103,12 @@
 			class="shrink-0"
 			disabled={areActionsDisabled}
 			onclick={handleVote}
-			aria-label={`Голосовать за ${participant.title}`}
+			aria-label={m.voting_vote_for({ title: participant.title })}
 		>
 			{#if voteMutation.isPending}
 				<Spinner data-icon="inline-start" />
 			{/if}
-			Голосовать
+			{m.voting_card_vote()}
 		</Button>
 	{/if}
 </li>

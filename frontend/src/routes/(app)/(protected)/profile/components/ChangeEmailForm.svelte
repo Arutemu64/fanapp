@@ -13,6 +13,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { isValidEmail, isValidOtp, normalizeEmail } from '#lib/utils/validation.js';
@@ -59,11 +60,11 @@
 		try {
 			await onSendCode({ new_email: normalizeEmail(newEmail) });
 		} catch (error) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
+			formError = getApiErrorDetail(error) ?? m.email_send_code_failed();
 			return;
 		}
 		verificationCode = '';
-		toastService.add('Код для подтверждения отправлен на почту', 'success');
+		toastService.add(m.email_code_sent(), 'success');
 		cooldown.start();
 	}
 
@@ -74,7 +75,7 @@
 		const trimmedEmail = normalizeEmail(newEmail);
 
 		if (!isValidEmail(trimmedEmail)) {
-			emailError = 'Введи адрес в формате name@example.com';
+			emailError = m.email_invalid_format();
 			return;
 		}
 
@@ -87,13 +88,13 @@
 				return;
 			}
 			if (getApiErrorCode(error) === 'EMAIL_ALREADY_EXISTS') {
-				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
+				emailError = getApiErrorDetail(error) ?? m.error_email_already_exists();
 				return;
 			}
-			formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
+			formError = getApiErrorDetail(error) ?? m.email_send_code_failed();
 			return;
 		}
-		toastService.add('Код подтверждения отправлен на новый адрес.', 'success');
+		toastService.add(m.email_code_sent_new(), 'success');
 		step = 'verify';
 		cooldown.start();
 	}
@@ -102,12 +103,12 @@
 		verificationCodeError = '';
 
 		if (verificationCode.length !== 6) {
-			verificationCodeError = 'Введи код из письма';
+			verificationCodeError = m.email_code_required();
 			return;
 		}
 
 		if (!isValidOtp(verificationCode)) {
-			verificationCodeError = 'Код должен состоять из 6 цифр';
+			verificationCodeError = m.email_code_six_digits();
 			return;
 		}
 
@@ -120,10 +121,10 @@
 				return;
 			}
 			if (getApiErrorCode(error) === 'INVALID_OTP_CODE') {
-				verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
+				verificationCodeError = getApiErrorDetail(error) ?? m.error_invalid_otp_code();
 				return;
 			}
-			formError = getApiErrorDetail(error) ?? 'Не удалось подтвердить код';
+			formError = getApiErrorDetail(error) ?? m.email_code_verify_failed();
 		}
 	}
 </script>
@@ -141,7 +142,7 @@
 		<Field.FieldGroup class="gap-4">
 			{#if currentEmail}
 				<Field.Field data-disabled={true}>
-					<Field.FieldLabel>Текущая эл. почта</Field.FieldLabel>
+					<Field.FieldLabel>{m.email_current_label()}</Field.FieldLabel>
 					<div class="relative flex items-center">
 						<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 						<Input
@@ -157,7 +158,7 @@
 			{/if}
 
 			<Field.Field data-invalid={emailError ? true : undefined}>
-				<Field.FieldLabel for="new_email">Новая эл. почта</Field.FieldLabel>
+				<Field.FieldLabel for="new_email">{m.email_new_label()}</Field.FieldLabel>
 				<div class="relative flex items-center">
 					<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 					<Input
@@ -179,9 +180,7 @@
 					<Field.FieldError>{emailError}</Field.FieldError>
 				{:else}
 					<Field.FieldDescription>
-						{currentEmail
-							? 'На новый адрес придёт код. Почта изменится только после подтверждения.'
-							: 'На этот адрес придёт письмо с кодом подтверждения.'}
+						{currentEmail ? m.email_hint_change() : m.email_hint_add()}
 					</Field.FieldDescription>
 				{/if}
 			</Field.Field>
@@ -190,9 +189,9 @@
 		<Button type="submit" class="w-full" disabled={sending}>
 			{#if sending}
 				<Spinner data-icon="inline-start" />
-				Отправка кода…
+				{m.email_sending_code()}
 			{:else}
-				{currentEmail ? 'Отправить код' : 'Добавить адрес'}
+				{currentEmail ? m.email_send_code() : m.email_add_address()}
 			{/if}
 		</Button>
 	</form>
@@ -205,16 +204,16 @@
 		{/if}
 
 		<Field.Field data-disabled={true}>
-			<Field.FieldLabel>Новая эл. почта</Field.FieldLabel>
+			<Field.FieldLabel>{m.email_new_label()}</Field.FieldLabel>
 			<div class="relative flex items-center">
 				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 				<Input type="text" value={normalizeEmail(newEmail)} disabled class="pl-9" />
 			</div>
-			<Field.FieldDescription>Код подтверждения отправлен на этот адрес.</Field.FieldDescription>
+			<Field.FieldDescription>{m.email_code_sent_to_address()}</Field.FieldDescription>
 		</Field.Field>
 
 		<div class="flex flex-col items-center gap-2">
-			<Label>Код подтверждения</Label>
+			<Label>{m.email_code_label()}</Label>
 			<InputOTP.Root
 				maxlength={6}
 				bind:value={verificationCode}
@@ -243,7 +242,7 @@
 			{#if verificationCodeError}
 				<p class="text-center text-sm text-destructive">{verificationCodeError}</p>
 			{:else}
-				<p class="text-center text-sm text-muted-foreground">Введи 6 цифр из письма.</p>
+				<p class="text-center text-sm text-muted-foreground">{m.email_enter_six_digits()}</p>
 			{/if}
 		</div>
 
@@ -251,9 +250,9 @@
 			<Button class="w-full" disabled={isBusy} onclick={submitVerificationCode}>
 				{#if confirming}
 					<Spinner data-icon="inline-start" />
-					Проверяем…
+					{m.email_verifying()}
 				{:else}
-					Подтвердить код
+					{m.email_verify()}
 				{/if}
 			</Button>
 
@@ -266,11 +265,11 @@
 			>
 				{#if sending}
 					<Spinner data-icon="inline-start" />
-					Отправляем…
+					{m.email_resending()}
 				{:else if cooldown.remaining > 0}
-					Отправить код ещё раз ({cooldown.remaining} сек.)
+					{m.email_resend_cooldown({ seconds: cooldown.remaining })}
 				{:else}
-					Отправить код ещё раз
+					{m.email_resend()}
 				{/if}
 			</Button>
 		</div>
