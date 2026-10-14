@@ -12,7 +12,6 @@ const style = new Style(definition);
 const DATA_URI_CACHE_LIMIT = 200;
 const dataUriCache = new Map<string, string>();
 
-/** Deterministic SVG data URI for a seed: the same seed always draws the same face. */
 export function getAvatarDataUri(seed: string): string {
 	let uri = dataUriCache.get(seed);
 	if (!uri) {
