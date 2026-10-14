@@ -1,0 +1,9 @@
+common_passwords.txt
+--------------------
+Source: SecLists, Passwords/Common-Credentials/Pwdb_top-1000000.txt
+        https://github.com/danielmiessler/SecLists
+License: MIT
+Derived file: the first 200,000 entries (the list is ordered by frequency),
+casefolded, deduplicated, and cut to the 10-128 characters a password may be
+here — a shorter entry is already refused by PASSWORD_FIELD, so it only costs
+memory. One password per line.

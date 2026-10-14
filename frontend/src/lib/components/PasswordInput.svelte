@@ -15,6 +15,9 @@
 		disabled?: boolean;
 		readonly?: boolean;
 		maxlength?: number;
+		// Apple Password AutoFill hint: makes the generated password fit the
+		// backend's length rules. Ignored by other browsers.
+		passwordrules?: string;
 		color?: 'red' | undefined;
 		// Id of the error or hint that describes the field (aria-describedby).
 		describedby?: string;
@@ -32,12 +35,16 @@
 		disabled = false,
 		readonly = false,
 		maxlength,
+		passwordrules,
 		color,
 		describedby,
 		oninput
 	}: Props = $props();
 
 	let show = $state(false);
+	// `passwordrules` is missing from Svelte's input attribute types, so it rides in
+	// through a spread.
+	let extraAttributes = $derived(passwordrules ? { passwordrules } : {});
 	let invalid = $derived(color === 'red');
 </script>
 
@@ -56,6 +63,7 @@
 		{disabled}
 		{readonly}
 		{maxlength}
+		{...extraAttributes}
 		aria-invalid={invalid ? true : undefined}
 		aria-describedby={describedby}
 		{oninput}

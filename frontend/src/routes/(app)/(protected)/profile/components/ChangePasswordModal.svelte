@@ -20,9 +20,12 @@
 	interface Props {
 		open: boolean;
 		hasPassword?: boolean;
+		// Account email, handed to password managers as the username of the password
+		// being saved. Null for an account that signs in through a social service.
+		email?: string | null;
 	}
 
-	let { open = $bindable(false), hasPassword = true }: Props = $props();
+	let { open = $bindable(false), hasPassword = true, email = null }: Props = $props();
 	const queryClient = useQueryClient();
 
 	// Not awaited: the refreshed user flips `hasPassword`, and with it this
@@ -101,6 +104,21 @@
 		</Dialog.Header>
 
 		<form onsubmit={handleSubmit} class="flex flex-col gap-4">
+			<!-- Password managers pair a saved password with the username field in the
+				same form. Visually hidden rather than display:none, which managers may
+				skip. https://web.dev/articles/sign-in-form-best-practices -->
+			{#if email}
+				<input
+					type="text"
+					name="username"
+					autocomplete="username"
+					value={email}
+					readonly
+					tabindex={-1}
+					aria-hidden="true"
+					class="sr-only"
+				/>
+			{/if}
 			{#if formError}
 				<Alert.Root variant="destructive">
 					<Alert.Description>{formError}</Alert.Description>
@@ -129,6 +147,7 @@
 						autocomplete="new-password"
 						revealLabel="новый пароль"
 						maxlength={MAX_PASSWORD_LENGTH}
+						passwordrules="minlength: {MIN_PASSWORD_LENGTH}; maxlength: {MAX_PASSWORD_LENGTH};"
 						color={newPasswordError ? 'red' : undefined}
 						bind:value={newPassword}
 						oninput={() => {

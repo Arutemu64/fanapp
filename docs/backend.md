@@ -270,6 +270,10 @@ User-chosen **public** text is screened for profanity behind the `ProfanityFilte
 
 The adapter normalizes input before matching (casefold, fold Latin/leet look-alikes to Cyrillic, strip non-letters, collapse repeats), so obfuscated forms (`х.у.й`, `пизд@`, `хуууй`) are still caught. It combines two static word lists under `adapters/profanity/data/`: the vendored CC-BY [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words) ru/en lists (used for **exact** normalized-token matches, see `NOTICE`) plus a curated `roots_ru.txt` of unambiguous mat stems (used for **substring** matches to catch inflections). To filter another field, inject the port and call it in that interactor.
 
+## Password Blocklist
+
+A new password is checked against the `PasswordBlocklist` port (`application/ports/password_blocklist.py`, word-list adapter `adapters/auth/password_blocklist.py`) in `ChangePassword` and `CreateUser`; a hit raises `PasswordTooCommon` (HTTP 400, code `PASSWORD_TOO_COMMON`). Length is the only other rule — no composition requirements, per [NIST SP 800-63B-4 §3.1.1](https://pages.nist.gov/800-63-4/sp800-63b/authenticators/), which also asks for the blocklist and a stated reason on rejection. The whole password is compared case-insensitively, never by substring. The list is the 10–128-character slice of the top 200k entries of SecLists' `Pwdb_top-1000000` (shorter ones are already refused by `PASSWORD_FIELD`); provenance is in `adapters/auth/data/NOTICE`. Login never consults it, so an existing account with a listed password can still sign in.
+
 ## Rate Limiting
 
 Two distinct rate-limiting ports exist — pick by semantics, do not overload one for the other:
