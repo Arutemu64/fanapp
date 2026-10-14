@@ -9,6 +9,7 @@ from fanfan.application.interactors.notifications.send_notification import (
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import UserNotReachable
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.user import User, UserSettings
@@ -85,12 +86,34 @@ class _StubMailingGateway(MailingGateway):
         raise AssertionError(msg)
 
 
+class _FakeUow(UnitOfWork):
+    def __init__(self) -> None:
+        self.commits = 0
+
+    async def commit(self) -> None:
+        self.commits += 1
+
+
+class _CommitCheckingTelegramNotifier(FakeTelegramNotifier):
+    """Records how many commits had run when the external send started."""
+
+    def __init__(self, uow: _FakeUow) -> None:
+        super().__init__()
+        self._uow = uow
+        self.commits_at_send: int | None = None
+
+    async def send_notification(self, notification: Notification) -> None:
+        self.commits_at_send = self._uow.commits
+        await super().send_notification(notification)
+
+
 def _interactor(
     *,
     user: User | None,
     tg: FakeTelegramNotifier,
     push: FakePushNotifier,
     vk: FakeVkNotifier,
+    uow: _FakeUow | None = None,
 ) -> SendNotification:
     return SendNotification(
         mailing_gateway=_StubMailingGateway(),
@@ -99,6 +122,7 @@ def _interactor(
         tg_notifier=tg,
         push_notifier=push,
         vk_notifier=vk,
+        uow=uow or _FakeUow(),
     )
 
 
@@ -117,6 +141,24 @@ async def test_telegram_delivered_when_enabled() -> None:
     await interactor.send_notification_to_telegram(_INPUT)
 
     assert [n.id for n in tg.sent_notifications] == [NOTIFICATION_ID]
+
+
+async def test_read_transaction_ends_before_the_external_send() -> None:
+    # The loads take row locks; a send holding them would stall the mailing's
+    # fan-out and every other channel of it for the length of the external call.
+    uow = _FakeUow()
+    tg = _CommitCheckingTelegramNotifier(uow)
+    interactor = _interactor(
+        user=_make_user(telegram=True),
+        tg=tg,
+        push=FakePushNotifier(),
+        vk=FakeVkNotifier(),
+        uow=uow,
+    )
+
+    await interactor.send_notification_to_telegram(_INPUT)
+
+    assert tg.commits_at_send == 1
 
 
 async def test_telegram_opt_out_is_unreachable() -> None:

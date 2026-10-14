@@ -10,6 +10,7 @@ from fanfan.application.ports.notifier import (
     TelegramNotifierPort,
     VkNotifierPort,
 )
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     MailingNotFound,
     NotificationNotFound,
@@ -36,6 +37,7 @@ class SendNotification:
         tg_notifier: TelegramNotifierPort,
         push_notifier: PushNotifierPort,
         vk_notifier: VkNotifierPort,
+        uow: UnitOfWork,
     ) -> None:
         self.mailing_gateway = mailing_gateway
         self.notification_gateway = notification_gateway
@@ -43,6 +45,7 @@ class SendNotification:
         self.tg_notifier = tg_notifier
         self.push_notifier = push_notifier
         self.vk_notifier = vk_notifier
+        self.uow = uow
 
     async def _get_notification(self, data: SendNotificationInput) -> Notification:
         notification = await self.notification_gateway.get(data.notification_id)
@@ -65,17 +68,28 @@ class SendNotification:
             raise UserNotReachable
         return user.settings
 
+    async def _end_read_transaction(self) -> None:
+        # The gateways load with SELECT ... FOR UPDATE and nothing here writes, so
+        # end the transaction before the external send. A Telegram or VK call can
+        # take up to ~60s; holding the mailing row that long stalls the fan-out's
+        # CreateNotification past lock_timeout and serializes every channel of
+        # the mailing, and the notification and user rows would block mark-read
+        # and settings edits the same way.
+        await self.uow.commit()
+
     async def send_notification_to_telegram(self, data: SendNotificationInput) -> None:
         notification = await self._get_notification(data)
         settings = await self._get_user_settings(notification.user_id)
         if not settings.receive_telegram_notifications:
             raise UserNotReachable
+        await self._end_read_transaction()
         await self.tg_notifier.send_notification(notification)
 
     async def send_notification_to_push(self, data: SendNotificationInput) -> None:
         # Push has no per-channel opt-out: a live push subscription is itself the
         # user's opt-in, so there is no setting to check here.
         notification = await self._get_notification(data)
+        await self._end_read_transaction()
         await self.push_notifier.send_notification(notification)
 
     async def send_notification_to_vk(self, data: SendNotificationInput) -> None:
@@ -83,4 +97,5 @@ class SendNotification:
         settings = await self._get_user_settings(notification.user_id)
         if not settings.receive_vk_notifications:
             raise UserNotReachable
+        await self._end_read_transaction()
         await self.vk_notifier.send_notification(notification)

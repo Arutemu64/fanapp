@@ -214,9 +214,11 @@ await self.events_broker.publish(
 )
 ```
 
-`NotificationQueued` and `MailingCancelled` follow this pattern: they are "do this side effect" commands to infrastructure, not aggregate state changes, so they are **not** recorded on any aggregate — the interactor constructs and publishes them directly via `EventBroker`.
+`NotificationQueued` follows this pattern: it is a "do this side effect" command to infrastructure, not an aggregate state change, so it is **not** recorded on any aggregate — the interactor constructs and publishes it directly via `EventBroker`.
 
 > `BroadcastQueued` is not a service event: it guards a committed `Mailing` row, so it flows through the outbox via `Mailing.queue_broadcast()` (see [Domain Events](#domain-events)).
+
+> `MailingCancelled` has one producer of each kind. An organizer's cancel is a domain event: `Mailing.cancel()` flips the status and records it, so both leave in one transaction through the outbox. A schedule undo publishes it as a service event from the `undo_schedule_change` consumer, which reacts to an already-durable `ScheduleChangeUndone` and changes no row itself. Either way `DeleteMailingNotifications` settles the cancellation idempotently.
 
 > Email login/confirmation codes are deliberately **not** service events. `request_login_code.py` and `change_email.py` send them synchronously by calling `SendLoginCodeEmail` / `SendEmailConfirmationCode` inside the request, so an SMTP failure reaches the caller instead of failing silently after the UI has already told the user the code was sent. The send runs inside the per-address cooldown claim, which a failed send gives back — the cooldown stays unspent, so the user can retry immediately.
 
