@@ -18,6 +18,7 @@ function user(overrides: Partial<User> = {}): User {
 		username: 'test_visitor',
 		role: 'visitor',
 		email: null,
+		avatar_seed: 'e2eSeedVisitor',
 		has_password: true,
 		ticket: null,
 		permissions: [],

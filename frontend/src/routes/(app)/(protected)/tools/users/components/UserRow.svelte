@@ -5,7 +5,8 @@
 	import type { UserListItemDto } from '#lib/api/generated/index.js';
 
 	import { Badge } from '#lib/components/ui/badge/index.js';
-	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { getRoleLabel } from '#lib/utils/users.js';
 
 	interface Props {
 		user: UserListItemDto;
@@ -24,12 +25,7 @@
 	href={resolve(`tools/users/${user.id}`)}
 	class="flex min-h-16 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:px-4"
 >
-	<span
-		class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
-		aria-hidden="true"
-	>
-		{getAvatarInitials(user.username)}
-	</span>
+	<UserAvatar seed={user.avatar_seed} class="size-10" />
 	<span class="flex min-w-0 flex-1 flex-col gap-0.5">
 		<span class="flex min-w-0 items-center gap-2">
 			<span class="truncate text-sm font-medium text-foreground">{user.username}</span>

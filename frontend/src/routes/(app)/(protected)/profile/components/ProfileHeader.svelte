@@ -3,11 +3,11 @@
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
-	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
-	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
+	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import EditProfileModal from './EditProfileModal.svelte';
 
@@ -16,7 +16,6 @@
 	}
 
 	let { user }: Props = $props();
-	let avatarInitials = $derived(getAvatarInitials(user.username));
 
 	// Editing the profile is a mutation — online only. Cached identity still renders.
 	const offlineGate = offlineWriteGate();
@@ -36,13 +35,7 @@
 	in the middle, edit action on the right.
 -->
 <div class="flex flex-col items-center gap-3 text-center sm:flex-row sm:gap-5 sm:text-left">
-	<Avatar.Root class="size-16 shrink-0 text-xl font-bold">
-		<!-- primary-700 in light, as on the hub's account row: on the primary/10 tint it
-		     measures 5.8:1, where primary-600 is 4.4:1, under AA's 4.5:1 for body text. -->
-		<Avatar.Fallback class="bg-primary/10 text-primary-700 dark:text-primary">
-			{avatarInitials}
-		</Avatar.Fallback>
-	</Avatar.Root>
+	<UserAvatar seed={user.avatar_seed} class="size-16" />
 
 	<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
 		<h2 class="min-w-0 text-xl font-bold break-words text-foreground sm:text-2xl">

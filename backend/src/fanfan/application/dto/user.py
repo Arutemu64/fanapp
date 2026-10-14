@@ -33,6 +33,7 @@ class UserListItemDTO(BaseModel):
     username: str
     role: UserRole
     email: EmailStr | None
+    avatar_seed: str
     ticket_number: str | None
     created_at: datetime
 
@@ -55,6 +56,7 @@ class UserDetailsDTO(BaseModel):
     username: str
     role: UserRole
     email: EmailStr | None
+    avatar_seed: str
     ticket_number: str | None
     created_at: datetime
     social_links: list[UserSocialLinkDTO]
@@ -82,6 +84,7 @@ class UserSocialIdentityDTO(BaseModel):
 
 class CurrentUserDTO(UserBaseDTO):
     email: EmailStr | None
+    avatar_seed: str
     has_password: bool
 
     ticket: UserTicketDTO | None

@@ -21,12 +21,13 @@
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 	import { isOrg } from '#lib/utils/permissions.js';
-	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
+	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
 	import LogoutButton from './components/LogoutButton.svelte';
@@ -36,7 +37,6 @@
 
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
-	let avatarInitials = $derived(getAvatarInitials(user?.username));
 	let ticketStatus = $derived(user?.ticket ? 'Привязан' : 'Не привязан');
 
 	// The row's "current value", like a settings screen's: whether any channel
@@ -117,11 +117,7 @@
 					{#snippet child({ props })}
 						<a href={resolve('profile/account')} {...props}>
 							<Item.Media>
-								<Avatar.Root class="size-12 text-base font-bold">
-									<Avatar.Fallback class="bg-primary/10 text-primary-700 dark:text-primary">
-										{avatarInitials}
-									</Avatar.Fallback>
-								</Avatar.Root>
+								<UserAvatar seed={user.avatar_seed} class="size-12" />
 							</Item.Media>
 							<Item.Content class="min-w-0">
 								<Item.Title class="max-w-full text-base">
