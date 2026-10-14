@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from uuid import uuid7
 
 import pytest
@@ -9,6 +10,11 @@ from fanfan.application.interactors.notifications.send_notification import (
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.notifier import (
+    PushNotifierPort,
+    TelegramNotifierPort,
+    VkNotifierPort,
+)
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import UserNotReachable
 from fanfan.core.models.notification import Notification
@@ -94,17 +100,18 @@ class _FakeUow(UnitOfWork):
         self.commits += 1
 
 
-class _CommitCheckingTelegramNotifier(FakeTelegramNotifier):
+class _CommitCheckingNotifier(TelegramNotifierPort, PushNotifierPort, VkNotifierPort):
     """Records how many commits had run when the external send started."""
 
     def __init__(self, uow: _FakeUow) -> None:
-        super().__init__()
         self._uow = uow
         self.commits_at_send: int | None = None
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def send_notification(
+        self,
+        notification: Notification,  # noqa: ARG002  # part of the port contract
+    ) -> None:
         self.commits_at_send = self._uow.commits
-        await super().send_notification(notification)
 
 
 def _interactor(
@@ -113,7 +120,6 @@ def _interactor(
     tg: FakeTelegramNotifier,
     push: FakePushNotifier,
     vk: FakeVkNotifier,
-    uow: _FakeUow | None = None,
 ) -> SendNotification:
     return SendNotification(
         mailing_gateway=_StubMailingGateway(),
@@ -122,7 +128,7 @@ def _interactor(
         tg_notifier=tg,
         push_notifier=push,
         vk_notifier=vk,
-        uow=uow or _FakeUow(),
+        uow=_FakeUow(),
     )
 
 
@@ -143,22 +149,34 @@ async def test_telegram_delivered_when_enabled() -> None:
     assert [n.id for n in tg.sent_notifications] == [NOTIFICATION_ID]
 
 
-async def test_read_transaction_ends_before_the_external_send() -> None:
+@pytest.mark.parametrize(
+    "send",
+    [
+        SendNotification.send_notification_to_telegram,
+        SendNotification.send_notification_to_push,
+        SendNotification.send_notification_to_vk,
+    ],
+)
+async def test_read_transaction_ends_before_the_external_send(
+    send: Callable[[SendNotification, SendNotificationInput], Awaitable[None]],
+) -> None:
     # The loads take row locks; a send holding them would stall the mailing's
     # fan-out and every other channel of it for the length of the external call.
     uow = _FakeUow()
-    tg = _CommitCheckingTelegramNotifier(uow)
-    interactor = _interactor(
-        user=_make_user(telegram=True),
-        tg=tg,
-        push=FakePushNotifier(),
-        vk=FakeVkNotifier(),
+    notifier = _CommitCheckingNotifier(uow)
+    interactor = SendNotification(
+        mailing_gateway=_StubMailingGateway(),
+        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        user_gateway=_FakeUserGateway(_make_user()),
+        tg_notifier=notifier,
+        push_notifier=notifier,
+        vk_notifier=notifier,
         uow=uow,
     )
 
-    await interactor.send_notification_to_telegram(_INPUT)
+    await send(interactor, _INPUT)
 
-    assert tg.commits_at_send == 1
+    assert notifier.commits_at_send == 1
 
 
 async def test_telegram_opt_out_is_unreachable() -> None:
