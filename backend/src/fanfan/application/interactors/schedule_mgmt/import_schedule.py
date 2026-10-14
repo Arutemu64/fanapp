@@ -8,12 +8,9 @@ from fanfan.application.interactors.schedule.publish_schedule_updated import (
 from fanfan.application.ports.gateways.schedule_events import (
     ScheduleEventGateway,
 )
-from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
-from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.application.services.permissions import PermissionService
+from fanfan.application.services.schedule_edit import ScheduleEditService
 from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 
@@ -47,20 +44,12 @@ class ImportSchedule:
     def __init__(
         self,
         schedule_gateway: ScheduleEventGateway,
-        uow: UnitOfWork,
-        current_user_provider: CurrentUserProvider,
-        user_gateway: UserGateway,
-        perm_service: PermissionService,
+        schedule_edit: ScheduleEditService,
         publish_schedule_updated: PublishScheduleUpdated,
-        schedule_cache: ScheduleCacheGateway,
     ) -> None:
-        self.user_gateway = user_gateway
-        self.current_user_provider = current_user_provider
-        self.uow = uow
         self.schedule_gateway = schedule_gateway
-        self.perm_service = perm_service
+        self.schedule_edit = schedule_edit
         self.publish_schedule_updated = publish_schedule_updated
-        self.schedule_cache = schedule_cache
 
     @staticmethod
     def _match_existing_event(
@@ -80,67 +69,60 @@ class ImportSchedule:
         return next((e for e in candidates if e.number == entry.number), None)
 
     async def __call__(self, data: ImportScheduleInput) -> None:
-        current_user = await self.current_user_provider.require_user()
-        await self.perm_service.ensure(
-            user=current_user, permission=Permission.SCHEDULE_IMPORT
-        )
-        await self.schedule_gateway.lock_for_edit()
-        orphaned_events = await self.schedule_gateway.list_all()
-        order = ORDER_INIT
-        for entry in data.schedule:
-            existing_event = self._match_existing_event(entry, orphaned_events)
-            if existing_event:
-                existing_event.update_details(
-                    title=entry.title,
-                    duration=entry.duration,
-                    block_title=entry.block_title,
-                    nomination_title=entry.nomination_title,
-                    order=order,
-                )
-                await self.schedule_gateway.save(existing_event)
-                orphaned_events.remove(existing_event)
+        async def mutate(current_user: User) -> None:
+            orphaned_events = await self.schedule_gateway.list_all()
+            order = ORDER_INIT
+            for entry in data.schedule:
+                existing_event = self._match_existing_event(entry, orphaned_events)
+                if existing_event:
+                    existing_event.update_details(
+                        title=entry.title,
+                        duration=entry.duration,
+                        block_title=entry.block_title,
+                        nomination_title=entry.nomination_title,
+                        order=order,
+                    )
+                    await self.schedule_gateway.save(existing_event)
+                    orphaned_events.remove(existing_event)
+                    logger.info(
+                        "Schedule event updated during import",
+                        extra={
+                            "event_id": str(existing_event.id),
+                            "actor_id": str(current_user.id),
+                        },
+                    )
+                else:
+                    new_event = ScheduleEvent(
+                        id=generate_schedule_event_id(),
+                        number=entry.number,
+                        title=entry.title,
+                        duration=entry.duration,
+                        block_title=entry.block_title,
+                        nomination_title=entry.nomination_title,
+                        order=order,
+                        is_current=False,
+                        is_skipped=False,
+                    )
+                    await self.schedule_gateway.add(new_event)
+                    logger.info(
+                        "Schedule event added during import",
+                        extra={
+                            "event_id": str(new_event.id),
+                            "actor_id": str(current_user.id),
+                        },
+                    )
+                order += ORDER_STEP
+            for e in orphaned_events:
+                await self.schedule_gateway.delete(e)
                 logger.info(
-                    "Schedule event updated during import",
+                    "Orphaned schedule event deleted during import",
                     extra={
-                        "event_id": str(existing_event.id),
+                        "event_id": str(e.id),
                         "actor_id": str(current_user.id),
                     },
                 )
-            else:
-                new_event = ScheduleEvent(
-                    id=generate_schedule_event_id(),
-                    number=entry.number,
-                    title=entry.title,
-                    duration=entry.duration,
-                    block_title=entry.block_title,
-                    nomination_title=entry.nomination_title,
-                    order=order,
-                    is_current=False,
-                    is_skipped=False,
-                )
-                await self.schedule_gateway.add(new_event)
-                logger.info(
-                    "Schedule event added during import",
-                    extra={
-                        "event_id": str(new_event.id),
-                        "actor_id": str(current_user.id),
-                    },
-                )
-            order += ORDER_STEP
-        for e in orphaned_events:
-            await self.schedule_gateway.delete(e)
-            logger.info(
-                "Orphaned schedule event deleted during import",
-                extra={
-                    "event_id": str(e.id),
-                    "actor_id": str(current_user.id),
-                },
-            )
-        await self.uow.commit()
 
-        # Invalidate after commit so no read serves the pre-import cache, even if
-        # the warm-up in the broadcast below fails (ADR-0014).
-        await self.schedule_cache.invalidate()
+        await self.schedule_edit.edit(Permission.SCHEDULE_IMPORT, mutate)
 
         # Import rewrites the whole schedule but deliberately records no
         # ScheduleChange, so nothing reaches the outbox → NATS → SSE path the
