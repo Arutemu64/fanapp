@@ -4,6 +4,7 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.dto.realtime import SSEEventName
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
@@ -22,6 +23,7 @@ from fanfan.core.vo.notification import (
     notification_id_for,
 )
 from fanfan.core.vo.user import UserId, Username
+from tests.fakes.realtime_gateway import FakeRealtimeGateway
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -174,3 +176,33 @@ async def test_create_notification_gateway_add_reports_whether_it_inserted(
 
     assert inserted_first is True
     assert inserted_second is False
+
+
+async def test_create_notification_pushes_it_to_its_user_in_realtime(
+    dishka_request: AsyncContainer,
+    visitor: User,
+) -> None:
+    interactor = await dishka_request.get(CreateNotification)
+    realtime = await dishka_request.get(FakeRealtimeGateway)
+
+    notification_id = await interactor(
+        CreateNotificationInput(
+            notification=NewNotification(
+                id=generate_notification_id(),
+                user_id=visitor.id,
+                title="Заголовок",
+                body="Тело",
+                path="/schedule",
+                mailing_id=None,
+                type=NotificationType.DEFAULT,
+            )
+        )
+    )
+
+    assert len(realtime.published) == 1
+    user_id, message = realtime.published[0]
+    assert user_id == visitor.id
+    assert message.event_name is SSEEventName.NOTIFICATION_CREATED
+    # The payload is the stored row, so it carries what only the DB fills in.
+    assert message.data["id"] == str(notification_id)
+    assert message.data["created_at"] is not None

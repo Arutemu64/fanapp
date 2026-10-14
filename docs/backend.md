@@ -214,9 +214,11 @@ await self.events_broker.publish(
 )
 ```
 
-`NotificationQueued` and `MailingCancelled` follow this pattern: they are "do this side effect" commands to infrastructure, not aggregate state changes, so they are **not** recorded on any aggregate — the interactor constructs and publishes them directly via `EventBroker`.
+`NotificationQueued` follows this pattern: it is a "do this side effect" command to infrastructure, not an aggregate state change, so it is **not** recorded on any aggregate — the interactor constructs and publishes it directly via `EventBroker`.
 
 > `BroadcastQueued` is not a service event: it guards a committed `Mailing` row, so it flows through the outbox via `Mailing.queue_broadcast()` (see [Domain Events](#domain-events)).
+
+> `MailingCancelled` has one producer of each kind. An organizer's cancel is a domain event: `Mailing.cancel()` flips the status and records it, so both leave in one transaction through the outbox. A schedule undo publishes it as a service event from the `undo_schedule_change` consumer, which reacts to an already-durable `ScheduleChangeUndone` and changes no row itself. Either way `DeleteMailingNotifications` settles the cancellation idempotently.
 
 > Email login/confirmation codes are deliberately **not** service events. `request_login_code.py` and `change_email.py` send them synchronously by calling `SendLoginCodeEmail` / `SendEmailConfirmationCode` inside the request, so an SMTP failure reaches the caller instead of failing silently after the UI has already told the user the code was sent. The send runs inside the per-address cooldown claim, which a failed send gives back — the cooldown stays unspent, so the user can retry immediately.
 
@@ -238,7 +240,7 @@ Redelivery makes every consumer run more than once for some messages, so handler
 
 ## Realtime (SSE)
 
-Browser push goes over Server-Sent Events, separate from the domain-event/outbox path: interactors and FastStream consumers publish an `SSEMessage` via `RealtimeGateway` (`adapters/nats/realtime_gateway.py`), which fans out over NATS subjects to every open `/events` stream (`presentation/web/routes/sse.py`). It carries no committed state, so it never touches the `UnitOfWork` or the outbox.
+Browser push goes over Server-Sent Events, separate from the domain-event/outbox path: the application layer (interactors and services, never a route or consumer) publishes an `SSEMessage` via `RealtimeGateway` after its commit (`adapters/nats/realtime_gateway.py`), which fans out over NATS subjects to every open `/events` stream (`presentation/web/routes/sse.py`). It carries no committed state, so it never touches the `UnitOfWork` or the outbox.
 
 **Every SSE event name is a member of the `SSEEventName` `StrEnum`** (`application/dto/realtime.py`) — never a bare string literal. `SSEMessage.event_name` is typed to the enum, so a typo is a type error, not a silently dead event. To add an event: add a member here, then mirror it in the frontend `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`).
 
