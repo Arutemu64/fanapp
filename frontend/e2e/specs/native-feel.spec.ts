@@ -69,7 +69,9 @@ test.describe('native feel', () => {
 		);
 		expect(scrollPaddingTop).toBeGreaterThanOrEqual((titleBox?.y ?? 0) + (titleBox?.height ?? 0));
 
-		await page.mouse.wheel(0, 1500);
+		// Not mouse.wheel: Playwright doesn't support it in mobile WebKit. A scrollBy fires
+		// the same `scroll` events the shell's hide-on-scroll listens to.
+		await page.evaluate(() => window.scrollBy(0, 1500));
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
 		if (isDesktop(testInfo.project.name)) {
 			await expect(title).toBeInViewport();
