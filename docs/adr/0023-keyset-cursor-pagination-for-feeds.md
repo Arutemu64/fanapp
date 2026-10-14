@@ -1,6 +1,6 @@
 # ADR-0023: Keyset cursor pagination for the infinite feeds
 
-- **Status:** Accepted
+- **Status:** Accepted; the users-directory alternative superseded by [0024](0024-keyset-paging-for-the-users-directory.md)
 - **Date:** 2026-10-13
 - **Deciders:** project maintainers
 

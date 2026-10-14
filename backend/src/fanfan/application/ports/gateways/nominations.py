@@ -1,7 +1,6 @@
 from typing import Protocol
 
 from fanfan.application.dto.nomination import NominationVotingDTO
-from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.voting import NominationContenderDTO
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode
@@ -23,7 +22,5 @@ class NominationGateway(Protocol):
     ) -> NominationVotingDTO | None: ...
 
     async def read_list_votable_nominations(
-        self,
-        user_id: UserId | None = None,
-        pagination: Pagination | None = None,
+        self, user_id: UserId | None = None
     ) -> list[NominationVotingDTO]: ...
