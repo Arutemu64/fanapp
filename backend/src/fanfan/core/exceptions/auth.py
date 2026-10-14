@@ -21,13 +21,6 @@ class IncorrectPassword(ConstraintViolation):
     code = "INCORRECT_PASSWORD"
 
 
-# The chosen password is on the commonly-used/leaked blocklist. Bad input (400),
-# and the client shows a reason rather than a generic "invalid" — NIST SP 800-63B-4
-# requires a rejected password to come with one.
-class PasswordTooCommon(ConstraintViolation):
-    code = "PASSWORD_TOO_COMMON"
-
-
 # An invalid/expired OTP is treated as bad input (400), not an auth failure, so
 # it carries the ConstraintViolation marker rather than AuthenticationError.
 class InvalidOtpCode(ConstraintViolation):

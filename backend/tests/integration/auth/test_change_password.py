@@ -11,7 +11,7 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.auth import IncorrectPassword, PasswordTooCommon
+from fanfan.core.exceptions.auth import IncorrectPassword
 from fanfan.core.models.user import User
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
@@ -164,26 +164,3 @@ async def test_change_password_revokes_existing_sessions(
     # The pre-existing session is gone; only the freshly issued one is valid.
     assert (await session_store.resolve_session(old_session_id)).user_id is None
     assert (await session_store.resolve_session(new_session_id)).user_id == user.id
-
-
-async def test_change_password_rejects_a_common_password(
-    dishka_request: AsyncContainer,
-    login: Callable[[User], None],
-    uow: UnitOfWork,
-) -> None:
-    interactor = await dishka_request.get(ChangePassword)
-    user_gateway = await dishka_request.get(UserGateway)
-    password_hasher = await dishka_request.get(PasswordHasher)
-
-    user = await _user(user_gateway, password_hasher, uow, OLD_PASSWORD)
-    login(user)
-
-    with pytest.raises(PasswordTooCommon):
-        await interactor(
-            ChangePasswordInput(old_password=OLD_PASSWORD, new_password="1234567890")
-        )
-
-    saved_user = await user_gateway.get_by_id(user.id)
-    assert saved_user is not None
-    assert saved_user.hashed_password is not None
-    assert password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)

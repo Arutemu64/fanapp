@@ -1,12 +1,11 @@
 from pydantic import BaseModel
 
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.password_blocklist import PasswordBlocklist
 from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.exceptions.auth import IncorrectPassword, PasswordTooCommon
+from fanfan.core.exceptions.auth import IncorrectPassword
 from fanfan.core.vo.fields import PASSWORD_FIELD
 
 
@@ -19,14 +18,12 @@ class ChangePassword:
     def __init__(
         self,
         password_hasher: PasswordHasher,
-        password_blocklist: PasswordBlocklist,
         user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         session_store: SessionStore,
         uow: UnitOfWork,
     ) -> None:
         self.password_hasher = password_hasher
-        self.password_blocklist = password_blocklist
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.session_store = session_store
@@ -37,8 +34,6 @@ class ChangePassword:
         data: ChangePasswordInput,
     ) -> str:
         current_user = await self.current_user_provider.require_user()
-        if self.password_blocklist.is_blocked(data.new_password):
-            raise PasswordTooCommon
         if current_user.hashed_password:
             if data.old_password:
                 if not self.password_hasher.verify(

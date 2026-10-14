@@ -239,7 +239,6 @@ const ERROR_MESSAGES = {
 	MAILING_NOT_CANCELLABLE: 'Рассылку уже нельзя отменить — она завершена',
 	MAILING_NOT_FOUND: 'Рассылка не найдена',
 	OUTDATED_SCHEDULE_CHANGE: 'Программа уже изменилась, обнови страницу',
-	PASSWORD_TOO_COMMON: 'Такой пароль слишком распространённый. Придумай другой',
 	PERMISSION_NOT_ASSIGNABLE: 'Полный доступ выдаётся только через сервер',
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
 	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',

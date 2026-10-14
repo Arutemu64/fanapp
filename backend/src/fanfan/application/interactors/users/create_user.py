@@ -3,11 +3,9 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.password_blocklist import PasswordBlocklist
 from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.profanity_filter import ProfanityFilter
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.auth import PasswordTooCommon
 from fanfan.core.exceptions.users import UsernameProfanity
 from fanfan.core.models.user import User
 from fanfan.core.vo.fields import PASSWORD_FIELD, USERNAME_FIELD
@@ -37,13 +35,11 @@ class CreateUser:
         self,
         user_gateway: UserGateway,
         password_hasher: PasswordHasher,
-        password_blocklist: PasswordBlocklist,
         profanity_filter: ProfanityFilter,
         uow: UnitOfWork,
     ) -> None:
         self.user_gateway = user_gateway
         self.password_hasher = password_hasher
-        self.password_blocklist = password_blocklist
         self.profanity_filter = profanity_filter
         self.uow = uow
 
@@ -52,8 +48,6 @@ class CreateUser:
         # username change enforces (UpdateCurrentUser).
         if self.profanity_filter.contains_profanity(data.username):
             raise UsernameProfanity
-        if self.password_blocklist.is_blocked(data.password):
-            raise PasswordTooCommon
 
         user = User.create(
             id=generate_user_id(),

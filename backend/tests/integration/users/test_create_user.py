@@ -7,7 +7,6 @@ from fanfan.application.interactors.users.create_user import (
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
-from fanfan.core.exceptions.auth import PasswordTooCommon
 from fanfan.core.exceptions.users import UserAlreadyExists, UsernameProfanity
 from fanfan.core.vo.user import UserRole
 
@@ -62,15 +61,4 @@ async def test_profane_username_is_rejected(
     with pytest.raises(UsernameProfanity):
         await create_user(
             CreateUserInput(username="fuck", password=_PASSWORD, role=UserRole.ORG)
-        )
-
-
-async def test_common_password_is_rejected(
-    dishka_request: AsyncContainer,
-) -> None:
-    create_user = await dishka_request.get(CreateUser)
-
-    with pytest.raises(PasswordTooCommon):
-        await create_user(
-            CreateUserInput(username="tester", password="1234567890", role=UserRole.ORG)
         )
