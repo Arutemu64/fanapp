@@ -42,6 +42,8 @@
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
 	}));
 
+	// No reset on open: EventStaffActions mounts this modal only while it is open,
+	// so a cancelled selection never lingers.
 	let query = $state('');
 	let selectedId: string | null = $state(null);
 	let formError = $state('');
@@ -49,15 +51,6 @@
 	// irreversible push to every subscriber, so a double-tap on a slow venue cell
 	// must not fire the request — and the mailing — twice.
 	let isSubmitting = $derived(moveMutation.isPending);
-
-	// Reset the picker each time the modal opens so a cancelled selection never lingers.
-	$effect(() => {
-		if (open) {
-			formError = '';
-			selectedId = null;
-			query = '';
-		}
-	});
 
 	// Shared matcher folds ё/е and matches space-separated tokens in any order.
 	// Indexed once per schedule so typing through a few hundred events stays cheap.

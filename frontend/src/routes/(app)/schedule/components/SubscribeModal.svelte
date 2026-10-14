@@ -28,15 +28,9 @@
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
 	}));
 
+	// No reset on open: EventCard mounts this modal only while it is open.
 	let counter = $state(5);
 	let formError = $state('');
-
-	$effect(() => {
-		if (open) {
-			counter = 5;
-			formError = '';
-		}
-	});
 
 	// Clamp to the valid 1–100 range, snapping a cleared/NaN input back to the min
 	// so +/- never dead-locks and submit never POSTs null.
