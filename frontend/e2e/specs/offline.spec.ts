@@ -45,6 +45,44 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await expect(page.getByRole('button', { name: 'Повторить' })).toHaveCount(0);
 	});
 
+	test('after reconnecting, the banner says it is updating until the screen has reloaded', async ({
+		page,
+		api
+	}) => {
+		await page.clock.install();
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
+
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
+
+		// Past the 60s staleTime, so reconnecting refetches what Home shows, and past
+		// the offline wording's minimum time on screen.
+		await page.clock.fastForward('01:05');
+
+		// Hold one of Home's refetches open to watch the catch-up state.
+		let release = () => {};
+		const released = new Promise<void>((resolve) => (release = resolve));
+		api.use({
+			'GET /debug/health': json({ status: 'healthy' }),
+			'GET /voting/status': async () => {
+				await released;
+				return json({
+					can_vote: false,
+					status: 'not_authenticated',
+					voting_start: null,
+					voting_end: null
+				});
+			}
+		});
+		await page.getByRole('button', { name: 'Повторить' }).click();
+
+		await expect(page.getByRole('status').getByText('Обновляем…')).toBeAttached();
+		release();
+		await expect(page.getByRole('status').getByText('Связь восстановлена')).toBeAttached();
+	});
+
 	test('an online-only switch explains itself offline instead of saving', async ({ page, api }) => {
 		let patched = false;
 		api.use({

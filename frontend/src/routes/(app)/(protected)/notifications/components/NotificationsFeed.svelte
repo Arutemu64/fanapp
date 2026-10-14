@@ -27,7 +27,6 @@
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { NOTIFICATION_PAGE_SIZE } from '#lib/constants/notifications.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
@@ -67,10 +66,6 @@
 	// Nothing saved yet and no way to fetch it: a calm inline state that keeps the
 	// app shell usable, not an error.
 	let offlineMiss = $derived(notificationsQuery.data === undefined && !reachability.current);
-	let showStaleNotice = $derived(
-		notificationsQuery.data !== undefined &&
-			(notificationsQuery.isRefetchError || !reachability.current)
-	);
 
 	// This page shows no push toast (the item lands in the list instead), so it
 	// announces arrivals to screen readers itself.
@@ -220,13 +215,6 @@
 		};
 	});
 </script>
-
-{#if showStaleNotice}
-	<StaleDataNotice
-		message="Показаны сохранённые уведомления."
-		cachedAt={notificationsQuery.dataUpdatedAt}
-	/>
-{/if}
 
 <!-- Rendered before any announcement: a live region injected together with its
 	text is not reliably announced. -->

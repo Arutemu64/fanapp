@@ -1,17 +1,7 @@
 <script lang="ts">
-	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
-	import { reachability } from '#lib/services/reachability.js';
-
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
-
-	// Every profile sub-page renders from the layout-cached user, so the only "out of
-	// date" state is being offline. The notice also says up front why every write
-	// control below is dimmed, rather than leaving it to a tap on each one
-	// (offlineWriteGate's toast).
-	let showStaleNotice = $derived(!reachability.current);
-	const staleNoticeMessage = 'Показан сохранённый профиль. Изменения доступны только онлайн.';
 </script>
 
 <!-- The /profile hub itself lives outside (protected) so guests can open it; only
@@ -20,10 +10,6 @@
      rows were. The way back is the navbar arrow, set in +layout.ts. -->
 <div class="mx-auto max-w-2xl">
 	<div class="flex flex-col gap-4 sm:gap-5">
-		{#if showStaleNotice}
-			<StaleDataNotice message={staleNoticeMessage} />
-		{/if}
-
 		{@render children()}
 	</div>
 </div>

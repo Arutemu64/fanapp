@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
+	import { useIsFetching } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 	import { slide } from 'svelte/transition';
 
@@ -11,6 +12,7 @@
 	const MIN_DISPLAY_MS = 4000;
 	// Long enough to read two words, short enough not to linger on a working app.
 	const RESTORED_DISPLAY_MS = 3000;
+	const UPDATING_MESSAGE = 'Обновляем…';
 	const RESTORED_MESSAGE = 'Связь восстановлена';
 
 	// Only one state reaches the user: whether the backend is reachable. The SSE
@@ -29,47 +31,62 @@
 		return deviceOnline ? 'Нет связи с сервером' : 'Нет интернета';
 	});
 
-	// Held separately from `offlineMessage` so the strip keeps its last wording
-	// through the minimum display time instead of vanishing mid-read, then says the
-	// connection is back before it slides away (web.dev: tell the user about a
-	// change in state as soon as it happens,
+	// What the strip shows, held separately from `offlineMessage`: the offline wording
+	// stays through the minimum display time instead of vanishing mid-read, then the
+	// strip says the connection is back before it slides away (web.dev: tell the user
+	// about a change in state as soon as it happens,
 	// https://web.dev/articles/offline-ux-design-guidelines).
-	let shown = $state<{ kind: 'offline'; message: string } | { kind: 'restored' } | null>(null);
+	let phase = $state<'hidden' | 'offline' | 'catching-up' | 'restored'>('hidden');
+	let lastOfflineMessage = $state('');
 	let offlineHoldUntil = 0;
 	let retrying = $state(false);
 
+	// Queries on screen fetching right now — on reconnect, the stale ones refetching
+	// (`refetchOnReconnect`) and the SSE handshake's catch-up. Counting only these
+	// keeps «Обновляем…» literal: it shows while what the user is looking at
+	// actually reloads, and a page with nothing to reload skips straight to
+	// «Связь восстановлена».
+	const fetchingOnScreen = useIsFetching({ type: 'active' });
+
 	let shownMessage = $derived.by(() => {
-		if (shown === null) return '';
-		if (shown.kind === 'restored') return RESTORED_MESSAGE;
-		return shown.message;
+		if (phase === 'offline') return lastOfflineMessage;
+		if (phase === 'catching-up') return UPDATING_MESSAGE;
+		if (phase === 'restored') return RESTORED_MESSAGE;
+		return '';
 	});
 
 	$effect(() => {
 		const message = offlineMessage;
 
 		if (message) {
-			shown = { kind: 'offline', message };
+			lastOfflineMessage = message;
+			phase = 'offline';
 			offlineHoldUntil = Date.now() + MIN_DISPLAY_MS;
 			return;
 		}
 
-		// Untracked: the timers below write `shown`, and re-running on that write would
-		// clear them. Only a real recovery is confirmed, not a session that never
-		// went offline.
-		if (untrack(() => shown?.kind) !== 'offline') return;
+		// Untracked: the timer below writes `phase`, and re-running on that write would
+		// clear it. Only a real recovery is confirmed, not a session that never went
+		// offline.
+		if (untrack(() => phase) !== 'offline') return;
 
-		let hideTimeoutId: ReturnType<typeof setTimeout> | undefined;
-		const restoreTimeoutId = setTimeout(
-			() => {
-				shown = { kind: 'restored' };
-				hideTimeoutId = setTimeout(() => (shown = null), RESTORED_DISPLAY_MS);
-			},
+		const holdTimeoutId = setTimeout(
+			() => (phase = 'catching-up'),
 			Math.max(0, offlineHoldUntil - Date.now())
 		);
-		return () => {
-			clearTimeout(restoreTimeoutId);
-			clearTimeout(hideTimeoutId);
-		};
+		return () => clearTimeout(holdTimeoutId);
+	});
+
+	// Latched rather than derived: once the catch-up is done, a later fetch (a poll,
+	// a stale query on the next screen) must not flip the strip back to «Обновляем…».
+	$effect(() => {
+		if (phase === 'catching-up' && fetchingOnScreen.current === 0) phase = 'restored';
+	});
+
+	$effect(() => {
+		if (phase !== 'restored') return;
+		const hideTimeoutId = setTimeout(() => (phase = 'hidden'), RESTORED_DISPLAY_MS);
+		return () => clearTimeout(hideTimeoutId);
 	});
 
 	// The reachability monitor already re-checks on its own, but its backoff grows
@@ -92,24 +109,27 @@
 	text alone, so the retry button's label and spinner aren't read out as status. -->
 <div role="status" class="sr-only">{shownMessage}</div>
 
-{#if shown}
+{#if phase !== 'hidden'}
 	<div
 		transition:slide={{ duration: 200 }}
 		class={[
-			// One height for both states, so swapping to «восстановлена» (no button)
-			// doesn't nudge the page.
+			// One height for every state, so dropping the retry button doesn't nudge the
+			// page.
 			'flex min-h-11 items-center gap-2.5 border-b px-4 py-2 text-sm sm:px-6',
-			shown.kind === 'offline' && 'border-warning/30 bg-warning/10 text-warning',
-			shown.kind === 'restored' && 'border-success/30 bg-success/10 text-success'
+			phase === 'offline' && 'border-warning/30 bg-warning/10 text-warning',
+			phase === 'catching-up' && 'border-info/30 bg-info/10 text-info',
+			phase === 'restored' && 'border-success/30 bg-success/10 text-success'
 		]}
 	>
-		{#if shown.kind === 'offline'}
+		{#if phase === 'offline'}
 			<AlertCircle class="h-4 w-4 shrink-0" aria-hidden="true" />
+		{:else if phase === 'catching-up'}
+			<Spinner class="shrink-0" aria-hidden="true" />
 		{:else}
 			<CheckCircle2 class="h-4 w-4 shrink-0" aria-hidden="true" />
 		{/if}
 		<p class="flex-1 leading-snug" aria-hidden="true">{shownMessage}</p>
-		{#if shown.kind === 'offline'}
+		{#if phase === 'offline'}
 			<!-- Negative margin fits the 40px tap target inside the 44px strip. -->
 			<Button
 				variant="ghost"
@@ -119,7 +139,7 @@
 				onclick={handleRetry}
 			>
 				{#if retrying}
-					<Spinner data-icon="inline-start" />
+					<Spinner data-icon="inline-start" aria-hidden="true" />
 				{/if}
 				Повторить
 			</Button>

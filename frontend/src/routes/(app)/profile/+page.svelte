@@ -18,12 +18,10 @@
 
 	import { currentUserOptions } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
-	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
-	import { reachability } from '#lib/services/reachability.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 	import { isOrg } from '#lib/utils/permissions.js';
 	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
@@ -58,10 +56,6 @@
 	let showTools = $derived(isOrg(user));
 
 	const pwa = getPwaService();
-
-	// The account row and ticket status render from the cached user, so
-	// offline they may be out of date; say so, as the settings pages behind it do.
-	let showStaleNotice = $derived(Boolean(user) && !reachability.current);
 
 	// Return here after logging in: the guest opened the Profile tab, so that is
 	// where they expect to land.
@@ -105,10 +99,6 @@
 	     because the shell centres its content column and a narrower block hugging that
 	     column's left edge reads as lopsided. -->
 	<div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
-		{#if showStaleNotice}
-			<StaleDataNotice message="Показан сохранённый профиль." />
-		{/if}
-
 		{#if user}
 			<MenuGroup>
 				<Item.Root class="rounded-none">
