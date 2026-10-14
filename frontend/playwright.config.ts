@@ -39,6 +39,10 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
 	use: {
 		baseURL: BASE_URL,
+		// The app follows the browser's language; Playwright's default is en-US,
+		// which would turn every Russian assertion into an English page. A spec
+		// that tests another browser language sets `test.use({ locale })`.
+		locale: 'ru-RU',
 		trace: 'on-first-retry',
 		// Capture a screenshot when a test fails; the HTML reporter embeds it, so a
 		// red CI run is debuggable from the uploaded report alone.

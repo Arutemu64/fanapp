@@ -1,7 +1,8 @@
 import { expect, test } from '../fixtures';
 
-// The interface is Russian until someone picks English; the choice lives in
-// localStorage (Paraglide's `localStorage` strategy) and applies after a reload.
+// The language is the first of: an explicit pick (localStorage, applied after a
+// reload), the browser's language list, Russian. The suite's browser is ru-RU
+// (playwright.config.ts), so the first describe runs as a Russian reader.
 test.describe('interface language', () => {
 	test('stays Russian by default', async ({ page, api }) => {
 		await page.goto('/profile');
@@ -52,5 +53,40 @@ test.describe('interface language', () => {
 			.click();
 		await expect(page.getByRole('main').getByRole('link', { name: 'Войти' })).toBeVisible();
 		expect(api.unmatched).toEqual([]);
+	});
+});
+
+test.describe('browser language', () => {
+	test.describe('English browser', () => {
+		test.use({ locale: 'en-GB' });
+
+		test('opens in English without any choice made', async ({ page, api }) => {
+			await page.goto('/profile');
+
+			await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+			await expect(page.getByRole('main').getByRole('link', { name: 'Sign in' })).toBeVisible();
+			expect(api.unmatched).toEqual([]);
+		});
+
+		test('lets a saved pick beat the browser', async ({ page, api }) => {
+			await page.addInitScript(() => localStorage.setItem('PARAGLIDE_LOCALE', 'ru'));
+			await page.goto('/profile');
+
+			await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+			await expect(page.getByRole('main').getByRole('link', { name: 'Войти' })).toBeVisible();
+			expect(api.unmatched).toEqual([]);
+		});
+	});
+
+	test.describe('unsupported browser language', () => {
+		test.use({ locale: 'zh-CN' });
+
+		test('falls back to Russian', async ({ page, api }) => {
+			await page.goto('/profile');
+
+			await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+			await expect(page.getByRole('main').getByRole('link', { name: 'Войти' })).toBeVisible();
+			expect(api.unmatched).toEqual([]);
+		});
 	});
 });

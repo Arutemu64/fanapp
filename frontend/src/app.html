@@ -84,13 +84,22 @@
 				// OS and drag the shell tint dark with it. theme.svelte.ts keeps it in sync
 				// afterwards. https://developer.chrome.com/blog/auto-dark-theme
 				document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-				// Match <html lang> to the locale Paraglide will resolve (localStorage
-				// key PARAGLIDE_LOCALE, Russian when unset) before first paint, so screen
-				// readers and hyphenation pick the right language from the start.
+				// Match <html lang> to the locale Paraglide will resolve before first
+				// paint, so screen readers and hyphenation pick the right language from
+				// the start. Same order as its strategy (vite.config.ts): the stored
+				// pick, then the first browser language the app supports, else Russian.
 				var locale = null;
 				try {
 					locale = localStorage.getItem('PARAGLIDE_LOCALE');
 				} catch (e) {}
+				if (locale !== 'ru' && locale !== 'en') {
+					locale = null;
+					var languages = navigator.languages || [navigator.language];
+					for (var i = 0; i < languages.length && !locale; i++) {
+						var base = String(languages[i]).toLowerCase().split('-')[0];
+						if (base === 'ru' || base === 'en') locale = base;
+					}
+				}
 				if (locale === 'en') document.documentElement.lang = 'en';
 				if (isDark) {
 					document.documentElement.classList.add('dark');

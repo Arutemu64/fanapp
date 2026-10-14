@@ -25,10 +25,13 @@ We will use [Paraglide JS](https://paraglidejs.com) 2.x (`@inlang/paraglide-js`)
 - Messages live in `frontend/messages/{ru,en}.json`, Russian as the base locale,
   compiled by the Vite plugin into `src/lib/paraglide/` (gitignored). Components
   call `m.key()`; each key is a tree-shaken function with typed parameters.
-- Locale strategy is `['localStorage', 'baseLocale']`: an explicit choice made in
-  the profile hub, Russian otherwise. We deliberately do **not** add
-  `preferredLanguage`: the audience is a Russian convention, and a Russian reader
-  whose browser is set to English should not be switched without asking.
+- Locale strategy is `['localStorage', 'preferredLanguage', 'baseLocale']`: an
+  explicit pick in the profile hub wins, then the first language in the browser's
+  list that the app supports, then Russian. Foreign guests (an English-speaking
+  or Chinese attendee) won't know the app has English, so it opens in their
+  language without being asked. The pick comes first, or the switch could never
+  stick for someone whose browser says otherwise. A browser that lists only
+  unsupported languages (say, `zh-CN` alone) gets Russian.
 - `setLocale()` keeps its default of reloading the page. Messages stay plain
   function calls (no reactive state), and module-level `Intl` formatters and
   lookup tables stay correct because the locale cannot change within a page load.
@@ -65,6 +68,8 @@ We will use [Paraglide JS](https://paraglidejs.com) 2.x (`@inlang/paraglide-js`)
   for SEO on a content site; here it multiplies routes, SW precache entries and
   links for no gain, because the app is behind a login and indexed nowhere.
 - **Cookie strategy:** nothing server-side reads it.
+- **Base locale only (no `preferredLanguage`)**, the first version of this
+  decision: foreign guests would never find the English UI.
 - **Reactive locale switching without reload:** possible with
   `setLocale(…, { reload: false })` plus reactive wrappers, but every static
   table and formatter would need re-deriving; not worth it for a rarely changed
