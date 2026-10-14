@@ -4,7 +4,6 @@ from sqlalchemy.orm import undefer
 
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
 from fanfan.application.dto.nomination import NominationVoteDTO, NominationVotingDTO
-from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.voting import ContenderDTO, NominationContenderDTO
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.core.models.nomination import Nomination
@@ -204,16 +203,11 @@ class SqlNominationGateway(NominationGateway):
         return None
 
     async def read_list_votable_nominations(
-        self,
-        user_id: UserId | None = None,
-        pagination: Pagination | None = None,
+        self, user_id: UserId | None = None
     ) -> list[NominationVotingDTO]:
         stmt = _select_nomination_voting_dto(user_id).where(
             NominationORM.is_votable.is_(True)
         )
-
-        if pagination:
-            stmt = stmt.limit(pagination.limit).offset(pagination.offset)
 
         results = (await self.session.execute(stmt)).all()
 

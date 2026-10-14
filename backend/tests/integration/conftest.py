@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
 from typing import Any
+from uuid import uuid7
 
 import pytest
 import pytest_asyncio
@@ -13,7 +14,9 @@ from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.email_sender import EmailSender
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.gateways import UserPermissionGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.notifier import (
     PushNotifierPort,
@@ -25,7 +28,10 @@ from fanfan.application.ports.sources.cosplay import CosplaySource
 from fanfan.application.ports.sources.tickets import TicketsSource
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.base import AppEvent
+from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.user import User
+from fanfan.core.vo.permission import Permission, generate_user_permission_id
+from fanfan.core.vo.user import UserId, Username, UserRole
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
 from fanfan.main.ioc.html import HtmlProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
@@ -144,6 +150,28 @@ async def dishka_request(dishka: AsyncContainer) -> AsyncGenerator[AsyncContaine
 @pytest_asyncio.fixture
 async def uow(dishka_request: AsyncContainer) -> UnitOfWork:
     return await dishka_request.get(UnitOfWork)
+
+
+async def make_broadcaster(dishka_request: AsyncContainer, uow: UnitOfWork) -> User:
+    """A user granted notifications:send (no persona fixture exists for it)."""
+    user_gateway = await dishka_request.get(UserGateway)
+    permission_gateway = await dishka_request.get(UserPermissionGateway)
+    broadcaster = User(
+        id=UserId(uuid7()),
+        username=Username("broadcaster"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(broadcaster)
+    await permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.NOTIFICATIONS_SEND,
+            user_id=broadcaster.id,
+        )
+    )
+    await uow.commit()
+    return broadcaster
 
 
 def as_outbox(*events: AppEvent) -> list[tuple[str, dict[str, Any]]]:

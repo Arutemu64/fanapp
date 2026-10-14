@@ -10,12 +10,6 @@ from fanfan.core.exceptions.pagination import InvalidPageCursor
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
-class Pagination:
-    limit: int
-    offset: int
-
-
-@dataclass(kw_only=True, frozen=True, slots=True)
 class PageCursor:
     """Position after the last row of a page sorted by (created_at, id) descending.
 

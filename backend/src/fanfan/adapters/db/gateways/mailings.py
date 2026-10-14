@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import MailingORM
@@ -102,12 +102,15 @@ class SqlMailingGateway(MailingGateway):
         return _parse_dto(mailing_orm) if mailing_orm else None
 
     async def read_broadcasts(self, pagination: CursorPagination) -> list[MailingDTO]:
-        # Organizer broadcasts only: a schedule-change fan-out leaves roles NULL,
-        # so it never surfaces in the mailing history. The table is small (manual
-        # broadcasts are infrequent), so a plain created_at sort needs no index.
+        # Organizer broadcasts only: a schedule-change fan-out has no roles, so it
+        # never surfaces in the mailing history. SQLAlchemy writes a Python None
+        # into a JSONB column as the JSON value `null`, not SQL NULL, so
+        # `roles IS NOT NULL` would match those fan-outs too; test for an array
+        # instead. The table is small (manual broadcasts are infrequent), so a
+        # plain created_at sort needs no index.
         stmt = (
             select(MailingORM)
-            .where(MailingORM.roles.isnot(None))
+            .where(func.jsonb_typeof(MailingORM.roles) == "array")
             # id (uuid7, time-ordered) breaks created_at ties so the page cursor
             # names one row — otherwise same-timestamp rows leave it ambiguous
             # and a mailing slips through unseen.

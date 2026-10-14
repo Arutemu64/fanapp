@@ -1,4 +1,4 @@
-# ADR-0024: DiceBear avatars drawn in the browser from a stored seed
+# ADR-0025: DiceBear avatars drawn in the browser from a stored seed
 
 - **Status:** Accepted
 - **Date:** 2026-10-14
