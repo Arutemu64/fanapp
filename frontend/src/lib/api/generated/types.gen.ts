@@ -1231,6 +1231,16 @@ export type TCloudWebhookResponse = {
 };
 
 /**
+ * UnlinkUserTicketOutput
+ */
+export type UnlinkUserTicketOutput = {
+	/**
+	 * Deleted Votes
+	 */
+	deleted_votes: number;
+};
+
+/**
  * UnreadNotificationsCountOutput
  */
 export type UnreadNotificationsCountOutput = {
@@ -3919,3 +3929,47 @@ export type GrantUserPermissionResponses = {
 
 export type GrantUserPermissionResponse =
 	GrantUserPermissionResponses[keyof GrantUserPermissionResponses];
+
+export type UnlinkUserTicketData = {
+	body?: never;
+	path: {
+		/**
+		 * User Id
+		 *
+		 * ID of the user to change.
+		 */
+		user_id: string;
+	};
+	query?: never;
+	url: '/users/{user_id}/ticket';
+};
+
+export type UnlinkUserTicketErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Missing users:manage.
+	 */
+	403: ErrorMessage;
+	/**
+	 * The user has no ticket.
+	 */
+	409: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type UnlinkUserTicketError = UnlinkUserTicketErrors[keyof UnlinkUserTicketErrors];
+
+export type UnlinkUserTicketResponses = {
+	/**
+	 * Ticket unlinked; reports how many votes were deleted.
+	 */
+	200: UnlinkUserTicketOutput;
+};
+
+export type UnlinkUserTicketResponse = UnlinkUserTicketResponses[keyof UnlinkUserTicketResponses];

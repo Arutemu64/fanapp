@@ -4436,6 +4436,87 @@
           }
         }
       }
+    },
+    "/users/{user_id}/ticket": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Unlink a user's ticket",
+        "description": "Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Requires users:manage.",
+        "operationId": "unlink_user_ticket",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the user to change.",
+              "title": "User Id"
+            },
+            "description": "ID of the user to change."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket unlinked; reports how many votes were deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnlinkUserTicketOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing users:manage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The user has no ticket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6447,6 +6528,19 @@
           "new_tickets_count"
         ],
         "title": "TCloudWebhookResponse"
+      },
+      "UnlinkUserTicketOutput": {
+        "properties": {
+          "deleted_votes": {
+            "type": "integer",
+            "title": "Deleted Votes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted_votes"
+        ],
+        "title": "UnlinkUserTicketOutput"
       },
       "UnreadNotificationsCountOutput": {
         "properties": {

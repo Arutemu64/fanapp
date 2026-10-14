@@ -7,6 +7,7 @@
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
+	import { canManageUsers } from '#lib/utils/permissions.js';
 	import {
 		buildSocialProfileUrl,
 		getAvatarInitials,
@@ -16,6 +17,7 @@
 
 	import type { PageProps } from './$types';
 
+	import UnlinkTicketButton from './components/UnlinkTicketButton.svelte';
 	import UserAccessCard from './components/UserAccessCard.svelte';
 
 	let { data }: PageProps = $props();
@@ -72,6 +74,10 @@
 				</dd>
 			</div>
 		</dl>
+
+		{#if profile.ticket_number && canManageUsers(data.user)}
+			<UnlinkTicketButton userId={profile.id} username={profile.username} />
+		{/if}
 	</Card.Root>
 
 	<UserAccessCard {profile} currentUser={data.user} />

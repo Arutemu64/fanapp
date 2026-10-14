@@ -44,3 +44,8 @@ class Ticket(AggregateRoot):
         if self.is_used:
             raise TicketAlreadyUsed
         self.used_by_user_id = user_id
+
+    def release(self) -> None:
+        # Freed rather than deleted: the barcode can be linked again, by the
+        # same person or by whoever the organiser hands it to.
+        self.used_by_user_id = None

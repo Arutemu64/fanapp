@@ -68,6 +68,7 @@ import {
 	uncheckCurrentEvent,
 	undoScheduleChange,
 	unlinkTelegramAccount,
+	unlinkUserTicket,
 	unlinkVkAccount,
 	unsubscribe,
 	updateCurrentUser,
@@ -245,6 +246,9 @@ import type {
 	UnlinkTelegramAccountData,
 	UnlinkTelegramAccountError,
 	UnlinkTelegramAccountResponse,
+	UnlinkUserTicketData,
+	UnlinkUserTicketError,
+	UnlinkUserTicketResponse,
 	UnlinkVkAccountData,
 	UnlinkVkAccountError,
 	UnlinkVkAccountResponse,
@@ -2275,6 +2279,35 @@ export const grantUserPermissionMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await grantUserPermission({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Unlink a user's ticket
+ *
+ * Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Requires users:manage.
+ */
+export const unlinkUserTicketMutation = (
+	options?: Partial<Options<UnlinkUserTicketData>>
+): MutationOptions<
+	UnlinkUserTicketResponse,
+	UnlinkUserTicketError,
+	Options<UnlinkUserTicketData>
+> => {
+	const mutationOptions: MutationOptions<
+		UnlinkUserTicketResponse,
+		UnlinkUserTicketError,
+		Options<UnlinkUserTicketData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await unlinkUserTicket({
 				...options,
 				...fnOptions,
 				throwOnError: true

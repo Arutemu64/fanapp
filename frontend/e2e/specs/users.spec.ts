@@ -1,5 +1,6 @@
 import type {
 	ListUsersOutput,
+	UnlinkUserTicketOutput,
 	UserDetailsDto,
 	UserListItemDto
 } from '../../src/lib/api/generated/types.gen';
@@ -90,6 +91,30 @@ test.describe('organizer user directory', () => {
 
 		await expect(usersRead).toBeChecked();
 		expect(grants).toBe(1);
+		expect(api.unmatched).toEqual([]);
+	});
+
+	test('an organizer unlinks a ticket and is told the role stays', async ({ page, api }) => {
+		let details = ANNA_DETAILS;
+		api.use({
+			...organizer(),
+			[`GET /users/${ANNA.id}`]: () => json<UserDetailsDto>(details),
+			[`DELETE /users/${ANNA.id}/ticket`]: () => {
+				details = { ...details, ticket_number: null };
+				return json<UnlinkUserTicketOutput>({ deleted_votes: 3 });
+			}
+		});
+		await page.goto(`/tools/users/${ANNA.id}`);
+
+		await page.getByRole('button', { name: 'Отвязать билет' }).click();
+		await page.getByRole('alertdialog').getByRole('button', { name: 'Отвязать' }).click();
+
+		await expect(
+			page.getByText(
+				'Билет отвязан, удалено 3 голоса. Роль не менялась — если нужно, смени её вручную.'
+			)
+		).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Отвязать билет' })).toBeHidden();
 		expect(api.unmatched).toEqual([]);
 	});
 });

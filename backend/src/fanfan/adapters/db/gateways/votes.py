@@ -1,7 +1,7 @@
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import and_, delete, func, select
+from sqlalchemy import CursorResult, and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
@@ -93,6 +93,13 @@ class SqlVoteGateway(VoteGateway):
             )
             or 0
         )
+
+    async def delete_all_by_user(self, user_id: UserId) -> int:
+        result = await self.session.execute(
+            delete(VoteORM).where(VoteORM.user_id == user_id)
+        )
+        # execute() is typed as Result, but a DELETE yields a CursorResult.
+        return cast("CursorResult[Any]", result).rowcount
 
     async def delete(self, vote: Vote) -> None:
         await self.session.execute(delete(VoteORM).where(VoteORM.id == vote.id))

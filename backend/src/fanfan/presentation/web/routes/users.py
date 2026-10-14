@@ -24,6 +24,11 @@ from fanfan.application.interactors.users.set_user_role import (
     SetUserRole,
     SetUserRoleInput,
 )
+from fanfan.application.interactors.users.unlink_user_ticket import (
+    UnlinkUserTicket,
+    UnlinkUserTicketInput,
+    UnlinkUserTicketOutput,
+)
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.user import UserId, UserRole
 from fanfan.presentation.web.responses import AUTH_RESPONSES
@@ -175,3 +180,23 @@ async def revoke_user_permission(
     await interactor(
         SetUserPermissionInput(user_id=user_id, permission=permission, granted=False)
     )
+
+
+@users_router.delete(
+    "/{user_id}/ticket",
+    summary="Unlink a user's ticket",
+    description="Frees the user's ticket for linking again and deletes the user's "
+    "votes, which the ticket entitled. The role is left unchanged. Requires "
+    "users:manage.",
+    responses={
+        200: {"description": "Ticket unlinked; reports how many votes were deleted."},
+        403: {"model": ErrorMessage, "description": "Missing users:manage."},
+        409: {"model": ErrorMessage, "description": "The user has no ticket."},
+    },
+)
+@inject
+async def unlink_user_ticket(
+    user_id: Annotated[UserId, Path(description="ID of the user to change.")],
+    interactor: FromDishka[UnlinkUserTicket],
+) -> UnlinkUserTicketOutput:
+    return await interactor(UnlinkUserTicketInput(user_id=user_id))

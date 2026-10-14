@@ -17,8 +17,8 @@ class TicketAlreadyUsed(Conflict, TicketException):
     code = "TICKET_ALREADY_USED"
 
 
-# Not raised by the backend yet, but the frontend already maps its code; mark it
-# Conflict (precondition not met) so it returns 409, not 500, once it is used.
+# The user has no linked ticket: raised when an organiser unlinks one that is
+# already gone. Conflict (precondition not met), so 409.
 class TicketNotLinked(Conflict, TicketException):
     code = "TICKET_NOT_LINKED"
 

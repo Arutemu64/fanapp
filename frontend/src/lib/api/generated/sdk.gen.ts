@@ -189,6 +189,9 @@ import type {
 	UnlinkTelegramAccountData,
 	UnlinkTelegramAccountErrors,
 	UnlinkTelegramAccountResponses,
+	UnlinkUserTicketData,
+	UnlinkUserTicketErrors,
+	UnlinkUserTicketResponses,
 	UnlinkVkAccountData,
 	UnlinkVkAccountErrors,
 	UnlinkVkAccountResponses,
@@ -1611,5 +1614,29 @@ export const grantUserPermission = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/users/{user_id}/permissions/{permission}',
+		...options
+	});
+
+/**
+ * Unlink a user's ticket
+ *
+ * Frees the user's ticket for linking again and deletes the user's votes, which the ticket entitled. The role is left unchanged. Requires users:manage.
+ */
+export const unlinkUserTicket = <ThrowOnError extends boolean = false>(
+	options: Options<UnlinkUserTicketData, ThrowOnError>
+): RequestResult<UnlinkUserTicketResponses, UnlinkUserTicketErrors, ThrowOnError> =>
+	(options.client ?? client).delete<
+		UnlinkUserTicketResponses,
+		UnlinkUserTicketErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/users/{user_id}/ticket',
 		...options
 	});
