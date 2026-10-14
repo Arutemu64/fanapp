@@ -24,9 +24,9 @@ class Mailing(AggregateRoot):
     # opt-ins, event subscribers) — so it distinguishes the two mailing kinds.
     body: str | None
     roles: list[UserRole] | None
-    # Recipients the fan-out will create notifications for. Set once by
-    # begin_fan_out; `sent_count` is deliberately not aggregate state (see
-    # register_delivery).
+    # Recipients the fan-out will create notifications for. Recalculated by
+    # begin_fan_out on each start or retry; `sent_count` is deliberately not
+    # aggregate state (see register_delivery).
     total_count: int
 
     @classmethod
