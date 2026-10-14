@@ -96,10 +96,11 @@
 			})();
 		</script>
 		<!--
-			SPA boot splash. As a client-rendered app nothing is painted
-			until the JS bundle loads and the root layout resolves /me/. This static
-			overlay shows a spinner during that gap; the root layout removes it on mount.
-			Plain CSS (no JS/Svelte) so it renders instantly before the bundle arrives.
+			SPA boot splash. As a client-rendered app nothing is painted until the JS
+			bundle loads and the root layout resolves /me/, and until then no route
+			knows which screen it will show, so a layout skeleton here would be a guess.
+			This static overlay holds the brand mark instead; the root layout removes it
+			on mount. Plain CSS (no JS/Svelte) so it renders before the bundle arrives.
 		-->
 		<style>
 			#app-splash {
@@ -111,35 +112,57 @@
 				justify-content: center;
 				/* Reads app.css's --background custom property (light/dark set on
 					documentElement) so the splash always matches the app shell instead
-					of drifting from a second hardcoded value; falls back to white if
-					app.css hasn't loaded yet. */
+					of drifting from a second hardcoded value. app.css is a render-blocking
+					<link> in the built shell, so the fallback is only a safety net. */
 				background: var(--background, #ffffff);
 			}
-			.app-splash__spinner {
-				width: 2.5rem;
-				height: 2.5rem;
-				border-radius: 9999px;
-				border: 3px solid rgba(214, 20, 80, 0.25);
-				border-top-color: #d61450;
-				animation: app-splash-spin 0.7s linear infinite;
+			/* Hidden for the first 400ms: a warm start mounts within that, and an
+				indicator that shows for a split second reads as flicker. Waits under a
+				second need none: https://www.nngroup.com/articles/skeleton-screens/ */
+			.app-splash__mark {
+				width: 4rem;
+				height: 4rem;
+				opacity: 0;
+				animation:
+					app-splash-in 0.3s ease-out 0.4s forwards,
+					app-splash-pulse 1.6s ease-in-out 0.7s infinite;
 			}
 			@media (prefers-reduced-motion: reduce) {
-				.app-splash__spinner {
-					animation-duration: 2s;
+				.app-splash__mark {
+					animation: app-splash-in 0s linear 0.4s forwards;
 				}
 			}
-			@keyframes app-splash-spin {
+			@keyframes app-splash-in {
 				to {
-					transform: rotate(360deg);
+					opacity: 1;
 				}
+			}
+			@keyframes app-splash-pulse {
+				0%,
+				100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.55;
+				}
+			}
+			.app-splash__label {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+				clip-path: inset(50%);
+				white-space: nowrap;
 			}
 		</style>
 		%sveltekit.head%
 	</head>
 
 	<body class="bg-background" data-sveltekit-preload-data="hover">
-		<div id="app-splash" aria-hidden="true">
-			<div class="app-splash__spinner"></div>
+		<div id="app-splash" role="status">
+			<!-- favicon.svg is in the service-worker precache, so the mark shows offline too. -->
+			<img class="app-splash__mark" src="/favicon.svg" alt="" width="64" height="64" />
+			<span class="app-splash__label">Загрузка…</span>
 		</div>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
