@@ -151,12 +151,14 @@ test.describe('logging out', () => {
 });
 
 test.describe('diagnostics', () => {
-	test('opens from five taps on the version line and copies a report', async ({
-		page,
-		context,
-		api
-	}) => {
-		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	test('opens from five taps on the version line and copies a report', async ({ page, api }) => {
+		// Captured instead of read back: WebKit rejects `clipboard-write` as an
+		// unknown permission, so granting it cannot be shared across projects.
+		await page.addInitScript(() => {
+			navigator.clipboard.writeText = async (text: string) => {
+				(window as { copiedText?: string }).copiedText = text;
+			};
+		});
 		api.use(loggedInAs());
 		await page.goto('/profile');
 
@@ -170,7 +172,8 @@ test.describe('diagnostics', () => {
 		await expect(dialog).toContainText('0123456');
 
 		await dialog.getByRole('button', { name: 'Скопировать отчёт' }).click();
-		const report = await page.evaluate(() => navigator.clipboard.readText());
+		await expect(page.getByText('Отчёт скопирован')).toBeVisible();
+		const report = await page.evaluate(() => (window as { copiedText?: string }).copiedText);
 		expect(report).toContain('Аккаунт: @test_visitor');
 		expect(report).toContain('Сборка целиком: 0123456789abcdef0123456789abcdef01234567');
 		expect(api.unmatched).toEqual([]);
