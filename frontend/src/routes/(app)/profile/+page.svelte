@@ -117,7 +117,9 @@
 							</Item.Media>
 							<Item.Content>
 								<Item.Title class="text-base">Обновить приложение</Item.Title>
-								<Item.Description>Доступна новая версия</Item.Description>
+								<Item.Description
+									>Обнови, чтобы получить новые функции и исправления</Item.Description
+								>
 							</Item.Content>
 						</button>
 					{/snippet}
