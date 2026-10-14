@@ -185,8 +185,8 @@
 				</div>
 			</div>
 
-			<!-- Personal action: the bell stays top-right for every user, separate from the staff strip below. -->
-			<div class="ml-auto shrink-0">
+			<!-- The bell stays top-right for every user; staff get the ⋯ management menu beside it. -->
+			<div class="ml-auto flex shrink-0 items-start">
 				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
 					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
@@ -207,13 +207,12 @@
 						<Bell class="size-5" />
 					{/if}
 				</button>
+
+				{#if canManageSchedule(user)}
+					<EventStaffActions {event} {isSkipped} bind:optimisticSkipped />
+				{/if}
 			</div>
 		</div>
-
-		<!-- Staff management strip: broadcast actions live on their own row so they never crowd the title, and read as "changes the show for everyone" distinct from the personal bell above. -->
-		{#if canManageSchedule(user)}
-			<EventStaffActions {event} {isSkipped} bind:optimisticSkipped />
-		{/if}
 	</div>
 </div>
 
