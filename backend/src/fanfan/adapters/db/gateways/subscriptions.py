@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.models import ScheduleEntryORM, SubscriptionORM
+from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
 from fanfan.application.dto.subscription import (
     SubscriptionEventDTO,
     SubscriptionFullDTO,
@@ -55,10 +55,10 @@ def _parse_full_dto(subscription_orm: SubscriptionORM) -> SubscriptionFullDTO:
 def _select_subscription_full_dto() -> Select[SubscriptionORM]:
     return (
         select(SubscriptionORM)
-        .join(ScheduleEntryORM)
+        .join(ScheduleEventORM)
         .options(
             joinedload(SubscriptionORM.event).options(
-                undefer(ScheduleEntryORM.queue),
+                undefer(ScheduleEventORM.queue),
             )
         )
     )
@@ -97,12 +97,12 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self, current_event_queue: int
     ) -> list[SubscriptionFullDTO]:
         stmt = _select_subscription_full_dto().where(
-            ScheduleEntryORM.is_skipped.isnot(True),  # noqa: FBT003
+            ScheduleEventORM.is_skipped.isnot(True),  # noqa: FBT003
             # Fire once the event is within `counter` positions of the stage.
-            SubscriptionORM.counter >= (ScheduleEntryORM.queue - current_event_queue),
+            SubscriptionORM.counter >= (ScheduleEventORM.queue - current_event_queue),
             # Excludes past events (negative diff); the counter check above
             # doesn't reject those on its own.
-            (ScheduleEntryORM.queue - current_event_queue) >= 0,
+            (ScheduleEventORM.queue - current_event_queue) >= 0,
         )
 
         results = await self.session.scalars(stmt)
@@ -115,7 +115,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         stmt = (
             _select_subscription_full_dto()
             .where(SubscriptionORM.user_id == user_id)
-            .order_by(ScheduleEntryORM.order)
+            .order_by(ScheduleEventORM.order)
         )
         results = await self.session.scalars(stmt)
         return [_parse_full_dto(subscription_orm) for subscription_orm in results]

@@ -59,12 +59,6 @@ class SkippedEventNotAllowed(ConstraintViolation, ScheduleException):
     code = "SKIPPED_EVENT_NOT_ALLOWED"
 
 
-class BlockStartNotAllowed(ConstraintViolation, ScheduleException):
-    """A stage operation (current, skip, move) aimed at a block start."""
-
-    code = "BLOCK_START_NOT_ALLOWED"
-
-
 class SameEventsAreNotAllowed(ConstraintViolation, ScheduleException):
     code = "SAME_EVENTS_ARE_NOT_ALLOWED"
 

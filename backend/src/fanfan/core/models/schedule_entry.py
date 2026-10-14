@@ -1,56 +1,53 @@
 from dataclasses import dataclass
 
 from fanfan.core.exceptions.schedule import (
-    BlockStartNotAllowed,
     CurrentEventNotAllowed,
     SameEventsAreNotAllowed,
     SkippedEventNotAllowed,
 )
 from fanfan.core.models.base import AggregateRoot
-from fanfan.core.vo.schedule_entry import ScheduleEntryId, ScheduleEntryKind
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 
-@dataclass(slots=True, kw_only=True)
-class ScheduleEntry(AggregateRoot):
+@dataclass(slots=True, kw_only=True, eq=False)
+class BaseScheduleEntry(AggregateRoot):
+    """What every row of the programme has: an identity, a title and a place."""
+
     id: ScheduleEntryId
-    kind: ScheduleEntryKind
+    title: str
+    order: float
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, BaseScheduleEntry) and self.id == other.id
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
+
+@dataclass(slots=True, kw_only=True, eq=False)
+class ScheduleBlockStart(BaseScheduleEntry):
+    """The head of a block: every event after it, up to the next one, is in it.
+
+    Nothing happens on stage here, so it has no number, time, queue position or
+    stage state, and none of the stage operations. It never moves either: moving
+    an event across a block start is what carries the event into another block.
+    """
+
+
+@dataclass(slots=True, kw_only=True, eq=False)
+class ScheduleEvent(BaseScheduleEntry):
     # The public number printed in the programme. Optional because not every row
     # on stage gets one — breaks and other filler are announced by title alone.
     number: int | None
-    title: str
     # Planned stage time in seconds. Seconds rather than minutes because acts
     # shorter than a minute are real, and rounding a per-event duration would
     # accumulate error across the programme.
     duration: int
-    order: float
     is_current: bool
     is_skipped: bool
     nomination_title: str | None
 
-    @classmethod
-    def block_start(
-        cls, *, entry_id: ScheduleEntryId, title: str, order: float
-    ) -> ScheduleEntry:
-        # A block start only marks where a block begins: nothing happens on
-        # stage, so it takes no number, time, queue position or stage state.
-        return cls(
-            id=entry_id,
-            kind=ScheduleEntryKind.BLOCK_START,
-            number=None,
-            title=title,
-            duration=0,
-            order=order,
-            is_current=False,
-            is_skipped=False,
-            nomination_title=None,
-        )
-
-    def _ensure_event(self) -> None:
-        if self.kind is not ScheduleEntryKind.EVENT:
-            raise BlockStartNotAllowed
-
     def set_current(self) -> None:
-        self._ensure_event()
         # A skipped event cannot be announced as currently on stage.
         if self.is_skipped:
             raise SkippedEventNotAllowed
@@ -60,7 +57,6 @@ class ScheduleEntry(AggregateRoot):
         self.is_current = False
 
     def skip(self) -> None:
-        self._ensure_event()
         # The current stage event must be unset before it can be skipped.
         if self.is_current:
             raise CurrentEventNotAllowed
@@ -71,23 +67,19 @@ class ScheduleEntry(AggregateRoot):
 
     def place_after(
         self,
-        previous_event: ScheduleEntry,
-        next_event: ScheduleEntry | None,
+        previous_entry: ScheduleEntry,
+        next_entry: ScheduleEntry | None,
     ) -> None:
-        # Only events move. A block start stays put, and moving an event across
-        # one is what carries the event into another block.
-        self._ensure_event()
-        if self == previous_event:
+        if self == previous_entry:
             raise SameEventsAreNotAllowed
         self.order = (
-            (previous_event.order + next_event.order) / 2
-            if next_event
-            else previous_event.order + 1
+            (previous_entry.order + next_entry.order) / 2
+            if next_entry
+            else previous_entry.order + 1
         )
 
-    def place_before_first(self, first_event: ScheduleEntry | None) -> None:
-        self._ensure_event()
-        self.order = first_event.order - 1 if first_event else 1
+    def place_before_first(self, first_entry: ScheduleEntry | None) -> None:
+        self.order = first_entry.order - 1 if first_entry else 1
 
     def update_details(
         self,
@@ -102,8 +94,5 @@ class ScheduleEntry(AggregateRoot):
         self.nomination_title = nomination_title
         self.order = order
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, ScheduleEntry) and self.id == other.id
 
-    def __hash__(self) -> int:
-        return hash(self.id)
+type ScheduleEntry = ScheduleEvent | ScheduleBlockStart

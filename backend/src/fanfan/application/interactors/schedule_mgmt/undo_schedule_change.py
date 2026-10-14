@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Awaitable, Callable
 
 from pydantic import BaseModel
 
@@ -14,7 +15,7 @@ from fanfan.core.exceptions.schedule import (
     OutdatedScheduleChange,
     ScheduleChangeNotFound,
 )
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleEntry, ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
@@ -40,8 +41,8 @@ class UndoScheduleChange:
 
     async def _handle_set_as_current(
         self,
-        changed_event: ScheduleEntry | None,
-        previous_event: ScheduleEntry | None,
+        changed_event: ScheduleEvent | None,
+        previous_event: ScheduleEvent | None,
     ) -> None:
         current_event = await self.schedule_gateway.get_current()
 
@@ -59,7 +60,7 @@ class UndoScheduleChange:
 
     async def _handle_moved(
         self,
-        changed_event: ScheduleEntry,
+        changed_event: ScheduleEvent,
         place_after_event: ScheduleEntry | None,
     ) -> None:
         if place_after_event:
@@ -78,18 +79,20 @@ class UndoScheduleChange:
 
         await self.schedule_gateway.save(changed_event)
 
-    async def _require_event(
-        self, event_id: ScheduleEntryId | None
-    ) -> ScheduleEntry | None:
-        # A null id means the change simply had no event in that slot. A non-null
+    @staticmethod
+    async def _require[T](
+        load: Callable[[ScheduleEntryId], Awaitable[T | None]],
+        entry_id: ScheduleEntryId | None,
+    ) -> T | None:
+        # A null id means the change simply had no entry in that slot. A non-null
         # id that resolves to nothing is an inconsistent state, so fail loud
         # instead of silently skipping the revert below.
-        if event_id is None:
+        if entry_id is None:
             return None
-        event = await self.schedule_gateway.get_by_id(event_id)
-        if event is None:
+        entry = await load(entry_id)
+        if entry is None:
             raise EventNotFound
-        return event
+        return entry
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
         async def mutate(_: User) -> None:
@@ -99,16 +102,23 @@ class UndoScheduleChange:
             if schedule_change is None:
                 raise ScheduleChangeNotFound
 
-            changed_event = await self._require_event(schedule_change.changed_event_id)
-            argument_event = await self._require_event(
-                schedule_change.argument_event_id
+            changed_event = await self._require(
+                self.schedule_gateway.get_event, schedule_change.changed_event_id
             )
 
+            # The argument is the previously current event for SET_AS_CURRENT,
+            # but any entry for MOVED: the one the event landed after.
             if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
-                await self._handle_set_as_current(changed_event, argument_event)
+                previous_event = await self._require(
+                    self.schedule_gateway.get_event, schedule_change.argument_event_id
+                )
+                await self._handle_set_as_current(changed_event, previous_event)
 
             if schedule_change.type is ScheduleChangeType.MOVED and changed_event:
-                await self._handle_moved(changed_event, argument_event)
+                place_after_entry = await self._require(
+                    self.schedule_gateway.get_entry, schedule_change.argument_event_id
+                )
+                await self._handle_moved(changed_event, place_after_entry)
 
             if schedule_change.type is ScheduleChangeType.SKIPPED and changed_event:
                 changed_event.unskip()

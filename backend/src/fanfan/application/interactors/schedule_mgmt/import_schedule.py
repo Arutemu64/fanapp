@@ -9,13 +9,14 @@ from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
 from fanfan.application.services.schedule_edit import ScheduleEditService
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import (
+    ScheduleBlockStart,
+    ScheduleEntry,
+    ScheduleEvent,
+)
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_entry import (
-    ScheduleEntryKind,
-    generate_schedule_entry_id,
-)
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
 # Entries start at 100 and step by 100 so an organizer can later drop rows between
 # them without renumbering (order is a float column). The demo seed reuses these.
@@ -49,12 +50,11 @@ type ScheduleRow = ScheduleEventRow | ScheduleBlockRow
 def build_schedule_entry(row: ScheduleRow, order: float) -> ScheduleEntry:
     """A fresh entry for a row; the import and the demo seed share it."""
     if isinstance(row, ScheduleBlockRow):
-        return ScheduleEntry.block_start(
-            entry_id=generate_schedule_entry_id(), title=row.title, order=order
+        return ScheduleBlockStart(
+            id=generate_schedule_entry_id(), title=row.title, order=order
         )
-    return ScheduleEntry(
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
-        kind=ScheduleEntryKind.EVENT,
         number=row.number,
         title=row.title,
         duration=row.duration,
@@ -101,7 +101,7 @@ class ImportSchedule:
                 (
                     e
                     for e in candidates
-                    if e.kind is ScheduleEntryKind.BLOCK_START and e.title == row.title
+                    if isinstance(e, ScheduleBlockStart) and e.title == row.title
                 ),
                 None,
             )
@@ -109,7 +109,14 @@ class ImportSchedule:
         if row.number is None:
             return None
 
-        return next((e for e in candidates if e.number == row.number), None)
+        return next(
+            (
+                e
+                for e in candidates
+                if isinstance(e, ScheduleEvent) and e.number == row.number
+            ),
+            None,
+        )
 
     async def __call__(self, data: ImportScheduleInput) -> None:
         async def mutate(current_user: User) -> None:
@@ -128,9 +135,11 @@ class ImportSchedule:
                         },
                     )
                 else:
-                    if isinstance(row, ScheduleBlockRow):
+                    # Matching pairs an event row only with an event and a
+                    # block row only with a block start, whose title matched.
+                    if isinstance(existing_entry, ScheduleBlockStart):
                         existing_entry.order = order
-                    else:
+                    elif isinstance(row, ScheduleEventRow):
                         existing_entry.update_details(
                             title=row.title,
                             duration=row.duration,

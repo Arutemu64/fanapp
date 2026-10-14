@@ -2,7 +2,11 @@ from sqlalchemy import Select, and_, delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
-from fanfan.adapters.db.models import ScheduleEntryORM
+from fanfan.adapters.db.models import (
+    ScheduleBlockStartORM,
+    ScheduleEntryORM,
+    ScheduleEventORM,
+)
 from fanfan.application.dto.schedule import (
     ScheduleBlockStartDTO,
     ScheduleEntryDTO,
@@ -10,7 +14,9 @@ from fanfan.application.dto.schedule import (
 )
 from fanfan.application.ports.gateways import ScheduleEntryGateway
 from fanfan.core.models.schedule_entry import (
+    ScheduleBlockStart,
     ScheduleEntry,
+    ScheduleEvent,
 )
 from fanfan.core.vo.schedule_entry import ScheduleEntryId, ScheduleEntryKind
 
@@ -18,9 +24,21 @@ SCHEDULE_EDIT_LOCK_KEY = "schedule:edit"
 
 
 def _from_model(model: ScheduleEntry) -> ScheduleEntryORM:
-    return ScheduleEntryORM(
+    if isinstance(model, ScheduleBlockStart):
+        # The event columns are written out rather than left to their server
+        # defaults, so a merge onto an existing row cannot keep stale values.
+        return ScheduleBlockStartORM(
+            id=model.id,
+            title=model.title,
+            order=model.order,
+            number=None,
+            duration=0,
+            is_current=False,
+            is_skipped=False,
+            nomination_title=None,
+        )
+    return ScheduleEventORM(
         id=model.id,
-        kind=model.kind,
         number=model.number,
         title=model.title,
         duration=model.duration,
@@ -31,10 +49,9 @@ def _from_model(model: ScheduleEntry) -> ScheduleEntryORM:
     )
 
 
-def _to_model(orm: ScheduleEntryORM) -> ScheduleEntry:
-    return ScheduleEntry(
+def _event_to_model(orm: ScheduleEntryORM) -> ScheduleEvent:
+    return ScheduleEvent(
         id=ScheduleEntryId(orm.id),
-        kind=orm.kind,
         number=orm.number,
         title=orm.title,
         duration=orm.duration,
@@ -43,6 +60,14 @@ def _to_model(orm: ScheduleEntryORM) -> ScheduleEntry:
         order=orm.order,
         nomination_title=orm.nomination_title,
     )
+
+
+def _to_model(orm: ScheduleEntryORM) -> ScheduleEntry:
+    if isinstance(orm, ScheduleBlockStartORM):
+        return ScheduleBlockStart(
+            id=ScheduleEntryId(orm.id), title=orm.title, order=orm.order
+        )
+    return _event_to_model(orm)
 
 
 def _parse_event_dto(
@@ -72,7 +97,7 @@ def _parse_entry_dto(
     *,
     queue: int | None,
 ) -> ScheduleEntryDTO:
-    if entry_orm.kind is ScheduleEntryKind.BLOCK_START:
+    if isinstance(entry_orm, ScheduleBlockStartORM):
         return ScheduleBlockStartDTO(
             kind=ScheduleEntryKind.BLOCK_START,
             id=ScheduleEntryId(entry_orm.id),
@@ -82,9 +107,9 @@ def _parse_entry_dto(
     return _parse_event_dto(entry_orm, queue=queue)
 
 
-def _select_schedule_event_full_dto() -> Select[ScheduleEntryORM]:
-    return select(ScheduleEntryORM).options(
-        undefer(ScheduleEntryORM.queue),
+def _select_schedule_event_full_dto() -> Select[ScheduleEventORM]:
+    return select(ScheduleEventORM).options(
+        undefer(ScheduleEventORM.queue),
     )
 
 
@@ -105,7 +130,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         entry_orm = _from_model(entry)
         self.session.add(entry_orm)
 
-    async def get_by_id(self, entry_id: ScheduleEntryId) -> ScheduleEntry | None:
+    async def get_entry(self, entry_id: ScheduleEntryId) -> ScheduleEntry | None:
         stmt = (
             select(ScheduleEntryORM)
             .where(ScheduleEntryORM.id == entry_id)
@@ -113,6 +138,15 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         )
         entry_orm = await self.session.scalar(stmt)
         return _to_model(entry_orm) if entry_orm else None
+
+    async def get_event(self, event_id: ScheduleEntryId) -> ScheduleEvent | None:
+        stmt = (
+            select(ScheduleEventORM)
+            .where(ScheduleEventORM.id == event_id)
+            .with_for_update()
+        )
+        event_orm = await self.session.scalar(stmt)
+        return _event_to_model(event_orm) if event_orm else None
 
     async def get_first(self) -> ScheduleEntry | None:
         stmt = (
@@ -124,36 +158,35 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         entry_orm = await self.session.scalar(stmt)
         return _to_model(entry_orm) if entry_orm else None
 
-    async def get_current(self) -> ScheduleEntry | None:
+    async def get_current(self) -> ScheduleEvent | None:
         stmt = (
-            select(ScheduleEntryORM)
-            .where(ScheduleEntryORM.is_current.is_(True))
+            select(ScheduleEventORM)
+            .where(ScheduleEventORM.is_current.is_(True))
             .with_for_update()
         )
-        entry_orm = await self.session.scalar(stmt)
-        return _to_model(entry_orm) if entry_orm else None
+        event_orm = await self.session.scalar(stmt)
+        return _event_to_model(event_orm) if event_orm else None
 
-    async def get_next(self) -> ScheduleEntry | None:
+    async def get_next(self) -> ScheduleEvent | None:
         current_event_order = (
-            select(ScheduleEntryORM.order)
-            .where(ScheduleEntryORM.is_current.is_(True))
+            select(ScheduleEventORM.order)
+            .where(ScheduleEventORM.is_current.is_(True))
             .scalar_subquery()
         )
         stmt = (
-            select(ScheduleEntryORM)
-            .order_by(ScheduleEntryORM.order)
+            select(ScheduleEventORM)
+            .order_by(ScheduleEventORM.order)
             .where(
                 and_(
-                    ScheduleEntryORM.order > current_event_order,
-                    ScheduleEntryORM.kind == ScheduleEntryKind.EVENT,
-                    ScheduleEntryORM.is_skipped.is_not(True),
+                    ScheduleEventORM.order > current_event_order,
+                    ScheduleEventORM.is_skipped.is_not(True),
                 )
             )
             .limit(1)
             .with_for_update()
         )
-        entry_orm = await self.session.scalar(stmt)
-        return _to_model(entry_orm) if entry_orm else None
+        event_orm = await self.session.scalar(stmt)
+        return _event_to_model(event_orm) if event_orm else None
 
     async def list_all(self) -> list[ScheduleEntry]:
         stmt = select(ScheduleEntryORM).with_for_update()
@@ -193,18 +226,17 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
 
     async def read_next_event(self) -> ScheduleEventFullDTO | None:
         current_event_order = (
-            select(ScheduleEntryORM.order)
-            .where(ScheduleEntryORM.is_current.is_(True))
+            select(ScheduleEventORM.order)
+            .where(ScheduleEventORM.is_current.is_(True))
             .scalar_subquery()
         )
         stmt = (
             _select_schedule_event_full_dto()
-            .order_by(ScheduleEntryORM.order)
+            .order_by(ScheduleEventORM.order)
             .where(
                 and_(
-                    ScheduleEntryORM.order > current_event_order,
-                    ScheduleEntryORM.kind == ScheduleEntryKind.EVENT,
-                    ScheduleEntryORM.is_skipped.is_not(True),
+                    ScheduleEventORM.order > current_event_order,
+                    ScheduleEventORM.is_skipped.is_not(True),
                 )
             )
             .limit(1)
@@ -216,7 +248,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
 
     async def read_current_event(self) -> ScheduleEventFullDTO | None:
         stmt = _select_schedule_event_full_dto().where(
-            ScheduleEntryORM.is_current.is_(True)
+            ScheduleEventORM.is_current.is_(True)
         )
         event_orm = await self.session.scalar(stmt)
         if event_orm:
@@ -228,7 +260,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         # ranking subquery joined once here, rather than the per-row correlated
         # column_property (which would re-run the window for every one of the
         # ~hundreds of rows).
-        ranked = ScheduleEntryORM.ranking_subquery()
+        ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
             select(ScheduleEntryORM, ranked.c.queue)
             .outerjoin(ranked, ScheduleEntryORM.id == ranked.c.id)

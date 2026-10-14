@@ -15,6 +15,17 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryKind
 
 
 class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM):
+    """One row of the programme, loaded as the subclass its ``kind`` names.
+
+    Single-table inheritance: querying ScheduleEventORM adds ``kind = 'event'``
+    on its own, so an events-only read cannot let a block start through
+    (https://docs.sqlalchemy.org/en/20/orm/inheritance.html#single-table-inheritance).
+    Every column stays declared here, not on the subclass that uses it: the
+    index and the check constraint below are table-level and name them, and a
+    block start's row still holds them, at the bare values that constraint
+    requires.
+    """
+
     __tablename__ = "schedule"
 
     kind: Mapped[ScheduleEntryKind] = str_enum_column(
@@ -53,6 +64,17 @@ class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
         # it with ours, so splice in the deferred order constraint explicitly.
         *OrderMixin.order_table_args(),
     )
+    __mapper_args__ = {"polymorphic_on": "kind"}  # noqa: RUF012
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class ScheduleEventORM(ScheduleEntryORM):
+    # None rather than inherited: the mixins' declared __table_args__ would
+    # otherwise make declarative build this subclass a table of its own.
+    __tablename__ = None
+    __mapper_args__ = {"polymorphic_identity": ScheduleEntryKind.EVENT}  # noqa: RUF012
 
     @classmethod
     def ranking_subquery(cls) -> Subquery:
@@ -68,6 +90,9 @@ class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
                 cls.id,
                 func.row_number().over(order_by=cls.order).label("queue"),
             )
+            # Spelled out: ``queue`` below builds this while the class is still
+            # being mapped, before SQLAlchemy can add the subclass's ``kind``
+            # criterion itself.
             .where(
                 cls.kind == ScheduleEntryKind.EVENT,
                 cls.is_skipped.isnot(True),  # noqa: FBT003
@@ -88,5 +113,9 @@ class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
             deferred=True,
         )
 
-    def __str__(self) -> str:
-        return self.title
+
+class ScheduleBlockStartORM(ScheduleEntryORM):
+    __tablename__ = None
+    __mapper_args__ = {  # noqa: RUF012
+        "polymorphic_identity": ScheduleEntryKind.BLOCK_START
+    }

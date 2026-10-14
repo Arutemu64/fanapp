@@ -40,7 +40,7 @@ class SetCurrentScheduleEvent:
                 await self.schedule_gateway.save(previous_current_event)
 
             if data.event_id is not None:
-                event = await self.schedule_gateway.get_by_id(data.event_id)
+                event = await self.schedule_gateway.get_event(data.event_id)
                 if event is None:
                     raise EventNotFound
                 event.set_current()

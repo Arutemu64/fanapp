@@ -11,10 +11,10 @@ from fanfan.application.services.schedule_edit import (
 )
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_change import ScheduleChange
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -35,7 +35,7 @@ async def test_edit_invalidates_cache_after_commit(
 
     async def add_event(_: User) -> None:
         await schedule_gateway.add(
-            ScheduleEntry(
+            ScheduleEvent(
                 id=generate_schedule_entry_id(),
                 number=1,
                 title="Событие",
@@ -44,7 +44,6 @@ async def test_edit_invalidates_cache_after_commit(
                 is_current=False,
                 is_skipped=False,
                 nomination_title=None,
-                kind=ScheduleEntryKind.EVENT,
             )
         )
 

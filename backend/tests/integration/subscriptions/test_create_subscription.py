@@ -12,11 +12,10 @@ from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGate
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.schedule import EventNotFound
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_entry import (
     ScheduleEntryId,
-    ScheduleEntryKind,
     generate_schedule_entry_id,
 )
 
@@ -26,8 +25,8 @@ pytestmark = [
 ]
 
 
-def _schedule_event(number: int, title: str, order: float) -> ScheduleEntry:
-    return ScheduleEntry(
+def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
@@ -36,7 +35,6 @@ def _schedule_event(number: int, title: str, order: float) -> ScheduleEntry:
         is_current=False,
         is_skipped=False,
         nomination_title=None,
-        kind=ScheduleEntryKind.EVENT,
     )
 
 

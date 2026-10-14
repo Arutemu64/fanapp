@@ -23,17 +23,15 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.schedule import (
-    BlockStartNotAllowed,
     EventNotFound,
     SameEventsAreNotAllowed,
     ScheduleEditTooFast,
 )
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_entry import (
     ScheduleEntryId,
-    ScheduleEntryKind,
     generate_schedule_entry_id,
 )
 from tests.integration.conftest import as_outbox
@@ -49,8 +47,8 @@ def _schedule_event(
     order: float,
     *,
     is_current: bool = False,
-) -> ScheduleEntry:
-    return ScheduleEntry(
+) -> ScheduleEvent:
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
@@ -59,7 +57,6 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=None,
-        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -93,7 +90,7 @@ async def test_move_reorders_event_and_records_change(
     )
 
     # place_after averages the neighbour orders: (2 + 3) / 2.
-    saved_first = await schedule_gateway.get_by_id(first.id)
+    saved_first = await schedule_gateway.get_event(first.id)
     assert saved_first is not None
     assert saved_first.order == 2.5
 
@@ -152,7 +149,7 @@ async def test_move_records_previous_event_and_next_change(
     )
 
     # Placed after the last event, so its order is last_order + 1.
-    saved_second = await schedule_gateway.get_by_id(second.id)
+    saved_second = await schedule_gateway.get_event(second.id)
     assert saved_second is not None
     assert saved_second.order == 4
 
@@ -202,7 +199,7 @@ async def test_move_event_after_itself_raises(
         )
     await uow.rollback()
 
-    saved_event = await schedule_gateway.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.order == 1
     assert (
@@ -275,7 +272,7 @@ async def test_move_raises_when_target_event_not_found(
         )
     await uow.rollback()
 
-    saved_event = await schedule_gateway.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.order == 1
     assert (
@@ -314,7 +311,7 @@ async def test_move_without_permission_raises_access_denied(
             )
         )
 
-    saved_first = await schedule_gateway.get_by_id(first.id)
+    saved_first = await schedule_gateway.get_event(first.id)
     assert saved_first is not None
     assert saved_first.order == 1
     assert (
@@ -365,7 +362,7 @@ async def test_move_twice_in_a_row_raises_too_fast(
 
     # The second move is rejected before writing: "third" keeps its order and
     # only the first change is recorded.
-    saved_third = await schedule_gateway.get_by_id(third.id)
+    saved_third = await schedule_gateway.get_event(third.id)
     assert saved_third is not None
     assert saved_third.order == 3
 
@@ -414,7 +411,7 @@ async def test_move_is_allowed_again_once_the_cooldown_has_passed(
         MoveScheduleEventInput(event_id=third.id, place_after_event_id=fourth.id)
     )
 
-    moved_third = await schedule_gateway.get_by_id(third.id)
+    moved_third = await schedule_gateway.get_event(third.id)
     assert moved_third is not None
     assert moved_third.order > 4
 
@@ -433,8 +430,8 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
     opening = _schedule_event(4, 0.5)
     first = _schedule_event(1, 1)
     moved = _schedule_event(2, 2)
-    block = ScheduleEntry.block_start(
-        entry_id=generate_schedule_entry_id(), title="Караоке", order=3
+    block = ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Караоке", order=3
     )
     in_block = _schedule_event(3, 4)
     for entry in (opening, first, moved, block, in_block):
@@ -446,7 +443,7 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
     )
 
     # Between the block start and the block's first event: now in the block.
-    saved = await schedule_gateway.get_by_id(moved.id)
+    saved = await schedule_gateway.get_event(moved.id)
     assert saved is not None
     assert saved.order == 3.5
 
@@ -458,7 +455,7 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
     assert changes[0].argument_event.id == first.id
 
 
-async def test_a_block_start_cannot_be_moved(
+async def test_a_block_start_is_not_an_event_to_move(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
@@ -468,15 +465,16 @@ async def test_a_block_start_cannot_be_moved(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
-    block = ScheduleEntry.block_start(
-        entry_id=generate_schedule_entry_id(), title="Караоке", order=1
+    block = ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Караоке", order=1
     )
     event = _schedule_event(1, 2)
     for entry in (block, event):
         await schedule_gateway.add(entry)
     await uow.commit()
 
-    with pytest.raises(BlockStartNotAllowed):
+    # Block starts never move; to the stage tools they are not events at all.
+    with pytest.raises(EventNotFound):
         await interactor(
             MoveScheduleEventInput(event_id=block.id, place_after_event_id=event.id)
         )

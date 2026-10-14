@@ -35,11 +35,13 @@ class MoveScheduleEvent:
 
     async def __call__(self, data: MoveScheduleEventInput) -> None:
         async def mutate(_: User) -> ChangeFactory:
-            event = await self.schedule_gateway.get_by_id(data.event_id)
+            event = await self.schedule_gateway.get_event(data.event_id)
             if event is None:
                 raise EventNotFound
 
-            place_after_event = await self.schedule_gateway.get_by_id(
+            # Any entry: a block start as the anchor moves the event to the top
+            # of that block.
+            place_after_event = await self.schedule_gateway.get_entry(
                 data.place_after_event_id
             )
             if place_after_event is None:

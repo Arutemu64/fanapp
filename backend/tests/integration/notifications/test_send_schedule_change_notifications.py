@@ -18,12 +18,12 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
-from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
@@ -36,8 +36,8 @@ pytestmark = [
 
 def _schedule_event(
     number: int, title: str, order: float, *, is_current: bool = False
-) -> ScheduleEntry:
-    return ScheduleEntry(
+) -> ScheduleEvent:
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
@@ -46,7 +46,6 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=None,
-        kind=ScheduleEntryKind.EVENT,
     )
 
 

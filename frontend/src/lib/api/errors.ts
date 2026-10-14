@@ -223,7 +223,6 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: 'В этой номинации голос уже учтён',
-	BLOCK_START_NOT_ALLOWED: 'Это начало блока, а не выступление',
 	CANNOT_CHANGE_OWN_ACCESS: 'Свою роль и права может изменить только другой организатор',
 	CANNOT_REMOVE_LAST_SIGN_IN_METHOD:
 		'Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт',

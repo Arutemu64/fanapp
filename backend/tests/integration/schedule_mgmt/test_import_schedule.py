@@ -14,10 +14,9 @@ from fanfan.application.ports.gateways import ScheduleEntryGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_entry import (
-    ScheduleEntryKind,
     generate_schedule_entry_id,
 )
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
@@ -37,10 +36,14 @@ def _entry(number: int | None, title: str) -> ScheduleEventRow:
     )
 
 
-def _schedule_event(number: int | None, title: str, order: float) -> ScheduleEntry:
-    return ScheduleEntry(
+async def _events(schedule_gateway: ScheduleEntryGateway) -> list[ScheduleEvent]:
+    entries = await schedule_gateway.list_all()
+    return [e for e in entries if isinstance(e, ScheduleEvent)]
+
+
+def _schedule_event(number: int | None, title: str, order: float) -> ScheduleEvent:
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
-        kind=ScheduleEntryKind.EVENT,
         number=number,
         title=title,
         duration=15,
@@ -73,7 +76,7 @@ async def test_import_creates_events_on_empty_schedule(
         )
     )
 
-    schedule = await schedule_gateway.list_all()
+    schedule = await _events(schedule_gateway)
     by_number = {e.number: e for e in schedule}
     assert set(by_number) == {1, 2, 3}
     assert by_number[1].title == "Открытие"
@@ -121,7 +124,7 @@ async def test_import_updates_existing_and_deletes_orphans(
         )
     )
 
-    schedule = await schedule_gateway.list_all()
+    schedule = await _events(schedule_gateway)
     by_number = {e.number: e for e in schedule}
     assert set(by_number) == {1, 3}
 
@@ -131,7 +134,7 @@ async def test_import_updates_existing_and_deletes_orphans(
     # New event is added.
     assert by_number[3].title == "Новое событие"
     # Orphan is gone.
-    assert await schedule_gateway.get_by_id(orphan.id) is None
+    assert await schedule_gateway.get_event(orphan.id) is None
 
 
 async def test_import_replaces_numberless_events(
@@ -160,14 +163,14 @@ async def test_import_replaces_numberless_events(
         )
     )
 
-    schedule = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
+    schedule = sorted(await _events(schedule_gateway), key=lambda e: e.order)
     assert [(e.number, e.title) for e in schedule] == [
         (1, "Открытие"),
         (None, "Перерыв"),
         (None, "Технический перерыв"),
     ]
     # Same title, but a new event — the previous break was not matched.
-    assert await schedule_gateway.get_by_id(existing_break.id) is None
+    assert await schedule_gateway.get_event(existing_break.id) is None
 
 
 async def test_import_keeps_block_starts_in_place_and_reuses_them_by_title(
@@ -180,11 +183,11 @@ async def test_import_keeps_block_starts_in_place_and_reuses_them_by_title(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
-    existing_block = ScheduleEntry.block_start(
-        entry_id=generate_schedule_entry_id(), title="Косплей", order=100.0
+    existing_block = ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Косплей", order=100.0
     )
-    stale_block = ScheduleEntry.block_start(
-        entry_id=generate_schedule_entry_id(), title="Больше нет", order=200.0
+    stale_block = ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Больше нет", order=200.0
     )
     await schedule_gateway.add(existing_block)
     await schedule_gateway.add(stale_block)
@@ -203,16 +206,16 @@ async def test_import_keeps_block_starts_in_place_and_reuses_them_by_title(
     )
 
     schedule = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
-    assert [(e.kind, e.title) for e in schedule] == [
-        (ScheduleEntryKind.EVENT, "Открытие"),
-        (ScheduleEntryKind.BLOCK_START, "Косплей"),
-        (ScheduleEntryKind.EVENT, "Дефиле"),
-        (ScheduleEntryKind.BLOCK_START, "Караоке"),
-        (ScheduleEntryKind.EVENT, "Песня"),
+    assert [(type(e), e.title) for e in schedule] == [
+        (ScheduleEvent, "Открытие"),
+        (ScheduleBlockStart, "Косплей"),
+        (ScheduleEvent, "Дефиле"),
+        (ScheduleBlockStart, "Караоке"),
+        (ScheduleEvent, "Песня"),
     ]
     # A block matched by title keeps its id; one missing from the file goes.
     assert schedule[1].id == existing_block.id
-    assert await schedule_gateway.get_by_id(stale_block.id) is None
+    assert await schedule_gateway.get_entry(stale_block.id) is None
 
 
 async def test_import_persists_null_nomination(
@@ -237,7 +240,7 @@ async def test_import_persists_null_nomination(
 
     await interactor(ImportScheduleInput(schedule=[_entry(1, "Открытие"), interlude]))
 
-    schedule = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
+    schedule = sorted(await _events(schedule_gateway), key=lambda e: e.order)
     stored_interlude = schedule[1]
     assert stored_interlude.title == "Перерыв"
     assert stored_interlude.nomination_title is None
@@ -263,8 +266,8 @@ async def test_import_without_permission_raises_access_denied(
         await interactor(ImportScheduleInput(schedule=[_entry(2, "Новое")]))
 
     # The schedule is left exactly as it was.
-    schedule = await schedule_gateway.list_all()
+    schedule = await _events(schedule_gateway)
     assert [e.number for e in schedule] == [1]
-    assert await schedule_gateway.get_by_id(existing.id) is not None
+    assert await schedule_gateway.get_event(existing.id) is not None
     # A rejected import must not send every client off to refetch.
     assert realtime.published == []

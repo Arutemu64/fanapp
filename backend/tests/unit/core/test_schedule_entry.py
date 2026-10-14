@@ -1,15 +1,12 @@
-from collections.abc import Callable
-
 import pytest
 
 from fanfan.core.exceptions.schedule import (
-    BlockStartNotAllowed,
     CurrentEventNotAllowed,
     SameEventsAreNotAllowed,
     SkippedEventNotAllowed,
 )
-from fanfan.core.models.schedule_entry import ScheduleEntry
-from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
+from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
 pytestmark = pytest.mark.unit
 
@@ -20,8 +17,8 @@ def _event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-) -> ScheduleEntry:
-    return ScheduleEntry(
+) -> ScheduleEvent:
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
@@ -30,7 +27,6 @@ def _event(
         is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
-        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -109,32 +105,22 @@ def test_place_before_first_when_no_events() -> None:
     assert event.order == 1
 
 
-def _block_start(order: float) -> ScheduleEntry:
-    return ScheduleEntry.block_start(
-        entry_id=generate_schedule_entry_id(), title="Косплей", order=order
+def _block_start(order: float) -> ScheduleBlockStart:
+    return ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Косплей", order=order
     )
 
 
-@pytest.mark.parametrize(
-    "operation",
-    [
-        ScheduleEntry.set_current,
-        ScheduleEntry.skip,
-        lambda block: block.place_after(_event(1, 1), None),
-        lambda block: block.place_before_first(None),
-    ],
-)
-def test_stage_operations_refuse_a_block_start(
-    operation: Callable[[ScheduleEntry], None],
-) -> None:
-    block = _block_start(5)
+def test_entries_are_equal_by_id_across_kinds() -> None:
+    # Undo compares the current event against the one a change recorded, and
+    # matching drops entries from a list by equality: both rest on id alone.
+    event = _event(1, 1)
+    same_event_later = _event(1, 7)
+    same_event_later.id = event.id
 
-    with pytest.raises(BlockStartNotAllowed):
-        operation(block)
-
-    assert block.order == 5
-    assert block.is_current is False
-    assert block.is_skipped is False
+    assert event == same_event_later
+    assert event != _block_start(1)
+    assert len({event, same_event_later}) == 1
 
 
 def test_an_event_moves_after_a_block_start() -> None:

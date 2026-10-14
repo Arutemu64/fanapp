@@ -5,7 +5,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
-from fanfan.adapters.db.models.schedule_entry import ScheduleEntryORM
+from fanfan.adapters.db.models.schedule_entry import (
+    ScheduleEntryORM,
+    ScheduleEventORM,
+)
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 
@@ -31,10 +34,12 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
         ForeignKey("mailings.id", ondelete="SET NULL"), index=True
     )
 
-    changed_event: Mapped[ScheduleEntryORM | None] = relationship(
+    changed_event: Mapped[ScheduleEventORM | None] = relationship(
         foreign_keys=[changed_event_id],
         lazy="raise",
     )
+    # Any entry: a move records the one it landed after, which can be a block
+    # start when the event went to the top of a block.
     argument_event: Mapped[ScheduleEntryORM | None] = relationship(
         foreign_keys=[argument_event_id],
         lazy="raise",

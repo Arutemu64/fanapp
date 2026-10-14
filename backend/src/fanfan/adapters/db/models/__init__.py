@@ -9,7 +9,7 @@ from .participant import ParticipantORM
 from .permission import UserPermissionORM
 from .push_subscription import PushSubscriptionORM
 from .schedule_change import ScheduleChangeORM
-from .schedule_entry import ScheduleEntryORM
+from .schedule_entry import ScheduleBlockStartORM, ScheduleEntryORM, ScheduleEventORM
 from .social_identity import SocialIdentityORM
 from .subscription import SubscriptionORM
 from .sync_run import SyncRunORM
@@ -28,8 +28,10 @@ __all__ = [
     "OutboxEventORM",
     "ParticipantORM",
     "PushSubscriptionORM",
+    "ScheduleBlockStartORM",
     "ScheduleChangeORM",
     "ScheduleEntryORM",
+    "ScheduleEventORM",
     "SocialIdentityORM",
     "SubscriptionORM",
     "SyncRunORM",

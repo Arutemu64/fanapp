@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models import ScheduleEntryORM
+from fanfan.adapters.db.models import ScheduleEventORM
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
@@ -21,4 +21,4 @@ class SubscriptionORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     )
     counter: Mapped[int] = mapped_column()
 
-    event: Mapped[ScheduleEntryORM] = relationship(lazy="raise")
+    event: Mapped[ScheduleEventORM] = relationship(lazy="raise")

@@ -23,12 +23,11 @@ from fanfan.core.exceptions.schedule import (
     EventNotFound,
     ScheduleEditTooFast,
 )
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_entry import (
     ScheduleEntryId,
-    ScheduleEntryKind,
     generate_schedule_entry_id,
 )
 from tests.integration.conftest import as_outbox
@@ -45,8 +44,8 @@ def _schedule_event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-) -> ScheduleEntry:
-    return ScheduleEntry(
+) -> ScheduleEvent:
+    return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
@@ -55,7 +54,6 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
-        kind=ScheduleEntryKind.EVENT,
     )
 
 
@@ -83,7 +81,7 @@ async def test_skip_marks_event_and_records_change(
 
     await interactor(UpdateScheduleEventSkipInput(event_id=second.id, is_skipped=True))
 
-    saved_second = await schedule_gateway.get_by_id(second.id)
+    saved_second = await schedule_gateway.get_event(second.id)
     assert saved_second is not None
     assert saved_second.is_skipped is True
 
@@ -129,7 +127,7 @@ async def test_unskip_marks_event_and_records_change(
 
     await interactor(UpdateScheduleEventSkipInput(event_id=event.id, is_skipped=False))
 
-    saved_event = await schedule_gateway.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.is_skipped is False
 
@@ -173,7 +171,7 @@ async def test_skip_current_event_raises_and_records_nothing(
         )
     await uow.rollback()
 
-    saved_current = await schedule_gateway.get_by_id(current.id)
+    saved_current = await schedule_gateway.get_event(current.id)
     assert saved_current is not None
     assert saved_current.is_skipped is False
     assert saved_current.is_current is True
@@ -235,7 +233,7 @@ async def test_skip_without_permission_raises_access_denied(
             UpdateScheduleEventSkipInput(event_id=event.id, is_skipped=True)
         )
 
-    saved_event = await schedule_gateway.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.is_skipped is False
     assert (
@@ -275,7 +273,7 @@ async def test_skip_twice_in_a_row_raises_too_fast(
 
     # The second skip is rejected before writing: "second" is untouched and
     # only the first change is recorded.
-    saved_second = await schedule_gateway.get_by_id(second.id)
+    saved_second = await schedule_gateway.get_event(second.id)
     assert saved_second is not None
     assert saved_second.is_skipped is False
 

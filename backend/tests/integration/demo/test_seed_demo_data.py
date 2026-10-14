@@ -14,10 +14,10 @@ from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.models.schedule_entry import ScheduleEntry
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.schedule_entry import ScheduleEntryKind, generate_schedule_entry_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 
 # Seeded by the initial-data migration; the actor for CLI/scheduler/NATS work.
@@ -80,9 +80,8 @@ async def test_seed_leaves_an_existing_programme_untouched(
     # seeding must skip a programme that already has events rather than collide.
     login(demo_seeder)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
-    existing = ScheduleEntry(
+    existing = ScheduleEvent(
         id=generate_schedule_entry_id(),
-        kind=ScheduleEntryKind.EVENT,
         number=1,
         title="Реальное выступление",
         duration=300,
