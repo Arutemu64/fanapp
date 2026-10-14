@@ -45,6 +45,34 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await expect(page.getByRole('button', { name: 'Повторить' })).toHaveCount(0);
 	});
 
+	test('an online-only switch explains itself offline instead of saving', async ({ page, api }) => {
+		let patched = false;
+		api.use({
+			...loggedInAs(),
+			'PATCH /me/settings': () => {
+				patched = true;
+				return json({});
+			}
+		});
+		await page.goto('/profile/notifications');
+		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
+		await expect(allAnnouncements).toBeChecked();
+
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(allAnnouncements).toHaveAttribute('aria-disabled', 'true');
+
+		// Dimmed, not disabled: it still takes focus and the press, and says why nothing
+		// happens. Driven from the keyboard because Playwright won't click (or click the
+		// label of) an aria-disabled control.
+		await allAnnouncements.focus();
+		await page.keyboard.press('Space');
+
+		await expect(page.getByText('Доступно только онлайн', { exact: true })).toBeVisible();
+		await expect(allAnnouncements).toBeChecked();
+		expect(patched).toBe(false);
+	});
+
 	test('a cold start with no saved identity shows the offline state, not login', async ({
 		page,
 		api

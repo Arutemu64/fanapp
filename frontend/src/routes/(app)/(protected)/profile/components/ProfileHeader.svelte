@@ -57,9 +57,8 @@
 		variant="outline"
 		size="sm"
 		class="min-h-11 shrink-0"
-		disabled={offlineGate.disabled}
-		title={offlineGate.title}
-		onclick={() => (editProfileModalOpen = true)}
+		aria-disabled={offlineGate.blocked}
+		onclick={offlineGate.guard(() => (editProfileModalOpen = true))}
 	>
 		<Pencil data-icon="inline-start" />
 		Редактировать

@@ -114,9 +114,8 @@
 					variant={emailButtonVariant}
 					size="sm"
 					class="min-h-11"
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
-					onclick={() => (changeEmailModalOpen = true)}
+					aria-disabled={offlineGate.blocked}
+					onclick={offlineGate.guard(() => (changeEmailModalOpen = true))}
 				>
 					{user.email ? 'Изменить' : 'Добавить'}
 				</Button>
@@ -136,9 +135,8 @@
 					variant="outline"
 					size="sm"
 					class="min-h-11"
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
-					onclick={() => (changePasswordModalOpen = true)}
+					aria-disabled={offlineGate.blocked}
+					onclick={offlineGate.guard(() => (changePasswordModalOpen = true))}
 				>
 					{user.has_password ? 'Изменить' : 'Установить'}
 				</Button>

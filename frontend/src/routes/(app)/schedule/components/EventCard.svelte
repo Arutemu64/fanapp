@@ -189,11 +189,10 @@
 			<div class="ml-auto flex shrink-0 items-start">
 				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
-					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
+					onclick={offlineGate.guard(event.user_subscription ? handleUnsubscribe : handleSubscribe)}
+					aria-disabled={offlineGate.blocked}
 					class={[
-						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
+						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40',
 						event.user_subscription
 							? 'text-primary hover:bg-primary/10'
 							: 'text-muted-foreground hover:bg-accent hover:text-foreground'

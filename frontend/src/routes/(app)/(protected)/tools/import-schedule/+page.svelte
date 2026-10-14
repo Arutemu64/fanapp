@@ -13,6 +13,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import FileFormatGuide from './components/FileFormatGuide.svelte';
 
@@ -35,6 +36,10 @@
 		inlineError = '';
 		successMessage = '';
 	}
+
+	// A connection that drops mid-form keeps what was typed; the submit explains
+	// itself instead of sending.
+	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -78,7 +83,7 @@
 	<FileFormatGuide />
 
 	<div class="border-t border-border pt-6">
-		<form class="flex flex-col gap-4" onsubmit={handleSubmit}>
+		<form class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
 			<Field.Field>
 				<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
 				<Input
@@ -114,7 +119,12 @@
 				</Alert.Root>
 			{/if}
 
-			<Button type="submit" class="w-full sm:w-auto" disabled={importMutation.isPending}>
+			<Button
+				type="submit"
+				class="w-full sm:w-auto"
+				disabled={importMutation.isPending}
+				aria-disabled={offlineGate.blocked}
+			>
 				{#if importMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Импортируем…

@@ -189,12 +189,12 @@
 	(https://www.nngroup.com/articles/contextual-menus/). -->
 <button
 	type="button"
-	onclick={() => (actionsOpen = true)}
-	disabled={offlineGate.disabled}
+	onclick={offlineGate.guard(() => (actionsOpen = true))}
+	aria-disabled={offlineGate.blocked}
 	aria-label="Управление выступлением"
 	aria-haspopup="dialog"
-	title={offlineGate.disabled ? offlineGate.title : 'Управление выступлением'}
-	class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+	title="Управление выступлением"
+	class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 >
 	<Ellipsis class="size-5" />
 </button>
@@ -217,9 +217,9 @@
 					<Button
 						variant="ghost"
 						class="h-11 justify-start"
-						disabled={offlineGate.disabled || isCurrentTogglePending}
-						title={offlineGate.title}
-						onclick={() => runFromSheet(askToggleCurrent)}
+						disabled={isCurrentTogglePending}
+						aria-disabled={offlineGate.blocked}
+						onclick={offlineGate.guard(() => runFromSheet(askToggleCurrent))}
 					>
 						{#if event.is_current}
 							<XCircle data-icon="inline-start" />
@@ -233,9 +233,8 @@
 				<Button
 					variant="ghost"
 					class="h-11 justify-start"
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
-					onclick={() => runFromSheet(() => (moveModal = true))}
+					aria-disabled={offlineGate.blocked}
+					onclick={offlineGate.guard(() => runFromSheet(() => (moveModal = true)))}
 				>
 					<Shuffle data-icon="inline-start" />
 					Перенести
@@ -244,9 +243,9 @@
 				<Button
 					variant="ghost"
 					class={['h-11 justify-start', !isSkipped && 'text-destructive hover:text-destructive']}
-					disabled={offlineGate.disabled || skipMutation.isPending}
-					title={offlineGate.title}
-					onclick={() => runFromSheet(askToggleSkip)}
+					disabled={skipMutation.isPending}
+					aria-disabled={offlineGate.blocked}
+					onclick={offlineGate.guard(() => runFromSheet(askToggleSkip))}
 				>
 					{#if isSkipped}
 						<Eye data-icon="inline-start" />
