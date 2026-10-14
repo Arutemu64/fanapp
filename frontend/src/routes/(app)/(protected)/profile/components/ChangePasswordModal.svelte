@@ -147,7 +147,6 @@
 						autocomplete="new-password"
 						revealLabel="новый пароль"
 						maxlength={MAX_PASSWORD_LENGTH}
-						passwordrules="minlength: {MIN_PASSWORD_LENGTH}; maxlength: {MAX_PASSWORD_LENGTH};"
 						color={newPasswordError ? 'red' : undefined}
 						bind:value={newPassword}
 						oninput={() => {
