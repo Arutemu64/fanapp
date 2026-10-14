@@ -5,7 +5,6 @@ from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
-from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
@@ -13,10 +12,6 @@ from fanfan.application.interactors.notifications.create_notification import (
 from fanfan.application.interactors.notifications.delete_mailing_notifications import (
     DeleteMailingNotifications,
     DeleteMailingNotificationsInput,
-)
-from fanfan.application.interactors.notifications.get_notification import (
-    GetNotification,
-    GetNotificationInput,
 )
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
@@ -26,7 +21,6 @@ from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
     SendNotificationInput,
 )
-from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.core.events.notifications import (
     BroadcastQueued,
     MailingCancelled,
@@ -36,7 +30,6 @@ from fanfan.core.events.notifications import (
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
     NotificationChannelUnavailable,
-    NotificationNotFound,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -118,13 +111,10 @@ async def _deliver_to_channel(
     stream=stream,
 )
 @inject
-async def create_new_notification(  # noqa: PLR0913, PLR0917 — all params framework-injected
+async def create_new_notification(
     data: NotificationQueued,
     interactor: FromDishka[CreateNotification],
-    get_notification: FromDishka[GetNotification],
-    realtime_gateway: FromDishka[RealtimeGateway],
     msg: NatsMessage,
-    logger: Logger,
 ) -> NotificationCreated:
     try:
         notification_id = await interactor(
@@ -133,33 +123,8 @@ async def create_new_notification(  # noqa: PLR0913, PLR0917 — all params fram
     except MailingAlreadyCancelled:
         await msg.reject()
         raise
-    else:
-        await msg.ack()
-
-        try:
-            notification = await get_notification(
-                GetNotificationInput(notification_id=notification_id)
-            )
-            await realtime_gateway.publish(
-                SSEMessage(
-                    SSEEventName.NOTIFICATION_CREATED,
-                    data=notification.model_dump(mode="json"),
-                ),
-                user_id=data.notification.user_id,
-            )
-        except NotificationNotFound:
-            logger.warning(
-                "Notification %s was created but could not be loaded "
-                "for realtime delivery",
-                notification_id,
-            )
-        except Exception:
-            logger.exception(
-                "Failed to publish realtime notification %s",
-                notification_id,
-            )
-
-        return NotificationCreated(notification_id=notification_id)
+    await msg.ack()
+    return NotificationCreated(notification_id=notification_id)
 
 
 @notifications_router.subscriber(

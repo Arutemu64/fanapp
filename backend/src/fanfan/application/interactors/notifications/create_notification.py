@@ -1,12 +1,18 @@
+import logging
+
 from pydantic import BaseModel
 
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.html_sanitizer import HtmlSanitizer
+from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.vo.notification import NotificationId
+
+logger = logging.getLogger(__name__)
 
 
 class CreateNotificationInput(BaseModel):
@@ -19,11 +25,13 @@ class CreateNotification:
         mailing_gateway: MailingGateway,
         notification_gateway: NotificationGateway,
         html_sanitizer: HtmlSanitizer,
+        realtime_gateway: RealtimeGateway,
         uow: UnitOfWork,
     ) -> None:
         self.mailing_gateway = mailing_gateway
         self.notification_gateway = notification_gateway
         self.html_sanitizer = html_sanitizer
+        self.realtime_gateway = realtime_gateway
         self.uow = uow
 
     def _to_model(self, notification: NewNotification) -> Notification:
@@ -75,4 +83,35 @@ class CreateNotification:
             ):
                 await self.mailing_gateway.save(mailing)
         await self.uow.commit()
+        await self._publish_realtime(notification)
         return notification.id
+
+    async def _publish_realtime(self, notification: Notification) -> None:
+        # After commit, so a toast never shows a notification that rolled back.
+        # Best-effort: the notification is stored and the feed shows it on the
+        # next load, so a failure here is logged, not raised — raising would
+        # stop the caller from queuing the channel sends. A redelivery publishes
+        # again, like those sends: a repeated toast beats a lost one.
+        try:
+            dto = await self.notification_gateway.read_realtime_notification(
+                notification.id
+            )
+            if dto is None:
+                # Deleted between commit and read, e.g. its mailing was cancelled.
+                logger.warning(
+                    "Notification gone before realtime delivery",
+                    extra={"notification_id": str(notification.id)},
+                )
+                return
+            await self.realtime_gateway.publish(
+                SSEMessage(
+                    SSEEventName.NOTIFICATION_CREATED,
+                    data=dto.model_dump(mode="json"),
+                ),
+                user_id=notification.user_id,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to publish realtime notification",
+                extra={"notification_id": str(notification.id)},
+            )

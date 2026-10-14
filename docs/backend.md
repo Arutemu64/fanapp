@@ -240,7 +240,7 @@ Redelivery makes every consumer run more than once for some messages, so handler
 
 ## Realtime (SSE)
 
-Browser push goes over Server-Sent Events, separate from the domain-event/outbox path: interactors and FastStream consumers publish an `SSEMessage` via `RealtimeGateway` (`adapters/nats/realtime_gateway.py`), which fans out over NATS subjects to every open `/events` stream (`presentation/web/routes/sse.py`). It carries no committed state, so it never touches the `UnitOfWork` or the outbox.
+Browser push goes over Server-Sent Events, separate from the domain-event/outbox path: the application layer (interactors and services, never a route or consumer) publishes an `SSEMessage` via `RealtimeGateway` after its commit (`adapters/nats/realtime_gateway.py`), which fans out over NATS subjects to every open `/events` stream (`presentation/web/routes/sse.py`). It carries no committed state, so it never touches the `UnitOfWork` or the outbox.
 
 **Every SSE event name is a member of the `SSEEventName` `StrEnum`** (`application/dto/realtime.py`) — never a bare string literal. `SSEMessage.event_name` is typed to the enum, so a typo is a type error, not a silently dead event. To add an event: add a member here, then mirror it in the frontend `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`).
 
