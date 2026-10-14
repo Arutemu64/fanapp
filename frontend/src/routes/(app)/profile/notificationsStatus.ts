@@ -1,5 +1,5 @@
 import type { CurrentUserDto } from '#lib/api/generated/index.js';
-import type { DevicePushState } from '#lib/utils/pushSubscription.js';
+import type { DevicePushState } from '#lib/services/pushDevice.svelte.js';
 
 type ChannelOwner = Pick<CurrentUserDto, 'settings' | 'social_identities'>;
 

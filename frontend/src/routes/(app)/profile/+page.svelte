@@ -21,11 +21,11 @@
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 	import { isOrg } from '#lib/utils/permissions.js';
-	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
 	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
 
 	import LogoutButton from './components/LogoutButton.svelte';
