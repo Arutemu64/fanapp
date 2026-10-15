@@ -1,6 +1,6 @@
 # FAN FAN companion app
 
-Companion web app for the FAN FAN anime convention: visitors follow the programme, vote and get notified; organizers run the programme and message visitors.
+Companion web app for the FAN FAN anime convention: visitors follow the schedule, vote and get notified; organizers run the schedule and message visitors.
 
 ## Roles
 
@@ -9,7 +9,7 @@ What a user is at the festival. Every user holds exactly one; broadcasts are add
 _Avoid_: Group, user type
 
 **Permission**:
-One organizer power, such as managing the programme or sending broadcasts, granted to a user one by one and independent of their role.
+One organizer power, such as managing the schedule or sending broadcasts, granted to a user one by one and independent of their role.
 _Avoid_: Right, access, role
 
 **Guest**:
@@ -36,10 +36,14 @@ _Avoid_: Org, organiser, admin
 Volunteers and organizers together: the people running the festival rather than visiting it.
 _Avoid_: Crew, team
 
-## Programme
+## Schedule
+
+**Schedule**:
+The running order of everything on the festival stage. The screens call it «программа».
+_Avoid_: Programme, timetable, lineup
 
 **Entry**:
-One row of the programme, in order: an event or a block start.
+One row of the schedule, in order: an event or a block start.
 _Avoid_: Row, item
 
 **Event**:
@@ -51,7 +55,7 @@ An event's place in the running order, 1..N, counting only events that are not s
 _Avoid_: Queue
 
 **Block**:
-A titled section of the programme: a block start and every event after it up to the next block start. An event's block is wherever it sits, so moving it across a block start moves it into that block.
+A titled section of the schedule: a block start and every event after it up to the next block start. An event's block is wherever it sits, so moving it across a block start moves it into that block.
 _Avoid_: Section, group
 
 ## Notifications
@@ -69,7 +73,7 @@ A mailing an organizer writes by hand for every user holding the chosen roles. T
 _Avoid_: Announcement
 
 **Change announcement**:
-A mailing a programme change sends on its own to the users subscribed to the events it touches. The screens call it «уведомление об изменении».
+A mailing a schedule change sends on its own to the users subscribed to the events it touches. The screens call it «уведомление об изменении».
 _Avoid_: Schedule fan-out, change notification
 
 **Channel**:
