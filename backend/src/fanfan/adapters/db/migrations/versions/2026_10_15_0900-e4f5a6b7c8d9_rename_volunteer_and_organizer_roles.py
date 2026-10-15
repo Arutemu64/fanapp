@@ -42,12 +42,10 @@ def _rewrite(renames: list[tuple[str, str]], allowed: list[str]) -> None:
     for table, ck_name in _ROLE_COLUMNS:
         # Drop the CHECK first, otherwise the rewrite would violate it mid-flight.
         op.drop_constraint(op.f(ck_name), table, type_="check")
+        role_table = sa.table(table, sa.column("role"))
         for src, dst in renames:
-            # table is a trusted literal from _ROLE_COLUMNS (never user input);
-            # the values are passed as bound parameters.
             conn.execute(
-                sa.text(f"UPDATE {table} SET role = :dst WHERE role = :src"),  # noqa: S608
-                {"src": src, "dst": dst},
+                sa.update(role_table).where(role_table.c.role == src).values(role=dst)
             )
         op.create_check_constraint(op.f(ck_name), table, sa.column("role").in_(allowed))
 
