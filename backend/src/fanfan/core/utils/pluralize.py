@@ -7,11 +7,6 @@ class Plurals(NamedTuple):
     five: str
 
 
-SECONDS_PLURALS = Plurals("секунду", "секунды", "секунд")
-POINTS_PLURALS = Plurals("очко", "очка", "очков")
-NOTIFICATIONS_PLURALS = Plurals("уведомление", "уведомления", "уведомлений")
-
-
 def pluralize(value: int, strings: Plurals) -> str:
     if (value % 10 == 1) and (value % 100 != 11):
         # e.g. "1 секунду"

@@ -27,7 +27,8 @@ This skill covers only the repo mechanics those skills can't know:
   `выступление` / `выступления` / `выступлений`). A bare `+ ' мин.'` is a bug
   waiting for the number 2. Frontend: a plural message in `frontend/messages/ru.json`
   (`declarations` + `plural` selector; copy `votes_count`).
-  Jinja: the `events_pluralize` macro pattern in the notification templates.
+  Jinja: the `plural` filter, `{{ n|plural('минуту', 'минуты', 'минут') }}`
+  (registered in `adapters/jinja/factory.py`).
 - **Ё is written always** (`ещё`, `её`, `всё`, `учёт`) — see `redpolitika.md`.
 - **Use the typographic dash** `—`, not a hyphen, in prose, and bind it to the
   word before with a non-breaking space so a wrapped line never opens with a
