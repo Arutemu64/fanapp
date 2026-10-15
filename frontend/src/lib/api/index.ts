@@ -1,5 +1,6 @@
 import {
 	type FetchQueryOptions,
+	isCancelledError,
 	type QueryClient,
 	type QueryKey,
 	queryOptions
@@ -7,6 +8,7 @@ import {
 
 import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
 
+import { getApiErrorCode, gotNoApiAnswer } from '#lib/api/errors.js';
 import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { client } from '#lib/api/generated/client.gen.js';
 import { getCurrentUser } from '#lib/api/generated/index.js';
@@ -87,6 +89,36 @@ export function queryForLoad<TData, TError, TQueryKey extends QueryKey>(
 // already gone — checking is exactly what we want.)
 const IDENTITY_PATH = '/me/';
 const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code']);
+
+// A 401 is session expiry, which `watchApiResponses` already turns into the
+// guest state; a toast on top would only repeat it.
+const SESSION_ERROR_CODES = new Set(['AUTHENTICATION_ERROR', 'USER_NOT_AUTHENTICATED']);
+
+/**
+ * Call `onFailure` when a refetch fails for a query on screen that still shows
+ * its last good data — the one failure no page renders, since every page keeps
+ * stale data over an error (https://tkdodo.eu/blog/react-query-error-handling).
+ * A missing answer is left to the connection banner, and a query that is fine
+ * staying quiet (a glanceable poll) opts out with `meta: { quietRefetchErrors: true }`.
+ * Returns the teardown.
+ */
+export function watchBackgroundRefetchErrors(
+	queryClient: QueryClient,
+	onFailure: () => void
+): () => void {
+	return queryClient.getQueryCache().subscribe((event) => {
+		if (event.type !== 'updated' || event.action.type !== 'error') return;
+
+		const { query } = event;
+		const error: unknown = event.action.error;
+		if (query.state.data === undefined || query.getObserversCount() === 0) return;
+		if (query.meta?.quietRefetchErrors === true) return;
+		if (gotNoApiAnswer(error) || isCancelledError(error)) return;
+		if (SESSION_ERROR_CODES.has(getApiErrorCode(error) ?? '')) return;
+
+		onFailure();
+	});
+}
 
 /**
  * Watch every API response for reachability and session expiry. Call once from

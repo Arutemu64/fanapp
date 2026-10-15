@@ -17,7 +17,8 @@
 	const onlineQuery = createQuery(() => ({
 		...countOnlineUsersOptions(),
 		refetchInterval: REFRESH_MS,
-		staleTime: REFRESH_MS
+		staleTime: REFRESH_MS,
+		meta: { quietRefetchErrors: true }
 	}));
 	// Undefined until the first response lands, so the card shows a placeholder
 	// instead of a misleading "0" while loading.
