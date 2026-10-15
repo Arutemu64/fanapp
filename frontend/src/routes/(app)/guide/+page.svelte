@@ -18,7 +18,6 @@
 	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
-	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { guideArticles } from '#lib/data/guideArticles.js';
@@ -29,37 +28,63 @@
 	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
 	const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent('Нижний Новгород, ДК ГАЗ')}`;
 
-	interface SocialLink {
+	interface ContactLink {
 		href: string;
 		label: () => string;
+		/** The handle or address, so a row is recognisable without its icon. */
+		handle: string;
 		icon: Component;
 		/** mailto: stays in the app's tab; web links open elsewhere. */
 		external: boolean;
 	}
 
-	const socialLinks: SocialLink[] = [
-		{ href: 'https://fancom.info/', label: m.guide_website, icon: Globe, external: true },
-		{ href: 'https://vk.com/ffest_nn', label: m.guide_vk, icon: IconVk, external: true },
+	const contactLinks: ContactLink[] = [
+		{
+			href: 'https://fancom.info/',
+			label: m.guide_website,
+			handle: 'fancom.info',
+			icon: Globe,
+			external: true
+		},
+		{
+			href: 'https://vk.com/ffest_nn',
+			label: m.guide_vk,
+			handle: 'vk.com/ffest_nn',
+			icon: IconVk,
+			external: true
+		},
 		{
 			href: 'https://t.me/fanfan_fest_news',
 			label: m.guide_telegram,
+			handle: 't.me/fanfan_fest_news',
 			icon: IconTelegram,
 			external: true
 		},
-		{ href: 'https://max.ru/ffest_nn', label: m.guide_max, icon: MessageCircle, external: true },
-		{ href: 'mailto:orgcom.fan@mail.ru', label: m.guide_email, icon: Mail, external: false }
+		{
+			href: 'https://max.ru/ffest_nn',
+			label: m.guide_max,
+			handle: 'max.ru/ffest_nn',
+			icon: MessageCircle,
+			external: true
+		},
+		{
+			href: 'mailto:orgcom.fan@mail.ru',
+			label: m.guide_email,
+			handle: 'orgcom.fan@mail.ru',
+			icon: Mail,
+			external: false
+		}
 	];
 
 	// The date and start come from the public config organizers edit, the same source
 	// as Home, so the two tabs can't disagree; the cached copy or the shipped
-	// defaults fill in offline. Doors and the age limit aren't in the config.
+	// defaults fill in offline. The doors time isn't in the config.
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	const config = $derived(configQuery.data ?? FALLBACK_CONFIG);
 	const facts = $derived([
 		formatFestivalDate(config.festival_start),
 		m.guide_doors(),
-		m.guide_start({ time: formatFestivalTime(config.festival_start) }),
-		m.guide_age()
+		m.guide_start({ time: formatFestivalTime(config.festival_start) })
 	]);
 </script>
 
@@ -67,10 +92,21 @@
 	<title>{m.document_title({ title: m.nav_guide() })}</title>
 </svelte:head>
 
-{#snippet externalRow(href: string, Icon: Component, title: string, description: string)}
+{#snippet linkRow(
+	href: string,
+	Icon: Component,
+	title: string,
+	description: string,
+	external = true
+)}
 	<Item.Root class="rounded-none">
 		{#snippet child({ props })}
-			<a {href} target="_blank" rel="noopener noreferrer" {...props}>
+			<a
+				{href}
+				target={external ? '_blank' : undefined}
+				rel={external ? 'noopener noreferrer' : undefined}
+				{...props}
+			>
 				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
 					<Icon class="size-5" aria-hidden="true" />
 				</Item.Media>
@@ -78,16 +114,18 @@
 					<Item.Title class="text-base">{title}</Item.Title>
 					<Item.Description>{description}</Item.Description>
 				</Item.Content>
-				<Item.Actions>
-					<ExternalLink class="size-4 text-muted-foreground" aria-hidden="true" />
-					<span class="sr-only">({m.guide_opens_in_new_tab()})</span>
-				</Item.Actions>
+				{#if external}
+					<Item.Actions>
+						<ExternalLink class="size-4 text-muted-foreground" aria-hidden="true" />
+						<span class="sr-only">({m.guide_opens_in_new_tab()})</span>
+					</Item.Actions>
+				{/if}
 			</a>
 		{/snippet}
 	</Item.Root>
 {/snippet}
 
-<!-- A hub, like /profile: the intro with the facts and social links, then grouped
+<!-- A hub, like /profile: the intro with the facts, then grouped
      rows that each lead somewhere. Grouped rows with a trailing indicator are the
      phone-settings shape for "drill in"
      (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables),
@@ -104,25 +142,6 @@
 				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact}</li>
 			{/each}
 		</ul>
-		<ul class="mt-4 flex flex-wrap gap-2">
-			{#each socialLinks as link (link.href)}
-				{@const Icon = link.icon}
-				<li>
-					<Button
-						variant="outline"
-						size="icon"
-						href={link.href}
-						target={link.external ? '_blank' : undefined}
-						rel={link.external ? 'noopener noreferrer' : undefined}
-					>
-						<Icon aria-hidden="true" />
-						<span class="sr-only">
-							{link.label()}{link.external ? ` (${m.guide_opens_in_new_tab()})` : ''}
-						</span>
-					</Button>
-				</li>
-			{/each}
-		</ul>
 	</section>
 
 	<section aria-labelledby="guide-important" class="flex flex-col gap-2">
@@ -131,17 +150,17 @@
 		</h2>
 		<MenuGroup>
 			<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
-			{@render externalRow(
+			{@render linkRow(
 				yandexMapsUrl,
 				MapPin,
 				`${m.guide_venue_name()}, ${m.guide_venue_address()}`,
 				m.guide_open_in_yandex_maps()
 			)}
-			{@render externalRow(
+			{@render linkRow(
 				'https://fancom.info/pages/rules',
 				ScrollText,
 				m.guide_rules(),
-				'fancom.info/pages/rules'
+				m.guide_rules_description()
 			)}
 		</MenuGroup>
 	</section>
@@ -158,6 +177,18 @@
 					description={article.description}
 					icon={article.icon}
 				/>
+			{/each}
+		</MenuGroup>
+	</section>
+
+	<!-- Rarely needed on the day, so below the activities rather than in the hero. -->
+	<section aria-labelledby="guide-contacts" class="flex flex-col gap-2">
+		<h2 id="guide-contacts" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_contacts_heading()}
+		</h2>
+		<MenuGroup>
+			{#each contactLinks as link (link.href)}
+				{@render linkRow(link.href, link.icon, link.label(), link.handle, link.external)}
 			{/each}
 		</MenuGroup>
 	</section>
