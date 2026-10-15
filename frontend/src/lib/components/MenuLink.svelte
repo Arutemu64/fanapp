@@ -10,12 +10,14 @@
 	interface Props {
 		href: Path;
 		label: string;
+		/** A line under the label, for rows whose title alone doesn't say what is behind them. */
+		description?: string;
 		icon: Component;
 		/** Current state shown before the chevron, so it reads without opening the page. */
 		value?: string;
 	}
 
-	let { href, label, icon: Icon, value }: Props = $props();
+	let { href, label, description, icon: Icon, value }: Props = $props();
 </script>
 
 <Item.Root class="rounded-none">
@@ -26,6 +28,9 @@
 			</Item.Media>
 			<Item.Content>
 				<Item.Title class="text-base">{label}</Item.Title>
+				{#if description}
+					<Item.Description>{description}</Item.Description>
+				{/if}
 			</Item.Content>
 			<Item.Actions>
 				{#if value}

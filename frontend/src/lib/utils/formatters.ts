@@ -63,8 +63,36 @@ const FESTIVAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	timeZone: EVENT_TIME_ZONE
 });
 
+const FESTIVAL_DATE_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	weekday: 'long',
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	timeZone: EVENT_TIME_ZONE
+});
+
+const FESTIVAL_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	hour: '2-digit',
+	minute: '2-digit',
+	hourCycle: 'h23',
+	timeZone: EVENT_TIME_ZONE
+});
+
+/** Festival day on the venue clock, weekday last: "13 марта 2027, суббота". */
+export function formatFestivalDate(value: string | number | Date): string {
+	const parts = FESTIVAL_DATE_FORMATTER.formatToParts(new Date(value));
+	const get = (type: Intl.DateTimeFormatPartTypes) =>
+		parts.find((part) => part.type === type)?.value ?? '';
+	return `${get('day')} ${get('month')} ${get('year')}, ${get('weekday')}`;
+}
+
+/** Wall-clock time on the venue clock: "11:30". */
+export function formatFestivalTime(value: string | number | Date): string {
+	return FESTIVAL_TIME_FORMATTER.format(new Date(value));
+}
+
 /**
- * Festival start for the hero, on the venue clock: "22 августа 2026, 11:30".
+ * Festival start for the hero, on the venue clock: "13 марта 2027, 11:30".
  * Built from parts so it drops the " г." year suffix ru-RU's long format adds,
  * matching the app's existing date copy.
  */

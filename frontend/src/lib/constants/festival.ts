@@ -6,6 +6,6 @@ import type { PublicConfigDto } from '#lib/api/generated/index.js';
 // backend defaults (core AppSettings.DEFAULT_FESTIVAL_START / _END, Moscow time
 // UTC+3).
 export const FALLBACK_CONFIG: PublicConfigDto = {
-	festival_start: '2026-08-22T11:30:00+03:00',
-	festival_end: '2026-08-23T20:00:00+03:00'
+	festival_start: '2027-03-13T11:30:00+03:00',
+	festival_end: '2027-03-13T19:30:00+03:00'
 };

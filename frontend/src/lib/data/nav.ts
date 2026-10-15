@@ -36,10 +36,11 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
 		outlineIcon: Calendar,
 		solidIcon: Calendar
 	},
-	// Voting sits before the guide so its long "Голосование" label lands in an inner
-	// column of the bottom nav, away from rounded screen corners that clip edges.
-	{ label: m.nav_voting, href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
+	// The guide takes the centre of the bar, the most prominent spot, as the tab people
+	// on site reach for most. Voting stays in an inner column, since its long
+	// "Голосование" label would be clipped by the rounded screen corners at an edge.
 	{ label: m.nav_guide, href: 'guide', outlineIcon: Compass, solidIcon: Compass },
+	{ label: m.nav_voting, href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
 	// Last, in the thumb's natural reach on the right, as the account tab sits in most
 	// tab bars. It is also the hub for everything without a tab of its own (feedback,
 	// the organizer toolbox, theme, logout), which is what lets the shell drop a hamburger.

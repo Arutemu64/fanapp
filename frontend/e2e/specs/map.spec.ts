@@ -52,7 +52,10 @@ test.describe('map viewer', () => {
 				.getByRole('navigation', { name: 'Разделы' })
 				.getByRole('link', { name: 'Гид' })
 				.click();
-			await page.getByRole('main').getByRole('link', { name: 'Карта', exact: true }).click();
+			await page
+				.getByRole('main')
+				.getByRole('link', { name: 'Карта площадки', exact: true })
+				.click();
 			await expect(page).toHaveURL('/guide/map');
 			const viewer = await openFirstMap(page);
 
