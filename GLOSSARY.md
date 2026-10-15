@@ -2,6 +2,32 @@
 
 Companion web app for the FAN FAN anime convention: visitors follow the programme, vote and get notified; organizers run the programme and message visitors.
 
+## Roles
+
+**Role**:
+What a user is at the festival. Every user holds exactly one; broadcasts are addressed by role, and a ticket carries the role its holder gets. A role lets a user do nothing by itself.
+_Avoid_: Group, user type
+
+**Permission**:
+One organizer power, such as managing the programme or sending broadcasts, granted to a user one by one and independent of their role.
+_Avoid_: Right, access, role
+
+**Visitor**:
+A user who came to watch, the role every new account starts with. The screens call one «зритель».
+_Avoid_: Guest («гость» at a convention means an invited star), attendee
+
+**Participant**:
+Someone who performs at the festival. The same person holds the participant role and is a voting entry in a nomination. The screens call one «участник».
+_Avoid_: Performer, contestant, cosplayer
+
+**Volunteer**:
+A user who helps run the festival on site. The screens call one «волонтёр».
+_Avoid_: Helper, staff
+
+**Organizer**:
+A user who runs the festival. The screens call one «организатор».
+_Avoid_: Org, organiser, admin
+
 ## Programme
 
 **Entry**:
