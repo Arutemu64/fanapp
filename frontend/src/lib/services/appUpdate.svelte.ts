@@ -107,8 +107,10 @@ class AppUpdateService {
 		if (!this.#waitingWorker || this.#applying) return;
 		this.#applying = true;
 		this.#targetUrl = targetUrl ?? null;
-		this.#waitingWorker.postMessage('skipWaiting');
+		// Armed before the send, so nothing that goes wrong with the message can
+		// leave the caller's cancelled navigation without a load behind it.
 		setTimeout(() => this.#load(), ACTIVATION_TIMEOUT_MS);
+		this.#waitingWorker.postMessage('skipWaiting');
 	}
 
 	#load() {
