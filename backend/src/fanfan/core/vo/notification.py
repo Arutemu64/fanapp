@@ -27,7 +27,7 @@ def schedule_notification_id_for(
     user_id: UserId,
     discriminator: str,
 ) -> NotificationId:
-    """Deterministic id for a schedule-change fan-out notification.
+    """Deterministic id for a change announcement notification.
 
     The schedule-change trigger is redelivered at-least-once; a rerun that
     minted fresh random ids would slip past the notifications insert's

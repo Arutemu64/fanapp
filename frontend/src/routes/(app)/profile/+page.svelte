@@ -51,7 +51,7 @@
 
 	// "Инструменты" is the organizer toolbox: a single link to the /tools dashboard
 	// rather than a row per tool, so the hub stays short as the tool list grows. It
-	// is org-only for now; per-tool permission gating lives on the dashboard, where
+	// is organizer-only for now; per-tool permission gating lives on the dashboard, where
 	// locked tools show as a discovery cue.
 	let showTools = $derived(isOrganizer(user));
 

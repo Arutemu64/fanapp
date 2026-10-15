@@ -9,8 +9,8 @@ import type { LayoutLoad } from './$types';
 export const load: LayoutLoad = async ({ parent, url }) => {
 	const { user } = await parent();
 
-	// The toolbox is org-only for now: the dashboard lists every tool an org may
-	// hold and marks the ones they lack as locked, so an org with no tool
+	// The toolbox is organizer-only for now: the dashboard lists every tool an organizer may
+	// hold and marks the ones they lack as locked, so an organizer with no tool
 	// permissions still sees the section. Each page enforces its own permission.
 	if (!isOrganizer(user)) {
 		error(403, 'У тебя нет доступа к этому разделу');

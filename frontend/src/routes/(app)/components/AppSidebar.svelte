@@ -16,7 +16,7 @@
 
 <!-- Desktop twin of AppBottomNav: the same PRIMARY_NAV_ITEMS, so label, order and
      icons can't drift between the two. Everything without a tab of its own
-     (feedback, the org toolbox, theme, logout) lives on the Profile page on both
+     (feedback, the organizer toolbox, theme, logout) lives on the Profile page on both
      sizes, so phones need no hamburger drawer and this sidebar carries nothing extra. -->
 <nav
 	aria-label="Разделы"

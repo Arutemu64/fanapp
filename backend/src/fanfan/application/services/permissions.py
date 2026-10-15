@@ -25,7 +25,7 @@ class PermissionService:
             return
 
         # Fall back to the wildcard only when the specific grant is absent: the
-        # common case (an org holding the exact permission) stays a single point
+        # common case (an organizer holding the exact permission) stays a single point
         # lookup, and a superuser holding "*" passes every check.
         wildcard = await self.perm_gateway.get_by_permission(
             user_id=user.id,

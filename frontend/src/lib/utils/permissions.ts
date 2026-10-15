@@ -34,7 +34,7 @@ export function hasPermission(user: CurrentUserDto | null, permission: Permissio
 	return granted.includes(WILDCARD) || granted.includes(permission);
 }
 
-// The staff toolbox is an organizer surface: only the organizer role reaches it at all.
+// The toolbox is an organizer surface: only the organizer role reaches it at all.
 // Access to each individual tool inside stays permission-based (an organizer may hold
 // any subset), so this gate governs visibility of the section, never the actions.
 export function isOrganizer(user: CurrentUserDto | null): boolean {

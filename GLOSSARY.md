@@ -12,9 +12,13 @@ _Avoid_: Group, user type
 One organizer power, such as managing the programme or sending broadcasts, granted to a user one by one and independent of their role.
 _Avoid_: Right, access, role
 
+**Guest**:
+Someone using the app without signing in. A guest holds no role and is not a user.
+_Avoid_: Anonymous, visitor
+
 **Visitor**:
 A user who came to watch, the role every new account starts with. The screens call one «зритель».
-_Avoid_: Guest («гость» at a convention means an invited star), attendee
+_Avoid_: «Гость» (at a convention it means an invited star), attendee
 
 **Participant**:
 Someone who performs at the festival. The same person holds the participant role and is a voting entry in a nomination. The screens call one «участник».
@@ -22,11 +26,15 @@ _Avoid_: Performer, contestant, cosplayer
 
 **Volunteer**:
 A user who helps run the festival on site. The screens call one «волонтёр».
-_Avoid_: Helper, staff
+_Avoid_: Helper
 
 **Organizer**:
 A user who runs the festival. The screens call one «организатор».
 _Avoid_: Org, organiser, admin
+
+**Staff**:
+Volunteers and organizers together: the people running the festival rather than visiting it.
+_Avoid_: Crew, team
 
 ## Programme
 
@@ -57,8 +65,12 @@ One send of a notification to many users at once, which is tracked, counted and 
 _Avoid_: Campaign, batch, dispatch, mail (it is never email)
 
 **Broadcast**:
-A mailing an organizer writes by hand for every user holding the chosen roles. The other kind of mailing is the automatic one a schedule change sends, so "broadcast" never names a mailing in general.
+A mailing an organizer writes by hand for every user holding the chosen roles. The other kind is a change announcement, so "broadcast" never names a mailing in general.
 _Avoid_: Announcement
+
+**Change announcement**:
+A mailing a programme change sends on its own to the users subscribed to the events it touches. The screens call it «уведомление об изменении».
+_Avoid_: Schedule fan-out, change notification
 
 **Channel**:
 A route a notification reaches a user by outside the app: Telegram, VK or Web Push.
