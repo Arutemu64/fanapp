@@ -64,17 +64,21 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
-    created = await _add_users(dishka_request, uow, count=3, role=UserRole.HELPER)
+    created = await _add_users(dishka_request, uow, count=3, role=UserRole.VOLUNTEER)
     mailing = Mailing.create(by_user_id=visitor.id)
     await mailing_gateway.add(mailing)
     await uow.commit()
 
     body = "Рассылка для волонтёров"
     await interactor(
-        ProcessBroadcastInput(mailing_id=mailing.id, body=body, roles=[UserRole.HELPER])
+        ProcessBroadcastInput(
+            mailing_id=mailing.id, body=body, roles=[UserRole.VOLUNTEER]
+        )
     )
 
-    expected_ids = {u.id for u in await user_gateway.read_all_by_roles(UserRole.HELPER)}
+    expected_ids = {
+        u.id for u in await user_gateway.read_all_by_roles(UserRole.VOLUNTEER)
+    }
     assert {u.id for u in created} <= expected_ids
 
     published = [
@@ -145,14 +149,14 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
     broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
-    await _add_users(dishka_request, uow, count=1, role=UserRole.HELPER)
+    await _add_users(dishka_request, uow, count=1, role=UserRole.VOLUNTEER)
 
     with pytest.raises(MailingNotFound):
         await interactor(
             ProcessBroadcastInput(
                 mailing_id=MailingId(uuid7()),
                 body="Нет рассылки",
-                roles=[UserRole.HELPER],
+                roles=[UserRole.VOLUNTEER],
             )
         )
 
@@ -178,13 +182,13 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
-    await _add_users(dishka_request, uow, count=3, role=UserRole.HELPER)
+    await _add_users(dishka_request, uow, count=3, role=UserRole.VOLUNTEER)
     mailing = Mailing.create(by_user_id=visitor.id)
     await mailing_gateway.add(mailing)
     await uow.commit()
 
     run_input = ProcessBroadcastInput(
-        mailing_id=mailing.id, body="Повторная рассылка", roles=[UserRole.HELPER]
+        mailing_id=mailing.id, body="Повторная рассылка", roles=[UserRole.VOLUNTEER]
     )
     await interactor(run_input)
     first_ids = {

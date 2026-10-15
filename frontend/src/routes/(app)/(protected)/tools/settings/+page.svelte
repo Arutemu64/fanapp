@@ -184,7 +184,7 @@
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
+<SectionIntro description="Управляй датами фестиваля и таймингами программы." />
 
 <form
 	class="mx-auto flex w-full max-w-2xl flex-col gap-5"

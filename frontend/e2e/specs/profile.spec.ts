@@ -3,7 +3,7 @@ import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
 // The Profile tab is the hub for everything without a tab of its own: login for
-// guests; account settings, feedback, the org toolbox and logout for members.
+// guests; account settings, feedback, the organizer toolbox and logout for members.
 test.describe('profile hub', () => {
 	test('offers a guest the login entry point, returning to the hub', async ({ page, api }) => {
 		await page.goto('/profile');
@@ -52,7 +52,7 @@ test.describe('profile hub', () => {
 		);
 	});
 
-	test('links an organiser to the toolbox and keeps the tab lit there', async ({ page, api }) => {
+	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
 		api.use(organizer());
 		await page.goto('/profile');
 

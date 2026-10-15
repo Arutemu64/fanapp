@@ -36,7 +36,7 @@ async def ticket_issuer(dishka_request: AsyncContainer) -> User:
         id=UserId(uuid7()),
         username=Username("ticket_issuer"),
         hashed_password=None,
-        role=UserRole.ORG,
+        role=UserRole.ORGANIZER,
     )
     await user_gateway.add(issuer)
     await user_permission_gateway.add(
@@ -60,7 +60,7 @@ async def test_generate_tickets_creates_unique_persisted_tickets(
 
     login(ticket_issuer)
 
-    result = await interactor(GenerateTicketsInput(role=UserRole.HELPER, amount=5))
+    result = await interactor(GenerateTicketsInput(role=UserRole.VOLUNTEER, amount=5))
 
     assert len(result.barcodes) == 5
     assert len(set(result.barcodes)) == 5
@@ -71,7 +71,7 @@ async def test_generate_tickets_creates_unique_persisted_tickets(
     for barcode in result.barcodes:
         saved = await ticket_gateway.get_by_barcode(barcode)
         assert saved is not None
-        assert saved.role == UserRole.HELPER
+        assert saved.role == UserRole.VOLUNTEER
         assert saved.issued_by_user_id == ticket_issuer.id
         assert saved.is_used is False
 
@@ -86,4 +86,4 @@ async def test_generate_tickets_requires_permission(
     login(visitor)
 
     with pytest.raises(AccessDenied):
-        await interactor(GenerateTicketsInput(role=UserRole.HELPER, amount=1))
+        await interactor(GenerateTicketsInput(role=UserRole.VOLUNTEER, amount=1))

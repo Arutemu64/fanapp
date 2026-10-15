@@ -14,7 +14,7 @@ export interface PrimaryNavItem {
 	solidIcon: Component;
 	/**
 	 * Other route roots reached from this tab's page, which keep the tab lit so the
-	 * bar still says where you are. Profile is the hub for feedback and the org
+	 * bar still says where you are. Profile is the hub for feedback and the organizer
 	 * toolbox, which have no tab of their own.
 	 */
 	nestedRoots?: Path[];
@@ -40,7 +40,7 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
 	{ label: 'Карта', href: 'map', outlineIcon: MapPin, solidIcon: MapPin },
 	// Last, in the thumb's natural reach on the right, as the account tab sits in most
 	// tab bars. It is also the hub for everything without a tab of its own (feedback,
-	// the org toolbox, theme, logout), which is what lets the shell drop a hamburger.
+	// the organizer toolbox, theme, logout), which is what lets the shell drop a hamburger.
 	{
 		label: 'Профиль',
 		href: 'profile',

@@ -114,7 +114,7 @@
 				его начало.
 			</Dialog.Description>
 
-			<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
+			<!-- Moving an event sends a change announcement to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
 			<Alert.Root variant="warning">
 				<BellRing class="shrink-0" />
 				<Alert.Description>

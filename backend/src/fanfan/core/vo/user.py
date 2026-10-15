@@ -24,5 +24,15 @@ def generate_avatar_seed() -> str:
 class UserRole(enum.StrEnum):
     VISITOR = "visitor"
     PARTICIPANT = "participant"
-    HELPER = "helper"
-    ORG = "org"
+    VOLUNTEER = "volunteer"
+    ORGANIZER = "organizer"
+
+    # TODO: drop the legacy values once a deploy has run for a while — they
+    # cover outbox rows and NATS messages queued before the rename, clients
+    # still on the old bundle and a TCLOUD__EVENT_IDS_MAP not yet updated.
+    # Renaming an enum value is a breaking change (https://google.aip.dev/180),
+    # so the old spellings keep resolving; the API schema lists only the new.
+    @classmethod
+    def _missing_(cls, value: object) -> UserRole | None:
+        legacy: dict[str, UserRole] = {"helper": cls.VOLUNTEER, "org": cls.ORGANIZER}
+        return legacy.get(str(value))

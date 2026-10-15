@@ -28,7 +28,7 @@
 	const unlinkMutation = createMutation(() => ({
 		...unlinkUserTicketMutation(),
 		onSuccess: () => {
-			// The backend leaves the role alone, so the organiser is told to change it.
+			// The backend leaves the role alone, so the organizer is told to change it.
 			toastService.add(
 				'Билет отвязан, голоса удалены. Роль не менялась — если нужно, смени её вручную.',
 				'success'

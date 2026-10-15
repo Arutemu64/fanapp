@@ -18,8 +18,8 @@ class Mailing(AggregateRoot):
     # Kept so a mailing survives its own fan-out: the per-user notifications get
     # deleted on cancel and purged by retention, so the mailing row is the only
     # durable record of what was sent. `body` is the exact broadcast text, or a
-    # short change summary for a schedule fan-out (whose per-recipient texts are
-    # templated variants of it). `roles` is None for a schedule fan-out — that is
+    # short change summary for a change announcement (whose per-recipient texts are
+    # templated variants of it). `roles` is None for a change announcement — that is
     # not a role-targeted broadcast (recipients are derived: editors, announcement
     # opt-ins, event subscribers) — so it distinguishes the two mailing kinds.
     body: str | None

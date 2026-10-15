@@ -173,6 +173,6 @@ class ImportSchedule:
         # schedule_mgmt interactors rely on. Broadcast here instead, or every
         # other connected client keeps a stale schedule until it reconnects.
         # Published after commit: SSE carries no committed state, and a
-        # broadcast for a rolled-back import would send clients to refetch
+        # live update for a rolled-back import would send clients to refetch
         # a schedule that never changed.
         await self.publish_schedule_updated()

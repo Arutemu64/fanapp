@@ -22,7 +22,7 @@ def generate_ticket_id() -> TicketId:
 
 
 def generate_ticket_barcode() -> str:
-    """Return a fresh barcode like ``FAN-7K4Q9M`` for an org-issued ticket.
+    """Return a fresh barcode like ``FAN-7K4Q9M`` for an organizer-issued ticket.
 
     The ``FAN-`` prefix keeps generated tickets visibly distinct from imported
     vendor barcodes; uniqueness is ultimately enforced by the DB constraint, so
@@ -37,7 +37,7 @@ def generate_ticket_barcode() -> str:
 def normalize_ticket_barcode(raw: str) -> str:
     """Return the stored form of a barcode as a person typed it.
 
-    Org-issued ``FAN-`` codes are Crockford Base32, which is case-insensitive
+    Organizer-issued ``FAN-`` codes are Crockford Base32, which is case-insensitive
     and forgiving of I/L/O by design — a phone keyboard types them in lowercase,
     and the lookup is an exact match. Other barcodes keep their exact spelling:
     an imported vendor format is not ours to fold. A vendor code could still

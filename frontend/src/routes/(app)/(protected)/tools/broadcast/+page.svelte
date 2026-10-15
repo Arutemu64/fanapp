@@ -90,7 +90,7 @@
 			{
 				body: {
 					body: bodyText.trim(),
-					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
+					roles: selectedRoles as ('visitor' | 'participant' | 'volunteer' | 'organizer')[]
 				}
 			},
 			{
@@ -173,23 +173,23 @@
 				</Field.Field>
 				<Field.Field orientation="horizontal">
 					<Checkbox
-						id="role-helper"
-						checked={selectedRoles.includes('helper')}
-						onCheckedChange={(v) => toggleRole('helper', !!v)}
+						id="role-volunteer"
+						checked={selectedRoles.includes('volunteer')}
+						onCheckedChange={(v) => toggleRole('volunteer', !!v)}
 						disabled={broadcastMutation.isPending}
 					/>
-					<Field.FieldLabel for="role-helper" class="cursor-pointer font-normal">
+					<Field.FieldLabel for="role-volunteer" class="cursor-pointer font-normal">
 						Волонтёры
 					</Field.FieldLabel>
 				</Field.Field>
 				<Field.Field orientation="horizontal">
 					<Checkbox
-						id="role-org"
-						checked={selectedRoles.includes('org')}
-						onCheckedChange={(v) => toggleRole('org', !!v)}
+						id="role-organizer"
+						checked={selectedRoles.includes('organizer')}
+						onCheckedChange={(v) => toggleRole('organizer', !!v)}
 						disabled={broadcastMutation.isPending}
 					/>
-					<Field.FieldLabel for="role-org" class="cursor-pointer font-normal">
+					<Field.FieldLabel for="role-organizer" class="cursor-pointer font-normal">
 						Организаторы
 					</Field.FieldLabel>
 				</Field.Field>

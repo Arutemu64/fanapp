@@ -31,11 +31,11 @@ _ROLE_CHOICE = click.Choice([r.value for r in UserRole])
     hide_input=True,
     confirmation_prompt=True,
 )
-# Default to org: a CLI-created account is a staff account (the toolbox is
-# org-only), and it is the natural companion to `permissions grant`. The role is
+# Default to organizer: a CLI-created account is a staff account (the toolbox is
+# organizer-only), and it is the natural companion to `permissions grant`. The role is
 # only a UI label — it grants no access on its own — so permissions are still
 # granted separately.
-@click.option("--role", type=_ROLE_CHOICE, default=UserRole.ORG.value)
+@click.option("--role", type=_ROLE_CHOICE, default=UserRole.ORGANIZER.value)
 @click.pass_context
 @async_command
 async def create_user_command(

@@ -17,7 +17,7 @@ class UserBaseDTO(BaseModel):
 
 
 class UserListFilter(BaseModel):
-    # Narrows the organiser user directory. Every field is optional and they
+    # Narrows the organizer user directory. Every field is optional and they
     # combine with AND; `search` is a case-insensitive substring of the username,
     # email or linked ticket number.
     search: str | None = None
@@ -26,7 +26,7 @@ class UserListFilter(BaseModel):
 
 
 class UserListItemDTO(BaseModel):
-    # A row in the organiser user directory (users:read). Email is carried so it
+    # A row in the organizer user directory (users:read). Email is carried so it
     # shows in the list and is matched by the server-side search; created_at is
     # the sort key the page cursor points into.
     id: UserId
@@ -40,7 +40,7 @@ class UserListItemDTO(BaseModel):
 
 class UserSocialLinkDTO(BaseModel):
     # The provider's native account id (Telegram chat_id / VK id), exposed only
-    # on the organiser user viewer (users:read) so staff can jump to the linked
+    # on the organizer user viewer (users:read) so staff can jump to the linked
     # account. The self-profile UserSocialIdentityDTO deliberately withholds it —
     # this is a different, permission-gated trust surface. Serialised as a string:
     # Telegram ids are BIGINT and can exceed JS's safe integer range, so a JSON
@@ -50,7 +50,7 @@ class UserSocialLinkDTO(BaseModel):
 
 
 class UserDetailsDTO(BaseModel):
-    # Full organiser view of one user (users:read): the profile basics, the
+    # Full organizer view of one user (users:read): the profile basics, the
     # linked external accounts with their ids, and the granted permissions.
     id: UserId
     username: str

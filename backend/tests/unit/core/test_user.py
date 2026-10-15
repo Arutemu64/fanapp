@@ -29,14 +29,14 @@ def test_create_sets_given_fields() -> None:
         id=user_id,
         username=Username("alice"),
         hashed_password="hash",
-        role=UserRole.ORG,
+        role=UserRole.ORGANIZER,
         email=Email("alice@example.com"),
     )
 
     assert user.id == user_id
     assert user.username == "alice"
     assert user.hashed_password == "hash"
-    assert user.role == UserRole.ORG
+    assert user.role == UserRole.ORGANIZER
     assert user.email == Email("alice@example.com")
 
 
@@ -58,3 +58,16 @@ def test_users_are_equal_by_id() -> None:
     assert one != other
     # Equal users must share a hash so they collapse in sets/dicts.
     assert len({one, two}) == 1
+
+
+@pytest.mark.parametrize(
+    ("legacy", "role"),
+    [("helper", UserRole.VOLUNTEER), ("org", UserRole.ORGANIZER)],
+)
+def test_role_accepts_legacy_values(legacy: str, role: UserRole) -> None:
+    assert UserRole(legacy) is role
+
+
+def test_role_rejects_unknown_value() -> None:
+    with pytest.raises(ValueError, match="admin"):
+        UserRole("admin")

@@ -121,11 +121,11 @@ async def test_filters_by_role_and_ticket(
     interactor = await dishka_request.get(ListUsers)
     login(users_reader)
 
-    await _add_user(user_gateway, username="filter_helper", role=UserRole.HELPER)
+    await _add_user(user_gateway, username="filter_helper", role=UserRole.VOLUNTEER)
     await uow.commit()
 
     helpers = await interactor(
-        _first_page(user_filter=UserListFilter(role=UserRole.HELPER))
+        _first_page(user_filter=UserListFilter(role=UserRole.VOLUNTEER))
     )
     assert [u.username for u in helpers.users] == ["filter_helper"]
 

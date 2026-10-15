@@ -24,7 +24,7 @@
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
-	import { isOrg } from '#lib/utils/permissions.js';
+	import { isOrganizer } from '#lib/utils/permissions.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
@@ -49,11 +49,11 @@
 		});
 	});
 
-	// "Инструменты" is the organiser toolbox: a single link to the /tools dashboard
+	// "Инструменты" is the organizer toolbox: a single link to the /tools dashboard
 	// rather than a row per tool, so the hub stays short as the tool list grows. It
-	// is org-only for now; per-tool permission gating lives on the dashboard, where
+	// is organizer-only for now; per-tool permission gating lives on the dashboard, where
 	// locked tools show as a discovery cue.
-	let showTools = $derived(isOrg(user));
+	let showTools = $derived(isOrganizer(user));
 
 	const pwa = getPwaService();
 

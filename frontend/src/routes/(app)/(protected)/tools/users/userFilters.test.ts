@@ -4,10 +4,10 @@ import { buildUserFiltersQuery, parseUserFilters } from './userFilters';
 
 describe('parseUserFilters', () => {
 	it('reads every filter from the URL', () => {
-		const params = new URLSearchParams('q=%20anna%20&role=helper&ticket=no');
+		const params = new URLSearchParams('q=%20anna%20&role=volunteer&ticket=no');
 		expect(parseUserFilters(params)).toEqual({
 			search: 'anna',
-			role: 'helper',
+			role: 'volunteer',
 			hasTicket: false
 		});
 	});
@@ -20,7 +20,7 @@ describe('parseUserFilters', () => {
 
 describe('buildUserFiltersQuery', () => {
 	it('round-trips through parseUserFilters', () => {
-		const filters = { search: 'FAN-12', role: 'org' as const, hasTicket: true };
+		const filters = { search: 'FAN-12', role: 'organizer' as const, hasTicket: true };
 		const query = buildUserFiltersQuery(filters);
 		expect(parseUserFilters(new URLSearchParams(query))).toEqual(filters);
 	});

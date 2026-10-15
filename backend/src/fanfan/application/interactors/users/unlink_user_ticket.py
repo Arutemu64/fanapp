@@ -18,12 +18,12 @@ class UnlinkUserTicketInput(BaseModel):
 
 
 class UnlinkUserTicket:
-    """An organiser takes a ticket off a user (users:manage).
+    """An organizer takes a ticket off a user (users:manage).
 
     The ticket is freed for linking again. A ticket is what entitles a vote, so
     the user's votes go with it, whenever it happens — they leave the tally and
     the prize-draw pool. The role stays as it is: it may have been set by hand
-    since the ticket was linked, so the organiser changes it separately if it
+    since the ticket was linked, so the organizer changes it separately if it
     should go too. Idempotent: with no ticket left there is nothing to free.
     """
 

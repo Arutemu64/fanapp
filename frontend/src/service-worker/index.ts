@@ -101,7 +101,7 @@ interface PushNotificationPayload {
 	title: string;
 	body: string;
 	url: string;
-	// Grouping key set by the backend: a topic ("schedule", "org") so a burst
+	// Grouping key set by the backend: a topic ("schedule", "broadcast") so a burst
 	// collapses to the latest, or `notification.id` for ungrouped types (which
 	// only collapses re-pushes of the same notification).
 	tag?: string;

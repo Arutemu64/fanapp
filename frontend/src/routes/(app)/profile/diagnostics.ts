@@ -154,7 +154,7 @@ export function buildSections(snapshot: DiagnosticsSnapshot, now: number): Diagn
 
 /**
  * The plain-text block "Скопировать отчёт" puts on the clipboard, for sending
- * to the organisers over whatever channel is at hand. Carries what the sheet shows plus
+ * to the organizers over whatever channel is at hand. Carries what the sheet shows plus
  * what a person can't read out loud: the full SHA and the user agent.
  */
 export function formatReport(snapshot: DiagnosticsSnapshot, now: number): string {

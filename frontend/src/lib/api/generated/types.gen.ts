@@ -1433,7 +1433,7 @@ export type UserListItemDto = {
 /**
  * UserRole
  */
-export type UserRole = 'visitor' | 'participant' | 'helper' | 'org';
+export type UserRole = 'visitor' | 'participant' | 'volunteer' | 'organizer';
 
 /**
  * UserSettingsDTO
