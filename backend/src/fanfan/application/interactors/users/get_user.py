@@ -14,7 +14,7 @@ class GetUserInput(BaseModel):
 
 
 class GetUser:
-    """Organiser view of one user: profile basics and linked external accounts."""
+    """Organizer view of one user: profile basics and linked external accounts."""
 
     def __init__(
         self,

@@ -2,7 +2,7 @@ import { resolve } from '$app/paths';
 import { error, redirect } from '@sveltejs/kit';
 
 import { isReachable } from '#lib/services/reachability.js';
-import { isOrg } from '#lib/utils/permissions.js';
+import { isOrganizer } from '#lib/utils/permissions.js';
 
 import type { LayoutLoad } from './$types';
 
@@ -12,7 +12,7 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 	// The toolbox is org-only for now: the dashboard lists every tool an org may
 	// hold and marks the ones they lack as locked, so an org with no tool
 	// permissions still sees the section. Each page enforces its own permission.
-	if (!isOrg(user)) {
+	if (!isOrganizer(user)) {
 		error(403, 'У тебя нет доступа к этому разделу');
 	}
 

@@ -29,14 +29,14 @@ def test_create_sets_given_fields() -> None:
         id=user_id,
         username=Username("alice"),
         hashed_password="hash",
-        role=UserRole.ORG,
+        role=UserRole.ORGANIZER,
         email=Email("alice@example.com"),
     )
 
     assert user.id == user_id
     assert user.username == "alice"
     assert user.hashed_password == "hash"
-    assert user.role == UserRole.ORG
+    assert user.role == UserRole.ORGANIZER
     assert user.email == Email("alice@example.com")
 
 

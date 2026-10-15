@@ -262,7 +262,7 @@ class SqlUserGateway(UserGateway):
         # tallies the whole eligible set before ORDER BY random()/LIMIT picks the
         # winner, so the surviving row carries the full pool size; an empty pool
         # yields no row. The pool is small (a live convention audience) and this is
-        # a one-off organiser action, so the sort scan is cheap.
+        # a one-off organizer action, so the sort scan is cheap.
         pool = self._voting_contest_pool()
         stmt = (
             select(UserORM, func.count().over().label("pool_size"))

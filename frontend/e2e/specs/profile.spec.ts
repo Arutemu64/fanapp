@@ -52,7 +52,7 @@ test.describe('profile hub', () => {
 		);
 	});
 
-	test('links an organiser to the toolbox and keeps the tab lit there', async ({ page, api }) => {
+	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
 		api.use(organizer());
 		await page.goto('/profile');
 

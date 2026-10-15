@@ -9,7 +9,7 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ parent }) => {
 	const { user } = await parent();
 
-	// The tools layout gates the section to organisers; mirror the backend
+	// The tools layout gates the section to organizers; mirror the backend
 	// users:read check here so a user without the grant isn't shown a page the
 	// list request would reject with a 403.
 	if (!canReadUsers(user)) {

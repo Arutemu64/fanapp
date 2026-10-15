@@ -6,7 +6,7 @@ import definition from '@dicebear/styles/initial-face.json';
 // the hosted DiceBear API so avatars work offline and no user seed leaves the app.
 const style = new Style(definition);
 
-// Bounded because an organiser scrolling the users directory and a reroll that gets
+// Bounded because an organizer scrolling the users directory and a reroll that gets
 // cancelled each draw faces nobody will ask for again. Map iterates in insertion
 // order, so the first key is the oldest.
 const DATA_URI_CACHE_LIMIT = 200;

@@ -5,7 +5,7 @@ Companion web app for the FAN FAN anime convention: visitors follow the programm
 ## Roles
 
 **Role**:
-What a user is at the festival. Every user holds exactly one; broadcasts are addressed by role, and a ticket carries the role its holder gets. A role lets a user do nothing by itself.
+What a user is at the festival. Every user holds exactly one; broadcasts are addressed by role, and a ticket carries the role its holder gets. Beyond the organizer role opening the organizer tools, a role lets a user do nothing by itself.
 _Avoid_: Group, user type
 
 **Permission**:

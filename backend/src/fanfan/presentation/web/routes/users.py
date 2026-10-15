@@ -74,7 +74,7 @@ async def list_users(
     "/online-count",
     summary="Count online users",
     description="How many users hold a live connection right now, for the "
-    "organiser dashboard. Approximate and ephemeral. Any authenticated user.",
+    "organizer dashboard. Approximate and ephemeral. Any authenticated user.",
     responses={
         200: {"description": "Online user count retrieved successfully."},
     },
@@ -109,7 +109,7 @@ async def get_user(
     "/{user_id}/role",
     status_code=204,
     summary="Change a user's role",
-    description="Sets another user's role. Requires users:manage; an organiser "
+    description="Sets another user's role. Requires users:manage; an organizer "
     "cannot change their own role.",
     responses={
         204: {"description": "Role changed."},

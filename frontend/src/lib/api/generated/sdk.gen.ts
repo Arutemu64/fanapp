@@ -1508,7 +1508,7 @@ export const listUsers = <ThrowOnError extends boolean = false>(
 /**
  * Count online users
  *
- * How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.
+ * How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.
  */
 export const countOnlineUsers = <ThrowOnError extends boolean = false>(
 	options?: Options<CountOnlineUsersData, ThrowOnError>
@@ -1548,7 +1548,7 @@ export const getUser = <ThrowOnError extends boolean = false>(
 /**
  * Change a user's role
  *
- * Sets another user's role. Requires users:manage; an organiser cannot change their own role.
+ * Sets another user's role. Requires users:manage; an organizer cannot change their own role.
  */
 export const setUserRole = <ThrowOnError extends boolean = false>(
 	options: Options<SetUserRoleData, ThrowOnError>

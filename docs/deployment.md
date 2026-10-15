@@ -188,7 +188,7 @@ config, so a change to it takes effect on redeploy with no consumer recreation.
 ### Creating a user
 
 Most accounts self-register (email code or a linked social account). To seed the
-first organiser before any of that is set up — a fresh deployment has no users —
+first organizer before any of that is set up — a fresh deployment has no users —
 create one with the operator CLI. The password is prompted (never passed as an
 argument, so it stays out of shell history) and confirmed:
 
@@ -203,14 +203,14 @@ with a permission grant below. On the host: `cd backend && uv run python -m
 fanfan.main.cli users create <username>`.
 
 The usual bootstrap is create-then-grant-`*`: one account, one wildcard grant,
-full organiser access.
+full organizer access.
 
-### Granting organiser permissions
+### Granting organizer permissions
 
 Permissions are per-user rows (`schedule:manage`, `notifications:send`,
 `feedback:read`, …, plus the wildcard `*` that stands in for all of them),
 checked with no role-based bypass. The system user's own
-grants (`sync:run`, `demo:seed`) are seeded by migration; real organisers are
+grants (`sync:run`, `demo:seed`) are seeded by migration; real organizers are
 granted by hand. Do it with the operator CLI rather than raw SQL — it validates
 the permission name and resolves the username for you:
 
@@ -238,14 +238,14 @@ cd backend && uv run python -m fanfan.main.cli permissions grant <username> sche
 ```
 
 `grant`/`revoke` are idempotent. The command is deliberately unauthenticated —
-it is the bootstrap for the first organiser's permissions, so it cannot itself
+it is the bootstrap for the first organizer's permissions, so it cannot itself
 require one, and shell access to the server is the trust boundary. There is no
 dedicated CLI container, and no `just` recipe: this is a rare admin operation,
 not a dev-loop task, so it stays a plain CLI command with one documented home
 here rather than a thin wrapper on a second surface.
 
 Once one superuser exists, everyday grants move to the app: a `*` holder toggles
-another organiser's permissions on their card under **Инструменты →
+another organizer's permissions on their card under **Инструменты →
 Пользователи**, and a `users:manage` holder changes roles there. The web never
 grants or revokes `*` itself and never edits the caller's own access, so minting
 a superuser still takes shell access.

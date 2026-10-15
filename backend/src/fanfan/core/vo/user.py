@@ -22,7 +22,10 @@ def generate_avatar_seed() -> str:
 
 
 class UserRole(enum.StrEnum):
+    # The values are older than the member names and stay put: stored rows, the
+    # API contract and TCLOUD__EVENT_IDS_MAP all carry them, and renaming an enum
+    # value is a breaking change (https://google.aip.dev/180).
     VISITOR = "visitor"
     PARTICIPANT = "participant"
-    HELPER = "helper"
-    ORG = "org"
+    VOLUNTEER = "helper"
+    ORGANIZER = "org"

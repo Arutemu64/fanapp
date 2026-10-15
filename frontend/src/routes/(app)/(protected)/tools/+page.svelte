@@ -121,8 +121,8 @@
 		description="Для работы организаторов фестиваля. Инструменты с замком тебе пока недоступны."
 	/>
 
-	<!-- Shown to every org: the tools layout already gates this whole section to the
-	     org role, so no per-tool permission scopes the live count. -->
+	<!-- Shown to every organizer: the tools layout already gates this whole section to the
+	     organizer role, so no per-tool permission scopes the live count. -->
 	<div class="mb-4">
 		<OnlineNowCard />
 	</div>

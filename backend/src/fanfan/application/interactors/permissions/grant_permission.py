@@ -16,7 +16,7 @@ class GrantPermission:
     """Grant one permission to a user by username.
 
     Deliberately unguarded: this is the bootstrap primitive that seeds the very
-    first organiser's permissions, so it cannot itself require a permission
+    first organizer's permissions, so it cannot itself require a permission
     without a chicken-and-egg. It is reachable only from the operator CLI, where
     shell access to the server is already the trust boundary. A future guarded
     caller (e.g. a web admin screen) must gate its own entry point rather than

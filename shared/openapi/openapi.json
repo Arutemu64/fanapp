@@ -4043,7 +4043,7 @@
           "Users"
         ],
         "summary": "Count online users",
-        "description": "How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.",
+        "description": "How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.",
         "operationId": "count_online_users",
         "responses": {
           "200": {
@@ -4181,7 +4181,7 @@
           "Users"
         ],
         "summary": "Change a user's role",
-        "description": "Sets another user's role. Requires users:manage; an organiser cannot change their own role.",
+        "description": "Sets another user's role. Requires users:manage; an organizer cannot change their own role.",
         "operationId": "set_user_role",
         "security": [
           {
