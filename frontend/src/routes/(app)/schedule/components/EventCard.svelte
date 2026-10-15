@@ -123,10 +123,12 @@
 								variant="outline"
 								class="inline-flex items-center gap-1.5 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
 							>
-								<!-- Pulsing live dot reads as "on stage now" at a glance. animate-ping is muted under reduced-motion via global CSS. -->
+								<!-- Live dot reads as "on stage now" at a glance. The ping runs three
+									     times and stops (WCAG 2.2.2, see --animate-ping-brief); reduced motion
+									     mutes it via global CSS. -->
 								<span class="relative flex h-2 w-2" aria-hidden="true">
 									<span
-										class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"
+										class="absolute inline-flex h-full w-full animate-ping-brief rounded-full bg-success opacity-75"
 									></span>
 									<span class="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
 								</span>
@@ -180,7 +182,7 @@
 					onclick={offlineGate.guard(event.user_subscription ? handleUnsubscribe : handleSubscribe)}
 					aria-disabled={offlineGate.blocked}
 					class={[
-						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40',
+						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40',
 						event.user_subscription
 							? 'text-primary hover:bg-primary/10'
 							: 'text-muted-foreground hover:bg-accent hover:text-foreground'

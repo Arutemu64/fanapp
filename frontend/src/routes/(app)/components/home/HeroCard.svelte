@@ -120,7 +120,7 @@
 				{#each units as unit, index (unit.id)}
 					<div
 						class={[
-							'countdown-cell flex flex-col items-center rounded-lg bg-white/15 px-1 py-2 backdrop-blur-sm',
+							'countdown-cell flex flex-col items-center rounded-lg bg-white/15 px-1 py-2',
 							!prefersReducedMotion.current && 'countdown-cell--animated'
 						]}
 						style:--enter-delay="{index * 80}ms"
@@ -152,11 +152,12 @@
 				class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white/85 uppercase"
 			>
 				{#if featured.live}
-					<!-- Pulsing live dot, as on the schedule's current row. animate-ping is
-					     muted under reduced motion via global CSS. -->
+					<!-- Live dot, as on the schedule's current row. The ping runs three
+					     times and stops (WCAG 2.2.2, see --animate-ping-brief); reduced motion
+					     mutes it via global CSS. -->
 					<span class="relative flex size-2" aria-hidden="true">
 						<span
-							class="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-75"
+							class="absolute inline-flex size-full animate-ping-brief rounded-full bg-success opacity-75"
 						></span>
 						<span class="relative inline-flex size-2 rounded-full bg-success"></span>
 					</span>
@@ -167,7 +168,7 @@
 				{#if featuredNumber !== null}
 					<!-- The schedule's number badge, restyled for the dark art. -->
 					<div
-						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 px-1.5 py-1.5 text-center backdrop-blur-sm"
+						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 px-1.5 py-1.5 text-center"
 					>
 						<span class="text-xs font-bold tracking-widest uppercase">№</span>
 						<span class="font-display text-base leading-none font-bold tabular-nums"

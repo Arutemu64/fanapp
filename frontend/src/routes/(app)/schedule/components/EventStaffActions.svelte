@@ -195,7 +195,7 @@
 	aria-label={m.event_manage()}
 	aria-haspopup="dialog"
 	title={m.event_manage()}
-	class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+	class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
 >
 	<Ellipsis class="size-5" />
 </button>

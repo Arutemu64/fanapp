@@ -43,8 +43,8 @@ label often appears in a component, a push notification and an email.
 5. **Jinja templates you touched are rendered** with real context before you
    call it done. AGENTS.md forbids assuming they render, and a broken
    `{% %}` in an email is invisible until it reaches a user.
-6. Scanner clean:
-   `node .agents/skills/kill-ai-slop/scripts/scan.mjs <root> --rules=.agents/skills/kill-ai-slop/scripts/rules.ru.mjs`
+6. Copy-tells scan clean: the `grep` in `fanfan-russian-copy` ("Copy-tells scan")
+   prints nothing.
 7. Touched `.svelte`? `just frontend-lint` and `just frontend-check` pass —
    a stray quote in a label breaks the build like any other syntax error.
 

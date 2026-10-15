@@ -38,5 +38,11 @@ This skill covers only the repo mechanics those skills can't know:
   alternative (`email_login_code`, `email_confirmation_code`). Change the copy in
   both, or the two halves of one message disagree — and render them before
   calling it done, per AGENTS.md.
-- `kill-ai-slop` ships `scripts/rules.ru.mjs`, a Russian copy-tells ruleset:
-  `node .agents/skills/kill-ai-slop/scripts/scan.mjs <root> --rules=.agents/skills/kill-ai-slop/scripts/rules.ru.mjs`
+- **Copy-tells scan.** Russian AI-copywriting tells (marketing-speak and
+  «не просто X — это Y»). Every hit is a lead to read, not a verdict, and a clean
+  run prints nothing. Run from the repo root:
+  ```sh
+  grep -rniE 'не просто .{1,40}[—–-] *это|попрощайтесь с|забудьте о том|представьте себе мир|молниеносн|бесшовн|безупречн|революционн|беспрецедентн|раскройте (весь )?потенциал|на новый уровень|в считанные секунды' frontend/messages/ru.json backend/src/fanfan/adapters/jinja/templates
+  ```
+  `antislop-copywriting` covers the English-shaped patterns (rule of three,
+  signposting, chatbot closers) that also show up in translated copy.

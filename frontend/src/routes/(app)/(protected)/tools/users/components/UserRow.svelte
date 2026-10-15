@@ -24,7 +24,7 @@
      the username alone. -->
 <a
 	href={resolve(`tools/users/${user.id}`)}
-	class="flex min-h-16 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none sm:px-4"
+	class="flex min-h-16 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset sm:px-4"
 >
 	<UserAvatar seed={user.avatar_seed} class="size-10" />
 	<span class="flex min-w-0 flex-1 flex-col gap-0.5">
