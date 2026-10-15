@@ -14,17 +14,17 @@ async function openFirstMap(page: Page) {
 
 test.describe('map viewer', () => {
 	test('the back gesture closes the viewer and stays on the map page', async ({ page }) => {
-		await page.goto('/map');
+		await page.goto('/guide/map');
 		const viewer = await openFirstMap(page);
 
 		await page.goBack();
 
 		await expect(viewer).toHaveCount(0);
-		await expect(page).toHaveURL('/map');
+		await expect(page).toHaveURL('/guide/map');
 	});
 
 	test('offers a single-pointer zoom and the original file to download', async ({ page }) => {
-		await page.goto('/map');
+		await page.goto('/guide/map');
 		const viewer = await openFirstMap(page);
 
 		// Pinch is a multipoint gesture, so WCAG 2.5.1 needs a single-pointer way in.
@@ -50,9 +50,10 @@ test.describe('map viewer', () => {
 			await page.goto('/');
 			await page
 				.getByRole('navigation', { name: 'Разделы' })
-				.getByRole('link', { name: 'Карта' })
+				.getByRole('link', { name: 'Гид' })
 				.click();
-			await expect(page).toHaveURL('/map');
+			await page.getByRole('main').getByRole('link', { name: 'Карта', exact: true }).click();
+			await expect(page).toHaveURL('/guide/map');
 			const viewer = await openFirstMap(page);
 
 			await viewer.getByRole('button', { name: 'Закрыть' }).click();
@@ -60,7 +61,7 @@ test.describe('map viewer', () => {
 
 			// One step back now leaves the map page: the viewer's entry is already gone.
 			await page.goBack();
-			await expect(page).toHaveURL('/');
+			await expect(page).toHaveURL('/guide');
 		});
 	});
 });

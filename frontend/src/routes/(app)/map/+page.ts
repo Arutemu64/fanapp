@@ -1,10 +1,11 @@
-import { m } from '#lib/paraglide/messages.js';
+import { resolve } from '$app/paths';
+import { redirect } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-// Static page; load only supplies the navbar title.
+// Links in posts and notifications still point at /map, and an installed app keeps
+// its cached manifest's "Карта" shortcut until the browser refreshes the manifest,
+// so the path stays as a redirect to the guide's map.
 export const load: PageLoad = () => {
-	return {
-		title: m.nav_map()
-	};
+	redirect(308, resolve('guide/map'));
 };

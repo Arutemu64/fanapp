@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { navTransitionKind } from './navTransition';
 
-const tabRoots = new Set(['/', '/schedule', '/voting', '/map', '/profile']);
+const tabRoots = new Set(['/', '/schedule', '/voting', '/guide', '/profile']);
 
 function kind(from: string, to: string, fromBackHref?: string) {
 	return navTransitionKind({ from, to, fromBackHref, tabRoots });

@@ -109,7 +109,7 @@ test('notifications', async ({ page, api }) => {
 });
 
 test('map', async ({ page }) => {
-	await page.goto('/map');
+	await page.goto('/guide/map');
 	// The thumbnails are decorative (alt=""): each card's button carries the name.
 	await expect(
 		page.getByRole('button', { name: /открыть карту на весь экран/ }).first()

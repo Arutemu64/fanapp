@@ -2,7 +2,7 @@ import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
 import { resolve } from '$app/paths';
-import { Calendar, CircleUser, Home, MapPin, ThumbsUp } from '@lucide/svelte';
+import { Calendar, CircleUser, Compass, Home, ThumbsUp } from '@lucide/svelte';
 
 import { m } from '#lib/paraglide/messages.js';
 
@@ -36,10 +36,10 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
 		outlineIcon: Calendar,
 		solidIcon: Calendar
 	},
-	// Voting sits before the map so its long "Голосование" label lands in an inner
+	// Voting sits before the guide so its long "Голосование" label lands in an inner
 	// column of the bottom nav, away from rounded screen corners that clip edges.
 	{ label: m.nav_voting, href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
-	{ label: m.nav_map, href: 'map', outlineIcon: MapPin, solidIcon: MapPin },
+	{ label: m.nav_guide, href: 'guide', outlineIcon: Compass, solidIcon: Compass },
 	// Last, in the thumb's natural reach on the right, as the account tab sits in most
 	// tab bars. It is also the hub for everything without a tab of its own (feedback,
 	// the organizer toolbox, theme, logout), which is what lets the shell drop a hamburger.
