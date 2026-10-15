@@ -36,6 +36,9 @@ _NEW_VALUES = ["visitor", "participant", "volunteer", "organizer"]
 
 def _rewrite(renames: list[tuple[str, str]], allowed: list[str]) -> None:
     conn = op.get_bind()
+    # Fail fast instead of queueing behind a long transaction from the old app
+    # still running during the deploy: every users read would queue behind us.
+    op.execute("SET LOCAL lock_timeout = '5s'")
     for table, ck_name in _ROLE_COLUMNS:
         # Drop the CHECK first, otherwise the rewrite would violate it mid-flight.
         op.drop_constraint(op.f(ck_name), table, type_="check")
@@ -61,7 +64,7 @@ def _rewrite(renames: list[tuple[str, str]], allowed: list[str]) -> None:
                     )
                     FROM jsonb_array_elements_text(roles) WITH ORDINALITY AS t(elem, ord)
                 )
-                WHERE roles ? :src
+                WHERE jsonb_typeof(roles) = 'array' AND roles ? :src
                 """
             ),
             {"src": src, "dst": dst},
