@@ -4043,7 +4043,7 @@
           "Users"
         ],
         "summary": "Count online users",
-        "description": "How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.",
+        "description": "How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.",
         "operationId": "count_online_users",
         "responses": {
           "200": {
@@ -4181,7 +4181,7 @@
           "Users"
         ],
         "summary": "Change a user's role",
-        "description": "Sets another user's role. Requires users:manage; an organiser cannot change their own role.",
+        "description": "Sets another user's role. Requires users:manage; an organizer cannot change their own role.",
         "operationId": "set_user_role",
         "security": [
           {
@@ -5064,7 +5064,7 @@
         "properties": {
           "schedule": {
             "items": {
-              "$ref": "#/components/schemas/ScheduleEventFullDTO"
+              "$ref": "#/components/schemas/ScheduleEntryDTO"
             },
             "type": "array",
             "title": "Schedule"
@@ -5567,15 +5567,15 @@
       },
       "MoveScheduleEventRequest": {
         "properties": {
-          "place_after_event_id": {
+          "place_after_entry_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Place After Event Id"
+            "title": "Place After Entry Id"
           }
         },
         "type": "object",
         "required": [
-          "place_after_event_id"
+          "place_after_entry_id"
         ],
         "title": "MoveScheduleEventRequest"
       },
@@ -5949,12 +5949,45 @@
         ],
         "title": "RequestLoginCodeInput"
       },
-      "ScheduleChangeEventDTO": {
+      "ScheduleBlockStartDTO": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "block_start",
+            "title": "Type"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "title",
+          "order"
+        ],
+        "title": "ScheduleBlockStartDTO"
+      },
+      "ScheduleChangeEntryDTO": {
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid",
             "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ScheduleEntryType"
           },
           "number": {
             "anyOf": [
@@ -5979,11 +6012,12 @@
         "type": "object",
         "required": [
           "id",
+          "type",
           "number",
           "title",
           "order"
         ],
-        "title": "ScheduleChangeEventDTO"
+        "title": "ScheduleChangeEntryDTO"
       },
       "ScheduleChangeFullDTO": {
         "properties": {
@@ -6026,17 +6060,17 @@
           "changed_event": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ScheduleChangeEventDTO"
+                "$ref": "#/components/schemas/ScheduleChangeEntryDTO"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "argument_event": {
+          "related_entry": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ScheduleChangeEventDTO"
+                "$ref": "#/components/schemas/ScheduleChangeEntryDTO"
               },
               {
                 "type": "null"
@@ -6067,7 +6101,7 @@
           "user_id",
           "next_event_changed",
           "changed_event",
-          "argument_event",
+          "related_entry",
           "user",
           "created_at"
         ],
@@ -6082,7 +6116,7 @@
           "unskipped"
         ],
         "title": "ScheduleChangeType",
-        "description": "How to read a `ScheduleChange`'s `changed_event_id`/`argument_event_id`.\n\nSET_AS_CURRENT: `changed_event_id` is the new current event (None if the\n    current event was unchecked); `argument_event_id` is the event that was\n    current before this change.\nMOVED: `argument_event_id` is the event `changed_event_id` was placed\n    after. To undo, place `changed_event_id` back after\n    `argument_event_id` — or at the top of the order if\n    `argument_event_id` is None.\nSKIPPED / UNSKIPPED: `argument_event_id` is unused."
+        "description": "How to read a `ScheduleChange`'s `changed_event_id`/`related_entry_id`.\n\nSET_AS_CURRENT: `changed_event_id` is the new current event (None if the\n    current event was unchecked); `related_entry_id` is the event that was\n    current before this change.\nMOVED: `related_entry_id` is the entry `changed_event_id` sat right after\n    before the move — a block start when the event opened its block. To\n    undo, place `changed_event_id` back after `related_entry_id` — or at\n    the top of the order if `related_entry_id` is None.\nSKIPPED / UNSKIPPED: `related_entry_id` is unused."
       },
       "ScheduleChangeUserDTO": {
         "properties": {
@@ -6103,8 +6137,39 @@
         ],
         "title": "ScheduleChangeUserDTO"
       },
+      "ScheduleEntryDTO": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ScheduleEventFullDTO"
+          },
+          {
+            "$ref": "#/components/schemas/ScheduleBlockStartDTO"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "block_start": "#/components/schemas/ScheduleBlockStartDTO",
+            "event": "#/components/schemas/ScheduleEventFullDTO"
+          }
+        }
+      },
+      "ScheduleEntryType": {
+        "type": "string",
+        "enum": [
+          "event",
+          "block_start"
+        ],
+        "title": "ScheduleEntryType",
+        "description": "What a row of the programme is.\n\nEVENT: something that happens on stage — an act, a break, the opening.\nBLOCK_START: the heading of a programme block. Every entry after it, up to\n    the next block start, belongs to that block, so moving an event across\n    a block start moves it into the other block."
+      },
       "ScheduleEventFullDTO": {
         "properties": {
+          "type": {
+            "type": "string",
+            "const": "event",
+            "title": "Type"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -6152,18 +6217,7 @@
             ],
             "title": "Nomination Title"
           },
-          "block_title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Block Title"
-          },
-          "queue": {
+          "position": {
             "anyOf": [
               {
                 "type": "integer"
@@ -6172,11 +6226,12 @@
                 "type": "null"
               }
             ],
-            "title": "Queue"
+            "title": "Position"
           }
         },
         "type": "object",
         "required": [
+          "type",
           "id",
           "number",
           "title",
@@ -6185,8 +6240,7 @@
           "is_current",
           "is_skipped",
           "nomination_title",
-          "block_title",
-          "queue"
+          "position"
         ],
         "title": "ScheduleEventFullDTO"
       },
@@ -6323,7 +6377,7 @@
             "type": "number",
             "title": "Order"
           },
-          "queue": {
+          "position": {
             "anyOf": [
               {
                 "type": "integer"
@@ -6332,7 +6386,7 @@
                 "type": "null"
               }
             ],
-            "title": "Queue"
+            "title": "Position"
           }
         },
         "type": "object",
@@ -6341,7 +6395,7 @@
           "number",
           "title",
           "order",
-          "queue"
+          "position"
         ],
         "title": "SubscriptionEventDTO"
       },
@@ -6833,8 +6887,8 @@
         "enum": [
           "visitor",
           "participant",
-          "helper",
-          "org"
+          "volunteer",
+          "organizer"
         ],
         "title": "UserRole"
       },

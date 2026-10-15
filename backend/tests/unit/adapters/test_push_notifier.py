@@ -214,7 +214,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     assert data["url"] == "/schedule"
     assert data["test"] is False
     # An ungrouped type keeps a unique per-notification tag and does not re-alert.
-    assert data["tag"] not in {"schedule", "org"}
+    assert data["tag"] not in {"schedule", "broadcast"}
     assert data["renotify"] is False
 
 
@@ -223,7 +223,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     [
         (NotificationType.SCHEDULE_CHANGE, "schedule"),
         (NotificationType.SCHEDULE_SUBSCRIPTION, "schedule"),
-        (NotificationType.BROADCAST, "org"),
+        (NotificationType.BROADCAST, "broadcast"),
     ],
 )
 async def test_notifier_groups_topic_notifications_by_tag(

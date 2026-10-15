@@ -27,9 +27,13 @@ export default defineConfig({
 	// Each spec file is isolated (fresh context) and safe to run in parallel: the
 	// backend is mocked per-test, so nothing is shared between them.
 	fullyParallel: true,
-	// One worker on CI, per https://playwright.dev/docs/ci: stability and
-	// reproducibility over speed on a shared runner. Locally, half the cores.
-	workers: process.env.CI ? 1 : undefined,
+	// https://playwright.dev/docs/ci defaults to one worker for stability, but
+	// allows more on capable runners. Public-repo ubuntu runners have 4 vCPU
+	// (https://docs.github.com/en/actions/reference/runners/github-hosted-runners),
+	// and every test mocks its own backend, so tests can only contend on timing.
+	// One worker took ~5 min on CI. If the report's flaky count climbs, timing
+	// contention is the first suspect: drop back to 1. Locally, half the cores.
+	workers: process.env.CI ? 2 : undefined,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
@@ -54,6 +58,8 @@ export default defineConfig({
 		// /api/<project>/envelope/ path, which the API mock catches as unmatched.
 		// A release number puts the profile footer's version line on screen, which
 		// is also the diagnostics sheet's hidden trigger.
+		// The hand-started server in e2e/README.md "A faster loop" repeats these;
+		// change both together.
 		env: {
 			PUBLIC_SMARTCAPTCHA_CLIENT_KEY: '',
 			PUBLIC_SENTRY_DSN: '',

@@ -60,7 +60,7 @@ class Ticket(AggregateRoot):
 
     def release(self) -> None:
         # Freed rather than deleted: the barcode can be linked again, by the
-        # same person or by whoever the organiser hands it to.
+        # same person or by whoever the organizer hands it to.
         self.used_by_user_id = None
 
     def revoke(self, now: datetime) -> None:

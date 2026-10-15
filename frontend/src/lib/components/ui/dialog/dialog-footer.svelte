@@ -17,6 +17,7 @@
 	} = $props();
 </script>
 
+<!-- Deviates from upstream: the close button's label is Russian. -->
 <div
 	bind:this={ref}
 	data-slot="dialog-footer"

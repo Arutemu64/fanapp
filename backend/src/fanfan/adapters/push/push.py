@@ -35,12 +35,12 @@ _RETRY_AFTER_DEFAULT_SECONDS = 5
 # Notification types that share a device-level topic, so a burst collapses to the
 # latest on the OS shade instead of stacking. Schedule updates flip rapidly during
 # a live event (the reader only cares about the current state); organizer
-# broadcasts share one "org" lane. A type absent here keeps a unique tag (its
+# broadcasts share one "broadcast" lane. A type absent here keeps a unique tag (its
 # notification id) so distinct notifications never replace one another.
 _TOPIC_TAGS: dict[NotificationType, str] = {
     NotificationType.SCHEDULE_CHANGE: "schedule",
     NotificationType.SCHEDULE_SUBSCRIPTION: "schedule",
-    NotificationType.BROADCAST: "org",
+    NotificationType.BROADCAST: "broadcast",
 }
 
 

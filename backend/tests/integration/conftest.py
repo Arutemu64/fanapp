@@ -160,7 +160,7 @@ async def make_broadcaster(dishka_request: AsyncContainer, uow: UnitOfWork) -> U
         id=UserId(uuid7()),
         username=Username("broadcaster"),
         hashed_password=None,
-        role=UserRole.ORG,
+        role=UserRole.ORGANIZER,
     )
     await user_gateway.add(broadcaster)
     await permission_gateway.add(

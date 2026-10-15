@@ -21,7 +21,7 @@ from fanfan.core.vo.user import UserRole
 
 pytestmark = pytest.mark.unit
 
-EVENT_HELPER = "event-helper"
+EVENT_VOLUNTEER = "event-volunteer"
 EVENT_UNKNOWN = "event-unknown"
 
 
@@ -33,7 +33,7 @@ def _order(
     order_id: str,
     *,
     status: OrderStatus = OrderStatus.DONE,
-    event: str = EVENT_HELPER,
+    event: str = EVENT_VOLUNTEER,
     tickets: list[Ticket],
 ) -> Order:
     return Order(id=order_id, status=status, event=event, tickets=tickets)
@@ -42,7 +42,7 @@ def _order(
 def _config() -> TCloudConfig:
     return TCloudConfig(
         api_key=SecretStr("key"),
-        event_ids_map={EVENT_HELPER: UserRole.HELPER},
+        event_ids_map={EVENT_VOLUNTEER: UserRole.VOLUNTEER},
     )
 
 
@@ -111,7 +111,7 @@ async def test_fetch_order_tickets_filters_and_maps_role() -> None:
     assert tickets[0].order_id == "o1"
     assert tickets[0].external_id == "t1"
     assert tickets[0].barcode == "B1"
-    assert tickets[0].role is UserRole.HELPER
+    assert tickets[0].role is UserRole.VOLUNTEER
 
 
 async def test_fetch_order_tickets_skips_non_done_order() -> None:

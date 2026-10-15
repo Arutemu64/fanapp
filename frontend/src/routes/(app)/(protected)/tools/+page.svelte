@@ -41,11 +41,11 @@
 		description: string;
 		icon: Component;
 		href: Path;
-		/** Whether this org holds the permission this tool needs. */
+		/** Whether this organizer holds the permission this tool needs. */
 		canAccess: boolean;
 	}
 
-	// Locked tools stay in the list so an org sees the whole toolbox and knows what
+	// Locked tools stay in the list so an organizer sees the whole toolbox and knows what
 	// they'd need granted, rather than the section silently shrinking per account.
 	let tools = $derived<Tool[]>([
 		{
@@ -121,8 +121,8 @@
 		description="Для работы организаторов фестиваля. Инструменты с замком тебе пока недоступны."
 	/>
 
-	<!-- Shown to every org: the tools layout already gates this whole section to the
-	     org role, so no per-tool permission scopes the live count. -->
+	<!-- Shown to every organizeranizer: the tools layout already gates this whole section to the
+	     organizer role, so no per-tool permission scopes the live count. -->
 	<div class="mb-4">
 		<OnlineNowCard />
 	</div>

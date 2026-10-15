@@ -11,10 +11,10 @@
 {% macro event_number_prefix(number) -%}
 {% if number is not none %}№{{ '%03d' % number }} {% endif %}
 {%- endmacro -%}
-{% if queue_difference == 0 -%}
+{% if position_difference == 0 -%}
 <b>Выступление {{ event_number_prefix(event_number) }}«{{ event_title }}» началось!</b>
 {%- else -%}
-До начала выступления <b>{{ event_number_prefix(event_number) }}«{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b>
+До начала выступления <b>{{ event_number_prefix(event_number) }}«{{ event_title }}»</b> осталось <b>{{ position_difference }} {{ events_pluralize(position_difference) }}</b>
 {% if reason_msg %}
 {{ reason_msg }}
 {%- endif %}

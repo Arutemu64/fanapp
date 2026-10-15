@@ -5,7 +5,10 @@ import pytest
 import xlsxwriter
 
 from fanfan.adapters.parsers.schedule import REQUIRED_COLUMNS, parse_schedule_from_excel
-from fanfan.application.interactors.schedule_mgmt.import_schedule import ScheduleEntry
+from fanfan.application.interactors.schedule_mgmt.import_schedule import (
+    ScheduleBlockRow,
+    ScheduleEventRow,
+)
 from fanfan.common.paths import REPO_ROOT
 from fanfan.core.exceptions.schedule import (
     InvalidScheduleFile,
@@ -16,22 +19,28 @@ pytestmark = pytest.mark.unit
 
 TEMPLATE_PATH = REPO_ROOT / "frontend" / "static" / "schedule-template.xlsx"
 
-VALID_ENTRY = ScheduleEntry(
+VALID_ENTRY = ScheduleEventRow(
     number=1,
     title="Открытие фестиваля",
     duration=900,
     nomination_title="Вне конкурса",
-    block_title="Открытие",
 )
 # The same entry as spreadsheet cells, keyed by column name. Derived from the
 # entry rather than written twice, so the row and the expected parse result
-# cannot drift apart.
-VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump()
+# cannot drift apart. An event row may leave its type blank.
+VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump() | {"type": None}
 
 
 def valid_row(**overrides: object) -> tuple[object, ...]:
     """A row that parses cleanly, in REQUIRED_COLUMNS order, with cells swapped."""
     cells = VALID_ROW | overrides
+    return tuple(cells[column] for column in REQUIRED_COLUMNS)
+
+
+def block_row(title: str, **overrides: object) -> tuple[object, ...]:
+    """A block row: type and title only, unless overridden."""
+    cells = dict.fromkeys(REQUIRED_COLUMNS) | {"type": "block", "title": title}
+    cells |= overrides
     return tuple(cells[column] for column in REQUIRED_COLUMNS)
 
 
@@ -60,55 +69,52 @@ def test_parses_the_downloadable_template() -> None:
         schedule = parse_schedule_from_excel(file)
 
     assert schedule == [
-        ScheduleEntry(
+        ScheduleEventRow(
             number=None,
             title="Открытие фестиваля",
             duration=900,
             nomination_title=None,
-            block_title=None,
         ),
-        ScheduleEntry(
+        ScheduleBlockRow(title="Косплей"),
+        ScheduleEventRow(
             number=1,
             title="Дефиле «Наруто»",
             duration=45,
             nomination_title="Одиночное дефиле",
-            block_title="Косплей",
         ),
-        ScheduleEntry(
+        ScheduleEventRow(
             number=2,
             title="Сценка «Стальной алхимик»",
             duration=480,
             nomination_title="Групповое дефиле",
-            block_title="Косплей",
         ),
-        ScheduleEntry(
+        ScheduleEventRow(
             number=None,
             title="Перерыв",
             duration=600,
             nomination_title=None,
-            block_title=None,
         ),
-        ScheduleEntry(
+        ScheduleBlockRow(title="Караоке"),
+        ScheduleEventRow(
             number=3,
             title="Вокал: «Унесённые призраками»",
             duration=210,
             nomination_title="Вокал",
-            block_title="Караоке",
         ),
-        ScheduleEntry(
+        ScheduleBlockRow(title="Закрытие"),
+        ScheduleEventRow(
             number=None,
             title="Награждение и закрытие",
             duration=1200,
             nomination_title=None,
-            block_title=None,
         ),
     ]
 
 
 def test_column_order_does_not_matter() -> None:
     sheet = build_sheet(
-        ["block_title", "duration", "number", "nomination_title", "title"],
-        [("Открытие", 900, 1, "Вне конкурса", "Открытие фестиваля")],
+        ["type", "duration", "number", "nomination_title", "title"],
+        [(None, 900, 1, "Вне конкурса", "Открытие фестиваля")],
     )
 
     assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
@@ -118,10 +124,7 @@ def test_accepts_whole_numbers_stored_as_floats() -> None:
     # Excel has no integer type, so a hand-typed 1 can arrive as 1.0.
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(number=1.0, duration=900.0)])
 
-    schedule = parse_schedule_from_excel(sheet)
-
-    assert schedule[0].number == 1
-    assert schedule[0].duration == 900
+    assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
 
 
 def test_accepts_a_sub_minute_duration() -> None:
@@ -130,7 +133,9 @@ def test_accepts_a_sub_minute_duration() -> None:
     # under a minute.
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=45)])
 
-    assert parse_schedule_from_excel(sheet)[0].duration == 45
+    assert parse_schedule_from_excel(sheet) == [
+        VALID_ENTRY.model_copy(update={"duration": 45})
+    ]
 
 
 def test_rejects_a_file_that_is_not_a_spreadsheet() -> None:
@@ -141,7 +146,7 @@ def test_rejects_a_file_that_is_not_a_spreadsheet() -> None:
 
 
 def test_reports_every_missing_column_at_once() -> None:
-    sheet = build_sheet(["number", "title", "block_title"], [(1, "Открытие", "Блок")])
+    sheet = build_sheet(["number", "title", "type"], [(1, "Открытие", None)])
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
         parse_schedule_from_excel(sheet)
@@ -160,8 +165,8 @@ def test_rejects_an_empty_sheet() -> None:
 
 
 def test_rejects_a_blank_title() -> None:
-    # `title` is a row's only human identity, so it stays required even though
-    # nomination and block are optional.
+    # `title` is an event row's only human identity, so it stays required even
+    # though the nomination is optional.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
         [valid_row(), valid_row(number=2, title="   ")],
@@ -176,17 +181,76 @@ def test_rejects_a_blank_title() -> None:
     assert exc_info.value.details["row"] == 3
 
 
-@pytest.mark.parametrize("column", ["nomination_title", "block_title"])
 @pytest.mark.parametrize("blank", [None, "", "   "])
-def test_accepts_a_blank_nomination_or_block(column: str, blank: object) -> None:
-    # Breaks, the opening and the closing carry no nomination or block, so those
-    # cells may be blank — an empty cell, an empty string or whitespace all read
-    # back as None rather than forcing an invented placeholder.
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(**{column: blank})])
+def test_accepts_a_blank_nomination(blank: object) -> None:
+    # Breaks, the opening and the closing carry no nomination, so the cell may
+    # be blank — an empty cell, an empty string or whitespace all read back as
+    # None rather than forcing an invented placeholder.
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(nomination_title=blank)])
 
     schedule = parse_schedule_from_excel(sheet)
 
-    assert getattr(schedule[0], column) is None
+    assert schedule == [VALID_ENTRY.model_copy(update={"nomination_title": None})]
+
+
+@pytest.mark.parametrize("row_type", [None, "", "   ", "event", "Event"])
+def test_a_blank_or_event_type_is_an_event_row(row_type: object) -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(type=row_type)])
+
+    assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
+
+
+def test_a_block_row_starts_a_block() -> None:
+    sheet = build_sheet(
+        REQUIRED_COLUMNS,
+        [block_row("  Косплей ", type=" Block "), valid_row()],
+    )
+
+    assert parse_schedule_from_excel(sheet) == [
+        ScheduleBlockRow(title="Косплей"),
+        VALID_ENTRY,
+    ]
+
+
+def test_rejects_an_unknown_type() -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(type="блок")])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert exc_info.value.details["reason"] == InvalidScheduleFileReason.INVALID_TYPE
+    assert exc_info.value.details["column"] == "type"
+    assert exc_info.value.details["row"] == 2
+
+
+def test_rejects_a_block_row_without_a_title() -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [block_row("  ")])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert exc_info.value.details["reason"] == InvalidScheduleFileReason.EMPTY_CELL
+    assert exc_info.value.details["column"] == "title"
+
+
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [("number", 1), ("duration", 60), ("nomination_title", "Х")],
+)
+def test_rejects_a_block_row_with_event_cells(column: str, value: object) -> None:
+    # A block row is a heading, not an act: a number, duration or nomination on
+    # it means the type was set on the wrong row.
+    sheet = build_sheet(REQUIRED_COLUMNS, [block_row("Косплей", **{column: value})])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert (
+        exc_info.value.details["reason"]
+        == InvalidScheduleFileReason.BLOCK_ROW_WITH_EVENT_DATA
+    )
+    assert exc_info.value.details["column"] == column
+    assert exc_info.value.details["row"] == 2
 
 
 @pytest.mark.parametrize("column", ["number", "duration"])
@@ -234,7 +298,10 @@ def test_accepts_an_empty_number() -> None:
 
     schedule = parse_schedule_from_excel(sheet)
 
-    assert [entry.number for entry in schedule] == [1, None]
+    assert schedule == [
+        VALID_ENTRY,
+        VALID_ENTRY.model_copy(update={"number": None, "title": "Перерыв"}),
+    ]
 
 
 def test_accepts_several_numberless_rows() -> None:
@@ -250,7 +317,10 @@ def test_accepts_several_numberless_rows() -> None:
 
     schedule = parse_schedule_from_excel(sheet)
 
-    assert [entry.number for entry in schedule] == [None, None]
+    assert schedule == [
+        VALID_ENTRY.model_copy(update={"number": None, "title": "Перерыв"}),
+        VALID_ENTRY.model_copy(update={"number": None, "title": "Технический перерыв"}),
+    ]
 
 
 def test_skips_a_blank_row_and_keeps_excel_row_numbers() -> None:

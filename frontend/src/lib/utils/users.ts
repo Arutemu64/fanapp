@@ -2,8 +2,8 @@
 const roleLabels: Record<string, string> = {
 	visitor: 'Зритель',
 	participant: 'Участник',
-	helper: 'Волонтёр',
-	org: 'Организатор'
+	volunteer: 'Волонтёр',
+	organizer: 'Организатор'
 };
 
 export function getRoleLabel(role: string): string {

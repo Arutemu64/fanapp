@@ -102,7 +102,7 @@ class SqlMailingGateway(MailingGateway):
         return _parse_dto(mailing_orm) if mailing_orm else None
 
     async def read_broadcasts(self, pagination: CursorPagination) -> list[MailingDTO]:
-        # Organizer broadcasts only: a schedule-change fan-out has no roles, so it
+        # Organizer broadcasts only: a change announcement has no roles, so it
         # never surfaces in the mailing history. SQLAlchemy writes a Python None
         # into a JSONB column as the JSON value `null`, not SQL NULL, so
         # `roles IS NOT NULL` would match those fan-outs too; test for an array

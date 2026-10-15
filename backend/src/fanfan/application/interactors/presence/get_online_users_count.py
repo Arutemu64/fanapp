@@ -9,10 +9,10 @@ class OnlineUsersCountOutput(BaseModel):
 
 
 class GetOnlineUsersCount:
-    """How many users are connected right now, for the organiser dashboard.
+    """How many users are connected right now, for the organizer dashboard.
 
     Authentication only, no permission: the figure is a non-sensitive aggregate
-    (no per-user data), and the organiser-only tools page is what scopes who
+    (no per-user data), and the organizer-only tools page is what scopes who
     actually sees it — role governs UI discovery here, not API access, so there
     is deliberately no hardcoded role check on the endpoint.
     """

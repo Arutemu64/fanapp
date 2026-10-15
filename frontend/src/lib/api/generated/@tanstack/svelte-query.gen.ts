@@ -2163,7 +2163,7 @@ export const countOnlineUsersQueryKey = (options?: Options<CountOnlineUsersData>
 /**
  * Count online users
  *
- * How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.
+ * How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.
  */
 export const countOnlineUsersOptions = (options?: Options<CountOnlineUsersData>) =>
 	queryOptions<
@@ -2209,7 +2209,7 @@ export const getUserOptions = (options: Options<GetUserData>) =>
 /**
  * Change a user's role
  *
- * Sets another user's role. Requires users:manage; an organiser cannot change their own role.
+ * Sets another user's role. Requires users:manage; an organizer cannot change their own role.
  */
 export const setUserRoleMutation = (
 	options?: Partial<Options<SetUserRoleData>>

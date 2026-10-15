@@ -33,7 +33,7 @@ export function loggedInAs(overrides: Partial<User> = {}): Handlers {
 	return { 'GET /me/': json<User>(user(overrides)) };
 }
 
-/** An organiser with full permissions — for tools/ and other gated surfaces. */
+/** An organizer with full permissions — for tools/ and other gated surfaces. */
 export function organizer(overrides: Partial<User> = {}): Handlers {
-	return loggedInAs({ role: 'org', username: 'test_org', permissions: ['*'], ...overrides });
+	return loggedInAs({ role: 'organizer', username: 'test_org', permissions: ['*'], ...overrides });
 }

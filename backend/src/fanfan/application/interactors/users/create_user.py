@@ -24,7 +24,7 @@ class CreateUser:
     """Create a user with a username and password.
 
     Deliberately unguarded, like GrantPermission: this is the bootstrap primitive
-    that seeds the first organiser account before any permission exists to gate it,
+    that seeds the first organizer account before any permission exists to gate it,
     so it cannot require one without a chicken-and-egg. It is reachable only from
     the operator CLI, where shell access to the server is already the trust
     boundary. A future guarded caller (e.g. a web admin screen) must gate its own

@@ -6,7 +6,7 @@ from fanfan.adapters.db.models import ScheduleChangeORM
 from fanfan.adapters.db.pagination import rows_after
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.schedule_change import (
-    ScheduleChangeEventDTO,
+    ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
     ScheduleChangeUserDTO,
 )
@@ -17,7 +17,7 @@ from fanfan.core.models.schedule_change import (
 )
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.user import UserId
 
 
@@ -28,7 +28,7 @@ def _from_model(model: ScheduleChange) -> ScheduleChangeORM:
         mailing_id=model.mailing_id,
         user_id=model.user_id,
         changed_event_id=model.changed_event_id,
-        argument_event_id=model.argument_event_id,
+        related_entry_id=model.related_entry_id,
         next_event_changed=model.next_event_changed,
     )
 
@@ -39,11 +39,11 @@ def _to_model(orm: ScheduleChangeORM) -> ScheduleChange:
         type=orm.type,
         mailing_id=MailingId(orm.mailing_id) if orm.mailing_id is not None else None,
         user_id=UserId(orm.user_id) if orm.user_id is not None else None,
-        changed_event_id=ScheduleEventId(orm.changed_event_id)
+        changed_event_id=ScheduleEntryId(orm.changed_event_id)
         if orm.changed_event_id is not None
         else None,
-        argument_event_id=ScheduleEventId(orm.argument_event_id)
-        if orm.argument_event_id is not None
+        related_entry_id=ScheduleEntryId(orm.related_entry_id)
+        if orm.related_entry_id is not None
         else None,
         next_event_changed=orm.next_event_changed,
     )
@@ -62,21 +62,23 @@ def _parse_full_dto(
         if schedule_change_orm.user_id is not None
         else None,
         next_event_changed=schedule_change_orm.next_event_changed,
-        changed_event=ScheduleChangeEventDTO(
-            id=ScheduleEventId(schedule_change_orm.changed_event.id),
+        changed_event=ScheduleChangeEntryDTO(
+            id=ScheduleEntryId(schedule_change_orm.changed_event.id),
+            type=schedule_change_orm.changed_event.type,
             number=schedule_change_orm.changed_event.number,
             title=schedule_change_orm.changed_event.title,
             order=schedule_change_orm.changed_event.order,
         )
         if schedule_change_orm.changed_event
         else None,
-        argument_event=ScheduleChangeEventDTO(
-            id=ScheduleEventId(schedule_change_orm.argument_event.id),
-            number=schedule_change_orm.argument_event.number,
-            title=schedule_change_orm.argument_event.title,
-            order=schedule_change_orm.argument_event.order,
+        related_entry=ScheduleChangeEntryDTO(
+            id=ScheduleEntryId(schedule_change_orm.related_entry.id),
+            type=schedule_change_orm.related_entry.type,
+            number=schedule_change_orm.related_entry.number,
+            title=schedule_change_orm.related_entry.title,
+            order=schedule_change_orm.related_entry.order,
         )
-        if schedule_change_orm.argument_event
+        if schedule_change_orm.related_entry
         else None,
         user=ScheduleChangeUserDTO(
             id=UserId(schedule_change_orm.user.id),
@@ -128,7 +130,7 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
             .where(ScheduleChangeORM.id == change_id)
             .options(
                 joinedload(ScheduleChangeORM.changed_event),
-                joinedload(ScheduleChangeORM.argument_event),
+                joinedload(ScheduleChangeORM.related_entry),
                 joinedload(ScheduleChangeORM.user),
             )
         )
@@ -147,7 +149,7 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
             .order_by(ScheduleChangeORM.created_at.desc(), ScheduleChangeORM.id.desc())
             .options(
                 joinedload(ScheduleChangeORM.changed_event),
-                joinedload(ScheduleChangeORM.argument_event),
+                joinedload(ScheduleChangeORM.related_entry),
                 joinedload(ScheduleChangeORM.user),
             )
             .limit(pagination.fetch_limit)

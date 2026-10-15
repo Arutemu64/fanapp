@@ -1,4 +1,4 @@
-import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
+import type { ScheduleBlockStartDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 /** The viewer's subscription to a single event (id + reminder threshold). */
 type EventSubscription = { id: string; counter: number };
@@ -12,3 +12,6 @@ type EventSubscription = { id: string; counter: number };
 export type ScheduleEventWithSubscription = ScheduleEventFullDto & {
 	user_subscription: EventSubscription | null;
 };
+
+/** One entry of the merged programme: an event, or the start of a block. */
+export type ScheduleEntryWithSubscription = ScheduleEventWithSubscription | ScheduleBlockStartDto;

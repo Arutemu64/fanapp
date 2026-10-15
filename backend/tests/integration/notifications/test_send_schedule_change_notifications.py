@@ -11,19 +11,19 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 )
 from fanfan.application.ports.gateways import ScheduleChangeGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
+from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
@@ -38,7 +38,7 @@ def _schedule_event(
     number: int, title: str, order: float, *, is_current: bool = False
 ) -> ScheduleEvent:
     return ScheduleEvent(
-        id=generate_schedule_event_id(),
+        id=generate_schedule_entry_id(),
         number=number,
         title=title,
         duration=15,
@@ -46,7 +46,6 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=None,
-        block_title=None,
     )
 
 
@@ -58,17 +57,17 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 ) -> None:
     """Subscription fan-out honours the window and carries the queue difference.
 
-    Layout by (order, queue): current=(1,1), B=(2,2), C=(3,3). A MOVED change
+    Layout by (order, position): current=(1,1), B=(2,2), C=(3,3). A MOVED change
     targets C. The window condition is
     current.order <= changed.order <= subscription.event.order, so:
       * a subscriber to C (order 3) is inside the window and is notified, with
-        queue_difference = C.queue - current.queue = 3 - 1 = 2;
+        position_difference = C.position - current.position = 3 - 1 = 2;
       * a subscriber to B (order 2) is outside it (3 > 2) and is not notified.
     The change carries no user and next_event_changed=False, so neither the
     editor nor the global-announcement branch fires — only subscriptions do.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     user_gateway = await dishka_request.get(UserGateway)
@@ -111,7 +110,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 
     change = ScheduleChange.moved(
         event_id=event_c.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=None,
         user_id=None,
         next_event_changed=False,
@@ -128,7 +127,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     event = published[0]
     assert event.notification.user_id == visitor.id
     assert event.notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
-    # queue_difference = 3 - 1 = 2 is rendered into the body.
+    # position_difference = 3 - 1 = 2 is rendered into the body.
     assert "2 выступления" in event.notification.body
     assert "Событие C" in event.notification.body
 
@@ -148,7 +147,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     same recipient.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     broker = await dishka_request.get(FakeEventBroker)
@@ -170,7 +169,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     )
     change = ScheduleChange.moved(
         event_id=event_c.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=None,
         user_id=None,
         next_event_changed=False,
@@ -204,7 +203,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     is settled as failed so it does not sit in the queue forever.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
@@ -230,7 +229,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     await mailing_gateway.add(mailing)
     change = ScheduleChange.moved(
         event_id=event_c.id,
-        previous_event_id=None,
+        previous_entry_id=None,
         mailing_id=mailing.id,
         user_id=None,
         next_event_changed=False,

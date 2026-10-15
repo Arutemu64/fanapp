@@ -5,8 +5,8 @@ from fanfan.core.exceptions.schedule import (
     SameEventsAreNotAllowed,
     SkippedEventNotAllowed,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
 pytestmark = pytest.mark.unit
 
@@ -19,7 +19,7 @@ def _event(
     is_skipped: bool = False,
 ) -> ScheduleEvent:
     return ScheduleEvent(
-        id=generate_schedule_event_id(),
+        id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -27,7 +27,6 @@ def _event(
         is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
-        block_title=None,
     )
 
 
@@ -104,3 +103,30 @@ def test_place_before_first_when_no_events() -> None:
     event.place_before_first(None)
 
     assert event.order == 1
+
+
+def _block_start(order: float) -> ScheduleBlockStart:
+    return ScheduleBlockStart(
+        id=generate_schedule_entry_id(), title="Косплей", order=order
+    )
+
+
+def test_entries_are_equal_by_id_across_kinds() -> None:
+    # Undo compares the current event against the one a change recorded, and
+    # matching drops entries from a list by equality: both rest on id alone.
+    event = _event(1, 1)
+    same_event_later = _event(1, 7)
+    same_event_later.id = event.id
+
+    assert event == same_event_later
+    assert event != _block_start(1)
+    assert len({event, same_event_later}) == 1
+
+
+def test_an_event_moves_after_a_block_start() -> None:
+    # Placing an event right after a block start is how it changes blocks.
+    event = _event(1, 99)
+
+    event.place_after(_block_start(10), _event(2, 20))
+
+    assert event.order == 15

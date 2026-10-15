@@ -19,6 +19,33 @@ The config builds the app and serves it with `vite preview` automatically — a
 production build is required because the service worker and offline caching are
 inert in `vite dev` (docs/frontend.md §2).
 
+### A faster loop
+
+The build alone is about a minute. While you're editing **specs** (not app code),
+keep a server running in a second terminal and Playwright reuses it instead of
+rebuilding (`reuseExistingServer` is on outside CI). Restart it after you change
+app code, or the tests run against the stale build. Playwright applies
+`webServer.env` only to a server it starts itself, so this command repeats those
+overrides; without them the captcha blocks login and the diagnostics test fails:
+
+```sh
+cd frontend && PUBLIC_SMARTCAPTCHA_CLIENT_KEY= PUBLIC_SENTRY_DSN= \
+	APP_VERSION=1.0.0 APP_BUILD=0123456789abcdef0123456789abcdef01234567 \
+	pnpm build && pnpm preview --port 4173 --strictPort
+```
+
+Then narrow the run ([CLI flags](https://playwright.dev/docs/test-cli)):
+
+```sh
+cd frontend
+pnpm e2e --last-failed                  # only what failed last time
+pnpm e2e -x                             # stop at the first failure
+pnpm e2e --only-changed=origin/main     # spec files changed since main
+pnpm e2e --grep @critical               # one tag lane (@smoke, @critical, @a11y)
+pnpm e2e --project=mobile-chromium      # one viewport instead of all of them
+pnpm e2e specs/voting.spec.ts           # one file
+```
+
 **Browser:** the suite runs on the Chromium build the pinned `@playwright/test`
 expects. A Claude Code web session's session-start hook installs it; CI installs
 it per run. On a fresh laptop, install it once (and again after a Playwright bump,

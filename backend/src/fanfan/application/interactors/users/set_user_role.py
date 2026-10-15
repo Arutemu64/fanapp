@@ -19,9 +19,9 @@ class SetUserRoleInput(BaseModel):
 
 
 class SetUserRole:
-    """An organiser changes another user's role (users:manage).
+    """An organizer changes another user's role (users:manage).
 
-    The role only decides which sections a user sees; every organiser action
+    The role only decides which sections a user sees; every organizer action
     stays behind its own permission, so this cannot grant one.
     """
 

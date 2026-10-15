@@ -22,7 +22,7 @@ class ListUsersOutput(BaseModel):
 
 
 class ListUsers:
-    """Newest-first, filterable directory of all users for organisers."""
+    """Newest-first, filterable directory of all users for organizers."""
 
     def __init__(
         self,

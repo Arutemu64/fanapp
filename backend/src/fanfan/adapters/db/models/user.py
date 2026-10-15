@@ -45,10 +45,11 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # extension point so new prefs need no schema migration.
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
-    # Indexed for the broadcast fan-out (read_all_by_roles): the org/helper roles
-    # are a tiny slice of a table dominated by visitors, so targeting them was a
-    # full scan. The planner still ignores the index when a broadcast includes
-    # VISITOR, which is correct — that really is most of the table.
+    # Indexed for the broadcast fan-out (read_all_by_roles): the organizer and
+    # volunteer roles are a tiny slice of a table dominated by visitors, so
+    # targeting them was a full scan. The planner still ignores the index when a
+    # broadcast includes VISITOR, which is correct — that really is most of the
+    # table.
     role: Mapped[UserRole] = str_enum_column(
         UserRole,
         name="userrole",

@@ -1,6 +1,62 @@
 # FAN FAN companion app
 
-Companion web app for the FAN FAN anime convention: visitors follow the programme, vote and get notified; organizers run the programme and message visitors.
+Companion web app for the FAN FAN anime convention: visitors follow the schedule, vote and get notified; organizers run the schedule and message visitors.
+
+## Roles
+
+**Role**:
+What a user is at the festival. Every user holds exactly one; broadcasts are addressed by role, and a ticket carries the role its holder gets. Beyond the organizer role opening the organizer tools, a role lets a user do nothing by itself.
+_Avoid_: Group, user type
+
+**Permission**:
+One organizer power, such as managing the schedule or sending broadcasts, granted to a user one by one and independent of their role.
+_Avoid_: Right, access, role
+
+**Guest**:
+Someone using the app without signing in. A guest holds no role and is not a user.
+_Avoid_: Anonymous, visitor
+
+**Visitor**:
+A user who came to watch, the role every new account starts with. The screens call one «зритель».
+_Avoid_: «Гость» (at a convention it means an invited star), attendee
+
+**Participant**:
+Someone who performs at the festival. The same person holds the participant role and is a voting entry in a nomination. The screens call one «участник».
+_Avoid_: Performer, contestant, cosplayer
+
+**Volunteer**:
+A user who helps run the festival on site. The screens call one «волонтёр».
+_Avoid_: Helper
+
+**Organizer**:
+A user who runs the festival. The screens call one «организатор».
+_Avoid_: Org, organiser, admin
+
+**Staff**:
+Volunteers and organizers together: the people running the festival rather than visiting it.
+_Avoid_: Crew, team
+
+## Schedule
+
+**Schedule**:
+The running order of everything on the festival stage. The screens call it «программа».
+_Avoid_: Programme, timetable, lineup
+
+**Entry**:
+One row of the schedule, in order: an event or a block start.
+_Avoid_: Row, item
+
+**Event**:
+An entry for something on stage — an act, a break, the opening. Only events are numbered, timed, given a position, made current, skipped, moved or subscribed to. The screens call one «выступление».
+_Avoid_: Performance, act (in code)
+
+**Position**:
+An event's place in the running order, 1..N, counting only events that are not skipped. "Осталось N выступлений" and subscription reminders count positions.
+_Avoid_: Queue
+
+**Block**:
+A titled section of the schedule: a block start and every event after it up to the next block start. An event's block is wherever it sits, so moving it across a block start moves it into that block.
+_Avoid_: Section, group
 
 ## Notifications
 
@@ -13,8 +69,12 @@ One send of a notification to many users at once, which is tracked, counted and 
 _Avoid_: Campaign, batch, dispatch, mail (it is never email)
 
 **Broadcast**:
-A mailing an organizer writes by hand for every user holding the chosen roles. The other kind of mailing is the automatic one a schedule change sends, so "broadcast" never names a mailing in general.
+A mailing an organizer writes by hand for every user holding the chosen roles. The other kind is a change announcement, so "broadcast" never names a mailing in general.
 _Avoid_: Announcement
+
+**Change announcement**:
+A mailing a schedule change sends on its own to the users subscribed to the events it touches. The screens call it «уведомление об изменении».
+_Avoid_: Schedule fan-out, change notification
 
 **Channel**:
 A route a notification reaches a user by outside the app: Telegram, VK or Web Push.

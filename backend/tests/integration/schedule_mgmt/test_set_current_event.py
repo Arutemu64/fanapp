@@ -11,7 +11,7 @@ from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event imp
 )
 from fanfan.application.ports.gateways import (
     ScheduleChangeGateway,
-    ScheduleEventGateway,
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -19,12 +19,12 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.schedule import EventNotFound, ScheduleEditTooFast
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
-from fanfan.core.vo.schedule_event import (
-    ScheduleEventId,
-    generate_schedule_event_id,
+from fanfan.core.vo.schedule_entry import (
+    ScheduleEntryId,
+    generate_schedule_entry_id,
 )
 from tests.integration.conftest import as_outbox
 
@@ -42,10 +42,9 @@ def _schedule_event(
     is_current: bool = False,
     duration: int = 15,
     nomination_title: str | None = None,
-    block_title: str | None = None,
 ) -> ScheduleEvent:
     return ScheduleEvent(
-        id=generate_schedule_event_id(),
+        id=generate_schedule_entry_id(),
         number=number,
         title=title,
         duration=duration,
@@ -53,7 +52,6 @@ def _schedule_event(
         is_current=is_current,
         is_skipped=False,
         nomination_title=nomination_title,
-        block_title=block_title,
     )
 
 
@@ -65,7 +63,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
@@ -79,7 +77,6 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
         2,
         duration=20,
         nomination_title="Номинация",
-        block_title="Блок",
     )
     await schedule_gateway.add(previous_current_event)
     await schedule_gateway.add(new_current_event)
@@ -87,8 +84,8 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
 
     await interactor(SetCurrentScheduleEventInput(event_id=new_current_event.id))
 
-    saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
-    saved_new_event = await schedule_gateway.get_by_id(new_current_event.id)
+    saved_previous_event = await schedule_gateway.get_event(previous_current_event.id)
+    saved_new_event = await schedule_gateway.get_event(new_current_event.id)
     assert saved_previous_event is not None
     assert saved_new_event is not None
     assert saved_previous_event.is_current is False
@@ -102,8 +99,8 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
     assert change.changed_event is not None
     assert change.changed_event.id == new_current_event.id
-    assert change.argument_event is not None
-    assert change.argument_event.id == previous_current_event.id
+    assert change.related_entry is not None
+    assert change.related_entry.id == previous_current_event.id
     assert change.user is not None
     assert change.user.id == schedule_editor.id
     assert change.user.username == schedule_editor.username
@@ -128,7 +125,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -139,7 +136,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
 
     await interactor(SetCurrentScheduleEventInput(event_id=event.id))
 
-    saved_event = await schedule_gateway.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.is_current is True
 
@@ -152,7 +149,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert change.changed_event is not None
     assert change.changed_event.id == event.id
     # There was no previous current event.
-    assert change.argument_event is None
+    assert change.related_entry is None
     assert change.user is not None
     assert change.user.id == schedule_editor.id
 
@@ -169,7 +166,7 @@ async def test_set_current_event_can_unset_current_event(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -179,7 +176,7 @@ async def test_set_current_event_can_unset_current_event(
 
     await interactor(SetCurrentScheduleEventInput(event_id=None))
 
-    saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
+    saved_previous_event = await schedule_gateway.get_event(previous_current_event.id)
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is False
 
@@ -190,8 +187,8 @@ async def test_set_current_event_can_unset_current_event(
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
     assert change.changed_event is None
-    assert change.argument_event is not None
-    assert change.argument_event.id == previous_current_event.id
+    assert change.related_entry is not None
+    assert change.related_entry.id == previous_current_event.id
     assert change.user is not None
     assert change.user.id == schedule_editor.id
     assert change.next_event_changed is True
@@ -210,7 +207,7 @@ async def test_set_current_event_raises_when_event_not_found(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -218,7 +215,7 @@ async def test_set_current_event_raises_when_event_not_found(
     await schedule_gateway.add(previous_current_event)
     await uow.commit()
 
-    unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
+    unknown_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
 
     with pytest.raises(EventNotFound):
         await interactor(SetCurrentScheduleEventInput(event_id=unknown_event_id))
@@ -227,7 +224,7 @@ async def test_set_current_event_raises_when_event_not_found(
     # transaction after the error.
     await uow.rollback()
 
-    saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
+    saved_previous_event = await schedule_gateway.get_event(previous_current_event.id)
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is True
     assert (
@@ -247,7 +244,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
@@ -259,7 +256,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
     with pytest.raises(AccessDenied):
         await interactor(SetCurrentScheduleEventInput(event_id=event.id))
 
-    saved_event = await schedule_gateway.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.is_current is False
     assert (
@@ -279,7 +276,7 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
@@ -298,8 +295,8 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
 
     # The second call is rejected before writing changes:
     # the first event remains current.
-    saved_first_event = await schedule_gateway.get_by_id(first_event.id)
-    saved_second_event = await schedule_gateway.get_by_id(second_event.id)
+    saved_first_event = await schedule_gateway.get_event(first_event.id)
+    saved_second_event = await schedule_gateway.get_event(second_event.id)
     assert saved_first_event is not None
     assert saved_first_event.is_current is True
     assert saved_second_event is not None

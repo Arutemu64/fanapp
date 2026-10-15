@@ -66,8 +66,8 @@ async def test_link_ticket_prefers_exact_vendor_spelling(
     interactor = await dishka_request.get(LinkTicket)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
-    # A vendor barcode that happens to look like an org code, next to the org
-    # ticket its folded form would match: the exact spelling must win.
+    # A vendor barcode that happens to look like an organizer-issued code, next to the
+    # organizer-issued ticket its folded form would match: the exact spelling must win.
     vendor = Ticket(
         id=generate_ticket_id(),
         barcode="FAN-o0",

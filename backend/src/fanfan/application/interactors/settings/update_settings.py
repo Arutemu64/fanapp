@@ -87,9 +87,9 @@ class UpdateSettings:
             extra={"actor_id": str(current_user.id)},
         )
 
-        # Published after commit: SSE carries no committed state, and a broadcast
+        # Published after commit: SSE carries no committed state, and a live update
         # for a rolled-back change would send clients to refetch config that never
-        # moved. Best-effort like the schedule broadcast — a missed event self-heals
+        # moved. Best-effort like the schedule live update — a missed event self-heals
         # on the next /config load (reconnect, navigation, or app resume).
         if public_config_changed:
             await self.realtime.publish(SSEMessage(SSEEventName.CONFIG_UPDATED))

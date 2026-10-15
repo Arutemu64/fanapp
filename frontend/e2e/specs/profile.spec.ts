@@ -3,7 +3,7 @@ import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
 // The Profile tab is the hub for everything without a tab of its own: login for
-// guests; account settings, feedback, the org toolbox and logout for members.
+// guests; account settings, feedback, the organizer toolbox and logout for members.
 test.describe('profile hub', () => {
 	test('offers a guest the login entry point, returning to the hub', async ({ page, api }) => {
 		await page.goto('/profile');
@@ -52,7 +52,7 @@ test.describe('profile hub', () => {
 		);
 	});
 
-	test('links an organiser to the toolbox and keeps the tab lit there', async ({ page, api }) => {
+	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
 		api.use(organizer());
 		await page.goto('/profile');
 
@@ -206,6 +206,68 @@ test.describe('avatar', () => {
 
 		await dialog.getByRole('button', { name: 'Сохранить' }).click();
 		await expect.poll(() => patched).toEqual({ avatar_seed: expect.stringMatching(/^[\w-]{12}$/) });
+		expect(api.unmatched).toEqual([]);
+	});
+});
+
+// Each account dialog mounts its form inside the dialog content, so closing it
+// throws the draft away: reopening must start from the saved state, never from
+// a half-typed value or an old error.
+test.describe('account dialogs start fresh on reopen', () => {
+	test('edit profile drops an unsaved username', async ({ page, api }) => {
+		api.use(loggedInAs());
+		await page.goto('/profile/account');
+		const dialog = page.getByRole('dialog', { name: 'Редактирование профиля' });
+		const username = dialog.getByLabel('Имя пользователя');
+
+		await page.getByRole('button', { name: 'Редактировать' }).click();
+		await username.fill('draft_name');
+		await page.keyboard.press('Escape');
+		await expect(dialog).toBeHidden();
+
+		await page.getByRole('button', { name: 'Редактировать' }).click();
+		await expect(username).toHaveValue('test_visitor');
+		expect(api.unmatched).toEqual([]);
+	});
+
+	test('change password drops the typed password and its error', async ({ page, api }) => {
+		api.use(loggedInAs());
+		await page.goto('/profile/account');
+		const dialog = page.getByRole('dialog', { name: 'Изменение пароля' });
+		const newPassword = dialog.getByLabel('Новый пароль', { exact: true });
+
+		await page.getByRole('button', { name: 'Изменить' }).click();
+		await newPassword.fill('short');
+		// Enter, not a tap on the submit button: on a phone the sheet's button sits
+		// over the bottom nav, and the pointer left there after the sheet closes
+		// would hover-preload the voting tab.
+		await newPassword.press('Enter');
+		await expect(dialog.getByText(/^Новый пароль должен быть/)).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(dialog).toBeHidden();
+
+		await page.getByRole('button', { name: 'Изменить' }).click();
+		await expect(newPassword).toHaveValue('');
+		await expect(dialog.getByText(/^Новый пароль должен быть/)).toBeHidden();
+		expect(api.unmatched).toEqual([]);
+	});
+
+	test('change email returns to the address step', async ({ page, api }) => {
+		api.use({ ...loggedInAs(), 'POST /me/email': json({}) });
+		await page.goto('/profile/account');
+		const dialog = page.getByRole('dialog', { name: 'Добавить эл. почту' });
+		const newEmail = dialog.getByLabel('Новая эл. почта');
+
+		await page.getByRole('button', { name: 'Добавить' }).click();
+		await newEmail.fill('new@example.com');
+		await newEmail.press('Enter');
+		await expect(dialog.getByText('Код подтверждения', { exact: true })).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(dialog).toBeHidden();
+
+		await page.getByRole('button', { name: 'Добавить' }).click();
+		await expect(newEmail).toBeEditable();
+		await expect(newEmail).toHaveValue('');
 		expect(api.unmatched).toEqual([]);
 	});
 });

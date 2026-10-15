@@ -27,7 +27,7 @@ export const ssr = false;
 // notifications with their badge. Only these are written to IndexedDB. Every
 // other query is online-only: fetched fresh after a cold start and dropped from
 // memory five minutes after its screen closes (TanStack's default gcTime) —
-// voting must not show a stale ballot, and the staff tools hold other people's
+// voting must not show a stale ballot, and the organizer tools hold other people's
 // details that have no business on the device.
 const OFFLINE_QUERY_KEYS = [
 	getCurrentUserQueryKey(),

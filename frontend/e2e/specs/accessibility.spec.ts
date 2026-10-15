@@ -148,7 +148,7 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 		expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
 	});
 
-	test('the profile hub has no WCAG A/AA violations for an organiser', async ({
+	test('the profile hub has no WCAG A/AA violations for an organizer', async ({
 		page,
 		api,
 		makeAxeBuilder

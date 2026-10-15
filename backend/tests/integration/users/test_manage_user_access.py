@@ -35,11 +35,11 @@ async def test_users_manager_changes_role(
     user_gateway = await dishka_request.get(UserGateway)
     login(users_manager)
 
-    await interactor(SetUserRoleInput(user_id=visitor.id, role=UserRole.HELPER))
+    await interactor(SetUserRoleInput(user_id=visitor.id, role=UserRole.VOLUNTEER))
 
     changed = await user_gateway.get_by_id(visitor.id)
     assert changed is not None
-    assert changed.role is UserRole.HELPER
+    assert changed.role is UserRole.VOLUNTEER
 
 
 async def test_role_change_requires_users_manage(
@@ -52,7 +52,7 @@ async def test_role_change_requires_users_manage(
     login(users_reader)
 
     with pytest.raises(AccessDenied):
-        await interactor(SetUserRoleInput(user_id=visitor.id, role=UserRole.ORG))
+        await interactor(SetUserRoleInput(user_id=visitor.id, role=UserRole.ORGANIZER))
 
 
 async def test_cannot_change_own_role(

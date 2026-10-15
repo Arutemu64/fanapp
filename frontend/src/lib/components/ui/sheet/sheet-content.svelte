@@ -49,6 +49,7 @@
 				{#snippet child({ props })}
 					<Button variant="ghost" class="absolute top-4 right-4" size="icon-sm" {...props}>
 						<XIcon />
+						<!-- Deviates from upstream: Russian label. -->
 						<span class="sr-only">Закрыть</span>
 					</Button>
 				{/snippet}

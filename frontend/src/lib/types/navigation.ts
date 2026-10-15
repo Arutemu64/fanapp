@@ -14,7 +14,7 @@ export interface BackTarget {
 
 /**
  * An icon button a page adds to the navbar, beside the bell. For page-level
- * actions (e.g. the organiser's change log on the schedule), not in-content
+ * actions (e.g. the organizer's change log on the schedule), not in-content
  * controls. Keep it to two per page: with the bell that is the three trailing
  * icons a phone top bar holds before an overflow menu is needed
  * (https://www.sap.com/design-system/fiori-design-android/v26-4/components/navigation-and-search/top-app-bar/usage).

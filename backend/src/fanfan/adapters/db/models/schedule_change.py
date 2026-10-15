@@ -5,7 +5,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
-from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
+from fanfan.adapters.db.models.schedule_entry import (
+    ScheduleEntryORM,
+    ScheduleEventORM,
+)
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 
@@ -18,10 +21,10 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
         name="schedulechangetype",
     )
     changed_event_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schedule_events.id", ondelete="CASCADE"), index=True
+        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
-    argument_event_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schedule_events.id", ondelete="CASCADE"), index=True
+    related_entry_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
@@ -35,8 +38,10 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
         foreign_keys=[changed_event_id],
         lazy="raise",
     )
-    argument_event: Mapped[ScheduleEventORM | None] = relationship(
-        foreign_keys=[argument_event_id],
+    # Any entry: a move records the one the event sat right after before it
+    # moved, which is a block start when the event opened its block.
+    related_entry: Mapped[ScheduleEntryORM | None] = relationship(
+        foreign_keys=[related_entry_id],
         lazy="raise",
     )
     user: Mapped[UserORM | None] = relationship(foreign_keys=user_id, lazy="raise")

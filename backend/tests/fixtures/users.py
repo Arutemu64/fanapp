@@ -73,7 +73,7 @@ async def _org_user_with(
         id=UserId(uuid7()),
         username=Username(username),
         hashed_password=None,
-        role=UserRole.ORG,
+        role=UserRole.ORGANIZER,
     )
     await user_gateway.add(user)
     for permission in permissions:

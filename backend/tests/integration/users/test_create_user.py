@@ -26,13 +26,13 @@ async def test_creates_a_user_with_a_hashed_password(
     password_hasher = await dishka_request.get(PasswordHasher)
 
     created = await create_user(
-        CreateUserInput(username="tester", password=_PASSWORD, role=UserRole.ORG)
+        CreateUserInput(username="tester", password=_PASSWORD, role=UserRole.ORGANIZER)
     )
 
     stored = await user_gateway.get_by_username("tester")
     assert stored is not None
     assert stored.id == created.id
-    assert stored.role is UserRole.ORG
+    assert stored.role is UserRole.ORGANIZER
     # The password is stored hashed, never in the clear, and verifies.
     assert stored.hashed_password is not None
     assert stored.hashed_password != _PASSWORD
@@ -45,11 +45,13 @@ async def test_duplicate_username_is_rejected(
     create_user = await dishka_request.get(CreateUser)
 
     await create_user(
-        CreateUserInput(username="tester", password=_PASSWORD, role=UserRole.ORG)
+        CreateUserInput(username="tester", password=_PASSWORD, role=UserRole.ORGANIZER)
     )
     with pytest.raises(UserAlreadyExists):
         await create_user(
-            CreateUserInput(username="tester", password=_PASSWORD, role=UserRole.ORG)
+            CreateUserInput(
+                username="tester", password=_PASSWORD, role=UserRole.ORGANIZER
+            )
         )
 
 
@@ -60,5 +62,7 @@ async def test_profane_username_is_rejected(
 
     with pytest.raises(UsernameProfanity):
         await create_user(
-            CreateUserInput(username="fuck", password=_PASSWORD, role=UserRole.ORG)
+            CreateUserInput(
+                username="fuck", password=_PASSWORD, role=UserRole.ORGANIZER
+            )
         )

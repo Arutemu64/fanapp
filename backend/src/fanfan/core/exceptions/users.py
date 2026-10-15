@@ -86,7 +86,7 @@ class LinkInitiatorMismatch(Conflict, UserException):
 
 
 class CannotChangeOwnAccess(ConstraintViolation, UserException):
-    """An organiser tried to change their own role or permissions.
+    """An organizer tried to change their own role or permissions.
 
     Refused so nobody can lock themselves out of the tools by mistake, or raise
     their own access: a change to someone's access always takes a second person.
@@ -99,7 +99,7 @@ class PermissionNotAssignable(ConstraintViolation, UserException):
     """The superuser grant "*" is handed out only from the operator CLI.
 
     Shell access to the server stays the one way to mint a superuser, so a
-    hijacked organiser session cannot create another one.
+    hijacked organizer session cannot create another one.
     """
 
     code = "PERMISSION_NOT_ASSIGNABLE"

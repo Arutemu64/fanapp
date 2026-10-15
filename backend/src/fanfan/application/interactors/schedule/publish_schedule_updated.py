@@ -2,8 +2,8 @@ import logging
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.schedule.get_schedule import render_schedule
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_entries import (
+    ScheduleEntryGateway,
 )
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class PublishScheduleUpdated:
-    """Re-render the schedule cache from committed state, then broadcast
-    ``schedule_updated``.
+    """Re-render the schedule cache from committed state, then send
+    ``schedule_updated`` to every screen as a live update.
 
-    Every connected client refetches the schedule the moment the broadcast
+    Every connected client refetches the schedule the moment the live update
     lands. Into an empty cache that burst is a stampede: each request misses and
     runs the schedule query before the first one can repopulate it. Warming
     first means the burst only reads Redis.
@@ -24,7 +24,7 @@ class PublishScheduleUpdated:
 
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleEntryGateway,
         schedule_cache: ScheduleCacheGateway,
         uow: UnitOfWork,
         realtime: RealtimeGateway,
@@ -37,7 +37,7 @@ class PublishScheduleUpdated:
     async def __call__(self) -> None:
         # Warming is an optimisation: when it fails, the cache is still empty
         # (edits invalidate after commit), so clients refetch correct data, just
-        # slower. That must not hold back the broadcast.
+        # slower. That must not hold back the live update.
         try:
             await self._warm_cache()
         except Exception:
