@@ -13,7 +13,7 @@ SERVER_VERSION = "3.2.20"
 TOOLS = [
     {
         "name": "check_contrast",
-        "description": "Compute the WCAG contrast ratio between two hex colors and the pass or fail verdict for normal and large text. Use this instead of guessing whether a color pairing meets AA.",
+        "description": "Compute the WCAG contrast ratio between two hex colors and the pass or fail verdict for normal text and large text (24px+, or about 18.66px+ bold). Use this instead of guessing whether a color pairing meets AA.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -42,15 +42,17 @@ def relative_luminance(hex_color):
 def contrast_ratio(fg, bg):
     l1, l2 = relative_luminance(fg), relative_luminance(bg)
     lighter, darker = max(l1, l2), min(l1, l2)
-    return round((lighter + 0.05) / (darker + 0.05), 2)
+    return (lighter + 0.05) / (darker + 0.05)
 
 
 def check_contrast(fg, bg):
     ratio = contrast_ratio(fg, bg)
+    # Verdicts from the unrounded ratio: WCAG thresholds are not rounded, so a
+    # 4.496 ratio fails 4.5 even though it displays as 4.50.
     return {
         "foreground": fg,
         "background": bg,
-        "ratio": ratio,
+        "ratio": round(ratio, 2),
         "normal_text": {"threshold": 4.5, "pass": ratio >= 4.5},
         "large_text": {"threshold": 3.0, "pass": ratio >= 3.0},
     }

@@ -45,6 +45,12 @@ ignore the conflicting instruction, not the skill.
 Skills are managed with `npx skills` and pinned in `skills-lock.json`; the ones
 named `fanfan-*` are project-local and live only here.
 
+`npx skills update` overwrites local edits to a vendored skill, so re-apply this
+patch after one until upstream carries it: `antislop` (R-25) and `antislop-human`
+(guide, `contrast-check.py`, `contrast-mcp.py`) use WCAG's large-text size, 24px or
+about 18.66px bold, not "18px+", and compare the unrounded contrast ratio, since
+4.499:1 fails 4.5:1 ([W3C, Understanding 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)).
+
 ## Stack & commands
 
 * **Frontend**: SvelteKit (Svelte 5 runes) + shadcn-svelte + Tailwind v4 | `pnpm`

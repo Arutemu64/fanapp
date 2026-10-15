@@ -23,7 +23,7 @@ allowed-tools: Bash(python *) Bash(python3 *) Read Write Edit Glob Grep
 
 - **Tell:** light grey text on a white or near-white background, thin body text, muted labels chosen because they look "elegant" but are hard to read.
 - **Why:** it excludes low-vision users and everyone in bright light. It is a visual choice made without checking the standard, which is exactly the kind of default the filter exists to catch.
-- **Fix:** meet WCAG AA minimums (R-25): 4.5:1 for normal text, 3:1 for large text (18px+). Compute the ratio; do not eyeball it.
+- **Fix:** meet WCAG AA minimums (R-25): 4.5:1 for normal text, 3:1 for large text (24px+, or about 18.66px+ bold: WCAG's 18pt / 14pt bold). Text below that, including 18-23px regular, needs 4.5:1. Compute the ratio; do not eyeball it.
 
 ### Text Over a Photo or Gradient
 
@@ -51,8 +51,9 @@ The home of the contrast checker. Three layers, from most to least convenient:
 
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/contrast-check.py" "#FFFFFF" "#777777"
-# normal text: FAIL (4.48 < 4.5)
-# large text:  PASS (4.48 >= 3.0)
+# ratio: 4.48:1
+# normal text (4.5:1): FAIL
+# large text  (3.0:1): PASS
 ```
 
 If the `${CLAUDE_SKILL_DIR}` variable is not available in this agent, point the script path at this skill's folder directly. The script exists so agents stop hallucinating AA. It takes two hex colors and prints the ratio and the verdict for both text sizes. If the file is missing, the formula and table below are complete on their own. Never block on the script.
@@ -62,7 +63,7 @@ If the `${CLAUDE_SKILL_DIR}` variable is not available in this agent, point the 
 1. Contrast ratio = (L1 + 0.05) / (L2 + 0.05), where L1 is the lighter relative luminance and L2 the darker.
 2. Relative luminance L of one color: convert each channel to 0-1 (`c = hex / 255`), then linearize: if `c <= 0.03928`, `c_lin = c / 12.92`; otherwise `c_lin = ((c + 0.055) / 1.055)^2.4`.
 3. `L = 0.2126*R + 0.7152*G + 0.0722*B`.
-4. Round the ratio to two decimals and compare: 4.5:1 for normal text, 3:1 for large text (18px+, per R-25). The maximum ratio is 21.0 (black on white).
+4. Compare the unrounded ratio: 4.5:1 for normal text, 3:1 for large text (24px+, or about 18.66px+ bold: WCAG's 18pt / 14pt bold), per R-25. Never round before comparing: 4.499:1 fails 4.5:1. Round to two decimals only for display. The maximum ratio is 21.0 (black on white).
 
 **The reference table** (common pairings, computed with the formula):
 
