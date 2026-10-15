@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
@@ -10,6 +11,8 @@
 	}
 
 	let { activeUrl, scrollToTop }: Props = $props();
+
+	const appUpdate = getAppUpdateService();
 
 	// -1 on a page no tab claims (e.g. notifications): the capsule fades out in place.
 	let activeIndex = $derived(
@@ -65,6 +68,7 @@
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{@const { label, href, outlineIcon: Icon } = item}
 			{@const active = isNavItemActive(activeUrl, item)}
+			{@const updateDot = href === 'profile' && appUpdate.available}
 			<!-- "Голосование" must fit one fifth of the pill: measured in-app it is ~62px at
 			     10px, ~67px at 11px, ~73px at 12px. A tab gets ~67px on a 360px phone and
 			     ~74px from 400px (where the pill's side margin grows from 8px to 12px). So
@@ -90,14 +94,24 @@
 				<!-- Colour and weight share the capsule's 300ms curve, so the old tab dims as
 				     the capsule leaves it and the new one lights up as it arrives; a snap
 				     would light the new label while the capsule still sits on the old tab. -->
-				<Icon
-					class={[
-						'size-5 transition-[color,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none',
-						active
-							? 'text-primary-700 dark:text-primary'
-							: 'text-muted-foreground group-hover:text-foreground'
-					]}
-				/>
+				<span class="relative">
+					<Icon
+						class={[
+							'size-5 transition-[color,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none',
+							active
+								? 'text-primary-700 dark:text-primary'
+								: 'text-muted-foreground group-hover:text-foreground'
+						]}
+					/>
+					{#if updateDot}
+						<!-- Points at the Profile hub's update row. Primary, like the bell's
+						     unseen badge: red would read as an error. -->
+						<span
+							aria-hidden="true"
+							class="absolute -top-0.5 -right-1 size-2.5 rounded-full border-2 border-background bg-primary"
+						></span>
+					{/if}
+				</span>
 				<span
 					class={[
 						'whitespace-nowrap transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
@@ -108,6 +122,9 @@
 				>
 					{label}
 				</span>
+				{#if updateDot}
+					<span class="sr-only">, доступно обновление</span>
+				{/if}
 			</a>
 		{/each}
 	</div>

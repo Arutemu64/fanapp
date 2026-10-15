@@ -7,6 +7,7 @@
 		Heart,
 		MessageSquare,
 		Palette,
+		RotateCw,
 		Ticket,
 		UserRound,
 		Wrench
@@ -21,6 +22,7 @@
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
@@ -56,6 +58,7 @@
 	let showTools = $derived(isOrganizer(user));
 
 	const pwa = getPwaService();
+	const appUpdate = getAppUpdateService();
 
 	// Return here after logging in: the guest opened the Profile tab, so that is
 	// where they expect to land.
@@ -99,6 +102,31 @@
 	     because the shell centres its content column and a narrower block hugging that
 	     column's left edge reads as lopsided. -->
 	<div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
+		{#if appUpdate.available}
+			<!-- First on the page: the dot on the Profile tab leads here. Optional all
+			     the same, since the next page change applies the update anyway (see the
+			     root layout's beforeNavigate). -->
+			<MenuGroup>
+				<Item.Root class="rounded-none hover:bg-muted">
+					{#snippet child({ props })}
+						<button type="button" {...props} onclick={() => appUpdate.apply()}>
+							<Item.Media
+								class="size-9 rounded-lg bg-primary/10 text-primary-700 dark:text-primary"
+							>
+								<RotateCw class="size-5" aria-hidden="true" />
+							</Item.Media>
+							<Item.Content>
+								<Item.Title class="text-base">Обновить приложение</Item.Title>
+								<Item.Description
+									>Обнови, чтобы получить новые функции и исправления</Item.Description
+								>
+							</Item.Content>
+						</button>
+					{/snippet}
+				</Item.Root>
+			</MenuGroup>
+		{/if}
+
 		{#if user}
 			<MenuGroup>
 				<Item.Root class="rounded-none">

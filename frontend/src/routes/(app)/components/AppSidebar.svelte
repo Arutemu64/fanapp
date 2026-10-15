@@ -4,6 +4,7 @@
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '#lib/assets/logo.svg';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
@@ -12,6 +13,8 @@
 	}
 
 	let { activeUrl, scrollToTop }: Props = $props();
+
+	const appUpdate = getAppUpdateService();
 </script>
 
 <!-- Desktop twin of AppBottomNav: the same PRIMARY_NAV_ITEMS, so label, order and
@@ -32,6 +35,7 @@
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{@const { label, href, outlineIcon: Icon } = item}
 			{@const active = isNavItemActive(activeUrl, item)}
+			{@const updateDot = href === 'profile' && appUpdate.available}
 			<a
 				href={resolve(href)}
 				aria-current={active ? 'page' : undefined}
@@ -61,6 +65,10 @@
 					]}
 				/>
 				<span>{label}</span>
+				{#if updateDot}
+					<span aria-hidden="true" class="ms-auto size-2 rounded-full bg-primary"></span>
+					<span class="sr-only">, доступно обновление</span>
+				{/if}
 			</a>
 		{/each}
 	</div>
