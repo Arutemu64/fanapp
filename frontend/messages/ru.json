@@ -201,7 +201,7 @@
 	"email_modal_title_change": "Изменить почту",
 	"email_new_label": "Новая почта",
 	"email_send_code": "Отправить код",
-	"email_sending_code": "Отправка кода…",
+	"email_sending_code": "Отправляем код…",
 	"error_already_voted_in_this_nomination": "В этой номинации голос уже учтён",
 	"error_cannot_change_own_access": "Свою роль и права может изменить только другой организатор",
 	"error_cannot_remove_last_sign_in_method": "Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт.",
