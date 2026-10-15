@@ -214,17 +214,18 @@ Contrast targets and dark-mode mechanics → `accessibility` / `ui-ux-pro-max`.
 
 ## 6. Language & Copy
 
-Russian copy is mandatory for all user-facing text — buttons, placeholders, errors, toasts, empty states (AGENTS.md, "Never"). Keep sentences brief, direct, and actionable; never surface raw backend exceptions or stack traces.
+All user-facing text — buttons, placeholders, errors, toasts, empty states — ships in Russian and English (AGENTS.md, "Never"). Russian is the source and follows the editorial policy; English is a translation of it. Keep sentences brief, direct, and actionable; never surface raw backend exceptions or stack traces.
 
 ### Messages (Paraglide JS)
 
-Every user-facing string lives in `frontend/messages/ru.json` and is used as a typed function: `import { m } from '#lib/paraglide/messages.js'`, then `m.feedback_sent()` or `m.import_error_cell_empty({ at })` (decision: [ADR-0027](adr/0027-paraglide-js-for-user-facing-copy.md)).
+Every user-facing string lives in `frontend/messages/ru.json` and `frontend/messages/en.json` (same keys in both) and is used as a typed function: `import { m } from '#lib/paraglide/messages.js'`, then `m.feedback_sent()` or `m.import_error_cell_empty({ at })` (decisions: [ADR-0027](adr/0027-paraglide-js-for-user-facing-copy.md), [ADR-0028](adr/0028-english-localization.md)).
 
 - **Keys** are `snake_case`, grouped by feature prefix (`feedback_`, `voting_`, `tool_`, …). Text shared by several screens takes a `common_` key rather than a copy per screen.
 - **Compile output** (`src/lib/paraglide/`) is gitignored. `pnpm install` generates it (`prepare` → `compile:i18n`) and the Vite plugin refreshes it on `dev`/`build`, so lint and `svelte-check` work before any build. Change the strategy or paths in `vite.config.ts` and `compile:i18n` together.
-- **Plurals** use a variant message (`declarations` + `plural` selector with `one`/`few`/`many`); `*` takes the `few` form, which is what fractions need in Russian. Never concatenate a number with a word.
+- **Plurals** use a variant message (`declarations` + `plural` selector). Russian lists `one`/`few`/`many`, and `*` takes the `few` form, which is what fractions need; English lists `one` and `*` (other). Never concatenate a number with a word.
+- **Active language** is resolved by the `custom-appLocale` strategy in `src/lib/i18n/locale.ts`: the choice saved in `localStorage` (`locale`) wins, else the first of the browser's languages the app has copy for, else English. Switching reloads the page, so module-level `Intl` formatters built from `intlLocale()` need no reactivity. Format dates and numbers with `intlLocale()`, never a literal `'ru-RU'`; the venue time zone stays fixed. The `hooks.client.ts` sets `<html lang>`. Tests pin Russian (`src/lib/testing/setupLocale.ts`, and `locale: 'ru-RU'` in the Playwright config); a spec for English sets `test.use({ locale: 'en-US' })`.
 - **Module-level maps** (roles, nav items, error codes) hold the message *function* (`role_visitor`, not `role_visitor()`) and call it at render time, so the text is resolved when it is shown rather than frozen at import.
-- **Not covered:** `app.html` and `static/manifest.json` are static files outside the bundle; keep their copy in step with `app_name` by hand. Backend emails and notifications are Jinja templates.
+- **Not covered:** `app.html` and `static/manifest.json` are static files outside the bundle and stay Russian; keep their copy in step with `app_name` by hand. Backend emails and notifications are Russian-only Jinja templates, so a pushed notification's text is Russian whatever the UI language. The service worker has no `localStorage`, so its fallback text follows the browser's language, not the saved choice.
 - **Links and emphasis inside a sentence** use Paraglide markup, never split fragments: write `"... {#link}профиле{/link}."` in the message and render it with `<ParaglideMessage message={m.key} inputs={{ ... }}>` from `@inlang/paraglide-js-svelte`, giving one `{#snippet tag({ children }: MessageTagProps)}` per tag (the annotation keeps typescript-eslint from reading `children` as `any`). Examples: `subscribe_hint`, `import_guide_columns`. Tag names must not shadow a local variable (`eventName`, not `event`).
 
 ## 7. Modal Conventions

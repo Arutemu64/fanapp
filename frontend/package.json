@@ -11,7 +11,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "pnpm run compile:i18n && svelte-kit sync || echo ''",
-		"compile:i18n": "paraglide-js compile --silent --project ./project.inlang --outdir ./src/lib/paraglide --strategy baseLocale --emit-ts-declarations",
+		"compile:i18n": "paraglide-js compile --silent --project ./project.inlang --outdir ./src/lib/paraglide --strategy custom-appLocale --strategy baseLocale --emit-ts-declarations",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc -p src/service-worker",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",

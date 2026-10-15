@@ -7,8 +7,14 @@ import {
 } from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
 
+import '#lib/i18n/locale.js';
 import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
 import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
+
+// app.html ships lang="ru" because it is static; screen readers, hyphenation and
+// the browser's translate prompt need the language the page is actually in.
+document.documentElement.lang = getLocale();
 
 // Server errors belong to the backend, which reports them with a full stack
 // trace and request context; a frontend mirror is a duplicate with none of that,

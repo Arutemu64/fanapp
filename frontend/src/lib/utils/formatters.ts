@@ -1,5 +1,6 @@
 import { PUBLIC_TIMEZONE } from '$app/env/public';
 
+import { intlLocale } from '#lib/i18n/locale.js';
 import { m } from '#lib/paraglide/messages.js';
 
 const SECONDS_IN_MINUTE = 60;
@@ -53,7 +54,7 @@ export function formatDuration(seconds: number): string {
 	return parts.join(' ');
 }
 
-const FESTIVAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const FESTIVAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(intlLocale(), {
 	day: 'numeric',
 	month: 'long',
 	year: 'numeric',
@@ -135,7 +136,7 @@ export function fromEventDateTimeLocal(value: string): string {
 	return new Date(naiveUtc - offsetMs).toISOString();
 }
 
-const EVENT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(intlLocale(), {
 	day: '2-digit',
 	month: '2-digit',
 	year: 'numeric',
@@ -173,13 +174,13 @@ export function formatRelativeTime(
 	return EVENT_DATE_TIME_FORMATTER.format(date);
 }
 
-const EVENT_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_TIME_FORMATTER = new Intl.DateTimeFormat(intlLocale(), {
 	hour: '2-digit',
 	minute: '2-digit',
 	timeZone: EVENT_TIME_ZONE
 });
 
-const EVENT_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat(intlLocale(), {
 	day: '2-digit',
 	month: '2-digit',
 	timeZone: EVENT_TIME_ZONE
@@ -217,13 +218,13 @@ export function formatSyncedAt(timestamp: number): string {
 	return m.synced_on_date({ date: EVENT_DAY_MONTH_FORMATTER.format(target), time });
 }
 
-const EVENT_DAY_LONG_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_DAY_LONG_FORMATTER = new Intl.DateTimeFormat(intlLocale(), {
 	day: 'numeric',
 	month: 'long',
 	timeZone: EVENT_TIME_ZONE
 });
 
-const EVENT_DAY_LONG_WITH_YEAR_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_DAY_LONG_WITH_YEAR_FORMATTER = new Intl.DateTimeFormat(intlLocale(), {
 	day: 'numeric',
 	month: 'long',
 	year: 'numeric',

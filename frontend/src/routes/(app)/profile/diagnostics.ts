@@ -1,3 +1,4 @@
+import { intlLocale } from '#lib/i18n/locale.js';
 import { m } from '#lib/paraglide/messages.js';
 import { formatRelativeTime } from '#lib/utils/formatters.js';
 
@@ -92,11 +93,13 @@ function formatBytes(bytes: number): string {
 	const megabytes = bytes / (1024 * 1024);
 	if (megabytes < 1024) {
 		return m.diag_size_mb({
-			size: megabytes.toLocaleString('ru-RU', { maximumFractionDigits: 1 })
+			size: megabytes.toLocaleString(intlLocale(), { maximumFractionDigits: 1 })
 		});
 	}
 	const gigabytes = megabytes / 1024;
-	return m.diag_size_gb({ size: gigabytes.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) });
+	return m.diag_size_gb({
+		size: gigabytes.toLocaleString(intlLocale(), { maximumFractionDigits: 1 })
+	});
 }
 
 function storageUsage(storage: StorageDiagnostics): string {

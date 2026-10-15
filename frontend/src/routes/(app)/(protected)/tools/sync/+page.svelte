@@ -15,6 +15,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { intlLocale } from '#lib/i18n/locale.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
@@ -64,7 +65,7 @@
 		if (!value) {
 			return m.sync_never_run();
 		}
-		return new Date(value).toLocaleString('ru-RU', {
+		return new Date(value).toLocaleString(intlLocale(), {
 			day: 'numeric',
 			month: 'long',
 			hour: '2-digit',

@@ -67,17 +67,18 @@ export default defineConfig(({ mode }) => {
 				}
 			}),
 			tailwindcss(),
-			// Single-locale (ru) message catalogue: the compiler emits typed `m.*`
-			// functions into src/lib/paraglide (gitignored, regenerated on every
-			// dev/build run). `baseLocale` is the only strategy because the app is a
-			// client-rendered SPA with no URL prefixes or server middleware; a second
-			// locale would add `localStorage` / `preferredLanguage` ahead of it.
+			// Message catalogues (ru, en): the compiler emits typed `m.*` functions
+			// into src/lib/paraglide (gitignored, regenerated on every dev/build run).
+			// The app is a client-rendered SPA with no URL prefixes or server
+			// middleware, so the locale comes from `custom-appLocale` (the saved choice,
+			// else the browser's language; src/lib/i18n/locale.ts), with `baseLocale`
+			// only as the last resort.
 			// Keep in step with `compile:i18n` in package.json: that script generates
 			// the same output on install, so lint and svelte-check work before any build.
 			paraglideVitePlugin({
 				project: './project.inlang',
 				outdir: './src/lib/paraglide',
-				strategy: ['baseLocale'],
+				strategy: ['custom-appLocale', 'baseLocale'],
 				emitTsDeclarations: true
 			}),
 			// Processes <enhanced:img> on the map page into AVIF/WebP + resized
@@ -130,6 +131,8 @@ export default defineConfig(({ mode }) => {
 		test: {
 			// Also matches `*.svelte.test.ts`, where runes are available.
 			include: ['src/**/*.test.ts'],
+			// Pins the UI language to Russian, which the tests' expected strings are in.
+			setupFiles: ['./src/lib/testing/setupLocale.ts'],
 			// No DOM: component tests are deliberately out of scope (ADR-0011).
 			environment: 'node',
 			// Undo vi.spyOn / vi.fn implementations after each test so a mock can't leak into the next.

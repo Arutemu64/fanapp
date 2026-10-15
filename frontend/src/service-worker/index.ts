@@ -12,6 +12,7 @@ import {
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst } from 'workbox-strategies';
 
+import '#lib/i18n/locale.js';
 import { m } from '#lib/paraglide/messages.js';
 import { buildPrecacheManifest } from '#lib/utils/precacheManifest.js';
 

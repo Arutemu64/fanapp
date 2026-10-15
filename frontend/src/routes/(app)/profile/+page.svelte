@@ -5,6 +5,7 @@
 		ChevronRight,
 		Download,
 		Heart,
+		Languages,
 		MessageSquare,
 		Palette,
 		RotateCw,
@@ -31,6 +32,7 @@
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
+	import LanguageToggle from './components/LanguageToggle.svelte';
 	import LogoutButton from './components/LogoutButton.svelte';
 	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
@@ -234,6 +236,17 @@
 				</Item.Content>
 				<Item.Footer>
 					<ThemeToggle />
+				</Item.Footer>
+			</Item.Root>
+			<Item.Root class="rounded-none">
+				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
+					<Languages class="size-5" aria-hidden="true" />
+				</Item.Media>
+				<Item.Content>
+					<Item.Title class="text-base">{m.profile_language()}</Item.Title>
+				</Item.Content>
+				<Item.Footer>
+					<LanguageToggle />
 				</Item.Footer>
 			</Item.Root>
 		</MenuGroup>
