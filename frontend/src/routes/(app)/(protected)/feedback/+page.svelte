@@ -87,10 +87,7 @@
 {#if showOffline}
 	<!-- Submit-only surface with nothing to cache: say so plainly rather than
 	     showing a form that can't send. -->
-	<OfflineUnavailableState
-		title={m.feedback_offline_title()}
-		message={m.feedback_offline_message()}
-	/>
+	<OfflineUnavailableState />
 {:else}
 	<div class="mx-auto w-full max-w-2xl">
 		<SectionIntro description={m.feedback_description()} />

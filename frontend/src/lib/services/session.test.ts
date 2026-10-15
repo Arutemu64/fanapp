@@ -176,7 +176,12 @@ describe('Session.settlePendingLogout', () => {
 	});
 
 	it('gives up on a stalled revoke and keeps the intent, so the user can retry', async () => {
-		logoutUser.mockRejectedValue(new DOMException('signal timed out', 'TimeoutError'));
+		// The generated client never rejects: a timed-out request resolves with the
+		// error and no response.
+		logoutUser.mockResolvedValue({
+			error: new DOMException('signal timed out', 'TimeoutError'),
+			response: undefined
+		});
 		markLogoutPending();
 		const { session } = setup();
 

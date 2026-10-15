@@ -305,8 +305,6 @@
 	"feedback_empty": "Сообщений пока нет",
 	"feedback_field_label": "Твоё сообщение",
 	"feedback_load_failed": "Не удалось загрузить сообщения",
-	"feedback_offline_message": "Подключись к интернету, чтобы отправить сообщение.",
-	"feedback_offline_title": "Обратная связь доступна только онлайн",
 	"feedback_placeholder": "Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…",
 	"feedback_send_failed": "Не удалось отправить сообщение",
 	"feedback_sent": "Спасибо, сообщение отправлено",
@@ -492,6 +490,8 @@
 	"notifications_status_on": "Включены",
 	"notifications_title": "Уведомления",
 	"offline_action_hint": "Доступно только онлайн",
+	"offline_unavailable_message": "Откроется, как только появится связь.",
+	"offline_unavailable_title": "Раздел доступен только онлайн",
 	"online_now_suffix": "сейчас в приложении",
 	"participants_count": [
 		{
@@ -773,8 +773,6 @@
 	"tools_back": "Назад к инструментам",
 	"tools_forbidden": "У тебя нет доступа к этому разделу",
 	"tools_intro": "Для работы организаторов фестиваля. Инструменты с замком тебе пока недоступны.",
-	"tools_offline_message": "Подключись к интернету, чтобы пользоваться инструментами организатора.",
-	"tools_offline_title": "Инструменты доступны только онлайн",
 	"tools_title": "Инструменты",
 	"unit_days": [
 		{
@@ -995,8 +993,6 @@
 	"voting_nominations_empty": "Номинаций пока нет",
 	"voting_nominations_load_failed": "Не удалось загрузить номинации",
 	"voting_nominations_loading": "Загружаем номинации…",
-	"voting_offline_message": "Подключись к интернету, чтобы голосовать за участников.",
-	"voting_offline_title": "Голосование доступно только онлайн",
 	"voting_open_title": "Голосование открыто",
 	"voting_participants_empty_message": "Появятся ближе к фестивалю",
 	"voting_participants_empty_title": "Участников пока нет",

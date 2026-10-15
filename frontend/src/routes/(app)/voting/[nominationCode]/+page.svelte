@@ -5,7 +5,7 @@
 
 	import type { GetVotingNominationOutput } from '#lib/api/generated/index.js';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { getApiErrorDetail, isConnectionFailure } from '#lib/api/errors.js';
 	import {
 		getVotingNominationOptions,
 		getVotingNominationQueryKey,
@@ -37,9 +37,18 @@
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
 	// Never shown from the cache offline: voting is a live, online-only surface
-	// (see ../+page.svelte).
+	// (see ../+page.svelte). A read that got no answer counts as offline too
+	// while it is still retrying, as on the nominations list, rather than holding
+	// the skeleton until the probe confirms it. Once the retries stop with the
+	// server reachable, ErrorState and its retry button take over.
+	let offline = $derived(
+		!reachability.current ||
+			(nominationQuery.data === undefined &&
+				nominationQuery.fetchStatus !== 'idle' &&
+				isConnectionFailure(nominationQuery.failureReason))
+	);
 	let nomination: GetVotingNominationOutput | undefined = $derived(
-		reachability.current ? nominationQuery.data : undefined
+		offline ? undefined : nominationQuery.data
 	);
 	let participants = $derived(nomination?.participants ?? []);
 	let canVote = $derived(votingStatusQuery.data?.can_vote ?? false);
@@ -82,10 +91,10 @@
 	</title>
 </svelte:head>
 
-{#if !reachability.current}
+{#if offline}
 	<!-- Voting is online-only, so there is no saved copy to show — say so plainly
 	     instead of crashing on a missing nomination. -->
-	<OfflineUnavailableState title={m.voting_offline_title()} message={m.voting_offline_message()} />
+	<OfflineUnavailableState />
 {:else if !nomination}
 	<!-- Online with nothing to show: the load gave up waiting (it leaves a
 	     connection failure to the page) or the request failed. Blaming the

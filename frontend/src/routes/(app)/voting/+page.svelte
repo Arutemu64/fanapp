@@ -23,10 +23,14 @@
 	let nominations = $derived(nominationsQuery.data?.nominations ?? []);
 	// A read that got no answer means the same here as being offline, without
 	// waiting for the reachability probe to confirm it or for the retries to run
-	// out: `failureReason` is set on the first failed attempt.
+	// out: `failureReason` is set on the first failed attempt. Only while it is
+	// still retrying, though: once the retries stop with the server reachable,
+	// ErrorState and its retry button take over, since reconnect never fires.
 	let offline = $derived(
 		!reachability.current ||
-			(nominationsQuery.data === undefined && isConnectionFailure(nominationsQuery.failureReason))
+			(nominationsQuery.data === undefined &&
+				nominationsQuery.fetchStatus !== 'idle' &&
+				isConnectionFailure(nominationsQuery.failureReason))
 	);
 </script>
 
@@ -39,7 +43,7 @@
 	     open/closed and already-voted state must not be shown stale (a ballot you
 	     can't submit is a dead end). So it is never persisted, and a copy still in
 	     memory from earlier in the session is not shown offline either. -->
-	<OfflineUnavailableState title={m.voting_offline_title()} message={m.voting_offline_message()} />
+	<OfflineUnavailableState />
 {:else if nominationsQuery.data === undefined}
 	{#if nominationsQuery.isError}
 		<ErrorState

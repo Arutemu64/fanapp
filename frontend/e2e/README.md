@@ -138,7 +138,7 @@ actually reaches the offline path:
 ```ts
 api.use({ 'GET /voting/nominations': (route) => route.abort() });
 await page.goto('/voting');
-await expect(page.getByText('Голосование доступно только онлайн')).toBeVisible();
+await expect(page.getByText('Раздел доступен только онлайн')).toBeVisible();
 ```
 
 The build ships a real service worker, so a cache-backed page can also be tested

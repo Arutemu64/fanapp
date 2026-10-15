@@ -2,20 +2,16 @@
 	import { AlertCircle } from '@lucide/svelte';
 
 	import EmptyState from '#lib/components/EmptyState.svelte';
-
-	interface Props {
-		/** Heading, e.g. «Голосование доступно только онлайн». Kept explicit rather
-		 *  than generated: Russian agreement (доступно/доступна/доступны) varies by
-		 *  the subject's gender and number. */
-		title: string;
-		/** One line on how to proceed, e.g. «Подключись к интернету, чтобы …». */
-		message: string;
-	}
-
-	let { title, message }: Props = $props();
+	import { m } from '#lib/paraglide/messages.js';
 </script>
 
-<!-- Shared render for surfaces that never cache and are useless offline (voting,
-	feedback, tools): a mutation-only page has no saved copy to show, so it says so
-	plainly. The load flags these with `offlineUnavailable` — see docs/frontend.md §2. -->
-<EmptyState icon={AlertCircle} {title} {message} />
+<!-- One screen for every surface that is useless offline (voting, feedback, tools,
+	the schedule change log), rendered in place rather than at a route of its own:
+	the URL stays put, so the state clears by itself on reconnect and the bottom nav
+	still shows where the user is. A cached screen whose copy simply hasn't loaded
+	yet says so in its own words instead — see docs/frontend.md §2. -->
+<EmptyState
+	icon={AlertCircle}
+	title={m.offline_unavailable_title()}
+	message={m.offline_unavailable_message()}
+/>

@@ -20,7 +20,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		});
 		await page.goto('/voting');
 
-		await expect(page.getByText('Голосование доступно только онлайн')).toBeVisible();
+		await expect(page.getByText('Раздел доступен только онлайн')).toBeVisible();
 		expect(api.unmatched).toEqual([]);
 	});
 
