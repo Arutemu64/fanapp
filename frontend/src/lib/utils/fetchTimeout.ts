@@ -21,3 +21,16 @@ export function timeoutSignal(ms: number): AbortSignal {
 
 /** Default budget for a first-paint API call before we fall back to cache. */
 export const FIRST_PAINT_TIMEOUT_MS = 3500;
+
+/**
+ * Settle with `promise`, or reject with the TimeoutError a native timeout signal
+ * would carry (`isConnectionFailure` recognises it) once `ms` have passed. The
+ * work is not cancelled: it keeps running and may still land after the timeout.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const budget = new Promise<never>((_, reject) => {
+		timer = setTimeout(() => reject(new DOMException('signal timed out', 'TimeoutError')), ms);
+	});
+	return Promise.race([promise, budget]).finally(() => clearTimeout(timer));
+}

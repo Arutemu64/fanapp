@@ -15,7 +15,7 @@ import {
 	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions, queryForLoad } from '#lib/api/index.js';
-import { isReachable, probeReachability } from '#lib/services/reachability.js';
+import { withTimeout } from '#lib/utils/fetchTimeout.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
 import type { LayoutLoad } from './$types';
@@ -49,6 +49,14 @@ const OFFLINE_QUERY_IDS = new Set(OFFLINE_QUERY_KEYS.map(([{ _id }]) => _id));
 // are garbage-collected before they are ever persisted:
 // https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+// How long boot waits for the saved cache. A normal IndexedDB read takes
+// milliseconds; the budget only matters when the read never settles, which WebKit
+// has shipped (a first open() hanging forever, a transaction stalling for ~30
+// minutes in an installed PWA with web push):
+// https://bugs.webkit.org/show_bug.cgi?id=226547
+// https://bugs.webkit.org/show_bug.cgi?id=315804
+const CACHE_RESTORE_TIMEOUT_MS = 1500;
 
 // API error bodies and dropped connections are expected and reported elsewhere
 // (the backend files its own errors), so only a failure in our own query code is
@@ -123,7 +131,11 @@ export const load: LayoutLoad = async () => {
 			}
 		}
 	});
-	await restored;
+	// Boot never waits on the cache for long, and a cache that fails to restore
+	// (the persister discards it, then rethrows) is no reason to fail the load. Both
+	// cases start empty and fetch fresh; a restore that is merely slow still lands
+	// in the client later, where hydration keeps whichever copy is newer.
+	await withTimeout(restored, CACHE_RESTORE_TIMEOUT_MS).catch(() => {});
 
 	// Identity gates the route guards, so settle it before any child load reads
 	// it. A restored user answers at once (the components reading it revalidate,
@@ -135,17 +147,16 @@ export const load: LayoutLoad = async () => {
 	// network: the logout flag is saved at once but the cache only on the
 	// persister's throttle, so a restart in between can restore the account the
 	// user just left.
+	let identityUnverified = false;
 	await queryForLoad(queryClient, {
 		...currentUserOptions(),
 		staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
-	}).catch(async () => {
-		// The guards branch on reachability to choose between /login and the offline
-		// state, but the API interceptors that ask the probe for a verdict are only
-		// installed once the root layout mounts, after this load. Without a verdict
-		// `isReachable()` keeps its optimistic default and an offline cold start
-		// would land on a login page that can't work offline.
-		if (isReachable()) await probeReachability();
+	}).catch(() => {
+		// The guard can't tell a guest from a user we couldn't reach. Probing
+		// reachability to find out is the guard's job, not boot's: it costs up to
+		// ~10 s on a connected-but-dead network, which every route would pay.
+		identityUnverified = true;
 	});
 
-	return { queryClient };
+	return { queryClient, identityUnverified };
 };

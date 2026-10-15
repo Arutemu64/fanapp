@@ -17,7 +17,7 @@ import {
 	markReachable,
 	probeReachability
 } from '#lib/services/reachability.js';
-import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
+import { FIRST_PAINT_TIMEOUT_MS, withTimeout } from '#lib/utils/fetchTimeout.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
 /**
@@ -67,15 +67,8 @@ export function queryForLoad<TData, TError, TQueryKey extends QueryKey>(
 	queryClient: QueryClient,
 	options: FetchQueryOptions<TData, TError, TData, TQueryKey>
 ): Promise<TData> {
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const budget = new Promise<never>((_, reject) => {
-		timer = setTimeout(
-			() => reject(new DOMException('signal timed out', 'TimeoutError')),
-			FIRST_PAINT_TIMEOUT_MS
-		);
-	});
 	const query = queryClient.query({ ...options, retry: false, networkMode: 'always' });
-	return Promise.race([query, budget]).finally(() => clearTimeout(timer));
+	return withTimeout(query, FIRST_PAINT_TIMEOUT_MS);
 }
 
 // A 401 means the session may have ended; /me/ gives the verdict. Its own 401

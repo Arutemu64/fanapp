@@ -2,14 +2,14 @@ import { error, redirect } from '@sveltejs/kit';
 
 import { currentUserOptions } from '#lib/api/index.js';
 import { m } from '#lib/paraglide/messages.js';
-import { isReachable } from '#lib/services/reachability.js';
+import { isReachable, probeReachability } from '#lib/services/reachability.js';
 import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, url }) => {
 	// The root load settled identity into the cache before any guard runs.
-	const { queryClient } = await parent();
+	const { queryClient, identityUnverified } = await parent();
 	const user = queryClient.getQueryData(currentUserOptions().queryKey);
 
 	if (!user) {
@@ -20,6 +20,12 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		// work offline would log out an authenticated user on a flaky connection.
 		// Show the offline state instead (ErrorState reframes this into a
 		// "нет интернета" or "нет связи с сервером" page from live reachability).
+		//
+		// Reachability only has its optimistic default until the monitor or an API
+		// response corrects it, and the root load that couldn't verify identity ran
+		// before either. So ask the probe here — joining the monitor's own if it
+		// is running — instead of making every route wait for it at boot.
+		if (identityUnverified && isReachable()) await probeReachability();
 		if (!isReachable()) {
 			// hooks.client.ts drops every 5xx HttpError from Sentry, so this expected
 			// offline blip never becomes a GlitchTip issue.
