@@ -8,9 +8,12 @@
 
 	import type { MapEntry } from '#lib/data/maps.js';
 
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { maps } from '#lib/data/maps.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import 'photoswipe/style.css';
+
+	const hasLegend = maps.some((map) => map.points.length > 0);
 
 	// Thumbnail buttons, indexed like `maps`. PhotoSwipe animates the open and
 	// close from each one's <img>, and returns focus to the one that opened it.
@@ -208,6 +211,42 @@ below the plan on the current posters, before their legend starts. -->
 		</div>
 	{/each}
 </div>
+
+<!-- The posters' legends as text: the thumbnails crop them off, and in the viewer
+they take a zoom to read. Numbers match the markers on the map. One column on a
+phone, where a name needs the full width; side by side under the thumbnails once
+there is room. -->
+{#if hasLegend}
+	<section aria-labelledby="map-where" class="mt-6 flex flex-col gap-3">
+		<h2 id="map-where" class="text-lg font-semibold">{m.map_where_heading()}</h2>
+		<div class="grid items-start gap-4 lg:grid-cols-2">
+			{#each maps as map (map.id)}
+				<section aria-labelledby="map-where-{map.id}" class="flex flex-col gap-2">
+					<h3 id="map-where-{map.id}" class="px-1 text-sm font-medium text-muted-foreground">
+						{map.label()}
+					</h3>
+					<MenuGroup>
+						<ol class="divide-y divide-border">
+							{#each map.points as point (point.number)}
+								<li class="flex items-center gap-3 px-4 py-2.5">
+									<span
+										class="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground tabular-nums"
+									>
+										{point.number}
+									</span>
+									<span class="grow">{point.name()}</span>
+									{#if point.floor}
+										<span class="shrink-0 text-sm text-muted-foreground">{point.floor()}</span>
+									{/if}
+								</li>
+							{/each}
+						</ol>
+					</MenuGroup>
+				</section>
+			{/each}
+		</div>
+	</section>
+{/if}
 
 <style>
 	/* PhotoSwipe appends its root to <body>, outside this component, hence :global. */

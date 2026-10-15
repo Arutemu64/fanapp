@@ -99,8 +99,8 @@ test.describe('native feel', () => {
 		const scrolledTo = await page.evaluate(() => window.scrollY);
 
 		const tabs = page.getByRole('navigation', { name: 'Разделы' });
-		await tabs.getByRole('link', { name: 'Карта' }).click();
-		await expect(page).toHaveURL('/map');
+		await tabs.getByRole('link', { name: 'Гид' }).click();
+		await expect(page).toHaveURL('/guide');
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 
 		await tabs.getByRole('link', { name: 'Программа' }).click();
@@ -140,9 +140,9 @@ test.describe('native feel', () => {
 		await expect(page).toHaveURL('/profile');
 		await page
 			.getByRole('navigation', { name: 'Разделы' })
-			.getByRole('link', { name: 'Карта' })
+			.getByRole('link', { name: 'Гид' })
 			.click();
-		await expect(page).toHaveURL('/map');
+		await expect(page).toHaveURL('/guide');
 
 		const expected =
 			supported && !isDesktop(testInfo.project.name) ? ['forward', 'back', 'fade'] : [];

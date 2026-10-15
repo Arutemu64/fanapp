@@ -32,8 +32,8 @@ describe('isNavItemActive', () => {
 	});
 
 	it('falls back to the item href alone without nested roots', () => {
-		expect(isNavItemActive('/map', { href: 'map' })).toBe(true);
-		expect(isNavItemActive('/feedback', { href: 'map' })).toBe(false);
+		expect(isNavItemActive('/guide', { href: 'guide' })).toBe(true);
+		expect(isNavItemActive('/feedback', { href: 'guide' })).toBe(false);
 	});
 });
 

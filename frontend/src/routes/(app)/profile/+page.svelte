@@ -19,6 +19,7 @@
 
 	import { currentUserOptions } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import MenuLink from '#lib/components/MenuLink.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
@@ -32,7 +33,6 @@
 
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
 	import LogoutButton from './components/LogoutButton.svelte';
-	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
 	import { notificationsStatus } from './notificationsStatus';
 

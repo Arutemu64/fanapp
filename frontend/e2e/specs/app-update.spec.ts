@@ -66,10 +66,10 @@ test.describe('app update', () => {
 
 		await page
 			.getByRole('navigation', { name: 'Разделы' })
-			.getByRole('link', { name: 'Карта' })
+			.getByRole('link', { name: 'Гид' })
 			.click();
 
-		await expect(page).toHaveURL(/\/map$/);
+		await expect(page).toHaveURL(/\/guide$/);
 		await waitForUpdateApplied(page);
 		// The marker is gone once the reload has replaced the page.
 		await page.waitForFunction(() => !('e2eSamePage' in window));
