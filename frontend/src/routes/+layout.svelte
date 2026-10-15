@@ -80,7 +80,7 @@
 		// Fixed copy, not the mapped code: the user didn't act, so «Билет не найден»
 		// out of nowhere would read as a fault of theirs rather than a stale screen.
 		const stopWatchingRefetches = watchBackgroundRefetchErrors(queryClient, () =>
-			toastService.add('Не удалось обновить данные — показаны последние загруженные', 'error')
+			toastService.add('Не удалось обновить данные', 'error')
 		);
 
 		eventsClient.on('schedule_updated', handleScheduleUpdated);
