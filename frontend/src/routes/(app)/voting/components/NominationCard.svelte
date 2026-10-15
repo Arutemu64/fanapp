@@ -26,7 +26,7 @@
 <Card.Root
 	as="article"
 	class={[
-		'relative flex w-full max-w-none flex-col p-4 shadow-sm transition-[box-shadow,border-color,background-color] hover:shadow-md has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring',
+		'relative flex w-full max-w-none flex-col p-4 shadow-sm transition-[box-shadow,border-color,background-color] hover:bg-muted/50 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring',
 		nomination.user_vote ? 'ring-2 ring-success' : ''
 	]}
 >

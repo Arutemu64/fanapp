@@ -83,7 +83,9 @@
 		</Dialog.Description>
 
 		<div class="my-4 flex items-center justify-center">
-			<div class="flex -space-x-px overflow-hidden rounded-lg border border-border bg-card">
+			<div
+				class="flex -space-x-px overflow-hidden rounded-lg border border-border bg-card has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-3 has-[input:focus-visible]:ring-ring"
+			>
 				<button
 					type="button"
 					onclick={() => {

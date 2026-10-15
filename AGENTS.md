@@ -24,7 +24,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices`; run `svelte-autofixer` on every file you touch (see "Svelte AI tooling") | [docs/frontend.md](docs/frontend.md) |
 | UI components (shadcn-svelte) | `shadcn-svelte` | [docs/frontend.md](docs/frontend.md) §3, §7–8 |
 | Styling / layout | `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4, [.agents/context/DESIGN.md](.agents/context/DESIGN.md) (design intent & named rules) |
-| Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md), [.agents/context/DESIGN.md](.agents/context/DESIGN.md) |
+| Design review before shipping UI | `antislop`, `antislop-ui`, `antislop-human`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md), [.agents/context/DESIGN.md](.agents/context/DESIGN.md) |
 | Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
@@ -44,6 +44,12 @@ ignore the conflicting instruction, not the skill.
 
 Skills are managed with `npx skills` and pinned in `skills-lock.json`; the ones
 named `fanfan-*` are project-local and live only here.
+
+`npx skills update` overwrites local edits to a vendored skill, so re-apply this
+patch after one until upstream carries it: `antislop` (R-25) and `antislop-human`
+(guide, `contrast-check.py`, `contrast-mcp.py`) use WCAG's large-text size, 24px or
+about 18.66px bold, not "18px+", and compare the unrounded contrast ratio, since
+4.499:1 fails 4.5:1 ([W3C, Understanding 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)).
 
 ## Stack & commands
 

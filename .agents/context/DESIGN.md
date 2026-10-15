@@ -117,6 +117,10 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 - **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; in light mode the active label is `primary-700`, not the token, so it clears AA on the tint (the `tonal` button's trick), while dark keeps `primary`. Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Idle = `muted-foreground` with foreground on hover. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
 - **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop. The sidebar keeps a permanent 1px right border: in light mode it and the page share one surface colour, so the line is the only edge between them; in dark mode the sidebar's `card` is a step lighter than the page's `background`, and the line reinforces that step. The top navbar's bottom hairline shows only once content has scrolled under it, the iOS / Material 3 scroll-edge behaviour; at the top of a page it would separate nothing.
 
+### Icons
+- **Set:** Lucide (`@lucide/svelte`), the library the vendored shadcn-svelte components already import, so app icons and component chrome share one stroke weight and corner style. It is chosen for consistency, not character: identity comes from the watermelon colour and Unbounded, and icons stay quiet next to them.
+- **Use:** an icon earns its place by naming its content (calendar for Программа, map pin for Карта). A labelled button beats a lone icon when no glyph reads unambiguously (see Tonal buttons).
+
 ### Empty & Loading States
 - **Loading:** Skeletons that mimic the content's shape — never a centered spinner in the content area.
 - **Empty:** Teach the interface (what this screen will hold, one action), not "nothing here."
@@ -144,3 +148,13 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 - **Don't** convey state by color alone, and never use full-saturation accents on inactive elements.
 - **Don't** use fluid `clamp()` heading scales; type sizes are fixed rem steps.
 - **Don't** reach for a modal first — exhaust inline and progressive alternatives.
+
+## 7. antislop overrides
+
+The antislop rulebook (`.agents/skills/antislop/`) is the slop filter; this file is the direction. Where they collide, the direction wins and the reason is recorded here (antislop R-37).
+
+- **Em dash (R-02).** Kept. In Russian the тире is grammatical, not a style tic. It marks an omitted copula between subject and nominal predicate and joins clauses of a conjunctionless sentence ([Правила русской орфографии и пунктуации, §164–172](https://www.azbyka.ru/otechnik/Spravochniki/pravila-russkoj-orfografii-i-punktuatsii/42)). A comma or colon would change the grammar. Copy keeps the `\u00A0—` binding from `fanfan-russian-copy`, and event titles of the form «Персонаж — Фэндом» are data.
+- **Fluid type (antislop-layoutmobile).** Rejected for the Fixed-Scale Rule (§3). A `clamp()` with viewport units can stop text reaching 200% under zoom, which fails WCAG 1.4.4 ([Adrian Roselli, Responsive Type and Zoom](https://adrianroselli.com/2019/12/responsive-type-and-zoom.html); [Smashing Magazine, Addressing Accessibility Concerns With Using Fluid Type](https://www.smashingmagazine.com/2023/11/addressing-accessibility-concerns-fluid-type/)).
+- **Tracked uppercase (R-06).** Allowed on labels and status pills only (§3 Label), which includes the hero's phase label («До начала фестиваля», «Сейчас на сцене»). Section headings stay sentence case.
+- **Live dot (R-19).** The dot marks a real state. Its ping runs three times and stops (`--animate-ping-brief` in `app.css`), because WCAG 2.2.2 requires auto-started motion beside other content to stop within 5s ([W3C, Understanding 2.2.2](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide)).
+- **Glass (R-10).** Reserved for surfaces that float over scrolling content: the bottom nav and the `floating` button variant. Dialog overlays keep shadcn's faint blur.
