@@ -6,7 +6,9 @@ import {
 	formatDayHeading,
 	formatDuration,
 	formatEventNumber,
+	formatFestivalDate,
 	formatFestivalDateTime,
+	formatFestivalTime,
 	formatRelativeTime,
 	formatUntil,
 	fromEventDateTimeLocal,
@@ -87,6 +89,16 @@ describe('festival start helpers', () => {
 
 	it('formats the start on the venue clock without a "г." suffix', () => {
 		expect(formatFestivalDateTime(START_ISO)).toBe('13 марта 2027, 11:30');
+	});
+
+	it('formats the day with its weekday last, on the venue clock', () => {
+		expect(formatFestivalDate(START_ISO)).toBe('13 марта 2027, суббота');
+		// 23:30 UTC on the 12th is already the 13th in Moscow.
+		expect(formatFestivalDate('2027-03-12T23:30:00.000Z')).toBe('13 марта 2027, суббота');
+	});
+
+	it('formats the time on the venue clock', () => {
+		expect(formatFestivalTime(START_ISO)).toBe('11:30');
 	});
 
 	it('shows the venue wall clock in the datetime-local value', () => {

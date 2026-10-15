@@ -108,7 +108,14 @@ test('notifications', async ({ page, api }) => {
 	await saveWebp(page, 'notifications');
 });
 
-test('guide', async ({ page }) => {
+test('guide', async ({ page, api }) => {
+	// The guide shows the festival's own date, not the fake "now" the other shots use.
+	api.use({
+		'GET /config': json({
+			festival_start: '2027-03-13T11:30:00+03:00',
+			festival_end: '2027-03-13T19:30:00+03:00'
+		})
+	});
 	await page.goto('/guide');
 	await expect(page.getByRole('heading', { name: /косплей-фестиваль/ })).toBeVisible();
 	await settle(page);

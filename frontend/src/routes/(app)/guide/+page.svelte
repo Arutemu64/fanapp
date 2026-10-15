@@ -10,16 +10,20 @@
 		MessageCircle,
 		ScrollText
 	} from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
 
+	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { formatFestivalDate, formatFestivalTime } from '#lib/utils/formatters.js';
 
 	// A text search, so there are no coordinates to keep in step with the venue.
 	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
@@ -46,7 +50,17 @@
 		{ href: 'mailto:orgcom.fan@mail.ru', label: m.guide_email, icon: Mail, external: false }
 	];
 
-	const facts = [m.guide_date, m.guide_doors, m.guide_start, m.guide_age];
+	// The date and start come from the public config organizers edit, the same source
+	// as Home, so the two tabs can't disagree; the cached copy or the shipped
+	// defaults fill in offline. Doors and the age limit aren't in the config.
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	const config = $derived(configQuery.data ?? FALLBACK_CONFIG);
+	const facts = $derived([
+		formatFestivalDate(config.festival_start),
+		m.guide_doors(),
+		m.guide_start({ time: formatFestivalTime(config.festival_start) }),
+		m.guide_age()
+	]);
 </script>
 
 <svelte:head>
@@ -87,7 +101,7 @@
 		<p class="mt-1.5 text-sm text-muted-foreground">{m.guide_about()}</p>
 		<ul class="mt-3 flex flex-wrap gap-2">
 			{#each facts as fact (fact)}
-				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact()}</li>
+				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact}</li>
 			{/each}
 		</ul>
 		<ul class="mt-4 flex flex-wrap gap-2">
