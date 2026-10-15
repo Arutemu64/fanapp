@@ -108,14 +108,11 @@ test('notifications', async ({ page, api }) => {
 	await saveWebp(page, 'notifications');
 });
 
-test('map', async ({ page }) => {
-	await page.goto('/guide/map');
-	// The thumbnails are decorative (alt=""): each card's button carries the name.
-	await expect(
-		page.getByRole('button', { name: /открыть карту на весь экран/ }).first()
-	).toBeVisible();
+test('guide', async ({ page }) => {
+	await page.goto('/guide');
+	await expect(page.getByRole('heading', { name: /косплей-фестиваль/ })).toBeVisible();
 	await settle(page);
-	await saveWebp(page, 'map');
+	await saveWebp(page, 'guide');
 });
 
 test('profile', async ({ page, api }) => {
