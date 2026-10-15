@@ -1,7 +1,16 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	import { ExternalLink, Globe, Map as MapIcon, MapPin } from '@lucide/svelte';
+	import {
+		ExternalLink,
+		Globe,
+		Mail,
+		Map as MapIcon,
+		MapPin,
+		MessageCircle,
+		ScrollText,
+		Ticket
+	} from '@lucide/svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
 
@@ -23,6 +32,29 @@
 		icon: Component;
 	}
 
+	const facts = [
+		{ label: m.guide_fact_date, value: m.guide_fact_date_value },
+		{ label: m.guide_fact_place, value: m.guide_fact_place_value },
+		{ label: m.guide_fact_doors, value: m.guide_fact_doors_value },
+		{ label: m.guide_fact_start, value: m.guide_fact_start_value },
+		{ label: m.guide_fact_kids, value: m.guide_fact_kids_value },
+		{ label: m.guide_fact_age, value: m.guide_fact_age_value }
+	];
+
+	const features = [
+		{ title: m.guide_feature_stage, description: m.guide_feature_stage_description },
+		{ title: m.guide_feature_fair, description: m.guide_feature_fair_description },
+		{ title: m.guide_feature_authors, description: m.guide_feature_authors_description },
+		{ title: m.guide_feature_games, description: m.guide_feature_games_description },
+		{ title: m.guide_feature_photo, description: m.guide_feature_photo_description },
+		{ title: m.guide_feature_contests, description: m.guide_feature_contests_description }
+	];
+
+	const notes = [
+		{ title: m.guide_note_entry, description: m.guide_note_entry_description },
+		{ title: m.guide_note_belongings, description: m.guide_note_belongings_description }
+	];
+
 	const contacts: ContactLink[] = [
 		{ href: 'https://fancom.info/', label: m.guide_website, hint: 'fancom.info', icon: Globe },
 		{ href: 'https://vk.com/ffest_nn', label: m.guide_vk, hint: 'vk.com/ffest_nn', icon: IconVk },
@@ -31,6 +63,18 @@
 			label: m.guide_telegram,
 			hint: 't.me/fanfan_fest_news',
 			icon: IconTelegram
+		},
+		{
+			href: 'https://max.ru/ffest_nn',
+			label: m.guide_max,
+			hint: 'max.ru/ffest_nn',
+			icon: MessageCircle
+		},
+		{
+			href: 'mailto:orgcom.fan@mail.ru',
+			label: m.guide_email,
+			hint: 'orgcom.fan@mail.ru',
+			icon: Mail
 		}
 	];
 </script>
@@ -74,9 +118,73 @@
 		<p class="mt-2 text-muted-foreground">{m.guide_about()}</p>
 	</section>
 
+	<section aria-labelledby="guide-facts" class="flex flex-col gap-2">
+		<h2 id="guide-facts" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_facts_heading()}
+		</h2>
+		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 rounded-2xl border bg-card p-5 sm:p-6">
+			{#each facts as fact (fact.value)}
+				<dt class="text-muted-foreground">{fact.label()}</dt>
+				<dd class="font-medium">{fact.value()}</dd>
+			{/each}
+		</dl>
+	</section>
+
 	<MenuGroup>
 		<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
 	</MenuGroup>
+
+	<section aria-labelledby="guide-features" class="flex flex-col gap-2">
+		<h2 id="guide-features" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_features_heading()}
+		</h2>
+		<MenuGroup>
+			{#each features as feature (feature.title)}
+				<Item.Root class="rounded-none">
+					<Item.Content>
+						<Item.Title class="text-base">{feature.title()}</Item.Title>
+						<Item.Description>{feature.description()}</Item.Description>
+					</Item.Content>
+				</Item.Root>
+			{/each}
+		</MenuGroup>
+	</section>
+
+	<section aria-labelledby="guide-visit" class="flex flex-col gap-2">
+		<h2 id="guide-visit" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_visit_heading()}
+		</h2>
+		<MenuGroup>
+			{@render externalRow(
+				'https://fancom.info/pages/Tickets',
+				Ticket,
+				m.guide_buy_ticket(),
+				'fancom.info/pages/Tickets'
+			)}
+			{@render externalRow(
+				'https://fancom.info/pages/rules',
+				ScrollText,
+				m.guide_rules(),
+				'fancom.info/pages/rules'
+			)}
+		</MenuGroup>
+	</section>
+
+	<section aria-labelledby="guide-notes" class="flex flex-col gap-2">
+		<h2 id="guide-notes" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_good_to_know_heading()}
+		</h2>
+		<MenuGroup>
+			{#each notes as note (note.title)}
+				<Item.Root class="rounded-none">
+					<Item.Content>
+						<Item.Title class="text-base">{note.title()}</Item.Title>
+						<Item.Description>{note.description()}</Item.Description>
+					</Item.Content>
+				</Item.Root>
+			{/each}
+		</MenuGroup>
+	</section>
 
 	<section aria-labelledby="guide-directions" class="flex flex-col gap-2">
 		<h2 id="guide-directions" class="px-1 text-sm font-medium text-muted-foreground">
