@@ -38,8 +38,11 @@ async function stageWaitingUpdate(page: Page) {
 	});
 }
 
+// The hand-off reloads the page, and an evaluate that lands mid-reload rejects
+// with "Execution context was destroyed"; null lets `expect.poll` ask the
+// reloaded page again instead of failing the test.
 const wasApplied = (page: Page) =>
-	page.evaluate(() => sessionStorage.getItem('e2e:update-applied'));
+	page.evaluate(() => sessionStorage.getItem('e2e:update-applied')).catch(() => null);
 
 test.describe('app update', () => {
 	test('marks the Profile tab and offers the update on the hub', async ({ page }) => {
