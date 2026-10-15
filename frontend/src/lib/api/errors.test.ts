@@ -1,6 +1,12 @@
+import { CancelledError } from '@tanstack/svelte-query';
 import { describe, expect, it } from 'vitest';
 
-import { getApiErrorDetail, getApiFieldError } from './errors';
+import {
+	getApiErrorDetail,
+	getApiFieldError,
+	gotNoApiAnswer,
+	isUnexpectedRequestError
+} from './errors';
 
 const CONNECTION_FAILED = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 
@@ -55,5 +61,32 @@ describe('getApiFieldError', () => {
 
 	it('ignores error codes other than VALIDATION_ERROR', () => {
 		expect(getApiFieldError({ code: 'INVALID_EMAIL', details: {} }, 'email')).toBeNull();
+	});
+});
+
+describe('gotNoApiAnswer', () => {
+	it('is true for a dropped connection, a timeout and a proxy page', () => {
+		expect(gotNoApiAnswer(new TypeError('Failed to fetch'))).toBe(true);
+		expect(gotNoApiAnswer(new DOMException('signal timed out', 'TimeoutError'))).toBe(true);
+		expect(gotNoApiAnswer('<html>502 Bad Gateway</html>')).toBe(true);
+	});
+
+	it('is false for an API error body and for a bug in our own code', () => {
+		expect(gotNoApiAnswer({ code: 'INTERNAL_ERROR', details: {} })).toBe(false);
+		expect(gotNoApiAnswer(new SyntaxError('Unexpected token'))).toBe(false);
+	});
+});
+
+describe('isUnexpectedRequestError', () => {
+	it('flags a failure in our own query code', () => {
+		expect(isUnexpectedRequestError(new SyntaxError('Unexpected token'))).toBe(true);
+	});
+
+	it('leaves out API errors, missing answers and cancellations', () => {
+		expect(isUnexpectedRequestError({ code: 'TICKET_NOT_FOUND', details: {} })).toBe(false);
+		expect(isUnexpectedRequestError(new TypeError('Failed to fetch'))).toBe(false);
+		expect(isUnexpectedRequestError('<html>502 Bad Gateway</html>')).toBe(false);
+		expect(isUnexpectedRequestError(new DOMException('aborted', 'AbortError'))).toBe(false);
+		expect(isUnexpectedRequestError(new CancelledError())).toBe(false);
 	});
 });

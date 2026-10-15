@@ -1,10 +1,11 @@
 import { version } from '$app/env';
+import * as Sentry from '@sentry/sveltekit';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { QueryClient } from '@tanstack/svelte-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
 import { del, get, set } from 'idb-keyval';
 
-import { getApiErrorCode } from '#lib/api/errors.js';
+import { gotNoApiAnswer, isUnexpectedRequestError } from '#lib/api/errors.js';
 import {
 	countUnreadNotificationsQueryKey,
 	getCurrentUserQueryKey,
@@ -49,6 +50,15 @@ const OFFLINE_QUERY_IDS = new Set(OFFLINE_QUERY_KEYS.map(([{ _id }]) => _id));
 // https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// API error bodies and dropped connections are expected and reported elsewhere
+// (the backend files its own errors), so only a failure in our own query code is
+// sent. Without a DSN, Sentry was never initialised and this is a no-op.
+function reportUnexpectedRequestError(error: unknown) {
+	if (isUnexpectedRequestError(error)) {
+		Sentry.captureException(error, { tags: { source: 'tanstack-query' } });
+	}
+}
+
 // Runs once per page load: nothing here reads `url` or calls `depends`, and the
 // app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
 // cache in it — lives for the whole session. It is load data rather than a
@@ -57,6 +67,12 @@ const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // outlives the document; logout empties it explicitly (Session).
 export const load: LayoutLoad = async () => {
 	const queryClient = new QueryClient({
+		// A failed query or mutation is caught by TanStack Query, so it never reaches
+		// `handleError` (hooks.client.ts). The cache-level callbacks run once per
+		// failure, not once per subscribed component, which makes them the place for
+		// error tracking (https://tkdodo.eu/blog/react-query-error-handling).
+		queryCache: new QueryCache({ onError: reportUnexpectedRequestError }),
+		mutationCache: new MutationCache({ onError: reportUnexpectedRequestError }),
 		defaultOptions: {
 			queries: {
 				// Data a load prefetched on hover/tap stays fresh when the page mounts a
@@ -67,8 +83,9 @@ export const load: LayoutLoad = async () => {
 				staleTime: 60 * 1000,
 				// Retry only a request that got no API answer — a network failure, a
 				// timeout, a gateway page. An API error (401, 404, validation) is the
-				// server's verdict, and repeating it only delays showing it by seconds.
-				retry: (failureCount, error) => failureCount < 3 && getApiErrorCode(error) === undefined
+				// server's verdict, and a bug in our own query code fails the same way
+				// every time; repeating either only delays showing it by seconds.
+				retry: (failureCount, error) => failureCount < 3 && gotNoApiAnswer(error)
 			},
 			mutations: {
 				// Every write is online-only (ADR-0022): it must fail at once with the

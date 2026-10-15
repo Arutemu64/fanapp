@@ -41,7 +41,13 @@ export function currentUserOptions() {
 
 			const { data, error, response } = await getCurrentUser({ signal });
 			if (response?.status === 401 || response?.status === 403) return null;
-			if (data === undefined) throw new Error('GET /me/ failed', { cause: error });
+			// Rethrow the SDK's error as-is, like every generated query does, so the
+			// retry rule and error reporting can tell a dropped connection from an
+			// API error body. That body is a plain object, hence the lint exception.
+			if (data === undefined) {
+				// eslint-disable-next-line @typescript-eslint/only-throw-error
+				throw error ?? new Error('GET /me/ returned no data');
+			}
 			return data;
 		}
 	});

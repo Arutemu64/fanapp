@@ -1,4 +1,5 @@
 import { error as kitError } from '@sveltejs/kit';
+import { isCancelledError } from '@tanstack/svelte-query';
 
 import type { ErrorMessage } from '#lib/api/generated/index.js';
 
@@ -306,6 +307,30 @@ export function isConnectionFailure(error: unknown): boolean {
 		return true;
 	}
 	return error instanceof DOMException && error.name === 'TimeoutError';
+}
+
+/**
+ * True when a request got no answer from the API itself: the connection
+ * failed, timed out, or a proxy answered with its own non-JSON page (a 502
+ * from a backend that is down), which the client hands back as a plain string.
+ * Worth retrying — unlike an API error body, the server's verdict, or a bug in
+ * our own code, which a retry only repeats.
+ */
+export function gotNoApiAnswer(error: unknown): boolean {
+	return isConnectionFailure(error) || typeof error === 'string';
+}
+
+/**
+ * True for a failed query or mutation that is neither an API error body nor a
+ * missing answer — a parse failure or a throw in our own query code. The backend
+ * reports its own errors and a dropped connection is expected, so only this is
+ * a frontend bug worth reporting. A deliberate cancel or abort is not.
+ */
+export function isUnexpectedRequestError(error: unknown): boolean {
+	if (gotNoApiAnswer(error) || getApiErrorPayload(error) || isCancelledError(error)) {
+		return false;
+	}
+	return !(error instanceof DOMException && error.name === 'AbortError');
 }
 
 /**
