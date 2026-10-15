@@ -35,12 +35,12 @@
         Referrer-Policy strict-origin-when-cross-origin
     }
 
-    # Compress API JSON. GET /schedule/ is unpaginated (~90 KiB for 250
-    # events) and every client refetches it on each schedule_updated SSE
-    # event, so it dominates venue-wifi traffic; gzip takes ~88% off it.
-    # Assets from the frontend container arrive already gzipped by
-    # nginx.conf and Caddy skips any response that carries a
-    # Content-Encoding, so they pass through rather than double-compressed.
+    # Compress API JSON and the SPA's assets. GET /schedule/ is unpaginated
+    # (~90 KiB for 250 events) and every client refetches it on each
+    # schedule_updated SSE event, so it dominates venue-wifi traffic; gzip
+    # takes ~88% off it. The frontend container serves its assets
+    # uncompressed (nginx.conf) so this is the one place they are encoded —
+    # Caddy skips any response that already carries a Content-Encoding.
     #
     # Exclude the SSE stream. encode withholds the response headers until
     # the first body bytes and buffers each chunk, which delays the
