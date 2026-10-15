@@ -39,7 +39,7 @@
 	     open/closed and already-voted state must not be shown stale (a ballot you
 	     can't submit is a dead end). So it is never persisted, and a copy still in
 	     memory from earlier in the session is not shown offline either. -->
-	<OfflineUnavailableState title={m.voting_offline_title()} message={m.voting_offline_message()} />
+	<OfflineUnavailableState />
 {:else if nominationsQuery.data === undefined}
 	{#if nominationsQuery.isError}
 		<ErrorState

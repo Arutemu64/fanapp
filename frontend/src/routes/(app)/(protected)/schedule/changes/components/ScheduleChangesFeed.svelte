@@ -43,10 +43,7 @@
 </script>
 
 {#if offlineMiss}
-	<OfflineUnavailableState
-		title={m.schedule_changes_offline_title()}
-		message={m.schedule_changes_offline_message()}
-	/>
+	<OfflineUnavailableState />
 {:else if changesQuery.data === undefined}
 	{#if changesQuery.isError}
 		<ErrorState

@@ -91,7 +91,7 @@
 {#if offline}
 	<!-- Voting is online-only, so there is no saved copy to show — say so plainly
 	     instead of crashing on a missing nomination. -->
-	<OfflineUnavailableState title={m.voting_offline_title()} message={m.voting_offline_message()} />
+	<OfflineUnavailableState />
 {:else if !nomination}
 	<!-- Online with nothing to show: the load gave up waiting (it leaves a
 	     connection failure to the page) or the request failed. Blaming the
