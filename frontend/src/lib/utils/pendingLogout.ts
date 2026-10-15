@@ -47,13 +47,10 @@ export function clearLogoutPending(): void {
 export async function flushPendingLogout(signal?: AbortSignal): Promise<void> {
 	if (!isLogoutPending()) return;
 
-	try {
-		const { response } = await logoutUser({ signal });
-		if (response?.ok || response?.status === 401 || response?.status === 403) {
-			clearLogoutPending();
-		}
-		// Any other status (e.g. 5xx): keep the intent and retry on the next edge.
-	} catch {
-		// Still unreachable (or timed out) — keep the intent for the next reconnect.
+	// The client never throws: a request that got no answer (still unreachable,
+	// timed out) comes back without a `response`, which keeps the intent like a 5xx.
+	const { response } = await logoutUser({ signal });
+	if (response?.ok || response?.status === 401 || response?.status === 403) {
+		clearLogoutPending();
 	}
 }

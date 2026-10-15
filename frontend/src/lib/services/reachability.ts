@@ -83,21 +83,6 @@ export function onReachableChange(listener: () => void): () => void {
 // torn down when the last of them goes away.
 const subscribeReachable = createSubscriber((update) => onReachableChange(update));
 
-/**
- * Device-level connectivity (`navigator.onLine`).
- *
- * Unlike `reachable` (a server probe), this only says whether a network
- * interface exists — it reports online on a captive portal or dead VPN. Reading
- * it alongside `current` lets the UI tell "the device has no internet" apart
- * from "the device is online but the server can't be reached", so an outage is
- * never miscast as the user's connection dropping. A `false` here is a
- * trustworthy negative (the device really is offline); a `true` is not.
- */
-export function deviceOnlineNow(): boolean {
-	// SSR / non-browser: assume online so the first paint still attempts the network.
-	return typeof navigator === 'undefined' ? true : navigator.onLine;
-}
-
 const subscribeDeviceOnline = createSubscriber((update) => {
 	window.addEventListener('online', update);
 	window.addEventListener('offline', update);
@@ -118,15 +103,19 @@ export const reachability = {
 		subscribeReachable();
 		return reachable;
 	},
+	/**
+	 * Device-level connectivity (`navigator.onLine`). Unlike `current` (a server
+	 * probe), this only says whether a network interface exists — it reports
+	 * online on a captive portal or dead VPN. Reading both lets the UI tell "the
+	 * device has no internet" apart from "the server can't be reached", so an
+	 * outage is never miscast as the user's connection dropping. A `false` is a
+	 * trustworthy negative; a `true` is not.
+	 */
 	get deviceOnline(): boolean {
 		subscribeDeviceOnline();
-		return deviceOnlineNow();
+		return navigator.onLine;
 	}
 };
-
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * One request to the health endpoint. A real CORS request (default mode) — not
@@ -161,9 +150,9 @@ async function runProbe(startVersion: number): Promise<boolean> {
 		if (await pingHealth()) return true;
 
 		const confirming =
-			version === startVersion && reachable && deviceOnlineNow() && Date.now() < deadline;
+			version === startVersion && reachable && navigator.onLine && Date.now() < deadline;
 		if (!confirming) return false;
-		await delay(OFFLINE_CONFIRM_GAP_MS);
+		await new Promise((resolve) => setTimeout(resolve, OFFLINE_CONFIRM_GAP_MS));
 	}
 }
 

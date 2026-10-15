@@ -2,7 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 
 import { currentUserOptions } from '#lib/api/index.js';
 import { m } from '#lib/paraglide/messages.js';
-import { isReachable } from '#lib/services/reachability.js';
+import { isReachable, probeReachability } from '#lib/services/reachability.js';
 import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';
@@ -20,6 +20,11 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		// work offline would log out an authenticated user on a flaky connection.
 		// Show the offline state instead (ErrorState reframes this into a
 		// "нет интернета" or "нет связи с сервером" page from live reachability).
+		// Ask the probe rather than trust the last verdict: on a cold start the API
+		// interceptors that keep it current aren't installed yet (the root layout
+		// mounts after this load), so `isReachable()` still holds its optimistic
+		// default. A probe already running is joined.
+		if (isReachable()) await probeReachability();
 		if (!isReachable()) {
 			// hooks.client.ts drops every 5xx HttpError from Sentry, so this expected
 			// offline blip never becomes a GlitchTip issue.

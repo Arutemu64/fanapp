@@ -614,6 +614,8 @@
 	"schedule_changes_empty": "Изменений пока нет",
 	"schedule_changes_forbidden": "У тебя нет доступа к этой странице",
 	"schedule_changes_load_failed": "Не удалось загрузить изменения программы",
+	"schedule_changes_offline_message": "Подключись к интернету, чтобы посмотреть изменения.",
+	"schedule_changes_offline_title": "Изменения программы доступны только онлайн",
 	"schedule_changes_title": "Изменения программы",
 	"schedule_empty_message": "Программа появится ближе к фестивалю",
 	"schedule_empty_title": "Программа пока пуста",

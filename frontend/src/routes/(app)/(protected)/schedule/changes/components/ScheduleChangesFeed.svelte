@@ -6,8 +6,10 @@
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 	import { SCHEDULE_CHANGES_PAGE_SIZE } from '#lib/constants/scheduleChanges.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
@@ -28,6 +30,9 @@
 	}));
 
 	let changes = $derived(changesQuery.data?.pages.flatMap((page) => page.schedule_changes) ?? []);
+	// Offline the query pauses instead of failing, so without this a cold miss
+	// would spin forever.
+	let offlineMiss = $derived(changesQuery.data === undefined && !reachability.current);
 
 	async function loadMore() {
 		const result = await changesQuery.fetchNextPage();
@@ -37,7 +42,12 @@
 	}
 </script>
 
-{#if changesQuery.data === undefined}
+{#if offlineMiss}
+	<OfflineUnavailableState
+		title={m.schedule_changes_offline_title()}
+		message={m.schedule_changes_offline_message()}
+	/>
+{:else if changesQuery.data === undefined}
 	{#if changesQuery.isError}
 		<ErrorState
 			variant="inline"
