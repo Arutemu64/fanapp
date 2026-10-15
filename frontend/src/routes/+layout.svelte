@@ -17,7 +17,11 @@
 		listScheduleChangesQueryKey,
 		listUserNotificationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions, watchApiResponses } from '#lib/api/index.js';
+	import {
+		currentUserOptions,
+		watchApiResponses,
+		watchBackgroundRefetchErrors
+	} from '#lib/api/index.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
@@ -45,7 +49,7 @@
 		router: browserSessionRouter,
 		isReachable
 	});
-	setToastService();
+	const toastService = setToastService();
 	const pwa = setPwaService();
 	setThemeService();
 	const appUpdate = setAppUpdateService();
@@ -90,6 +94,11 @@
 		const stopMonitor = startReachabilityMonitor();
 		const stopUpdates = appUpdate.start();
 		const stopWatching = watchApiResponses(queryClient, () => void session.expired());
+		// Fixed copy, not the mapped code: the user didn't act, so «Билет не найден»
+		// out of nowhere would read as a fault of theirs rather than a stale screen.
+		const stopWatchingRefetches = watchBackgroundRefetchErrors(queryClient, () =>
+			toastService.add('Не удалось обновить данные', 'error')
+		);
 
 		eventsClient.on('schedule_updated', handleScheduleUpdated);
 		eventsClient.on('config_updated', handleConfigUpdated);
@@ -100,6 +109,7 @@
 			stopMonitor();
 			stopUpdates();
 			stopWatching();
+			stopWatchingRefetches();
 			eventsClient.off('schedule_updated', handleScheduleUpdated);
 			eventsClient.off('config_updated', handleConfigUpdated);
 			eventsClient.off('notification_created', handleNotificationCreated);

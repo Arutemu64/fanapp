@@ -5,6 +5,7 @@
 
 	import type { GetVotingNominationOutput } from '#lib/api/generated/index.js';
 
+	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		getVotingNominationOptions,
 		getVotingNominationQueryKey,
@@ -12,10 +13,12 @@
 		listVotingNominationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
+	import ErrorState from '#lib/components/ErrorState.svelte';
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
@@ -74,13 +77,33 @@
 	<title>{nomination ? `${nomination.title} · ` : ''}Голосование · ФАН ФАН</title>
 </svelte:head>
 
-{#if !nomination}
+{#if !reachability.current}
 	<!-- Voting is online-only, so there is no saved copy to show — say so plainly
 	     instead of crashing on a missing nomination. -->
 	<OfflineUnavailableState
 		title="Голосование доступно только онлайн"
 		message="Подключись к интернету, чтобы голосовать за участников."
 	/>
+{:else if !nomination}
+	<!-- Online with nothing to show: the load gave up waiting (it leaves a
+	     connection failure to the page) or the request failed. Blaming the
+	     connection here would be wrong, so this says what actually happened. -->
+	{#if nominationQuery.isError}
+		<ErrorState
+			variant="inline"
+			onRetry={() => void nominationQuery.refetch()}
+			error={{
+				status: 500,
+				message: getApiErrorDetail(nominationQuery.error) ?? 'Не удалось загрузить номинацию'
+			}}
+		/>
+	{:else}
+		<div role="status" aria-live="polite" class="flex flex-col gap-3">
+			<span class="sr-only">Загрузка участников…</span>
+			<Skeleton class="h-10 w-full rounded-lg" />
+			<Skeleton class="h-64 w-full rounded-xl" />
+		</div>
+	{/if}
 {:else}
 	{#if showVoteHint || nomination?.works_url}
 		<SectionIntro>
