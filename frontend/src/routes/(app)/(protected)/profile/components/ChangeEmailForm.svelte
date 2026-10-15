@@ -265,7 +265,7 @@
 			>
 				{#if sending}
 					<Spinner data-icon="inline-start" />
-					{m.common_sending_progress()}
+					{m.common_sending()}
 				{:else if cooldown.remaining > 0}
 					{m.verification_resend_countdown({ remaining: cooldown.remaining })}
 				{:else}

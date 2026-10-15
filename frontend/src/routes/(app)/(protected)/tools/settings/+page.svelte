@@ -287,7 +287,7 @@
 	>
 		{#if saveMutation.isPending}
 			<Spinner data-icon="inline-start" />
-			{m.common_saving_progress()}
+			{m.common_saving()}
 		{:else}
 			{m.common_save()}
 		{/if}

@@ -191,7 +191,7 @@
 	<Button type="submit" class="w-full" disabled={isRequesting}>
 		{#if isRequesting}
 			<Spinner data-icon="inline-start" />
-			{m.common_sending_progress()}
+			{m.common_sending()}
 		{:else}
 			{m.common_continue()}
 		{/if}

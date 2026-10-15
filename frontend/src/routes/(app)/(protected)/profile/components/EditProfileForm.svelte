@@ -159,7 +159,7 @@
 			<Field.FieldError>{usernameError}</Field.FieldError>
 		{/if}
 		<ul class="flex flex-col gap-1 text-xs text-muted-foreground">
-			<li>{m.username_rule_length()}</li>
+			<li>{m.username_rule_length({ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH })}</li>
 			<li>{m.username_rule_start()}</li>
 			<li>{m.username_rule_rest()}</li>
 		</ul>

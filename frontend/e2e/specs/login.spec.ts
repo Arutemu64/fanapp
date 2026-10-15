@@ -7,7 +7,7 @@ import { expect, json, test } from '../fixtures';
 async function openEmailStep(page: Page) {
 	await page.goto('/login');
 	await page.getByRole('button', { name: 'Войти по почте' }).click();
-	return page.getByLabel('Эл. почта');
+	return page.getByLabel('Почта');
 }
 
 test.describe('email login', () => {
@@ -90,7 +90,7 @@ test.describe('email login', () => {
 		await expect(leave).toBeVisible();
 
 		await page.getByRole('button', { name: 'Войти по почте' }).click();
-		await expect(page.getByLabel('Эл. почта')).toBeFocused();
+		await expect(page.getByLabel('Почта')).toBeFocused();
 		await expect(leave).toHaveCount(0);
 	});
 
@@ -144,7 +144,7 @@ test(
 		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
 
 		await page.getByRole('button', { name: 'Войти по почте' }).click();
-		const email = page.getByLabel('Эл. почта');
+		const email = page.getByLabel('Почта');
 		await email.press('Enter');
 		await expect(page.getByRole('alert')).toBeVisible();
 		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);

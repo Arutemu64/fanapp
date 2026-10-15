@@ -68,7 +68,7 @@
 			// title and bottom nav show through behind the edge-to-edge map. Dragging
 			// the map down to close still fades it and reveals the page.
 			bgOpacity: 1,
-			closeTitle: m.lightbox_close(),
+			closeTitle: m.common_close(),
 			zoomTitle: m.lightbox_zoom(),
 			arrowPrevTitle: m.lightbox_prev(),
 			arrowNextTitle: m.lightbox_next(),

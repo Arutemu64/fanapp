@@ -255,8 +255,8 @@ test.describe('account dialogs start fresh on reopen', () => {
 	test('change email returns to the address step', async ({ page, api }) => {
 		api.use({ ...loggedInAs(), 'POST /me/email': json({}) });
 		await page.goto('/profile/account');
-		const dialog = page.getByRole('dialog', { name: 'Добавить эл. почту' });
-		const newEmail = dialog.getByLabel('Новая эл. почта');
+		const dialog = page.getByRole('dialog', { name: 'Добавить почту' });
+		const newEmail = dialog.getByLabel('Новая почта');
 
 		await page.getByRole('button', { name: 'Добавить' }).click();
 		await newEmail.fill('new@example.com');

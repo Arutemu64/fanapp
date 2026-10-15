@@ -108,7 +108,7 @@
 					<div
 						class="pointer-events-none absolute bottom-1 flex items-center text-xs text-muted-foreground select-none"
 					>
-						<span>{m.subscribe_counter_unit()}</span>
+						<span>{m.subscribe_counter_unit({ count: counter })}</span>
 					</div>
 				</div>
 
