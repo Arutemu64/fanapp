@@ -25,7 +25,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
 - **Auth**: sign in via VK ID or Telegram (social providers are enabled per deployment), email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
-- **Map**: festival venue maps.
+- **Guide**: the festival at a glance: date, times, age limit, social links, address, the rules, venue maps, and a page per festival activity. The activity pages are Markdown files in `frontend/src/content/guide/`, compiled with mdsvex, so adding or rewording one is a file edit ([ADR-0028](docs/adr/0028-mdsvex-for-guide-articles.md)).
 - **Organizer tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, and other admin screens, gated by permissions.
 - **Feedback**: user feedback submission.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
@@ -46,7 +46,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
     <td><img src="docs/assets/readme-gallery/schedule.webp" width="150" alt="Schedule: performances grouped by block, the one on stage now highlighted, a bell to subscribe to each"></td>
     <td><img src="docs/assets/readme-gallery/voting.webp" width="150" alt="Voting: a nomination's participants with vote counts and the user's own choice marked"></td>
     <td><img src="docs/assets/readme-gallery/notifications.webp" width="150" alt="Notifications: a subscription reminder, an on-stage announcement and organizer broadcasts"></td>
-    <td><img src="docs/assets/readme-gallery/guide.webp" width="150" alt="Guide: a festival intro, the venue map, directions and the festival's contacts"></td>
+    <td><img src="docs/assets/readme-gallery/guide.webp" width="150" alt="Guide: the festival's date, times and social links, the address, the venue map, the rules and a page per festival activity"></td>
     <td><img src="docs/assets/readme-gallery/map.webp" width="150" alt="Map: both floor plans, then «Что где», the posters' numbered legend as a list"></td>
     <td><img src="docs/assets/readme-gallery/profile.webp" width="150" alt="Profile: the account, a linked ticket, notification status and the theme switch"></td>
   </tr>

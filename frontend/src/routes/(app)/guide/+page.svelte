@@ -111,32 +111,26 @@
 		</ul>
 	</section>
 
-	<section aria-labelledby="guide-address" class="flex flex-col gap-2">
-		<h2 id="guide-address" class="px-1 text-sm font-medium text-muted-foreground">
-			{m.guide_address_heading()}
+	<section aria-labelledby="guide-important" class="flex flex-col gap-2">
+		<h2 id="guide-important" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_important_heading()}
 		</h2>
 		<MenuGroup>
+			<MenuLink href="guide/map" label={m.guide_map_label()} icon={MapIcon} />
 			{@render externalRow(
 				yandexMapsUrl,
 				MapPin,
 				`${m.guide_venue_name()}, ${m.guide_venue_address()}`,
 				m.guide_open_in_yandex_maps()
 			)}
+			{@render externalRow(
+				'https://fancom.info/pages/rules',
+				ScrollText,
+				m.guide_rules(),
+				'fancom.info/pages/rules'
+			)}
 		</MenuGroup>
 	</section>
-
-	<MenuGroup>
-		<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
-	</MenuGroup>
-
-	<MenuGroup>
-		{@render externalRow(
-			'https://fancom.info/pages/rules',
-			ScrollText,
-			m.guide_rules(),
-			'fancom.info/pages/rules'
-		)}
-	</MenuGroup>
 
 	<section aria-labelledby="guide-activities" class="flex flex-col gap-2">
 		<h2 id="guide-activities" class="px-1 text-sm font-medium text-muted-foreground">
