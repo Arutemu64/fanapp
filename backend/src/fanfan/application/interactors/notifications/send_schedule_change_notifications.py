@@ -75,43 +75,27 @@ class SendScheduleChangeNotifications:
         self.uow = uow
         self.events_broker = events_broker
 
-    @staticmethod
-    def _event_label(event: ScheduleChangeEntryDTO) -> str:
-        """Name an event inside a notification body.
-
-        A numberless event (a break) is named by its title instead — it is the
-        only handle the reader has, and there is no number to print.
-        """
-        if event.number is None:
-            return f"«{event.title}»"
-        return f"№{event.number:03d}"
-
-    @classmethod
-    def _resolve_reason_msg(
-        cls,
-        schedule_change: ScheduleChangeFullDTO,
+    async def _render_reason_msg(
+        self, schedule_change: ScheduleChangeFullDTO
     ) -> str | None:
         changed_event = schedule_change.changed_event
-        related_entry = schedule_change.related_entry
-        match schedule_change.type:
-            case ScheduleChangeType.SET_AS_CURRENT:
-                if changed_event:
-                    return f"Выступление {cls._event_label(changed_event)} началось"
-                if related_entry:
-                    return (
-                        f"Выступление {cls._event_label(related_entry)} "
-                        f"больше не текущее"
-                    )
-            case ScheduleChangeType.MOVED:
-                if changed_event:
-                    return f"Выступление {cls._event_label(changed_event)} перенесено"
-            case ScheduleChangeType.SKIPPED:
-                if changed_event:
-                    return f"Выступление {cls._event_label(changed_event)} было снято"
-            case ScheduleChangeType.UNSKIPPED:
-                if changed_event:
-                    return f"Выступление {cls._event_label(changed_event)} вернулось"
-        return None
+        event = changed_event
+        # Unchecking the current event leaves no new current event; the reason
+        # then names the event that left the stage.
+        if event is None and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
+            event = schedule_change.related_entry
+        if event is None:
+            return None
+        reason_msg = await self.template_renderer.render(
+            "schedule_change_reason.txt.jinja2",
+            {
+                "change_type": schedule_change.type,
+                "left_stage": changed_event is None,
+                "event_number": event.number,
+                "event_title": event.title,
+            },
+        )
+        return reason_msg.strip() or None
 
     async def _build_editor_notifications(
         self, schedule_change: ScheduleChangeFullDTO, reason_msg: str | None
@@ -120,6 +104,10 @@ class SendScheduleChangeNotifications:
         if schedule_change.user:
             editor = schedule_change.user
             editors = await self.user_gateway.read_schedule_editors()
+            body = await self.template_renderer.render(
+                "schedule_change_editor.jinja2",
+                {"editor_username": editor.username, "reason_msg": reason_msg},
+            )
             events.extend(
                 NotificationQueued(
                     notification=NewNotification(
@@ -128,8 +116,7 @@ class SendScheduleChangeNotifications:
                         ),
                         user_id=e.id,
                         title="Изменение программы",
-                        body=f"@{editor.username} сделал изменение "
-                        f"в программе: {reason_msg}",
+                        body=body,
                         type=NotificationType.SCHEDULE_CHANGE,
                         path="/schedule/changes",
                         mailing_id=schedule_change.mailing_id,
@@ -253,7 +240,7 @@ class SendScheduleChangeNotifications:
         current_event = await self.schedule_gateway.read_current_event()
         next_event = await self.schedule_gateway.read_next_event()
         changed_event = schedule_change.changed_event
-        reason_msg = self._resolve_reason_msg(schedule_change)
+        reason_msg = await self._render_reason_msg(schedule_change)
 
         notification_events: list[NotificationQueued] = []
         notification_events.extend(

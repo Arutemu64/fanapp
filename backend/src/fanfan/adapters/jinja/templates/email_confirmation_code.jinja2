@@ -3,7 +3,7 @@
 
 {% set title = "Подтверждение почты" %}
 
-{% block preheader %}Код подтверждения: {{ confirmation_code }}. Действует {{ expires_in_minutes }} минут.{% endblock %}
+{% block preheader %}Код подтверждения: {{ confirmation_code }}. Действует {{ expires_in_minutes }} {{ expires_in_minutes|plural('минуту', 'минуты', 'минут') }}.{% endblock %}
 
 {% block content %}
 <p style="margin:0 0 12px; font-size:15px; line-height:24px; color:#374151;">
@@ -29,7 +29,7 @@
 </table>
 
 <p style="margin:0 0 8px; font-size:14px; line-height:22px; color:#4b5563;">
-  Код действует <strong>{{ expires_in_minutes }}</strong> минут. Никому не сообщай его.
+  Код действует <strong>{{ expires_in_minutes }}</strong> {{ expires_in_minutes|plural('минуту', 'минуты', 'минут') }}. Никому не сообщай его.
 </p>
 <p style="margin:0; font-size:13px; line-height:20px; color:#9ca3af;">
   Если это письмо пришло по ошибке, просто проигнорируй его.

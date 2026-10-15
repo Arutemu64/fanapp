@@ -32,7 +32,7 @@ label often appears in a component, a push notification and an email.
 
 1. Every changed string reads correctly per the skills' voice and glossary.
 2. **Plurals carry all three forms** (1 / 2–4 / 5+). Frontend: a plural message in
-   `frontend/messages/ru.json` (see `votes_count`). Jinja: the `events_pluralize` macro pattern. A
+   `frontend/messages/ru.json` (see `votes_count`). Jinja: the `plural` filter (`{{ n|plural('минуту', 'минуты', 'минут') }}`). A
    string concatenating a bare `' мин.'` is a bug — fix it, don't preserve it.
 3. **Ё is written everywhere** (`ещё`, `её`, `всё`), and prose uses the
    typographic dash `—`, never a hyphen.
