@@ -9,8 +9,10 @@
 #
 # Usage on the server (always together with the base file):
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
-# (or simply `just deploy`).
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d --wait --remove-orphans
+# (or simply `just deploy`). With COMPOSE_FILE / COMPOSE_PROFILES set in the
+# server's .env (see .env.example), the flags drop to `docker compose pull` and
+# `docker compose up -d --wait --remove-orphans`.
 #
 # Pin a specific build for a reproducible deploy or a rollback by setting
 # IMAGE_TAG in .env, e.g. `IMAGE_TAG=sha-1a2b3c4`. Defaults to `latest`, which

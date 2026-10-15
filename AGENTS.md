@@ -101,7 +101,6 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 │       ├── routes/      # Pages & layouts
 │       └── lib/         # assets/ components/ api/ types/ services/ utils/ constants/ data/ testing/
 ├── shared/openapi/      # Shared OpenAPI spec
-├── config/              # Committed, non-secret infra config
 └── secrets/             # Gitignored runtime secrets (VAPID PEM); mounted read-only
 ```
 

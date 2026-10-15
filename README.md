@@ -264,7 +264,6 @@ relative `/api`, so the bundle itself stays domain-agnostic.
 backend/    FastAPI app (core / application / adapters / presentation / main)
 frontend/   SvelteKit app (routes + lib: components, api, services, utils)
 shared/     Shared OpenAPI spec
-config/     Committed, non-secret infra config (Redis, NATS)
 secrets/    Gitignored runtime secrets (VAPID PEM keys); ships empty
 docs/       Architecture guides and ADRs
 ```

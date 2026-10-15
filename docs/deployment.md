@@ -60,15 +60,16 @@ Cosplay2 — is runtime config in `.env` and needs no rebuild.
 
 ## What the server needs on disk
 
-Cloning the repo is the simplest way to get all of it:
+Cloning the repo is the simplest way to get all of it, but only three things are
+read at runtime:
 
 | Path | Why |
 | --- | --- |
-| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. |
+| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The NATS and Valkey server configs are inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
 | `.env` | All runtime config. Start from `.env.example`. |
-| `config/` | Redis config, mounted read-only. |
 | `secrets/` | VAPID PEM keys, mounted read-only. Ships empty — the keys are yours. |
-| `backend/alembic.ini` | Read by the `migration` service. |
+
+`backups/` is created by `just deploy` (see [Backups and restore](#backups-and-restore)).
 
 ## One-time setup
 
@@ -80,6 +81,15 @@ cp .env.example .env          # fill in placeholders (see the README's Getting s
 chmod 600 secrets/private_key.pem
 sudo chown 999:999 secrets/*.pem
 ```
+
+Then uncomment `COMPOSE_FILE` and `COMPOSE_PROFILES` in the server's `.env`.
+Compose reads both from the project `.env`
+([Compose pre-defined variables](https://docs.docker.com/compose/how-tos/environment-variables/envvars/)),
+so every bare `docker compose` command on the server — `pull`, `up`, `run`,
+`exec`, `logs` — targets the deployed stack without repeating
+`-f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops`.
+The commands below assume it. Leave them commented on a dev machine: there a bare
+`docker compose` would drive the prod overlay.
 
 Generate the VAPID keys with `just bootstrap` (or `just backend-generate-vapid`)
 on any machine and copy the PEMs across; `PUBLIC_VAPID_KEY` in `.env` must match
@@ -124,11 +134,22 @@ than as an error on our side.
 ## Deploying
 
 ```sh
-just deploy                   # docker compose ... -f docker-compose.prod.yml pull && up -d
+just deploy                   # pull, then up -d --wait --remove-orphans
+# or, with COMPOSE_FILE / COMPOSE_PROFILES set and no `just` on the server:
+mkdir -p backups && chmod 700 backups
+docker compose pull && docker compose up -d --wait --remove-orphans
 ```
 
 This pulls the images and restarts, building nothing on the host. Migrations run
 automatically via the `migration` service before the API starts.
+
+`--wait` blocks until every service is running or healthy and exits non-zero if
+one is not, so a broken release fails the command instead of looking deployed
+([`docker compose up`](https://docs.docker.com/reference/cli/docker/compose/up/)).
+The one-shot `migration` container exiting 0 does not trip it, because the app
+services gate on it with `service_completed_successfully`. `just deploy` caps the
+wait at 300s, which covers `pgbackup`'s on-start dump. `--remove-orphans` stops
+containers of services the Compose files no longer define.
 
 ### Changing a JetStream consumer's config
 
@@ -193,8 +214,7 @@ create one with the operator CLI. The password is prompted (never passed as an
 argument, so it stays out of shell history) and confirmed:
 
 ```sh
-docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-  run --rm --no-deps api cli users create <username>
+docker compose run --rm --no-deps api cli users create <username>
 ```
 
 `--role` defaults to `organizer` (a CLI-created account is a staff account; the toolbox
@@ -219,12 +239,11 @@ On a Docker deployment, run it one-off against the already-running stack.
 stopped container is left behind:
 
 ```sh
-docker compose -f docker-compose.yml -f docker-compose.prod.yml \
-  run --rm --no-deps api cli permissions grant <username> schedule:manage
+docker compose run --rm --no-deps api cli permissions grant <username> schedule:manage
 
-docker compose ... run --rm --no-deps api cli permissions grant <username> '*'
-docker compose ... run --rm --no-deps api cli permissions list <username>
-docker compose ... run --rm --no-deps api cli permissions revoke <username> schedule:manage
+docker compose run --rm --no-deps api cli permissions grant <username> '*'
+docker compose run --rm --no-deps api cli permissions list <username>
+docker compose run --rm --no-deps api cli permissions revoke <username> schedule:manage
 ```
 
 Grant `'*'` (quote it so the shell does not glob it) for a superuser that clears
@@ -486,10 +505,12 @@ on a single origin (e.g. `http://localhost`).
 `Caddyfile.example` enables `encode zstd gzip`. The win is the API: `GET
 /schedule/` is unpaginated and runs to ~90 KiB, and every client refetches it on
 each `schedule_updated` event, so compressing it takes ~88% off the heaviest
-traffic on a venue's wifi. Static frontend assets are already gzipped inside the
-frontend container by [`nginx.conf`](../frontend/nginx.conf), and Caddy skips any
-response that already carries a `Content-Encoding` — they are not compressed
-twice.
+traffic on a venue's wifi. The frontend container serves its static assets
+**uncompressed** ([`nginx.conf`](../frontend/nginx.conf)) and leaves encoding to
+this proxy: Caddy skips any response that already carries a `Content-Encoding`,
+so an NGINX-side gzip would pin the assets to gzip and keep zstd from the
+browsers that accept it. A proxy without `encode` therefore ships the SPA
+uncompressed — keep it on whatever fronts the stack.
 
 **`/api/events` (the SSE stream) is deliberately excluded**, and the exclusion
 should survive any rewrite of this file. Compression middleware buffers chunks

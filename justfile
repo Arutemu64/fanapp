@@ -233,7 +233,11 @@ run-prod build="--build": _backups-dir
 # Server deploy: pull prebuilt images and (re)start
 deploy: _backups-dir
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
+    # --wait fails the deploy if a service never turns healthy (the finished
+    # migration container counts as done, via service_completed_successfully);
+    # the timeout covers pgbackup's on-start dump. --remove-orphans drops
+    # containers of services the Compose files no longer define.
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d --wait --wait-timeout 300 --remove-orphans
 
 # pgbackup's bind mount, kept owner-only: left to Docker it is created root-owned
 # and world-readable, and the dumps hold attendees' personal data. chmod rather

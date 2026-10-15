@@ -231,8 +231,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./backend/alembic.ini:/app/alembic.ini:ro
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
     init: true
@@ -318,8 +316,10 @@ services:
     image: nats:2.14-alpine
     volumes:
       - nats-data:/data
-      - ./config/nats/nats.conf:/etc/nats/nats.conf:ro
-    # JetStream (enable + store_dir + fsync tuning) lives in the mounted config;
+    configs:
+      - source: nats-conf
+        target: /etc/nats/nats.conf
+    # JetStream (enable + store_dir + fsync tuning) lives in the nats-conf config;
     # auth stays on the CLI so the password never lands in the committed file
     # (compose interpolates it from .env), same split as redis --requirepass.
     command: "-c /etc/nats/nats.conf -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
@@ -398,7 +398,9 @@ services:
       REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
       - redis-data:/data
-      - ./config/redis/redis.conf:/usr/local/etc/valkey/valkey.conf:ro
+    configs:
+      - source: valkey-conf
+        target: /usr/local/etc/valkey/valkey.conf
     command: "valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "127.0.0.1:6379:6379"
@@ -419,6 +421,76 @@ services:
     profiles: [ "core" ]
     networks:
       - backend-network
+
+# Server config for nats and redis, inlined so a deploy needs no config files
+# beside the Compose files. Compose interpolates `content`, so a literal `$`
+# here must be written `$$`. Inline configs cannot target a `read_only` service
+# (Compose refuses: "`file` is the sole supported option"); nats and redis are
+# not read-only, so keep it that way or move the config back to a `file:`.
+configs:
+  nats-conf:
+    content: |
+      # NATS JetStream config for the FAN FAN companion app.
+      #
+      # Defining this jetstream block is what ENABLES JetStream (store_dir set here),
+      # so the CLI carries no --js/--sd — only auth (--user/--pass, kept off this
+      # committed file) and monitoring (-m 8222). A --js flag on the command line
+      # would override this block and silently reset sync_interval to its default.
+      jetstream {
+        # Matches the nats-data volume mount in docker-compose.yml.
+        store_dir: "/data"
+
+        # How often the filestore is fsync'd to disk. The default is 2 minutes:
+        # JetStream acks a publish immediately but only flushes every sync_interval,
+        # so a host crash (power loss, kernel panic) in that window drops writes that
+        # were already acknowledged (nats-server#7564; Jepsen NATS 2.12.1, 2025-12).
+        # We run single-node with no replication, so there is no second replica to
+        # recover from — the fsync window IS the durability guarantee. This matters
+        # because the outbox marks a row published once NATS acks it and never
+        # redelivers it (see presentation/faststream/jstream.py), so an event lost in
+        # the fsync window is lost on both sides. 10s shrinks that window 12x from the
+        # 120s default at negligible I/O cost for this traffic. Not "always" (fsync
+        # before every ack): this stream also carries ephemeral SSE subjects, and a
+        # per-message fsync would add disk latency to real-time delivery for no gain.
+        sync_interval: "10s"
+      }
+  valkey-conf:
+    content: |
+      # Valkey config for the FAN FAN companion app.
+      # This store holds only regenerable, TTL'd data: web sessions, auth tokens,
+      # rate-limit counters, and short-lived locks. There is no system-of-record
+      # data here, so both the memory policy and persistence are tuned to degrade
+      # gracefully rather than to guarantee durability.
+
+      # Listen on all interfaces inside the container. This is safe because the
+      # host only publishes the port on 127.0.0.1 (see docker-compose.yml), the
+      # service sits on an isolated Docker network, and access requires a password
+      # (--requirepass, passed on the command line so it stays out of this
+      # committed, non-secret file).
+      bind 0.0.0.0
+
+      # Memory ceiling. Kept below the container's 256M limit so Valkey evicts keys
+      # itself instead of being OOM-killed by the kernel, with headroom for the
+      # copy-on-write spike during RDB saves. Without this, the default noeviction
+      # policy makes writes (logins, token issue, rate-limit increments) fail as
+      # memory fills, right before the container is killed.
+      maxmemory 192mb
+
+      # Every key here carries a TTL and is regenerable, so evicting the coldest
+      # keys under memory pressure (a user re-logs in, a rate-limit window resets)
+      # is strictly better than failing writes.
+      maxmemory-policy allkeys-lru
+
+      # RDB snapshots. Enough to survive a restart without logging everyone out;
+      # some minutes of data loss on a hard crash is acceptable for this data.
+      save 900 1
+      save 300 10
+      save 60 10000
+
+      # A failed background snapshot must not take the app down. Persistence here is
+      # best-effort, so keep serving writes even if a save fails (default is `yes`,
+      # which stops all writes until the next successful save).
+      stop-writes-on-bgsave-error no
 
 # Build-time secret for the frontend image, sourced from .env. Present but
 # empty in most setups (the upload is skipped); see .env.example.
