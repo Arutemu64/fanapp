@@ -115,7 +115,7 @@
 						target={link.external ? '_blank' : undefined}
 						rel={link.external ? 'noopener noreferrer' : undefined}
 					>
-						<Icon class="size-5" aria-hidden="true" />
+						<Icon aria-hidden="true" />
 						<span class="sr-only">
 							{link.label()}{link.external ? ` (${m.guide_opens_in_new_tab()})` : ''}
 						</span>
