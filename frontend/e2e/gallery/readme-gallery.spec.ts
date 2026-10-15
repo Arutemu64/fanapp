@@ -115,6 +115,16 @@ test('guide', async ({ page }) => {
 	await saveWebp(page, 'guide');
 });
 
+test('map', async ({ page }) => {
+	await page.goto('/guide/map');
+	// The thumbnails are decorative (alt=""): each card's button carries the name.
+	await expect(
+		page.getByRole('button', { name: /открыть карту на весь экран/ }).first()
+	).toBeVisible();
+	await settle(page);
+	await saveWebp(page, 'map');
+});
+
 test('profile', async ({ page, api }) => {
 	// A linked ticket and Telegram fill the hub's values: «Привязан», «Включены».
 	api.use(
