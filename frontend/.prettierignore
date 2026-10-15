@@ -22,4 +22,7 @@ build/
 /blob-report/
 
 /src/lib/paraglide/
-/project.inlang/cache/
+
+# inlang writes these on compile; the .gitignore it also writes is not there yet on a fresh CI checkout
+/project.inlang/*
+!/project.inlang/settings.json
