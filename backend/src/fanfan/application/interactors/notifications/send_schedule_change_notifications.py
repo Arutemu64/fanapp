@@ -127,9 +127,9 @@ class SendScheduleChangeNotifications:
                             schedule_change.id, e.id, "editor"
                         ),
                         user_id=e.id,
-                        title="Изменение расписания",
+                        title="Изменение программы",
                         body=f"@{editor.username} сделал изменение "
-                        f"в расписании: {reason_msg}",
+                        f"в программе: {reason_msg}",
                         type=NotificationType.SCHEDULE_CHANGE,
                         path="/schedule/changes",
                         mailing_id=schedule_change.mailing_id,
