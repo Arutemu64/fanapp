@@ -1,4 +1,7 @@
 <script lang="ts">
+	// Deviates from upstream: the focus ring is solid `ring-ring`, not `ring-ring/50`.
+	// At half alpha it measures ~2.4:1 against the surface, under the 3:1 WCAG 1.4.11
+	// asks of a focus indicator; see `--ring` in app.css.
 	import type { ComponentProps } from 'svelte';
 
 	import { Label } from '#lib/components/ui/label/index.js';
@@ -16,7 +19,7 @@
 	bind:ref
 	data-slot="field-label"
 	class={cn(
-		'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-muted/50 has-[>[data-slot=field]]:has-[:focus-visible]:border-ring has-[>[data-slot=field]]:has-[:focus-visible]:ring-3 has-[>[data-slot=field]]:has-[:focus-visible]:ring-ring/50 *:data-[slot=field]:p-3 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10',
+		'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50 has-data-checked:border-primary/30 has-data-checked:bg-primary/5 has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border has-[>[data-slot=field]]:not-has-[:disabled,[data-disabled]]:hover:bg-muted/50 has-[>[data-slot=field]]:has-[:focus-visible]:border-ring has-[>[data-slot=field]]:has-[:focus-visible]:ring-3 has-[>[data-slot=field]]:has-[:focus-visible]:ring-ring *:data-[slot=field]:p-3 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10',
 		'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col',
 		className
 	)}

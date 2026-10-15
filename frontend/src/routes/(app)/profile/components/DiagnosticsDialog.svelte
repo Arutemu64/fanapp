@@ -204,7 +204,7 @@
 		<div class="flex flex-col gap-4">
 			{#each sections as section (section.title)}
 				<section>
-					<h3 class="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+					<h3 class="mb-1 text-sm font-semibold text-foreground">
 						{section.title}
 					</h3>
 					<dl class="divide-y divide-border rounded-xl border border-border text-sm">
