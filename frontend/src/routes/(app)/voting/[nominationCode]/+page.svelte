@@ -37,12 +37,15 @@
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
 	// Never shown from the cache offline: voting is a live, online-only surface
-	// (see ../+page.svelte). A read that got no answer counts as offline too, as
-	// on the nominations list, rather than holding the skeleton until the probe
-	// confirms it or the retries run out.
+	// (see ../+page.svelte). A read that got no answer counts as offline too
+	// while it is still retrying, as on the nominations list, rather than holding
+	// the skeleton until the probe confirms it. Once the retries stop with the
+	// server reachable, ErrorState and its retry button take over.
 	let offline = $derived(
 		!reachability.current ||
-			(nominationQuery.data === undefined && isConnectionFailure(nominationQuery.failureReason))
+			(nominationQuery.data === undefined &&
+				nominationQuery.fetchStatus !== 'idle' &&
+				isConnectionFailure(nominationQuery.failureReason))
 	);
 	let nomination: GetVotingNominationOutput | undefined = $derived(
 		offline ? undefined : nominationQuery.data

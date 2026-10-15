@@ -23,10 +23,14 @@
 	let nominations = $derived(nominationsQuery.data?.nominations ?? []);
 	// A read that got no answer means the same here as being offline, without
 	// waiting for the reachability probe to confirm it or for the retries to run
-	// out: `failureReason` is set on the first failed attempt.
+	// out: `failureReason` is set on the first failed attempt. Only while it is
+	// still retrying, though: once the retries stop with the server reachable,
+	// ErrorState and its retry button take over, since reconnect never fires.
 	let offline = $derived(
 		!reachability.current ||
-			(nominationsQuery.data === undefined && isConnectionFailure(nominationsQuery.failureReason))
+			(nominationsQuery.data === undefined &&
+				nominationsQuery.fetchStatus !== 'idle' &&
+				isConnectionFailure(nominationsQuery.failureReason))
 	);
 </script>
 
