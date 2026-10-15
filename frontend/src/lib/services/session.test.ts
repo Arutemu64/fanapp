@@ -60,6 +60,15 @@ describe('Session.loggedIn', () => {
 		expect(calls).toEqual(['goToLoginTarget', 'restart']);
 	});
 
+	it('joins the /me/ refetch its invalidation starts instead of aborting it for a second one', async () => {
+		getCurrentUser.mockResolvedValue({ data: USER, response: { status: 200 } });
+		const { session } = setup();
+
+		await session.loggedIn();
+
+		expect(getCurrentUser).toHaveBeenCalledOnce();
+	});
+
 	it('cancels a logout queued offline so the reconnect flush cannot revoke the new session', async () => {
 		getCurrentUser.mockResolvedValue({ data: USER, response: { status: 200 } });
 		markLogoutPending();

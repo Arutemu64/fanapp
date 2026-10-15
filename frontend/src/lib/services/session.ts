@@ -71,9 +71,13 @@ export class Session {
 
 		// Everything cached so far was fetched as a guest: mark it all stale, so what
 		// is on screen refetches now and the rest when next shown. Identity is awaited,
-		// since the guards on the way to `next` read it from the cache.
+		// since the guards on the way to `next` read it from the cache; it joins the
+		// /me/ refetch the invalidation just started instead of aborting it.
 		void this.#queryClient.invalidateQueries();
-		await this.#queryClient.refetchQueries({ queryKey: getCurrentUserQueryKey() });
+		await this.#queryClient.refetchQueries(
+			{ queryKey: getCurrentUserQueryKey() },
+			{ cancelRefetch: false }
+		);
 
 		await this.#router.goToLoginTarget();
 		this.#events.restart();
