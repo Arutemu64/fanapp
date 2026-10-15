@@ -33,8 +33,12 @@
 	// On a phone the list runs below the plan, so a row tapped far down would
 	// light up a zone off screen. `nearest` scrolls only when the plan isn't
 	// already in view; the layout's scroll-padding keeps it clear of the navbar.
-	function selectFromList(number: number) {
+	// Only for a tap or click: Enter/Space fire a click with `detail` 0, and
+	// scrolling then would carry the focused row off screen (WCAG 2.4.11); the
+	// status line still announces the pick.
+	function selectFromList(event: MouseEvent, number: number) {
 		togglePoint(number);
+		if (event.detail === 0) return;
 		planElement?.scrollIntoView({
 			block: 'nearest',
 			behavior: prefersReducedMotion.current ? 'auto' : 'smooth'
@@ -64,7 +68,13 @@
 		<!-- Two columns once there's room, so the plan stays in view beside its
 		list; on a phone the list follows the plan. -->
 		<div class="grid items-start gap-4 lg:grid-cols-[3fr_2fr]">
-			<div class="flex flex-col gap-3 lg:sticky lg:top-24">
+			<!-- Sticks below the top chrome through the (app) layout's --sticky-top,
+			which follows the bar as it hides and the connection banner as it shows. -->
+			<div
+				class="flex flex-col gap-3 ease-out motion-reduce:transition-none lg:sticky lg:transition-[top]"
+				style:top="calc(var(--sticky-top, 0px) + 1rem)"
+				style:transition-duration="var(--sticky-top-duration, 0ms)"
+			>
 				<!-- The plan is a picture to sighted users and one image to a screen
 				reader: the list below carries every place by name and is the keyboard
 				path to the same selection, so the zones stay pointer-only rather than
@@ -153,6 +163,8 @@
 						<!-- Pointer-only by design; the list below is the keyboard path (see above). -->
 						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 						<g
+							data-point={zone.point}
+							data-selected={isSelected || undefined}
 							onclick={() => togglePoint(zone.point)}
 							class={[
 								'cursor-pointer transition-opacity motion-reduce:transition-none',
@@ -216,7 +228,7 @@
 								<button
 									type="button"
 									aria-pressed={isSelected}
-									onclick={() => selectFromList(point.number)}
+									onclick={(event) => selectFromList(event, point.number)}
 									class={[
 										'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600',
 										isSelected && 'bg-primary/10'
