@@ -15,6 +15,7 @@
 
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import {
 		canGenerateTickets,
 		canImportSchedule,
@@ -50,64 +51,64 @@
 	let tools = $derived<Tool[]>([
 		{
 			key: 'settings',
-			title: 'Настройки фестиваля',
-			description: 'Даты фестиваля и тайминги программы.',
+			title: m.tool_settings(),
+			description: m.tool_settings_description(),
 			icon: SlidersHorizontal,
 			href: 'tools/settings',
 			canAccess: canManageSettings(user)
 		},
 		{
 			key: 'voting',
-			title: 'Голосование',
-			description: 'Включай голосование, следи за лидерами и разыгрывай приз.',
+			title: m.nav_voting(),
+			description: m.tool_voting_description(),
 			icon: Award,
 			href: 'tools/voting',
 			canAccess: canManageVoting(user)
 		},
 		{
 			key: 'import-schedule',
-			title: 'Импорт программы',
-			description: 'Загрузи программу из Excel-файла.',
+			title: m.tool_import_schedule(),
+			description: m.tool_import_schedule_description(),
 			icon: FileUp,
 			href: 'tools/import-schedule',
 			canAccess: canImportSchedule(user)
 		},
 		{
 			key: 'broadcast',
-			title: 'Рассылка уведомлений',
-			description: 'Массовые уведомления для выбранных категорий участников.',
+			title: m.tool_broadcast(),
+			description: m.tool_broadcast_description(),
 			icon: Megaphone,
 			href: 'tools/broadcast',
 			canAccess: canSendNotifications(user)
 		},
 		{
 			key: 'generate-tickets',
-			title: 'Генерация билетов',
-			description: 'Новые билеты для выбранной роли — получатель привязывает по номеру.',
+			title: m.tool_generate_tickets(),
+			description: m.tool_generate_tickets_description(),
 			icon: Ticket,
 			href: 'tools/generate-tickets',
 			canAccess: canGenerateTickets(user)
 		},
 		{
 			key: 'sync',
-			title: 'Синхронизация',
-			description: 'Подтяни свежие данные вручную, не дожидаясь автообновления.',
+			title: m.tool_sync(),
+			description: m.tool_sync_description(),
 			icon: RotateCw,
 			href: 'tools/sync',
 			canAccess: canRunSync(user)
 		},
 		{
 			key: 'feedback',
-			title: 'Отзывы',
-			description: 'Что участники пишут о приложении — свежие отзывы сверху.',
+			title: m.tool_feedback(),
+			description: m.tool_feedback_description(),
 			icon: MessageSquare,
 			href: 'tools/feedback',
 			canAccess: canReadFeedback(user)
 		},
 		{
 			key: 'users',
-			title: 'Пользователи',
-			description: 'Список всех пользователей с поиском и карточкой каждого.',
+			title: m.tool_users(),
+			description: m.tool_users_description(),
 			icon: Users,
 			href: 'tools/users',
 			canAccess: canReadUsers(user)
@@ -117,9 +118,7 @@
 
 <!-- Capped and centred like the /profile hub this menu continues. -->
 <div class="mx-auto max-w-2xl">
-	<SectionIntro
-		description="Для работы организаторов фестиваля. Инструменты с замком тебе пока недоступны."
-	/>
+	<SectionIntro description={m.tools_intro()} />
 
 	<!-- Shown to every organizeranizer: the tools layout already gates this whole section to the
 	     organizer role, so no per-tool permission scopes the live count. -->

@@ -13,6 +13,7 @@
 	import { currentUserOptions } from '#lib/api/index.js';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
@@ -81,7 +82,7 @@
 	let hasSubscriptions = $derived(schedule.some((event) => event.user_subscription !== null));
 	// Before the festival the steps are preparation; once it runs they are app setup.
 	let readyHeading = $derived(
-		phase === 'before' ? 'Подготовься к фестивалю' : 'Настрой приложение'
+		phase === 'before' ? m.home_ready_heading_before() : m.home_ready_heading_setup()
 	);
 	let showStage = $derived(phase === 'during' && hasProgramme);
 	let featuredAct = $derived(phase === 'during' ? snapshot.featured : null);
@@ -176,7 +177,7 @@
 </script>
 
 <svelte:head>
-	<title>ФАН ФАН</title>
+	<title>{m.app_name()}</title>
 </svelte:head>
 
 {#snippet supporting()}
@@ -191,10 +192,7 @@
 	<HeroCard {phase} festivalStart={config.festival_start} featured={featuredAct} />
 
 	{#if showStaleNotice}
-		<StaleDataNotice
-			message="Показана сохранённая программа."
-			cachedAt={scheduleQuery.dataUpdatedAt}
-		/>
+		<StaleDataNotice message={m.schedule_cached_notice()} cachedAt={scheduleQuery.dataUpdatedAt} />
 	{/if}
 
 	{#if showUpNext}

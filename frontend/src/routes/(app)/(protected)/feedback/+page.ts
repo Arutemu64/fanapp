@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 import { isReachable } from '#lib/services/reachability.js';
 
 import type { PageLoad } from './$types';
@@ -7,7 +8,7 @@ import type { PageLoad } from './$types';
 // instead of a form whose submit is doomed. Mirrors the voting load's pattern.
 export const load: PageLoad = () => {
 	return {
-		title: 'Обратная связь',
+		title: m.feedback_title(),
 		offlineUnavailable: !isReachable()
 	};
 };

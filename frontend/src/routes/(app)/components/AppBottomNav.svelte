@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { isNavItemActive } from '#lib/utils/nav.js';
 
@@ -43,7 +44,7 @@
      first tap on a tab never waits on a chunk; data still waits for the tap
      (preload-data="hover" on <body> fires on touchstart). -->
 <nav
-	aria-label="Разделы"
+	aria-label={m.nav_aria_label()}
 	data-sveltekit-preload-code="viewport"
 	class="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-gap) z-(--z-overlay) px-2 select-none [-webkit-touch-callout:none] min-[25rem]:px-3 md:hidden"
 >
@@ -120,10 +121,10 @@
 							: 'text-muted-foreground group-hover:text-foreground'
 					]}
 				>
-					{label}
+					{label()}
 				</span>
 				{#if updateDot}
-					<span class="sr-only">, доступно обновление</span>
+					<span class="sr-only">{m.nav_update_available()}</span>
 				{/if}
 			</a>
 		{/each}

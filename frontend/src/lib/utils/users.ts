@@ -1,22 +1,23 @@
+import { m } from '#lib/paraglide/messages.js';
 // The one place the role names live, so every screen says the same thing.
-const roleLabels: Record<string, string> = {
-	visitor: 'Зритель',
-	participant: 'Участник',
-	volunteer: 'Волонтёр',
-	organizer: 'Организатор'
+const roleLabels: Record<string, () => string> = {
+	visitor: m.role_visitor,
+	participant: m.role_participant,
+	volunteer: m.role_volunteer,
+	organizer: m.role_organizer
 };
 
 export function getRoleLabel(role: string): string {
-	return roleLabels[role] || role;
+	return roleLabels[role]?.() || role;
 }
 
-const socialProviderLabels: Record<string, string> = {
-	telegram: 'Telegram',
-	vk: 'ВКонтакте'
+const socialProviderLabels: Record<string, () => string> = {
+	telegram: () => 'Telegram',
+	vk: m.social_vk
 };
 
 export function getSocialProviderLabel(provider: string): string {
-	return socialProviderLabels[provider] || provider;
+	return socialProviderLabels[provider]?.() || provider;
 }
 
 /**

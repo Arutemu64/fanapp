@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { m } from '#lib/paraglide/messages.js';
+
 import {
 	formatDayHeading,
 	formatDuration,
@@ -8,7 +10,6 @@ import {
 	formatRelativeTime,
 	formatUntil,
 	fromEventDateTimeLocal,
-	pluralize,
 	previousDayKey,
 	toEventDateTimeLocal
 } from './formatters';
@@ -98,23 +99,24 @@ describe('festival start helpers', () => {
 	});
 });
 
-describe('pluralize', () => {
-	const forms = ['событие', 'события', 'событий'] as const;
-
+// The messages pick their form with Intl.PluralRules('ru') (CLDR), not mod-10
+// arithmetic: 11–14 are `many` even though they end in 1–4. `other` is fractions
+// only and takes the `few` form ("1,5 часа").
+describe('Russian plural messages', () => {
 	it.each([
-		[0, 'событий'],
-		[1, 'событие'],
-		[2, 'события'],
-		[5, 'событий'],
-		[11, 'событий'],
-		[12, 'событий'],
-		[21, 'событие'],
-		[22, 'события'],
-		[25, 'событий'],
-		[111, 'событий'],
-		[1.5, 'события']
+		[0, '0 голосов'],
+		[1, '1 голос'],
+		[2, '2 голоса'],
+		[5, '5 голосов'],
+		[11, '11 голосов'],
+		[12, '12 голосов'],
+		[21, '21 голос'],
+		[22, '22 голоса'],
+		[25, '25 голосов'],
+		[111, '111 голосов'],
+		[1.5, '1.5 голоса']
 	])('%d → %s', (count, expected) => {
-		expect(pluralize(count, ...forms)).toBe(expected);
+		expect(m.votes_count({ count })).toBe(expected);
 	});
 });
 

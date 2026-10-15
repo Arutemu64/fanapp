@@ -9,6 +9,7 @@
 		getCurrentUserQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import ChangePasswordForm from './ChangePasswordForm.svelte';
@@ -34,7 +35,7 @@
 
 	// Screen-reader description for the dialog (visually the form speaks for itself).
 	let dialogDescription = $derived(
-		hasPassword ? 'Смени пароль от своего аккаунта.' : 'Задай пароль для входа в аккаунт.'
+		hasPassword ? m.password_modal_description_change() : m.password_modal_description_set()
 	);
 
 	// The mutation lives here, not in the form: the form unmounts when the dialog
@@ -43,7 +44,7 @@
 	// (ADR-0022).
 	async function save(body: ChangePasswordInput) {
 		await changePasswordMutation.mutateAsync({ body });
-		toastService.add(hasPassword ? 'Пароль изменён' : 'Пароль установлен', 'success');
+		toastService.add(hasPassword ? m.password_changed() : m.password_set_done(), 'success');
 		open = false;
 	}
 </script>
@@ -53,7 +54,7 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Lock class="size-5 text-muted-foreground" />
-				{hasPassword ? 'Изменение пароля' : 'Установка пароля'}
+				{hasPassword ? m.password_modal_title_change() : m.password_modal_title_set()}
 			</Dialog.Title>
 			<Dialog.Description class="sr-only">{dialogDescription}</Dialog.Description>
 		</Dialog.Header>

@@ -16,6 +16,7 @@
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
@@ -62,8 +63,8 @@
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
 	const loginErrorToasts = {
-		cancelled: { message: 'Вход отменён.', type: 'info' },
-		failed: { message: 'Не удалось войти. Попробуй ещё раз.', type: 'error' }
+		cancelled: { message: m.login_cancelled(), type: 'info' },
+		failed: { message: m.login_failed(), type: 'error' }
 	} as const;
 
 	// Starting an OAuth login is a full-page navigation that waits on our backend
@@ -112,7 +113,7 @@
 			return;
 		}
 		openingProvider = null;
-		toastService.add('Не удалось выйти из прошлого аккаунта. Попробуй ещё раз.', 'error');
+		toastService.add(m.login_previous_logout_failed(), 'error');
 	}
 
 	function showEmailLogin() {
@@ -179,7 +180,7 @@
 />
 
 <svelte:head>
-	<title>Вход · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.login_title() })}</title>
 </svelte:head>
 
 <Card.Root class="w-full rounded-2xl p-4 sm:p-6">
@@ -191,13 +192,13 @@
 				onclick={goBack}
 			>
 				<ArrowLeft data-icon="inline-start" />
-				Назад
+				{m.common_back()}
 			</Button>
 		{/if}
 
 		<div class="flex flex-col gap-1 text-center">
 			<!-- Just «Вход»: the logo above already names ФАН ФАН. -->
-			<h1 class="text-2xl font-bold text-foreground">Вход</h1>
+			<h1 class="text-2xl font-bold text-foreground">{m.login_title()}</h1>
 			{#if step === 'options'}
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
 					sub-steps are the task, not the pitch. Every method — email or social —
@@ -205,10 +206,10 @@
 					so the entry screen says so once rather than leave a newcomer hunting
 					for «Регистрация». -->
 				<p class="text-sm text-muted-foreground">
-					Получай персональные уведомления, голосуй за участников и оставляй обратную связь.
+					{m.login_intro()}
 				</p>
 				<p class="text-sm text-muted-foreground">
-					Аккаунта ещё нет? Он создастся при первом входе.
+					{m.login_signup_note()}
 				</p>
 			{/if}
 		</div>
@@ -228,10 +229,10 @@
 						>
 							{#if openingProvider === provider}
 								<Spinner data-icon="inline-start" />
-								Открываем {meta.name}…
+								{m.login_opening_provider({ name: meta.name })}
 							{:else}
 								<Icon class={meta.iconClass} data-icon="inline-start" />
-								Войти через {meta.name}
+								{m.login_via_provider({ name: meta.name })}
 							{/if}
 						</Button>
 					{/each}
@@ -244,7 +245,7 @@
 						onclick={showEmailLogin}
 					>
 						<Mail data-icon="inline-start" />
-						Войти по почте
+						{m.login_via_email()}
 					</Button>
 				{:else if step === 'code' && codeSentTo}
 					<VerifyCodeForm email={codeSentTo} />
@@ -275,7 +276,7 @@
 			class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 			onclick={() => goto(resolve(''))}
 		>
-			Продолжить без входа
+			{m.login_continue_guest()}
 		</button>
 	</div>
 {/if}

@@ -6,7 +6,7 @@
 
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
-	import { pluralize } from '#lib/utils/formatters.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		nomination: NominationVotingDto;
@@ -33,15 +33,14 @@
 	<!-- Header row mirrors ParticipantCard: reserved min-h keeps the title fixed whether voted or not. -->
 	<div class="mb-2 flex min-h-6 items-center justify-between gap-2">
 		<span class="text-xs font-semibold tracking-wide text-muted-foreground">
-			{nomination.participants_count}
-			{pluralize(nomination.participants_count, 'участник', 'участника', 'участников')}
+			{m.participants_count({ count: nomination.participants_count })}
 		</span>
 
 		{#if nomination.user_vote}
 			<Badge variant="outline" class="shrink-0 border-success/30 bg-success/10 text-success">
 				<span class="flex items-center gap-1">
 					<CheckCircle2 class="size-3.5" />
-					Голос учтён
+					{m.voting_vote_counted()}
 				</span>
 			</Badge>
 		{/if}
@@ -60,7 +59,7 @@
 	<div
 		class="mt-3 flex items-center justify-end gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary"
 	>
-		{nomination.user_vote ? 'Перейти' : 'Голосовать'}
+		{nomination.user_vote ? m.common_go() : m.voting_action()}
 		<ArrowRight class="size-3.5" />
 	</div>
 </Card.Root>

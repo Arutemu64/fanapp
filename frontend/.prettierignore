@@ -20,3 +20,6 @@ build/
 /playwright-report/
 /test-results/
 /blob-report/
+
+/src/lib/paraglide/
+/project.inlang/cache/

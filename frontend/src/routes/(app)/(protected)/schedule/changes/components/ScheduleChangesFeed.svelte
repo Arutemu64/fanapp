@@ -7,6 +7,7 @@
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import { SCHEDULE_CHANGES_PAGE_SIZE } from '#lib/constants/scheduleChanges.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
@@ -31,7 +32,7 @@
 	async function loadMore() {
 		const result = await changesQuery.fetchNextPage();
 		if (result.isFetchNextPageError) {
-			toastService.add('Не удалось загрузить изменения программы', 'error');
+			toastService.add(m.schedule_changes_load_failed(), 'error');
 		}
 	}
 </script>
@@ -43,14 +44,14 @@
 			onRetry={() => void changesQuery.refetch()}
 			error={{
 				status: 500,
-				message: getApiErrorDetail(changesQuery.error) ?? 'Не удалось загрузить изменения программы'
+				message: getApiErrorDetail(changesQuery.error) ?? m.schedule_changes_load_failed()
 			}}
 		/>
 	{:else}
 		<SectionSpinner />
 	{/if}
 {:else if changes.length === 0}
-	<EmptyState message="Изменений пока нет" />
+	<EmptyState message={m.schedule_changes_empty()} />
 {:else}
 	<div class="flex flex-col gap-3">
 		{#each changes as change (change.id)}

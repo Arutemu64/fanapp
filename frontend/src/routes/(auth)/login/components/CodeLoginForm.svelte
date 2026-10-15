@@ -11,6 +11,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
 	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
 
@@ -66,12 +67,12 @@
 		emailError = '';
 
 		if (!normalizedEmail) {
-			emailError = 'Введи адрес эл. почты';
+			emailError = m.validation_email_required();
 			return false;
 		}
 
 		if (!isValidEmail(normalizedEmail)) {
-			emailError = 'Введи адрес в формате name@example.com';
+			emailError = m.validation_email_format();
 			return false;
 		}
 
@@ -94,7 +95,7 @@
 		if (captchaEnabled && !captchaToken) {
 			executeCaptcha?.();
 			captchaGate.hold(() => {
-				formError = 'Не удалось пройти проверку. Попробуй ещё раз';
+				formError = m.captcha_failed();
 			});
 			return;
 		}
@@ -115,7 +116,7 @@
 					if (emailFieldError) {
 						emailError = emailFieldError;
 					} else {
-						formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+						formError = getApiErrorDetail(error) ?? m.login_code_send_failed();
 					}
 					// The token is single-use, so fetch a fresh one before a retry.
 					resetCaptcha?.();
@@ -145,7 +146,7 @@
 		would block the submit in the browser's language, not Russian.
 		https://design-system.service.gov.uk/patterns/validation/ -->
 	<Field.Field data-invalid={emailError ? true : undefined}>
-		<Field.FieldLabel for="code-email">Эл. почта</Field.FieldLabel>
+		<Field.FieldLabel for="code-email">{m.email_label()}</Field.FieldLabel>
 		<div class="relative flex items-center">
 			<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 			<!-- Read-only, not disabled, while sending: disabling a focused input
@@ -175,7 +176,7 @@
 			<Field.FieldError id="code-email-error">{emailError}</Field.FieldError>
 		{:else}
 			<Field.FieldDescription id="code-email-description">
-				Пришлём код для входа.
+				{m.login_code_hint()}
 			</Field.FieldDescription>
 		{/if}
 	</Field.Field>
@@ -190,9 +191,9 @@
 	<Button type="submit" class="w-full" disabled={isRequesting}>
 		{#if isRequesting}
 			<Spinner data-icon="inline-start" />
-			Отправляем…
+			{m.common_sending_progress()}
 		{:else}
-			Продолжить
+			{m.common_continue()}
 		{/if}
 	</Button>
 
@@ -204,7 +205,7 @@
 			onclick={() => onPasswordLogin?.()}
 			disabled={isRequesting}
 		>
-			Войти с паролем
+			{m.login_with_password()}
 		</button>
 	</div>
 </form>

@@ -19,9 +19,14 @@ glossary changes — not this file.
 
 This skill covers only the repo mechanics those skills can't know:
 
+- **Frontend copy lives in `frontend/messages/ru.json`**, used as `m.key()` from
+  `#lib/paraglide/messages.js` (Paraglide JS, ADR-0027). Edit the JSON, not a
+  string literal in a component.
+
 - **Plurals need all three forms** — 1 / 2–4 / 5+ (`минута` / `минуты` / `минут`,
   `выступление` / `выступления` / `выступлений`). A bare `+ ' мин.'` is a bug
-  waiting for the number 2. Frontend: `pluralize()` in `lib/utils/formatters.ts`.
+  waiting for the number 2. Frontend: a plural message in `frontend/messages/ru.json`
+  (`declarations` + `plural` selector; copy `votes_count`).
   Jinja: the `events_pluralize` macro pattern in the notification templates.
 - **Ё is written always** (`ещё`, `её`, `всё`, `учёт`) — see `redpolitika.md`.
 - **Use the typographic dash** `—`, not a hyphen, in prose, and bind it to the

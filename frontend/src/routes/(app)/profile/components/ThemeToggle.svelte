@@ -3,21 +3,22 @@
 
 	import { Monitor, Moon, Sun } from '@lucide/svelte';
 
+	import { m } from '#lib/paraglide/messages.js';
 	import { getThemeService, type ThemeMode } from '#lib/services/theme.svelte.js';
 
 	const theme = getThemeService();
 
 	const options: { mode: ThemeMode; label: string; Icon: Component }[] = [
-		{ mode: 'system', label: 'Авто', Icon: Monitor },
-		{ mode: 'light', label: 'Светлая', Icon: Sun },
-		{ mode: 'dark', label: 'Тёмная', Icon: Moon }
+		{ mode: 'system', label: m.theme_auto(), Icon: Monitor },
+		{ mode: 'light', label: m.theme_light(), Icon: Sun },
+		{ mode: 'dark', label: m.theme_dark(), Icon: Moon }
 	];
 </script>
 
 <div
 	class="flex w-full rounded-lg border border-border p-1"
 	role="group"
-	aria-label="Тема оформления"
+	aria-label={m.theme_aria_label()}
 >
 	{#each options as { mode, label, Icon } (mode)}
 		<button

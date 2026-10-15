@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 import { formatRelativeTime } from '#lib/utils/formatters.js';
 
 /**
@@ -60,95 +61,103 @@ export interface DiagnosticsSection {
  * them. Only what is persisted for offline use (the root layout's
  * OFFLINE_QUERY_KEYS) is worth showing: its age is what a stale screen shows.
  */
-export const CACHE_LABELS: Record<string, string> = {
-	getCurrentUser: 'Профиль',
-	getPublicConfig: 'Настройки фестиваля',
-	getSchedule: 'Программа',
-	getSubscriptions: 'Подписки',
-	listUserNotifications: 'Уведомления'
+export const CACHE_LABELS: Record<string, () => string> = {
+	getCurrentUser: m.nav_profile,
+	getPublicConfig: m.tool_settings,
+	getSchedule: m.nav_schedule,
+	getSubscriptions: m.diag_subscriptions,
+	listUserNotifications: m.notifications_title
 };
 
-const SERVICE_WORKER_LABELS: Record<ServiceWorkerStatus, string> = {
-	unsupported: 'Не поддерживается',
-	none: 'Не установлен',
-	installing: 'Устанавливается',
-	active: 'Работает',
-	'update-waiting': 'Ждёт перезапуска с обновлением'
+const SERVICE_WORKER_LABELS: Record<ServiceWorkerStatus, () => string> = {
+	unsupported: m.diag_unsupported,
+	none: m.status_not_set,
+	installing: m.diag_sw_installing,
+	active: m.diag_sw_active,
+	'update-waiting': m.diag_sw_update_waiting
 };
 
-const PERMISSION_LABELS: Record<PushDiagnostics['permission'], string> = {
-	granted: 'Разрешено',
-	denied: 'Запрещено',
-	default: 'Не спрашивали',
-	unsupported: 'Не поддерживается'
+const PERMISSION_LABELS: Record<PushDiagnostics['permission'], () => string> = {
+	granted: m.diag_permission_granted,
+	denied: m.diag_permission_denied,
+	default: m.diag_permission_default,
+	unsupported: m.diag_unsupported
 };
 
 function yesNo(value: boolean): string {
-	return value ? 'Да' : 'Нет';
+	return value ? m.common_yes() : m.common_no();
 }
 
 function formatBytes(bytes: number): string {
 	const megabytes = bytes / (1024 * 1024);
 	if (megabytes < 1024) {
-		return `${megabytes.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00A0МБ`;
+		return m.diag_size_mb({
+			size: megabytes.toLocaleString('ru-RU', { maximumFractionDigits: 1 })
+		});
 	}
 	const gigabytes = megabytes / 1024;
-	return `${gigabytes.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}\u00A0ГБ`;
+	return m.diag_size_gb({ size: gigabytes.toLocaleString('ru-RU', { maximumFractionDigits: 1 }) });
 }
 
 function storageUsage(storage: StorageDiagnostics): string {
-	if (storage.usageBytes === null) return 'Неизвестно';
+	if (storage.usageBytes === null) return m.common_unknown();
 	if (storage.quotaBytes === null) return formatBytes(storage.usageBytes);
-	return `${formatBytes(storage.usageBytes)} из ${formatBytes(storage.quotaBytes)}`;
+	return m.diag_storage_usage({
+		used: formatBytes(storage.usageBytes),
+		total: formatBytes(storage.quotaBytes)
+	});
 }
 
 function serverRegistration(push: PushDiagnostics): string {
-	if (push.serverRegistered === null) return 'Не проверено';
-	return push.serverRegistered ? 'Знает это устройство' : 'Не знает это устройство';
+	if (push.serverRegistered === null) return m.diag_not_checked();
+	return push.serverRegistered ? m.diag_server_knows_device() : m.diag_server_unknown_device();
 }
 
 function connection(snapshot: DiagnosticsSnapshot): string {
-	if (snapshot.serverReachable) return 'Сервер доступен';
-	if (!snapshot.deviceOnline) return 'Нет интернета';
+	if (snapshot.serverReachable) return m.diag_server_reachable();
+	if (!snapshot.deviceOnline) return m.connection_no_internet();
 	// The device has a network but the probe can't reach us: a captive portal, a
 	// dead VPN or an outage — worth telling apart in a report.
-	return 'Интернет есть, сервер недоступен';
+	return m.diag_server_unreachable();
 }
 
 export function buildSections(snapshot: DiagnosticsSnapshot, now: number): DiagnosticsSection[] {
 	const build: DiagnosticsRow[] = [
-		{ label: 'Версия', value: snapshot.version || 'Без номера' },
-		{ label: 'Сборка', value: snapshot.build.slice(0, 7) || 'Неизвестно' },
-		{ label: 'Офлайн-режим', value: SERVICE_WORKER_LABELS[snapshot.serviceWorker] },
-		{ label: 'На главном экране', value: yesNo(snapshot.installed) }
+		{ label: m.diag_version(), value: snapshot.version || m.diag_no_version() },
+		{ label: m.diag_build(), value: snapshot.build.slice(0, 7) || m.common_unknown() },
+		{ label: m.diag_offline_mode(), value: SERVICE_WORKER_LABELS[snapshot.serviceWorker]() },
+		{ label: m.diag_home_screen(), value: yesNo(snapshot.installed) }
 	];
 
 	const push: DiagnosticsRow[] = [
-		{ label: 'Разрешение', value: PERMISSION_LABELS[snapshot.push.permission] },
-		{ label: 'Подписка в браузере', value: yesNo(snapshot.push.subscribed) }
+		{ label: m.diag_permission(), value: PERMISSION_LABELS[snapshot.push.permission]() },
+		{ label: m.diag_browser_subscription(), value: yesNo(snapshot.push.subscribed) }
 	];
 	if (snapshot.push.pushService) {
-		push.push({ label: 'Сервис доставки', value: snapshot.push.pushService });
+		push.push({ label: m.diag_delivery_service(), value: snapshot.push.pushService });
 	}
-	push.push({ label: 'Сервер', value: serverRegistration(snapshot.push) });
+	push.push({ label: m.diag_server(), value: serverRegistration(snapshot.push) });
 
 	const cache: DiagnosticsRow[] = snapshot.cache.map((entry) => ({
 		label: entry.label,
 		value: formatRelativeTime(entry.updatedAt, now)
 	}));
 	if (cache.length === 0) {
-		cache.push({ label: 'Сохранённые экраны', value: 'Нет' });
+		cache.push({ label: m.diag_cached_screens(), value: m.common_no() });
 	}
-	cache.push({ label: 'Занято', value: storageUsage(snapshot.storage) });
+	cache.push({ label: m.diag_storage_used(), value: storageUsage(snapshot.storage) });
 	if (snapshot.storage.persisted !== null) {
-		cache.push({ label: 'Защищено от очистки', value: yesNo(snapshot.storage.persisted) });
+		cache.push({ label: m.diag_storage_persisted(), value: yesNo(snapshot.storage.persisted) });
 	}
 
 	return [
-		{ title: 'Приложение', rows: build },
-		{ title: 'Связь', rows: [{ label: 'Сейчас', value: connection(snapshot) }] },
-		{ title: 'Пуш-уведомления', rows: push },
-		{ title: 'Сохранённые данные', rows: cache }
+		{ title: m.diag_section_app(), rows: build },
+		{
+			title: m.diag_section_connection(),
+			rows: [{ label: m.common_now(), value: connection(snapshot) }]
+		},
+		{ title: m.diag_section_push(), rows: push },
+		{ title: m.diag_section_cache(), rows: cache }
 	];
 }
 
@@ -158,10 +167,12 @@ export function buildSections(snapshot: DiagnosticsSnapshot, now: number): Diagn
  * what a person can't read out loud: the full SHA and the user agent.
  */
 export function formatReport(snapshot: DiagnosticsSnapshot, now: number): string {
-	const lines = [
-		'ФАН ФАН — диагностика',
-		`Время: ${new Date(now).toISOString()}`,
-		`Аккаунт: ${snapshot.account ?? 'гость'}`
+	// Widened: message functions return the branded LocalizedString, which would
+	// otherwise reject the plain strings pushed below.
+	const lines: string[] = [
+		m.diag_report_title(),
+		m.diag_report_time({ time: new Date(now).toISOString() }),
+		m.diag_report_account({ account: snapshot.account ?? m.diag_report_guest() })
 	];
 	for (const section of buildSections(snapshot, now)) {
 		lines.push('', section.title);
@@ -171,8 +182,8 @@ export function formatReport(snapshot: DiagnosticsSnapshot, now: number): string
 	}
 	lines.push(
 		'',
-		`Сборка целиком: ${snapshot.build || 'неизвестно'}`,
-		`Браузер: ${snapshot.userAgent}`
+		m.diag_report_full_build({ build: snapshot.build || m.diag_report_unknown() }),
+		m.diag_report_browser({ userAgent: snapshot.userAgent })
 	);
 	return lines.join('\n');
 }

@@ -13,6 +13,7 @@
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	interface Props {
@@ -45,11 +46,11 @@
 			{ body: { event_id: event.id, counter } },
 			{
 				onSuccess: () => {
-					toastService.add('Подписка оформлена', 'success');
+					toastService.add(m.subscribe_done(), 'success');
 					open = false;
 				},
 				onError: (error) => {
-					formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
+					formError = getApiErrorDetail(error) ?? m.subscribe_failed();
 				}
 			}
 		);
@@ -61,7 +62,7 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<BellRing class="size-5 text-muted-foreground" />
-				Подписка на уведомления
+				{m.subscribe_title()}
 			</Dialog.Title>
 		</Dialog.Header>
 
@@ -72,8 +73,8 @@
 		{/if}
 
 		<Dialog.Description>
-			За сколько выступлений до <strong class="text-foreground">{event.title}</strong>
-			начать присылать тебе уведомления?
+			{m.subscribe_intro_prefix()} <strong class="text-foreground">{event.title}</strong>
+			{m.subscribe_intro_suffix()}
 		</Dialog.Description>
 
 		<div class="my-4 flex items-center justify-center">
@@ -86,7 +87,7 @@
 					}}
 					class="flex h-11 w-12 items-center justify-center border-r border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={counter <= 1}
-					aria-label="Уменьшить"
+					aria-label={m.subscribe_decrease()}
 				>
 					<Minus class="size-5" />
 				</button>
@@ -95,7 +96,7 @@
 					<input
 						name="subscription_counter"
 						type="number"
-						aria-label="Сколько выступлений ждать до уведомления"
+						aria-label={m.subscribe_counter_label()}
 						min="1"
 						max="100"
 						inputmode="numeric"
@@ -107,7 +108,7 @@
 					<div
 						class="pointer-events-none absolute bottom-1 flex items-center text-xs text-muted-foreground select-none"
 					>
-						<span>выступлений</span>
+						<span>{m.subscribe_counter_unit()}</span>
 					</div>
 				</div>
 
@@ -119,7 +120,7 @@
 					}}
 					class="flex h-11 w-12 items-center justify-center border-l border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={counter >= 100}
-					aria-label="Увеличить"
+					aria-label={m.subscribe_increase()}
 				>
 					<Plus class="size-5" />
 				</button>
@@ -127,16 +128,18 @@
 		</div>
 
 		<p class="text-sm leading-relaxed text-muted-foreground">
-			Напоминание придёт в уведомления — проверь, что они включены в <a
-				href={resolve('profile/notifications')}
-				class="font-medium text-primary hover:underline">профиле</a
+			{m.subscribe_hint_prefix()}
+			<a href={resolve('profile/notifications')} class="font-medium text-primary hover:underline"
+				>{m.subscribe_hint_link()}</a
 			>.
 		</p>
 
 		<Dialog.Footer class="flex flex-row justify-end gap-2">
-			<Button type="button" variant="outline" onclick={() => (open = false)}>Отмена</Button>
+			<Button type="button" variant="outline" onclick={() => (open = false)}
+				>{m.common_cancel()}</Button
+			>
 			<Button type="button" onclick={handleSubmit} disabled={subscribeMutation.isPending}
-				>Подписаться</Button
+				>{m.common_subscribe()}</Button
 			>
 		</Dialog.Footer>
 	</Dialog.Content>

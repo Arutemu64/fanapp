@@ -31,8 +31,8 @@ label often appears in a component, a push notification and an email.
 ## Definition of done
 
 1. Every changed string reads correctly per the skills' voice and glossary.
-2. **Plurals carry all three forms** (1 / 2–4 / 5+). Frontend: `pluralize()` in
-   `lib/utils/formatters.ts`. Jinja: the `events_pluralize` macro pattern. A
+2. **Plurals carry all three forms** (1 / 2–4 / 5+). Frontend: a plural message in
+   `frontend/messages/ru.json` (see `votes_count`). Jinja: the `events_pluralize` macro pattern. A
    string concatenating a bare `' мин.'` is a bug — fix it, don't preserve it.
 3. **Ё is written everywhere** (`ещё`, `её`, `всё`), and prose uses the
    typographic dash `—`, never a hyphen.
@@ -63,7 +63,7 @@ The caller has to review your wording, so show it — compactly.
 ```
 frontend/src/routes/voting/+page.svelte
   «Голосование не доступно» → «Голосование ещё не началось»
-  «Осталось 2 минут» → pluralize(n, 'минута', 'минуты', 'минут')
+  «Осталось 2 минут» → plural message `duration_minutes` in messages/ru.json
 
 backend/.../templates/email_login_code.jinja2 + .txt.jinja2
   «Ваш код подтверждения» → «Твой код для входа»

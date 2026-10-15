@@ -4,6 +4,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		open: boolean;
@@ -23,31 +24,32 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<MessageSquare class="size-5 text-muted-foreground" />
-				Уведомления во ВКонтакте
+				{m.vk_modal_title()}
 			</Dialog.Title>
 		</Dialog.Header>
 
 		<Dialog.Description class="leading-relaxed">
-			Чтобы получать уведомления во ВКонтакте, нужно разрешить сообществу писать тебе — без этого
-			ВКонтакте не доставит сообщения.
+			{m.vk_modal_intro()}
 		</Dialog.Description>
-		<p class="text-sm font-medium text-foreground">Что сделать:</p>
+		<p class="text-sm font-medium text-foreground">{m.vk_modal_steps_title()}</p>
 		<ul class="flex flex-col gap-1 text-sm leading-relaxed text-muted-foreground">
 			<li>
-				Подключи ВКонтакте в
+				{m.vk_modal_step_connect_prefix()}
 				<a href={resolve('profile/account')} class="font-medium text-primary hover:underline"
-					>настройках аккаунта</a
+					>{m.vk_modal_step_connect_link()}</a
 				>.
 			</li>
-			<li>Открой сообщество и нажми «Разрешить сообщения».</li>
+			<li>{m.vk_modal_step_allow()}</li>
 		</ul>
 		<Dialog.Footer class="flex flex-col gap-2 sm:flex-col">
 			{#if vkGroupUrl}
 				<Button class="w-full" href={vkGroupUrl} target="_blank" rel="noopener">
-					Открыть сообщество
+					{m.vk_modal_open_community()}
 				</Button>
 			{/if}
-			<Button variant="outline" class="w-full" onclick={() => (open = false)}>Понятно</Button>
+			<Button variant="outline" class="w-full" onclick={() => (open = false)}
+				>{m.common_got_it()}</Button
+			>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

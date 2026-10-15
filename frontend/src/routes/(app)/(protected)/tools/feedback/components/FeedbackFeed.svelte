@@ -8,6 +8,7 @@
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { FEEDBACK_PAGE_SIZE } from '#lib/constants/feedback.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
@@ -28,7 +29,7 @@
 	async function loadMore() {
 		const result = await feedbackQuery.fetchNextPage();
 		if (result.isFetchNextPageError) {
-			toastService.add('Не удалось загрузить отзывы', 'error');
+			toastService.add(m.feedback_load_failed(), 'error');
 		}
 	}
 </script>
@@ -40,14 +41,14 @@
 			onRetry={() => void feedbackQuery.refetch()}
 			error={{
 				status: 500,
-				message: getApiErrorDetail(feedbackQuery.error) ?? 'Не удалось загрузить отзывы'
+				message: getApiErrorDetail(feedbackQuery.error) ?? m.feedback_load_failed()
 			}}
 		/>
 	{:else}
 		<SectionSpinner />
 	{/if}
 {:else if feedback.length === 0}
-	<EmptyState message="Отзывов пока нет" />
+	<EmptyState message={m.feedback_empty()} />
 {:else}
 	<!-- One divided list, not a card per item: the entries are all the same shape,
 	     so a list scans faster and fits more on a phone screen. -->

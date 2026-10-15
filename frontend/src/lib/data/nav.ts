@@ -4,9 +4,11 @@ import type { Component } from 'svelte';
 import { resolve } from '$app/paths';
 import { Calendar, CircleUser, Home, MapPin, ThumbsUp } from '@lucide/svelte';
 
+import { m } from '#lib/paraglide/messages.js';
+
 export interface PrimaryNavItem {
 	/** Russian label shown under (bottom nav) or beside (sidebar) the icon. */
-	label: string;
+	label: () => string;
 	href: Path;
 	/** Idle icon; the solid twin replaces it on the active route. */
 	outlineIcon: Component;
@@ -27,22 +29,22 @@ export interface PrimaryNavItem {
  * preserved-scroll roots below stay in step with them.
  */
 export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
-	{ label: 'Главная', href: '', outlineIcon: Home, solidIcon: Home },
+	{ label: m.nav_home, href: '', outlineIcon: Home, solidIcon: Home },
 	{
-		label: 'Программа',
+		label: m.nav_schedule,
 		href: 'schedule',
 		outlineIcon: Calendar,
 		solidIcon: Calendar
 	},
 	// Voting sits before the map so its long "Голосование" label lands in an inner
 	// column of the bottom nav, away from rounded screen corners that clip edges.
-	{ label: 'Голосование', href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
-	{ label: 'Карта', href: 'map', outlineIcon: MapPin, solidIcon: MapPin },
+	{ label: m.nav_voting, href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
+	{ label: m.nav_map, href: 'map', outlineIcon: MapPin, solidIcon: MapPin },
 	// Last, in the thumb's natural reach on the right, as the account tab sits in most
 	// tab bars. It is also the hub for everything without a tab of its own (feedback,
 	// the organizer toolbox, theme, logout), which is what lets the shell drop a hamburger.
 	{
-		label: 'Профиль',
+		label: m.nav_profile,
 		href: 'profile',
 		outlineIcon: CircleUser,
 		solidIcon: CircleUser,

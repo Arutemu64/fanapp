@@ -3,6 +3,7 @@ import {
 	getScheduleOptions,
 	getVotingStatusOptions
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { m } from '#lib/paraglide/messages.js';
 
 import type { PageLoad } from './$types';
 
@@ -16,5 +17,5 @@ export const load: PageLoad = async ({ parent }) => {
 
 	// AppNavbar renders this as the page <h1>; it matches the tab label, as on
 	// every other tab.
-	return { title: 'Главная' };
+	return { title: m.nav_home() };
 };

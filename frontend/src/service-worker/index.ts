@@ -12,6 +12,7 @@ import {
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst } from 'workbox-strategies';
 
+import { m } from '#lib/paraglide/messages.js';
 import { buildPrecacheManifest } from '#lib/utils/precacheManifest.js';
 
 // The adapter-static fallback page (`fallback` in vite.config.ts) that every
@@ -140,8 +141,8 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('push', (event: PushEvent) => {
 	let data: PushNotificationPayload = {
-		title: 'ФАН ФАН',
-		body: 'Новое уведомление',
+		title: m.app_name(),
+		body: m.push_default_body(),
 		url: '/'
 	};
 

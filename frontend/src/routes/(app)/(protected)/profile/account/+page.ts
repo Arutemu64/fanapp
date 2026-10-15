@@ -1,3 +1,4 @@
+import { m } from '#lib/paraglide/messages.js';
 import {
 	OAUTH_ERROR_CODES,
 	OAUTH_LINK_ERROR_PARAM,
@@ -16,6 +17,6 @@ const LINK_ERROR_CODES = [
 ] as const;
 
 export const load: PageLoad = ({ url }) => ({
-	title: 'Аккаунт',
+	title: m.account_title(),
 	oauthLinkError: readOAuthErrorCode(url, OAUTH_LINK_ERROR_PARAM, LINK_ERROR_CODES)
 });

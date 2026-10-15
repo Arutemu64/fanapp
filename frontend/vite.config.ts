@@ -1,3 +1,4 @@
+import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { sentrySvelteKit } from '@sentry/sveltekit';
 import adapter from '@sveltejs/adapter-static';
 import { enhancedImages } from '@sveltejs/enhanced-img';
@@ -66,6 +67,19 @@ export default defineConfig(({ mode }) => {
 				}
 			}),
 			tailwindcss(),
+			// Single-locale (ru) message catalogue: the compiler emits typed `m.*`
+			// functions into src/lib/paraglide (gitignored, regenerated on every
+			// dev/build run). `baseLocale` is the only strategy because the app is a
+			// client-rendered SPA with no URL prefixes or server middleware; a second
+			// locale would add `localStorage` / `preferredLanguage` ahead of it.
+			// Keep in step with `compile:i18n` in package.json: that script generates
+			// the same output on install, so lint and svelte-check work before any build.
+			paraglideVitePlugin({
+				project: './project.inlang',
+				outdir: './src/lib/paraglide',
+				strategy: ['baseLocale'],
+				emitTsDeclarations: true
+			}),
 			// Processes <enhanced:img> on the map page into AVIF/WebP + resized
 			// variants. Returns a Promise<Plugin[]>, which Vite resolves in place;
 			// must precede sveltekit().

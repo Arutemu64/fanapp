@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 
+	import { beforeNavigate } from '$app/navigation';
+
 	import '../app.css';
 
-	import { beforeNavigate } from '$app/navigation';
 	import * as Sentry from '@sentry/sveltekit';
 	import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
@@ -23,6 +24,7 @@
 		watchBackgroundRefetchErrors
 	} from '#lib/api/index.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
@@ -97,7 +99,7 @@
 		// Fixed copy, not the mapped code: the user didn't act, so «Билет не найден»
 		// out of nowhere would read as a fault of theirs rather than a stale screen.
 		const stopWatchingRefetches = watchBackgroundRefetchErrors(queryClient, () =>
-			toastService.add('Не удалось обновить данные', 'error')
+			toastService.add(m.refetch_failed(), 'error')
 		);
 
 		eventsClient.on('schedule_updated', handleScheduleUpdated);
@@ -181,7 +183,7 @@
 
 <!-- Fallback title; pages override via their own <svelte:head><title>. -->
 <svelte:head>
-	<title>ФАН ФАН</title>
+	<title>{m.app_name()}</title>
 </svelte:head>
 
 <QueryClientProvider client={queryClient}>
@@ -200,6 +202,6 @@
 	manual-chrome
 	manual-apple
 	manifest-url="/manifest.json"
-	name="ФАН ФАН"
+	name={m.app_name()}
 	icon="/icons/icon-512.png"
 ></pwa-install>

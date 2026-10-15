@@ -7,6 +7,7 @@ import {
 } from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
 
+import { m } from '#lib/paraglide/messages.js';
 import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
 
 // Server errors belong to the backend, which reports them with a full stack
@@ -195,7 +196,7 @@ export const handleError: HandleClientError = ({ kind, error }) => {
 	const err = error as { code?: string } | undefined;
 	const code = err?.code ?? 'UNKNOWN';
 	// Also replaces the English message SvelteKit gives its own framework errors.
-	const message = 'В приложении что-то сломалось. Попробуй обновить страницу.';
+	const message = m.app_error_fallback();
 
 	// A framework error is SvelteKit's own — a route it could not match — not an app bug.
 	if (
