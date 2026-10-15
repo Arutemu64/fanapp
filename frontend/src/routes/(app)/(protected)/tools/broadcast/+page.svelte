@@ -13,6 +13,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
@@ -37,14 +38,14 @@
 		let isValid = true;
 
 		if (!bodyText.trim()) {
-			bodyError = 'Введи текст уведомления';
+			bodyError = m.broadcast_validation_text();
 			isValid = false;
 		} else {
 			bodyError = '';
 		}
 
 		if (selectedRoles.length === 0) {
-			rolesError = 'Выбери хотя бы одну группу пользователей';
+			rolesError = m.broadcast_validation_roles();
 			isValid = false;
 		} else {
 			rolesError = '';
@@ -55,13 +56,13 @@
 
 	function handleBodyInput() {
 		if (bodyError) {
-			bodyError = bodyText.trim() ? '' : 'Введи текст уведомления';
+			bodyError = bodyText.trim() ? '' : m.broadcast_validation_text();
 		}
 	}
 
 	function handleRoleChange() {
 		if (rolesError) {
-			rolesError = selectedRoles.length > 0 ? '' : 'Выбери хотя бы одну группу пользователей';
+			rolesError = selectedRoles.length > 0 ? '' : m.broadcast_validation_roles();
 		}
 	}
 
@@ -95,7 +96,7 @@
 			},
 			{
 				onSuccess: () => {
-					toastService.add('Рассылка запущена', 'success');
+					toastService.add(m.broadcast_started(), 'success');
 					bodyText = '';
 					selectedRoles = [];
 					bodyError = '';
@@ -107,7 +108,7 @@
 					if (bodyError || rolesError) {
 						return;
 					}
-					submitError = getApiErrorDetail(error) ?? 'Не удалось запустить рассылку';
+					submitError = getApiErrorDetail(error) ?? m.broadcast_start_failed();
 				}
 			}
 		);
@@ -115,22 +116,20 @@
 </script>
 
 <svelte:head>
-	<title>Рассылка уведомлений · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.tool_broadcast() })}</title>
 </svelte:head>
 
 <div class="mx-auto w-full max-w-2xl">
-	<SectionIntro
-		description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
-	/>
+	<SectionIntro description={m.broadcast_description()} />
 
 	<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 		<Field.Field data-invalid={bodyError ? true : undefined}>
-			<Field.FieldLabel for="broadcast-body">Текст уведомления</Field.FieldLabel>
+			<Field.FieldLabel for="broadcast-body">{m.broadcast_text_label()}</Field.FieldLabel>
 			<Textarea
 				id="broadcast-body"
 				name="body"
 				rows={4}
-				placeholder="Напиши важное сообщение для участников фестиваля…"
+				placeholder={m.broadcast_text_placeholder()}
 				bind:value={bodyText}
 				disabled={broadcastMutation.isPending}
 				oninput={handleBodyInput}
@@ -141,13 +140,13 @@
 				<Field.FieldError>{bodyError}</Field.FieldError>
 			{:else}
 				<Field.FieldDescription>
-					Это сообщение будет моментально отправлено всем пользователям с выбранными ролями.
+					{m.broadcast_text_hint()}
 				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
 
 		<Field.FieldSet data-invalid={rolesError ? true : undefined}>
-			<Field.FieldLegend variant="label">Кому отправить</Field.FieldLegend>
+			<Field.FieldLegend variant="label">{m.broadcast_roles_label()}</Field.FieldLegend>
 			<Field.FieldGroup data-slot="checkbox-group" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<Field.Field orientation="horizontal">
 					<Checkbox
@@ -157,7 +156,7 @@
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-visitor" class="cursor-pointer font-normal">
-						Зрители
+						{m.audience_visitors()}
 					</Field.FieldLabel>
 				</Field.Field>
 				<Field.Field orientation="horizontal">
@@ -168,7 +167,7 @@
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-participant" class="cursor-pointer font-normal">
-						Участники
+						{m.audience_participants()}
 					</Field.FieldLabel>
 				</Field.Field>
 				<Field.Field orientation="horizontal">
@@ -179,7 +178,7 @@
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-volunteer" class="cursor-pointer font-normal">
-						Волонтёры
+						{m.audience_volunteers()}
 					</Field.FieldLabel>
 				</Field.Field>
 				<Field.Field orientation="horizontal">
@@ -190,7 +189,7 @@
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-organizer" class="cursor-pointer font-normal">
-						Организаторы
+						{m.audience_organizers()}
 					</Field.FieldLabel>
 				</Field.Field>
 			</Field.FieldGroup>
@@ -213,9 +212,9 @@
 		>
 			{#if broadcastMutation.isPending}
 				<Spinner data-icon="inline-start" />
-				Отправка…
+				{m.common_sending()}
 			{:else}
-				Отправить рассылку
+				{m.broadcast_submit()}
 			{/if}
 		</Button>
 	</form>

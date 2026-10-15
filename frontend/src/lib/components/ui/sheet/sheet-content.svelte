@@ -1,4 +1,6 @@
 <script lang="ts" module>
+	// Deviates from upstream: Russian copy comes from Paraglide messages.
+	import { m } from '#lib/paraglide/messages.js';
 	export type Side = 'top' | 'right' | 'bottom' | 'left';
 </script>
 
@@ -50,7 +52,7 @@
 					<Button variant="ghost" class="absolute top-4 right-4" size="icon-sm" {...props}>
 						<XIcon />
 						<!-- Deviates from upstream: Russian label. -->
-						<span class="sr-only">Закрыть</span>
+						<span class="sr-only">{m.common_close()}</span>
 					</Button>
 				{/snippet}
 			</SheetPrimitive.Close>

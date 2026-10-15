@@ -14,6 +14,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
@@ -41,8 +42,8 @@
 	// Each row's second line is its current state, not a description of the setting
 	// (Android settings guidance: "Secondary text below the setting label reflects
 	// the current selection"), so a phone shows the whole group without scrolling.
-	let emailStatus = $derived(user.email ?? 'Не добавлена — нужна, чтобы восстановить доступ');
-	let passwordStatus = $derived(user.has_password ? 'Установлен' : 'Не установлен');
+	let emailStatus = $derived(user.email ?? m.signin_email_missing());
+	let passwordStatus = $derived(user.has_password ? m.signin_password_set() : m.status_not_set());
 	// Colour goes to the action the user is missing, not to a state that is fine
 	// (DESIGN.md "Color-Earns-Its-Place"): a missing email is the one to fix.
 	let emailButtonVariant = $derived<'outline' | 'default'>(user.email ? 'outline' : 'default');
@@ -90,14 +91,11 @@
 			toastService.error(error);
 			return;
 		}
-		toastService.add(`${name} отвязан`, 'success');
+		toastService.add(m.social_unlinked_toast({ name }), 'success');
 	}
 </script>
 
-<SettingsSection
-	title="Способы входа"
-	description="Настрой почту, пароль и привязки для входа и восстановления доступа."
->
+<SettingsSection title={m.signin_title()} description={m.signin_description()}>
 	<!-- One bordered group with hairline dividers between rows, so related account
 	     settings read as a set rather than as separate boxes. -->
 	<MenuGroup class="divide-y divide-border">
@@ -106,7 +104,7 @@
 				<Mail class="size-5" aria-hidden="true" />
 			</Item.Media>
 			<Item.Content class="min-w-0">
-				<Item.Title class="text-base">Эл. почта</Item.Title>
+				<Item.Title class="text-base">{m.email_label()}</Item.Title>
 				<Item.Description class="line-clamp-none wrap-anywhere">{emailStatus}</Item.Description>
 			</Item.Content>
 			<Item.Actions>
@@ -117,7 +115,7 @@
 					aria-disabled={offlineGate.blocked}
 					onclick={offlineGate.guard(() => (changeEmailModalOpen = true))}
 				>
-					{user.email ? 'Изменить' : 'Добавить'}
+					{user.email ? m.common_change() : m.common_add()}
 				</Button>
 			</Item.Actions>
 		</Item.Root>
@@ -127,7 +125,7 @@
 				<Shield class="size-5" aria-hidden="true" />
 			</Item.Media>
 			<Item.Content class="min-w-0">
-				<Item.Title class="text-base">Пароль</Item.Title>
+				<Item.Title class="text-base">{m.password_label()}</Item.Title>
 				<Item.Description>{passwordStatus}</Item.Description>
 			</Item.Content>
 			<Item.Actions>
@@ -138,7 +136,7 @@
 					aria-disabled={offlineGate.blocked}
 					onclick={offlineGate.guard(() => (changePasswordModalOpen = true))}
 				>
-					{user.has_password ? 'Изменить' : 'Установить'}
+					{user.has_password ? m.common_change() : m.common_set()}
 				</Button>
 			</Item.Actions>
 		</Item.Root>
@@ -150,7 +148,7 @@
 				label={meta.name}
 				connected={linkedProviders.includes(provider)}
 				connectHref={`${PUBLIC_API_URL}/me/connections/${provider}`}
-				unlinkPrompt={`Отвязать ${meta.name}?`}
+				unlinkPrompt={m.social_unlink_confirm({ name: meta.name })}
 				hasEmail={Boolean(user.email)}
 				onUnlink={() => unlinkProvider(provider)}
 			>

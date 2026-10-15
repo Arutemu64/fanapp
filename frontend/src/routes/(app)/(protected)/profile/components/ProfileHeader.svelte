@@ -6,6 +6,7 @@
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
@@ -54,7 +55,7 @@
 		onclick={offlineGate.guard(() => (editProfileModalOpen = true))}
 	>
 		<Pencil data-icon="inline-start" />
-		Редактировать
+		{m.profile_edit_action()}
 	</Button>
 </div>
 

@@ -5,6 +5,7 @@
 
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { formatEventNumber, formatUntil } from '#lib/utils/formatters.js';
 
 	import { actsUntil, type StageSnapshot } from './stage';
@@ -49,7 +50,7 @@
 		{#if event.user_subscription}
 			<span class="shrink-0 text-primary">
 				<BellRing class="size-4" aria-hidden="true" />
-				<span class="sr-only">Есть подписка</span>
+				<span class="sr-only">{m.home_has_subscription()}</span>
 			</span>
 		{/if}
 	</div>
@@ -60,15 +61,17 @@
 	class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
 >
 	<div class="flex items-center justify-between gap-3">
-		<h2 id="up-next-heading" class="text-base font-semibold text-foreground sm:text-lg">Дальше</h2>
+		<h2 id="up-next-heading" class="text-base font-semibold text-foreground sm:text-lg">
+			{m.home_next()}
+		</h2>
 		<Button href="/schedule" variant="ghost" size="sm" class="-mr-2 shrink-0">
-			Вся программа
+			{m.home_full_schedule()}
 			<ArrowRight aria-hidden="true" />
 		</Button>
 	</div>
 
 	{#if isLastAct}
-		<p class="text-sm text-muted-foreground">На сцене последнее выступление программы.</p>
+		<p class="text-sm text-muted-foreground">{m.home_last_event()}</p>
 	{/if}
 
 	{#if snapshot.upNext.length > 0}
@@ -81,7 +84,7 @@
 
 	{#if snapshot.nextSubscribed}
 		<div class="flex flex-col gap-2 border-t border-border pt-4">
-			<h3 class="text-sm font-medium text-muted-foreground">Из твоих подписок</h3>
+			<h3 class="text-sm font-medium text-muted-foreground">{m.home_from_subscriptions()}</h3>
 			{@render eventRow(snapshot.nextSubscribed)}
 		</div>
 	{/if}

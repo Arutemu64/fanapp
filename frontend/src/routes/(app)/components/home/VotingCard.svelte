@@ -4,6 +4,7 @@
 	import type { VotingStatus } from '#lib/api/generated/index.js';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 
 	interface Props {
@@ -24,20 +25,20 @@
 		switch (status) {
 			case 'not_authenticated':
 				return {
-					description: 'Чтобы голосовать, войди в аккаунт и привяжи билет.',
-					label: 'Войти',
+					description: m.voting_card_login_and_ticket(),
+					label: m.common_login(),
 					href: `/login?${LOGIN_NEXT_PARAM}=/voting`
 				};
 			case 'no_ticket':
 				return {
-					description: 'Чтобы голосовать, привяжи билет.',
-					label: 'Привязать билет',
+					description: m.voting_card_link_ticket(),
+					label: m.ticket_link_action(),
 					href: '/profile/ticket'
 				};
 			default:
 				return {
-					description: 'Выбери любимых участников в номинациях.',
-					label: 'Голосовать',
+					description: m.voting_card_ready(),
+					label: m.voting_action(),
 					href: '/voting'
 				};
 		}
@@ -60,7 +61,7 @@
 			</span>
 			<div class="min-w-0 flex-1">
 				<h2 id="voting-heading" class="text-base font-bold text-foreground @md:text-lg">
-					Голосование открыто
+					{m.voting_open_title()}
 				</h2>
 				<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{action.description}</p>
 			</div>

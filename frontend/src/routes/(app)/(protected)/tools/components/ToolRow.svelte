@@ -6,6 +6,7 @@
 	import { ChevronRight, Lock } from '@lucide/svelte';
 
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		title: string;
@@ -35,7 +36,7 @@
 		{#if locked}
 			<span class="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
 				<Lock class="size-3.5" aria-hidden="true" />
-				Нет доступа
+				{m.tool_no_access()}
 			</span>
 		{:else}
 			<ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
@@ -46,7 +47,7 @@
 {#if locked}
 	<!-- Non-navigable on purpose; the title explains the state on hover/focus without
 	     inventing a channel to request access, which the app's admin model doesn't define. -->
-	<Item.Root class="cursor-not-allowed rounded-none" title="Права на этот инструмент не выданы">
+	<Item.Root class="cursor-not-allowed rounded-none" title={m.tool_no_permission_title()}>
 		{@render body()}
 	</Item.Root>
 {:else}

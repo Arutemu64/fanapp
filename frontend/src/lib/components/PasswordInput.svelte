@@ -2,6 +2,7 @@
 	import { Eye, EyeOff, Lock } from '@lucide/svelte';
 
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
 		value: string;
@@ -26,7 +27,7 @@
 		id,
 		name,
 		autocomplete,
-		revealLabel = 'пароль',
+		revealLabel = m.field_password(),
 		placeholder = '••••••••',
 		required = false,
 		disabled = false,
@@ -65,7 +66,7 @@
 			size="icon-sm"
 			{disabled}
 			onclick={() => (show = !show)}
-			aria-label={show ? `Скрыть ${revealLabel}` : `Показать ${revealLabel}`}
+			aria-label={show ? m.password_hide({ revealLabel }) : m.password_show({ revealLabel })}
 			aria-pressed={show}
 		>
 			{#if show}

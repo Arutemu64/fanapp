@@ -11,3 +11,6 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 Thumbs.db
+src/lib/paraglide
+project.inlang/*
+!project.inlang/settings.json

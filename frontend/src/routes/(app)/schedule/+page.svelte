@@ -20,6 +20,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import {
 		blockTitleByEventId,
@@ -116,8 +117,8 @@
 
 	let resultsSummary = $derived(
 		filtered.length === schedule.length
-			? `Всего выступлений: ${schedule.length}`
-			: `Показано ${filtered.length} из ${schedule.length}`
+			? m.schedule_total_events({ count: schedule.length })
+			: m.results_shown_of({ count: filtered.length, total: schedule.length })
 	);
 
 	let hasActiveFilters = $derived(showOnlySubscribed || searchQuery.trim().length > 0);
@@ -189,7 +190,7 @@
 </script>
 
 <svelte:head>
-	<title>Программа · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.nav_schedule() })}</title>
 </svelte:head>
 
 {#if scheduleQuery.data === undefined && !offlineMiss}
@@ -199,7 +200,7 @@
 			onRetry={() => void scheduleQuery.refetch()}
 			error={{
 				status: 500,
-				message: getApiErrorDetail(scheduleQuery.error) ?? 'Не удалось загрузить программу'
+				message: getApiErrorDetail(scheduleQuery.error) ?? m.schedule_load_failed()
 			}}
 		/>
 	{:else}
@@ -209,7 +210,7 @@
 	<div {@attach capturePageRoot} class="flex flex-col gap-4">
 		{#if showStaleNotice}
 			<StaleDataNotice
-				message="Показана сохранённая программа."
+				message={m.schedule_cached_notice()}
 				cachedAt={scheduleQuery.dataUpdatedAt}
 			/>
 		{/if}
@@ -224,8 +225,8 @@
 				<Input
 					bind:value={searchQuery}
 					name="schedule_search"
-					aria-label="Поиск по программе"
-					placeholder="Поиск по номеру или названию…"
+					aria-label={m.schedule_search_label()}
+					placeholder={m.schedule_search_placeholder()}
 					autocomplete="off"
 					spellcheck={false}
 					class="pr-8 pl-9"
@@ -235,7 +236,7 @@
 						type="button"
 						class="absolute right-2 text-muted-foreground hover:text-foreground"
 						onclick={() => (searchQuery = '')}
-						aria-label="Очистить поиск"
+						aria-label={m.common_clear_search()}
 					>
 						<X class="size-4" />
 					</button>
@@ -248,10 +249,10 @@
 					variant="outline"
 					size="sm"
 					bind:value={getScope, setScope}
-					aria-label="Какие выступления показать"
+					aria-label={m.schedule_filter_label()}
 				>
-					<ToggleGroup.Item value="all">Все</ToggleGroup.Item>
-					<ToggleGroup.Item value="subscribed">Мои подписки</ToggleGroup.Item>
+					<ToggleGroup.Item value="all">{m.common_all()}</ToggleGroup.Item>
+					<ToggleGroup.Item value="subscribed">{m.schedule_my_subscriptions()}</ToggleGroup.Item>
 				</ToggleGroup.Root>
 
 				<!-- Always mounted so screen readers hear the list shrink and grow, but shown
@@ -287,20 +288,20 @@
 				>
 					<p class="text-base font-bold text-foreground">
 						{#if offlineMiss}
-							Программа недоступна офлайн
+							{m.schedule_offline_title()}
 						{:else if hasActiveFilters}
-							Ничего не нашлось
+							{m.common_nothing_found()}
 						{:else}
-							Программа пока пуста
+							{m.schedule_empty_title()}
 						{/if}
 					</p>
 					<p class="mt-1 text-sm text-muted-foreground">
 						{#if offlineMiss}
-							Появится после подключения к интернету
+							{m.schedule_offline_message()}
 						{:else if hasActiveFilters}
-							Попробуй изменить поиск или фильтры
+							{m.schedule_try_other_filters()}
 						{:else}
-							Программа появится ближе к фестивалю
+							{m.schedule_empty_message()}
 						{/if}
 					</p>
 
@@ -309,7 +310,7 @@
 					{#if hasActiveFilters}
 						<Button variant="outline" size="sm" class="mt-4" onclick={resetFilters}>
 							<X data-icon="inline-start" />
-							Сбросить фильтры
+							{m.schedule_reset_filters()}
 						</Button>
 					{/if}
 				</div>

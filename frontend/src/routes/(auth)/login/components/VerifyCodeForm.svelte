@@ -1,8 +1,11 @@
 <script lang="ts">
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { RotateCw } from '@lucide/svelte';
 	import { createMutation } from '@tanstack/svelte-query';
 	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import { onMount } from 'svelte';
+
+	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import {
@@ -15,6 +18,7 @@
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getSession } from '#lib/services/session.js';
@@ -36,7 +40,7 @@
 		...loginWithCodeMutation(),
 		onSuccess: async () => {
 			await session.loggedIn();
-			toastService.add('Вход выполнен', 'success');
+			toastService.add(m.login_success(), 'success');
 		}
 	}));
 	const resendMutation = createMutation(() => requestLoginCodeMutation());
@@ -88,12 +92,12 @@
 		}
 
 		if (loginCode.length !== 6) {
-			loginCodeError = 'Введи код из письма';
+			loginCodeError = m.validation_code_required();
 			return;
 		}
 
 		if (!isValidOtp(loginCode)) {
-			loginCodeError = 'Код должен состоять из 6 цифр';
+			loginCodeError = m.validation_code_length();
 			return;
 		}
 
@@ -114,10 +118,10 @@
 					}
 					if (getApiErrorCode(error) === 'INVALID_OTP_CODE') {
 						loginCode = '';
-						loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
+						loginCodeError = getApiErrorDetail(error) ?? m.error_invalid_otp_code();
 						return;
 					}
-					formError = getApiErrorDetail(error) ?? 'Не удалось выполнить вход';
+					formError = getApiErrorDetail(error) ?? m.login_failed_generic();
 				}
 			}
 		);
@@ -130,7 +134,7 @@
 		if (captchaEnabled && !captchaToken) {
 			executeCaptcha?.();
 			captchaGate.hold(() => {
-				formError = 'Не удалось пройти проверку. Попробуй ещё раз';
+				formError = m.captcha_failed();
 			});
 			return;
 		}
@@ -144,14 +148,14 @@
 			{
 				onSuccess: () => {
 					loginCode = '';
-					toastService.add('Код отправлен повторно', 'success');
+					toastService.add(m.login_code_resent(), 'success');
 					// Each resend needs its own fresh token.
 					resetCaptcha?.();
 					captchaToken = null;
 					cooldown.start();
 				},
 				onError: (error) => {
-					formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
+					formError = getApiErrorDetail(error) ?? m.login_code_resend_failed();
 					// The token is single-use, so fetch a fresh one before a retry.
 					resetCaptcha?.();
 					captchaToken = null;
@@ -175,12 +179,17 @@
 	{/if}
 
 	<Alert.Root variant="success">
-		<Alert.Description>Код отправлен на <span class="font-medium">{email}</span>.</Alert.Description
-		>
+		<Alert.Description>
+			<ParaglideMessage message={m.login_code_sent_to} inputs={{ email }}>
+				{#snippet address({ children }: MessageTagProps)}<span class="font-medium"
+						>{@render children?.()}</span
+					>{/snippet}
+			</ParaglideMessage>
+		</Alert.Description>
 	</Alert.Root>
 
 	<div class="flex flex-col items-center gap-2">
-		<Label for="login-code">Код подтверждения</Label>
+		<Label for="login-code">{m.verification_code_label()}</Label>
 		<!-- Read-only, not disabled, while busy so focus and the phone keyboard stay
 			put; digits-only so a stray letter can't auto-submit a doomed code. -->
 		<InputOTP.Root
@@ -214,7 +223,7 @@
 			</p>
 		{:else}
 			<p id="login-code-hint" class="text-center text-sm text-muted-foreground">
-				Введи 6 цифр из письма. Не пришло — проверь папку «Спам».
+				{m.login_code_hint_with_spam()}
 			</p>
 		{/if}
 	</div>
@@ -222,9 +231,9 @@
 	<Button type="submit" class="w-full" disabled={busy || loginCode.length < 6}>
 		{#if loginMutation.isPending}
 			<Spinner data-icon="inline-start" />
-			Проверяем…
+			{m.common_checking()}
 		{:else}
-			Войти по коду
+			{m.login_via_code()}
 		{/if}
 	</Button>
 
@@ -245,12 +254,12 @@
 		>
 			{#if isResending}
 				<Spinner data-icon="inline-start" />
-				Отправляем…
+				{m.common_sending()}
 			{:else if cooldown.remaining > 0}
-				Отправить код ещё раз ({cooldown.remaining} сек.)
+				{m.verification_resend_countdown({ remaining: cooldown.remaining })}
 			{:else}
 				<RotateCw data-icon="inline-start" />
-				Отправить код ещё раз
+				{m.verification_resend()}
 			{/if}
 		</Button>
 	</div>

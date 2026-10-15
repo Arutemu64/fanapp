@@ -7,6 +7,7 @@
 
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 
 	import type { ReadyStepKey } from './readySteps';
@@ -30,45 +31,42 @@
 	}
 
 	let installDescription = $derived(
-		pwa.pushRequiresInstall
-			? 'На iPhone и iPad уведомления приходят только в установленное приложение.'
-			: 'Быстрый доступ с главного экрана и пуш-уведомления.'
+		pwa.pushRequiresInstall ? m.install_description_ios() : m.install_description()
 	);
 
 	function stepFor(key: ReadyStepKey): ReadyStep {
 		switch (key) {
 			case 'account':
 				return {
-					title: 'Создать аккаунт',
-					description: 'Нужен для голосования и подписки на выступления программы.',
+					title: m.ready_account_title(),
+					description: m.ready_account_description(),
 					icon: UserPlus,
 					href: 'login'
 				};
 			case 'ticket':
 				return {
-					title: 'Привязать билет',
-					description: 'Открывает доступ к голосованию в конкурсных номинациях.',
+					title: m.ticket_link_action(),
+					description: m.ready_ticket_description(),
 					icon: Ticket,
 					href: 'profile/ticket'
 				};
 			case 'subscribe':
 				return {
-					title: 'Подписаться на выступления',
-					description:
-						'Отметь интересные номера в программе\u00A0— напомним, когда до них дойдёт очередь.',
+					title: m.ready_subscribe_title(),
+					description: m.ready_subscribe_description(),
 					icon: CalendarHeart,
 					href: 'schedule'
 				};
 			case 'notifications':
 				return {
-					title: 'Включить уведомления',
-					description: 'Напоминания о выступлениях и новости фестиваля придут сразу на телефон.',
+					title: m.ready_notifications_title(),
+					description: m.ready_notifications_description(),
 					icon: Bell,
 					href: 'profile/notifications'
 				};
 			case 'install':
 				return {
-					title: 'Установить приложение',
+					title: m.install_title(),
 					description: installDescription,
 					icon: Download,
 					// Open the install dialog directly; the library handles per-platform UX.

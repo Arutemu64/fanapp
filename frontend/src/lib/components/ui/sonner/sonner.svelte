@@ -6,6 +6,8 @@
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { Toaster as Sonner, type ToasterProps as SonnerProps } from 'svelte-sonner';
 
+	// Deviates from upstream: Russian copy comes from Paraglide messages.
+	import { m } from '#lib/paraglide/messages.js';
 	import { getThemeService } from '#lib/services/theme.svelte.js';
 
 	let { ...restProps }: SonnerProps = $props();
@@ -61,8 +63,8 @@
 	position="bottom-center"
 	{offset}
 	{mobileOffset}
-	containerAriaLabel="Всплывающие сообщения"
-	closeButtonAriaLabel="Закрыть"
+	containerAriaLabel={m.toast_container_label()}
+	closeButtonAriaLabel={m.common_close()}
 	{toastOptions}
 	{swipeDirections}
 	style={toasterStyle}

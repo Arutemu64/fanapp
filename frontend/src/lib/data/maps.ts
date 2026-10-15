@@ -1,11 +1,13 @@
 import type { Picture } from '@sveltejs/enhanced-img';
 
+import { m } from '#lib/paraglide/messages.js';
+
 export interface MapEntry {
 	id: string;
 	picture: Picture;
 	// Short caption under the thumbnail, e.g. «1 этаж».
-	label: string;
-	alt: string;
+	label: () => string;
+	alt: () => string;
 	// File name used when downloading the map.
 	filename: string;
 }
@@ -15,9 +17,9 @@ export interface MapEntry {
 // for accessibility. Intrinsic dimensions, formats and responsive sizes come
 // from <enhanced:img> at build time, so dropping in a map of any proportions
 // needs only its entry here.
-const TEXT: Record<string, { label: string; alt: string }> = {
-	'map_1.png': { label: '1 этаж', alt: 'Карта 1 этажа' },
-	'map_2.png': { label: '2 и 3 этажи', alt: 'Карта 2 и 3 этажа' }
+const TEXT: Record<string, { label: () => string; alt: () => string }> = {
+	'map_1.png': { label: m.map_floor_1_label, alt: m.map_floor_1_alt },
+	'map_2.png': { label: m.map_floor_2_3_label, alt: m.map_floor_2_3_alt }
 };
 
 // enhanced-img processes each match at build into a Picture (AVIF/WebP + sized

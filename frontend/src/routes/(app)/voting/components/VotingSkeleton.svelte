@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 
 	// Placeholder that mirrors the voting grid — a status bar then a responsive
 	// grid of nomination cards (count line, title, footer action) — so the layout
@@ -12,7 +13,7 @@
 </script>
 
 <div role="status" aria-live="polite">
-	<span class="sr-only">Загрузка номинаций…</span>
+	<span class="sr-only">{m.voting_nominations_loading()}</span>
 
 	<!-- Voting status bar -->
 	<Skeleton class="mb-4 h-12 w-full rounded-xl" />

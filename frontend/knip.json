@@ -1,5 +1,7 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
 	"ignore": ["src/lib/components/ui/**", "src/lib/api/generated/**"],
+	// Read by inlang from project.inlang/settings.json, not imported by any source file.
+	"ignoreDependencies": ["@inlang/plugin-message-format"],
 	"entry": ["src/env.ts"]
 }

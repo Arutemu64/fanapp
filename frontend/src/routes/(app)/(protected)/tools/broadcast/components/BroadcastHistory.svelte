@@ -15,6 +15,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { BROADCAST_PAGE_SIZE } from '#lib/constants/notifications.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 
@@ -27,8 +28,8 @@
 	// cancelled before the first answers, and `mutate` only calls back for the latest.
 	const cancelMutation = createMutation(() => ({
 		...cancelMailingMutation(),
-		onSuccess: () => toastService.add('Рассылка отменена', 'success'),
-		onError: (error) => toastService.error(error, 'Не удалось отменить рассылку'),
+		onSuccess: () => toastService.add(m.broadcast_cancelled(), 'success'),
+		onError: (error) => toastService.error(error, m.broadcast_cancel_failed()),
 		// Refresh from the server whether it succeeded or raced with another
 		// change, so the row reflects the real state.
 		onSettled: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })
@@ -50,16 +51,16 @@
 	async function loadMore() {
 		const result = await mailingsQuery.fetchNextPage();
 		if (result.isFetchNextPageError) {
-			toastService.add('Не удалось загрузить рассылки', 'error');
+			toastService.add(m.broadcast_history_load_failed_toast(), 'error');
 		}
 	}
 
 	const STATUS_LABELS: Record<MailingStatus, string> = {
-		pending: 'В очереди',
-		sending: 'Отправляется',
-		finished: 'Отправлена',
-		cancelled: 'Отменена',
-		failed: 'Ошибка'
+		pending: m.status_queued(),
+		sending: m.mailing_status_sending(),
+		finished: m.mailing_status_finished(),
+		cancelled: m.mailing_status_cancelled(),
+		failed: m.status_error()
 	};
 
 	const STATUS_VARIANTS: Record<MailingStatus, BadgeVariant> = {
@@ -71,10 +72,10 @@
 	};
 
 	const ROLE_LABELS: Record<UserRole, string> = {
-		visitor: 'Зрители',
-		participant: 'Участники',
-		volunteer: 'Волонтёры',
-		organizer: 'Организаторы'
+		visitor: m.audience_visitors(),
+		participant: m.audience_participants(),
+		volunteer: m.audience_volunteers(),
+		organizer: m.audience_organizers()
 	};
 
 	function isCancellable(status: MailingStatus): boolean {
@@ -92,18 +93,20 @@
 </script>
 
 <section class="mx-auto w-full max-w-2xl">
-	<h2 class="mb-3 text-base font-semibold text-foreground sm:text-lg">История рассылок</h2>
+	<h2 class="mb-3 text-base font-semibold text-foreground sm:text-lg">
+		{m.broadcast_history_title()}
+	</h2>
 
 	{#if mailingsQuery.data === undefined}
 		<!-- Best-effort: a history that fails to load must not block the composer
 		     above it, so it degrades to a line rather than an error page. -->
 		{#if mailingsQuery.isError}
-			<EmptyState message="Не удалось загрузить историю рассылок" />
+			<EmptyState message={m.broadcast_history_load_failed()} />
 		{:else}
 			<SectionSpinner />
 		{/if}
 	{:else if mailings.length === 0}
-		<EmptyState message="Пока ничего не отправлено" />
+		<EmptyState message={m.broadcast_history_empty()} />
 	{:else}
 		<!-- One divided list, not a card per mailing: the entries are all the same
 		     shape, so a list scans faster and fits more on a phone screen. -->
@@ -132,7 +135,10 @@
 							<span>
 								{rolesLabel(mailing.roles)}
 								{#if mailing.total_count > 0}
-									· отправлено {mailing.sent_count} из {mailing.total_count}
+									{m.broadcast_progress_suffix({
+										sent_count: mailing.sent_count,
+										total_count: mailing.total_count
+									})}
 								{/if}
 							</span>
 							{#if isCancellable(mailing.status)}
@@ -146,7 +152,7 @@
 									{#if cancellingId === mailing.id}
 										<Spinner data-icon="inline-start" />
 									{/if}
-									Отменить
+									{m.common_revert()}
 								</Button>
 							{/if}
 						</div>

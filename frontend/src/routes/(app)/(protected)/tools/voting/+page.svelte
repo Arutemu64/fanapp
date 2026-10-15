@@ -20,8 +20,8 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { pluralize } from '#lib/utils/formatters.js';
 
 	import type { PageProps } from './$types';
 
@@ -72,8 +72,8 @@
 				}
 			},
 			{
-				onSuccess: () => toastService.add('Время голосования обновлено', 'success'),
-				onError: (error) => toastService.error(error, 'Не удалось сохранить время голосования')
+				onSuccess: () => toastService.add(m.voting_period_saved(), 'success'),
+				onError: (error) => toastService.error(error, m.voting_period_save_failed())
 			}
 		);
 	}
@@ -98,7 +98,7 @@
 					hasDrawn = true;
 				},
 				onError: (error) => {
-					drawError = getApiErrorDetail(error) ?? 'Не удалось провести розыгрыш';
+					drawError = getApiErrorDetail(error) ?? m.voting_draw_failed();
 				}
 			}
 		);
@@ -106,24 +106,22 @@
 </script>
 
 <svelte:head>
-	<title>Голосование · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.nav_voting() })}</title>
 </svelte:head>
 
-<SectionIntro
-	description="Задавай период голосования, следи за лидерами номинаций и разыгрывай приз среди тех, кто проголосовал во всех номинациях."
-/>
+<SectionIntro description={m.voting_admin_description()} />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-base font-semibold text-foreground sm:text-lg">Период голосования</h2>
+		<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.voting_period_title()}</h2>
 
 		<p class="text-sm leading-5 text-muted-foreground">
-			Посетители смогут голосовать только в указанный период.
+			{m.voting_period_hint()}
 		</p>
 
 		<Field.FieldGroup class="grid gap-4 sm:grid-cols-2">
 			<Field.Field>
-				<Field.FieldLabel for="voting-start">Начало</Field.FieldLabel>
+				<Field.FieldLabel for="voting-start">{m.common_start()}</Field.FieldLabel>
 				<Input
 					id="voting-start"
 					type="datetime-local"
@@ -132,7 +130,7 @@
 				/>
 			</Field.Field>
 			<Field.Field>
-				<Field.FieldLabel for="voting-end">Конец</Field.FieldLabel>
+				<Field.FieldLabel for="voting-end">{m.common_end()}</Field.FieldLabel>
 				<Input
 					id="voting-end"
 					type="datetime-local"
@@ -147,7 +145,7 @@
 				{#if timeRangeMutation.isPending}
 					<Spinner data-icon="inline-start" />
 				{/if}
-				Сохранить
+				{m.common_save()}
 			</Button>
 			<Button
 				type="button"
@@ -155,7 +153,7 @@
 				disabled={timeRangeMutation.isPending || (!votingStart && !votingEnd)}
 				onclick={handleClear}
 			>
-				Сбросить
+				{m.common_reset()}
 			</Button>
 		</div>
 	</Card.Root>
@@ -163,17 +161,16 @@
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Gift class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-base font-semibold text-foreground sm:text-lg">Розыгрыш приза</h2>
+			<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.voting_draw_title()}</h2>
 		</div>
 		<p class="text-sm leading-5 text-muted-foreground">
-			Случайный участник среди тех, кто проголосовал во всех номинациях.
+			{m.voting_draw_hint()}
 		</p>
 
 		<div class="flex items-center gap-2 text-sm text-muted-foreground">
 			<Users class="size-4" aria-hidden="true" />
 			<span>
-				В розыгрыше: {poolSize}
-				{pluralize(poolSize, 'участник', 'участника', 'участников')}
+				{m.voting_draw_pool({ count: poolSize })}
 			</span>
 		</div>
 
@@ -192,7 +189,7 @@
 					<div class="flex items-center gap-3 rounded-xl bg-primary/10 p-3">
 						<Award class="size-6 shrink-0 text-primary" aria-hidden="true" />
 						<div class="min-w-0">
-							<p class="text-xs text-muted-foreground">Победитель</p>
+							<p class="text-xs text-muted-foreground">{m.voting_winner()}</p>
 							<p class="truncate text-base font-semibold text-foreground">
 								{winner.username}
 							</p>
@@ -200,7 +197,7 @@
 					</div>
 				{:else}
 					<p class="text-sm text-muted-foreground">
-						Пока некого разыгрывать — никто не проголосовал во всех номинациях.
+						{m.voting_draw_empty()}
 					</p>
 				{/if}
 			</div>
@@ -214,14 +211,14 @@
 		>
 			{#if drawMutation.isPending}
 				<Spinner data-icon="inline-start" />
-				Разыгрываем…
+				{m.voting_drawing()}
 			{:else}
-				{hasDrawn ? 'Разыграть ещё раз' : 'Разыграть'}
+				{hasDrawn ? m.voting_draw_again() : m.voting_draw_action()}
 			{/if}
 		</Button>
 		{#if !canDraw}
 			<p class="text-xs text-muted-foreground">
-				Кнопка станет активной, когда кто-нибудь проголосует во всех номинациях.
+				{m.voting_draw_disabled_hint()}
 			</p>
 		{/if}
 	</Card.Root>
@@ -229,7 +226,7 @@
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Award class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-base font-semibold text-foreground sm:text-lg">Лидеры номинаций</h2>
+			<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.voting_leaders_title()}</h2>
 		</div>
 
 		{#if nominations.length > 0}
@@ -243,13 +240,14 @@
 									{nomination.leader.title}
 								</span>
 								<Badge>
-									{nomination.leader.votes_count}
-									{pluralize(nomination.leader.votes_count, 'голос', 'голоса', 'голосов')}
-									из {nomination.total_votes}
+									{m.voting_leader_votes({
+										count: nomination.leader.votes_count,
+										total: nomination.total_votes
+									})}
 								</Badge>
 							</div>
 						{:else}
-							<p class="mt-1 text-xs text-muted-foreground">Голосов пока нет</p>
+							<p class="mt-1 text-xs text-muted-foreground">{m.voting_no_votes()}</p>
 						{/if}
 					</li>
 				{/each}
@@ -257,8 +255,8 @@
 		{:else}
 			<EmptyState
 				icon={Users}
-				title="Нет номинаций для голосования"
-				message="Появятся после импорта косплей-конкурса"
+				title={m.voting_no_nominations_title()}
+				message={m.voting_no_nominations_message()}
 			/>
 		{/if}
 	</Card.Root>

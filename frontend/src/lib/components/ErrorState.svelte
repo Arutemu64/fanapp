@@ -4,6 +4,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { probeReachability, reachability } from '#lib/services/reachability.js';
 	import { statusTitle } from '#lib/utils/errorTitle.js';
 
@@ -46,7 +47,7 @@
 
 	let title = $derived.by(() => {
 		if (!offline) return statusTitle(status);
-		return deviceOffline ? 'Нет интернета' : 'Нет связи с сервером';
+		return deviceOffline ? m.connection_no_internet() : m.connection_no_server();
 	});
 
 	// A genuine 403 gets the lock icon; everything else (including offline, which
@@ -58,13 +59,12 @@
 	);
 
 	let description = $derived.by(() => {
-		if (offline && deviceOffline)
-			return 'Проверь подключение к сети. Часть данных доступна офлайн.';
-		if (offline) return 'Не удаётся связаться с сервером. Часть данных доступна офлайн.';
+		if (offline && deviceOffline) return m.error_state_offline_hint();
+		if (offline) return m.error_state_server_offline_hint();
 		if (errorMessage) return errorMessage;
-		if (status === 403) return 'У тебя нет прав для просмотра этой страницы.';
-		if (status === 404) return 'Похоже, эта страница не существует, была удалена или перенесена.';
-		return 'Произошла непредвиденная ошибка на сервере или отсутствует интернет-соединение.';
+		if (status === 403) return m.error_state_forbidden();
+		if (status === 404) return m.error_state_not_found();
+		return m.error_state_unexpected();
 	});
 
 	// Fullscreen owns the viewport background; inline inherits the shell's surface.
@@ -99,7 +99,7 @@
 			</div>
 
 			<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-				{offline ? 'Офлайн' : `Ошибка ${status}`}
+				{offline ? m.error_state_offline_title() : m.error_state_status_title({ status })}
 			</span>
 
 			<h2 class="mb-2 text-xl font-bold text-foreground sm:text-2xl">
@@ -114,7 +114,7 @@
 				<!-- Something a user can quote in feedback; matches the error_id tag on the
 				     GlitchTip event (see handleError in hooks.client.ts). -->
 				<p class="-mt-4 mb-6 text-xs text-muted-foreground">
-					Код ошибки: <span class="font-mono select-all">{errorId}</span>
+					{m.error_state_code_label()} <span class="font-mono select-all">{errorId}</span>
 				</p>
 			{/if}
 
@@ -122,18 +122,18 @@
 				{#if offline || status >= 500}
 					<Button class="w-full" onclick={handleRetry}>
 						<RotateCw data-icon="inline-start" />
-						Попробовать снова
+						{m.common_try_again()}
 					</Button>
 				{/if}
 
 				<Button href="/" variant={offline || status >= 500 ? 'outline' : 'default'} class="w-full">
 					<Home data-icon="inline-start" />
-					На главную
+					{m.common_to_home()}
 				</Button>
 
 				<Button type="button" variant="ghost" class="w-full" onclick={handleGoBack}>
 					<ArrowLeft data-icon="inline-start" />
-					Вернуться назад
+					{m.common_go_back()}
 				</Button>
 			</div>
 		</div>

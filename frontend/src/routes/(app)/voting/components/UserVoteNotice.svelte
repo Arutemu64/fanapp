@@ -8,6 +8,7 @@
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	interface Props {
@@ -29,7 +30,7 @@
 		// notice, and TanStack drops a call's callbacks once its component unmounts.
 		onSuccess: async () => {
 			await onCancelled?.();
-			toastService.add('Голос отменён', 'success');
+			toastService.add(m.voting_vote_cancelled(), 'success');
 		}
 	}));
 
@@ -54,7 +55,7 @@
 <Alert.Root variant="success" role="status" class="flex items-center gap-3">
 	<CheckCircle2 class="shrink-0" />
 	<div class="min-w-0 flex-1">
-		<Alert.Title>Твой выбор</Alert.Title>
+		<Alert.Title>{m.voting_your_choice()}</Alert.Title>
 		<Alert.Description class="break-words">{participantLabel}</Alert.Description>
 	</div>
 	<!-- A closed ballot is final (CancelVote enforces the same window as casting),
@@ -66,14 +67,14 @@
 			class="min-h-11 shrink-0"
 			disabled={cancelMutation.isPending}
 			onclick={handleCancelVote}
-			aria-label="Отменить голос"
+			aria-label={m.voting_cancel_vote()}
 		>
 			{#if cancelMutation.isPending}
 				<Spinner data-icon="inline-start" />
 			{:else}
 				<X data-icon="inline-start" />
 			{/if}
-			Отменить
+			{m.common_revert()}
 		</Button>
 	{/if}
 </Alert.Root>

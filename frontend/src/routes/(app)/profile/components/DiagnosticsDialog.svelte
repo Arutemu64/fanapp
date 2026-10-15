@@ -10,6 +10,7 @@
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { browserPush } from '#lib/services/pushBrowser.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
@@ -143,7 +144,7 @@
 		const entries: CacheEntry[] = [];
 		for (const [id, label] of Object.entries(CACHE_LABELS)) {
 			const updatedAt = newestById[id];
-			if (updatedAt) entries.push({ label, updatedAt });
+			if (updatedAt) entries.push({ label: label(), updatedAt });
 		}
 		return entries;
 	}
@@ -152,10 +153,10 @@
 		if (!snapshot) return;
 		try {
 			await navigator.clipboard.writeText(formatReport(snapshot, capturedAt));
-			toastService.add('Отчёт скопирован. Отправь его организаторам', 'success');
+			toastService.add(m.diagnostics_report_copied(), 'success');
 		} catch (error) {
 			console.error('Failed to copy diagnostics report:', error);
-			toastService.add('Не удалось скопировать. Сделай скриншот этого окна', 'error');
+			toastService.add(m.diagnostics_copy_failed(), 'error');
 		}
 	}
 
@@ -165,7 +166,7 @@
 	async function resetAndReload() {
 		// The connection can drop while the confirmation is open.
 		if (!reachability.current) {
-			toastService.add('Нет связи. Сброс доступен только с интернетом', 'error');
+			toastService.add(m.diagnostics_reset_offline(), 'error');
 			return;
 		}
 		isResetting = true;
@@ -193,10 +194,10 @@
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Stethoscope class="size-5 text-muted-foreground" />
-				Диагностика
+				{m.diagnostics_title()}
 			</Dialog.Title>
 			<Dialog.Description>
-				Если что-то не работает, скопируй отчёт и отправь организаторам.
+				{m.diagnostics_description()}
 			</Dialog.Description>
 		</Dialog.Header>
 
@@ -221,7 +222,7 @@
 		<Dialog.Footer class="flex flex-col gap-2 sm:flex-col">
 			<Button class="w-full" disabled={!snapshot} onclick={copyReport}>
 				<Copy data-icon="inline-start" />
-				Скопировать отчёт
+				{m.diagnostics_copy_report()}
 			</Button>
 			<Button
 				variant="outline"
@@ -230,11 +231,11 @@
 				onclick={() => (confirmResetOpen = true)}
 			>
 				<RotateCcw data-icon="inline-start" />
-				Сбросить кэш и перезагрузить
+				{m.diagnostics_reset_action()}
 			</Button>
 			{#if !reachability.current}
 				<p class="text-center text-sm leading-relaxed text-muted-foreground">
-					Сброс доступен только с интернетом&nbsp;— без него приложение не откроется.
+					{m.diagnostics_reset_hint()}
 				</p>
 			{/if}
 		</Dialog.Footer>
@@ -244,15 +245,15 @@
 <AlertDialog.Root bind:open={confirmResetOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>Сбросить кэш?</AlertDialog.Title>
+			<AlertDialog.Title>{m.diagnostics_reset_confirm_title()}</AlertDialog.Title>
 			<AlertDialog.Description>
-				Приложение забудет сохранённую программу и загрузит всё заново. Из аккаунта ты не выйдешь.
+				{m.diagnostics_reset_confirm_description()}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
+			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
 			<AlertDialog.Action disabled={!reachability.current} onclick={resetAndReload}>
-				Сбросить
+				{m.common_reset()}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

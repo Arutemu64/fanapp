@@ -1,5 +1,7 @@
 import { PUBLIC_TIMEZONE } from '$app/env/public';
 
+import { m } from '#lib/paraglide/messages.js';
+
 const SECONDS_IN_MINUTE = 60;
 const SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE;
 
@@ -38,16 +40,14 @@ export function formatDuration(seconds: number): string {
 
 	const parts: string[] = [];
 	if (hours > 0) {
-		parts.push(`${hours} ${pluralize(hours, 'час', 'часа', 'часов')}`);
+		parts.push(m.duration_hours({ count: hours }));
 	}
 	if (minutes > 0) {
-		parts.push(`${minutes} ${pluralize(minutes, 'минута', 'минуты', 'минут')}`);
+		parts.push(m.duration_minutes({ count: minutes }));
 	}
 	// Also covers a zero duration, which would otherwise render as an empty label.
 	if (remainingSeconds > 0 || parts.length === 0) {
-		parts.push(
-			`${remainingSeconds} ${pluralize(remainingSeconds, 'секунда', 'секунды', 'секунд')}`
-		);
+		parts.push(m.duration_seconds({ count: remainingSeconds }));
 	}
 
 	return parts.join(' ');
@@ -157,17 +157,17 @@ export function formatRelativeTime(
 	const diffSeconds = Math.floor((now - date.getTime()) / 1000);
 
 	if (diffSeconds < 60) {
-		return 'только что';
+		return m.relative_just_now();
 	}
 
 	const diffMinutes = Math.floor(diffSeconds / 60);
 	if (diffMinutes < 60) {
-		return `${diffMinutes} ${pluralize(diffMinutes, 'минуту', 'минуты', 'минут')} назад`;
+		return m.relative_minutes_ago({ count: diffMinutes });
 	}
 
 	const diffHours = Math.floor(diffMinutes / 60);
 	if (diffHours < 24) {
-		return `${diffHours} ${pluralize(diffHours, 'час', 'часа', 'часов')} назад`;
+		return m.relative_hours_ago({ count: diffHours });
 	}
 
 	return EVENT_DATE_TIME_FORMATTER.format(date);
@@ -209,12 +209,12 @@ export function formatSyncedAt(timestamp: number): string {
 	const targetDay = EVENT_DAY_KEY_FORMATTER.format(target);
 
 	if (targetDay === EVENT_DAY_KEY_FORMATTER.format(now)) {
-		return `сегодня в ${time}`;
+		return m.synced_today({ time });
 	}
 	if (targetDay === EVENT_DAY_KEY_FORMATTER.format(yesterday)) {
-		return `вчера в ${time}`;
+		return m.synced_yesterday({ time });
 	}
-	return `${EVENT_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
+	return m.synced_on_date({ date: EVENT_DAY_MONTH_FORMATTER.format(target), time });
 }
 
 const EVENT_DAY_LONG_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
@@ -259,10 +259,10 @@ export function formatDayHeading(value: string | number | Date, now: number = Da
 	const targetDay = eventDayKey(target);
 
 	if (targetDay === eventDayKey(now)) {
-		return 'Сегодня';
+		return m.day_today();
 	}
 	if (targetDay === previousDayKey(eventDayKey(now))) {
-		return 'Вчера';
+		return m.day_yesterday();
 	}
 
 	const sameYear = targetDay.slice(0, 4) === eventDayKey(now).slice(0, 4);
@@ -280,28 +280,5 @@ export function formatDayHeading(value: string | number | Date, now: number = Da
  * — so the position distance is the whole label, and it stays exact as acts advance.
  */
 export function formatUntil(actsAhead: number): string {
-	return `Осталось ${actsAhead} ${pluralize(actsAhead, 'выступление', 'выступления', 'выступлений')}`;
-}
-
-const RUSSIAN_PLURAL_RULES = new Intl.PluralRules('ru-RU');
-
-/**
- * Pluralize a Russian word based on count, using the CLDR rules behind
- * `Intl.PluralRules` rather than hand-rolled mod-10/mod-100 arithmetic.
- * @param one - Form for 1, 21, 31… (e.g., "событие")
- * @param few - Form for 2-4, 22-24… (e.g., "события")
- * @param many - Form for 0, 5-20, 25… (e.g., "событий")
- */
-export function pluralize(count: number, one: string, few: string, many: string): string {
-	switch (RUSSIAN_PLURAL_RULES.select(count)) {
-		case 'one':
-			return one;
-		case 'few':
-			return few;
-		case 'many':
-			return many;
-		default:
-			// CLDR's `other` is fractions only ("1,5 часа"), which take the `few` form.
-			return few;
-	}
+	return m.events_left({ count: actsAhead });
 }

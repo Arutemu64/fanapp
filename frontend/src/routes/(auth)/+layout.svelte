@@ -2,6 +2,7 @@
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '#lib/assets/logo.svg';
 	import SkipLink from '#lib/components/SkipLink.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	import type { LayoutProps } from './$types';
 
@@ -20,7 +21,7 @@
 			on its own to cover both themes. The extra margin keeps the brand apart from
 			the card: at the column's 12px gap it reads as part of the form (NN/g,
 			https://www.nngroup.com/articles/gestalt-proximity/). -->
-		<img src={logo} alt="ФАН ФАН" class="mx-auto mb-5 h-12 w-auto dark:invert" />
+		<img src={logo} alt={m.app_name()} class="mx-auto mb-5 h-12 w-auto dark:invert" />
 
 		{@render children()}
 	</div>

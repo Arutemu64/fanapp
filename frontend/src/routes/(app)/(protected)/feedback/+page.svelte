@@ -10,6 +10,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
@@ -37,7 +38,7 @@
 
 	function validateForm() {
 		if (!feedbackText.trim()) {
-			feedbackError = 'Напиши, чем хочешь поделиться';
+			feedbackError = m.feedback_validation_empty();
 			return false;
 		}
 		feedbackError = '';
@@ -46,7 +47,7 @@
 
 	function handleInput() {
 		if (feedbackError) {
-			feedbackError = feedbackText.trim() ? '' : 'Напиши, чем хочешь поделиться';
+			feedbackError = feedbackText.trim() ? '' : m.feedback_validation_empty();
 		}
 	}
 
@@ -62,7 +63,7 @@
 			{ body: { text: feedbackText.trim() } },
 			{
 				onSuccess: () => {
-					toastService.add('Спасибо, отзыв отправлен', 'success');
+					toastService.add(m.feedback_sent(), 'success');
 					feedbackText = '';
 					feedbackError = '';
 				},
@@ -72,7 +73,7 @@
 						feedbackError = textError;
 						return;
 					}
-					submitError = getApiErrorDetail(error) ?? 'Не удалось отправить отзыв';
+					submitError = getApiErrorDetail(error) ?? m.feedback_send_failed();
 				}
 			}
 		);
@@ -80,31 +81,29 @@
 </script>
 
 <svelte:head>
-	<title>Обратная связь · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.feedback_title() })}</title>
 </svelte:head>
 
 {#if showOffline}
 	<!-- Submit-only surface with nothing to cache: say so plainly rather than
 	     showing a form that can't send. -->
 	<OfflineUnavailableState
-		title="Обратная связь доступна только онлайн"
-		message="Подключись к интернету, чтобы отправить отзыв."
+		title={m.feedback_offline_title()}
+		message={m.feedback_offline_message()}
 	/>
 {:else}
 	<div class="mx-auto w-full max-w-2xl">
-		<SectionIntro
-			description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
-		/>
+		<SectionIntro description={m.feedback_description()} />
 
 		<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 			<Field.Field data-invalid={feedbackError ? true : undefined}>
-				<Field.FieldLabel for="feedback-text">Твой отзыв</Field.FieldLabel>
+				<Field.FieldLabel for="feedback-text">{m.feedback_field_label()}</Field.FieldLabel>
 				<Textarea
 					id="feedback-text"
 					name="text"
 					rows={6}
 					maxlength={MAX_LENGTH}
-					placeholder="Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…"
+					placeholder={m.feedback_placeholder()}
 					bind:value={feedbackText}
 					disabled={feedbackMutation.isPending}
 					oninput={handleInput}
@@ -115,7 +114,7 @@
 					<Field.FieldError>{feedbackError}</Field.FieldError>
 				{:else}
 					<Field.FieldDescription>
-						Осталось символов: {charsLeft}
+						{m.feedback_chars_left({ count: charsLeft })}
 					</Field.FieldDescription>
 				{/if}
 			</Field.Field>
@@ -134,9 +133,9 @@
 			>
 				{#if feedbackMutation.isPending}
 					<Spinner data-icon="inline-start" />
-					Отправка…
+					{m.common_sending()}
 				{:else}
-					Отправить отзыв
+					{m.feedback_submit()}
 				{/if}
 			</Button>
 		</form>

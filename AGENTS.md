@@ -5,7 +5,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to 
 ## Never
 
 * **Never** import outward from `core/` or `application/` — no ORM models, concrete adapters, presentation routers, no FastAPI/SQLAlchemy in `core/`. Infrastructure reaches the inner layers only through ports in `application/ports/`. Enforced by `just backend-import-lint`.
-* **Never** ship user-facing English. Every label, placeholder, error, toast and empty state is **Russian**. Code comments and docstrings are **English**.
+* **Never** ship user-facing English. Every label, placeholder, error, toast and empty state is **Russian**. Code comments and docstrings are **English**. Frontend copy lives in `frontend/messages/ru.json`, never as a literal in a component ([docs/frontend.md](docs/frontend.md) §6).
 * **Never** delete or weaken a comment that carries a *why* — a constraint, upstream bug, ADR or rejected alternative — unless the code it describes is gone. Such a comment encodes something you cannot see from the diff; if it looks wrong, verify before dropping it. A comment that only restates the line under it carries nothing and may go; name the removal in the PR so a reviewer can confirm nothing was lost.
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
@@ -88,9 +88,11 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
 │   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
-├── frontend/src/
-│   ├── routes/          # Pages & layouts
-│   └── lib/             # assets/ components/ api/ types/ services/ utils/ constants/ data/ testing/
+├── frontend/
+│   ├── messages/        # ru.json: all user-facing copy (Paraglide JS)
+│   └── src/
+│       ├── routes/      # Pages & layouts
+│       └── lib/         # assets/ components/ api/ types/ services/ utils/ constants/ data/ testing/
 ├── shared/openapi/      # Shared OpenAPI spec
 ├── config/              # Committed, non-secret infra config
 └── secrets/             # Gitignored runtime secrets (VAPID PEM); mounted read-only

@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 
 import type { BackTarget } from '#lib/types/navigation.js';
 
+import { m } from '#lib/paraglide/messages.js';
 import { canManageSchedule } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
@@ -13,11 +14,11 @@ export const load: PageLoad = async ({ parent }) => {
 	const { user } = await parent();
 
 	if (!canManageSchedule(user)) {
-		error(403, 'У тебя нет доступа к этой странице');
+		error(403, m.schedule_changes_forbidden());
 	}
 
 	return {
-		title: 'Изменения программы',
-		back: { href: 'schedule', label: 'Назад к программе' } satisfies BackTarget
+		title: m.schedule_changes_title(),
+		back: { href: 'schedule', label: m.schedule_back() } satisfies BackTarget
 	};
 };

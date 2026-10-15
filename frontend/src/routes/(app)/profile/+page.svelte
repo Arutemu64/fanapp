@@ -22,6 +22,7 @@
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
@@ -37,7 +38,9 @@
 
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
-	let ticketStatus = $derived(user?.ticket ? 'Привязан' : 'Не привязан');
+	let ticketStatus = $derived(
+		user?.ticket ? m.ticket_status_linked() : m.ticket_status_not_linked()
+	);
 
 	// The row's "current value", like a settings screen's: whether any channel
 	// reaches this user (see notificationsStatus). Device push is read from the
@@ -90,7 +93,7 @@
 </script>
 
 <svelte:head>
-	<title>Профиль · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.nav_profile() })}</title>
 </svelte:head>
 
 <!-- data-fill-column lets this grow to fill the (app) shell's content column, so on a page
@@ -116,10 +119,8 @@
 								<RotateCw class="size-5" aria-hidden="true" />
 							</Item.Media>
 							<Item.Content>
-								<Item.Title class="text-base">Обновить приложение</Item.Title>
-								<Item.Description
-									>Обнови, чтобы получить новые функции и исправления</Item.Description
-								>
+								<Item.Title class="text-base">{m.profile_update_app()}</Item.Title>
+								<Item.Description>{m.profile_update_app_description()}</Item.Description>
 							</Item.Content>
 						</button>
 					{/snippet}
@@ -139,7 +140,11 @@
 								<Item.Title class="max-w-full text-base">
 									<span class="truncate">@{user.username}</span>
 								</Item.Title>
-								<Item.Description>{getRoleLabel(user.role)} · аккаунт и вход</Item.Description>
+								<Item.Description
+									>{m.profile_menu_account_description({
+										role: getRoleLabel(user.role)
+									})}</Item.Description
+								>
 							</Item.Content>
 							<Item.Actions>
 								<ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
@@ -150,19 +155,24 @@
 			</MenuGroup>
 
 			<MenuGroup>
-				<MenuLink href="profile/ticket" label="Билет" icon={Ticket} value={ticketStatus} />
+				<MenuLink
+					href="profile/ticket"
+					label={m.ticket_title()}
+					icon={Ticket}
+					value={ticketStatus}
+				/>
 				<MenuLink
 					href="profile/notifications"
-					label="Уведомления"
+					label={m.notifications_title()}
 					icon={Bell}
 					value={notificationsValue}
 				/>
 			</MenuGroup>
 
 			<MenuGroup>
-				<MenuLink href="feedback" label="Обратная связь" icon={MessageSquare} />
+				<MenuLink href="feedback" label={m.feedback_title()} icon={MessageSquare} />
 				{#if showTools}
-					<MenuLink href="tools" label="Инструменты" icon={Wrench} />
+					<MenuLink href="tools" label={m.tools_title()} icon={Wrench} />
 				{/if}
 			</MenuGroup>
 		{:else}
@@ -180,9 +190,9 @@
 								</Avatar.Root>
 							</Item.Media>
 							<Item.Content class="min-w-0">
-								<Item.Title class="text-base">Войти</Item.Title>
+								<Item.Title class="text-base">{m.common_login()}</Item.Title>
 								<Item.Description>
-									Голосование, подписки на выступления и уведомления
+									{m.profile_login_description()}
 								</Item.Description>
 							</Item.Content>
 							<Item.Actions>
@@ -206,10 +216,8 @@
 								<Download class="size-5" aria-hidden="true" />
 							</Item.Media>
 							<Item.Content>
-								<Item.Title class="text-base">Установить приложение</Item.Title>
-								<Item.Description
-									>Быстрый запуск с главного экрана и пуш-уведомления</Item.Description
-								>
+								<Item.Title class="text-base">{m.install_title()}</Item.Title>
+								<Item.Description>{m.profile_install_description()}</Item.Description>
 							</Item.Content>
 						</button>
 					{/snippet}
@@ -222,7 +230,7 @@
 					<Palette class="size-5" aria-hidden="true" />
 				</Item.Media>
 				<Item.Content>
-					<Item.Title class="text-base">Тема</Item.Title>
+					<Item.Title class="text-base">{m.profile_theme()}</Item.Title>
 				</Item.Content>
 				<Item.Footer>
 					<ThemeToggle />
@@ -237,14 +245,14 @@
 
 	<footer class="mx-auto mt-auto max-w-2xl pt-6 text-center text-xs text-muted-foreground">
 		<p class="flex items-center justify-center gap-1">
-			Работает на
+			{m.footer_powered_by()}
 			<IconSvelte class="inline size-3.5 text-[#FF3E00]" />
-			Svelte и
+			{m.footer_svelte_and()}
 			<IconFastapi class="inline size-3.5 text-[#009688]" />
 			FastAPI
 		</p>
 		<p class="mt-0.5 flex items-center justify-center gap-1">
-			С любовью,
+			{m.footer_with_love()}
 			<a
 				href="https://arutemu64.com/"
 				target="_blank"
@@ -259,7 +267,7 @@
 			<!-- A button so a keyboard reaches the diagnostics too, styled as the plain
 			     line it was so the gesture stays out of sight. -->
 			<button type="button" class="mt-0.5 cursor-default select-none" onclick={handleVersionTap}>
-				Версия {appVersion}
+				{m.footer_version({ version: appVersion })}
 				{#if buildId}· {buildId}{/if}
 			</button>
 		{/if}

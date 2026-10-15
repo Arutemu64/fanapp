@@ -19,6 +19,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
@@ -55,8 +56,8 @@
 
 	let resultsSummary = $derived(
 		filtered.length === participants.length
-			? `Всего участников: ${participants.length}`
-			: `Показано ${filtered.length} из ${participants.length}`
+			? m.voting_total_participants({ count: participants.length })
+			: m.results_shown_of({ count: filtered.length, total: participants.length })
 	);
 
 	let votedParticipant = $derived(
@@ -74,16 +75,17 @@
 </script>
 
 <svelte:head>
-	<title>{nomination ? `${nomination.title} · ` : ''}Голосование · ФАН ФАН</title>
+	<title>
+		{m.document_title({
+			title: nomination ? `${nomination.title} · ${m.nav_voting()}` : m.nav_voting()
+		})}
+	</title>
 </svelte:head>
 
 {#if !reachability.current}
 	<!-- Voting is online-only, so there is no saved copy to show — say so plainly
 	     instead of crashing on a missing nomination. -->
-	<OfflineUnavailableState
-		title="Голосование доступно только онлайн"
-		message="Подключись к интернету, чтобы голосовать за участников."
-	/>
+	<OfflineUnavailableState title={m.voting_offline_title()} message={m.voting_offline_message()} />
 {:else if !nomination}
 	<!-- Online with nothing to show: the load gave up waiting (it leaves a
 	     connection failure to the page) or the request failed. Blaming the
@@ -94,12 +96,12 @@
 			onRetry={() => void nominationQuery.refetch()}
 			error={{
 				status: 500,
-				message: getApiErrorDetail(nominationQuery.error) ?? 'Не удалось загрузить номинацию'
+				message: getApiErrorDetail(nominationQuery.error) ?? m.voting_nomination_load_failed()
 			}}
 		/>
 	{:else}
 		<div role="status" aria-live="polite" class="flex flex-col gap-3">
-			<span class="sr-only">Загрузка участников…</span>
+			<span class="sr-only">{m.voting_participants_loading()}</span>
 			<Skeleton class="h-10 w-full rounded-lg" />
 			<Skeleton class="h-64 w-full rounded-xl" />
 		</div>
@@ -112,7 +114,7 @@
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				{#if showVoteHint}
 					<p class="text-sm text-muted-foreground sm:text-base">
-						Выбери участника, чтобы отдать голос
+						{m.voting_pick_participant()}
 					</p>
 				{/if}
 				{#if nomination?.works_url}
@@ -125,7 +127,7 @@
 						class="shrink-0 self-start"
 					>
 						<ExternalLink data-icon="inline-start" />
-						Смотреть работы
+						{m.voting_see_works()}
 					</Button>
 				{/if}
 			</div>
@@ -155,8 +157,8 @@
 			<Input
 				bind:value={searchQuery}
 				name="participant_search"
-				aria-label="Поиск участников в номинации"
-				placeholder="Поиск по имени или номеру…"
+				aria-label={m.voting_participants_search_label()}
+				placeholder={m.voting_participants_search_placeholder()}
 				autocomplete="off"
 				spellcheck={false}
 				class="pr-8 pl-9"
@@ -166,7 +168,7 @@
 					type="button"
 					class="absolute right-2 text-muted-foreground hover:text-foreground"
 					onclick={() => (searchQuery = '')}
-					aria-label="Очистить поиск"
+					aria-label={m.common_clear_search()}
 				>
 					<X class="size-4" />
 				</button>
@@ -201,15 +203,19 @@
 		<!-- Two distinct states: a search that matched nothing (recoverable —
 		     offer the reset), and a nomination with no participants at all,
 		     where clearing the search would do nothing. -->
-		<EmptyState icon={Users} title="Ничего не нашлось" message="Попробуй изменить запрос">
+		<EmptyState icon={Users} title={m.common_nothing_found()} message={m.voting_try_other_query()}>
 			<button
 				onclick={() => (searchQuery = '')}
 				class="mt-3 text-sm font-medium text-primary hover:underline"
 			>
-				Очистить поиск
+				{m.common_clear_search()}
 			</button>
 		</EmptyState>
 	{:else}
-		<EmptyState icon={Users} title="Участников пока нет" message="Появятся ближе к фестивалю" />
+		<EmptyState
+			icon={Users}
+			title={m.voting_participants_empty_title()}
+			message={m.voting_participants_empty_message()}
+		/>
 	{/if}
 {/if}

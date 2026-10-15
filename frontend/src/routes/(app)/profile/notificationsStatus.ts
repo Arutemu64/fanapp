@@ -1,6 +1,8 @@
 import type { CurrentUserDto } from '#lib/api/generated/index.js';
 import type { DevicePushState } from '#lib/services/pushDevice.svelte.js';
 
+import { m } from '#lib/paraglide/messages.js';
+
 type ChannelOwner = Pick<CurrentUserDto, 'settings' | 'social_identities'>;
 
 /**
@@ -24,10 +26,10 @@ export function notificationsStatus(
 		linked.has('telegram') && user.settings.receive_telegram_notifications === true;
 
 	if (devicePush === 'on' || vkOn || telegramOn) {
-		return 'Включены';
+		return m.notifications_status_on();
 	}
 	if (devicePush === 'unknown') {
 		return undefined;
 	}
-	return 'Выключены';
+	return m.notifications_status_off();
 }

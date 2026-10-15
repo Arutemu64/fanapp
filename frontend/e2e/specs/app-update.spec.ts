@@ -38,8 +38,11 @@ async function stageWaitingUpdate(page: Page) {
 	});
 }
 
-const wasApplied = (page: Page) =>
-	page.evaluate(() => sessionStorage.getItem('e2e:update-applied'));
+// The hand-off reloads the page. `waitForFunction` retries when its context is
+// destroyed by that reload; a one-off `page.evaluate` inside `expect.poll` rejects
+// instead, and `expect.poll` does not retry a throwing callback.
+const waitForUpdateApplied = (page: Page) =>
+	page.waitForFunction(() => sessionStorage.getItem('e2e:update-applied') === '1');
 
 test.describe('app update', () => {
 	test('marks the Profile tab and offers the update on the hub', async ({ page }) => {
@@ -51,7 +54,7 @@ test.describe('app update', () => {
 		).toHaveAccessibleName(/^Профиль/);
 
 		await page.getByRole('button', { name: /Обновить приложение/ }).click();
-		await expect.poll(() => wasApplied(page)).toBe('1');
+		await waitForUpdateApplied(page);
 		await expect(page.getByRole('button', { name: /Обновить приложение/ })).toHaveCount(0);
 	});
 
@@ -67,8 +70,9 @@ test.describe('app update', () => {
 			.click();
 
 		await expect(page).toHaveURL(/\/map$/);
-		await expect.poll(() => wasApplied(page)).toBe('1');
-		expect(await page.evaluate(() => 'e2eSamePage' in window)).toBe(false);
+		await waitForUpdateApplied(page);
+		// The marker is gone once the reload has replaced the page.
+		await page.waitForFunction(() => !('e2eSamePage' in window));
 	});
 
 	test('shows no mark without a waiting update', async ({ page }) => {

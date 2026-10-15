@@ -71,3 +71,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0024](0024-keyset-paging-for-the-users-directory.md) | Keyset paging for the users directory; bounded sets stay unpaged | Accepted |
 | [0025](0025-dicebear-avatars-from-a-stored-seed.md) | DiceBear avatars drawn in the browser from a stored seed | Accepted |
 | [0026](0026-schedule-blocks-as-block-start-entries.md) | Schedule blocks as block-start entries | Accepted |
+| [0027](0027-paraglide-js-for-user-facing-copy.md) | Paraglide JS for user-facing copy | Accepted |

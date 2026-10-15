@@ -9,6 +9,7 @@
 	import type { MapEntry } from '#lib/data/maps.js';
 
 	import { maps } from '#lib/data/maps.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import 'photoswipe/style.css';
 
 	// Thumbnail buttons, indexed like `maps`. PhotoSwipe animates the open and
@@ -67,12 +68,12 @@
 			// title and bottom nav show through behind the edge-to-edge map. Dragging
 			// the map down to close still fades it and reveals the page.
 			bgOpacity: 1,
-			closeTitle: 'Закрыть',
-			zoomTitle: 'Масштаб',
-			arrowPrevTitle: 'Предыдущая карта',
-			arrowNextTitle: 'Следующая карта',
-			errorMsg: 'Не удалось загрузить карту',
-			indexIndicatorSep: ' из '
+			closeTitle: m.common_close(),
+			zoomTitle: m.lightbox_zoom(),
+			arrowPrevTitle: m.lightbox_prev(),
+			arrowNextTitle: m.lightbox_next(),
+			errorMsg: m.lightbox_load_failed(),
+			indexIndicatorSep: m.lightbox_index_separator()
 		});
 		pswp.addFilter('thumbBounds', alignCropToTop);
 		pswp.on('uiRegister', () => pswp.ui?.registerElement(downloadButton));
@@ -100,7 +101,7 @@
 			srcset: map.picture.sources.webp,
 			width: map.picture.img.w,
 			height: map.picture.img.h,
-			alt: map.alt,
+			alt: map.alt(),
 			// Shown while the full image loads; the thumbnail's variant is already cached.
 			msrc: thumbnailImage?.currentSrc,
 			element: thumbnail,
@@ -128,7 +129,7 @@
 	// built-in toolbar icons: https://photoswipe.com/adding-ui-elements/
 	const downloadButton: UIElementData = {
 		name: 'download-button',
-		title: 'Скачать карту',
+		title: m.lightbox_download(),
 		order: 8,
 		isButton: true,
 		tagName: 'a',
@@ -153,18 +154,18 @@
 	function localizeAria(root: HTMLElement | undefined) {
 		if (!root) return;
 		root.setAttribute('aria-modal', 'true');
-		root.setAttribute('aria-label', 'Просмотр карты');
+		root.setAttribute('aria-label', m.lightbox_aria_view());
 		for (const element of root.querySelectorAll('[aria-roledescription="carousel"]')) {
-			element.setAttribute('aria-roledescription', 'карусель');
+			element.setAttribute('aria-roledescription', m.lightbox_aria_carousel());
 		}
 		for (const element of root.querySelectorAll('[aria-roledescription="slide"]')) {
-			element.setAttribute('aria-roledescription', 'слайд');
+			element.setAttribute('aria-roledescription', m.lightbox_aria_slide());
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>Карта · ФАН ФАН</title>
+	<title>{m.document_title({ title: m.nav_map() })}</title>
 </svelte:head>
 
 <!-- Two columns at every width, so both floors are on screen at once, with no
@@ -180,7 +181,7 @@ below the plan on the current posters, before their legend starts. -->
 			onclick={() => openMap(index)}
 			class="group flex flex-col gap-2 overflow-hidden rounded-2xl border bg-muted p-2 text-start shadow-sm transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 			aria-haspopup="dialog"
-			aria-label={`${map.label}\u00A0— открыть карту на весь экран`}
+			aria-label={m.map_open_fullscreen({ name: map.label() })}
 		>
 			<span class="relative block">
 				<enhanced:img
@@ -197,13 +198,13 @@ below the plan on the current posters, before their legend starts. -->
 					<Maximize2 class="size-4" />
 				</span>
 			</span>
-			<span class="px-1 pb-1 font-medium">{map.label}</span>
+			<span class="px-1 pb-1 font-medium">{map.label()}</span>
 		</button>
 	{:else}
 		<div
 			class="col-span-2 rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground"
 		>
-			Карты пока не добавлены.
+			{m.map_empty()}
 		</div>
 	{/each}
 </div>

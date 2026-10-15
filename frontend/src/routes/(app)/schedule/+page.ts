@@ -4,6 +4,7 @@ import type { NavbarAction } from '#lib/types/navigation.js';
 
 import { getScheduleOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions } from '#lib/api/index.js';
+import { m } from '#lib/paraglide/messages.js';
 import { canManageSchedule } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
@@ -20,8 +21,8 @@ export const load: PageLoad = async ({ parent }) => {
 	const user = queryClient.getQueryData(currentUserOptions().queryKey) ?? null;
 	const actions: NavbarAction[] = [];
 	if (canManageSchedule(user)) {
-		actions.push({ href: 'schedule/changes', label: 'Изменения программы', icon: History });
+		actions.push({ href: 'schedule/changes', label: m.schedule_changes_title(), icon: History });
 	}
 
-	return { title: 'Программа', actions };
+	return { title: m.nav_schedule(), actions };
 };

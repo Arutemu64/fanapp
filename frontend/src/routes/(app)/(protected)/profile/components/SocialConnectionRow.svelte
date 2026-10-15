@@ -4,6 +4,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	interface Props {
@@ -40,12 +41,12 @@
 	// dependent setting is unavailable, where it is).
 	let status = $derived.by(() => {
 		if (!connected) {
-			return 'Не подключён';
+			return m.social_not_connected();
 		}
 		if (!hasEmail) {
-			return 'Подключён. Чтобы отвязать, сначала добавь почту';
+			return m.social_connected_need_email();
 		}
-		return 'Подключён';
+		return m.social_connected();
 	});
 
 	async function confirmUnlink() {
@@ -84,7 +85,7 @@
 				aria-disabled={offlineGate.blocked}
 				onclick={offlineGate.guard(() => {})}
 			>
-				Подключить
+				{m.common_connect()}
 			</Button>
 		</Item.Actions>
 	{:else if !isConfirming}
@@ -99,7 +100,7 @@
 				aria-disabled={offlineGate.blocked}
 				onclick={offlineGate.guard(() => (isConfirming = true))}
 			>
-				Отвязать
+				{m.common_unlink()}
 			</Button>
 		</Item.Actions>
 	{:else}
@@ -117,9 +118,9 @@
 				>
 					{#if isUnlinking}
 						<Spinner data-icon="inline-start" />
-						Отвязка…
+						{m.social_unlinking()}
 					{:else}
-						Отвязать
+						{m.common_unlink()}
 					{/if}
 				</Button>
 				<Button
@@ -129,7 +130,7 @@
 					disabled={isUnlinking}
 					onclick={() => (isConfirming = false)}
 				>
-					Отмена
+					{m.common_cancel()}
 				</Button>
 			</div>
 		</div>

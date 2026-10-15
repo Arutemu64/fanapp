@@ -4,6 +4,8 @@
 	import { Dialog as DialogPrimitive } from 'bits-ui';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	// Deviates from upstream: Russian copy comes from Paraglide messages.
+	import { m } from '#lib/paraglide/messages.js';
 	import { cn, type WithElementRef } from '#lib/utils.js';
 
 	let {
@@ -28,7 +30,7 @@
 	{#if showCloseButton}
 		<DialogPrimitive.Close>
 			{#snippet child({ props })}
-				<Button variant="outline" {...props}>Закрыть</Button>
+				<Button variant="outline" {...props}>{m.common_close()}</Button>
 			{/snippet}
 		</DialogPrimitive.Close>
 	{/if}

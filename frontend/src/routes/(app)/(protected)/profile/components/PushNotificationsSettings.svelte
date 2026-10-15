@@ -18,6 +18,7 @@
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { PushDevice, type PushToggleOutcome } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
@@ -65,9 +66,7 @@
 	let receiveAll = $derived(user.settings.receive_all_announcements ?? false);
 	let receiveVk = $derived(hasVkAccount && (user.settings.receive_vk_notifications ?? false));
 	let vkDescription = $derived(
-		hasVkAccount
-			? 'Получать сообщения от сообщества во ВКонтакте.'
-			: 'Сначала подключи ВКонтакте в настройках аккаунта.'
+		hasVkAccount ? m.vk_notifications_on_description() : m.vk_notifications_connect_first()
 	);
 	const pwa = getPwaService();
 	let showVkModal = $state(false);
@@ -84,12 +83,12 @@
 	// settings behind the address-bar icon.
 	let blockedHint = $derived.by(() => {
 		if (!pwa.isInstalled) {
-			return 'Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с адресом) и разреши уведомления.';
+			return m.push_blocked_browser();
 		}
 		if (pwa.isApplePlatform) {
-			return 'Уведомления выключены в настройках устройства. Открой Настройки → Уведомления → ФАН ФАН и разреши уведомления.';
+			return m.push_off_device();
 		}
-		return 'Уведомления выключены в настройках телефона. Открой настройки приложения ФАН ФАН и разреши уведомления.';
+		return m.push_off_phone();
 	});
 
 	const pushDevice = new PushDevice({
@@ -113,14 +112,14 @@
 	});
 
 	const toggleFailureCopy: Record<Exclude<PushToggleOutcome, 'enabled' | 'disabled'>, string> = {
-		unsupported: 'Твой браузер не поддерживает уведомления',
-		unavailable: 'Уведомления сейчас недоступны',
-		blocked: 'Уведомления заблокированы',
-		'not-granted': 'Уведомления не разрешены',
-		incomplete: 'Не удалось подключить устройство. Попробуй ещё раз',
-		rejected: 'Не удалось включить уведомления. Попробуй ещё раз',
-		failed: 'Не удалось включить уведомления',
-		'disable-failed': 'Не удалось отключить уведомления'
+		unsupported: m.push_status_unsupported(),
+		unavailable: m.push_status_unavailable(),
+		blocked: m.push_status_blocked(),
+		'not-granted': m.push_status_not_granted(),
+		incomplete: m.push_error_incomplete(),
+		rejected: m.push_error_rejected(),
+		failed: m.push_error_failed(),
+		'disable-failed': m.push_error_disable_failed()
 	};
 
 	async function toggleSubscription() {
@@ -143,7 +142,7 @@
 			{ body: nextSettings },
 			{
 				onError: () => {
-					toastService.add('Не удалось обновить настройки', 'error');
+					toastService.add(m.push_settings_update_failed(), 'error');
 					rollback();
 				}
 			}
@@ -183,12 +182,9 @@
 			{},
 			{
 				onSuccess: () => {
-					toastService.add(
-						'Тест отправлен. Должны прийти тост, колокольчик и системное пуш-уведомление.',
-						'success'
-					);
+					toastService.add(m.push_test_sent(), 'success');
 				},
-				onError: (error) => toastService.error(error, 'Не удалось отправить тестовое уведомление')
+				onError: (error) => toastService.error(error, m.push_test_failed())
 			}
 		);
 	}
@@ -196,15 +192,15 @@
 
 <div class="flex flex-col gap-6">
 	<p class="text-sm leading-5 text-muted-foreground">
-		Настрой уведомления, чтобы не пропустить анонсы и важные сообщения.
+		{m.push_settings_intro()}
 	</p>
 
-	<SettingsSection title="Каналы">
+	<SettingsSection title={m.push_channels_title()}>
 		<MenuGroup class="divide-y divide-border">
 			<SwitchRow
 				id="push-this-device"
-				title="На этом устройстве"
-				description="Приходят как обычные уведомления телефона, даже когда приложение закрыто."
+				title={m.push_this_device_title()}
+				description={m.push_this_device_description()}
 				checked={pushDevice.state === 'on'}
 				disabled={pushDevice.isBusy || pushDevice.state === 'unsupported'}
 				blocked={offlineGate.blocked}
@@ -214,8 +210,7 @@
 			>
 				{#if pushDevice.state === 'unsupported'}
 					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-						Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
-						встроенном браузере они не работают.
+						{m.push_open_in_browser()}
 					</p>
 				{:else if pushDevice.state === 'blocked'}
 					<p class="mt-2 text-sm leading-relaxed text-destructive">{blockedHint}</p>
@@ -224,7 +219,7 @@
 
 			<SwitchRow
 				id="vk-notifications"
-				title="ВКонтакте"
+				title={m.social_vk()}
 				description={vkDescription}
 				checked={receiveVk}
 				disabled={settingsMutation.isPending || !hasVkAccount}
@@ -237,7 +232,7 @@
 							href={resolve('profile/account')}
 							class="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
 						>
-							Подключить ВКонтакте
+							{m.vk_connect()}
 						</a>
 					{/if}
 					<button
@@ -245,19 +240,19 @@
 						class="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
 						onclick={() => (showVkModal = true)}
 					>
-						Как это работает?
+						{m.vk_how_it_works()}
 					</button>
 				</div>
 			</SwitchRow>
 		</MenuGroup>
 	</SettingsSection>
 
-	<SettingsSection title="Типы уведомлений">
+	<SettingsSection title={m.push_types_title()}>
 		<MenuGroup>
 			<SwitchRow
 				id="all-announcements"
-				title="Все анонсы"
-				description="Получать уведомления о начале каждого выступления."
+				title={m.push_all_announcements_title()}
+				description={m.push_all_announcements_description()}
 				checked={receiveAll}
 				disabled={settingsMutation.isPending}
 				blocked={offlineGate.blocked}
@@ -268,7 +263,7 @@
 
 	<div>
 		<p class="mb-3 text-sm leading-relaxed text-muted-foreground">
-			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает.
+			{m.push_test_hint()}
 		</p>
 		<Button
 			variant="outline"
@@ -279,9 +274,9 @@
 		>
 			{#if testMutation.isPending}
 				<Spinner data-icon="inline-start" />
-				Отправка…
+				{m.common_sending()}
 			{:else}
-				Проверить уведомления
+				{m.push_test_action()}
 			{/if}
 		</Button>
 	</div>

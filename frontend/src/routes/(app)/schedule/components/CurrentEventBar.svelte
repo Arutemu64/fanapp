@@ -4,6 +4,7 @@
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { m } from '#lib/paraglide/messages.js';
 	import { formatEventNumber } from '#lib/utils/formatters.js';
 
 	interface Props {
@@ -59,7 +60,7 @@
 			<Play class="size-4 fill-current" />
 		</span>
 		<span class="flex min-w-0 flex-col">
-			<span class="text-xs font-medium text-success">Сейчас на сцене</span>
+			<span class="text-xs font-medium text-success">{m.home_on_stage()}</span>
 			<span class="truncate text-sm font-semibold text-foreground">
 				{#if eventNumber !== null}
 					<span class="tabular-nums">{eventNumber}</span> ·
