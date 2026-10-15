@@ -1,12 +1,14 @@
 import { CancelledError } from '@tanstack/svelte-query';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { droppedConnectionError } from '#lib/testing/connection.js';
 
 import {
+	fetchRecordingConnectionFailures,
 	getApiErrorDetail,
 	getApiFieldError,
 	gotNoApiAnswer,
+	isConnectionFailure,
 	isUnexpectedRequestError
 } from './errors';
 
@@ -99,5 +101,51 @@ describe('isUnexpectedRequestError', () => {
 		expect(isUnexpectedRequestError('<html>502 Bad Gateway</html>')).toBe(false);
 		expect(isUnexpectedRequestError(new DOMException('aborted', 'AbortError'))).toBe(false);
 		expect(isUnexpectedRequestError(new CancelledError())).toBe(false);
+	});
+});
+
+describe('fetchRecordingConnectionFailures', () => {
+	afterEach(() => vi.unstubAllGlobals());
+
+	// What `fetch` resolves with when the connection drops after the headers: a
+	// body whose stream errors the way the browser's does (Chromium rejects the
+	// read with "TypeError: Failed to fetch").
+	function stubDroppedBody() {
+		const body = new ReadableStream({
+			pull(controller) {
+				controller.error(new TypeError('Failed to fetch'));
+			}
+		});
+		vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response(body)));
+	}
+
+	async function rejection(promise: Promise<unknown>): Promise<unknown> {
+		return promise.then(
+			() => undefined,
+			(error: unknown) => error
+		);
+	}
+
+	it('counts a connection dropped while the body was read', async () => {
+		stubDroppedBody();
+		const response = await fetchRecordingConnectionFailures('https://api.test/');
+		expect(isConnectionFailure(await rejection(response.text()))).toBe(true);
+	});
+
+	it('does not count reading the same body twice, which is our bug', async () => {
+		vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response('{}')));
+		const response = await fetchRecordingConnectionFailures('https://api.test/');
+		await response.text();
+		const error = await rejection(response.text());
+		expect(error).toBeInstanceOf(TypeError);
+		expect(isConnectionFailure(error)).toBe(false);
+	});
+
+	it('does not count a body that is not valid JSON', async () => {
+		vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(new Response('<html>')));
+		const response = await fetchRecordingConnectionFailures('https://api.test/');
+		const error = await rejection(response.json());
+		expect(error).toBeInstanceOf(SyntaxError);
+		expect(isConnectionFailure(error)).toBe(false);
 	});
 });
