@@ -1,7 +1,8 @@
-import { QueryClient, QueryObserver } from '@tanstack/svelte-query';
+import { InfiniteQueryObserver, QueryClient, QueryObserver } from '@tanstack/svelte-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { watchBackgroundRefetchErrors } from '#lib/api/index.js';
+import { droppedConnectionError } from '#lib/testing/connection.js';
 
 const KEY = ['thing'];
 
@@ -56,7 +57,7 @@ describe('watchBackgroundRefetchErrors', () => {
 	});
 
 	it('leaves a missing answer to the connection banner', async () => {
-		const onFailure = await failRefetch(new TypeError('Failed to fetch'));
+		const onFailure = await failRefetch(await droppedConnectionError());
 		expect(onFailure).not.toHaveBeenCalled();
 	});
 
@@ -71,5 +72,49 @@ describe('watchBackgroundRefetchErrors', () => {
 			{ meta: { quietRefetchErrors: true } }
 		);
 		expect(onFailure).not.toHaveBeenCalled();
+	});
+
+	describe('a paginated feed', () => {
+		// A feed on screen with its first page loaded; every later request fails.
+		async function loadedFeed() {
+			const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+			const onFailure = vi.fn();
+			const stop = watchBackgroundRefetchErrors(queryClient, onFailure);
+			let failing = false;
+			const observer = new InfiniteQueryObserver(queryClient, {
+				queryKey: ['feed'],
+				queryFn: ({ pageParam }) => {
+					if (!failing) return Promise.resolve(pageParam);
+					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+					return Promise.reject({ code: 'INTERNAL_ERROR', details: {} });
+				},
+				initialPageParam: 0,
+				getNextPageParam: (lastPage: number) => lastPage + 1
+			});
+			const unsubscribe = observer.subscribe(() => {});
+			await observer.refetch();
+			failing = true;
+			const teardown = () => {
+				unsubscribe();
+				stop();
+				queryClient.clear();
+			};
+			return { observer, onFailure, teardown };
+		}
+
+		it('leaves a failed «Показать ещё» to the feed, which shows its own error', async () => {
+			const { observer, onFailure, teardown } = await loadedFeed();
+			const result = await observer.fetchNextPage();
+			teardown();
+			expect(result.isFetchNextPageError).toBe(true);
+			expect(onFailure).not.toHaveBeenCalled();
+		});
+
+		it('still reports a failed refresh of the loaded pages', async () => {
+			const { observer, onFailure, teardown } = await loadedFeed();
+			await observer.refetch();
+			teardown();
+			expect(onFailure).toHaveBeenCalledOnce();
+		});
 	});
 });

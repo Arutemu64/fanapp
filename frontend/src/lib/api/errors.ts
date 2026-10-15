@@ -297,14 +297,36 @@ const _GENERIC_FALLBACK_CODES = [
 
 const CONNECTION_FAILED_MESSAGE = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 
+// A network failure rejects `fetch` with a TypeError that each engine words
+// differently, so the type is the only stable signal — but a bug in our own
+// query code (a property read on undefined) is a TypeError too. So only the ones
+// `fetch` itself rejected with count, recorded where the call is made.
+const connectionFailures = new WeakSet<object>();
+
+/**
+ * The `fetch` the generated client calls (`clientConfig.ts`): the real one,
+ * remembering a TypeError it rejects with so `isConnectionFailure` can tell a
+ * dropped connection from a bug that happens to throw the same type.
+ */
+export function fetchRecordingConnectionFailures(
+	input: RequestInfo | URL,
+	init?: RequestInit
+): Promise<Response> {
+	return globalThis.fetch(input, init).catch((error: unknown) => {
+		if (error instanceof TypeError) {
+			connectionFailures.add(error);
+		}
+		throw error;
+	});
+}
+
 // The generated client never throws: a request that got no response comes back
-// as `{ error }` holding what `fetch` rejected with — a TypeError for a network
-// failure (each engine words it differently, so the type is the only stable
-// signal) or a TimeoutError DOMException from `timeoutSignal`. A deliberate
-// AbortError is left out: nobody is waiting for that request's answer.
+// as `{ error }` holding what `fetch` rejected with — a TypeError recorded above,
+// or a TimeoutError DOMException from `timeoutSignal` or `queryForLoad`. A
+// deliberate AbortError is left out: nobody is waiting for that request's answer.
 export function isConnectionFailure(error: unknown): boolean {
 	if (error instanceof TypeError) {
-		return true;
+		return connectionFailures.has(error);
 	}
 	return error instanceof DOMException && error.name === 'TimeoutError';
 }

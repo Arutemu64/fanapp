@@ -95,7 +95,7 @@ const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code'])
 const SESSION_ERROR_CODES = new Set(['AUTHENTICATION_ERROR', 'USER_NOT_AUTHENTICATED']);
 
 /**
- * Call `onFailure` when a refetch fails for a query on screen that still shows
+ * Call `onFailure` when a refresh fails for a query on screen that still shows
  * its last good data — the one failure no page renders, since every page keeps
  * stale data over an error (https://tkdodo.eu/blog/react-query-error-handling).
  * A missing answer is left to the connection banner, and a query that is fine
@@ -112,6 +112,9 @@ export function watchBackgroundRefetchErrors(
 		const { query } = event;
 		const error: unknown = event.action.error;
 		if (query.state.data === undefined || query.getObserversCount() === 0) return;
+		// «Показать ещё» failing is a next-page fetch, not a refresh: the feed that
+		// asked for it shows its own error, and a second toast would repeat it.
+		if (query.state.fetchMeta?.fetchMore) return;
 		if (query.meta?.quietRefetchErrors === true) return;
 		if (gotNoApiAnswer(error) || isCancelledError(error)) return;
 		if (SESSION_ERROR_CODES.has(getApiErrorCode(error) ?? '')) return;

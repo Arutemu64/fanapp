@@ -1,6 +1,8 @@
 import { CancelledError } from '@tanstack/svelte-query';
 import { describe, expect, it } from 'vitest';
 
+import { droppedConnectionError } from '#lib/testing/connection.js';
+
 import {
 	getApiErrorDetail,
 	getApiFieldError,
@@ -19,8 +21,14 @@ describe('getApiErrorDetail', () => {
 		expect(getApiErrorDetail({ code: 'TICKET_NOT_FOUND', details: {} })).toBe('Билет не найден');
 	});
 
-	it('treats a rejected fetch as a connection failure', () => {
-		expect(getApiErrorDetail(new TypeError('Failed to fetch'))).toBe(CONNECTION_FAILED);
+	it('treats a rejected fetch as a connection failure', async () => {
+		expect(getApiErrorDetail(await droppedConnectionError())).toBe(CONNECTION_FAILED);
+	});
+
+	it('does not blame the connection for a TypeError from our own code', () => {
+		expect(
+			getApiErrorDetail(new TypeError("Cannot read properties of undefined (reading 'id')"))
+		).toBeNull();
 	});
 
 	it('treats a timed-out request as a connection failure', () => {
@@ -65,8 +73,8 @@ describe('getApiFieldError', () => {
 });
 
 describe('gotNoApiAnswer', () => {
-	it('is true for a dropped connection, a timeout and a proxy page', () => {
-		expect(gotNoApiAnswer(new TypeError('Failed to fetch'))).toBe(true);
+	it('is true for a dropped connection, a timeout and a proxy page', async () => {
+		expect(gotNoApiAnswer(await droppedConnectionError())).toBe(true);
 		expect(gotNoApiAnswer(new DOMException('signal timed out', 'TimeoutError'))).toBe(true);
 		expect(gotNoApiAnswer('<html>502 Bad Gateway</html>')).toBe(true);
 	});
@@ -80,11 +88,14 @@ describe('gotNoApiAnswer', () => {
 describe('isUnexpectedRequestError', () => {
 	it('flags a failure in our own query code', () => {
 		expect(isUnexpectedRequestError(new SyntaxError('Unexpected token'))).toBe(true);
+		expect(
+			isUnexpectedRequestError(new TypeError("Cannot read properties of undefined (reading 'id')"))
+		).toBe(true);
 	});
 
-	it('leaves out API errors, missing answers and cancellations', () => {
+	it('leaves out API errors, missing answers and cancellations', async () => {
 		expect(isUnexpectedRequestError({ code: 'TICKET_NOT_FOUND', details: {} })).toBe(false);
-		expect(isUnexpectedRequestError(new TypeError('Failed to fetch'))).toBe(false);
+		expect(isUnexpectedRequestError(await droppedConnectionError())).toBe(false);
 		expect(isUnexpectedRequestError('<html>502 Bad Gateway</html>')).toBe(false);
 		expect(isUnexpectedRequestError(new DOMException('aborted', 'AbortError'))).toBe(false);
 		expect(isUnexpectedRequestError(new CancelledError())).toBe(false);
