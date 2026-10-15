@@ -64,7 +64,7 @@ const FESTIVAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 });
 
 /**
- * Festival start for the hero, on the venue clock: "22 августа 2026, 11:30".
+ * Festival start for the hero, on the venue clock: "17 марта 2027, 11:30".
  * Built from parts so it drops the " г." year suffix ru-RU's long format adds,
  * matching the app's existing date copy.
  */

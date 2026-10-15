@@ -11,9 +11,11 @@ from fanfan.core.models.base import AggregateRoot
 # with until organizers override them from the settings page; together they
 # drive the home-page countdown and the before/during/after phase boundaries.
 DEFAULT_FESTIVAL_START = datetime(
-    2026, 8, 22, 11, 30, tzinfo=timezone(timedelta(hours=3))
+    2027, 3, 17, 11, 30, tzinfo=timezone(timedelta(hours=3))
 )
-DEFAULT_FESTIVAL_END = datetime(2026, 8, 23, 20, 0, tzinfo=timezone(timedelta(hours=3)))
+DEFAULT_FESTIVAL_END = datetime(
+    2027, 3, 17, 19, 30, tzinfo=timezone(timedelta(hours=3))
+)
 
 
 @dataclass(slots=True, kw_only=True)

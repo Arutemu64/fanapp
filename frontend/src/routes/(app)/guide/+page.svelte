@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
+	import { resolve } from '$app/paths';
 	import {
+		ChevronRight,
 		ExternalLink,
 		Globe,
 		Mail,
@@ -16,8 +18,8 @@
 
 	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
-	import MenuLink from '#lib/components/MenuLink.svelte';
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { maps } from '#lib/data/maps.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	// A text search, so there are no coordinates to keep in step with the venue.
@@ -118,6 +120,34 @@
 		<p class="mt-2 text-muted-foreground">{m.guide_about()}</p>
 	</section>
 
+	<!-- The map is what people reach for on site, so it sits right under the intro as
+	     a card with the posters themselves, not as a row among the links. -->
+	<a
+		href={resolve('guide/map')}
+		class="group flex flex-col gap-3 rounded-2xl border bg-card p-3 shadow-sm transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+	>
+		<span class="grid grid-cols-2 gap-2">
+			{#each maps as map (map.id)}
+				<enhanced:img
+					src={map.picture}
+					alt=""
+					sizes="(min-width: 672px) 320px, 45vw"
+					class="block aspect-[16/10] w-full rounded-xl object-cover object-top"
+				/>
+			{/each}
+		</span>
+		<span class="flex items-center gap-3 px-2 pb-1">
+			<span class="flex size-10 items-center justify-center rounded-xl bg-primary-600 text-white">
+				<MapIcon class="size-5" aria-hidden="true" />
+			</span>
+			<span class="flex grow flex-col">
+				<span class="text-lg leading-snug font-semibold">{m.nav_map()}</span>
+				<span class="text-muted-foreground">{m.guide_map_description()}</span>
+			</span>
+			<ChevronRight class="size-5 text-muted-foreground" aria-hidden="true" />
+		</span>
+	</a>
+
 	<section aria-labelledby="guide-facts" class="flex flex-col gap-2">
 		<h2 id="guide-facts" class="px-1 text-sm font-medium text-muted-foreground">
 			{m.guide_facts_heading()}
@@ -130,10 +160,6 @@
 		</dl>
 	</section>
 
-	<MenuGroup>
-		<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
-	</MenuGroup>
-
 	<section aria-labelledby="guide-features" class="flex flex-col gap-2">
 		<h2 id="guide-features" class="px-1 text-sm font-medium text-muted-foreground">
 			{m.guide_features_heading()}
@@ -143,7 +169,7 @@
 				<Item.Root class="rounded-none">
 					<Item.Content>
 						<Item.Title class="text-base">{feature.title()}</Item.Title>
-						<Item.Description>{feature.description()}</Item.Description>
+						<Item.Description class="line-clamp-none">{feature.description()}</Item.Description>
 					</Item.Content>
 				</Item.Root>
 			{/each}
@@ -179,7 +205,7 @@
 				<Item.Root class="rounded-none">
 					<Item.Content>
 						<Item.Title class="text-base">{note.title()}</Item.Title>
-						<Item.Description>{note.description()}</Item.Description>
+						<Item.Description class="line-clamp-none">{note.description()}</Item.Description>
 					</Item.Content>
 				</Item.Root>
 			{/each}

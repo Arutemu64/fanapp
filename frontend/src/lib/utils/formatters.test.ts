@@ -82,15 +82,15 @@ describe('formatUntil', () => {
 // (Europe/Moscow, +03:00). These pin the display copy and the lossless round
 // trip through the zone-naive datetime-local input organizers edit it with.
 describe('festival start helpers', () => {
-	// 2026-08-22 11:30 Moscow, the shipped default, expressed as its UTC instant.
-	const START_ISO = '2026-08-22T08:30:00.000Z';
+	// 2027-03-17 11:30 Moscow, the shipped default, expressed as its UTC instant.
+	const START_ISO = '2027-03-17T08:30:00.000Z';
 
 	it('formats the start on the venue clock without a "г." suffix', () => {
-		expect(formatFestivalDateTime(START_ISO)).toBe('22 августа 2026, 11:30');
+		expect(formatFestivalDateTime(START_ISO)).toBe('17 марта 2027, 11:30');
 	});
 
 	it('shows the venue wall clock in the datetime-local value', () => {
-		expect(toEventDateTimeLocal(START_ISO)).toBe('2026-08-22T11:30');
+		expect(toEventDateTimeLocal(START_ISO)).toBe('2027-03-17T11:30');
 	});
 
 	it('round-trips a datetime-local value back to the same instant', () => {
