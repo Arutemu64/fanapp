@@ -162,6 +162,10 @@
 	</MenuGroup>
 </SettingsSection>
 
-<ChangePasswordModal bind:open={changePasswordModalOpen} hasPassword={user.has_password} />
+<ChangePasswordModal
+	bind:open={changePasswordModalOpen}
+	hasPassword={user.has_password}
+	email={user.email}
+/>
 
 <ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} />

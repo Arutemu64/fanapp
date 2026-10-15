@@ -16,9 +16,12 @@
 	interface Props {
 		open: boolean;
 		hasPassword?: boolean;
+		// Account email, handed to password managers as the username of the password
+		// being saved. Null for an account that signs in through a social service.
+		email?: string | null;
 	}
 
-	let { open = $bindable(false), hasPassword = true }: Props = $props();
+	let { open = $bindable(false), hasPassword = true, email = null }: Props = $props();
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
@@ -55,6 +58,11 @@
 			<Dialog.Description class="sr-only">{dialogDescription}</Dialog.Description>
 		</Dialog.Header>
 
-		<ChangePasswordForm {hasPassword} pending={changePasswordMutation.isPending} onSave={save} />
+		<ChangePasswordForm
+			{hasPassword}
+			{email}
+			pending={changePasswordMutation.isPending}
+			onSave={save}
+		/>
 	</Dialog.Content>
 </Dialog.Root>
