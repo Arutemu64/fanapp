@@ -12,9 +12,10 @@
 	<title>{m.document_title({ title: data.article.title })}</title>
 </svelte:head>
 
-<!-- The markdown renders bare elements, so the spacing and list style come from here. -->
+<!-- The markdown renders bare elements, so the spacing, list and link style come from here.
+     Links stay underlined: colour alone must not mark them (WCAG 1.4.1). -->
 <article
-	class="mx-auto w-full max-w-2xl rounded-2xl border bg-card p-5 leading-relaxed sm:p-6 [&_h2]:mt-6 [&_h2]:text-base [&_h2]:leading-snug [&_h2]:font-semibold sm:[&_h2]:text-lg [&_li]:mt-1.5 [&_p]:mt-3 [&_p:first-child]:mt-0 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:ps-5"
+	class="mx-auto w-full max-w-2xl rounded-2xl border bg-card p-5 leading-relaxed sm:p-6 [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-4 [&_h2]:mt-6 [&_h2]:text-base [&_h2]:leading-snug [&_h2]:font-semibold sm:[&_h2]:text-lg [&_li]:mt-1.5 [&_p]:mt-3 [&_p:first-child]:mt-0 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:ps-5"
 >
 	<Content />
 </article>
