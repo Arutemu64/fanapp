@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from dishka import AsyncContainer
@@ -11,6 +11,7 @@ from fanfan.application.interactors.settings.update_settings import (
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.core.exceptions.settings import InvalidFestivalTimeRange
+from fanfan.core.models.app_settings import DEFAULT_FESTIVAL_END
 from fanfan.core.models.user import User
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 
@@ -30,7 +31,9 @@ async def test_public_field_change_broadcasts_config_updated(
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(settings_editor)
 
-    new_end = datetime(2026, 8, 23, 20, 0, tzinfo=UTC)
+    # Derived from the shipped default so it stays after the default start and
+    # differs from the stored end whichever year the defaults are moved to.
+    new_end = DEFAULT_FESTIVAL_END + timedelta(hours=1)
     await interactor(UpdateAppSettingsInput(festival_end=new_end))
 
     assert (await settings_gateway.get()).festival_end == new_end
