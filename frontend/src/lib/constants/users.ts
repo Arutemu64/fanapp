@@ -4,4 +4,4 @@ import type { UserRole } from '#lib/api/generated/index.js';
 export const USERS_PAGE_SIZE = 20;
 
 // Display order of the roles in the directory filter and the role picker.
-export const USER_ROLES: UserRole[] = ['visitor', 'participant', 'helper', 'org'];
+export const USER_ROLES: UserRole[] = ['visitor', 'participant', 'volunteer', 'organizer'];

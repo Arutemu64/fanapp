@@ -73,8 +73,8 @@
 	const ROLE_LABELS: Record<UserRole, string> = {
 		visitor: 'Зрители',
 		participant: 'Участники',
-		helper: 'Волонтёры',
-		org: 'Организаторы'
+		volunteer: 'Волонтёры',
+		organizer: 'Организаторы'
 	};
 
 	function isCancellable(status: MailingStatus): boolean {

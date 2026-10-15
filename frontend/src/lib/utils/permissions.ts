@@ -38,7 +38,7 @@ export function hasPermission(user: CurrentUserDto | null, permission: Permissio
 // Access to each individual tool inside stays permission-based (an organizer may hold
 // any subset), so this gate governs visibility of the section, never the actions.
 export function isOrganizer(user: CurrentUserDto | null): boolean {
-	return user?.role === 'org';
+	return user?.role === 'organizer';
 }
 
 export function canManageSchedule(user: CurrentUserDto | null): boolean {

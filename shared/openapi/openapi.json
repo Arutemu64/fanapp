@@ -6887,8 +6887,8 @@
         "enum": [
           "visitor",
           "participant",
-          "helper",
-          "org"
+          "volunteer",
+          "organizer"
         ],
         "title": "UserRole"
       },

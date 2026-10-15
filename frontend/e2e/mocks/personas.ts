@@ -35,5 +35,5 @@ export function loggedInAs(overrides: Partial<User> = {}): Handlers {
 
 /** An organizer with full permissions — for tools/ and other gated surfaces. */
 export function organizer(overrides: Partial<User> = {}): Handlers {
-	return loggedInAs({ role: 'org', username: 'test_org', permissions: ['*'], ...overrides });
+	return loggedInAs({ role: 'organizer', username: 'test_org', permissions: ['*'], ...overrides });
 }

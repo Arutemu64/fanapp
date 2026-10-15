@@ -197,8 +197,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml \
   run --rm --no-deps api cli users create <username>
 ```
 
-`--role` defaults to `org` (a CLI-created account is a staff account; the toolbox
-is org-only). The role is only a UI label — it grants no access — so pair this
+`--role` defaults to `organizer` (a CLI-created account is a staff account; the toolbox
+is organizer-only). The role is only a UI label — it grants no access — so pair this
 with a permission grant below. On the host: `cd backend && uv run python -m
 fanfan.main.cli users create <username>`.
 
