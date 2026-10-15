@@ -49,6 +49,11 @@ numbered zones as tappable rectangles, traced from the posters in their
 - **Keep the posters and overlay hotspots** — still ships multi-megabyte
   images and the poster's sign-only furniture, and the hotspot positions would
   be tied to one raster.
+- **Designer-exported SVG files with zones named `zone-N`** — a layout change
+  would become a re-export instead of a re-trace, with a test keeping the file's
+  numbers and the legend in step. It only pays off if someone hands over vector
+  files each season, which nobody does today; it also injects raw markup via
+  `{@html}` and leaves dark mode to CSS overrides on the designer's ids.
 - **A pan/zoom library over the SVG** (`panzoom`, `svg-pan-zoom`) — not needed
   once the plan is legible at phone width; it would bring back a dependency and
   gesture conflicts with page scroll.
