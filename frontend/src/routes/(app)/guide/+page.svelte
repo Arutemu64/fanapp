@@ -116,7 +116,7 @@
 			{m.guide_important_heading()}
 		</h2>
 		<MenuGroup>
-			<MenuLink href="guide/map" label={m.guide_map_label()} icon={MapIcon} />
+			<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
 			{@render externalRow(
 				yandexMapsUrl,
 				MapPin,
