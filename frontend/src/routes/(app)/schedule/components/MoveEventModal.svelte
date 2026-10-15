@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEntryDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
+	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
@@ -110,10 +112,14 @@
 			{/if}
 
 			<Dialog.Description class="sm:text-base">
-				{m.event_move_choose_prefix()}
-				<strong class="text-foreground">{m.event_move_after()}</strong>
-				{m.event_move_choose_middle()}
-				<strong class="text-primary">{event.title}</strong>{m.event_move_choose_suffix()}
+				<ParaglideMessage message={m.event_move_choose} inputs={{ title: event.title }}>
+					{#snippet strong({ children }: MessageTagProps)}
+						<strong class="text-foreground">{@render children?.()}</strong>
+					{/snippet}
+					{#snippet eventName({ children }: MessageTagProps)}
+						<strong class="text-primary">{@render children?.()}</strong>
+					{/snippet}
+				</ParaglideMessage>
 			</Dialog.Description>
 
 			<!-- Moving an event sends a change announcement to every subscriber. Push notifications cannot be recalled, so warn before sending. -->

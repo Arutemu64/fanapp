@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
+	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
@@ -73,8 +75,11 @@
 		{/if}
 
 		<Dialog.Description>
-			{m.subscribe_intro_prefix()} <strong class="text-foreground">{event.title}</strong>
-			{m.subscribe_intro_suffix()}
+			<ParaglideMessage message={m.subscribe_intro} inputs={{ title: event.title }}>
+				{#snippet eventName({ children }: MessageTagProps)}
+					<strong class="text-foreground">{@render children?.()}</strong>
+				{/snippet}
+			</ParaglideMessage>
 		</Dialog.Description>
 
 		<div class="my-4 flex items-center justify-center">
@@ -128,10 +133,14 @@
 		</div>
 
 		<p class="text-sm leading-relaxed text-muted-foreground">
-			{m.subscribe_hint_prefix()}
-			<a href={resolve('profile/notifications')} class="font-medium text-primary hover:underline"
-				>{m.subscribe_hint_link()}</a
-			>.
+			<ParaglideMessage message={m.subscribe_hint}>
+				{#snippet link({ children }: MessageTagProps)}
+					<a
+						href={resolve('profile/notifications')}
+						class="font-medium text-primary hover:underline">{@render children?.()}</a
+					>
+				{/snippet}
+			</ParaglideMessage>
 		</p>
 
 		<Dialog.Footer class="flex flex-row justify-end gap-2">

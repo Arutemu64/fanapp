@@ -33,8 +33,9 @@ with [Paraglide JS](https://paraglidejs.com) 2.x (`@inlang/paraglide-js`).
 ## Consequences
 
 Copy can be reviewed and linted as one file. Components import `m` instead of
-carrying text. A second locale becomes an additive change, though sentences
-split around links would need reworking first (see docs/frontend.md §6).
+carrying text. A second locale becomes an additive change. Sentences that wrap a
+link or `<code>` are single markup messages rendered by
+`@inlang/paraglide-js-svelte`, so word order stays the translator's call.
 
 The service worker imports the messages too (push fallback text) and its
 bundle grew by about 4 KB for the Paraglide runtime.

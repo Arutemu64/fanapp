@@ -1,8 +1,11 @@
 <script lang="ts">
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { RotateCw } from '@lucide/svelte';
 	import { createMutation } from '@tanstack/svelte-query';
 	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import { onMount } from 'svelte';
+
+	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import {
@@ -176,9 +179,13 @@
 	{/if}
 
 	<Alert.Root variant="success">
-		<Alert.Description
-			>{m.login_code_sent_to()} <span class="font-medium">{email}</span>.</Alert.Description
-		>
+		<Alert.Description>
+			<ParaglideMessage message={m.login_code_sent_to} inputs={{ email }}>
+				{#snippet address({ children }: MessageTagProps)}<span class="font-medium"
+						>{@render children?.()}</span
+					>{/snippet}
+			</ParaglideMessage>
+		</Alert.Description>
 	</Alert.Root>
 
 	<div class="flex flex-col items-center gap-2">

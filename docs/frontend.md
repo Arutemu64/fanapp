@@ -225,7 +225,7 @@ Every user-facing string lives in `frontend/messages/ru.json` and is used as a t
 - **Plurals** use a variant message (`declarations` + `plural` selector with `one`/`few`/`many`); `*` takes the `few` form, which is what fractions need in Russian. Never concatenate a number with a word.
 - **Module-level maps** (roles, nav items, error codes) hold the message *function* (`role_visitor`, not `role_visitor()`) and call it at render time, so the text is resolved when it is shown rather than frozen at import.
 - **Not covered:** `app.html` and `static/manifest.json` are static files outside the bundle; keep their copy in step with `app_name` by hand. Backend emails and notifications are Jinja templates.
-- Sentences that wrap a link or `<code>` are split into several messages (`import_guide_*`, `subscribe_hint_*`) because Paraglide has no markup support; a second locale would need these reworked.
+- **Links and emphasis inside a sentence** use Paraglide markup, never split fragments: write `"... {#link}профиле{/link}."` in the message and render it with `<ParaglideMessage message={m.key} inputs={{ ... }}>` from `@inlang/paraglide-js-svelte`, giving one `{#snippet tag({ children }: MessageTagProps)}` per tag (the annotation keeps typescript-eslint from reading `children` as `any`). Examples: `subscribe_hint`, `import_guide_columns`. Tag names must not shadow a local variable (`eventName`, not `event`).
 
 ## 7. Modal Conventions
 

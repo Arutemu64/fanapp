@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { Bell } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
+	import type { MessageTagProps } from '#lib/types/markup.js';
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
@@ -65,7 +67,11 @@
 				{m.unsubscribe_title()}
 			</AlertDialog.Title>
 			<AlertDialog.Description>
-				{m.unsubscribe_confirm_prefix()} <strong class="text-foreground">{event.title}</strong>?
+				<ParaglideMessage message={m.unsubscribe_confirm} inputs={{ title: event.title }}>
+					{#snippet eventName({ children }: MessageTagProps)}
+						<strong class="text-foreground">{@render children?.()}</strong>
+					{/snippet}
+				</ParaglideMessage>
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 

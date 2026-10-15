@@ -152,6 +152,8 @@ test(
 		await email.fill('ann@example.com');
 		await email.press('Enter');
 		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
+		// The address sits inside a tag of the markup message.
+		await expect(page.getByText('Код отправлен на ann@example.com.')).toBeVisible();
 		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
 	}
 );

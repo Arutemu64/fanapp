@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { MessageSquare } from '@lucide/svelte';
+
+	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -34,10 +37,13 @@
 		<p class="text-sm font-medium text-foreground">{m.vk_modal_steps_title()}</p>
 		<ul class="flex flex-col gap-1 text-sm leading-relaxed text-muted-foreground">
 			<li>
-				{m.vk_modal_step_connect_prefix()}
-				<a href={resolve('profile/account')} class="font-medium text-primary hover:underline"
-					>{m.vk_modal_step_connect_link()}</a
-				>.
+				<ParaglideMessage message={m.vk_modal_step_connect}>
+					{#snippet link({ children }: MessageTagProps)}
+						<a href={resolve('profile/account')} class="font-medium text-primary hover:underline"
+							>{@render children?.()}</a
+						>
+					{/snippet}
+				</ParaglideMessage>
 			</li>
 			<li>{m.vk_modal_step_allow()}</li>
 		</ul>
