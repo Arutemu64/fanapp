@@ -1,169 +1,44 @@
 <script lang="ts">
-	import type { Bounds, SlideData, UIElementData } from 'photoswipe';
-
-	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
-	import { Maximize2 } from '@lucide/svelte';
-	import PhotoSwipe from 'photoswipe';
-
-	import type { MapEntry } from '#lib/data/maps.js';
+	import { prefersReducedMotion } from 'svelte/motion';
 
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
-	import { maps } from '#lib/data/maps.js';
+	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import { maps, WALL_WIDTH } from '#lib/data/maps.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import 'photoswipe/style.css';
 
-	const hasLegend = maps.some((map) => map.points.length > 0);
+	let floorId = $state(maps[0]?.id ?? '');
+	let selectedNumber = $state<number | null>(null);
 
-	// Thumbnail buttons, indexed like `maps`. PhotoSwipe animates the open and
-	// close from each one's <img>, and returns focus to the one that opened it.
-	const thumbnails: HTMLButtonElement[] = [];
+	let map = $derived(maps.find((entry) => entry.id === floorId));
+	let selectedPoint = $derived(map?.points.find((point) => point.number === selectedNumber));
 
-	// The open viewer. Not $state: nothing renders from it.
-	let viewer: PhotoSwipe | null = null;
+	let planElement: SVGSVGElement | undefined = $state();
 
-	// The viewer lives on its own history entry (shallow routing), so the phone's
-	// back gesture closes the map instead of leaving the page — the case
-	// https://svelte.dev/docs/kit/shallow-routing is written for. A thumbnail only
-	// pushes the entry; the effect below opens and closes the viewer from it, so
-	// back, forward and the viewer's own close controls all go through one path.
-	function openMap(index: number) {
-		void goto('', { shallow: true, state: { mapViewerIndex: index } });
+	function getFloor() {
+		return floorId;
 	}
 
-	$effect(() => {
-		const index = page.state.mapViewerIndex;
-		if (index === undefined || !maps[index]) {
-			closeViewer();
-			return;
-		}
-		if (!viewer) {
-			viewer = createViewer(index);
-		}
-	});
-
-	// Closes the viewer the page state no longer asks for (back gesture, or leaving
-	// the page). Letting go of `viewer` first tells the close handler below that
-	// the history entry is already gone. PhotoSwipe ignores close() — and destroy(),
-	// which goes through it — until its opening animation ends, so a back gesture
-	// made that quickly would strand the viewer open without the deferral.
-	function closeViewer() {
-		const closing = viewer;
-		if (!closing) return;
-		viewer = null;
-		if (closing.opener.isOpen) {
-			closing.close();
-		} else {
-			closing.on('openingAnimationEnd', () => closing.close());
-		}
+	// A single-select ToggleGroup hands back '' when the pressed item is tapped
+	// again; a floor must always be shown, so that tap changes nothing.
+	function setFloor(id: string) {
+		if (!id) return;
+		floorId = id;
+		selectedNumber = null;
 	}
 
-	// Leaving the page with the viewer open must not strand its overlay on <body>.
-	$effect(() => {
-		return () => closeViewer();
-	});
+	function togglePoint(number: number) {
+		selectedNumber = selectedNumber === number ? null : number;
+	}
 
-	function createViewer(index: number) {
-		const pswp = new PhotoSwipe({
-			dataSource: maps.map((map, i) => toSlide(map, thumbnails[i])),
-			index,
-			// Solid, like a native photo viewer: at PhotoSwipe's default 0.8 the page
-			// title and bottom nav show through behind the edge-to-edge map. Dragging
-			// the map down to close still fades it and reveals the page.
-			bgOpacity: 1,
-			closeTitle: m.common_close(),
-			zoomTitle: m.lightbox_zoom(),
-			arrowPrevTitle: m.lightbox_prev(),
-			arrowNextTitle: m.lightbox_next(),
-			errorMsg: m.lightbox_load_failed(),
-			indexIndicatorSep: m.lightbox_index_separator()
+	// On a phone the list runs below the plan, so a row tapped far down would
+	// light up a zone off screen. `nearest` scrolls only when the plan isn't
+	// already in view; the layout's scroll-padding keeps it clear of the navbar.
+	function selectFromList(number: number) {
+		togglePoint(number);
+		planElement?.scrollIntoView({
+			block: 'nearest',
+			behavior: prefersReducedMotion.current ? 'auto' : 'smooth'
 		});
-		pswp.addFilter('thumbBounds', alignCropToTop);
-		pswp.on('uiRegister', () => pswp.ui?.registerElement(downloadButton));
-		pswp.on('afterInit', () => localizeAria(pswp.element));
-		pswp.on('close', () => {
-			if (viewer !== pswp) return;
-			// Closed from inside the viewer (button, Escape, swipe or pinch to close):
-			// drop its history entry too, so back then leaves the page as expected.
-			viewer = null;
-			history.back();
-		});
-		pswp.init();
-		return pswp;
-	}
-
-	// PhotoSwipe renders a bare <img srcset> rather than a <picture>, so it takes a
-	// single format. WebP decodes on every browser the app supports; AVIF would
-	// leave out iOS before 16 (https://caniuse.com/avif). As the user zooms,
-	// PhotoSwipe raises the <img>'s `sizes`, so the browser fetches wider variants
-	// up to the original — the map's labels stay sharp at full zoom.
-	function toSlide(map: MapEntry, thumbnail: HTMLButtonElement | undefined): SlideData {
-		const thumbnailImage = thumbnail?.querySelector('img');
-		return {
-			src: map.picture.img.src,
-			srcset: map.picture.sources.webp,
-			width: map.picture.img.w,
-			height: map.picture.img.h,
-			alt: map.alt(),
-			// Shown while the full image loads; the thumbnail's variant is already cached.
-			msrc: thumbnailImage?.currentSrc,
-			element: thumbnail,
-			thumbCropped: true
-		};
-	}
-
-	// The thumbnails crop to the top of the map (object-top), where the floor plan
-	// sits; PhotoSwipe computes a cropped thumbnail as if centred. Shift its bounds
-	// so the open and close animations line up with what the thumbnail shows.
-	// `innerRect.y` is the image's offset inside the crop: 0 when top-aligned.
-	function alignCropToTop(bounds: Bounds | undefined): Bounds {
-		// The filter's type promises Bounds, but PhotoSwipe passes undefined when it
-		// finds no thumbnail (and then fades instead); hand that back unchanged.
-		if (!bounds?.innerRect) return bounds as Bounds;
-		return {
-			...bounds,
-			y: bounds.y - bounds.innerRect.y,
-			innerRect: { ...bounds.innerRect, y: 0 }
-		};
-	}
-
-	// Downloads the original-format fallback (img.src, the largest variant).
-	// The icon path is PhotoSwipe's own download-button example, so it matches the
-	// built-in toolbar icons: https://photoswipe.com/adding-ui-elements/
-	const downloadButton: UIElementData = {
-		name: 'download-button',
-		title: m.lightbox_download(),
-		order: 8,
-		isButton: true,
-		tagName: 'a',
-		html: {
-			isCustomSVG: true,
-			inner:
-				'<path d="M20.5 14.3 17.1 18V10h-2.2v7.9l-3.4-3.6L10 16l6 6.1 6-6.1ZM23 23H9v2h14Z" id="pswp__icn-download"/>',
-			outlineID: 'pswp__icn-download'
-		},
-		onInit: (element, pswp) => {
-			pswp.on('change', () => {
-				const map = maps[pswp.currIndex];
-				if (!map) return;
-				element.setAttribute('href', map.picture.img.src);
-				element.setAttribute('download', map.filename);
-			});
-		}
-	};
-
-	// PhotoSwipe gives its root role="dialog" without a name or aria-modal, and
-	// hardcodes English role descriptions that screen readers read aloud.
-	function localizeAria(root: HTMLElement | undefined) {
-		if (!root) return;
-		root.setAttribute('aria-modal', 'true');
-		root.setAttribute('aria-label', m.lightbox_aria_view());
-		for (const element of root.querySelectorAll('[aria-roledescription="carousel"]')) {
-			element.setAttribute('aria-roledescription', m.lightbox_aria_carousel());
-		}
-		for (const element of root.querySelectorAll('[aria-roledescription="slide"]')) {
-			element.setAttribute('aria-roledescription', m.lightbox_aria_slide());
-		}
 	}
 </script>
 
@@ -171,66 +46,189 @@
 	<title>{m.document_title({ title: m.nav_map() })}</title>
 </svelte:head>
 
-<!-- Two columns at every width, so both floors are on screen at once, with no
-scrolling to find out the second one exists. A thumbnail at this size can't show
-the legend legibly anyway: it is a door into the viewer, so it crops to the top of
-the map, where the floor plan is, and the caption names the floor. 16:15 ends just
-below the plan on the current posters, before their legend starts. -->
-<div class="grid grid-cols-2 items-start gap-3 sm:gap-4">
-	{#each maps as map, index (map.id)}
-		<button
-			bind:this={thumbnails[index]}
-			type="button"
-			onclick={() => openMap(index)}
-			class="group flex flex-col gap-2 overflow-hidden rounded-2xl border bg-muted p-2 text-start shadow-sm transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-			aria-haspopup="dialog"
-			aria-label={m.map_open_fullscreen({ name: map.label() })}
+{#if map}
+	{@const plan = map.plan}
+	<div class="flex flex-col gap-4">
+		<ToggleGroup.Root
+			type="single"
+			variant="outline"
+			bind:value={getFloor, setFloor}
+			aria-label={m.map_floor_switch_label()}
+			class="w-full sm:w-auto"
 		>
-			<span class="relative block">
-				<enhanced:img
-					src={map.picture}
-					alt=""
-					loading="lazy"
-					sizes="(min-width: 1024px) 512px, 50vw"
-					class="block aspect-[16/15] w-full rounded-xl object-cover object-top"
-				/>
-				<span
-					class="absolute end-2 bottom-2 flex size-8 items-center justify-center rounded-full bg-black/60 text-white"
-					aria-hidden="true"
-				>
-					<Maximize2 class="size-4" />
-				</span>
-			</span>
-			<span class="px-1 pb-1 font-medium">{map.label()}</span>
-		</button>
-	{:else}
-		<div
-			class="col-span-2 rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground"
-		>
-			{m.map_empty()}
-		</div>
-	{/each}
-</div>
+			{#each maps as entry (entry.id)}
+				<ToggleGroup.Item value={entry.id} class="grow">{entry.label()}</ToggleGroup.Item>
+			{/each}
+		</ToggleGroup.Root>
 
-<!-- The posters' legends as text: the thumbnails crop them off, and in the viewer
-they take a zoom to read. Numbers match the markers on the map. One column on a
-phone, where a name needs the full width; side by side under the thumbnails once
-there is room. -->
-{#if hasLegend}
-	<section aria-labelledby="map-where" class="mt-6 flex flex-col gap-3">
-		<h2 id="map-where" class="text-lg font-semibold">{m.map_where_heading()}</h2>
-		<div class="grid items-start gap-4 lg:grid-cols-2">
-			{#each maps as map (map.id)}
-				<section aria-labelledby="map-where-{map.id}" class="flex flex-col gap-2">
-					<h3 id="map-where-{map.id}" class="px-1 text-sm font-medium text-muted-foreground">
-						{map.label()}
-					</h3>
-					<MenuGroup>
-						<ol class="divide-y divide-border">
-							{#each map.points as point (point.number)}
-								<li class="flex items-center gap-3 px-4 py-2.5">
+		<!-- Two columns once there's room, so the plan stays in view beside its
+		list; on a phone the list follows the plan. -->
+		<div class="grid items-start gap-4 lg:grid-cols-[3fr_2fr]">
+			<div class="flex flex-col gap-3 lg:sticky lg:top-24">
+				<!-- The plan is a picture to sighted users and one image to a screen
+				reader: the list below carries every place by name and is the keyboard
+				path to the same selection, so the zones stay pointer-only rather than
+				doubling every tab stop. -->
+				<svg
+					bind:this={planElement}
+					viewBox={plan.viewBox}
+					role="img"
+					aria-label={map.alt()}
+					class="h-auto w-full rounded-2xl border bg-muted p-2 select-none"
+				>
+					<defs>
+						<pattern
+							id="stairs-{map.id}"
+							width="6"
+							height="6"
+							patternUnits="userSpaceOnUse"
+							class="stroke-muted-foreground/60"
+						>
+							<line x1="0" y1="3" x2="6" y2="3" stroke-width="1.5" />
+						</pattern>
+					</defs>
+
+					{#each plan.stairs as stair, index (index)}
+						<rect
+							x={stair.x}
+							y={stair.y}
+							width={stair.w}
+							height={stair.h}
+							fill="url(#stairs-{map.id})"
+						/>
+					{/each}
+
+					{#each plan.wells as well, index (index)}
+						<g class="stroke-muted">
+							<rect
+								x={well.x}
+								y={well.y}
+								width={well.w}
+								height={well.h}
+								class="fill-foreground/55"
+								stroke-width="1"
+							/>
+							<path
+								d="M{well.x} {well.y} l{well.w} {well.h} m0 {-well.h} l{-well.w} {well.h}"
+								stroke-width="1"
+							/>
+						</g>
+					{/each}
+
+					<path
+						d={plan.walls}
+						fill="none"
+						stroke-width={WALL_WIDTH}
+						stroke-linecap="square"
+						class="stroke-foreground/55"
+					/>
+					{#each plan.pillars as pillar, index (index)}
+						<rect
+							x={pillar.x}
+							y={pillar.y}
+							width={pillar.w}
+							height={pillar.h}
+							class="fill-foreground/55"
+						/>
+					{/each}
+					{#each plan.columns as [cx, cy, r], index (index)}
+						<circle {cx} {cy} {r} class="fill-foreground/55" />
+					{/each}
+
+					{#each plan.captions as caption, index (index)}
+						<text
+							x={caption.x}
+							y={caption.y}
+							text-anchor="middle"
+							dominant-baseline="central"
+							font-size={plan.fontSize * 0.7}
+							class="fill-muted-foreground font-semibold"
+						>
+							{caption.text()}
+						</text>
+					{/each}
+
+					{#each plan.zones as zone, index (index)}
+						{@const isSelected = zone.point === selectedNumber}
+						<!-- Pointer-only by design; the list below is the keyboard path (see above). -->
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<g
+							onclick={() => togglePoint(zone.point)}
+							class={[
+								'cursor-pointer transition-opacity motion-reduce:transition-none',
+								selectedNumber !== null && !isSelected && 'opacity-40'
+							]}
+						>
+							<rect
+								x={zone.x}
+								y={zone.y}
+								width={zone.w}
+								height={zone.h}
+								rx="4"
+								stroke-width="1.5"
+								class={[isSelected ? 'fill-primary stroke-primary' : 'fill-card stroke-border']}
+							/>
+							<text
+								x={zone.x + zone.w / 2}
+								y={zone.y + zone.h / 2}
+								text-anchor="middle"
+								dominant-baseline="central"
+								font-size={plan.fontSize}
+								class={[
+									'font-bold tabular-nums',
+									isSelected ? 'fill-primary-foreground' : 'fill-foreground'
+								]}
+							>
+								{zone.point}
+							</text>
+						</g>
+					{/each}
+				</svg>
+
+				<p
+					role="status"
+					aria-live="polite"
+					class="flex min-h-11 items-center gap-3 rounded-2xl border bg-card px-4 py-2"
+				>
+					{#if selectedPoint}
+						<span
+							class="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground tabular-nums"
+						>
+							{selectedPoint.number}
+						</span>
+						<span class="grow font-medium">{selectedPoint.name()}</span>
+						{#if selectedPoint.floor}
+							<span class="shrink-0 text-sm text-muted-foreground">{selectedPoint.floor()}</span>
+						{/if}
+					{:else}
+						<span class="text-sm text-muted-foreground">{m.map_pick_hint()}</span>
+					{/if}
+				</p>
+			</div>
+
+			<section aria-labelledby="map-where" class="flex flex-col gap-2">
+				<h2 id="map-where" class="px-1 text-lg font-semibold">{m.map_where_heading()}</h2>
+				<MenuGroup>
+					<ol class="divide-y divide-border">
+						{#each map.points as point (point.number)}
+							{@const isSelected = point.number === selectedNumber}
+							<li>
+								<button
+									type="button"
+									aria-pressed={isSelected}
+									onclick={() => selectFromList(point.number)}
+									class={[
+										'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600',
+										isSelected && 'bg-primary/10'
+									]}
+								>
 									<span
-										class="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground tabular-nums"
+										class={[
+											'flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold tabular-nums',
+											isSelected
+												? 'bg-primary text-primary-foreground'
+												: 'bg-muted text-muted-foreground'
+										]}
 									>
 										{point.number}
 									</span>
@@ -238,30 +236,12 @@ there is room. -->
 									{#if point.floor}
 										<span class="shrink-0 text-sm text-muted-foreground">{point.floor()}</span>
 									{/if}
-								</li>
-							{/each}
-						</ol>
-					</MenuGroup>
-				</section>
-			{/each}
+								</button>
+							</li>
+						{/each}
+					</ol>
+				</MenuGroup>
+			</section>
 		</div>
-	</section>
+	</div>
 {/if}
-
-<style>
-	/* PhotoSwipe appends its root to <body>, outside this component, hence :global. */
-	:global(.pswp) {
-		/* On the app's ladder rather than PhotoSwipe's 100000: above the bottom nav
-		and every other overlay, like any fullscreen viewer. */
-		--pswp-root-z-index: var(--z-modal);
-	}
-
-	/* app.html opts into viewport-fit=cover, so the overlay runs under the notch
-	and rounded corners; keep the toolbar out from under them. */
-	:global(.pswp__top-bar) {
-		top: env(safe-area-inset-top);
-		right: env(safe-area-inset-right);
-		left: env(safe-area-inset-left);
-		width: auto;
-	}
-</style>

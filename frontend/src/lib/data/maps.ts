@@ -1,41 +1,202 @@
-import type { Picture } from '@sveltejs/enhanced-img';
-
 import { m } from '#lib/paraglide/messages.js';
 
-/** A numbered marker on the poster, listed under the maps as «Что где». */
-export interface MapPoint {
-	/** The number printed on the poster, so the list and the map agree. */
+/** A numbered place on a floor, listed under the plan as «Что где». */
+interface MapPoint {
+	/** The number drawn on the plan, so the list and the map agree. */
 	number: number;
 	name: () => string;
-	/** Set where the poster shows a point off the map's main floor, e.g. «3 этаж». */
+	/** Set where a point sits off the plan's main floor, e.g. «3 этаж». */
 	floor?: () => string;
 }
 
-export interface MapEntry {
+/** Axis-aligned box in the plan's own coordinates (the viewBox's units). */
+interface Rect {
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+}
+
+/** A tappable area on the plan. One point can own several, e.g. three stairways. */
+interface MapZone extends Rect {
+	point: number;
+}
+
+interface FloorPlan {
+	/** SVG viewBox: `minX minY width height`. */
+	viewBox: string;
+	/** Wall centre lines as SVG path data, stroked at `WALL_WIDTH`. */
+	walls: string;
+	/** Short wall stubs and pillars, filled like walls. */
+	pillars: Rect[];
+	/** Stair flights, drawn hatched. */
+	stairs: Rect[];
+	/** Open wells between floors, drawn as a crossed-out dark box. */
+	wells: Rect[];
+	/** Round structures, as [cx, cy, r]. */
+	columns: [number, number, number][];
+	/** Text drawn on the plan itself, e.g. the 3rd-floor annex's title. */
+	captions: { x: number; y: number; text: () => string }[];
+	zones: MapZone[];
+	/** Number size in plan units: the two plans have different scales. */
+	fontSize: number;
+}
+
+interface MapEntry {
 	id: string;
-	picture: Picture;
-	// Short caption under the thumbnail, e.g. «1 этаж».
+	/** Floor switcher label, e.g. «1 этаж». */
 	label: () => string;
+	/** The plan's accessible name. */
 	alt: () => string;
-	// File name used when downloading the map.
-	filename: string;
+	plan: FloorPlan;
 	points: MapPoint[];
 }
+
+export const WALL_WIDTH = 9;
 
 function numbered(names: (() => string)[]): MapPoint[] {
 	return names.map((name, index) => ({ number: index + 1, name }));
 }
 
-// The caption, alt text and legend are the only per-file metadata that can't be
-// derived from the file: all are human-authored Russian, and alt is required
-// for accessibility. The legend repeats the poster's own, in order, as text a
-// phone can read without zooming into the image. Intrinsic dimensions, formats
-// and responsive sizes come from <enhanced:img> at build time, so dropping in a
-// map of any proportions needs only its entry here.
-const TEXT: Record<string, Pick<MapEntry, 'label' | 'alt' | 'points'>> = {
-	'map_1.png': {
+// Traced from the festival's printed posters, in their 900×1350 preview's
+// pixels, so a correction can be measured against the poster directly.
+// Only the layout is kept: the posters' title, legend and «Я тут» marker
+// belong to a sign standing at one spot, not a phone in a visitor's hand.
+const FLOOR_1: FloorPlan = {
+	viewBox: '150 140 610 700',
+	fontSize: 22,
+	walls: [
+		// Café wing and the corridor to the backstage door
+		'M196 153 H406 V387',
+		'M196 153 V434 H261',
+		'M197 387 H277',
+		'M159 434 V487 H374',
+		// Lobby and the main hall
+		'M322 387 H704 V491 H729',
+		'M729 543 H704 V762 H729',
+		'M729 812 H704 V826 H604',
+		'M553 826 H452 V542 H342',
+		'M452 387 V455',
+		// The stand block between the two flights up
+		'M494 491 V426 H547',
+		'M611 426 H665 V491'
+	].join(' '),
+	pillars: [
+		{ x: 403, y: 482, w: 10, h: 10 },
+		{ x: 444, y: 482, w: 10, h: 10 },
+		{ x: 489, y: 484, w: 12, h: 12 },
+		{ x: 540, y: 484, w: 10, h: 12 },
+		{ x: 612, y: 484, w: 10, h: 12 },
+		{ x: 660, y: 484, w: 12, h: 12 }
+	],
+	stairs: [
+		{ x: 456, y: 427, w: 38, h: 24 },
+		{ x: 547, y: 427, w: 64, h: 28 },
+		{ x: 556, y: 480, w: 54, h: 16 },
+		{ x: 669, y: 427, w: 32, h: 24 },
+		{ x: 688, y: 494, w: 16, h: 42 },
+		{ x: 688, y: 770, w: 16, h: 42 },
+		{ x: 222, y: 442, w: 24, h: 40 }
+	],
+	wells: [],
+	columns: [
+		[501, 537, 6],
+		[656, 537, 6]
+	],
+	captions: [],
+	zones: [
+		{ point: 1, x: 552, y: 796, w: 52, h: 26 },
+		{ point: 2, x: 491, y: 551, w: 178, h: 233 },
+		{ point: 3, x: 558, y: 396, w: 40, h: 28 },
+		{ point: 3, x: 711, y: 494, w: 30, h: 42 },
+		{ point: 3, x: 711, y: 771, w: 30, h: 42 },
+		{ point: 4, x: 617, y: 434, w: 40, h: 57 },
+		{ point: 5, x: 501, y: 434, w: 40, h: 57 },
+		{ point: 6, x: 342, y: 494, w: 33, h: 42 },
+		{ point: 7, x: 370, y: 396, w: 74, h: 48 },
+		{ point: 8, x: 211, y: 171, w: 173, h: 203 },
+		{ point: 9, x: 202, y: 396, w: 49, h: 33 },
+		{ point: 10, x: 176, y: 442, w: 35, h: 39 }
+	]
+};
+
+const FLOOR_2_3: FloorPlan = {
+	viewBox: '45 50 835 740',
+	fontSize: 28,
+	walls: [
+		// West wing: the authors' alley with the two side doors
+		'M54 343 H119 V202 H831 V329 H870',
+		'M54 407 H115 V682 H54',
+		'M54 743 H115 V780 H831 V396 H870',
+		// East wing: the stands' hall under the 11/12 room
+		'M449 202 V336',
+		'M449 332 H751',
+		'M449 396 V652',
+		'M449 704 V780',
+		'M449 704 H517',
+		'M511 396 V509',
+		'M511 604 V704',
+		// 3rd-floor annex
+		'M529 59 H831 V177 H529 Z'
+	].join(' '),
+	pillars: [
+		...[401, 461, 521, 582, 650, 708].flatMap((y) => [
+			{ x: 167, y, w: 12, h: 11 },
+			{ x: 377, y, w: 12, h: 11 }
+		]),
+		{ x: 507, y: 549, w: 9, h: 12 }
+	],
+	stairs: [
+		{ x: 172, y: 209, w: 39, h: 48 },
+		{ x: 347, y: 209, w: 39, h: 48 },
+		{ x: 126, y: 259, w: 43, h: 75 },
+		{ x: 388, y: 259, w: 55, h: 75 },
+		{ x: 678, y: 337, w: 51, h: 58 },
+		{ x: 678, y: 707, w: 51, h: 68 },
+		{ x: 176, y: 721, w: 35, h: 47 },
+		{ x: 354, y: 721, w: 36, h: 47 },
+		{ x: 546, y: 125, w: 44, h: 38 },
+		{ x: 769, y: 125, w: 46, h: 38 }
+	],
+	wells: [
+		{ x: 172, y: 259, w: 214, h: 57 },
+		{ x: 517, y: 336, w: 159, h: 64 },
+		{ x: 517, y: 704, w: 159, h: 75 }
+	],
+	columns: [[672, 556, 34]],
+	captions: [{ x: 680, y: 84, text: m.map_point_on_floor_3 }],
+	zones: [
+		{ point: 1, x: 219, y: 379, w: 118, h: 39 },
+		{ point: 2, x: 219, y: 423, w: 118, h: 266 },
+		{ point: 3, x: 126, y: 413, w: 36, h: 266 },
+		{ point: 4, x: 77, y: 352, w: 33, h: 49 },
+		{ point: 4, x: 77, y: 691, w: 33, h: 50 },
+		{ point: 5, x: 397, y: 413, w: 41, h: 97 },
+		{ point: 6, x: 126, y: 708, w: 48, h: 61 },
+		{ point: 6, x: 393, y: 708, w: 47, h: 61 },
+		{ point: 7, x: 219, y: 318, w: 118, h: 31 },
+		{ point: 7, x: 219, y: 723, w: 118, h: 46 },
+		{ point: 7, x: 457, y: 640, w: 47, h: 61 },
+		{ point: 7, x: 724, y: 495, w: 85, h: 111 },
+		{ point: 8, x: 396, y: 533, w: 40, h: 102 },
+		{ point: 9, x: 528, y: 614, w: 185, h: 85 },
+		{ point: 10, x: 528, y: 405, w: 183, h: 86 },
+		{ point: 11, x: 528, y: 224, w: 139, h: 87 },
+		{ point: 12, x: 676, y: 224, w: 138, h: 87 },
+		{ point: 13, x: 835, y: 340, w: 40, h: 48 },
+		{ point: 14, x: 607, y: 96, w: 70, h: 68 },
+		{ point: 15, x: 681, y: 96, w: 70, h: 68 }
+	]
+};
+
+// Labels, accessible names and legends are human-authored Russian, kept in
+// ru.json; the legend lists every number on the plan, in order.
+export const maps: MapEntry[] = [
+	{
+		id: 'floor-1',
 		label: m.map_floor_1_label,
 		alt: m.map_floor_1_alt,
+		plan: FLOOR_1,
 		points: numbered([
 			m.map_floor_1_point_01,
 			m.map_floor_1_point_02,
@@ -49,9 +210,11 @@ const TEXT: Record<string, Pick<MapEntry, 'label' | 'alt' | 'points'>> = {
 			m.map_floor_1_point_10
 		])
 	},
-	'map_2.png': {
+	{
+		id: 'floor-2-3',
 		label: m.map_floor_2_3_label,
 		alt: m.map_floor_2_3_alt,
+		plan: FLOOR_2_3,
 		points: [
 			...numbered([
 				m.map_floor_2_3_point_01,
@@ -72,34 +235,4 @@ const TEXT: Record<string, Pick<MapEntry, 'label' | 'alt' | 'points'>> = {
 			{ number: 15, name: m.map_floor_2_3_point_15, floor: m.map_point_on_floor_3 }
 		]
 	}
-};
-
-// enhanced-img processes each match at build into a Picture (AVIF/WebP + sized
-// variants, content-hashed so a swap busts every cache layer — browser, CDN,
-// service worker). eager inlines the objects; import:'default' unwraps each
-// module to its Picture.
-const modules = import.meta.glob<Picture>('#lib/assets/map/*.{jpg,jpeg,png}', {
-	eager: true,
-	query: { enhanced: true },
-	import: 'default'
-});
-
-// Build the gallery from the discovered files, attaching the text by name and
-// sorting by id so the order is stable regardless of glob iteration order. A
-// file with no TEXT entry is skipped, so a map is shown only once it's described.
-export const maps: MapEntry[] = Object.entries(modules)
-	.map(([path, picture]) => {
-		const filename = path.split('/').pop() ?? '';
-		const text = TEXT[filename];
-		if (!text) return null;
-		return {
-			id: filename.replace(/\.[^.]+$/, ''),
-			picture,
-			label: text.label,
-			alt: text.alt,
-			filename,
-			points: text.points
-		};
-	})
-	.filter((entry): entry is MapEntry => entry !== null)
-	.sort((a, b) => a.id.localeCompare(b.id));
+];

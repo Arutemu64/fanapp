@@ -1,6 +1,6 @@
 # ADR-0019: PhotoSwipe for the map viewer
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0029](0029-inline-svg-floor-plans.md)
 - **Date:** 2026-10-07
 - **Deciders:** Project maintainers
 

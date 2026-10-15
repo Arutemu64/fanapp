@@ -327,7 +327,7 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 - `frontend/static/icons/`
 - `frontend/static/favicon.svg`, `frontend/static/favicon.ico`
 - `frontend/src/lib/assets/logo.svg`
-- `frontend/src/lib/assets/map/`
+- `frontend/src/lib/data/maps.ts` (floor plans traced from the festival's maps)
 - `frontend/src/routes/(app)/components/home/main.webp`
 - `docs/assets/readme-header.webp`
 - `docs/assets/readme-gallery/`
