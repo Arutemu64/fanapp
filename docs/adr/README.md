@@ -72,3 +72,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0025](0025-dicebear-avatars-from-a-stored-seed.md) | DiceBear avatars drawn in the browser from a stored seed | Accepted |
 | [0026](0026-schedule-blocks-as-block-start-entries.md) | Schedule blocks as block-start entries | Accepted |
 | [0027](0027-paraglide-js-for-user-facing-copy.md) | Paraglide JS for user-facing copy | Accepted |
+| [0028](0028-mdsvex-for-guide-articles.md) | mdsvex for guide articles | Accepted |

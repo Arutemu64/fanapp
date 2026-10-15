@@ -5,6 +5,7 @@ import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
+import { mdsvex } from 'mdsvex';
 import { fileURLToPath } from 'node:url';
 import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
@@ -87,7 +88,10 @@ export default defineConfig(({ mode }) => {
 			sveltekit({
 				// Consult https://svelte.dev/docs/kit/integrations
 				// for more information about preprocessors
-				preprocess: vitePreprocess(),
+				// mdsvex compiles the guide articles (src/content/guide/*.md, ADR-0028)
+				// into components; vitePreprocess handles the `lang="ts"` in the rest.
+				extensions: ['.svelte', '.md'],
+				preprocess: [mdsvex({ extensions: ['.md'] }), vitePreprocess()],
 				// The whole monorepo shares the single root `.env` (see .env.example) —
 				// the frontend has no env file of its own. `$app/env/public` loads
 				// from there; real environment variables (Docker build args, CI) still

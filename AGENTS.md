@@ -97,6 +97,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── frontend/
 │   ├── messages/        # ru.json: all user-facing copy (Paraglide JS)
 │   └── src/
+│       ├── content/     # Markdown guide articles (mdsvex, ADR-0028)
 │       ├── routes/      # Pages & layouts
 │       └── lib/         # assets/ components/ api/ types/ services/ utils/ constants/ data/ testing/
 ├── shared/openapi/      # Shared OpenAPI spec

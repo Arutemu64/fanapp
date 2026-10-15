@@ -16,49 +16,37 @@
 	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	// A text search, so there are no coordinates to keep in step with the venue.
 	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
 	const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent('Нижний Новгород, ДК ГАЗ')}`;
 
-	interface ContactLink {
+	interface SocialLink {
 		href: string;
 		label: () => string;
-		/** The bare address, so people know where the row leads before leaving the app. */
-		hint: string;
 		icon: Component;
+		/** mailto: stays in the app's tab; web links open elsewhere. */
+		external: boolean;
 	}
 
-	const facts = [
-		{ label: m.guide_fact_doors, value: m.guide_fact_doors_value },
-		{ label: m.guide_fact_start, value: m.guide_fact_start_value },
-		{ label: m.guide_fact_kids, value: m.guide_fact_kids_value }
-	];
-
-	const contacts: ContactLink[] = [
-		{ href: 'https://fancom.info/', label: m.guide_website, hint: 'fancom.info', icon: Globe },
-		{ href: 'https://vk.com/ffest_nn', label: m.guide_vk, hint: 'vk.com/ffest_nn', icon: IconVk },
+	const socialLinks: SocialLink[] = [
+		{ href: 'https://fancom.info/', label: m.guide_website, icon: Globe, external: true },
+		{ href: 'https://vk.com/ffest_nn', label: m.guide_vk, icon: IconVk, external: true },
 		{
 			href: 'https://t.me/fanfan_fest_news',
 			label: m.guide_telegram,
-			hint: 't.me/fanfan_fest_news',
-			icon: IconTelegram
+			icon: IconTelegram,
+			external: true
 		},
-		{
-			href: 'https://max.ru/ffest_nn',
-			label: m.guide_max,
-			hint: 'max.ru/ffest_nn',
-			icon: MessageCircle
-		},
-		{
-			href: 'mailto:orgcom.fan@mail.ru',
-			label: m.guide_email,
-			hint: 'orgcom.fan@mail.ru',
-			icon: Mail
-		}
+		{ href: 'https://max.ru/ffest_nn', label: m.guide_max, icon: MessageCircle, external: true },
+		{ href: 'mailto:orgcom.fan@mail.ru', label: m.guide_email, icon: Mail, external: false }
 	];
+
+	const facts = [m.guide_date, m.guide_doors, m.guide_start, m.guide_age];
 </script>
 
 <svelte:head>
@@ -85,52 +73,47 @@
 	</Item.Root>
 {/snippet}
 
-<!-- The page is for people already on site, so it leads with what they reach for
-     mid-day — the map, then contacts and the entry times — and keeps the festival
-     intro and directions at the bottom. Grouped rows with a trailing indicator are
-     the phone-settings shape for "drill in"
+<!-- A hub, like /profile: the intro with the facts and social links, then grouped
+     rows that each lead somewhere. Grouped rows with a trailing indicator are the
+     phone-settings shape for "drill in"
      (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables),
      so every target is a full-width tap. Capped and centred like the profile column. -->
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
-	<MenuGroup>
-		<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
-	</MenuGroup>
-
-	<section aria-labelledby="guide-contacts" class="flex flex-col gap-2">
-		<h2 id="guide-contacts" class="px-1 text-sm font-medium text-muted-foreground">
-			{m.guide_contacts_heading()}
+	<section aria-labelledby="guide-heading" class="rounded-2xl border bg-card p-5 sm:p-6">
+		<img src={logo} alt={m.app_name()} class="h-10 w-auto dark:invert" />
+		<h2 id="guide-heading" class="mt-4 text-lg leading-snug font-semibold text-balance">
+			{m.guide_tagline()}
 		</h2>
-		<MenuGroup>
-			{#each contacts as contact (contact.href)}
-				{@render externalRow(contact.href, contact.icon, contact.label(), contact.hint)}
+		<p class="mt-1.5 text-sm text-muted-foreground">{m.guide_about()}</p>
+		<ul class="mt-3 flex flex-wrap gap-2">
+			{#each facts as fact (fact)}
+				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact()}</li>
 			{/each}
-		</MenuGroup>
+		</ul>
+		<ul class="mt-4 flex flex-wrap gap-2">
+			{#each socialLinks as link (link.href)}
+				{@const Icon = link.icon}
+				<li>
+					<Button
+						variant="outline"
+						size="icon"
+						href={link.href}
+						target={link.external ? '_blank' : undefined}
+						rel={link.external ? 'noopener noreferrer' : undefined}
+					>
+						<Icon class="size-5" aria-hidden="true" />
+						<span class="sr-only">
+							{link.label()}{link.external ? ` (${m.guide_opens_in_new_tab()})` : ''}
+						</span>
+					</Button>
+				</li>
+			{/each}
+		</ul>
 	</section>
 
-	<section aria-labelledby="guide-facts" class="flex flex-col gap-2">
-		<h2 id="guide-facts" class="px-1 text-sm font-medium text-muted-foreground">
-			{m.guide_facts_heading()}
-		</h2>
-		<dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 rounded-2xl border bg-card p-5 sm:p-6">
-			{#each facts as fact (fact.value)}
-				<dt class="text-muted-foreground">{fact.label()}</dt>
-				<dd class="font-medium">{fact.value()}</dd>
-			{/each}
-		</dl>
-	</section>
-
-	<MenuGroup>
-		{@render externalRow(
-			'https://fancom.info/pages/rules',
-			ScrollText,
-			m.guide_rules(),
-			'fancom.info/pages/rules'
-		)}
-	</MenuGroup>
-
-	<section aria-labelledby="guide-directions" class="flex flex-col gap-2">
-		<h2 id="guide-directions" class="px-1 text-sm font-medium text-muted-foreground">
-			{m.guide_directions_heading()}
+	<section aria-labelledby="guide-address" class="flex flex-col gap-2">
+		<h2 id="guide-address" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_address_heading()}
 		</h2>
 		<MenuGroup>
 			{@render externalRow(
@@ -142,11 +125,32 @@
 		</MenuGroup>
 	</section>
 
-	<section aria-labelledby="guide-heading" class="rounded-2xl border bg-card p-5 sm:p-6">
-		<img src={logo} alt={m.app_name()} class="h-10 w-auto dark:invert" />
-		<h2 id="guide-heading" class="mt-4 text-lg leading-snug font-semibold text-balance">
-			{m.guide_tagline()}
+	<MenuGroup>
+		<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
+	</MenuGroup>
+
+	<MenuGroup>
+		{@render externalRow(
+			'https://fancom.info/pages/rules',
+			ScrollText,
+			m.guide_rules(),
+			'fancom.info/pages/rules'
+		)}
+	</MenuGroup>
+
+	<section aria-labelledby="guide-activities" class="flex flex-col gap-2">
+		<h2 id="guide-activities" class="px-1 text-sm font-medium text-muted-foreground">
+			{m.guide_activities_heading()}
 		</h2>
-		<p class="mt-2 text-muted-foreground">{m.guide_about()}</p>
+		<MenuGroup>
+			{#each guideArticles as article (article.slug)}
+				<MenuLink
+					href={`guide/${article.slug}`}
+					label={article.title}
+					description={article.description}
+					icon={article.icon}
+				/>
+			{/each}
+		</MenuGroup>
 	</section>
 </div>
