@@ -14,6 +14,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import BroadcastQueued
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import MailingAlreadyExists
+from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.user import UserRole
@@ -114,3 +115,33 @@ async def test_send_broadcast_with_a_taken_id_raises_already_exists(
 
     with pytest.raises(MailingAlreadyExists):
         await interactor(data.model_copy(update={"body": "Другой текст"}))
+
+
+async def test_overlapping_send_loses_the_insert_race_with_already_exists(
+    dishka_request: AsyncContainer,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(SendBroadcast)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    broadcaster = await make_broadcaster(dishka_request, uow)
+    login(broadcaster)
+    data = _broadcast("Всем привет!", [UserRole.VISITOR])
+    first = await interactor(data)
+
+    # The overlapping request missed the interactor's lookup before the first
+    # committed, so its INSERT is what meets the taken ID.
+    racer = Mailing.create(by_user_id=broadcaster.id, mailing_id=data.mailing_id)
+    racer.queue_broadcast(body=data.body, roles=data.roles)
+    with pytest.raises(MailingAlreadyExists):
+        await mailing_gateway.add(racer)
+
+    await uow.rollback()
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(
+        BroadcastQueued(
+            mailing_id=first.mailing_id, body="Всем привет!", roles=[UserRole.VISITOR]
+        )
+    )
