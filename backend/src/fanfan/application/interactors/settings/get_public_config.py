@@ -14,4 +14,9 @@ class GetPublicConfig:
         self.app_settings_gateway = app_settings_gateway
 
     async def __call__(self) -> PublicConfigDTO:
-        return PublicConfigDTO.model_validate(await self.app_settings_gateway.get())
+        settings = await self.app_settings_gateway.get()
+        return PublicConfigDTO(
+            festival_start=settings.festival_start,
+            festival_end=settings.festival_end,
+            quest_enabled=settings.quest.enabled,
+        )

@@ -22,6 +22,9 @@ class UpdateAppSettingsInput(BaseModel):
     festival_start: AwareDatetime | None = None
     festival_end: AwareDatetime | None = None
     announcement_timeout: int | None = Field(default=None, ge=1)
+    quest_enabled: bool | None = None
+    quest_max_award: int | None = Field(default=None, ge=1, le=10_000)
+    quest_cancel_window_minutes: int | None = Field(default=None, ge=0, le=1440)
 
 
 class UpdateSettings:
@@ -75,6 +78,25 @@ class UpdateSettings:
             announcement_timeout := data_to_update.get("announcement_timeout")
         ) is not None:
             settings.update_limits(announcement_timeout=announcement_timeout)
+            update_flag = True
+
+        quest_enabled = data_to_update.get("quest_enabled")
+        quest_max_award = data_to_update.get("quest_max_award")
+        quest_cancel_window = data_to_update.get("quest_cancel_window_minutes")
+        quest_touched = (
+            quest_enabled is not None
+            or quest_max_award is not None
+            or quest_cancel_window is not None
+        )
+        if quest_touched:
+            # Only the on/off switch is public: it shows or hides the quest card.
+            if quest_enabled is not None and quest_enabled != settings.quest.enabled:
+                public_config_changed = True
+            settings.update_quest(
+                enabled=quest_enabled,
+                max_award=quest_max_award,
+                cancel_window_minutes=quest_cancel_window,
+            )
             update_flag = True
 
         if not update_flag:

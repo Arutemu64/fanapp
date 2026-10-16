@@ -10,6 +10,14 @@ class LimitsConfigDTO(BaseModel):
     announcement_timeout: int = Field(ge=1)
 
 
+class QuestConfigDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    enabled: bool
+    max_award: int = Field(ge=1)
+    cancel_window_minutes: int = Field(ge=0)
+
+
 class AppSettingsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,6 +26,7 @@ class AppSettingsDTO(BaseModel):
     festival_start: datetime
     festival_end: datetime
     limits: LimitsConfigDTO
+    quest: QuestConfigDTO
 
 
 class PublicConfigDTO(BaseModel):
@@ -37,3 +46,5 @@ class PublicConfigDTO(BaseModel):
 
     festival_start: datetime
     festival_end: datetime
+    # Shows or hides the quest card and tool; the quest endpoints enforce it too.
+    quest_enabled: bool

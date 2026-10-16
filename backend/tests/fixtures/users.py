@@ -171,3 +171,23 @@ async def users_manager(dishka_request: AsyncContainer) -> User:
     return await _org_user_with(
         dishka_request, "users_manager", Permission.USERS_MANAGE
     )
+
+
+@pytest_asyncio.fixture
+async def quest_volunteer(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted quest:award.
+    """
+    return await _org_user_with(
+        dishka_request, "quest_volunteer", Permission.QUEST_AWARD
+    )
+
+
+@pytest_asyncio.fixture
+async def quest_manager(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted quest:manage.
+    """
+    return await _org_user_with(
+        dishka_request, "quest_manager", Permission.QUEST_MANAGE
+    )

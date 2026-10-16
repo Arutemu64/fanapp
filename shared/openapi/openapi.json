@@ -4528,6 +4528,469 @@
           }
         }
       }
+    },
+    "/quest": {
+      "get": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "Get the quest",
+        "description": "Returns the current user's points and rank with the top of the leaderboard. Ties rank by who reached the score first.",
+        "operationId": "get_quest",
+        "responses": {
+          "200": {
+            "description": "Quest retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetQuestOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The quest is disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/quest/players": {
+      "get": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "Find quest players",
+        "description": "Finds players whose username starts with the search term. Requires the quest:award permission.",
+        "operationId": "find_quest_players",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Players found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindQuestPlayersOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quest/players/{user_id}": {
+      "get": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "Get a quest player",
+        "description": "Returns one player's points, for the award form after a QR scan. Requires the quest:award permission.",
+        "operationId": "get_quest_player",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Player retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestPlayerDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The user does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quest/awards": {
+      "post": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "Award quest points",
+        "description": "Gives a player points for a quest task. Replaying the same award ID with the same payload returns the original award. Requires the quest:award permission.",
+        "operationId": "award_quest_points",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AwardQuestPointsInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Points awarded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AwardQuestPointsOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The user does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The award ID is taken by a different award.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "List quest awards",
+        "description": "Lists the awards the current user gave, newest first; holders of quest:manage see every award. Requires quest:award or quest:manage.",
+        "operationId": "list_quest_awards",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Awards retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListQuestAwardsOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quest/awards/{award_id}/cancel": {
+      "post": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "Cancel a quest award",
+        "description": "Takes an award's points back. A volunteer may cancel their own award within the cancel window; quest:manage cancels any award at any time.",
+        "operationId": "cancel_quest_award",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "award_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Award Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Award cancelled."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The award does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The award is already cancelled or its window expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4574,15 +5037,67 @@
           },
           "limits": {
             "$ref": "#/components/schemas/LimitsConfigDTO"
+          },
+          "quest": {
+            "$ref": "#/components/schemas/QuestConfigDTO"
           }
         },
         "type": "object",
         "required": [
           "festival_start",
           "festival_end",
-          "limits"
+          "limits",
+          "quest"
         ],
         "title": "AppSettingsDTO"
+      },
+      "AwardQuestPointsInput": {
+        "properties": {
+          "award_id": {
+            "type": "string",
+            "format": "uuid7",
+            "title": "Award Id",
+            "description": "UUIDv7 the client generates once per award form."
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "amount": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Amount"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "award_id",
+          "user_id",
+          "amount",
+          "message"
+        ],
+        "title": "AwardQuestPointsInput"
+      },
+      "AwardQuestPointsOutput": {
+        "properties": {
+          "award_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Award Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "award_id"
+        ],
+        "title": "AwardQuestPointsOutput"
       },
       "Body_import_schedule": {
         "properties": {
@@ -4917,6 +5432,7 @@
               "ALREADY_VOTED_IN_THIS_NOMINATION",
               "APP_SETTINGS_NOT_FOUND",
               "AUTHENTICATION_ERROR",
+              "CANNOT_AWARD_SELF",
               "CANNOT_CHANGE_OWN_ACCESS",
               "CANNOT_REMOVE_LAST_SIGN_IN_METHOD",
               "CAPTCHA_VERIFICATION_FAILED",
@@ -4947,6 +5463,12 @@
               "PERMISSION_NOT_ASSIGNABLE",
               "PUSH_SUBSCRIPTION_ALREADY_EXISTS",
               "PUSH_SUBSCRIPTION_NOT_FOUND",
+              "QUEST_AWARD_ALREADY_CANCELLED",
+              "QUEST_AWARD_ALREADY_EXISTS",
+              "QUEST_AWARD_AMOUNT_OUT_OF_RANGE",
+              "QUEST_AWARD_CANCEL_WINDOW_EXPIRED",
+              "QUEST_AWARD_NOT_FOUND",
+              "QUEST_DISABLED",
               "SAME_EVENTS_ARE_NOT_ALLOWED",
               "SCHEDULE_CHANGE_NOT_FOUND",
               "SCHEDULE_EDIT_TOO_FAST",
@@ -5036,6 +5558,22 @@
         ],
         "title": "FeedbackUserDTO"
       },
+      "FindQuestPlayersOutput": {
+        "properties": {
+          "players": {
+            "items": {
+              "$ref": "#/components/schemas/QuestPlayerDTO"
+            },
+            "type": "array",
+            "title": "Players"
+          }
+        },
+        "type": "object",
+        "required": [
+          "players"
+        ],
+        "title": "FindQuestPlayersOutput"
+      },
       "GenerateTicketsInput": {
         "properties": {
           "role": {
@@ -5070,6 +5608,50 @@
           "barcodes"
         ],
         "title": "GenerateTicketsOutput"
+      },
+      "GetQuestOutput": {
+        "properties": {
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "leaderboard": {
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardEntryDTO"
+            },
+            "type": "array",
+            "title": "Leaderboard"
+          },
+          "own_entry": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LeaderboardEntryDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "points",
+          "rank",
+          "leaderboard",
+          "own_entry"
+        ],
+        "title": "GetQuestOutput"
       },
       "GetScheduleOutput": {
         "properties": {
@@ -5264,6 +5846,23 @@
         ],
         "title": "HealthCheckOutput"
       },
+      "LeaderboardEntryDTO": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "player": {
+            "$ref": "#/components/schemas/QuestPlayerDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "player"
+        ],
+        "title": "LeaderboardEntryDTO"
+      },
       "LimitsConfigDTO": {
         "properties": {
           "announcement_timeout": {
@@ -5346,6 +5945,34 @@
           "next_cursor"
         ],
         "title": "ListFeedbackOutput"
+      },
+      "ListQuestAwardsOutput": {
+        "properties": {
+          "awards": {
+            "items": {
+              "$ref": "#/components/schemas/QuestAwardItemDTO"
+            },
+            "type": "array",
+            "title": "Awards"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "awards",
+          "next_cursor"
+        ],
+        "title": "ListQuestAwardsOutput"
       },
       "ListScheduleChangesOutput": {
         "properties": {
@@ -5786,7 +6413,7 @@
           "schedule_change",
           "schedule_subscription",
           "message",
-          "points_received",
+          "quest",
           "broadcast",
           "test"
         ],
@@ -5897,7 +6524,9 @@
           "feedback:read",
           "voting:manage",
           "users:read",
-          "users:manage"
+          "users:manage",
+          "quest:award",
+          "quest:manage"
         ],
         "title": "Permission"
       },
@@ -5912,12 +6541,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Festival End"
+          },
+          "quest_enabled": {
+            "type": "boolean",
+            "title": "Quest Enabled"
           }
         },
         "type": "object",
         "required": [
           "festival_start",
-          "festival_end"
+          "festival_end",
+          "quest_enabled"
         ],
         "title": "PublicConfigDTO",
         "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` and `festival_end` so the client can run the\nlive countdown and pick its before/during/after phase itself — flipping at\neach boundary without provoking a 403 on a guarded endpoint. Voting\navailability is intentionally not here: the UI reads it per-user from\nGET /voting/status (which already reflects the time range as a DISABLED\nstate), so a second public copy would only be a redundant source of truth to\ndrift."
@@ -5934,6 +6568,142 @@
           "subscribed"
         ],
         "title": "PushSubscriptionStatus"
+      },
+      "QuestAwardItemDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          },
+          "user": {
+            "$ref": "#/components/schemas/QuestAwardUserDTO"
+          },
+          "awarded_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuestAwardUserDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "can_cancel": {
+            "type": "boolean",
+            "title": "Can Cancel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "message",
+          "created_at",
+          "cancelled_at",
+          "user",
+          "awarded_by",
+          "can_cancel"
+        ],
+        "title": "QuestAwardItemDTO"
+      },
+      "QuestAwardUserDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "QuestAwardUserDTO"
+      },
+      "QuestConfigDTO": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "max_award": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Award"
+          },
+          "cancel_window_minutes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Cancel Window Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "max_award",
+          "cancel_window_minutes"
+        ],
+        "title": "QuestConfigDTO"
+      },
+      "QuestPlayerDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "avatar_seed": {
+            "type": "string",
+            "title": "Avatar Seed"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "avatar_seed",
+          "points"
+        ],
+        "title": "QuestPlayerDTO"
       },
       "RequestLoginCodeInput": {
         "properties": {
@@ -6654,6 +7424,43 @@
               }
             ],
             "title": "Announcement Timeout"
+          },
+          "quest_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quest Enabled"
+          },
+          "quest_max_award": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quest Max Award"
+          },
+          "quest_cancel_window_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quest Cancel Window Minutes"
           }
         },
         "type": "object",

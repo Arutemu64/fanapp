@@ -8,6 +8,7 @@ from fanfan.presentation.web.routes.debug import debug_router
 from fanfan.presentation.web.routes.feedback import feedback_router
 from fanfan.presentation.web.routes.notifications import notifications_router
 from fanfan.presentation.web.routes.push import push_router
+from fanfan.presentation.web.routes.quest import quest_router
 from fanfan.presentation.web.routes.schedule import schedule_router
 from fanfan.presentation.web.routes.settings import settings_router
 from fanfan.presentation.web.routes.sse import sse_router
@@ -38,5 +39,6 @@ def setup_api_router() -> APIRouter:
     router.include_router(tickets_router, responses=VALIDATION_RESPONSES)
     router.include_router(sync_router, responses=VALIDATION_RESPONSES)
     router.include_router(users_router, responses=VALIDATION_RESPONSES)
+    router.include_router(quest_router, responses=VALIDATION_RESPONSES)
 
     return router

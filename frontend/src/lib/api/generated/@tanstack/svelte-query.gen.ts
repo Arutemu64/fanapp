@@ -10,7 +10,9 @@ import {
 import { client } from '../client.gen';
 import {
 	addVote,
+	awardQuestPoints,
 	cancelMailing,
+	cancelQuestAward,
 	cancelVote,
 	changeCurrentUserEmail,
 	changeCurrentUserPassword,
@@ -21,9 +23,12 @@ import {
 	debug,
 	deleteSubscription,
 	drawVotingContestWinner,
+	findQuestPlayers,
 	generateTickets,
 	getCurrentUser,
 	getPublicConfig,
+	getQuest,
+	getQuestPlayer,
 	getSchedule,
 	getSettings,
 	getSubscriptions,
@@ -39,6 +44,7 @@ import {
 	listBroadcasts,
 	listFeedback,
 	listOauthProviders,
+	listQuestAwards,
 	listScheduleChanges,
 	listUserNotifications,
 	listUsers,
@@ -80,9 +86,15 @@ import type {
 	AddVoteData,
 	AddVoteError,
 	AddVoteResponse,
+	AwardQuestPointsData,
+	AwardQuestPointsError,
+	AwardQuestPointsResponse,
 	CancelMailingData,
 	CancelMailingError,
 	CancelMailingResponse,
+	CancelQuestAwardData,
+	CancelQuestAwardError,
+	CancelQuestAwardResponse,
 	CancelVoteData,
 	CancelVoteError,
 	CancelVoteResponse,
@@ -113,6 +125,9 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerError,
 	DrawVotingContestWinnerResponse,
+	FindQuestPlayersData,
+	FindQuestPlayersError,
+	FindQuestPlayersResponse,
 	GenerateTicketsData,
 	GenerateTicketsError,
 	GenerateTicketsResponse,
@@ -122,6 +137,12 @@ import type {
 	GetPublicConfigData,
 	GetPublicConfigError,
 	GetPublicConfigResponse,
+	GetQuestData,
+	GetQuestError,
+	GetQuestPlayerData,
+	GetQuestPlayerError,
+	GetQuestPlayerResponse,
+	GetQuestResponse,
 	GetScheduleData,
 	GetScheduleError,
 	GetScheduleResponse,
@@ -166,6 +187,9 @@ import type {
 	ListOauthProvidersData,
 	ListOauthProvidersError,
 	ListOauthProvidersResponse,
+	ListQuestAwardsData,
+	ListQuestAwardsError,
+	ListQuestAwardsResponse,
 	ListScheduleChangesData,
 	ListScheduleChangesError,
 	ListScheduleChangesResponse,
@@ -2308,6 +2332,221 @@ export const unlinkUserTicketMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await unlinkUserTicket({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+export const getQuestQueryKey = (options?: Options<GetQuestData>) =>
+	createQueryKey('getQuest', options);
+
+/**
+ * Get the quest
+ *
+ * Returns the current user's points and rank with the top of the leaderboard. Ties rank by who reached the score first.
+ */
+export const getQuestOptions = (options?: Options<GetQuestData>) =>
+	queryOptions<
+		GetQuestResponse,
+		GetQuestError,
+		GetQuestResponse,
+		ReturnType<typeof getQuestQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await getQuest({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: getQuestQueryKey(options)
+	});
+
+export const findQuestPlayersQueryKey = (options: Options<FindQuestPlayersData>) =>
+	createQueryKey('findQuestPlayers', options);
+
+/**
+ * Find quest players
+ *
+ * Finds players whose username starts with the search term. Requires the quest:award permission.
+ */
+export const findQuestPlayersOptions = (options: Options<FindQuestPlayersData>) =>
+	queryOptions<
+		FindQuestPlayersResponse,
+		FindQuestPlayersError,
+		FindQuestPlayersResponse,
+		ReturnType<typeof findQuestPlayersQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await findQuestPlayers({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: findQuestPlayersQueryKey(options)
+	});
+
+export const getQuestPlayerQueryKey = (options: Options<GetQuestPlayerData>) =>
+	createQueryKey('getQuestPlayer', options);
+
+/**
+ * Get a quest player
+ *
+ * Returns one player's points, for the award form after a QR scan. Requires the quest:award permission.
+ */
+export const getQuestPlayerOptions = (options: Options<GetQuestPlayerData>) =>
+	queryOptions<
+		GetQuestPlayerResponse,
+		GetQuestPlayerError,
+		GetQuestPlayerResponse,
+		ReturnType<typeof getQuestPlayerQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await getQuestPlayer({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: getQuestPlayerQueryKey(options)
+	});
+
+export const listQuestAwardsQueryKey = (options?: Options<ListQuestAwardsData>) =>
+	createQueryKey('listQuestAwards', options);
+
+/**
+ * List quest awards
+ *
+ * Lists the awards the current user gave, newest first; holders of quest:manage see every award. Requires quest:award or quest:manage.
+ */
+export const listQuestAwardsOptions = (options?: Options<ListQuestAwardsData>) =>
+	queryOptions<
+		ListQuestAwardsResponse,
+		ListQuestAwardsError,
+		ListQuestAwardsResponse,
+		ReturnType<typeof listQuestAwardsQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await listQuestAwards({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: listQuestAwardsQueryKey(options)
+	});
+
+export const listQuestAwardsInfiniteQueryKey = (
+	options?: Options<ListQuestAwardsData>
+): QueryKey<Options<ListQuestAwardsData>> => createQueryKey('listQuestAwards', options, true);
+
+/**
+ * List quest awards
+ *
+ * Lists the awards the current user gave, newest first; holders of quest:manage see every award. Requires quest:award or quest:manage.
+ */
+export const listQuestAwardsInfiniteOptions = (options?: Options<ListQuestAwardsData>) => {
+	const opts = infiniteQueryOptions<
+		ListQuestAwardsResponse,
+		ListQuestAwardsError,
+		InfiniteData<ListQuestAwardsResponse>,
+		QueryKey<Options<ListQuestAwardsData>>,
+		| string
+		| null
+		| Pick<QueryKey<Options<ListQuestAwardsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+	>(
+		// @ts-ignore
+		{
+			queryFn: async ({ pageParam, queryKey, signal }) => {
+				// @ts-ignore
+				const page: Pick<
+					QueryKey<Options<ListQuestAwardsData>>[0],
+					'body' | 'headers' | 'path' | 'query'
+				> =
+					typeof pageParam === 'object'
+						? pageParam
+						: {
+								query: {
+									cursor: pageParam
+								}
+							};
+				const params = createInfiniteParams(queryKey, page);
+				const { data } = await listQuestAwards({
+					...options,
+					...params,
+					signal,
+					throwOnError: true
+				});
+				return data;
+			},
+			queryKey: listQuestAwardsInfiniteQueryKey(options)
+		}
+	);
+	return opts as Omit<typeof opts, 'initialData'>;
+};
+
+/**
+ * Award quest points
+ *
+ * Gives a player points for a quest task. Replaying the same award ID with the same payload returns the original award. Requires the quest:award permission.
+ */
+export const awardQuestPointsMutation = (
+	options?: Partial<Options<AwardQuestPointsData>>
+): MutationOptions<
+	AwardQuestPointsResponse,
+	AwardQuestPointsError,
+	Options<AwardQuestPointsData>
+> => {
+	const mutationOptions: MutationOptions<
+		AwardQuestPointsResponse,
+		AwardQuestPointsError,
+		Options<AwardQuestPointsData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await awardQuestPoints({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Cancel a quest award
+ *
+ * Takes an award's points back. A volunteer may cancel their own award within the cancel window; quest:manage cancels any award at any time.
+ */
+export const cancelQuestAwardMutation = (
+	options?: Partial<Options<CancelQuestAwardData>>
+): MutationOptions<
+	CancelQuestAwardResponse,
+	CancelQuestAwardError,
+	Options<CancelQuestAwardData>
+> => {
+	const mutationOptions: MutationOptions<
+		CancelQuestAwardResponse,
+		CancelQuestAwardError,
+		Options<CancelQuestAwardData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await cancelQuestAward({
 				...options,
 				...fnOptions,
 				throwOnError: true

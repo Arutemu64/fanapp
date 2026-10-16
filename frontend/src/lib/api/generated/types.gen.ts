@@ -37,6 +37,41 @@ export type AppSettingsDto = {
 	 */
 	festival_end: string;
 	limits: LimitsConfigDto;
+	quest: QuestConfigDto;
+};
+
+/**
+ * AwardQuestPointsInput
+ */
+export type AwardQuestPointsInput = {
+	/**
+	 * Award Id
+	 *
+	 * UUIDv7 the client generates once per award form.
+	 */
+	award_id: string;
+	/**
+	 * User Id
+	 */
+	user_id: string;
+	/**
+	 * Amount
+	 */
+	amount: number;
+	/**
+	 * Message
+	 */
+	message: string;
+};
+
+/**
+ * AwardQuestPointsOutput
+ */
+export type AwardQuestPointsOutput = {
+	/**
+	 * Award Id
+	 */
+	award_id: string;
 };
 
 /**
@@ -256,6 +291,7 @@ export type ErrorMessage = {
 		| 'ALREADY_VOTED_IN_THIS_NOMINATION'
 		| 'APP_SETTINGS_NOT_FOUND'
 		| 'AUTHENTICATION_ERROR'
+		| 'CANNOT_AWARD_SELF'
 		| 'CANNOT_CHANGE_OWN_ACCESS'
 		| 'CANNOT_REMOVE_LAST_SIGN_IN_METHOD'
 		| 'CAPTCHA_VERIFICATION_FAILED'
@@ -286,6 +322,12 @@ export type ErrorMessage = {
 		| 'PERMISSION_NOT_ASSIGNABLE'
 		| 'PUSH_SUBSCRIPTION_ALREADY_EXISTS'
 		| 'PUSH_SUBSCRIPTION_NOT_FOUND'
+		| 'QUEST_AWARD_ALREADY_CANCELLED'
+		| 'QUEST_AWARD_ALREADY_EXISTS'
+		| 'QUEST_AWARD_AMOUNT_OUT_OF_RANGE'
+		| 'QUEST_AWARD_CANCEL_WINDOW_EXPIRED'
+		| 'QUEST_AWARD_NOT_FOUND'
+		| 'QUEST_DISABLED'
 		| 'SAME_EVENTS_ARE_NOT_ALLOWED'
 		| 'SCHEDULE_CHANGE_NOT_FOUND'
 		| 'SCHEDULE_EDIT_TOO_FAST'
@@ -355,6 +397,16 @@ export type FeedbackUserDto = {
 };
 
 /**
+ * FindQuestPlayersOutput
+ */
+export type FindQuestPlayersOutput = {
+	/**
+	 * Players
+	 */
+	players: Array<QuestPlayerDto>;
+};
+
+/**
  * GenerateTicketsInput
  */
 export type GenerateTicketsInput = {
@@ -373,6 +425,25 @@ export type GenerateTicketsOutput = {
 	 * Barcodes
 	 */
 	barcodes: Array<string>;
+};
+
+/**
+ * GetQuestOutput
+ */
+export type GetQuestOutput = {
+	/**
+	 * Points
+	 */
+	points: number;
+	/**
+	 * Rank
+	 */
+	rank: number | null;
+	/**
+	 * Leaderboard
+	 */
+	leaderboard: Array<LeaderboardEntryDto>;
+	own_entry: LeaderboardEntryDto | null;
 };
 
 /**
@@ -478,6 +549,17 @@ export type HealthCheckOutput = {
 };
 
 /**
+ * LeaderboardEntryDTO
+ */
+export type LeaderboardEntryDto = {
+	/**
+	 * Rank
+	 */
+	rank: number;
+	player: QuestPlayerDto;
+};
+
+/**
  * LimitsConfigDTO
  */
 export type LimitsConfigDto = {
@@ -519,6 +601,20 @@ export type ListFeedbackOutput = {
 	 * Feedback
 	 */
 	feedback: Array<FeedbackDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
+};
+
+/**
+ * ListQuestAwardsOutput
+ */
+export type ListQuestAwardsOutput = {
+	/**
+	 * Awards
+	 */
+	awards: Array<QuestAwardItemDto>;
 	/**
 	 * Next Cursor
 	 */
@@ -766,7 +862,7 @@ export type NotificationType =
 	| 'schedule_change'
 	| 'schedule_subscription'
 	| 'message'
-	| 'points_received'
+	| 'quest'
 	| 'broadcast'
 	| 'test';
 
@@ -844,7 +940,9 @@ export type Permission =
 	| 'feedback:read'
 	| 'voting:manage'
 	| 'users:read'
-	| 'users:manage';
+	| 'users:manage'
+	| 'quest:award'
+	| 'quest:manage';
 
 /**
  * PublicConfigDTO
@@ -869,6 +967,10 @@ export type PublicConfigDto = {
 	 * Festival End
 	 */
 	festival_end: string;
+	/**
+	 * Quest Enabled
+	 */
+	quest_enabled: boolean;
 };
 
 /**
@@ -879,6 +981,92 @@ export type PushSubscriptionStatus = {
 	 * Subscribed
 	 */
 	subscribed: boolean;
+};
+
+/**
+ * QuestAwardItemDTO
+ */
+export type QuestAwardItemDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Amount
+	 */
+	amount: number;
+	/**
+	 * Message
+	 */
+	message: string;
+	/**
+	 * Created At
+	 */
+	created_at: string;
+	/**
+	 * Cancelled At
+	 */
+	cancelled_at: string | null;
+	user: QuestAwardUserDto;
+	awarded_by: QuestAwardUserDto | null;
+	/**
+	 * Can Cancel
+	 */
+	can_cancel: boolean;
+};
+
+/**
+ * QuestAwardUserDTO
+ */
+export type QuestAwardUserDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Username
+	 */
+	username: string;
+};
+
+/**
+ * QuestConfigDTO
+ */
+export type QuestConfigDto = {
+	/**
+	 * Enabled
+	 */
+	enabled: boolean;
+	/**
+	 * Max Award
+	 */
+	max_award: number;
+	/**
+	 * Cancel Window Minutes
+	 */
+	cancel_window_minutes: number;
+};
+
+/**
+ * QuestPlayerDTO
+ */
+export type QuestPlayerDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Username
+	 */
+	username: string;
+	/**
+	 * Avatar Seed
+	 */
+	avatar_seed: string;
+	/**
+	 * Points
+	 */
+	points: number;
 };
 
 /**
@@ -1308,6 +1496,18 @@ export type UpdateAppSettingsInput = {
 	 * Announcement Timeout
 	 */
 	announcement_timeout?: number | null;
+	/**
+	 * Quest Enabled
+	 */
+	quest_enabled?: boolean | null;
+	/**
+	 * Quest Max Award
+	 */
+	quest_max_award?: number | null;
+	/**
+	 * Quest Cancel Window Minutes
+	 */
+	quest_cancel_window_minutes?: number | null;
 };
 
 /**
@@ -4031,3 +4231,247 @@ export type UnlinkUserTicketResponses = {
 };
 
 export type UnlinkUserTicketResponse = UnlinkUserTicketResponses[keyof UnlinkUserTicketResponses];
+
+export type GetQuestData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/quest';
+};
+
+export type GetQuestErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * The quest is disabled.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GetQuestError = GetQuestErrors[keyof GetQuestErrors];
+
+export type GetQuestResponses = {
+	/**
+	 * Quest retrieved successfully.
+	 */
+	200: GetQuestOutput;
+};
+
+export type GetQuestResponse = GetQuestResponses[keyof GetQuestResponses];
+
+export type FindQuestPlayersData = {
+	body?: never;
+	path?: never;
+	query: {
+		/**
+		 * Search
+		 */
+		search: string;
+	};
+	url: '/quest/players';
+};
+
+export type FindQuestPlayersErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type FindQuestPlayersError = FindQuestPlayersErrors[keyof FindQuestPlayersErrors];
+
+export type FindQuestPlayersResponses = {
+	/**
+	 * Players found.
+	 */
+	200: FindQuestPlayersOutput;
+};
+
+export type FindQuestPlayersResponse = FindQuestPlayersResponses[keyof FindQuestPlayersResponses];
+
+export type GetQuestPlayerData = {
+	body?: never;
+	path: {
+		/**
+		 * User Id
+		 */
+		user_id: string;
+	};
+	query?: never;
+	url: '/quest/players/{user_id}';
+};
+
+export type GetQuestPlayerErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * The user does not exist.
+	 */
+	404: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GetQuestPlayerError = GetQuestPlayerErrors[keyof GetQuestPlayerErrors];
+
+export type GetQuestPlayerResponses = {
+	/**
+	 * Player retrieved successfully.
+	 */
+	200: QuestPlayerDto;
+};
+
+export type GetQuestPlayerResponse = GetQuestPlayerResponses[keyof GetQuestPlayerResponses];
+
+export type ListQuestAwardsData = {
+	body?: never;
+	path?: never;
+	query?: {
+		/**
+		 * Limit
+		 */
+		limit?: number;
+		/**
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
+		 */
+		cursor?: string | null;
+	};
+	url: '/quest/awards';
+};
+
+export type ListQuestAwardsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type ListQuestAwardsError = ListQuestAwardsErrors[keyof ListQuestAwardsErrors];
+
+export type ListQuestAwardsResponses = {
+	/**
+	 * Awards retrieved successfully.
+	 */
+	200: ListQuestAwardsOutput;
+};
+
+export type ListQuestAwardsResponse = ListQuestAwardsResponses[keyof ListQuestAwardsResponses];
+
+export type AwardQuestPointsData = {
+	body: AwardQuestPointsInput;
+	path?: never;
+	query?: never;
+	url: '/quest/awards';
+};
+
+export type AwardQuestPointsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * The user does not exist.
+	 */
+	404: ErrorMessage;
+	/**
+	 * The award ID is taken by a different award.
+	 */
+	409: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type AwardQuestPointsError = AwardQuestPointsErrors[keyof AwardQuestPointsErrors];
+
+export type AwardQuestPointsResponses = {
+	/**
+	 * Points awarded.
+	 */
+	201: AwardQuestPointsOutput;
+};
+
+export type AwardQuestPointsResponse = AwardQuestPointsResponses[keyof AwardQuestPointsResponses];
+
+export type CancelQuestAwardData = {
+	body?: never;
+	path: {
+		/**
+		 * Award Id
+		 */
+		award_id: string;
+	};
+	query?: never;
+	url: '/quest/awards/{award_id}/cancel';
+};
+
+export type CancelQuestAwardErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * The award does not exist.
+	 */
+	404: ErrorMessage;
+	/**
+	 * The award is already cancelled or its window expired.
+	 */
+	409: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type CancelQuestAwardError = CancelQuestAwardErrors[keyof CancelQuestAwardErrors];
+
+export type CancelQuestAwardResponses = {
+	/**
+	 * Award cancelled.
+	 */
+	204: void;
+};
+
+export type CancelQuestAwardResponse = CancelQuestAwardResponses[keyof CancelQuestAwardResponses];
