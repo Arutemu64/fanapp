@@ -41,9 +41,8 @@ the restore before the guards.
 - A value structured clone rejects (a function, a `Headers`) fails the write,
   where JSON would have dropped it silently. The failure goes to Sentry and the
   previous save stays. Query keys and API data are plain objects today.
-- The old key is deleted on boot. Each deploy busts the cache anyway, so
-  renaming loses no data a client could still use. The cleanup is a `TODO` to
-  drop later.
+- The `REACT_QUERY_OFFLINE_CACHE` key needs no cleanup: the app had no users
+  when the key changed, so no device holds an entry under it.
 - We own about 20 lines that the package used to cover.
 
 ## Alternatives considered

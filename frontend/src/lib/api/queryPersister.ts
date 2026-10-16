@@ -6,12 +6,6 @@ import { del, get, set } from 'idb-keyval';
 /** The IndexedDB entry (idb-keyval's default store) holding the offline queries. */
 export const QUERY_CACHE_KEY = 'fanfan-query-cache';
 
-// createAsyncStoragePersister's default key, used before this persister existed.
-// Every deploy busts the saved cache anyway, so only the orphaned entry is lost.
-// TODO: drop this cleanup once no installed client can still hold the old key —
-// deferred until a few weeks of deploys have passed.
-const LEGACY_QUERY_CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
-
 // The persistQueryClient subscription saves on every cache event; a burst of
 // events (a boot, an SSE invalidation) becomes one write of the latest state.
 const SAVE_INTERVAL_MS = 1000;
@@ -25,8 +19,6 @@ const SAVE_INTERVAL_MS = 1000;
  * https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient#building-a-persister
  */
 export function createIdbPersister(): Persister {
-	void del(LEGACY_QUERY_CACHE_KEY).catch(() => {});
-
 	let latest: PersistedClient | undefined;
 	let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
