@@ -16,7 +16,7 @@ Loaded only when working with `frontend/**` files.
 - Favour the obvious construction over the compact one — no nested ternaries in markup, no dense one-liners. Prefer a named `$derived` over an inline expression a reader has to unpick.
 - A single-caller helper or a single-use constant needs a reason to exist (AGENTS.md "A helper or constant earns its name"); a template event handler or a hoisted regex/`Intl` formatter already has one.
 - Comment only to carry the *why* (browser quirk, ordering constraint, why an effect is needed) — never a restatement of the markup or a `$derived`. Update a comment in the same edit as the code under it; don't drop one that carries a *why* unless its code is gone (a pure restatement may go — see AGENTS.md).
-- Never store user/session state in module-level singletons (client-rendered SPA).
+- Never store user-scoped state in a module-level singleton unless `Session` resets it on login/logout — modules outlive both in the SPA (AGENTS.md).
 - Research the current best practice (web / current docs) before any non-trivial work — a refactor, a new feature, a library or framework API. Never decide from training memory alone; cite what you find.
 - Mobile-first; bottom padding for the floating nav bar.
 - Adding a write trigger (a button, switch or form submit that runs a mutation) to a page that stays readable offline? Bind `offlineWriteGate` on it: `aria-disabled={gate.blocked}` and `onclick={gate.guard(handler)}` (or `onsubmit`/`onCheckedChange`), so offline it explains itself instead of failing. A modal's confirm button is covered by the gated trigger that opens it. See [docs/frontend.md](../../docs/frontend.md) §2.
