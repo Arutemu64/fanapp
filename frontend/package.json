@@ -58,7 +58,7 @@
 		"globals": "17.13.0",
 		"knip": "^6.34.0",
 		"mdsvex": "0.12.8",
-		"prettier": "3.9.9",
+		"prettier": "3.9.10",
 		"prettier-plugin-svelte": "4.1.1",
 		"prettier-plugin-tailwindcss": "0.8.1",
 		"shadcn-svelte": "^1.5.0",
