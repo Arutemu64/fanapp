@@ -104,7 +104,9 @@ for the closed/open, offline and SSE patterns respectively.
 
 - One catch-all route over `**/api/**` (`mocks/api.ts`). A registry maps
   `"<METHOD> <path>"` (path **without** `/api`, **with** the trailing slash the
-  OpenAPI spec uses — `"GET /me/"`) to a response.
+  OpenAPI spec uses — `"GET /me/"`) to a response. The keys are typed from the
+  committed spec (`RouteKey`), so a typo, a wrong method or a removed route fails
+  to compile; a path parameter takes the concrete value (`` `GET /users/${id}` ``).
 - `mocks/defaults.ts` pre-mocks the **boot-critical** endpoints (`/me/`,
   `/config`, `/debug/health`, `/schedule/`, …) as a logged-out guest. Every test
   starts from this baseline.

@@ -1,11 +1,25 @@
 import type { BrowserContext, Route } from '@playwright/test';
 
-type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+import type openapi from '../../../shared/openapi/openapi.json';
+
+type Paths = (typeof openapi)['paths'];
+type Path = Extract<keyof Paths, string>;
+type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
+
+// `/users/{user_id}` becomes `/users/${string}`, so a test names the concrete
+// id it mocks and still type-checks.
+type Concrete<P extends string> = P extends `${infer Head}{${string}}${infer Tail}`
+	? `${Head}${string}${Concrete<Tail>}`
+	: P;
 
 // A route key is `"<METHOD> <path>"`, where <path> is the API path WITHOUT the
 // `/api` base and WITH the trailing slash exactly as the backend declares it —
-// e.g. `"GET /me/"`, `"GET /voting/status"`. Copy them from the OpenAPI paths.
-export type RouteKey = `${Method} ${string}`;
+// e.g. `"GET /me/"`, `"GET /voting/status"`. The union is derived from the
+// committed OpenAPI spec, so a typo or a route the backend dropped fails to
+// compile instead of failing at runtime as an unmocked 404.
+export type RouteKey = {
+	[P in Path]: `${Uppercase<Extract<keyof Paths[P], HttpMethod>>} ${Concrete<P>}`;
+}[Path];
 
 export interface MockResponse {
 	status?: number;
