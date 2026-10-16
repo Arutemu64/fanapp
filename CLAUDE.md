@@ -4,12 +4,12 @@
 
 ### Issue tracker
 
-Issues live in GitHub Issues for `Arutemu64/fanapp`. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues for `Arutemu64/fanapp`. See `.agents/context/issue-tracker.md`.
 
 ### Triage labels
 
-Default five-label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+Default five-label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `.agents/context/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `GLOSSARY.md` + `docs/adr/` at the repo root. See `.agents/context/domain.md`.
