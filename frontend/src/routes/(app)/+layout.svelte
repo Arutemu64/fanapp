@@ -236,7 +236,7 @@
 >
 	<SkipLink />
 
-	<AppSidebar {activeUrl} scrollToTop={scrollPageToTop} />
+	<AppSidebar {activeUrl} avatarSeed={user?.avatar_seed ?? null} scrollToTop={scrollPageToTop} />
 
 	<!-- overflow-x-clip, not overflow-hidden: clip guards against a wide child scrolling the
 		page sideways without making this column a scroll container, which would break every
@@ -296,5 +296,5 @@
 		</main>
 	</div>
 
-	<AppBottomNav {activeUrl} scrollToTop={scrollPageToTop} />
+	<AppBottomNav {activeUrl} avatarSeed={user?.avatar_seed ?? null} scrollToTop={scrollPageToTop} />
 </div>

@@ -3,6 +3,7 @@
 
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '#lib/assets/logo.svg';
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
@@ -10,10 +11,12 @@
 
 	interface Props {
 		activeUrl: string;
+		/** The signed-in user's face for the Profile item; null keeps the generic icon. */
+		avatarSeed: string | null;
 		scrollToTop: () => void;
 	}
 
-	let { activeUrl, scrollToTop }: Props = $props();
+	let { activeUrl, avatarSeed, scrollToTop }: Props = $props();
 
 	const appUpdate = getAppUpdateService();
 </script>
@@ -57,14 +60,24 @@
 					}
 				}}
 			>
-				<Icon
-					class={[
-						'size-5 shrink-0 transition-colors',
-						active
-							? 'text-primary-700 dark:text-primary'
-							: 'text-muted-foreground group-hover:text-foreground'
-					]}
-				/>
+				{#if href === 'profile' && avatarSeed}
+					<!-- Ringed, not tinted, for the reason given in AppBottomNav. -->
+					<UserAvatar
+						seed={avatarSeed}
+						class="size-5 {active
+							? 'ring-2 ring-primary-700 dark:ring-primary'
+							: 'ring-1 ring-border'}"
+					/>
+				{:else}
+					<Icon
+						class={[
+							'size-5 shrink-0 transition-colors',
+							active
+								? 'text-primary-700 dark:text-primary'
+								: 'text-muted-foreground group-hover:text-foreground'
+						]}
+					/>
+				{/if}
 				<span>{label()}</span>
 				{#if updateDot}
 					<span aria-hidden="true" class="ms-auto size-2 rounded-full bg-primary"></span>
