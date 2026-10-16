@@ -176,7 +176,7 @@
 		{#if canEditPermissions}
 			<ul class="divide-y divide-border">
 				{#each ASSIGNABLE_PERMISSIONS as permission (permission)}
-					{@const id = `permission-${permission.replace(':', '-')}`}
+					{const id = $derived(`permission-${permission.replace(':', '-')}`)}
 					<li class="flex min-h-11 items-center justify-between gap-3 py-2">
 						<label for={id} class="text-sm text-foreground">{PERMISSION_LABELS[permission]()}</label
 						>

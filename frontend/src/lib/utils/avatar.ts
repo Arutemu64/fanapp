@@ -17,7 +17,10 @@ export function getAvatarDataUri(seed: string): string {
 	if (!uri) {
 		uri = new Avatar(style, { seed }).toDataUri();
 		if (dataUriCache.size >= DATA_URI_CACHE_LIMIT) {
-			dataUriCache.delete(dataUriCache.keys().next().value!);
+			const oldest = dataUriCache.keys().next();
+			if (!oldest.done) {
+				dataUriCache.delete(oldest.value);
+			}
 		}
 		dataUriCache.set(seed, uri);
 	}

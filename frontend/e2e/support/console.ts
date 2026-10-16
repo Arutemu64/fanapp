@@ -38,7 +38,7 @@ export function watchConsole(page: Page): { guard: ConsoleGuard; assertClean: ()
 		// abort `/api` reads outright. Ignore those by resource URL — but never a
 		// failed *app* asset (a missing script or stylesheet is a real regression the
 		// guard must still catch).
-		const url = message.location()?.url ?? '';
+		const url = message.location().url;
 		if (/Failed to load resource/i.test(text) && url.includes('/api/')) return;
 		collected.push(text);
 	});

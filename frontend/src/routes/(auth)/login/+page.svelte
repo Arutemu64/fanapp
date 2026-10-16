@@ -218,8 +218,8 @@
 			<div class="flex flex-col gap-4" {@attach focusStep}>
 				{#if step === 'options'}
 					{#each providers as provider (provider)}
-						{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
-						{@const Icon = meta.icon}
+						{const meta = $derived(SOCIAL_PROVIDER_PRESENTATION[provider])}
+						{const Icon = $derived(meta.icon)}
 						<Button
 							href={providerStartUrl(provider)}
 							variant="outline"

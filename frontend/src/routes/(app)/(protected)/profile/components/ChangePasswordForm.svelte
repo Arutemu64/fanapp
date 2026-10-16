@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle2, XCircle } from '@lucide/svelte';
+	import { CircleCheck, CircleX } from '@lucide/svelte';
 
 	import type { ChangePasswordInput } from '#lib/api/generated/index.js';
 
@@ -123,9 +123,9 @@
 						: 'text-muted-foreground'}"
 				>
 					{#if hasMinLength}
-						<CheckCircle2 class="size-4 shrink-0" />
+						<CircleCheck class="size-4 shrink-0" />
 					{:else}
-						<XCircle class="size-4 shrink-0" />
+						<CircleX class="size-4 shrink-0" />
 					{/if}
 					{m.validation_min_chars({ count: MIN_PASSWORD_LENGTH })}
 				</li>

@@ -121,7 +121,7 @@
 
 	// https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate
 	async function readStorage(): Promise<StorageDiagnostics> {
-		const storage = navigator.storage as StorageManager | undefined;
+		const storage = navigator.storage as Partial<StorageManager> | undefined;
 		const [estimate, persisted] = await Promise.all([
 			storage?.estimate?.().catch(() => undefined),
 			storage?.persisted?.().catch(() => undefined)
@@ -144,7 +144,7 @@
 		const entries: CacheEntry[] = [];
 		for (const [id, label] of Object.entries(CACHE_LABELS)) {
 			const updatedAt = newestById[id];
-			if (updatedAt) entries.push({ label: label(), updatedAt });
+			if (updatedAt !== undefined) entries.push({ label: label(), updatedAt });
 		}
 		return entries;
 	}

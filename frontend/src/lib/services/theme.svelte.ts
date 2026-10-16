@@ -40,7 +40,7 @@ function applyTheme(mode: ThemeMode): void {
 class ThemeService {
 	// Device-wide preference, persisted through safeStorage (see the singleton
 	// note below for why surviving login/logout is wanted here, not a leak).
-	#mode = new Persisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
+	readonly #mode = new Persisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
 
 	get mode(): ThemeMode {
 		return this.#mode.current;

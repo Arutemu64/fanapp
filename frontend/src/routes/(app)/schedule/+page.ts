@@ -1,4 +1,4 @@
-import { History } from '@lucide/svelte';
+import { RotateCcwClock } from '@lucide/svelte';
 
 import type { NavbarAction } from '#lib/types/navigation.js';
 
@@ -21,7 +21,11 @@ export const load: PageLoad = async ({ parent }) => {
 	const user = queryClient.getQueryData(currentUserOptions().queryKey) ?? null;
 	const actions: NavbarAction[] = [];
 	if (canManageSchedule(user)) {
-		actions.push({ href: 'schedule/changes', label: m.schedule_changes_title(), icon: History });
+		actions.push({
+			href: 'schedule/changes',
+			label: m.schedule_changes_title(),
+			icon: RotateCcwClock
+		});
 	}
 
 	return { title: m.nav_schedule(), actions };

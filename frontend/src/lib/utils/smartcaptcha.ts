@@ -1,3 +1,10 @@
+import { PUBLIC_SMARTCAPTCHA_CLIENT_KEY } from '$app/env/public';
+
+// Captcha is enabled only when a SmartCaptcha client key is configured.
+// Without the key the widget renders nothing and the flow works captcha-free,
+// which lets us turn the feature off just by leaving the env var empty.
+export const captchaEnabled = Boolean(PUBLIC_SMARTCAPTCHA_CLIENT_KEY);
+
 // Loads the Yandex SmartCaptcha widget script once and hands callers the ready
 // `window.smartCaptcha` API. The script is fetched lazily (only when a captcha
 // widget actually mounts) and shared across every widget on the page.

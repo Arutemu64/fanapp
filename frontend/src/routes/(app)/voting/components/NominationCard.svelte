@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ArrowRight, CheckCircle2 } from '@lucide/svelte';
+	import { ArrowRight, CircleCheck } from '@lucide/svelte';
 
 	import type { NominationVotingDto } from '#lib/api/generated/index.js';
 
@@ -39,7 +39,7 @@
 		{#if nomination.user_vote}
 			<Badge variant="outline" class="shrink-0 border-success/30 bg-success/10 text-success">
 				<span class="flex items-center gap-1">
-					<CheckCircle2 class="size-3.5" />
+					<CircleCheck class="size-3.5" />
 					{m.voting_vote_counted()}
 				</span>
 			</Badge>

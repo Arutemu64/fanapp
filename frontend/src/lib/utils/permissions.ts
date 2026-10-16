@@ -29,10 +29,6 @@ export function hasPermission(user: CurrentUserDto | null, permission: Permissio
 	}
 
 	const granted = user.permissions;
-	if (!granted) {
-		return false;
-	}
-
 	return granted.includes(WILDCARD) || granted.includes(permission);
 }
 

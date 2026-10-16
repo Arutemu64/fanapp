@@ -93,9 +93,9 @@ export class PushDevice {
 	/** True during the initial check and while a toggle is in flight. */
 	isBusy = $state(true);
 
-	#backend: PushBackend;
-	#vapidKey: string;
-	#browser: PushBrowser;
+	readonly #backend: PushBackend;
+	readonly #vapidKey: string;
+	readonly #browser: PushBrowser;
 
 	constructor({ backend, vapidKey, browser = browserPush }: PushDeviceOptions) {
 		this.#backend = backend;

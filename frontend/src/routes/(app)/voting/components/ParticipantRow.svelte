@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle2, ThumbsUp } from '@lucide/svelte';
+	import { CircleCheck, ThumbsUp } from '@lucide/svelte';
 	import { createMutation, useIsMutating } from '@tanstack/svelte-query';
 
 	import type { ParticipantFullDto } from '#lib/api/generated/index.js';
@@ -88,7 +88,7 @@
 					variant="outline"
 					class="inline-flex items-center gap-1 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
 				>
-					<CheckCircle2 class="size-3.5" />
+					<CircleCheck class="size-3.5" />
 					{m.voting_your_vote()}
 				</Badge>
 			</div>

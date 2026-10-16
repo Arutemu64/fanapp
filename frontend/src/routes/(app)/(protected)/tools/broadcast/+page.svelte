@@ -152,7 +152,7 @@
 					<Checkbox
 						id="role-visitor"
 						checked={selectedRoles.includes('visitor')}
-						onCheckedChange={(v) => toggleRole('visitor', !!v)}
+						onCheckedChange={(v) => toggleRole('visitor', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-visitor" class="cursor-pointer font-normal">
@@ -163,7 +163,7 @@
 					<Checkbox
 						id="role-participant"
 						checked={selectedRoles.includes('participant')}
-						onCheckedChange={(v) => toggleRole('participant', !!v)}
+						onCheckedChange={(v) => toggleRole('participant', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-participant" class="cursor-pointer font-normal">
@@ -174,7 +174,7 @@
 					<Checkbox
 						id="role-volunteer"
 						checked={selectedRoles.includes('volunteer')}
-						onCheckedChange={(v) => toggleRole('volunteer', !!v)}
+						onCheckedChange={(v) => toggleRole('volunteer', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-volunteer" class="cursor-pointer font-normal">
@@ -185,7 +185,7 @@
 					<Checkbox
 						id="role-organizer"
 						checked={selectedRoles.includes('organizer')}
-						onCheckedChange={(v) => toggleRole('organizer', !!v)}
+						onCheckedChange={(v) => toggleRole('organizer', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-organizer" class="cursor-pointer font-normal">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle2 } from '@lucide/svelte';
+	import { CircleCheck } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
@@ -74,7 +74,7 @@
 	{#if user.ticket}
 		<div class="rounded-lg bg-success/10 p-4">
 			<div class="flex items-center gap-2">
-				<CheckCircle2 class="size-5 text-success" />
+				<CircleCheck class="size-5 text-success" />
 				<span class="font-medium text-success">{m.ticket_linked()}</span>
 			</div>
 			<p class="mt-2 text-sm text-success">

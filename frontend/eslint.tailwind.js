@@ -122,7 +122,9 @@ export const tailwindConfigs = [
 				'error',
 				{ ignore: ['^toaster$', '^countdown-cell(--animated)?$', '^tick$'] }
 			],
-			'better-tailwindcss/no-restricted-classes': ['error', { restrict: restrictedClasses() }]
+			'better-tailwindcss/no-restricted-classes': ['error', { restrict: restrictedClasses() }],
+			// Outside the recommended preset: `p-2 p-4` on one element is always a slip.
+			'better-tailwindcss/no-conflicting-classes': 'error'
 		}
 	},
 	...restrictedClassExemptions,

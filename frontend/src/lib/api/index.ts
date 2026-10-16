@@ -1,7 +1,7 @@
 import {
-	type FetchQueryOptions,
-	isCancelledError,
+	CancelledError,
 	type QueryClient,
+	type QueryExecuteOptions,
 	type QueryKey,
 	queryOptions
 } from '@tanstack/svelte-query';
@@ -45,10 +45,10 @@ export function currentUserOptions() {
 			if (response?.status === 401 || response?.status === 403) return null;
 			// Rethrow the SDK's error as-is, like every generated query does, so the
 			// retry rule and error reporting can tell a dropped connection from an
-			// API error body. That body is a plain object, hence the lint exception.
+			// API error body.
 			if (data === undefined) {
-				// eslint-disable-next-line @typescript-eslint/only-throw-error
-				throw error ?? new Error('GET /me/ returned no data');
+				// eslint-disable-next-line @typescript-eslint/only-throw-error -- the API error body is a plain object
+				throw error;
 			}
 			return data;
 		}
@@ -65,7 +65,7 @@ export function currentUserOptions() {
  */
 export function queryForLoad<TData, TError, TQueryKey extends QueryKey>(
 	queryClient: QueryClient,
-	options: FetchQueryOptions<TData, TError, TData, TQueryKey>
+	options: QueryExecuteOptions<TData, TError, TData, TData, TQueryKey>
 ): Promise<TData> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const budget = new Promise<never>((_, reject) => {
@@ -116,7 +116,7 @@ export function watchBackgroundRefetchErrors(
 		// asked for it shows its own error, and a second toast would repeat it.
 		if (query.state.fetchMeta?.fetchMore) return;
 		if (query.meta?.quietRefetchErrors === true) return;
-		if (gotNoApiAnswer(error) || isCancelledError(error)) return;
+		if (gotNoApiAnswer(error) || error instanceof CancelledError) return;
 		if (SESSION_ERROR_CODES.has(getApiErrorCode(error) ?? '')) return;
 
 		onFailure();

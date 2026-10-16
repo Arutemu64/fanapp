@@ -18,8 +18,7 @@ async function failRefetch(
 
 	const onFailure = vi.fn();
 	const stop = watchBackgroundRefetchErrors(queryClient, onFailure);
-	// The real client rejects with the API body, a plain object, not an Error.
-	// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+	// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- the real client rejects with the API body, a plain object, not an Error
 	const queryFn = () => Promise.reject(error);
 	const unsubscribe = observed
 		? new QueryObserver(queryClient, { queryKey: KEY, queryFn, meta, enabled: false }).subscribe(
@@ -27,7 +26,7 @@ async function failRefetch(
 			)
 		: () => {};
 
-	await queryClient.fetchQuery({ queryKey: KEY, queryFn, meta, staleTime: 0 }).catch(() => {});
+	await queryClient.query({ queryKey: KEY, queryFn, meta, staleTime: 0 }).catch(() => {});
 
 	unsubscribe();
 	stop();
@@ -85,7 +84,7 @@ describe('watchBackgroundRefetchErrors', () => {
 				queryKey: ['feed'],
 				queryFn: ({ pageParam }) => {
 					if (!failing) return Promise.resolve(pageParam);
-					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- an API error body, as the real client rejects with
 					return Promise.reject({ code: 'INTERNAL_ERROR', details: {} });
 				},
 				initialPageParam: 0,

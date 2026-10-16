@@ -83,7 +83,7 @@
 		{#if profile.social_links.length > 0}
 			<ul class="divide-y divide-border">
 				{#each profile.social_links as link (link.provider)}
-					{@const url = buildSocialProfileUrl(link.provider, link.id)}
+					{const url = $derived(buildSocialProfileUrl(link.provider, link.id))}
 					<li class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
 						<div class="min-w-0">
 							<p class="text-sm font-medium text-foreground">

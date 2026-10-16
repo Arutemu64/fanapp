@@ -67,9 +67,9 @@
 		></span>
 
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
-			{@const { label, href, outlineIcon: Icon } = item}
-			{@const active = isNavItemActive(activeUrl, item)}
-			{@const updateDot = href === 'profile' && appUpdate.available}
+			{const { label, href, outlineIcon: Icon } = $derived(item)}
+			{const active = $derived(isNavItemActive(activeUrl, item))}
+			{const updateDot = $derived(href === 'profile' && appUpdate.available)}
 			<!-- "Голосование" must fit one fifth of the pill: measured in-app it is ~62px at
 			     10px, ~67px at 11px, ~73px at 12px. A tab gets ~67px on a 360px phone and
 			     ~74px from 400px (where the pill's side margin grows from 8px to 12px). So

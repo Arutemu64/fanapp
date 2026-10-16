@@ -22,7 +22,7 @@ export function registerServiceWorker(): void {
 	if (!('serviceWorker' in navigator)) return;
 
 	const register = () => {
-		navigator.serviceWorker.register(SCRIPT_URL, { type: 'module' }).catch((err) => {
+		navigator.serviceWorker.register(SCRIPT_URL, { type: 'module' }).catch((err: unknown) => {
 			// Logged, not reported. Reporting brings back the noise this wrapper
 			// exists to remove — the high-volume rejections are benign (see above)
 			// — and the failures worth acting on (a 404 from a broken deploy, an
@@ -30,6 +30,7 @@ export function registerServiceWorker(): void {
 			// 404s the app's own hashed assets, and a script bug is caught by the
 			// build. console.debug keeps the real message to hand when someone is
 			// actually looking (devtools, a deploy check).
+			// eslint-disable-next-line no-console -- debug-level on purpose, see above
 			console.debug('Service worker registration failed:', err);
 		});
 	};

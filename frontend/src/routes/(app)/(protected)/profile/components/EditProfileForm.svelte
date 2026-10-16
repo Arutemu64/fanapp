@@ -28,7 +28,7 @@
 	// Mounted fresh on every open (inside Dialog.Content), so each open starts from
 	// the profile as it is then. `untrack` takes a one-off snapshot on purpose: a
 	// background refetch of the user must not overwrite what is being typed.
-	let username = $state(untrack(() => user.username ?? ''));
+	let username = $state(untrack(() => user.username));
 	let avatarSeed = $state(untrack(() => user.avatar_seed));
 
 	let usernameError = $state('');

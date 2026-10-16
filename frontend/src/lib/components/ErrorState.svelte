@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { AlertCircle, ArrowLeft, Home, Lock, RotateCw } from '@lucide/svelte';
+	import { ArrowLeft, CircleAlert, House, Lock, RotateCw } from '@lucide/svelte';
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
@@ -53,7 +53,7 @@
 	// A genuine 403 gets the lock icon; everything else (including offline, which
 	// is never a 403) gets the generic alert icon. Offline is the only yellow
 	// state; all others are red.
-	let StatusIcon = $derived(status === 403 ? Lock : AlertCircle);
+	let StatusIcon = $derived(status === 403 ? Lock : CircleAlert);
 	let iconColorClass = $derived(
 		offline ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive'
 	);
@@ -127,7 +127,7 @@
 				{/if}
 
 				<Button href="/" variant={offline || status >= 500 ? 'outline' : 'default'} class="w-full">
-					<Home data-icon="inline-start" />
+					<House data-icon="inline-start" />
 					{m.common_to_home()}
 				</Button>
 

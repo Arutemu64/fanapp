@@ -35,7 +35,7 @@
 		onSettled: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })
 	}));
 	let cancellingId = $derived(
-		cancelMutation.isPending ? cancelMutation.variables?.path.mailing_id : null
+		cancelMutation.isPending ? cancelMutation.variables.path.mailing_id : null
 	);
 
 	const mailingsQuery = createInfiniteQuery(() => ({

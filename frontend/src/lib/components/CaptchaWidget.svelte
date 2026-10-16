@@ -1,14 +1,7 @@
-<script module lang="ts">
-	import { PUBLIC_SMARTCAPTCHA_CLIENT_KEY } from '$app/env/public';
-
-	// Captcha is enabled only when a SmartCaptcha client key is configured.
-	// Without the key the widget renders nothing and the flow works captcha-free,
-	// which lets us turn the feature off just by leaving the env var empty.
-	export const captchaEnabled = Boolean(PUBLIC_SMARTCAPTCHA_CLIENT_KEY);
-</script>
-
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
+
+	import { PUBLIC_SMARTCAPTCHA_CLIENT_KEY } from '$app/env/public';
 
 	import { loadSmartCaptcha, type SmartCaptchaApi } from '#lib/utils/smartcaptcha.js';
 
@@ -47,6 +40,7 @@
 		let api: SmartCaptchaApi | undefined;
 		let widgetId: number | undefined;
 		let unmounted = false;
+		const unsubscribers: (() => void)[] = [];
 		// A submit can arrive before the script finishes loading. Remember that the
 		// challenge was requested and run it the moment the widget is ready, so a
 		// slow load doesn't leave the parked submit to time out.
@@ -94,9 +88,11 @@
 
 				// Expired or errored tokens are unusable — drop them so the caller
 				// re-runs execute() on the next submit instead of sending a dead token.
-				smartCaptcha.subscribe(widgetId, 'token-expired', () => (token = null));
-				smartCaptcha.subscribe(widgetId, 'network-error', () => (token = null));
-				smartCaptcha.subscribe(widgetId, 'javascript-error', () => (token = null));
+				unsubscribers.push(
+					smartCaptcha.subscribe(widgetId, 'token-expired', () => (token = null)),
+					smartCaptcha.subscribe(widgetId, 'network-error', () => (token = null)),
+					smartCaptcha.subscribe(widgetId, 'javascript-error', () => (token = null))
+				);
 
 				// Fulfill a challenge that was requested before the widget was ready.
 				if (executeWhenReady) {
@@ -104,7 +100,7 @@
 					smartCaptcha.execute(widgetId);
 				}
 			})
-			.catch((error) => {
+			.catch((error: unknown) => {
 				// Script blocked or CDN unreachable: leave token null. The form's
 				// captcha gate hits its timeout and surfaces a retryable error.
 				console.error('SmartCaptcha failed to load:', error);
@@ -112,6 +108,9 @@
 
 		return () => {
 			unmounted = true;
+			for (const unsubscribe of unsubscribers) {
+				unsubscribe();
+			}
 			if (widgetId !== undefined) {
 				window.smartCaptcha?.destroy(widgetId);
 			}

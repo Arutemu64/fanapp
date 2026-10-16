@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
+	import { CircleAlert, CircleCheck } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
@@ -108,14 +108,14 @@
 
 			{#if inlineError}
 				<Alert.Root variant="destructive">
-					<AlertCircle class="size-4" />
+					<CircleAlert class="size-4" />
 					<Alert.Description>{inlineError}</Alert.Description>
 				</Alert.Root>
 			{/if}
 
 			{#if successMessage}
 				<Alert.Root variant="success">
-					<CheckCircle2 />
+					<CircleCheck />
 					<Alert.Description>{successMessage}</Alert.Description>
 				</Alert.Root>
 			{/if}

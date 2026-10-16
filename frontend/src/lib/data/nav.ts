@@ -2,7 +2,7 @@ import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
 import { resolve } from '$app/paths';
-import { Calendar, CircleUser, Compass, Home, ThumbsUp } from '@lucide/svelte';
+import { Calendar, CircleUser, Compass, House, ThumbsUp } from '@lucide/svelte';
 
 import { m } from '#lib/paraglide/messages.js';
 
@@ -29,7 +29,7 @@ export interface PrimaryNavItem {
  * preserved-scroll roots below stay in step with them.
  */
 export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
-	{ label: m.nav_home, href: '', outlineIcon: Home, solidIcon: Home },
+	{ label: m.nav_home, href: '', outlineIcon: House, solidIcon: House },
 	{
 		label: m.nav_schedule,
 		href: 'schedule',

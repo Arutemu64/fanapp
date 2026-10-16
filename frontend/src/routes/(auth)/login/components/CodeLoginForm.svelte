@@ -5,7 +5,7 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { requestLoginCodeMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
+	import CaptchaWidget from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -13,6 +13,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
+	import { captchaEnabled } from '#lib/utils/smartcaptcha.js';
 	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
 
 	interface Props {

@@ -1,5 +1,5 @@
 import { error as kitError } from '@sveltejs/kit';
-import { isCancelledError } from '@tanstack/svelte-query';
+import { CancelledError } from '@tanstack/svelte-query';
 
 import type { ErrorMessage } from '#lib/api/generated/index.js';
 
@@ -375,7 +375,7 @@ export function gotNoApiAnswer(error: unknown): boolean {
  * a frontend bug worth reporting. A deliberate cancel or abort is not.
  */
 export function isUnexpectedRequestError(error: unknown): boolean {
-	if (gotNoApiAnswer(error) || getApiErrorPayload(error) || isCancelledError(error)) {
+	if (gotNoApiAnswer(error) || getApiErrorPayload(error) || error instanceof CancelledError) {
 		return false;
 	}
 	return !(error instanceof DOMException && error.name === 'AbortError');
@@ -437,7 +437,7 @@ export function throwApiError(
 
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorPayload(apiError)?.code;
-	return kitError(status, code ? { message, code } : { message });
+	return kitError(status, message, code ? { code } : {});
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle } from '@lucide/svelte';
+	import { CircleAlert } from '@lucide/svelte';
 
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { m } from '#lib/paraglide/messages.js';
@@ -11,7 +11,7 @@
 	still shows where the user is. A cached screen whose copy simply hasn't loaded
 	yet says so in its own words instead — see docs/frontend.md §2. -->
 <EmptyState
-	icon={AlertCircle}
+	icon={CircleAlert}
 	title={m.offline_unavailable_title()}
 	message={m.offline_unavailable_message()}
 />

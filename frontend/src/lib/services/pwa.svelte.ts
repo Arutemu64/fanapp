@@ -66,7 +66,7 @@ class PwaService {
 	}
 
 	// Arrow function so it can be used directly as an event listener.
-	#syncState = () => {
+	readonly #syncState = () => {
 		const el = this.#element;
 		if (!el) return;
 

@@ -143,7 +143,7 @@ class AppUpdateService {
 	// Ask the browser to re-fetch the worker script; if it changed, the
 	// updatefound/statechange flow above picks it up. Errors (offline) are
 	// ignored — the next check retries. Arrow function so it can be a listener.
-	#check = () => {
+	readonly #check = () => {
 		if (document.visibilityState !== 'visible') return;
 		// Skip while offline (nothing to fetch) or while an install is already in
 		// flight — re-checking then just races our own update flow. navigator.onLine
