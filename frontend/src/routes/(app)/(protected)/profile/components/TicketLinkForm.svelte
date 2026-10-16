@@ -20,6 +20,7 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import SettingsSection from './SettingsSection.svelte';
+	import TicketNumberIllustration from './TicketNumberIllustration.svelte';
 
 	interface Props {
 		user: CurrentUserDto;
@@ -103,6 +104,7 @@
 				<Field.FieldDescription id="ticket-barcode-hint">
 					{m.ticket_number_hint()}
 				</Field.FieldDescription>
+				<TicketNumberIllustration />
 				<Input
 					id="ticket-barcode"
 					name="ticket_barcode"
