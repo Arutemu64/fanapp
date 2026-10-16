@@ -10,9 +10,8 @@ import type { LayoutLoad } from './$types';
 export const load: LayoutLoad = async ({ parent, url }) => {
 	const { user } = await parent();
 
-	// The toolbox is for staff. The dashboard shows an organizer every tool, the
-	// ones they lack locked, and a volunteer only the tools they hold. Each page
-	// enforces its own permission.
+	// The toolbox is for staff, and the dashboard lists only the tools a user
+	// holds. Each page enforces its own permission.
 	if (!isStaff(user)) {
 		error(403, m.tools_forbidden());
 	}

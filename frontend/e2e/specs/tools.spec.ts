@@ -11,9 +11,7 @@ test.describe('organizer tools', { tag: '@critical' }, () => {
 		});
 		await page.goto('/tools');
 
-		await expect(
-			page.getByText('Для работы организаторов фестиваля.', { exact: false })
-		).toBeVisible();
+		await expect(page.getByText('Инструменты для работы на фестивале.')).toBeVisible();
 		// The online-now card renders for every organizer, above the tool grid.
 		await expect(page.getByText('сейчас в приложении')).toBeVisible();
 		// A couple of the permission-gated tool cards render for a full-permission organizer.

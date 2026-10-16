@@ -14,9 +14,10 @@ test.describe('quest', { tag: '@critical' }, () => {
 		api.use({ ...questConfig(), ...loggedInAs(), 'GET /quest': json(QUEST) });
 
 		await page.goto('/profile');
-		await expect(page.getByRole('link', { name: /Квест/ })).toContainText('35 баллов · 23-е место');
+		await expect(page.getByRole('link', { name: /Квест/ })).toContainText('35 баллов');
 
 		await page.getByRole('link', { name: /Квест/ }).click();
+		await expect(page.getByText('35 баллов · 23-е место')).toBeVisible();
 		await expect(page.getByRole('img', { name: 'QR-код игрока @test_visitor' })).toBeVisible();
 		// The top ten, then the player's own row below the gap.
 		await expect(page.getByRole('listitem')).toHaveCount(11);

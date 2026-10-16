@@ -53,13 +53,10 @@
 		description: string;
 		icon: Component;
 		href: Path;
-		/** Whether this organizer holds the permission this tool needs. */
+		/** Whether this user holds the permission this tool needs. */
 		canAccess: boolean;
 	}
 
-	// Locked tools stay in an organizer's list so they see the whole toolbox and know
-	// what they'd need granted. A volunteer sees only what they hold: the organizer
-	// tools are not theirs to ask for.
 	let allTools = $derived<Tool[]>([
 		{
 			key: 'settings',
@@ -135,26 +132,21 @@
 		}
 	]);
 
-	// The quest tool hides with the quest itself, like the profile card.
+	// Only the tools this user holds; the quest tool also hides with the quest
+	// itself, like the profile card.
 	let tools = $derived(
 		allTools.filter((tool) => {
 			if (tool.key === 'quest' && !questEnabled) {
 				return false;
 			}
-			return organizer || tool.canAccess;
+			return tool.canAccess;
 		})
 	);
 </script>
 
 <!-- Capped and centred like the /profile hub this menu continues. -->
 <div class="mx-auto max-w-2xl">
-	{#if organizer}
-		<SectionIntro description={m.tools_intro()} />
-	{:else}
-		<!-- A volunteer's list holds only their own tools, so the organizer intro's
-		     note about locked tools does not apply. -->
-		<SectionIntro description={m.tools_intro_volunteer()} />
-	{/if}
+	<SectionIntro description={m.tools_intro()} />
 
 	<!-- Shown to every organizer, with no per-tool permission scoping the live count;
 	     volunteers come here for their own tools only. -->
@@ -171,7 +163,6 @@
 				description={tool.description}
 				icon={tool.icon}
 				href={tool.href}
-				locked={!tool.canAccess}
 			/>
 		{/each}
 	</MenuGroup>

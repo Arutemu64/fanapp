@@ -31,7 +31,7 @@
 		}
 		// No place until the first points: there is nothing to rank yet.
 		if (quest.rank === null) {
-			return m.quest_points({ count: 0 });
+			return m.quest_points({ count: quest.points });
 		}
 		return `${m.quest_points({ count: quest.points })} · ${m.quest_rank({ rank: quest.rank })}`;
 	});
@@ -43,6 +43,12 @@
 
 <SectionIntro description={m.quest_intro()} />
 
+{#if summary}
+	<Card.Root class="w-full max-w-none items-center rounded-2xl p-4 text-center sm:p-6">
+		<p class="text-headline text-foreground">{summary}</p>
+	</Card.Root>
+{/if}
+
 {#if user}
 	<Card.Root class="w-full max-w-none items-center gap-3 rounded-2xl p-4 text-center sm:p-6">
 		<h2 class="text-section text-foreground">{m.quest_code_title()}</h2>
@@ -53,9 +59,6 @@
 			label={m.quest_code_label({ username: user.username })}
 			class="w-full max-w-64 rounded-lg"
 		/>
-		{#if summary}
-			<p class="text-headline text-foreground">{summary}</p>
-		{/if}
 		<p class="text-sm text-muted-foreground">{m.quest_code_hint()}</p>
 	</Card.Root>
 {/if}

@@ -3,13 +3,13 @@
 	import {
 		Bell,
 		ChevronRight,
-		Coins,
 		Download,
 		Heart,
 		MessageSquare,
 		Palette,
 		RotateCw,
 		Ticket,
+		Trophy,
 		UserRound,
 		Wrench
 	} from '@lucide/svelte';
@@ -34,7 +34,7 @@
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
-	import { isOrganizer, isStaff } from '#lib/utils/permissions.js';
+	import { isStaff } from '#lib/utils/permissions.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
@@ -62,11 +62,8 @@
 
 	// "Инструменты" is the staff toolbox: a single link to the /tools dashboard
 	// rather than a row per tool, so the hub stays short as the tool list grows.
-	// Organizers always see it, locked tools there being a discovery cue; a
-	// volunteer sees it once granted a tool, since theirs lists held tools only.
-	let showTools = $derived(
-		isOrganizer(user) || (isStaff(user) && (user?.permissions.length ?? 0) > 0)
-	);
+	// The dashboard lists only held tools, so the link waits for the first grant.
+	let showTools = $derived(isStaff(user) && (user?.permissions.length ?? 0) > 0);
 
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	let questEnabled = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_enabled);
@@ -79,11 +76,7 @@
 		if (!quest) {
 			return undefined;
 		}
-		// No place until the first points: there is nothing to rank yet.
-		if (quest.rank === null) {
-			return m.quest_points({ count: 0 });
-		}
-		return `${m.quest_points({ count: quest.points })} · ${m.quest_rank({ rank: quest.rank })}`;
+		return m.quest_points({ count: quest.points });
 	});
 
 	const pwa = getPwaService();
@@ -182,7 +175,7 @@
 
 			{#if questEnabled}
 				<MenuGroup>
-					<MenuLink href="profile/quest" label={m.quest_title()} icon={Coins} value={questValue} />
+					<MenuLink href="profile/quest" label={m.quest_title()} icon={Trophy} value={questValue} />
 				</MenuGroup>
 			{/if}
 
