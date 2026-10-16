@@ -67,15 +67,26 @@ class ScheduleEditService:
         self,
         permission: Permission,
         mutate: Callable[[User], Awaitable[ChangeFactory]],
+        *,
+        already_applied: Callable[[], Awaitable[bool]],
     ) -> User:
         """Edit the schedule and announce it to subscribers.
 
         ``mutate`` applies the domain change and returns a factory for the
         ``ScheduleChange`` that records it. Returns the acting user.
+
+        ``already_applied`` reports whether the schedule is already in the
+        requested state. If so, the edit is a no-op: nothing is written or
+        announced. A retry after a lost response, or a second operator making
+        the same call, therefore succeeds without telling everyone twice
+        (docs/adr/0034). It runs under the edit lock, so no concurrent edit can
+        change the answer, and before the cooldown, so a no-op is never a 429.
         """
         user = await self._authorize(permission)
         settings = await self.settings_gateway.get()
         await self.schedule_gateway.lock_for_edit()
+        if await already_applied():
+            return user
         await self._ensure_announcement_cooldown(settings.limits.announcement_timeout)
 
         # Snapshot the next event before and after the change so the

@@ -309,3 +309,54 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+
+
+async def test_set_current_event_repeat_is_a_no_op_inside_the_cooldown(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(SetCurrentScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    event = _schedule_event(1, "Первое событие", 1)
+    await schedule_gateway.add(event)
+    await uow.commit()
+
+    await interactor(SetCurrentScheduleEventInput(event_id=event.id))
+    # A retry after a lost response: already true, so neither a 429 nor a
+    # second announcement.
+    await interactor(SetCurrentScheduleEventInput(event_id=event.id))
+
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=CursorPagination(limit=100)
+    )
+    assert len(changes) == 1
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+
+
+async def test_unset_current_event_with_nothing_current_is_a_no_op(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+) -> None:
+    interactor = await dishka_request.get(SetCurrentScheduleEvent)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    await interactor(SetCurrentScheduleEventInput(event_id=None))
+
+    assert (
+        await changes_gateway.read_list_schedule_changes(
+            pagination=CursorPagination(limit=100)
+        )
+        == []
+    )
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []

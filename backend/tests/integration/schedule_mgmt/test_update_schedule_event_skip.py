@@ -286,3 +286,32 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+
+
+async def test_skip_repeat_is_a_no_op_inside_the_cooldown(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(UpdateScheduleEventSkip)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    event = _schedule_event(1, 1)
+    await schedule_gateway.add(event)
+    await uow.commit()
+
+    data = UpdateScheduleEventSkipInput(event_id=event.id, is_skipped=True)
+    await interactor(data)
+    await interactor(data)
+
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=CursorPagination(limit=100)
+    )
+    assert len(changes) == 1
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))

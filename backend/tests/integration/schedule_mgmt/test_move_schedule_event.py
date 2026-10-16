@@ -478,3 +478,42 @@ async def test_a_block_start_is_not_an_event_to_move(
         await interactor(
             MoveScheduleEventInput(event_id=block.id, place_after_entry_id=event.id)
         )
+
+
+async def test_move_repeat_is_a_no_op_inside_the_cooldown(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    first = _schedule_event(1, 1)
+    second = _schedule_event(2, 2)
+    third = _schedule_event(3, 3)
+    for event in (first, second, third):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    data = MoveScheduleEventInput(event_id=first.id, place_after_entry_id=second.id)
+    await interactor(data)
+    moved = await schedule_gateway.get_event(first.id)
+    assert moved is not None
+    order_after_first_move = moved.order
+
+    await interactor(data)
+
+    unmoved = await schedule_gateway.get_event(first.id)
+    assert unmoved is not None
+    assert unmoved.order == order_after_first_move
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=CursorPagination(limit=100)
+    )
+    assert len(changes) == 1
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))

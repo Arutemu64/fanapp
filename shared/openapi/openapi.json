@@ -1406,7 +1406,7 @@
           "Schedule"
         ],
         "summary": "Set specific event as current",
-        "description": "Updates the schedule state to mark a specific event as active. Validates timing and event status.",
+        "description": "Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.",
         "operationId": "set_event_as_current",
         "security": [
           {
@@ -1508,7 +1508,7 @@
           "Schedule"
         ],
         "summary": "Unset current schedule event",
-        "description": "Clears the currently active event from the schedule. Subject to rate limiting.",
+        "description": "Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.",
         "operationId": "uncheck_current_event",
         "responses": {
           "204": {
@@ -1576,7 +1576,7 @@
           "Schedule"
         ],
         "summary": "Reorder schedule event",
-        "description": "Moves an event to a new position in the sequence, specifically after the provided event ID.",
+        "description": "Moves an event to a new position in the sequence, specifically after the provided event ID. If it is already there, nothing is changed or announced.",
         "operationId": "move_schedule_event",
         "security": [
           {
@@ -1688,7 +1688,7 @@
           "Schedule"
         ],
         "summary": "Update a schedule event",
-        "description": "Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.",
+        "description": "Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped. If the event already has that state, nothing is announced.",
         "operationId": "update_schedule_event",
         "security": [
           {

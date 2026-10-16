@@ -34,6 +34,17 @@ class MoveScheduleEvent:
         self.schedule_edit = schedule_edit
 
     async def __call__(self, data: MoveScheduleEventInput) -> None:
+        async def already_applied() -> bool:
+            event = await self.schedule_gateway.get_event(data.event_id)
+            if event is None:
+                return False
+            previous_entry = await self.schedule_gateway.get_previous_by_order(
+                event.order
+            )
+            if previous_entry is None:
+                return False
+            return previous_entry.id == data.place_after_entry_id
+
         async def mutate(_: User) -> ChangeFactory:
             event = await self.schedule_gateway.get_event(data.event_id)
             if event is None:
@@ -67,7 +78,9 @@ class MoveScheduleEvent:
 
             return build_change
 
-        user = await self.schedule_edit.announce(Permission.SCHEDULE_MANAGE, mutate)
+        user = await self.schedule_edit.announce(
+            Permission.SCHEDULE_MANAGE, mutate, already_applied=already_applied
+        )
 
         logger.info(
             "Schedule event moved",

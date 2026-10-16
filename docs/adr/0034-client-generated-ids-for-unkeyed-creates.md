@@ -55,6 +55,12 @@ first: `SendBroadcastInput.mailing_id` is required.
 
 Creates whose natural key already makes a repeat a 409 stay server-generated.
 
+**State edits are idempotent by their target state, not by an ID.** The
+announced schedule edits (set current, skip/unskip, move) pass
+`ScheduleEditService.announce` an `already_applied` check. Under the edit lock
+and before the announcement cooldown, a request for the state the schedule
+already has returns 204 and writes and announces nothing.
+
 ## Consequences
 
 - A lost response followed by a second press on the broadcast form returns the
@@ -78,6 +84,10 @@ Creates whose natural key already makes a repeat a 409 stay server-generated.
 - **Server-side dedup on payload (same author, text and roles within N
   minutes).** Rejected. It guesses intent: an organizer who deliberately
   repeats an announcement gets it swallowed.
+- **Client IDs on schedule edits.** Rejected. They are PATCHes to a target
+  state, not creates, so there is no row to replay. A client ID would also catch
+  only the same device repeating itself, while the state check also catches two
+  operators making the same call.
 - **Client IDs on every create.** Rejected. Votes, subscriptions, push and
   ticket links already turn a repeat into a 409 by their natural key. A second
   key there adds a column of code for nothing.

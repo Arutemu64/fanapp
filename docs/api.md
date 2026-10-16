@@ -128,6 +128,8 @@ A lost response followed by a second press must not create the row twice. Where 
 - **Keep it across submits; draw a new one only once the intent is settled**: on success, or on the endpoint's "already exists" 409.
 - **The server replays an identical request.** Same caller and payload → the existing resource and the original success status; the side effect does not run again. A different payload under a taken ID → 409.
 
+A `PATCH` that sets a state needs no ID: requesting the state that already holds is a 204 that writes and announces nothing (the schedule edits: set current, skip, move).
+
 ### Long-running actions (202 Accepted)
 
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.
