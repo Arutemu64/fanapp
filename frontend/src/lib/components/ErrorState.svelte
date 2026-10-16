@@ -102,11 +102,11 @@
 				{offline ? m.error_state_offline_title() : m.error_state_status_title({ status })}
 			</span>
 
-			<h2 class="mb-2 text-2xl font-bold text-foreground">
+			<h2 class="mb-2 text-headline text-foreground">
 				{title}
 			</h2>
 
-			<p class="mb-6 text-base text-muted-foreground">
+			<p class="mb-6 text-body text-muted-foreground">
 				{description}
 			</p>
 

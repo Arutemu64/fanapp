@@ -55,6 +55,28 @@
 	--text-3xs--line-height: calc(0.875 / 0.625);
 
 	/*
+	 * Named type roles (DESIGN.md §3), so the scale is retuned here rather than at each
+	 * call site. Same size at every width: phones are where people read this app.
+	 * Weight and line height are defaults; a `font-*` / `leading-*` class still wins.
+	 * A new role here must also join `cn()`'s tailwind-merge list in `$lib/utils.ts`,
+	 * or `cn()` drops it as an unknown text colour.
+	 *
+	 * headline: page titles, Material 3 Headline Small (24sp); between iOS Title 2 (22pt)
+	 *   and Title 1 (28pt). section: section headings, one step under it and over body.
+	 * body: reading text, Material 3 Body Large (16sp); iOS Body is 17pt.
+	 * https://developer.android.com/develop/ui/compose/designsystems/material3
+	 * https://developer.apple.com/design/human-interface-guidelines/typography
+	 */
+	--text-headline: 1.5rem;
+	--text-headline--line-height: 1.375;
+	--text-headline--font-weight: 700;
+	--text-section: 1.125rem;
+	--text-section--line-height: 1.375;
+	--text-section--font-weight: 600;
+	--text-body: 1rem;
+	--text-body--line-height: 1.5;
+
+	/*
 	 * The live dot's ping, run three times instead of forever. WCAG 2.2.2 requires
 	 * auto-started motion shown beside other content to stop within 5s or offer a
 	 * pause; three 1s pings say "live" and then rest. Same curve as `animate-ping`.

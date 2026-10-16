@@ -60,7 +60,7 @@
 				<ThumbsUp class="size-6" aria-hidden="true" />
 			</span>
 			<div class="min-w-0 flex-1">
-				<h2 id="voting-heading" class="text-lg font-bold text-foreground">
+				<h2 id="voting-heading" class="text-section font-bold text-foreground">
 					{m.voting_open_title()}
 				</h2>
 				<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{action.description}</p>

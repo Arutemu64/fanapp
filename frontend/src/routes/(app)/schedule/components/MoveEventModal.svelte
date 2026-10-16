@@ -111,7 +111,7 @@
 				</Alert.Root>
 			{/if}
 
-			<Dialog.Description class="text-base">
+			<Dialog.Description class="text-body">
 				<ParaglideMessage message={m.event_move_choose} inputs={{ title: event.title }}>
 					{#snippet strong({ children }: MessageTagProps)}
 						<strong class="text-foreground">{@render children?.()}</strong>
@@ -159,7 +159,7 @@
 					<button
 						type="button"
 						class={[
-							'w-full cursor-pointer px-3 py-2.5 text-left text-base transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3',
+							'w-full cursor-pointer px-3 py-2.5 text-left text-body transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3',
 							entry.type === 'block_start' && 'bg-muted/60',
 							selectedId === entry.id && 'bg-primary/20'
 						]}
@@ -177,7 +177,7 @@
 						{/if}
 					</button>
 				{:else}
-					<div class="px-3 py-4 text-center text-base text-muted-foreground sm:py-5">
+					<div class="px-3 py-4 text-center text-body text-muted-foreground sm:py-5">
 						{m.event_move_no_matches()}
 					</div>
 				{/each}

@@ -133,10 +133,10 @@
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
 	<section aria-labelledby="guide-heading" class="rounded-2xl border bg-card p-5 sm:p-6">
 		<img src={logo} alt={m.app_name()} class="h-10 w-auto dark:invert" />
-		<h2 id="guide-heading" class="mt-4 text-lg leading-snug font-semibold text-balance">
+		<h2 id="guide-heading" class="mt-4 text-section text-balance">
 			{m.guide_tagline()}
 		</h2>
-		<p class="mt-1.5 text-base leading-relaxed text-muted-foreground">{m.guide_about()}</p>
+		<p class="mt-1.5 text-body leading-relaxed text-muted-foreground">{m.guide_about()}</p>
 		<ul class="mt-3 flex flex-wrap gap-2">
 			{#each facts as fact (fact)}
 				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact}</li>

@@ -219,7 +219,7 @@
 			</div>
 
 			<section aria-labelledby="map-where" class="flex flex-col gap-2">
-				<h2 id="map-where" class="px-1 text-lg font-semibold">{m.map_where_heading()}</h2>
+				<h2 id="map-where" class="px-1 text-section">{m.map_where_heading()}</h2>
 				<MenuGroup>
 					<ol class="divide-y divide-border">
 						{#each map.points as point (point.number)}

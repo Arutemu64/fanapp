@@ -55,10 +55,10 @@ Both are self-hosted via Fontsource with Cyrillic subsets — all copy is Russia
 
 ### Hierarchy
 - **Display** (Unbounded, 700, ~1.5rem+, line-height 1.15): Brand wordmark and rare identity moments only. Never body, never data.
-- **Headline** (Inter, 700, 1.5rem, line-height 1.375): Page titles (in navbar), error-card titles. `text-2xl` at every width; a long title wraps to two lines rather than truncating.
-- **Section** (Inter, 600, 1.125rem, line-height 1.375): Section and card-group headings. `text-lg` at every width.
+- **Headline** (Inter, 700, 1.5rem, line-height 1.375): Page titles (in navbar), error-card titles. `text-headline` at every width; a long title wraps to two lines rather than truncating.
+- **Section** (Inter, 600, 1.125rem, line-height 1.375): Section and card-group headings. `text-section` at every width.
 - **Title** (Inter, 600, 1rem, line-height 1.4): Card headings, notification titles, list-item leads.
-- **Body** (Inter, 400, 1rem, line-height 1.6): Descriptions and prose. `text-base`; 14px (`text-sm`) is for secondary text only — helper lines, a subtitle under a heading, metadata rows. Cap prose at 65–75ch (the `max-w-5xl` single column already enforces this on phones).
+- **Body** (Inter, 400, 1rem, line-height 1.6): Descriptions and prose. `text-body`; 14px (`text-sm`) is for secondary text only — helper lines, a subtitle under a heading, metadata rows. Cap prose at 65–75ch (the `max-w-5xl` single column already enforces this on phones).
 - **Label** (Inter, 600, ~0.75rem, letter-spacing 0.05em, sometimes uppercase): Status pills ("Офлайн", "Ошибка 500"), meta. The *only* place tracked uppercase is allowed.
 
 ### Named Rules

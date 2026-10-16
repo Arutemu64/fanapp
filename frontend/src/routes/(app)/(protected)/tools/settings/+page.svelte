@@ -199,7 +199,7 @@
 	{/if}
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">
+		<h2 class="text-section text-foreground">
 			{m.settings_festival_section()}
 		</h2>
 
@@ -251,7 +251,7 @@
 	</Card.Root>
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">{m.nav_schedule()}</h2>
+		<h2 class="text-section text-foreground">{m.nav_schedule()}</h2>
 
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
 			<Field.FieldLabel for="announcement-timeout">{m.settings_timeout_label()}</Field.FieldLabel>

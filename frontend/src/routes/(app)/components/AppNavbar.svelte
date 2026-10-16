@@ -54,13 +54,13 @@
 			</Button>
 		{/if}
 		{#if pageTitle}
-			<!-- 24px at every width (Material 3 Headline Small). The longest titles
-				(«Настройки уведомлений») overflow a 360px phone beside the back arrow and
-				bell at that size, so they wrap to a second line instead of truncating: a
-				clipped page title loses the word that names the page. The layout measures
-				the bar, so <main>'s offset follows the taller row. leading-snug, not tight:
-				line-clamp clips like truncate, and Cyrillic descenders (у, д) need the room. -->
-			<h1 class="line-clamp-2 text-2xl leading-snug font-bold break-words text-foreground">
+			<!-- Long titles («Настройки уведомлений», and nomination names, which are
+				organiser data) overflow a 360px phone beside the back arrow and bell, so
+				they wrap to a second line instead of truncating: a clipped page title
+				loses the word that names the page. The layout measures the bar, so <main>'s
+				offset follows the taller row. Keep the role's 1.375 line height, not
+				leading-tight: line-clamp clips, and Cyrillic descenders (у, д) need the room. -->
+			<h1 class="line-clamp-2 text-headline break-words text-foreground">
 				{pageTitle}
 			</h1>
 		{/if}

@@ -184,10 +184,10 @@
 				</div>
 			</div>
 		{:else if phase === 'during'}
-			<h2 id="hero-heading" class="text-lg font-semibold">{m.home_festival_ongoing()}</h2>
+			<h2 id="hero-heading" class="text-section">{m.home_festival_ongoing()}</h2>
 		{:else}
-			<h2 id="hero-heading" class="text-lg font-semibold">{m.home_festival_finished()}</h2>
-			<p class="max-w-prose text-base leading-relaxed text-white/85">
+			<h2 id="hero-heading" class="text-section">{m.home_festival_finished()}</h2>
+			<p class="max-w-prose text-body leading-relaxed text-white/85">
 				{m.home_festival_farewell()}
 			</p>
 			<!-- Guests land on the auth-gated feedback page, which bounces them to

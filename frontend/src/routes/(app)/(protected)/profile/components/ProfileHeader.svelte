@@ -39,7 +39,7 @@
 	<UserAvatar seed={user.avatar_seed} class="size-16" />
 
 	<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
-		<h2 class="min-w-0 text-2xl font-bold break-words text-foreground">
+		<h2 class="min-w-0 text-headline break-words text-foreground">
 			@{user.username}
 		</h2>
 		<Badge variant="secondary" class="text-xs">

@@ -61,7 +61,7 @@
 	class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
 >
 	<div class="flex items-center justify-between gap-3">
-		<h2 id="up-next-heading" class="text-lg font-semibold text-foreground">
+		<h2 id="up-next-heading" class="text-section text-foreground">
 			{m.home_next()}
 		</h2>
 		<Button href="/schedule" variant="ghost" size="sm" class="-mr-2 shrink-0">

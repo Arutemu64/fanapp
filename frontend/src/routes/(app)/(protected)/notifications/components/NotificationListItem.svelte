@@ -92,7 +92,7 @@
 			<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
 			<!-- eslint-disable svelte/no-at-html-tags -->
 			<div
-				class="mt-0.5 text-base whitespace-pre-line text-foreground/80 [&_a]:relative [&_a]:underline [&_a]:underline-offset-2"
+				class="mt-0.5 text-body whitespace-pre-line text-foreground/80 [&_a]:relative [&_a]:underline [&_a]:underline-offset-2"
 			>
 				{@html notification.body}
 			</div>
