@@ -60,10 +60,10 @@ function reportUnexpectedRequestError(error: unknown) {
 
 // Runs once per page load: nothing here reads `url` or calls `depends`, and the
 // app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
-// cache in it — lives for the whole session. It is load data rather than a
-// module singleton (TanStack's SvelteKit setup:
-// https://tanstack.com/query/latest/docs/framework/svelte/ssr), so it never
-// outlives the document; logout empties it explicitly (Session).
+// cache in it — lives for the whole session. Without SSR a module singleton
+// would be just as safe from cross-user leaks; it is load data so `Session`
+// receives it as a dependency and every identity transition clears the one
+// cache the app reads (Session.#forgetAccount).
 export const load: LayoutLoad = async () => {
 	const queryClient = new QueryClient({
 		// A failed query or mutation is caught by TanStack Query, so it never reaches
