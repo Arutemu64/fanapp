@@ -47,9 +47,8 @@
 
 	// Hide-on-scroll for the top bar: hide it as the user scrolls down past the bar's
 	// own height, reveal it on any scroll back up, so content gets the viewport while
-	// the page title stays one flick away — the standard mobile "hidey bar". Reveal is
-	// deliberately faster than hide (see chromeTransitionMs) so the nav snaps back the
-	// instant you flick up. The bottom nav (primary navigation) stays put.
+	// the page title stays one flick away — the standard mobile "hidey bar". See
+	// chromeTransitionMs for the timing. The bottom nav (primary navigation) stays put.
 	//
 	// The chrome is sticky, and we slide it with `top`, never `transform`:
 	//   - Sticky keeps its place in the flow whether shown or hidden, so hiding the bar
@@ -86,9 +85,18 @@
 	const isDesktop = new MediaQuery('(min-width: 48rem)');
 	let chromeHidden = $derived(navbarHidden && !isDesktop.current);
 
-	// Reveal fast so the nav is back the instant you flick up; hide a touch slower so it
-	// glides away rather than snapping. This asymmetry is the "headroom" feel.
-	let chromeTransitionMs = $derived(chromeHidden ? 240 : 120);
+	// Material's enter/exit pairing: the bar enters over the longer duration on the
+	// emphasized-decelerate curve and leaves faster on emphasized-accelerate
+	// (https://github.com/material-components/material-components-android/blob/master/docs/theming/Motion.md).
+	// 300ms sits in NN/g's 300–400ms for a revealed header to feel like scrolling
+	// (https://www.nngroup.com/articles/sticky-headers/); the decelerate curve covers
+	// most of the travel up front, so the bar still reads as back the instant you flick up.
+	// --sticky-top-duration/-easing hand both to the page's sticky headers so they move
+	// in step with the bar.
+	let chromeTransitionMs = $derived(chromeHidden ? 200 : 300);
+	let chromeEasing = $derived(
+		chromeHidden ? 'cubic-bezier(0.3, 0, 0.8, 0.15)' : 'cubic-bezier(0.05, 0.7, 0.1, 1)'
+	);
 
 	// Where the page's sticky headers rest: just under whatever chrome is showing.
 	let stickyTop = $derived(chromeHidden ? chromeHeight - navbarHeight : chromeHeight);
@@ -264,9 +272,10 @@
 		<div
 			bind:offsetHeight={chromeHeight}
 			onfocusin={revealNavbar}
-			class="sticky z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
+			class="sticky z-(--z-chrome) backdrop-blur-md transition-[top] [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
+			style:transition-timing-function={chromeEasing}
 		>
 			<div bind:offsetHeight={navbarHeight}>
 				<AppNavbar {user} {contentScrolled} />
@@ -278,7 +287,7 @@
 
 			--sticky-top is the top offset that sticky descendants (the schedule's block and
 			nomination headers) must use instead of a bare top-0, which would tuck them under
-			the chrome. It tracks the chrome's slide via the same duration, so a header rests
+			the chrome. It tracks the chrome's slide via the same duration and easing, so a header rests
 			at the viewport top (or just below the connection banner, which stays) once the
 			bar has slid away. -->
 		<main
@@ -286,6 +295,7 @@
 			tabindex="-1"
 			style:--sticky-top={`${stickyTop}px`}
 			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
+			style:--sticky-top-easing={chromeEasing}
 			class="flex flex-1 flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
 			<!-- Bottom padding lets the last row scroll 1rem clear of the floating mobile bottom nav;

@@ -71,9 +71,10 @@
 			<!-- Sticks below the top chrome through the (app) layout's --sticky-top,
 			which follows the bar as it hides and the connection banner as it shows. -->
 			<div
-				class="flex flex-col gap-3 ease-out motion-reduce:transition-none lg:sticky lg:transition-[top]"
+				class="flex flex-col gap-3 motion-reduce:transition-none lg:sticky lg:transition-[top]"
 				style:top="calc(var(--sticky-top, 0px) + 1rem)"
 				style:transition-duration="var(--sticky-top-duration, 0ms)"
+				style:transition-timing-function="var(--sticky-top-easing, ease-out)"
 			>
 				<!-- The plan is a picture to sighted users and one image to a screen
 				reader: the list below carries every place by name and is the keyboard
