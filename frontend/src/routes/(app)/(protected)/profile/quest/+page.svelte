@@ -29,8 +29,9 @@
 		if (!quest) {
 			return '';
 		}
+		// No place until the first points: there is nothing to rank yet.
 		if (quest.rank === null) {
-			return m.quest_no_points();
+			return m.quest_points({ count: 0 });
 		}
 		return `${m.quest_points({ count: quest.points })} · ${m.quest_rank({ rank: quest.rank })}`;
 	});

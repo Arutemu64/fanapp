@@ -264,7 +264,10 @@
 
 <SectionIntro description={m.settings_description()} />
 
+<!-- novalidate: the browser's own bubble for min/max would pre-empt the Russian
+     field errors with English text; the validate* functions cover the same bounds. -->
 <form
+	novalidate
 	class="mx-auto flex w-full max-w-2xl flex-col gap-5"
 	onsubmit={offlineGate.guard(handleSubmit)}
 >

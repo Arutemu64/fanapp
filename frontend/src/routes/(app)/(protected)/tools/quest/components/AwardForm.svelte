@@ -126,7 +126,9 @@
 	}
 </script>
 
-<form class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
+<!-- novalidate: the browser's own bubble for min/max would pre-empt the Russian
+     field error with English text; validateAmount covers the same bounds. -->
+<form novalidate class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
 	<div class="flex items-center gap-3">
 		<UserAvatar seed={player.avatar_seed} class="size-12" />
 		<div class="min-w-0 flex-1">

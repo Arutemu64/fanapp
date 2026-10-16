@@ -148,7 +148,13 @@
 
 <!-- Capped and centred like the /profile hub this menu continues. -->
 <div class="mx-auto max-w-2xl">
-	<SectionIntro description={m.tools_intro()} />
+	{#if organizer}
+		<SectionIntro description={m.tools_intro()} />
+	{:else}
+		<!-- A volunteer's list holds only their own tools, so the organizer intro's
+		     note about locked tools does not apply. -->
+		<SectionIntro description={m.tools_intro_volunteer()} />
+	{/if}
 
 	<!-- Shown to every organizer, with no per-tool permission scoping the live count;
 	     volunteers come here for their own tools only. -->
