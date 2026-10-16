@@ -40,7 +40,7 @@ const MAX_IMAGE_SIDE = 3000;
 
 /**
  * Like `readBarcode`, for a picked image file. The browser decodes the file:
- * ZXing's own loader reads only PNG and JPEG, and an iPhone photo can be HEIC.
+ * it applies EXIF orientation and reads WebP, which ZXing's own loader doesn't.
  * Rejects when the browser can't open the file as an image.
  */
 export async function readBarcodeFromImage(

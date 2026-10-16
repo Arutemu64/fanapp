@@ -209,12 +209,18 @@
 		</div>
 	</div>
 
-	<!-- A bare wildcard on purpose: Safari transcodes a picked image only when
-	     `accept` names concrete types that exclude it
-	     (https://bugs.webkit.org/show_bug.cgi?id=267277), and the browser decodes
-	     whatever it gets anyway, HEIC included where it can display it. No
-	     `capture`, so a phone offers its gallery rather than the camera. -->
-	<input bind:this={imageInput} type="file" accept="image/*" hidden onchange={handleImagePicked} />
+	<!-- Concrete types, not `image/*`: Safari then converts a HEIC photo to JPEG
+	     before we see it (https://bugs.webkit.org/show_bug.cgi?id=267277), so no
+	     browser has to decode HEIC itself (Safari only can from 17, Chrome not at
+	     all). A screenshot is PNG and passes through untouched. No `capture`, so a
+	     phone offers its gallery rather than the camera. -->
+	<input
+		bind:this={imageInput}
+		type="file"
+		accept="image/jpeg,image/png,image/webp"
+		hidden
+		onchange={handleImagePicked}
+	/>
 	<Button
 		type="button"
 		variant="outline"
