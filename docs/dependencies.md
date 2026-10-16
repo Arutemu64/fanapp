@@ -171,11 +171,21 @@ and a CSS or component-substrate minor can move the layout with every gate green
 are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
 `svelte-check`, `vitest` and `@hey-api/openapi-ts` keep automerging.
 
-Runtime dependencies automerge on **patch only**, after **14 days** instead of
-the global 7 — Renovate's advice once third-party deps automerge
-([upgrade best practices](https://docs.renovatebot.com/upgrade-best-practices/)).
-0.x packages stay on review PRs, since any 0.x release may break. Database and
-service images, majors and the shipped-bundle list never automerge.
+Runtime dependencies automerge on **patch only**. 0.x packages stay on review
+PRs, since any 0.x release may break. Database and service images, majors and
+the shipped-bundle list never automerge.
+
+**Release age: 7 days for a reviewed PR, 14 for an automerge.** Renovate
+recommends 14 days once third-party deps automerge
+([upgrade best practices](https://docs.renovatebot.com/upgrade-best-practices/)),
+so the frontend dev tooling, backend dev group, runtime patch and GitHub Action
+rules carry it. The global 7 days stays for reviewed PRs and matches pnpm's
+`minimumReleaseAge` and uv's `exclude-newer`. 7 days is already the
+"conservative" tier ([cooldowns.dev](https://cooldowns.dev/)), more than
+double Dependabot's 3-day default. Shared-pin groups must keep a single age:
+the Action rule skips the setup actions' version inputs, and pre-commit hooks
+stay at 7, because a longer age on one site would split its group across two
+versions.
 
 Lock file maintenance automerges with Renovate's own release age switched off:
 Renovate cannot age a lock file refresh, and the `timestamp-required` default

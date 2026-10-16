@@ -51,9 +51,10 @@
       "rangeStrategy": "pin"
     },
     {
-      "description": "Auto-merge dev tooling (linters, formatters, type checkers, test libs) on minor/patch — these break loudly in CI, not silently in prod.",
+      "description": "Auto-merge dev tooling (linters, formatters, type checkers, test libs) on minor/patch — these break loudly in CI, not silently in prod. Aged 14 days like every unreviewed merge (see the runtime rule below): dev tooling never ships, but it runs on developer machines and in CI, which is what the Nx and Shai-Hulud worms went after.",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "14 days",
       "automerge": true
     },
     {
@@ -84,6 +85,8 @@
         "unplugin-icons",
         "@iconify-json/**"
       ],
+      // A reviewed PR returns to the global 7 days; the 14 days above is for merges nobody looks at.
+      "minimumReleaseAge": "7 days",
       "automerge": false
     },
     {
@@ -91,6 +94,7 @@
       "matchFileNames": ["backend/pyproject.toml"],
       "matchDepTypes": ["dependency-groups"],
       "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "14 days",
       "automerge": true
     },
     {
@@ -98,6 +102,12 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "automerge": true
+    },
+    {
+      "description": "Age automerged actions 14 days, like the other unreviewed merges: an action runs in CI with the workflow's token, the tj-actions attack's target. Scoped to the 'action'/'workflow' depTypes so it skips the setup-uv/setup-node/pnpm version inputs ('uses-with'), which belong to the uv, node and pnpm shared-pin groups — aging them longer than their mise and pyproject sites would split each group across two target versions. pre-commit hooks stay at 7 days for the same reason: gitleaks and hadolint are shared pins too.",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action", "workflow"],
+      "minimumReleaseAge": "14 days"
     },
     {
       "description": "Auto-merge pre-commit hook bumps on minor/patch.",
