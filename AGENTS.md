@@ -90,7 +90,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ## Codebase map
 
 ```text
-├── .agents/             # Agent-only material: skills/, context/ (product, design, issue tracker), redpolitika.md
+├── .agents/             # Agent-only material: skills/, context/ (product, design, issue tracker), plans/, redpolitika.md
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
