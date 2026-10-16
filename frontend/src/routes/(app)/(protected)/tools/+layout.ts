@@ -1,6 +1,8 @@
 import { resolve } from '$app/paths';
 import { error, redirect } from '@sveltejs/kit';
 
+import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { queryForLoad } from '#lib/api/index.js';
 import { m } from '#lib/paraglide/messages.js';
 import { isReachable } from '#lib/services/reachability.js';
 import { isStaff } from '#lib/utils/permissions.js';
@@ -8,7 +10,7 @@ import { isStaff } from '#lib/utils/permissions.js';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, url }) => {
-	const { user } = await parent();
+	const { queryClient, user } = await parent();
 
 	// The toolbox is for staff, and the dashboard lists only the tools a user
 	// holds. Each page enforces its own permission.
@@ -26,5 +28,15 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		redirect(307, resolve('tools'));
 	}
 
-	return { offlineUnavailable: offline };
+	// Read once for every tool guard (the quest tool is off with the quest). A
+	// persisted or already-loaded copy answers at once, however old: the guard is
+	// a UX redirect and the backend enforces the real rule. Only a true cache miss
+	// asks the network, and if that fails the guard fails open on the quest flag
+	// rather than locking out a quest awarder over a request that didn't land.
+	const toolConfig = await queryForLoad(queryClient, {
+		...getPublicConfigOptions(),
+		staleTime: 'static'
+	}).catch(() => ({ quest_enabled: true }));
+
+	return { offlineUnavailable: offline, toolConfig };
 };

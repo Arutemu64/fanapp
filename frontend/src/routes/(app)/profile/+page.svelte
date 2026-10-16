@@ -29,6 +29,7 @@
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
+	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
@@ -62,11 +63,12 @@
 
 	// "Инструменты" is the staff toolbox: a single link to the /tools dashboard
 	// rather than a row per tool, so the hub stays short as the tool list grows.
-	// The dashboard lists only held tools, so the link waits for the first grant.
-	let showTools = $derived(isStaff(user) && (user?.permissions.length ?? 0) > 0);
-
+	// The dashboard lists only held tools, so the link waits for the first one.
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	let questEnabled = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_enabled);
+	let showTools = $derived(
+		isStaff(user) && toolsFor(user, configQuery.data ?? FALLBACK_CONFIG).length > 0
+	);
 	const questQuery = createQuery(() => ({
 		...getQuestOptions(),
 		enabled: questEnabled && user !== null
