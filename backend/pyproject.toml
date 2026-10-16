@@ -69,7 +69,7 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.10",
     "testcontainers>=4.15.0",
-    "ty>=0.0.79",
+    "ty>=0.0.85",
     "types-authlib>=1.8.0.20260911",
     "uv-sort>=0.8.0",
     # Dead-code sweep (`just backend-deadcode`), never a CI gate — see
