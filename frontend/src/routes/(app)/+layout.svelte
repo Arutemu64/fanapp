@@ -64,7 +64,6 @@
 	//     doesn't apply here anyway.
 	// `navbarHeight` (the bar alone) is how far we slide up on hide; `chromeHeight` (bar +
 	// connection banner) sets where the page's own sticky headers rest beneath it.
-	const HIDE_NAVBAR_AFTER_PX = 64; // never hide while the bar's own content is still on screen
 	const SCROLL_DELTA_PX = 6; // ignore inertia/subpixel jitter that would flicker the bar
 	let navbarHidden = $state(false);
 	// Whether content sits under the bar, which draws its bottom hairline only then. At
@@ -138,10 +137,17 @@
 			const top = window.scrollY;
 			// Before the jitter guard: a slow drift back to 0 must still clear the hairline.
 			contentScrolled = top > 0;
+			// iOS rubber-banding reports offsets past either end of the page. Settling back
+			// from an overscroll at the bottom would read as an upward scroll and pop the
+			// bar in on every list end, so ignore those frames, as headroom.js does
+			// (https://github.com/WickyNilliams/headroom.js/blob/master/src/trackScroll.js).
+			const maxTop = document.documentElement.scrollHeight - window.innerHeight;
+			if (top < 0 || top > maxTop) return;
 			const delta = top - lastScrollTop;
 			if (Math.abs(delta) < SCROLL_DELTA_PX) return;
-			// Reveal on any upward move; hide only while moving down past the bar's height.
-			navbarHidden = delta > 0 && top > HIDE_NAVBAR_AFTER_PX;
+			// Reveal on any upward move; hide only while moving down past the bar's own
+			// height, so a page barely taller than the screen keeps its title.
+			navbarHidden = delta > 0 && top > navbarHeight;
 			lastScrollTop = top;
 		});
 	}
@@ -252,9 +258,12 @@
 			Under reduced transparency the wrapper turns opaque rather than just unblurred: the
 			connection banner's tint is only /10, so without a solid fill behind it the page
 			would show through the banner.
-			Dropdowns render in the native Popover top layer regardless of the wrapper. -->
+			Dropdowns render in the native Popover top layer regardless of the wrapper.
+			onfocusin reveals the bar when keyboard or screen-reader focus lands in it while
+			hidden, which would otherwise leave the focused control off-screen (WCAG 2.4.11). -->
 		<div
 			bind:offsetHeight={chromeHeight}
+			onfocusin={revealNavbar}
 			class="sticky z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
