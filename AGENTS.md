@@ -50,6 +50,9 @@ patch after one until upstream carries it: `antislop` (R-25) and `antislop-human
 (guide, `contrast-check.py`, `contrast-mcp.py`) use WCAG's large-text size, 24px or
 about 18.66px bold, not "18px+", and compare the unrounded contrast ratio, since
 4.499:1 fails 4.5:1 ([W3C, Understanding 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)).
+`setup-matt-pocock-skills` writes its config to `.agents/context/`, not upstream's
+`docs/agents/`, because agent-only material lives under `.agents/` and `docs/` is the
+codebase guide.
 
 ## Stack & commands
 
@@ -87,6 +90,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ## Codebase map
 
 ```text
+├── .agents/             # Agent-only material: skills/, context/ (product, design, issue tracker), redpolitika.md
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
