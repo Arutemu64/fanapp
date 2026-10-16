@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
+	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
@@ -8,10 +9,12 @@
 
 	interface Props {
 		activeUrl: string;
+		/** The signed-in user's face for the Profile tab; null keeps the generic icon. */
+		avatarSeed: string | null;
 		scrollToTop: () => void;
 	}
 
-	let { activeUrl, scrollToTop }: Props = $props();
+	let { activeUrl, avatarSeed, scrollToTop }: Props = $props();
 
 	const appUpdate = getAppUpdateService();
 
@@ -96,14 +99,27 @@
 				     the capsule leaves it and the new one lights up as it arrives; a snap
 				     would light the new label while the capsule still sits on the old tab. -->
 				<span class="relative">
-					<Icon
-						class={[
-							'size-5 transition-[color,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none',
-							active
-								? 'text-primary-700 dark:text-primary'
-								: 'text-muted-foreground group-hover:text-foreground'
-						]}
-					/>
+					{#if href === 'profile' && avatarSeed}
+						<!-- The user's own face, as most apps' account tab shows it. A photo can't
+						     take the label's tint, so the active tab rings it instead of dimming the
+						     idle one like the icons: a greyed-out face looks out of place
+						     (https://support.discord.com/hc/ja/community/posts/360058100671-New-tabs-UI). -->
+						<UserAvatar
+							seed={avatarSeed}
+							class="size-5 transition-[scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none {active
+								? 'ring-2 ring-primary-700 dark:ring-primary'
+								: 'ring-1 ring-border'}"
+						/>
+					{:else}
+						<Icon
+							class={[
+								'size-5 transition-[color,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none',
+								active
+									? 'text-primary-700 dark:text-primary'
+									: 'text-muted-foreground group-hover:text-foreground'
+							]}
+						/>
+					{/if}
 					{#if updateDot}
 						<!-- Points at the Profile hub's update row. Primary, like the bell's
 						     unseen badge: red would read as an error. -->

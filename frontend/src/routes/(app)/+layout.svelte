@@ -296,5 +296,5 @@
 		</main>
 	</div>
 
-	<AppBottomNav {activeUrl} scrollToTop={scrollPageToTop} />
+	<AppBottomNav {activeUrl} avatarSeed={user?.avatar_seed ?? null} scrollToTop={scrollPageToTop} />
 </div>
