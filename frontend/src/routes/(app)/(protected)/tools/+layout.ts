@@ -3,7 +3,6 @@ import { error, redirect } from '@sveltejs/kit';
 
 import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { queryForLoad } from '#lib/api/index.js';
-import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 import { m } from '#lib/paraglide/messages.js';
 import { isReachable } from '#lib/services/reachability.js';
 import { isStaff } from '#lib/utils/permissions.js';
@@ -29,11 +28,15 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		redirect(307, resolve('tools'));
 	}
 
-	// Read once for every tool guard below (the quest tool is off with the quest).
-	// Cached after the first visit; a failed fetch falls back to the defaults.
-	const toolConfig = await queryForLoad(queryClient, getPublicConfigOptions()).catch(
-		() => FALLBACK_CONFIG
-	);
+	// Read once for every tool guard (the quest tool is off with the quest). A
+	// persisted or already-loaded copy answers at once, however old: the guard is
+	// a UX redirect and the backend enforces the real rule. Only a true cache miss
+	// asks the network, and if that fails the guard fails open on the quest flag
+	// rather than locking out a quest awarder over a request that didn't land.
+	const toolConfig = await queryForLoad(queryClient, {
+		...getPublicConfigOptions(),
+		staleTime: 'static'
+	}).catch(() => ({ quest_enabled: true }));
 
 	return { offlineUnavailable: offline, toolConfig };
 };
