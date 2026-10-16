@@ -8,6 +8,7 @@
 	import type { NotificationDto } from '#lib/api/generated/index.js';
 
 	import { countUnreadNotificationsOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { checkSubscription } from '#lib/api/generated/index.js';
 	import { NOTIFICATION_BADGE_MAX } from '#lib/constants/notifications.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
@@ -47,6 +48,11 @@
 		setAppBadgeCount(unreadCount);
 	});
 
+	async function isPushRegistered(endpoint: string) {
+		const { data } = await checkSubscription({ query: { endpoint } });
+		return data?.subscribed ?? false;
+	}
+
 	function handleNewNotification(notification: NotificationDto) {
 		// On the notifications page the item already appears at the top of the
 		// list, so a toast would only repeat it — Apple's HIG: in the foreground,
@@ -56,8 +62,8 @@
 		// Where the browser shows pushes itself (Declarative Web Push on iOS), the
 		// OS notification appears over the open app too and nothing can stop it,
 		// so the toast would repeat it. Checked per event because push can be
-		// switched on or off while the bell stays mounted.
-		void pushShowsOverOpenApp().then((osShowsIt) => {
+		// switched on or off, or the account changed, while the bell stays mounted.
+		void pushShowsOverOpenApp(isPushRegistered).then((osShowsIt) => {
 			if (!osShowsIt) {
 				toastService.push(notification);
 			}

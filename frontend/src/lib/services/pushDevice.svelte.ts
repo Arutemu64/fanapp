@@ -78,15 +78,31 @@ export async function getDevicePushState(
 
 /**
  * Whether a new notification also shows as an OS notification while the app is
- * open on this device. True where the browser shows pushes itself and this device
- * is subscribed, so the in-app toast would repeat it. Elsewhere the service worker
- * skips the OS notification for a visible app and the toast is the only alert.
+ * open on this device. True where the browser shows pushes itself and the signed-in
+ * account's pushes reach this device, so the in-app toast would repeat it.
+ * Elsewhere the service worker skips the OS notification for a visible app and the
+ * toast is the only alert.
  */
-export async function pushShowsOverOpenApp(browser: PushBrowser = browserPush): Promise<boolean> {
+export async function pushShowsOverOpenApp(
+	isRegistered: PushBackend['isRegistered'],
+	browser: PushBrowser = browserPush
+): Promise<boolean> {
 	if (!browser.isSupported() || !browser.showsPushItself()) {
 		return false;
 	}
-	return (await getDevicePushState(browser)) === 'on';
+	try {
+		const found = await inspectBrowser(browser);
+		if (typeof found === 'string') {
+			return false;
+		}
+		// The browser keeps its subscription across logout, and the server ties it
+		// to whoever registered it, so on a shared device only the server knows
+		// whether this account's pushes come here.
+		return await isRegistered(found.endpoint);
+	} catch {
+		// A repeated alert beats a missing one, so a failed check keeps the toast.
+		return false;
+	}
 }
 
 interface PushDeviceOptions {
