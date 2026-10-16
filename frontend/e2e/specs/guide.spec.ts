@@ -37,6 +37,6 @@ test.describe('guide articles', () => {
 	test('an unknown article shows the error page', async ({ page }) => {
 		await page.goto('/guide/no-such-article');
 
-		await expect(page.getByRole('heading', { name: /404|не найден/i }).first()).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Страница не найдена' })).toBeVisible();
 	});
 });

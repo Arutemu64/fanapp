@@ -94,7 +94,6 @@ test('closed voting shows the closed banner', async ({ page, api }) => {
 	});
 	await page.goto('/voting');
 	await expect(page.getByText('Голосование сейчас закрыто.')).toBeVisible();
-	expect(api.unmatched).toEqual([]); // no endpoint went unmocked
 });
 ```
 
@@ -113,7 +112,8 @@ for the closed/open, offline and SSE patterns respectively.
 - **Type your bodies** with `json<SomeDto>({ … })`, importing the generated type
   from `../fixtures`, so a mock that drifts from the real contract fails to compile.
 - An endpoint nobody mocked returns a **loud 404** and lands in `api.unmatched`.
-  Assert `api.unmatched` is empty, or add the missing route.
+  The `api` fixture fails the test at teardown if it isn't empty, so add the
+  missing route; specs don't assert it themselves.
 - The build runs with **SmartCaptcha and Sentry off** (`webServer.env` in
   `playwright.config.ts`), whatever CI's repository variables or your `.env` set:
   the captcha widget refuses `127.0.0.1`, and Sentry's sampled traces would post to

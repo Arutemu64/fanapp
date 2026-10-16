@@ -38,13 +38,14 @@ test.describe('in a desktop browser that cannot install', () => {
 	test.use({ userAgent: FIREFOX_DESKTOP });
 
 	test('hides the install row', async ({ page }) => {
+		await page.clock.install();
 		await page.goto('/profile');
 		await expect(page.getByText('Тема', { exact: true })).toBeVisible();
 
-		// The library's fallback reports availability on a 1 s timer, so give it
-		// longer than that before asserting the row never appeared.
-		// eslint-disable-next-line playwright/no-wait-for-timeout -- proving an absence needs the time to pass
-		await page.waitForTimeout(2000);
+		// The library's fallback reports availability on a 1 s timer, so run the
+		// fake clock past it before asserting the row never appeared.
+		// https://playwright.dev/docs/clock
+		await page.clock.runFor(2000);
 		await expect(page.getByRole('button', { name: /Установить приложение/ })).toHaveCount(0);
 	});
 });

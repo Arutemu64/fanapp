@@ -40,7 +40,6 @@ test.describe('voting', { tag: '@critical' }, () => {
 		await page.goto('/voting');
 
 		await expect(page.getByText('Голосование сейчас закрыто.')).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('lists nominations when voting is open', async ({ page, api }) => {
@@ -55,6 +54,5 @@ test.describe('voting', { tag: '@critical' }, () => {
 		await expect(page.getByText('Лучший косплей')).toBeVisible();
 		// Open voting hides the status banner.
 		await expect(page.getByText('Голосование сейчас закрыто.')).toHaveCount(0);
-		expect(api.unmatched).toEqual([]);
 	});
 });

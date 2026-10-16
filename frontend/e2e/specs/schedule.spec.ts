@@ -18,7 +18,7 @@ const schedule: GetScheduleOutput['schedule'] = [
 	}))
 ];
 
-test.describe('schedule', () => {
+test.describe('schedule', { tag: '@critical' }, () => {
 	// A single-select toggle group clears its value when the pressed item is tapped
 	// again; the page must keep one scope selected and the list filtered to match.
 	test('keeps the scope selected when the pressed option is tapped again', async ({
@@ -52,6 +52,5 @@ test.describe('schedule', () => {
 		await expect(subscribed).toBeChecked();
 		await expect(all).not.toBeChecked();
 		await expect(page.getByText('Выступление 2')).toBeHidden();
-		expect(api.unmatched).toEqual([]);
 	});
 });
