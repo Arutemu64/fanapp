@@ -14,7 +14,8 @@ Scope is one file and a hard latency budget (hooks are synchronous, so every
 millisecond is added to the agent's turn). Measured on this repo:
     ruff check       ~0.3s   -> in
     prettier --check ~1.2s   -> in
-    eslint           ~8.7s   -> OUT, stays in pre-commit and CI
+    eslint, Tailwind rules only (eslint.tailwind.config.js) ~1s -> in
+    eslint, full     ~8.7s   -> OUT, stays in pre-commit and CI
     ty / svelte-check       whole-project -> OUT, pre-push and CI already run them
 That mirrors the fast/slow split .pre-commit-config.yaml already makes between
 its pre-commit and pre-push stages.
@@ -104,6 +105,44 @@ def check_prettier(path: Path, repo: Path) -> str | None:
     )
 
 
+def check_tailwind(path: Path, repo: Path) -> str | None:
+    """Design-system class rules (type roles, colour tokens, z-index ladder).
+
+    Runs eslint's own entry point under node rather than `pnpm exec`, which adds
+    ~0.5s of package-manager startup to every edit.
+    """
+    frontend = repo / "frontend"
+    rel = path.relative_to(frontend)
+    code, out = run(
+        [
+            "node",
+            "node_modules/eslint/bin/eslint.js",
+            "--config",
+            "eslint.tailwind.config.js",
+            "--no-warn-ignored",
+            "--format",
+            "json",
+            str(rel),
+        ],
+        frontend,
+    )
+    if code == 0:
+        return None
+    try:
+        results = json.loads(out)
+    except ValueError:
+        return None  # eslint itself failed; the full lint in pre-commit reports it
+    lines = [
+        f"  line {message['line']}: {message['message']}"
+        for result in results
+        for message in result.get("messages", [])
+    ]
+    if not lines:
+        return None
+    header = "Tailwind class rules (eslint-plugin-better-tailwindcss):"
+    return "\n".join([header, *lines])
+
+
 def strip_non_markup(source: str) -> str:
     """Drop <script>/<style> bodies, comments and {expressions} from a Svelte file.
 
@@ -167,6 +206,18 @@ def check_russian_copy(path: Path) -> str | None:
     )
 
 
+def check_frontend(path: Path, repo: Path) -> list[str | None]:
+    if path.suffix not in {".svelte", ".ts", ".js", ".css", ".json"}:
+        return []
+    reports = [check_prettier(path, repo)]
+    in_src = path.is_relative_to(repo / "frontend" / "src")
+    if in_src and path.suffix in {".svelte", ".ts", ".js"}:
+        reports.append(check_tailwind(path, repo))
+    if path.suffix == ".svelte":
+        reports.append(check_russian_copy(path))
+    return reports
+
+
 def main() -> int:
     try:
         event = json.load(sys.stdin)
@@ -195,16 +246,8 @@ def main() -> int:
 
     if area == "backend" and path.suffix == ".py":
         reports.append(check_python(path, repo))
-    elif area == "frontend" and path.suffix in {
-        ".svelte",
-        ".ts",
-        ".js",
-        ".css",
-        ".json",
-    }:
-        reports.append(check_prettier(path, repo))
-        if path.suffix == ".svelte":
-            reports.append(check_russian_copy(path))
+    elif area == "frontend":
+        reports.extend(check_frontend(path, repo))
 
     found = [r for r in reports if r]
     if not found:

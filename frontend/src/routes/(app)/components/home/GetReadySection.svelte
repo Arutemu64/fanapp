@@ -111,7 +111,7 @@
 
 {#if steps.length > 0}
 	<section aria-labelledby="get-ready-heading" class="flex flex-col gap-3">
-		<h2 id="get-ready-heading" class="text-base font-semibold text-foreground sm:text-lg">
+		<h2 id="get-ready-heading" class="text-section text-foreground">
 			{heading}
 		</h2>
 

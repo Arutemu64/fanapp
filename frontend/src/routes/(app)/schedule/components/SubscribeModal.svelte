@@ -110,7 +110,7 @@
 						autocomplete="off"
 						bind:value={counter}
 						onblur={() => setCounter(counter)}
-						class="h-full w-full border-0 bg-transparent pb-5 text-center font-bold text-foreground [-moz-appearance:textfield] focus:ring-0 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+						class="size-full border-0 bg-transparent pb-5 text-center font-bold text-foreground [-moz-appearance:textfield] focus:ring-0 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 					/>
 					<div
 						class="pointer-events-none absolute bottom-1 flex items-center text-xs text-muted-foreground select-none"

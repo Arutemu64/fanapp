@@ -55,12 +55,12 @@
 	<div class="flex flex-col gap-4 @md:flex-row @md:items-center">
 		<div class="flex min-w-0 flex-1 items-center gap-4">
 			<span
-				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"
+				class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary"
 			>
 				<ThumbsUp class="size-6" aria-hidden="true" />
 			</span>
 			<div class="min-w-0 flex-1">
-				<h2 id="voting-heading" class="text-base font-bold text-foreground @md:text-lg">
+				<h2 id="voting-heading" class="text-section font-bold text-foreground">
 					{m.voting_open_title()}
 				</h2>
 				<p class="mt-1 text-sm leading-relaxed text-muted-foreground">{action.description}</p>

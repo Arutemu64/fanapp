@@ -9,6 +9,8 @@ import globals from 'globals';
 import path from 'node:path';
 import ts from 'typescript-eslint';
 
+import { tailwindConfigs } from './eslint.tailwind.js';
+
 // SvelteKit 3 keeps the Svelte config in vite.config.ts; load-config reads it from
 // there (https://sveltejs.github.io/eslint-plugin-svelte/user-guide/). The resolved
 // config carries a function default under `typescript`, which `eslint --cache`
@@ -94,6 +96,7 @@ export default defineConfig(
 			'no-useless-assignment': 'off'
 		}
 	},
+	...tailwindConfigs,
 	{
 		// Design-system primitive renders <a href={...}> from an external/variable href.
 		files: ['src/lib/components/ui/button/button.svelte'],
@@ -129,6 +132,8 @@ export default defineConfig(
 		// here because their nearest tsconfig is the app one, which excludes them.
 		files: [
 			'eslint.config.js',
+			'eslint.tailwind.config.js',
+			'eslint.tailwind.js',
 			'openapi-ts.config.ts',
 			'playwright.config.ts',
 			'playwright.gallery.config.ts'

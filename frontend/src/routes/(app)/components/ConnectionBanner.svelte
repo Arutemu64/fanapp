@@ -123,11 +123,11 @@
 		]}
 	>
 		{#if phase === 'offline'}
-			<AlertCircle class="h-4 w-4 shrink-0" aria-hidden="true" />
+			<AlertCircle class="size-4 shrink-0" aria-hidden="true" />
 		{:else if phase === 'catching-up'}
 			<Spinner class="shrink-0" aria-hidden="true" />
 		{:else}
-			<CheckCircle2 class="h-4 w-4 shrink-0" aria-hidden="true" />
+			<CheckCircle2 class="size-4 shrink-0" aria-hidden="true" />
 		{/if}
 		<p class="flex-1 leading-snug" aria-hidden="true">{shownMessage}</p>
 		{#if phase === 'offline'}

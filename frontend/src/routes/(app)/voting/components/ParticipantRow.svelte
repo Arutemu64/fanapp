@@ -78,7 +78,7 @@
 	{/if}
 
 	<div class="min-w-0 flex-1">
-		<h3 class="text-base leading-snug font-semibold break-words text-foreground">
+		<h3 class="text-base leading-snug font-semibold wrap-break-word text-foreground">
 			{participant.title}
 		</h3>
 

@@ -13,7 +13,7 @@
      the brand. Shared by the schedule and voting lists so both read as one app. -->
 <div
 	class={[
-		'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
+		'flex w-12 shrink-0 flex-col items-center rounded-lg border p-1.5 text-center',
 		highlighted ? 'border-success/40 bg-card' : 'border-border bg-muted'
 	]}
 >

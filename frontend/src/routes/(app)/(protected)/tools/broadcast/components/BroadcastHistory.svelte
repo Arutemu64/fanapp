@@ -93,7 +93,7 @@
 </script>
 
 <section class="mx-auto w-full max-w-2xl">
-	<h2 class="mb-3 text-base font-semibold text-foreground sm:text-lg">
+	<h2 class="mb-3 text-section text-foreground">
 		{m.broadcast_history_title()}
 	</h2>
 
@@ -124,7 +124,7 @@
 						</div>
 
 						{#if mailing.body}
-							<p class="line-clamp-2 text-sm break-words whitespace-pre-line">
+							<p class="line-clamp-2 text-sm wrap-break-word whitespace-pre-line">
 								{mailing.body}
 							</p>
 						{/if}

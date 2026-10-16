@@ -94,19 +94,19 @@
 <div class={wrapperClass}>
 	<Card.Root class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
-			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
-				<StatusIcon class="h-8 w-8" />
+			<div class="mb-4 flex size-16 items-center justify-center rounded-full {iconColorClass}">
+				<StatusIcon class="size-8" />
 			</div>
 
 			<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
 				{offline ? m.error_state_offline_title() : m.error_state_status_title({ status })}
 			</span>
 
-			<h2 class="mb-2 text-xl font-bold text-foreground sm:text-2xl">
+			<h2 class="mb-2 text-headline text-foreground">
 				{title}
 			</h2>
 
-			<p class="mb-6 text-sm text-muted-foreground">
+			<p class="mb-6 text-body text-muted-foreground">
 				{description}
 			</p>
 

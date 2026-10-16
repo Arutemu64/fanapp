@@ -341,13 +341,13 @@
 		<!-- top / transition come from the (app) layout's <main> (--sticky-top): a bare top-0
 			would tuck the header under the top bar. See the note there. -->
 		<div
-			class="sticky z-20 bg-background/95 backdrop-blur transition-[top] ease-out motion-reduce:transition-none reduced-transparency:bg-background"
+			class="sticky z-20 bg-background/95 backdrop-blur-sm transition-[top] ease-out motion-reduce:transition-none reduced-transparency:bg-background"
 			style:top="var(--sticky-top, 0px)"
 			style:transition-duration="var(--sticky-top-duration, 0ms)"
 		>
 			<!-- min-h-11 is load-bearing: the nomination header sticks 2.75rem below this one. -->
 			<div class="flex min-h-11 items-center justify-between gap-3 px-1">
-				<h2 class="truncate text-base font-semibold tracking-tight text-foreground">
+				<h2 class="truncate text-section tracking-tight text-foreground">
 					{block.title}
 				</h2>
 				<span class="shrink-0 text-xs text-muted-foreground tabular-nums">
@@ -365,7 +365,7 @@
 					<!-- Stacks 2.75rem below the block header (its min-h-11), sharing the layout's
 						--sticky-top offset so both track the top bar together. -->
 					<div
-						class="sticky z-10 rounded-t-xl border-b border-border bg-card/95 px-3 py-2 backdrop-blur transition-[top] ease-out motion-reduce:transition-none"
+						class="sticky z-10 rounded-t-xl border-b border-border bg-card/95 px-3 py-2 backdrop-blur-sm transition-[top] ease-out motion-reduce:transition-none"
 						style:top="calc(var(--sticky-top, 0px) + 2.75rem)"
 						style:transition-duration="var(--sticky-top-duration, 0ms)"
 					>

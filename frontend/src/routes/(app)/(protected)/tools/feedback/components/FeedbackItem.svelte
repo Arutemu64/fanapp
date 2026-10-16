@@ -23,5 +23,5 @@
 		<span>{submittedAt}</span>
 	</div>
 	<!-- Free-text feedback: Svelte escapes it, so it renders as plain text. -->
-	<p class="text-sm whitespace-pre-line text-foreground">{feedback.text}</p>
+	<p class="text-body whitespace-pre-line text-foreground">{feedback.text}</p>
 </article>

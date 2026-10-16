@@ -36,7 +36,7 @@
 			<div class="w-12 shrink-0" aria-hidden="true"></div>
 		{/if}
 		<div class="min-w-0 flex-1">
-			<p class="text-sm leading-snug font-semibold text-foreground sm:text-base">{event.title}</p>
+			<p class="text-base leading-snug font-semibold text-foreground">{event.title}</p>
 			{#if event.nomination_title}
 				<p class="mt-0.5 truncate text-xs text-muted-foreground">{event.nomination_title}</p>
 			{/if}
@@ -61,7 +61,7 @@
 	class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
 >
 	<div class="flex items-center justify-between gap-3">
-		<h2 id="up-next-heading" class="text-base font-semibold text-foreground sm:text-lg">
+		<h2 id="up-next-heading" class="text-section text-foreground">
 			{m.home_next()}
 		</h2>
 		<Button href="/schedule" variant="ghost" size="sm" class="-mr-2 shrink-0">

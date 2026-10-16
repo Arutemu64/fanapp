@@ -47,7 +47,7 @@
 			for={id}
 			class={['block', disabled || blocked ? 'cursor-not-allowed' : 'cursor-pointer']}
 		>
-			<span id={titleId} class="block text-sm font-medium text-foreground">{title}</span>
+			<span id={titleId} class="block text-base font-medium text-foreground">{title}</span>
 			<span id={descriptionId} class="mt-1 block text-sm leading-relaxed text-muted-foreground">
 				{description}
 			</span>

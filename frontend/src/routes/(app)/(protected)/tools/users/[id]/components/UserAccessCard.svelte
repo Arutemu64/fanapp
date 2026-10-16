@@ -124,7 +124,7 @@
 <Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 	<div class="flex items-center gap-2">
 		<ShieldCheck class="size-5 text-primary" aria-hidden="true" />
-		<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.access_title()}</h2>
+		<h2 class="text-section text-foreground">{m.access_title()}</h2>
 	</div>
 
 	{#if isSelf}

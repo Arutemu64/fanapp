@@ -122,7 +122,7 @@
 			screens, sits side by side from sm up. -->
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				{#if showVoteHint}
-					<p class="text-sm text-muted-foreground sm:text-base">
+					<p class="text-body text-muted-foreground">
 						{m.voting_pick_participant()}
 					</p>
 				{/if}

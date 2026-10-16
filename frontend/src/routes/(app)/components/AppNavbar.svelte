@@ -36,9 +36,9 @@
 	]}
 >
 	<!-- Page title comes from each page's `load` via `page.data.title`; render it
-		as the single page <h1>. The row is held at the bell's h-11 so the bar keeps
-		one height whether or not the bell renders (guests have none). -->
-	<div class="flex h-11 min-w-0 flex-1 items-center gap-1">
+		as the single page <h1>. The row is held at least at the bell's h-11 so the bar
+		keeps one height whether or not the bell renders (guests have none). -->
+	<div class="flex min-h-11 min-w-0 flex-1 items-center gap-1">
 		<!-- Leading back arrow, the top-app-bar convention: an installed iOS PWA has no
 			system back button, and unlike an in-content link this one returns with the
 			bar on any upward scroll. -ml-2 lines the arrow glyph up with the page edge. -->
@@ -54,7 +54,13 @@
 			</Button>
 		{/if}
 		{#if pageTitle}
-			<h1 class="truncate text-xl font-bold text-foreground sm:text-2xl">
+			<!-- Long titles («Настройки уведомлений», and nomination names, which are
+				organiser data) overflow a 360px phone beside the back arrow and bell, so
+				they wrap to a second line instead of truncating: a clipped page title
+				loses the word that names the page. The layout measures the bar, so <main>'s
+				offset follows the taller row. Keep the role's 1.375 line height, not
+				leading-tight: line-clamp clips, and Cyrillic descenders (у, д) need the room. -->
+			<h1 class="line-clamp-2 text-headline wrap-break-word text-foreground">
 				{pageTitle}
 			</h1>
 		{/if}

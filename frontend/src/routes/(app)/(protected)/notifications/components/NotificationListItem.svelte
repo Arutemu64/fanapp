@@ -76,7 +76,7 @@
 	</div>
 
 	<div class="min-w-0 flex-1">
-		<p class="text-sm font-semibold text-foreground">
+		<p class="text-base font-semibold text-foreground">
 			{#if href}
 				<a
 					{href}
@@ -92,7 +92,7 @@
 			<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
 			<!-- eslint-disable svelte/no-at-html-tags -->
 			<div
-				class="mt-0.5 text-sm whitespace-pre-line text-foreground/80 [&_a]:relative [&_a]:underline [&_a]:underline-offset-2"
+				class="mt-0.5 text-body whitespace-pre-line text-foreground/80 [&_a]:relative [&_a]:underline [&_a]:underline-offset-2"
 			>
 				{@html notification.body}
 			</div>

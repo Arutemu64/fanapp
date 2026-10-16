@@ -198,7 +198,7 @@
 
 		<div class="flex flex-col gap-1 text-center">
 			<!-- Just «Вход»: the logo above already names ФАН ФАН. -->
-			<h1 class="text-2xl font-bold text-foreground">{m.login_title()}</h1>
+			<h1 class="text-headline text-foreground">{m.login_title()}</h1>
 			{#if step === 'options'}
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
 					sub-steps are the task, not the pitch. Every method — email or social —

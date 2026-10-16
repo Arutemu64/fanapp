@@ -76,7 +76,7 @@
 	 what sits on it is always the most useful thing for that moment. -->
 <section
 	aria-labelledby="hero-heading"
-	class="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-primary-900 via-gray-900 to-secondary-900 text-white shadow-sm"
+	class="relative isolate overflow-hidden rounded-2xl bg-linear-to-br from-primary-900 via-gray-900 to-secondary-900 text-white shadow-sm"
 >
 	<!-- Key art as a backdrop. Decorative now that it carries no message of its
 		 own, so alt="" — the dark brand bed underneath keeps the card readable while
@@ -100,14 +100,14 @@
 			decoding="async"
 			fetchpriority="high"
 			onerror={() => (imageFailed = true)}
-			class="absolute inset-0 -z-10 h-full w-full object-cover"
+			class="absolute inset-0 -z-10 size-full object-cover"
 		/>
 	{/if}
 	<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
 		 layer under it to hold contrast wherever the crop lands. -->
 	<div
 		aria-hidden="true"
-		class="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/60 to-black/35"
+		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/60 to-black/35"
 	></div>
 
 	<div class="flex flex-col gap-3 p-4 pt-16 sm:p-6 sm:pt-24">
@@ -168,7 +168,7 @@
 				{#if featuredNumber !== null}
 					<!-- The schedule's number badge, restyled for the dark art. -->
 					<div
-						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 px-1.5 py-1.5 text-center"
+						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 p-1.5 text-center"
 					>
 						<span class="text-xs font-bold tracking-widest uppercase">№</span>
 						<span class="font-display text-base leading-none font-bold tabular-nums"
@@ -184,10 +184,10 @@
 				</div>
 			</div>
 		{:else if phase === 'during'}
-			<h2 id="hero-heading" class="text-lg font-semibold">{m.home_festival_ongoing()}</h2>
+			<h2 id="hero-heading" class="text-section">{m.home_festival_ongoing()}</h2>
 		{:else}
-			<h2 id="hero-heading" class="text-lg font-semibold">{m.home_festival_finished()}</h2>
-			<p class="max-w-prose text-sm leading-relaxed text-white/85">
+			<h2 id="hero-heading" class="text-section">{m.home_festival_finished()}</h2>
+			<p class="max-w-prose text-body leading-relaxed text-white/85">
 				{m.home_festival_farewell()}
 			</p>
 			<!-- Guests land on the auth-gated feedback page, which bounces them to

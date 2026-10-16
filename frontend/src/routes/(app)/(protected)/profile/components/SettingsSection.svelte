@@ -20,7 +20,7 @@
 <section class="flex flex-col gap-3">
 	{#if title}
 		<div class="flex flex-col gap-1">
-			<h2 class="text-base leading-snug font-semibold text-foreground sm:text-lg">{title}</h2>
+			<h2 class="text-section text-foreground">{title}</h2>
 			{#if description}
 				<p class="text-sm leading-5 text-muted-foreground">{description}</p>
 			{/if}

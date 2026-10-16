@@ -55,15 +55,16 @@ Both are self-hosted via Fontsource with Cyrillic subsets — all copy is Russia
 
 ### Hierarchy
 - **Display** (Unbounded, 700, ~1.5rem+, line-height 1.15): Brand wordmark and rare identity moments only. Never body, never data.
-- **Headline** (Inter, 700, ~1.25rem, line-height 1.25): Page titles (in navbar), error-card titles. `text-xl`/`text-2xl`.
-- **Title** (Inter, 600, ~1rem, line-height 1.4): Card headings, notification titles, list-item leads.
-- **Body** (Inter, 400, ~0.875rem, line-height 1.6): Descriptions and prose. `text-sm`/`text-base`; cap prose at 65–75ch (the `max-w-5xl` single column already enforces this on phones).
+- **Headline** (Inter, 700, 1.5rem, line-height 1.375): Page titles (in navbar), error-card titles. `text-headline` at every width; a long title wraps to two lines rather than truncating.
+- **Section** (Inter, 600, 1.125rem, line-height 1.375): Section and card-group headings. `text-section` at every width.
+- **Title** (Inter, 600, 1rem, line-height 1.4): Card headings, notification titles, list-item leads.
+- **Body** (Inter, 400, 1rem, line-height 1.6): Descriptions and prose. `text-body`; 14px (`text-sm`) is for secondary text only — helper lines, a subtitle under a heading, metadata rows. Cap prose at 65–75ch (the `max-w-5xl` single column already enforces this on phones).
 - **Label** (Inter, 600, ~0.75rem, letter-spacing 0.05em, sometimes uppercase): Status pills ("Офлайн", "Ошибка 500"), meta. The *only* place tracked uppercase is allowed.
 
 ### Named Rules
 **The Inter-For-The-Job Rule.** Unbounded is identity, Inter is interface. Display type never appears in a button, input, table cell, or label. A label set in Unbounded is a bug.
 
-**The Fixed-Scale Rule.** Type sizes are fixed rem steps, not fluid `clamp()`. Users view at consistent phone DPI; a heading that shrinks in a panel looks worse, not designed.
+**The Fixed-Scale Rule.** Type sizes are fixed rem steps, not fluid `clamp()`, and they don't step down on phones (no `text-sm sm:text-base`). Users view at consistent phone DPI and read here on a phone; a heading that shrinks in a panel looks worse, not designed.
 
 ## 4. Elevation
 

@@ -56,7 +56,7 @@
 	<CheckCircle2 class="shrink-0" />
 	<div class="min-w-0 flex-1">
 		<Alert.Title>{m.voting_your_choice()}</Alert.Title>
-		<Alert.Description class="break-words">{participantLabel}</Alert.Description>
+		<Alert.Description class="wrap-break-word">{participantLabel}</Alert.Description>
 	</div>
 	<!-- A closed ballot is final (CancelVote enforces the same window as casting),
 	     so the button goes rather than sitting there disabled. -->

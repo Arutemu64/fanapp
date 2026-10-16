@@ -33,7 +33,7 @@
 		<div class="flex items-center gap-4">
 			<UserAvatar seed={profile.avatar_seed} class="size-14" />
 			<div class="min-w-0">
-				<h2 class="text-xl font-bold break-words text-foreground sm:text-2xl">
+				<h2 class="text-headline wrap-break-word text-foreground">
 					{profile.username}
 				</h2>
 				<Badge variant="secondary" class="mt-1">
@@ -77,7 +77,7 @@
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Link2 class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-base font-semibold text-foreground sm:text-lg">{m.user_linked_accounts()}</h2>
+			<h2 class="text-section text-foreground">{m.user_linked_accounts()}</h2>
 		</div>
 
 		{#if profile.social_links.length > 0}

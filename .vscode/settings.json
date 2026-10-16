@@ -73,5 +73,11 @@
 		"**/.ruff_cache/**": true,
 		"**/.pytest_cache/**": true,
 		"**/frontend/build/**": true
-	}
+	},
+
+	// better-tailwindcss/enforce-canonical-classes (ADR-0030) already reports these,
+	// with the type roles and leading-* ignored; the extension's copy doesn't know
+	// that and would suggest rewriting text-body back to text-base.
+	// https://github.com/schoero/eslint-plugin-better-tailwindcss/blob/main/docs/rules/enforce-canonical-classes.md
+	"tailwindCSS.lint.suggestCanonicalClasses": "ignore"
 }
