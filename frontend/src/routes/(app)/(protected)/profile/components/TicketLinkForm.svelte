@@ -109,7 +109,6 @@
 					id="ticket-barcode"
 					name="ticket_barcode"
 					bind:value={barcode}
-					placeholder={m.ticket_number_placeholder()}
 					autocomplete="off"
 					autocapitalize="off"
 					enterkeyhint="go"
