@@ -45,7 +45,7 @@
 		"@sveltejs/load-config": "0.2.3",
 		"@sveltejs/vite-plugin-svelte": "7.3.1",
 		"@tailwindcss/vite": "4.3.3",
-		"@types/node": "26.6.4",
+		"@types/node": "26.6.5",
 		"@vitest/eslint-plugin": "1.6.27",
 		"bits-ui": "^2.19.0",
 		"clsx": "^2.1.1",
