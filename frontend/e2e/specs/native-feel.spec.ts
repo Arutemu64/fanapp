@@ -167,11 +167,13 @@ test.describe('native feel', () => {
 		await dialog.evaluate((element) =>
 			Promise.allSettled(element.getAnimations().map((animation) => animation.finished))
 		);
-		// A missing box or viewport falls back to zeros, which fails every check below.
-		const box = (await dialog.boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 };
-		const viewport = page.viewportSize() ?? { width: 0, height: 0 };
+		const box = await dialog.boundingBox();
+		const viewport = page.viewportSize();
+		expect(box).not.toBeNull();
+		expect(viewport).not.toBeNull();
 
-		/* eslint-disable playwright/no-conditional-in-test, playwright/no-conditional-expect -- the layout differs per device project by design */
+		/* eslint-disable playwright/no-conditional-in-test, playwright/no-conditional-expect -- the null guard only narrows the types; the layout differs per device project by design */
+		if (box === null || viewport === null) return;
 		if (isDesktop(testInfo.project.name)) {
 			expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(2);
 			expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(2);
