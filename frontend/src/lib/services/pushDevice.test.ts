@@ -8,7 +8,12 @@ vi.mock('@sentry/sveltekit', () => ({
 
 import type { PushBrowser } from './pushBrowser.js';
 
-import { getDevicePushState, type PushBackend, PushDevice } from './pushDevice.svelte';
+import {
+	getDevicePushState,
+	type PushBackend,
+	PushDevice,
+	pushShowsOverOpenApp
+} from './pushDevice.svelte';
 
 function fakeSubscription(complete = true) {
 	return {
@@ -24,6 +29,7 @@ function fakeSubscription(complete = true) {
 function fakeBrowser(overrides: Partial<PushBrowser> = {}): PushBrowser {
 	return {
 		isSupported: () => true,
+		showsPushItself: () => false,
 		permission: () => 'granted',
 		requestPermission: vi.fn().mockResolvedValue('granted'),
 		getSubscription: vi.fn().mockResolvedValue(null),
@@ -66,6 +72,28 @@ describe('getDevicePushState', () => {
 	it('is unknown when the browser throws', async () => {
 		const browser = fakeBrowser({ getSubscription: () => Promise.reject(new Error('boom')) });
 		expect(await getDevicePushState(browser)).toBe('unknown');
+	});
+});
+
+describe('pushShowsOverOpenApp', () => {
+	const sub = fakeSubscription() as unknown as PushSubscription;
+	const subscribed = { getSubscription: () => Promise.resolve(sub) };
+
+	it('is true only where the browser shows pushes itself and this device is subscribed', async () => {
+		expect(
+			await pushShowsOverOpenApp(fakeBrowser({ ...subscribed, showsPushItself: () => true }))
+		).toBe(true);
+		expect(await pushShowsOverOpenApp(fakeBrowser({ showsPushItself: () => true }))).toBe(false);
+		expect(await pushShowsOverOpenApp(fakeBrowser(subscribed))).toBe(false);
+	});
+
+	it('is false when permission is denied', async () => {
+		const browser = fakeBrowser({
+			...subscribed,
+			showsPushItself: () => true,
+			permission: () => 'denied'
+		});
+		expect(await pushShowsOverOpenApp(browser)).toBe(false);
 	});
 });
 
