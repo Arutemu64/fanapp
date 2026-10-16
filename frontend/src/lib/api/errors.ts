@@ -232,6 +232,7 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: m.error_already_voted_in_this_nomination,
+	CANNOT_AWARD_SELF: m.error_cannot_award_self,
 	CANNOT_CHANGE_OWN_ACCESS: m.error_cannot_change_own_access,
 	CANNOT_REMOVE_LAST_SIGN_IN_METHOD: m.error_cannot_remove_last_sign_in_method,
 	CAPTCHA_VERIFICATION_FAILED: m.error_captcha_verification_failed,
@@ -254,6 +255,12 @@ const ERROR_MESSAGES = {
 	OUTDATED_SCHEDULE_CHANGE: m.error_outdated_schedule_change,
 	PERMISSION_NOT_ASSIGNABLE: m.error_permission_not_assignable,
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: m.error_push_subscription_already_exists,
+	QUEST_AWARD_ALREADY_CANCELLED: m.error_quest_award_already_cancelled,
+	QUEST_AWARD_ALREADY_EXISTS: m.error_quest_award_already_exists,
+	QUEST_AWARD_AMOUNT_OUT_OF_RANGE: m.error_quest_award_amount_out_of_range,
+	QUEST_AWARD_CANCEL_WINDOW_EXPIRED: m.error_quest_award_cancel_window_expired,
+	QUEST_AWARD_NOT_FOUND: m.error_quest_award_not_found,
+	QUEST_DISABLED: m.error_quest_disabled,
 	SAME_EVENTS_ARE_NOT_ALLOWED: m.error_same_events_are_not_allowed,
 	SKIPPED_EVENT_NOT_ALLOWED: m.error_skipped_event_not_allowed,
 	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: m.error_social_account_linked_to_another_user,

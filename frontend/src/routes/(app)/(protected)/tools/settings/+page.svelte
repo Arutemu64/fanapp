@@ -16,6 +16,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '#lib/utils/formatters.js';
@@ -51,12 +52,27 @@
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
 	let announcementTimeoutError = $state('');
+	let savedQuest = $state(untrack(() => ({ ...data.settings.quest })));
+	let questEnabled = $state(untrack(() => data.settings.quest.enabled));
+	let questMaxAward = $state<number | undefined>(untrack(() => data.settings.quest.max_award));
+	let questCancelWindow = $state<number | undefined>(
+		untrack(() => data.settings.quest.cancel_window_minutes)
+	);
+	let questMaxAwardError = $state('');
+	let questCancelWindowError = $state('');
 	let submitError = $state('');
+
+	// Mirror the backend bounds (UpdateAppSettingsInput).
+	const QUEST_MAX_AWARD_LIMIT = 10_000;
+	const QUEST_CANCEL_WINDOW_LIMIT = 1440;
 
 	let hasChanges = $derived(
 		festivalStart !== savedFestivalStart ||
 			festivalEnd !== savedFestivalEnd ||
-			announcementTimeout !== savedAnnouncementTimeout
+			announcementTimeout !== savedAnnouncementTimeout ||
+			questEnabled !== savedQuest.enabled ||
+			questMaxAward !== savedQuest.max_award ||
+			questCancelWindow !== savedQuest.cancel_window_minutes
 	);
 
 	function validateFestivalStart() {
@@ -126,6 +142,36 @@
 		}
 	}
 
+	function isIntegerInRange(value: number | undefined, min: number, max: number): boolean {
+		return value !== undefined && Number.isInteger(value) && value >= min && value <= max;
+	}
+
+	function validateQuestMaxAward() {
+		const valid = isIntegerInRange(questMaxAward, 1, QUEST_MAX_AWARD_LIMIT);
+		questMaxAwardError = valid ? '' : m.settings_validation_quest_max();
+		return valid;
+	}
+
+	function validateQuestCancelWindow() {
+		const valid = isIntegerInRange(questCancelWindow, 0, QUEST_CANCEL_WINDOW_LIMIT);
+		questCancelWindowError = valid ? '' : m.settings_validation_quest_window();
+		return valid;
+	}
+
+	function handleQuestMaxAwardInput() {
+		submitError = '';
+		if (questMaxAwardError) {
+			validateQuestMaxAward();
+		}
+	}
+
+	function handleQuestCancelWindowInput() {
+		submitError = '';
+		if (questCancelWindowError) {
+			validateQuestCancelWindow();
+		}
+	}
+
 	// A connection that drops mid-form keeps what was typed; the submit explains
 	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
@@ -138,23 +184,45 @@
 		const isFestivalStartValid = validateFestivalStart();
 		const isFestivalEndValid = validateFestivalEnd();
 		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
+		const isQuestMaxAwardValid = validateQuestMaxAward();
+		const isQuestCancelWindowValid = validateQuestCancelWindow();
 
-		if (!isFestivalStartValid || !isFestivalEndValid || !isAnnouncementTimeoutValid) {
+		if (
+			!isFestivalStartValid ||
+			!isFestivalEndValid ||
+			!isAnnouncementTimeoutValid ||
+			!isQuestMaxAwardValid ||
+			!isQuestCancelWindowValid
+		) {
 			return;
 		}
 
 		const nextAnnouncementTimeout = announcementTimeout;
+		const nextQuestMaxAward = questMaxAward;
+		const nextQuestCancelWindow = questCancelWindow;
 
-		if (nextAnnouncementTimeout === undefined) {
+		if (
+			nextAnnouncementTimeout === undefined ||
+			nextQuestMaxAward === undefined ||
+			nextQuestCancelWindow === undefined
+		) {
 			return;
 		}
+		const nextQuest = {
+			enabled: questEnabled,
+			max_award: nextQuestMaxAward,
+			cancel_window_minutes: nextQuestCancelWindow
+		};
 
 		saveMutation.mutate(
 			{
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
-					announcement_timeout: nextAnnouncementTimeout
+					announcement_timeout: nextAnnouncementTimeout,
+					quest_enabled: nextQuest.enabled,
+					quest_max_award: nextQuest.max_award,
+					quest_cancel_window_minutes: nextQuest.cancel_window_minutes
 				}
 			},
 			{
@@ -162,6 +230,7 @@
 					savedFestivalStart = festivalStart;
 					savedFestivalEnd = festivalEnd;
 					savedAnnouncementTimeout = nextAnnouncementTimeout;
+					savedQuest = nextQuest;
 					festivalStartError = '';
 					festivalEndError = '';
 					announcementTimeoutError = '';
@@ -171,7 +240,15 @@
 					festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
 					festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
 					announcementTimeoutError = getApiFieldError(error, 'announcement_timeout') ?? '';
-					if (festivalStartError || festivalEndError || announcementTimeoutError) {
+					questMaxAwardError = getApiFieldError(error, 'quest_max_award') ?? '';
+					questCancelWindowError = getApiFieldError(error, 'quest_cancel_window_minutes') ?? '';
+					const hasFieldError =
+						festivalStartError ||
+						festivalEndError ||
+						announcementTimeoutError ||
+						questMaxAwardError ||
+						questCancelWindowError;
+					if (hasFieldError) {
 						return;
 					}
 					submitError = getApiErrorDetail(error) ?? m.settings_save_failed();
@@ -187,7 +264,10 @@
 
 <SectionIntro description={m.settings_description()} />
 
+<!-- novalidate: the browser's own bubble for min/max would pre-empt the Russian
+     field errors with English text; the validate* functions cover the same bounds. -->
 <form
+	novalidate
 	class="mx-auto flex w-full max-w-2xl flex-col gap-5"
 	onsubmit={offlineGate.guard(handleSubmit)}
 >
@@ -277,6 +357,76 @@
 				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
+	</Card.Root>
+
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-section text-foreground">{m.quest_title()}</h2>
+
+		<Field.FieldGroup class="gap-4">
+			<Field.Field orientation="horizontal">
+				<Field.FieldContent>
+					<Field.FieldLabel for="quest-enabled">{m.settings_quest_enabled_label()}</Field.FieldLabel
+					>
+					<Field.FieldDescription>{m.settings_quest_enabled_hint()}</Field.FieldDescription>
+				</Field.FieldContent>
+				<Switch
+					id="quest-enabled"
+					bind:checked={questEnabled}
+					disabled={saveMutation.isPending}
+					onCheckedChange={() => (submitError = '')}
+				/>
+			</Field.Field>
+
+			<Field.Field data-invalid={questMaxAwardError ? true : undefined}>
+				<Field.FieldLabel for="quest-max-award">{m.settings_quest_max_label()}</Field.FieldLabel>
+				<Input
+					id="quest-max-award"
+					name="quest_max_award"
+					type="number"
+					min="1"
+					max={QUEST_MAX_AWARD_LIMIT}
+					step="1"
+					inputmode="numeric"
+					autocomplete="off"
+					bind:value={questMaxAward}
+					disabled={saveMutation.isPending}
+					oninput={handleQuestMaxAwardInput}
+					onblur={validateQuestMaxAward}
+					aria-invalid={questMaxAwardError ? true : undefined}
+				/>
+				{#if questMaxAwardError}
+					<Field.FieldError>{questMaxAwardError}</Field.FieldError>
+				{:else}
+					<Field.FieldDescription>{m.settings_quest_max_hint()}</Field.FieldDescription>
+				{/if}
+			</Field.Field>
+
+			<Field.Field data-invalid={questCancelWindowError ? true : undefined}>
+				<Field.FieldLabel for="quest-cancel-window">
+					{m.settings_quest_window_label()}
+				</Field.FieldLabel>
+				<Input
+					id="quest-cancel-window"
+					name="quest_cancel_window_minutes"
+					type="number"
+					min="0"
+					max={QUEST_CANCEL_WINDOW_LIMIT}
+					step="1"
+					inputmode="numeric"
+					autocomplete="off"
+					bind:value={questCancelWindow}
+					disabled={saveMutation.isPending}
+					oninput={handleQuestCancelWindowInput}
+					onblur={validateQuestCancelWindow}
+					aria-invalid={questCancelWindowError ? true : undefined}
+				/>
+				{#if questCancelWindowError}
+					<Field.FieldError>{questCancelWindowError}</Field.FieldError>
+				{:else}
+					<Field.FieldDescription>{m.settings_quest_window_hint()}</Field.FieldDescription>
+				{/if}
+			</Field.Field>
+		</Field.FieldGroup>
 	</Card.Root>
 
 	<Button

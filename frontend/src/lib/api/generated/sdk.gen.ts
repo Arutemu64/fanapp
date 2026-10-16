@@ -15,9 +15,15 @@ import type {
 	AddVoteData,
 	AddVoteErrors,
 	AddVoteResponses,
+	AwardQuestPointsData,
+	AwardQuestPointsErrors,
+	AwardQuestPointsResponses,
 	CancelMailingData,
 	CancelMailingErrors,
 	CancelMailingResponses,
+	CancelQuestAwardData,
+	CancelQuestAwardErrors,
+	CancelQuestAwardResponses,
 	CancelVoteData,
 	CancelVoteErrors,
 	CancelVoteResponses,
@@ -48,6 +54,9 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerErrors,
 	DrawVotingContestWinnerResponses,
+	FindQuestPlayersData,
+	FindQuestPlayersErrors,
+	FindQuestPlayersResponses,
 	GenerateTicketsData,
 	GenerateTicketsErrors,
 	GenerateTicketsResponses,
@@ -57,6 +66,12 @@ import type {
 	GetPublicConfigData,
 	GetPublicConfigErrors,
 	GetPublicConfigResponses,
+	GetQuestData,
+	GetQuestErrors,
+	GetQuestPlayerData,
+	GetQuestPlayerErrors,
+	GetQuestPlayerResponses,
+	GetQuestResponses,
 	GetScheduleData,
 	GetScheduleErrors,
 	GetScheduleResponses,
@@ -102,6 +117,9 @@ import type {
 	ListOauthProvidersData,
 	ListOauthProvidersErrors,
 	ListOauthProvidersResponses,
+	ListQuestAwardsData,
+	ListQuestAwardsErrors,
+	ListQuestAwardsResponses,
 	ListScheduleChangesData,
 	ListScheduleChangesErrors,
 	ListScheduleChangesResponses,
@@ -1638,5 +1656,129 @@ export const unlinkUserTicket = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/users/{user_id}/ticket',
+		...options
+	});
+
+/**
+ * Get the quest
+ *
+ * Returns the current user's points and rank with the top of the leaderboard. Ties rank by who reached the score first.
+ */
+export const getQuest = <ThrowOnError extends boolean = false>(
+	options?: Options<GetQuestData, ThrowOnError>
+): RequestResult<GetQuestResponses, GetQuestErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetQuestResponses, GetQuestErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest',
+		...options
+	});
+
+/**
+ * Find quest players
+ *
+ * Finds players whose username starts with the search term. Requires the quest:award permission.
+ */
+export const findQuestPlayers = <ThrowOnError extends boolean = false>(
+	options: Options<FindQuestPlayersData, ThrowOnError>
+): RequestResult<FindQuestPlayersResponses, FindQuestPlayersErrors, ThrowOnError> =>
+	(options.client ?? client).get<FindQuestPlayersResponses, FindQuestPlayersErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest/players',
+		...options
+	});
+
+/**
+ * Get a quest player
+ *
+ * Returns one player's points, for the award form after a QR scan. Requires the quest:award permission.
+ */
+export const getQuestPlayer = <ThrowOnError extends boolean = false>(
+	options: Options<GetQuestPlayerData, ThrowOnError>
+): RequestResult<GetQuestPlayerResponses, GetQuestPlayerErrors, ThrowOnError> =>
+	(options.client ?? client).get<GetQuestPlayerResponses, GetQuestPlayerErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest/players/{user_id}',
+		...options
+	});
+
+/**
+ * List quest awards
+ *
+ * Lists the awards the current user gave, newest first; holders of quest:manage see every award. Requires quest:award or quest:manage.
+ */
+export const listQuestAwards = <ThrowOnError extends boolean = false>(
+	options?: Options<ListQuestAwardsData, ThrowOnError>
+): RequestResult<ListQuestAwardsResponses, ListQuestAwardsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<ListQuestAwardsResponses, ListQuestAwardsErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest/awards',
+		...options
+	});
+
+/**
+ * Award quest points
+ *
+ * Gives a player points for a quest task. Replaying the same award ID with the same payload returns the original award. Requires the quest:award permission.
+ */
+export const awardQuestPoints = <ThrowOnError extends boolean = false>(
+	options: Options<AwardQuestPointsData, ThrowOnError>
+): RequestResult<AwardQuestPointsResponses, AwardQuestPointsErrors, ThrowOnError> =>
+	(options.client ?? client).post<AwardQuestPointsResponses, AwardQuestPointsErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest/awards',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Cancel a quest award
+ *
+ * Takes an award's points back. A volunteer may cancel their own award within the cancel window; quest:manage cancels any award at any time.
+ */
+export const cancelQuestAward = <ThrowOnError extends boolean = false>(
+	options: Options<CancelQuestAwardData, ThrowOnError>
+): RequestResult<CancelQuestAwardResponses, CancelQuestAwardErrors, ThrowOnError> =>
+	(options.client ?? client).post<CancelQuestAwardResponses, CancelQuestAwardErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest/awards/{award_id}/cancel',
 		...options
 	});

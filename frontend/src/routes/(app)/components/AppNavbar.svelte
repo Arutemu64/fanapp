@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { ArrowLeft } from '@lucide/svelte';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	import NotificationBell from './NotificationBell.svelte';
 
@@ -44,7 +44,7 @@
 			bar on any upward scroll. -ml-2 lines the arrow glyph up with the page edge. -->
 		{#if back}
 			<Button
-				href={resolve(back.href)}
+				href={resolvePath(back.href)}
 				variant="ghost"
 				size="icon"
 				class="-ml-2"
@@ -67,7 +67,7 @@
 	</div>
 
 	{#each actions as action (action.href)}
-		<Button href={resolve(action.href)} variant="ghost" size="icon" aria-label={action.label}>
+		<Button href={resolvePath(action.href)} variant="ghost" size="icon" aria-label={action.label}>
 			<action.icon class="size-5" />
 		</Button>
 	{/each}

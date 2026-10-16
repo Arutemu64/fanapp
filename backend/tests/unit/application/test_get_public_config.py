@@ -44,3 +44,12 @@ async def test_projects_public_fields_from_settings() -> None:
     assert not hasattr(result, "limits")
     assert not hasattr(result, "voting_start")
     assert not hasattr(result, "voting_end")
+
+
+async def test_projects_the_quest_switch() -> None:
+    settings = AppSettings()
+    settings.update_quest(enabled=True)
+
+    result = await GetPublicConfig(_FakeAppSettingsGateway(settings))()
+
+    assert result.quest_enabled is True

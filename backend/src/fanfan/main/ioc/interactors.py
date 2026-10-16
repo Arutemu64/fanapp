@@ -101,6 +101,12 @@ from fanfan.application.interactors.push_sub.create_push_subscription import (
 from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
 )
+from fanfan.application.interactors.quest.award_quest_points import AwardQuestPoints
+from fanfan.application.interactors.quest.cancel_quest_award import CancelQuestAward
+from fanfan.application.interactors.quest.find_quest_players import FindQuestPlayers
+from fanfan.application.interactors.quest.get_quest import GetQuest
+from fanfan.application.interactors.quest.get_quest_player import GetQuestPlayer
+from fanfan.application.interactors.quest.list_quest_awards import ListQuestAwards
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
 from fanfan.application.interactors.schedule.publish_schedule_updated import (
     PublishScheduleUpdated,
@@ -216,6 +222,12 @@ class InteractorsProvider(Provider):
         LinkTicket,
         SubmitFeedback,
         ListFeedback,
+        GetQuest,
+        FindQuestPlayers,
+        GetQuestPlayer,
+        AwardQuestPoints,
+        CancelQuestAward,
+        ListQuestAwards,
         ListUsers,
         GetUser,
         SetUserRole,

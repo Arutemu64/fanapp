@@ -1,4 +1,5 @@
 import type {
+	GetQuestOutput,
 	GetVotingNominationOutput,
 	NotificationDto,
 	ScheduleEntryDto,
@@ -154,3 +155,11 @@ export const notifications: NotificationDto[] = [
 		'Гардероб работает до 21:00. Не забудьте забрать вещи после закрытия.'
 	)
 ];
+
+// The profile hub's quest row: a balance part-way up the leaderboard.
+export const questStanding: GetQuestOutput = {
+	points: 120,
+	rank: 4,
+	leaderboard: [],
+	own_entry: null
+};

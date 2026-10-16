@@ -22,6 +22,7 @@ from fanfan.adapters.db.gateways.permissions import (
 from fanfan.adapters.db.gateways.push_subscriptions import (
     SqlPushSubscriptionGateway,
 )
+from fanfan.adapters.db.gateways.quest_awards import SqlQuestAwardGateway
 from fanfan.adapters.db.gateways.schedule_changes import SqlScheduleChangeGateway
 from fanfan.adapters.db.gateways.schedule_entries import SqlScheduleEntryGateway
 from fanfan.adapters.db.gateways.social_identity import SqlSocialIdentityGateway
@@ -48,6 +49,7 @@ from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
+from fanfan.application.ports.gateways.quest_awards import QuestAwardGateway
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
@@ -102,6 +104,7 @@ class SqlGatewaysProvider(Provider):
     subscriptions = provide(SqlSubscriptionGateway, provides=SubscriptionGateway)
     tickets = provide(SqlTicketGateway, provides=TicketGateway)
     feedback = provide(SqlFeedbackGateway, provides=FeedbackGateway)
+    quest_awards = provide(SqlQuestAwardGateway, provides=QuestAwardGateway)
     users = provide(SqlUserGateway, provides=UserGateway)
     votes = provide(SqlVoteGateway, provides=VoteGateway)
     flags = provide(SqlUserFlagGateway, provides=UserFlagGateway)

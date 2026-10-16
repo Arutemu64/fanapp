@@ -9,7 +9,14 @@ import { expect, json, loggedInAs, test } from '../fixtures';
 import { ApiMock } from '../mocks/api';
 import { baselineHandlers } from '../mocks/defaults';
 import { installSseDouble } from '../mocks/sse';
-import { GALLERY_NOW, notifications, scheduleEntries, singleDefile, subscriptions } from './data';
+import {
+	GALLERY_NOW,
+	notifications,
+	questStanding,
+	scheduleEntries,
+	singleDefile,
+	subscriptions
+} from './data';
 
 // One test per README image: the gallery, then the hero. Run with
 // `just readme-gallery`, then review the image diff in docs/assets/ before committing.
@@ -27,7 +34,9 @@ const visitorAtFestival: Handlers = {
 	...loggedInAs({ ticket: null }),
 	'GET /config': json({
 		festival_start: new Date(now - 2 * HOUR_MS).toISOString(),
-		festival_end: new Date(now + 6 * HOUR_MS).toISOString()
+		festival_end: new Date(now + 6 * HOUR_MS).toISOString(),
+		quest_enabled: true,
+		quest_max_award: 100
 	}),
 	'GET /notifications/unread-count': json({ count: 2 }),
 	'GET /voting/status': json({
@@ -113,7 +122,9 @@ test('guide', async ({ page, api }) => {
 	api.use({
 		'GET /config': json({
 			festival_start: '2027-03-13T11:30:00+03:00',
-			festival_end: '2027-03-13T19:30:00+03:00'
+			festival_end: '2027-03-13T19:30:00+03:00',
+			quest_enabled: false,
+			quest_max_award: 100
 		})
 	});
 	await page.goto('/guide');
@@ -130,16 +141,19 @@ test('map', async ({ page }) => {
 });
 
 test('profile', async ({ page, api }) => {
-	// A linked ticket and Telegram fill the hub's values: «Привязан», «Включены».
-	api.use(
-		loggedInAs({
+	// A linked ticket and Telegram fill the hub's values: «Привязан», «Включены»;
+	// the quest row shows a balance mid-festival.
+	api.use({
+		...loggedInAs({
 			username: 'sakura_cosplay',
 			ticket: { id: 'ticket-1', barcode: '4600000000017', role: 'visitor' },
 			social_identities: [{ provider: 'telegram' }]
-		})
-	);
+		}),
+		'GET /quest': json(questStanding)
+	});
 	await page.goto('/profile');
 	await expect(page.getByText('Включены')).toBeVisible();
+	await expect(page.getByText('120 баллов')).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'profile');
 });

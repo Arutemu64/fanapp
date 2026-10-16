@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
+from fanfan.core.exceptions.quest import QuestDisabled
 from fanfan.core.exceptions.settings import (
     InvalidFestivalTimeRange,
     InvalidVotingTimeRange,
@@ -24,6 +25,17 @@ class LimitsConfig:
 
 
 @dataclass(slots=True, kw_only=True)
+class QuestConfig:
+    # Off by default: the quest runs only at festivals that hand out merch for it.
+    enabled: bool = False
+    # Caps one award so a typo (1000 for 10) cannot top the leaderboard.
+    max_award: int = 100
+    # How long a volunteer may cancel their own award; organizers holding
+    # quest:manage cancel at any time.
+    cancel_window_minutes: int = 15
+
+
+@dataclass(slots=True, kw_only=True)
 class AppSettings(AggregateRoot):
     # Voting is open when ``now`` falls within [voting_start, voting_end).
     # Both None means voting is closed (the default).
@@ -37,6 +49,7 @@ class AppSettings(AggregateRoot):
     festival_end: datetime = DEFAULT_FESTIVAL_END
 
     limits: LimitsConfig = field(default_factory=LimitsConfig)
+    quest: QuestConfig = field(default_factory=QuestConfig)
 
     def set_voting_time_range(
         self,
@@ -76,3 +89,22 @@ class AppSettings(AggregateRoot):
         # so callers never reach into it directly. None means "leave as is".
         if announcement_timeout is not None:
             self.limits.announcement_timeout = announcement_timeout
+
+    def ensure_quest_enabled(self) -> None:
+        if not self.quest.enabled:
+            raise QuestDisabled
+
+    def update_quest(
+        self,
+        *,
+        enabled: bool | None = None,
+        max_award: int | None = None,
+        cancel_window_minutes: int | None = None,
+    ) -> None:
+        # None means "leave as is", like update_limits.
+        if enabled is not None:
+            self.quest.enabled = enabled
+        if max_award is not None:
+            self.quest.max_award = max_award
+        if cancel_window_minutes is not None:
+            self.quest.cancel_window_minutes = cancel_window_minutes

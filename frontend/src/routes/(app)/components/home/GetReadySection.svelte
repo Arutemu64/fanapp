@@ -2,13 +2,13 @@
 	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
-	import { resolve } from '$app/paths';
 	import { Bell, CalendarHeart, ChevronRight, Download, Ticket, UserPlus } from '@lucide/svelte';
 
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	import type { ReadyStepKey } from './readySteps';
 
@@ -97,7 +97,7 @@
 	<Item.Root class="rounded-none hover:bg-muted">
 		{#snippet child({ props })}
 			{#if step.href}
-				<a href={resolve(step.href)} {...props}>
+				<a href={resolvePath(step.href)} {...props}>
 					{@render stepBody(step)}
 				</a>
 			{:else}

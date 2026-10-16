@@ -8,6 +8,7 @@ from .outbox import OutboxEventORM
 from .participant import ParticipantORM
 from .permission import UserPermissionORM
 from .push_subscription import PushSubscriptionORM
+from .quest_award import QuestAwardORM
 from .schedule_change import ScheduleChangeORM
 from .schedule_entry import ScheduleBlockStartORM, ScheduleEntryORM, ScheduleEventORM
 from .social_identity import SocialIdentityORM
@@ -28,6 +29,7 @@ __all__ = [
     "OutboxEventORM",
     "ParticipantORM",
     "PushSubscriptionORM",
+    "QuestAwardORM",
     "ScheduleBlockStartORM",
     "ScheduleChangeORM",
     "ScheduleEntryORM",

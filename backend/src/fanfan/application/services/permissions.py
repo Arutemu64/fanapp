@@ -17,12 +17,20 @@ class PermissionService:
         user: User,
         permission: Permission,
     ) -> None:
+        if not await self.has(user, permission):
+            raise AccessDenied
+
+    async def has(
+        self,
+        user: User,
+        permission: Permission,
+    ) -> bool:
         user_perm = await self.perm_gateway.get_by_permission(
             user_id=user.id,
             permission=permission,
         )
         if user_perm is not None:
-            return
+            return True
 
         # Fall back to the wildcard only when the specific grant is absent: the
         # common case (an organizer holding the exact permission) stays a single point
@@ -31,5 +39,4 @@ class PermissionService:
             user_id=user.id,
             permission=Permission.WILDCARD,
         )
-        if wildcard is None:
-            raise AccessDenied
+        return wildcard is not None

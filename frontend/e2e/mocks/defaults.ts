@@ -27,7 +27,9 @@ export const baselineHandlers: Handlers = {
 	'GET /debug/health': json<HealthCheckOutput>({ status: 'healthy' }),
 	'GET /config': json<PublicConfigDto>({
 		festival_start: new Date(now + DAY_MS).toISOString(),
-		festival_end: new Date(now + 3 * DAY_MS).toISOString()
+		festival_end: new Date(now + 3 * DAY_MS).toISOString(),
+		quest_enabled: false,
+		quest_max_award: 100
 	}),
 	// Guest by default; personas.ts overrides this with a 200 user.
 	'GET /me/': json({ code: 'unauthorized' }, 401),

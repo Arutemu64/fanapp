@@ -79,3 +79,25 @@ _Avoid_: Schedule fan-out, change notification
 **Channel**:
 A route a notification reaches a user by outside the app: Telegram, VK or Web Push.
 _Avoid_: Provider, transport
+
+## Quest
+
+**Quest**:
+A festival-wide game: players do tasks around the venue, volunteers give them points, and the top of the leaderboard wins merch. Organizers switch it on for a festival. The screens call it «квест».
+_Avoid_: Game, challenge, gamification (in copy)
+
+**Player**:
+Any user taking part in the quest; staff included, though nobody can give points to themselves. The screens call one «игрок».
+_Avoid_: Participant (that is a performer)
+
+**Award**:
+One grant of points to a player by a volunteer, with a note saying what for. An award can be cancelled but never edited or deleted. The screens call one «начисление».
+_Avoid_: Transaction, transfer, reward
+
+**Points**:
+A player's balance: the sum of their awards that are not cancelled. Points are only earned, never spent. The screens call them «баллы».
+_Avoid_: Coins, score, credits
+
+**Leaderboard**:
+Players ranked by points, ties going to whoever reached the score first, so no two players share a place. The screens call it «таблица лидеров».
+_Avoid_: Rating, top
