@@ -46,7 +46,7 @@
 		{/if}
 	</div>
 
-	<h3 class="flex-1 text-base leading-snug font-bold break-words text-foreground">
+	<h3 class="flex-1 text-base leading-snug font-bold wrap-break-word text-foreground">
 		<a
 			href={resolve(`voting/${nomination.code}`)}
 			class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"

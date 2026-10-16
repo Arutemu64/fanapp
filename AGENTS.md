@@ -115,10 +115,12 @@ Two mechanisms enforce the rules above without relying on anyone remembering the
 * **`PostToolUse` hook** (`.claude/hooks/post-edit-check.py`, wired in
   `.claude/settings.json`) — after every `Edit`/`Write` it checks *that one file*
   and reports back: `ruff check` on `backend/**/*.py`, `prettier --check` on
-  `frontend/**`, plus a heuristic scan of `.svelte` markup for user-facing
-  English. Check-only, never `--fix`: a hook that rewrites the file invalidates
-  the next edit and removes the signal. It deliberately does **not** run
-  `eslint` (~9s even warm), `ty` or `svelte-check` (whole-project) — those stay
+  `frontend/**`, the Tailwind design-system class rules on `frontend/src`
+  (ADR-0030; ~1s via `eslint.tailwind.config.js`), plus a heuristic scan of
+  `.svelte` markup for user-facing English. Check-only, never `--fix`: a hook
+  that rewrites the file invalidates the next edit and removes the signal. It
+  deliberately does **not** run the full `eslint` (~9s even warm), `ty` or
+  `svelte-check` (whole-project) — those stay
   where `.pre-commit-config.yaml` already puts them, at pre-push and in CI. So a
   silent hook means the fast checks passed, not that the work is done.
 * **Secret reads** — `.claude/settings.json` denies `secrets/**`, `*.pem` and

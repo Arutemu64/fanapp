@@ -124,7 +124,7 @@
 						</div>
 
 						{#if mailing.body}
-							<p class="line-clamp-2 text-sm break-words whitespace-pre-line">
+							<p class="line-clamp-2 text-sm wrap-break-word whitespace-pre-line">
 								{mailing.body}
 							</p>
 						{/if}

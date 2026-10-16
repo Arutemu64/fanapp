@@ -211,7 +211,7 @@
 						{#each section.rows as row (row.label)}
 							<div class="flex items-baseline justify-between gap-3 px-3 py-2">
 								<dt class="text-muted-foreground">{row.label}</dt>
-								<dd class="min-w-0 text-right font-medium break-words">{row.value}</dd>
+								<dd class="min-w-0 text-right font-medium wrap-break-word">{row.value}</dd>
 							</div>
 						{/each}
 					</dl>

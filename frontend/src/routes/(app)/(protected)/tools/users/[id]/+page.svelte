@@ -33,7 +33,7 @@
 		<div class="flex items-center gap-4">
 			<UserAvatar seed={profile.avatar_seed} class="size-14" />
 			<div class="min-w-0">
-				<h2 class="text-headline break-words text-foreground">
+				<h2 class="text-headline wrap-break-word text-foreground">
 					{profile.username}
 				</h2>
 				<Badge variant="secondary" class="mt-1">

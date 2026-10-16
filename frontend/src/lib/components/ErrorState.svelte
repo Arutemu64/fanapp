@@ -94,8 +94,8 @@
 <div class={wrapperClass}>
 	<Card.Root class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
-			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
-				<StatusIcon class="h-8 w-8" />
+			<div class="mb-4 flex size-16 items-center justify-center rounded-full {iconColorClass}">
+				<StatusIcon class="size-8" />
 			</div>
 
 			<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">

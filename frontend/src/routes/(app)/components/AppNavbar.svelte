@@ -60,7 +60,7 @@
 				loses the word that names the page. The layout measures the bar, so <main>'s
 				offset follows the taller row. Keep the role's 1.375 line height, not
 				leading-tight: line-clamp clips, and Cyrillic descenders (у, д) need the room. -->
-			<h1 class="line-clamp-2 text-headline break-words text-foreground">
+			<h1 class="line-clamp-2 text-headline wrap-break-word text-foreground">
 				{pageTitle}
 			</h1>
 		{/if}
