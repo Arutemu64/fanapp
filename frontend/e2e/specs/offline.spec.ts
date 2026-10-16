@@ -184,7 +184,8 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.goto('/notifications');
 		await expect(page.getByRole('heading', { name: 'Уведомления' })).toBeVisible();
 
-		// The persister saves on a throttle, so wait until the user is on disk.
+		// The persister saves on a throttle, so wait until the user is on disk
+		// (idb-keyval's default store, under `QUERY_CACHE_KEY` in queryPersister.ts).
 		await expect
 			.poll(() =>
 				page.evaluate(
@@ -195,7 +196,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 								const read = open.result
 									.transaction('keyval')
 									.objectStore('keyval')
-									.get('REACT_QUERY_OFFLINE_CACHE');
+									.get('fanfan-query-cache');
 								read.onsuccess = () => resolve(JSON.stringify(read.result ?? ''));
 							};
 						})
