@@ -53,6 +53,10 @@
 		return data?.subscribed ?? false;
 	}
 
+	// The bell unmounts on every session end, so a check still in flight then
+	// belongs to the previous account and must not toast its notification.
+	let sessionEnded = false;
+
 	function handleNewNotification(notification: NotificationDto) {
 		// On the notifications page the item already appears at the top of the
 		// list, so a toast would only repeat it — Apple's HIG: in the foreground,
@@ -64,7 +68,7 @@
 		// so the toast would repeat it. Checked per event because push can be
 		// switched on or off, or the account changed, while the bell stays mounted.
 		void pushShowsOverOpenApp(isPushRegistered).then((osShowsIt) => {
-			if (!osShowsIt) {
+			if (!osShowsIt && !sessionEnded) {
 				toastService.push(notification);
 			}
 		});
@@ -74,6 +78,7 @@
 		eventsClient.on('notification_created', handleNewNotification);
 
 		return () => {
+			sessionEnded = true;
 			eventsClient.off('notification_created', handleNewNotification);
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed
