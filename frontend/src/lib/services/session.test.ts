@@ -99,7 +99,7 @@ describe('Session.logOut', () => {
 		await session.logOut(revoke);
 
 		expect(queryClient.getQueryData(userKey)).toBeNull();
-		expect(calls).toEqual(['revoke', 'goHome', 'unsubscribePush', 'restart']);
+		expect(calls).toEqual(['revoke', 'goHome', 'restart', 'unsubscribePush']);
 		expect(isLogoutPending()).toBe(false);
 	});
 
@@ -151,7 +151,7 @@ describe('Session.expired', () => {
 		await session.expired();
 
 		expect(queryClient.getQueryData(userKey)).toBeNull();
-		expect(calls).toEqual(['redirectToLogin', 'unsubscribePush', 'restart']);
+		expect(calls).toEqual(['redirectToLogin', 'restart', 'unsubscribePush']);
 	});
 
 	it('ends only once for a burst of 401s, and not at all for a guest', async () => {

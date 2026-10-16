@@ -108,7 +108,7 @@ export class Session {
 		// cached data is forgotten.
 		this.#queryClient.setQueryData(currentUserOptions().queryKey, null);
 		await this.#router.goHome();
-		this.#forgetAccount();
+		await this.#forgetAccount();
 	}
 
 	/** True while a logout made offline still waits for its server revoke. */
@@ -138,7 +138,7 @@ export class Session {
 		this.#queryClient.setQueryData(queryKey, null);
 
 		await this.#router.redirectToLogin();
-		this.#forgetAccount();
+		await this.#forgetAccount();
 	}
 
 	/**
@@ -150,11 +150,14 @@ export class Session {
 	 * push subscription ends for the same reason: the server ties it to this
 	 * account, so the next person would get its pushes on the lock screen.
 	 */
-	#forgetAccount(): void {
-		void this.#unsubscribePush();
+	async #forgetAccount(): Promise<void> {
 		this.#queryClient.removeQueries({ type: 'inactive' });
 		void this.#queryClient.invalidateQueries();
 		this.#events.restart();
+		// Last, so a slow browser call can't hold up the rest of the teardown, but
+		// awaited, so the transition ends only once the subscription is gone and a
+		// login that switches push back on can't have its new one dropped by this.
+		await this.#unsubscribePush();
 	}
 }
 
