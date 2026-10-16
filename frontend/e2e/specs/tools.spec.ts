@@ -19,17 +19,14 @@ test.describe('organizer tools', { tag: '@critical' }, () => {
 		// A couple of the permission-gated tool cards render for a full-permission organizer.
 		await expect(page.getByRole('link', { name: 'Пользователи' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Синхронизация' })).toBeVisible();
-
-		expect(api.unmatched).toEqual([]);
 	});
 
-	test('a guest is bounced to login', async ({ page, api }) => {
+	test('a guest is bounced to login', async ({ page }) => {
 		// No persona: the baseline /me/ is a 401 guest, and the protected guard
 		// redirects a reachable guest to login, remembering where they were headed.
 		await page.goto('/tools');
 
 		await expect(page).toHaveURL(/\/login\?/);
 		await expect(page.getByRole('heading', { level: 1, name: 'Вход' })).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 });

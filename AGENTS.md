@@ -29,7 +29,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Server state (TanStack Query: queries, mutations, cache, persistence) | `tanstack-query-best-practices` (written for React: map `useQuery`/`useMutation` to Svelte's thunk `createQuery`/`createMutation`; ADR-0021's and ADR-0022's departures from the defaults win) | [docs/frontend.md](docs/frontend.md) §2, [docs/api.md](docs/api.md), [ADR-0021](docs/adr/0021-tanstack-query-for-server-state.md), [ADR-0022](docs/adr/0022-createmutation-for-writes.md) |
-| Tests | `python-testing-patterns` (pytest), `vitest` (frontend unit), `playwright-best-practices` (E2E) | [docs/testing.md](docs/testing.md) |
+| Tests | `python-testing-patterns` (pytest), `vitest` (frontend unit), `playwright-best-practices` + `e2e-testing-patterns` (E2E; its Cypress examples and `data-testid`-first advice don't apply, since we locate by role and Russian name) | [docs/testing.md](docs/testing.md) |
 | Auth, user input, webhooks, external integrations | `security-and-hardening` | [docs/backend.md](docs/backend.md) |
 | Docker / infra | `docker-expert` | [docs/dependencies.md](docs/dependencies.md) |
 | Deployment / reverse proxy | `docker-expert` | [docs/deployment.md](docs/deployment.md) |

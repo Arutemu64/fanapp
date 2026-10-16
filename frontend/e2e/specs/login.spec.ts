@@ -10,7 +10,7 @@ async function openEmailStep(page: Page) {
 	return page.getByLabel('Почта');
 }
 
-test.describe('email login', () => {
+test.describe('email login', { tag: '@critical' }, () => {
 	test('validates on submit, not while typing', async ({ page }) => {
 		const email = await openEmailStep(page);
 		await expect(email).toBeFocused();
@@ -44,7 +44,6 @@ test.describe('email login', () => {
 		await page.goBack();
 		await expect(page).toHaveURL('/login');
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('the on-screen back returns focus to the control that opened the step', async ({ page }) => {
@@ -115,7 +114,6 @@ test.describe('email login', () => {
 		await expect(page.getByRole('alert')).toHaveText('Неверный или устаревший код');
 		await expect(code).toHaveValue('');
 		await expect(code).toBeFocused();
-		expect(api.unmatched).toEqual([]);
 	});
 });
 

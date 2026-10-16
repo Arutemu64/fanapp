@@ -1,6 +1,6 @@
 import type AxeBuilder from '@axe-core/playwright';
 
-import { test as base } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
 
 import type { ConsoleGuard } from './support/console';
 
@@ -38,6 +38,10 @@ export const test = base.extend<Fixtures>({
 			const api = new ApiMock(context, baselineHandlers);
 			await api.install();
 			await use(api);
+			// Teardown: an unmocked endpoint gets a 404 the app may swallow into an
+			// empty or error state the test never looks at, so fail on it here
+			// rather than trusting each spec to assert it.
+			expect(api.unmatched, `Unmocked API routes:\n${api.unmatched.join('\n')}`).toEqual([]);
 		},
 		{ auto: true }
 	],

@@ -21,7 +21,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.goto('/voting');
 
 		await expect(page.getByText('Раздел доступен только онлайн')).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('the connection banner re-checks on tap and confirms the recovery', async ({

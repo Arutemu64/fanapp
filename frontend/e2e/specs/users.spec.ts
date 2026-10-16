@@ -69,7 +69,6 @@ test.describe('organizer user directory', () => {
 		await expect(page.getByRole('main').getByRole('status')).toHaveText('1 пользователь');
 		await expect(page.getByRole('link', { name: /boris/ })).toBeHidden();
 		expect(listRequests.at(-1)?.get('role')).toBe('participant');
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('a superuser grants a permission from the user card', async ({ page, api }) => {
@@ -93,7 +92,6 @@ test.describe('organizer user directory', () => {
 
 		await expect(usersRead).toBeChecked();
 		expect(grants).toBe(1);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('an organizer unlinks a ticket and is told the role stays', async ({ page, api }) => {
@@ -117,6 +115,5 @@ test.describe('organizer user directory', () => {
 			)
 		).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Отвязать билет' })).toBeHidden();
-		expect(api.unmatched).toEqual([]);
 	});
 });

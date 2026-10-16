@@ -13,6 +13,5 @@ test.describe('realtime (SSE)', { tag: '@critical' }, () => {
 		// The root layout invalidates the schedule query on the event, which refetches
 		// it while the page shows it.
 		await expect.poll(() => api.countCalls('GET /schedule/')).toBeGreaterThan(before);
-		expect(api.unmatched).toEqual([]);
 	});
 });
