@@ -178,9 +178,13 @@ the shipped-bundle list never automerge.
 **Release age: 7 days for a reviewed PR, 14 for an automerge.** Renovate
 recommends 14 days once third-party deps automerge
 ([upgrade best practices](https://docs.renovatebot.com/upgrade-best-practices/)),
-so the frontend dev tooling, backend dev group, runtime patch and GitHub Action
-rules carry it. The global 7 days stays for reviewed PRs and matches pnpm's
-`minimumReleaseAge` and uv's `exclude-newer`. 7 days is already the
+so the frontend dev tooling, frontend runtime patch and GitHub Action rules
+carry it. The global 7 days stays for reviewed PRs and matches pnpm's
+`minimumReleaseAge` and uv's `exclude-newer`. Backend deps stay at 7 even when
+they automerge: Renovate bumps a `>=` floor and uv relocks it, so with Renovate
+at 14 uv could lock a newer release still inside Renovate's window, and the PR
+would stick on `renovate/artifacts` (PR #310). The frontend has no such gap
+because its versions are pinned exactly. 7 days is already the
 "conservative" tier ([cooldowns.dev](https://cooldowns.dev/)), more than
 double Dependabot's 3-day default. Shared-pin groups must keep a single age:
 the Action rule skips the setup actions' version inputs, and pre-commit hooks
