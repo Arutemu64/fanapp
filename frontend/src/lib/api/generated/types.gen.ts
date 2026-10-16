@@ -276,6 +276,7 @@ export type ErrorMessage = {
 		| 'INVALID_TELEGRAM_AUTH_PAYLOAD'
 		| 'INVALID_VOTING_TIME_RANGE'
 		| 'LINK_INITIATOR_MISMATCH'
+		| 'MAILING_ALREADY_EXISTS'
 		| 'MAILING_CANCELLED'
 		| 'MAILING_NOT_CANCELLABLE'
 		| 'MAILING_NOT_FOUND'
@@ -1069,6 +1070,12 @@ export type ScheduleEventFullDto = {
  * SendBroadcastInput
  */
 export type SendBroadcastInput = {
+	/**
+	 * Mailing Id
+	 *
+	 * UUIDv7 the client generates once per broadcast form.
+	 */
+	mailing_id: string;
 	/**
 	 * Body
 	 */
@@ -3332,6 +3339,10 @@ export type SendBroadcastErrors = {
 	 */
 	403: ErrorMessage;
 	/**
+	 * The mailing ID belongs to a different broadcast.
+	 */
+	409: ErrorMessage;
+	/**
 	 * Request validation error.
 	 */
 	422: ValidationErrorResponse;
@@ -3341,7 +3352,7 @@ export type SendBroadcastError = SendBroadcastErrors[keyof SendBroadcastErrors];
 
 export type SendBroadcastResponses = {
 	/**
-	 * Broadcast initiated successfully.
+	 * Broadcast initiated, or an identical one replayed.
 	 */
 	200: SendBroadcastOutput;
 };

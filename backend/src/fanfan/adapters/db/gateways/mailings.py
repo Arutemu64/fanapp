@@ -1,12 +1,14 @@
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.models import MailingORM
 from fanfan.adapters.db.pagination import rows_after
 from fanfan.application.dto.mailing import MailingDTO
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.exceptions.notifications import MailingAlreadyExists
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.user import UserId, UserRole
@@ -54,8 +56,12 @@ class SqlMailingGateway(MailingGateway):
 
     async def add(self, mailing: Mailing) -> None:
         mailing_orm = _from_model(mailing)
-        self.session.add(mailing_orm)
-        await self.session.flush()
+        # The ID can come from the client (SendBroadcast), so two overlapping
+        # requests with one ID can both pass the interactor's lookup; the
+        # second one lands here.
+        with translate_integrity_error({"pk_mailings": MailingAlreadyExists}):
+            self.session.add(mailing_orm)
+            await self.session.flush()
         # Register so any event recorded on the mailing (e.g. BroadcastQueued)
         # is written to the outbox when the unit of work commits.
         self.uow.register(mailing)

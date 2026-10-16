@@ -120,6 +120,14 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 - **Return Checking** (plain SDK calls only): success payload, error payload, and response metadata come back on the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
 - **A plain SDK call never throws** (`throwOnError` is off on the client): every failure, a dropped connection included, comes back as `error`. So don't wrap one in `try/catch` to handle API failures; that `catch` can't fire for them. The generated query and mutation options are the opposite: they pass `throwOnError: true`, so failures arrive as `query.error` / `onError` (or a rejected `mutateAsync`).
 
+### Client-generated IDs for creates without a natural key
+
+A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcast` sends to everyone again), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
+
+- **Generate a UUIDv7 with `uuidv7()` from `#lib/utils/uuidv7`** when the form opens. The server rejects any other version with a 422.
+- **Keep it across submits; draw a new one only once the intent is settled**: on success, or on the endpoint's "already exists" 409.
+- **The server replays an identical request.** Same caller and payload → the existing resource and the original success status; the side effect does not run again. A different payload under a taken ID → 409.
+
 ### Long-running actions (202 Accepted)
 
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.

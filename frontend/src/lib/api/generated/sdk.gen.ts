@@ -1266,7 +1266,7 @@ export const listBroadcasts = <ThrowOnError extends boolean = false>(
 /**
  * Send broadcast notification
  *
- * Creates a new mailing broadcast for specified user roles.
+ * Creates a new mailing broadcast for specified user roles. The client supplies the mailing ID, so repeating the same request returns the existing mailing instead of sending the broadcast again.
  */
 export const sendBroadcast = <ThrowOnError extends boolean = false>(
 	options: Options<SendBroadcastData, ThrowOnError>

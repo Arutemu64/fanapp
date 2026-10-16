@@ -30,9 +30,11 @@ class Mailing(AggregateRoot):
     total_count: int
 
     @classmethod
-    def create(cls, by_user_id: UserId) -> Mailing:
+    def create(cls, by_user_id: UserId, mailing_id: MailingId | None = None) -> Mailing:
+        if mailing_id is None:
+            mailing_id = generate_mailing_id()
         return cls(
-            id=generate_mailing_id(),
+            id=mailing_id,
             status=MailingStatus.PENDING,
             by_user_id=by_user_id,
             body=None,
@@ -49,6 +51,20 @@ class Mailing(AggregateRoot):
         self.body = body
         self.roles = roles
         self.record_event(BroadcastQueued(mailing_id=self.id, body=body, roles=roles))
+
+    def is_broadcast(
+        self, by_user_id: UserId, body: str, roles: list[UserRole]
+    ) -> bool:
+        """Whether this mailing is that broadcast, so a retry can replay it.
+
+        Roles compare as a set: the audience is the same whatever order the
+        client listed it in.
+        """
+        if self.by_user_id != by_user_id or self.body != body:
+            return False
+        if self.roles is None:
+            return False
+        return set(self.roles) == set(roles)
 
     def record_summary(self, body: str) -> None:
         self.body = body

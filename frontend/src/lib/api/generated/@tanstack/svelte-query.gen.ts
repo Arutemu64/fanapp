@@ -1781,7 +1781,7 @@ export const listBroadcastsInfiniteOptions = (options?: Options<ListBroadcastsDa
 /**
  * Send broadcast notification
  *
- * Creates a new mailing broadcast for specified user roles.
+ * Creates a new mailing broadcast for specified user roles. The client supplies the mailing ID, so repeating the same request returns the existing mailing instead of sending the broadcast again.
  */
 export const sendBroadcastMutation = (
 	options?: Partial<Options<SendBroadcastData>>
