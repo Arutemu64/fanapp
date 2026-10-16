@@ -7,7 +7,7 @@
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
-	import { isNavItemActive } from '#lib/utils/nav.js';
+	import { handleNavItemClick, hasUpdateDot, isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
@@ -39,7 +39,7 @@
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{const { label, href, outlineIcon: Icon } = $derived(item)}
 			{const active = $derived(isNavItemActive(activeUrl, item))}
-			{const updateDot = $derived(href === 'profile' && appUpdate.available)}
+			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
 			<a
 				href={resolve(href)}
 				aria-current={active ? 'page' : undefined}
@@ -51,14 +51,7 @@
 							'bg-primary/10 text-primary-700 dark:text-primary'
 						: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
 				]}
-				onclick={(event: MouseEvent) => {
-					// Mirror the bottom nav: re-tapping the current root eases back to the top,
-					// only on an exact match so a nested page still navigates to the root.
-					if (activeUrl === resolve(href)) {
-						event.preventDefault();
-						scrollToTop();
-					}
-				}}
+				onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}
 			>
 				{#if href === 'profile' && avatarSeed}
 					<!-- Ringed, not tinted, for the reason given in AppBottomNav. -->

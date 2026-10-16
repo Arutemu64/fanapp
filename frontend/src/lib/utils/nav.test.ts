@@ -1,7 +1,7 @@
 import { resolve } from '$app/paths';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { isActivePath, isNavItemActive, toAppPath } from './nav';
+import { handleNavItemClick, hasUpdateDot, isActivePath, isNavItemActive, toAppPath } from './nav';
 
 describe('isActivePath', () => {
 	it.each([
@@ -34,6 +34,38 @@ describe('isNavItemActive', () => {
 	it('falls back to the item href alone without nested roots', () => {
 		expect(isNavItemActive('/guide', { href: 'guide' })).toBe(true);
 		expect(isNavItemActive('/feedback', { href: 'guide' })).toBe(false);
+	});
+});
+
+describe('handleNavItemClick', () => {
+	// The unit tier runs in Node, which has no MouseEvent; the helper only calls preventDefault.
+	function clickEvent() {
+		const preventDefault = vi.fn();
+		return { event: { preventDefault } as unknown as MouseEvent, preventDefault };
+	}
+
+	it('scrolls to top instead of navigating on a re-tap of the current root', () => {
+		const { event, preventDefault } = clickEvent();
+		const scrollToTop = vi.fn();
+		handleNavItemClick(event, resolve('schedule'), 'schedule', scrollToTop);
+		expect(preventDefault).toHaveBeenCalledOnce();
+		expect(scrollToTop).toHaveBeenCalledOnce();
+	});
+
+	it('navigates from a nested page of the same tab', () => {
+		const { event, preventDefault } = clickEvent();
+		const scrollToTop = vi.fn();
+		handleNavItemClick(event, resolve('schedule') + '/changes', 'schedule', scrollToTop);
+		expect(preventDefault).not.toHaveBeenCalled();
+		expect(scrollToTop).not.toHaveBeenCalled();
+	});
+});
+
+describe('hasUpdateDot', () => {
+	it('marks only Profile, and only when an update is available', () => {
+		expect(hasUpdateDot('profile', true)).toBe(true);
+		expect(hasUpdateDot('profile', false)).toBe(false);
+		expect(hasUpdateDot('schedule', true)).toBe(false);
 	});
 });
 

@@ -8,6 +8,7 @@
 
 	import { currentUserOptions } from '#lib/api/index.js';
 	import SkipLink from '#lib/components/SkipLink.svelte';
+	import { DESKTOP_MEDIA_QUERY } from '#lib/constants/layout.js';
 	import { TAB_ROOTS } from '#lib/data/nav.js';
 
 	import type { LayoutProps } from './$types';
@@ -82,7 +83,7 @@
 	// slide flicker — so at md+ (the breakpoint that swaps the bottom nav for the sidebar)
 	// the bar stays put. We keep tracking scroll everywhere and mask the result here, so
 	// resizing across the breakpoint reveals the bar at once without a stale hidden state.
-	const isDesktop = new MediaQuery('(min-width: 48rem)');
+	const isDesktop = new MediaQuery(DESKTOP_MEDIA_QUERY);
 	let chromeHidden = $derived(navbarHidden && !isDesktop.current);
 
 	// Material's enter/exit pairing: the bar enters over the longer duration on the

@@ -131,6 +131,7 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 
 ### Do:
 - **Do** keep every primary task one-handed and one-glance: bottom nav on mobile, ≥44px tap targets, a single `max-w-5xl` column.
+- **Do** treat a wide screen as a rearrangement of the phone layout, never a second design: at `lg`/`xl` a page may put the same components side by side (Home's supporting column, the map's plan beside its list, the voting grid), but it never shows content, controls or navigation that phones don't get. Extra panes come only where the width earns them, Material 3's canonical layouts at expanded widths and up ([Android, window size classes](https://developer.android.com/develop/ui/compose/layouts/adaptive/window-size-classes)). Behaviour that must switch with the bottom nav ↔ sidebar swap matches `DESKTOP_MEDIA_QUERY` (`#lib/constants/layout`, kept equal to `--breakpoint-md` in `app.css` by a unit test), never a hardcoded width.
 - **Do** let color earn its place — saturated watermelon only on action, active state, and semantic state; gray at rest.
 - **Do** separate surfaces with a border and a tonal step (`gray-50` field under `white` surface) before reaching for any shadow.
 - **Do** use Inter for all interface text; reserve Unbounded for the wordmark and rare identity moments.

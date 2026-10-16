@@ -39,6 +39,15 @@
 	}
 }
 
+/*
+ * Tailwind's default md, pinned here because DESKTOP_MEDIA_QUERY (#lib/constants/layout)
+ * must switch JS behaviour at the same width as the `md:` classes; layout.test.ts
+ * keeps the two in step.
+ */
+@theme {
+	--breakpoint-md: 48rem;
+}
+
 @theme {
 	--font-sans: 'Inter Variable', sans-serif;
 	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
