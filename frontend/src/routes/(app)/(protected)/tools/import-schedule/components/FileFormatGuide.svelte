@@ -39,12 +39,12 @@
 <section class="mb-6 flex flex-col">
 	<div class="mb-3 flex items-center gap-2">
 		<Info class="size-5 shrink-0 text-muted-foreground" />
-		<h2 class="text-base leading-snug font-semibold text-foreground sm:text-lg">
+		<h2 class="text-lg leading-snug font-semibold text-foreground">
 			{m.import_guide_title()}
 		</h2>
 	</div>
 
-	<p class="text-sm leading-relaxed text-muted-foreground sm:text-base">
+	<p class="text-base leading-relaxed text-muted-foreground">
 		{m.import_guide_intro()}
 	</p>
 

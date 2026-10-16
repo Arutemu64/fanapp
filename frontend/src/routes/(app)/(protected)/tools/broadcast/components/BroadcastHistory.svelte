@@ -93,7 +93,7 @@
 </script>
 
 <section class="mx-auto w-full max-w-2xl">
-	<h2 class="mb-3 text-base font-semibold text-foreground sm:text-lg">
+	<h2 class="mb-3 text-lg font-semibold text-foreground">
 		{m.broadcast_history_title()}
 	</h2>
 

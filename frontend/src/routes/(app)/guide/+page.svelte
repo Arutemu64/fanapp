@@ -136,7 +136,7 @@
 		<h2 id="guide-heading" class="mt-4 text-lg leading-snug font-semibold text-balance">
 			{m.guide_tagline()}
 		</h2>
-		<p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">{m.guide_about()}</p>
+		<p class="mt-1.5 text-base leading-relaxed text-muted-foreground">{m.guide_about()}</p>
 		<ul class="mt-3 flex flex-wrap gap-2">
 			{#each facts as fact (fact)}
 				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact}</li>

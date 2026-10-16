@@ -347,7 +347,7 @@
 		>
 			<!-- min-h-11 is load-bearing: the nomination header sticks 2.75rem below this one. -->
 			<div class="flex min-h-11 items-center justify-between gap-3 px-1">
-				<h2 class="truncate text-base font-semibold tracking-tight text-foreground">
+				<h2 class="truncate text-lg font-semibold tracking-tight text-foreground">
 					{block.title}
 				</h2>
 				<span class="shrink-0 text-xs text-muted-foreground tabular-nums">
