@@ -1,9 +1,7 @@
 import { version } from '$app/env';
 import * as Sentry from '@sentry/sveltekit';
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
-import { del, get, set } from 'idb-keyval';
 
 import { gotNoApiAnswer, isUnexpectedRequestError } from '#lib/api/errors.js';
 import {
@@ -15,6 +13,7 @@ import {
 	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions, queryForLoad } from '#lib/api/index.js';
+import { createIdbPersister } from '#lib/api/queryPersister.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
 import type { LayoutLoad } from './$types';
@@ -107,9 +106,7 @@ export const load: LayoutLoad = async () => {
 	// shaped by an older API.
 	const [, restored] = persistQueryClient({
 		queryClient,
-		persister: createAsyncStoragePersister({
-			storage: { getItem: get, setItem: set, removeItem: del }
-		}),
+		persister: createIdbPersister(),
 		maxAge: CACHE_MAX_AGE_MS,
 		buster: version,
 		dehydrateOptions: {

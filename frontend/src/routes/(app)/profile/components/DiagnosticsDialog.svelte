@@ -7,6 +7,7 @@
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import { checkSubscription } from '#lib/api/generated/index.js';
+	import { QUERY_CACHE_KEY } from '#lib/api/queryPersister.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -41,9 +42,6 @@
 	const queryClient = useQueryClient();
 	const pwa = getPwaService();
 	const toastService = getToastService();
-
-	// createAsyncStoragePersister's default key; the root layout leaves it unset.
-	const PERSISTED_CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
 
 	let snapshot = $state.raw<DiagnosticsSnapshot | null>(null);
 	let capturedAt = $state(0);
@@ -172,7 +170,7 @@
 		isResetting = true;
 		try {
 			queryClient.clear();
-			await del(PERSISTED_CACHE_KEY);
+			await del(QUERY_CACHE_KEY);
 			if ('caches' in window) {
 				const keys = await caches.keys();
 				await Promise.all(keys.map((key) => caches.delete(key)));
