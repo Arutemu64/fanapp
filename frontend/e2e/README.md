@@ -119,6 +119,10 @@ for the closed/open, offline and SSE patterns respectively.
   the captcha widget refuses `127.0.0.1`, and Sentry's sampled traces would post to
   an `/api/…/envelope/` path the mock records as unmatched.
 - **Never inline a large payload in a spec** — put reusable fixtures in `mocks/`.
+- **Camera**: Chromium plays a file in `media/` as the camera (`scanner.spec.ts`).
+  Encode a frame as a 4:2:0 MJPEG (`ffmpeg -i frame.png -frames:v 1 -pix_fmt yuvj420p -f mjpeg out.mjpeg`);
+  any other chroma layout plays as a flat green frame. The launch flags force a new
+  worker, so they go in a top-level `test.use`, one feed per spec file.
 
 ### Personas (auth)
 

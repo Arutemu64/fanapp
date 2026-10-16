@@ -20,13 +20,15 @@ describe('buildPrecacheManifest', () => {
 				'_app/immutable/entry/app.CF4D9Ccr.js',
 				'_app/immutable/assets/0.Cgo3sDEd.css',
 				'_app/immutable/assets/logo.Bx1c2d3e.svg',
-				'_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2'
+				'_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2',
+				'_app/immutable/assets/zxing_reader.B7f3k2Qa.wasm'
 			])
 		).toEqual([
 			'_app/immutable/entry/app.CF4D9Ccr.js',
 			'_app/immutable/assets/0.Cgo3sDEd.css',
 			'_app/immutable/assets/logo.Bx1c2d3e.svg',
 			'_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2',
+			'_app/immutable/assets/zxing_reader.B7f3k2Qa.wasm',
 			'200.html'
 		]);
 	});

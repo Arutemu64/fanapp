@@ -86,7 +86,10 @@ export default defineConfig({
 			? [
 					{
 						name: 'mobile-webkit',
-						use: { ...devices['iPhone 14'] }
+						use: { ...devices['iPhone 14'] },
+						// Faking a camera takes Chromium launch flags, which WebKit has no
+						// equivalent of and refuses to launch with.
+						testIgnore: 'scanner.spec.ts'
 					}
 				]
 			: [])
