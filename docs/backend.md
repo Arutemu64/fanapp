@@ -31,6 +31,10 @@ Everything below this section is detail; these rules alone prevent most mistakes
    drop+create; enum member changes need hand-written migrations).
 10. Logging: stdlib `logging.getLogger(__name__)`; short static message + scalar ids
     in `extra`; `str(...)` UUIDs; never log secrets, codes, or PII.
+11. A create with no natural key whose duplicate does harm takes a client-generated
+    UUIDv7 (`UuidVersion(7)` on the input). Replay the same caller and payload
+    as success; raise a `Conflict` otherwise, and map `pk_<table>` for the race
+    ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)).
 
 ## Common task recipes
 

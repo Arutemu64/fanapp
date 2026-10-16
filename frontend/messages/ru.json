@@ -219,6 +219,7 @@
 	"error_invalid_telegram_auth_payload": "Не удалось подтвердить Telegram",
 	"error_invalid_voting_time_range": "Конец голосования должен быть позже начала",
 	"error_link_initiator_mismatch": "Вход в аккаунт сменился, пока шло подключение. Попробуй ещё раз.",
+	"error_mailing_already_exists": "Эта рассылка уже отправлена\u00a0— она есть в истории",
 	"error_mailing_cancelled": "Рассылка уже отменена",
 	"error_mailing_not_cancellable": "Рассылку уже нельзя отменить\u00a0— она завершена",
 	"error_mailing_not_deletable": "Нельзя удалить эту рассылку.",

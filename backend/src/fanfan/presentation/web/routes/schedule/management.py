@@ -38,7 +38,8 @@ management_router = APIRouter(
     status_code=204,
     summary="Set specific event as current",
     description="Updates the schedule state to mark a specific event as active. "
-    "Validates timing and event status.",
+    "Validates timing and event status. "
+    "If that event is already current, nothing is changed or announced.",
     responses={
         204: {"description": "Event set as current successfully."},
         400: {
@@ -61,7 +62,7 @@ async def set_event_as_current(
     status_code=204,
     summary="Unset current schedule event",
     description="Clears the currently active event from the schedule. "
-    "Subject to rate limiting.",
+    "Subject to rate limiting. If no event is current, nothing is announced.",
     responses={
         204: {"description": "Current event cleared successfully."},
     },
@@ -78,7 +79,8 @@ async def uncheck_current_event(
     status_code=204,
     summary="Reorder schedule event",
     description="Moves an event to a new position in the sequence, "
-    "specifically after the provided event ID.",
+    "specifically after the provided event ID. If it is already there, "
+    "nothing is changed or announced.",
     responses={
         204: {"description": "Event moved successfully."},
         400: {
@@ -110,7 +112,7 @@ async def move_schedule_event(
     summary="Update a schedule event",
     description="Updates a schedule event's skip state. Set `is_skipped` to true to "
     "skip the event or false to restore it. Note: the currently active event cannot "
-    "be skipped.",
+    "be skipped. If the event already has that state, nothing is announced.",
     responses={
         204: {"description": "Event updated successfully."},
         400: {

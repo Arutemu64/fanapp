@@ -34,6 +34,11 @@ class UpdateScheduleEventSkip:
         self.schedule_edit = schedule_edit
 
     async def __call__(self, data: UpdateScheduleEventSkipInput) -> None:
+        async def already_applied() -> bool:
+            event = await self.schedule_gateway.get_event(data.event_id)
+            # A missing event is not "applied": mutate raises EventNotFound.
+            return event is not None and event.is_skipped == data.is_skipped
+
         async def mutate(_: User) -> ChangeFactory:
             event = await self.schedule_gateway.get_event(data.event_id)
             if event is None:
@@ -60,7 +65,9 @@ class UpdateScheduleEventSkip:
 
             return build_change
 
-        user = await self.schedule_edit.announce(Permission.SCHEDULE_MANAGE, mutate)
+        user = await self.schedule_edit.announce(
+            Permission.SCHEDULE_MANAGE, mutate, already_applied=already_applied
+        )
 
         logger.info(
             "Schedule event skip updated",

@@ -1406,7 +1406,7 @@
           "Schedule"
         ],
         "summary": "Set specific event as current",
-        "description": "Updates the schedule state to mark a specific event as active. Validates timing and event status.",
+        "description": "Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.",
         "operationId": "set_event_as_current",
         "security": [
           {
@@ -1508,7 +1508,7 @@
           "Schedule"
         ],
         "summary": "Unset current schedule event",
-        "description": "Clears the currently active event from the schedule. Subject to rate limiting.",
+        "description": "Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.",
         "operationId": "uncheck_current_event",
         "responses": {
           "204": {
@@ -1576,7 +1576,7 @@
           "Schedule"
         ],
         "summary": "Reorder schedule event",
-        "description": "Moves an event to a new position in the sequence, specifically after the provided event ID.",
+        "description": "Moves an event to a new position in the sequence, specifically after the provided event ID. If it is already there, nothing is changed or announced.",
         "operationId": "move_schedule_event",
         "security": [
           {
@@ -1688,7 +1688,7 @@
           "Schedule"
         ],
         "summary": "Update a schedule event",
-        "description": "Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.",
+        "description": "Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped. If the event already has that state, nothing is announced.",
         "operationId": "update_schedule_event",
         "security": [
           {
@@ -3107,7 +3107,7 @@
           "Notifications"
         ],
         "summary": "Send broadcast notification",
-        "description": "Creates a new mailing broadcast for specified user roles.",
+        "description": "Creates a new mailing broadcast for specified user roles. The client supplies the mailing ID, so repeating the same request returns the existing mailing instead of sending the broadcast again.",
         "operationId": "send_broadcast",
         "security": [
           {
@@ -3126,7 +3126,7 @@
         },
         "responses": {
           "200": {
-            "description": "Broadcast initiated successfully.",
+            "description": "Broadcast initiated, or an identical one replayed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3157,6 +3157,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The mailing ID belongs to a different broadcast.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4927,6 +4937,7 @@
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
               "INVALID_VOTING_TIME_RANGE",
               "LINK_INITIATOR_MISMATCH",
+              "MAILING_ALREADY_EXISTS",
               "MAILING_CANCELLED",
               "MAILING_NOT_CANCELLABLE",
               "MAILING_NOT_FOUND",
@@ -6246,6 +6257,12 @@
       },
       "SendBroadcastInput": {
         "properties": {
+          "mailing_id": {
+            "type": "string",
+            "format": "uuid7",
+            "title": "Mailing Id",
+            "description": "UUIDv7 the client generates once per broadcast form."
+          },
           "body": {
             "type": "string",
             "title": "Body"
@@ -6260,6 +6277,7 @@
         },
         "type": "object",
         "required": [
+          "mailing_id",
           "body",
           "roles"
         ],

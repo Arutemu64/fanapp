@@ -147,9 +147,17 @@ async def send_test_notification(
 @notifications_router.post(
     "/broadcast",
     summary="Send broadcast notification",
-    description="Creates a new mailing broadcast for specified user roles.",
+    description=(
+        "Creates a new mailing broadcast for specified user roles. The client "
+        "supplies the mailing ID, so repeating the same request returns the "
+        "existing mailing instead of sending the broadcast again."
+    ),
     responses={
-        200: {"description": "Broadcast initiated successfully."},
+        200: {"description": "Broadcast initiated, or an identical one replayed."},
+        409: {
+            "model": ErrorMessage,
+            "description": "The mailing ID belongs to a different broadcast.",
+        },
     },
 )
 @inject

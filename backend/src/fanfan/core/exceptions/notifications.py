@@ -20,6 +20,12 @@ class MailingAlreadyCancelled(Conflict, NotificationException):
     code = "MAILING_CANCELLED"
 
 
+class MailingAlreadyExists(Conflict, NotificationException):
+    # The client-chosen mailing ID is taken by a different broadcast: another
+    # author, text or audience. A replay of the same broadcast is not an error.
+    code = "MAILING_ALREADY_EXISTS"
+
+
 class MailingNotCancellable(Conflict, NotificationException):
     # The mailing already reached a terminal non-cancelled state (finished or
     # failed), so there is nothing left to cancel.

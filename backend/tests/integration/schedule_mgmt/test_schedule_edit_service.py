@@ -22,6 +22,10 @@ pytestmark = [
 ]
 
 
+async def _not_applied() -> bool:
+    return False
+
+
 async def test_edit_invalidates_cache_after_commit(
     dishka_request: AsyncContainer,
     schedule_editor: User,
@@ -84,7 +88,9 @@ async def test_failed_mutation_does_not_commit_the_announcement(
         raise EventNotFound
 
     with pytest.raises(EventNotFound):
-        await service.announce(Permission.SCHEDULE_MANAGE, fail)
+        await service.announce(
+            Permission.SCHEDULE_MANAGE, fail, already_applied=_not_applied
+        )
 
     # No change was recorded, so the cooldown was not spent by the failed edit.
     async def succeed(_: User) -> ChangeFactory:
@@ -95,4 +101,33 @@ async def test_failed_mutation_does_not_commit_the_announcement(
             user_id=ctx.user_id,
         )
 
-    await service.announce(Permission.SCHEDULE_MANAGE, succeed)
+    await service.announce(
+        Permission.SCHEDULE_MANAGE, succeed, already_applied=_not_applied
+    )
+
+
+async def test_already_applied_edit_skips_mutation_and_commit(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = await dishka_request.get(ScheduleEditService)
+    login(schedule_editor)
+    calls: list[str] = []
+
+    async def recording_commit() -> None:
+        calls.append("commit")
+
+    monkeypatch.setattr(service.uow, "commit", recording_commit)
+
+    async def mutate(_: User) -> ChangeFactory:
+        calls.append("mutate")
+        raise AssertionError
+
+    async def applied() -> bool:
+        return True
+
+    await service.announce(Permission.SCHEDULE_MANAGE, mutate, already_applied=applied)
+
+    assert calls == []

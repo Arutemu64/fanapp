@@ -911,7 +911,7 @@ export const getScheduleOptions = (options?: Options<GetScheduleData>) =>
 /**
  * Set specific event as current
  *
- * Updates the schedule state to mark a specific event as active. Validates timing and event status.
+ * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
  */
 export const setEventAsCurrentMutation = (
 	options?: Partial<Options<SetEventAsCurrentData>>
@@ -940,7 +940,7 @@ export const setEventAsCurrentMutation = (
 /**
  * Unset current schedule event
  *
- * Clears the currently active event from the schedule. Subject to rate limiting.
+ * Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.
  */
 export const uncheckCurrentEventMutation = (
 	options?: Partial<Options<UncheckCurrentEventData>>
@@ -969,7 +969,7 @@ export const uncheckCurrentEventMutation = (
 /**
  * Reorder schedule event
  *
- * Moves an event to a new position in the sequence, specifically after the provided event ID.
+ * Moves an event to a new position in the sequence, specifically after the provided event ID. If it is already there, nothing is changed or announced.
  */
 export const moveScheduleEventMutation = (
 	options?: Partial<Options<MoveScheduleEventData>>
@@ -998,7 +998,7 @@ export const moveScheduleEventMutation = (
 /**
  * Update a schedule event
  *
- * Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.
+ * Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped. If the event already has that state, nothing is announced.
  */
 export const updateScheduleEventMutation = (
 	options?: Partial<Options<UpdateScheduleEventData>>
@@ -1781,7 +1781,7 @@ export const listBroadcastsInfiniteOptions = (options?: Options<ListBroadcastsDa
 /**
  * Send broadcast notification
  *
- * Creates a new mailing broadcast for specified user roles.
+ * Creates a new mailing broadcast for specified user roles. The client supplies the mailing ID, so repeating the same request returns the existing mailing instead of sending the broadcast again.
  */
 export const sendBroadcastMutation = (
 	options?: Partial<Options<SendBroadcastData>>

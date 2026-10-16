@@ -247,6 +247,7 @@ const ERROR_MESSAGES = {
 	INVALID_TELEGRAM_AUTH_PAYLOAD: m.error_invalid_telegram_auth_payload,
 	INVALID_VOTING_TIME_RANGE: m.error_invalid_voting_time_range,
 	LINK_INITIATOR_MISMATCH: m.error_link_initiator_mismatch,
+	MAILING_ALREADY_EXISTS: m.error_mailing_already_exists,
 	MAILING_CANCELLED: m.error_mailing_cancelled,
 	MAILING_NOT_CANCELLABLE: m.error_mailing_not_cancellable,
 	MAILING_NOT_FOUND: m.error_mailing_not_found,
