@@ -78,30 +78,36 @@ export async function getDevicePushState(
 
 /**
  * Whether a new notification also shows as an OS notification while the app is
- * open on this device. True where the browser shows pushes itself and the signed-in
- * account's pushes reach this device, so the in-app toast would repeat it.
- * Elsewhere the service worker skips the OS notification for a visible app and the
- * toast is the only alert.
+ * open on this device. True where the browser shows pushes itself and this device
+ * is subscribed, so the in-app toast would repeat it. A subscription here always
+ * belongs to the signed-in account, since every session end drops it
+ * (`unsubscribeDevicePush`). Elsewhere the service worker skips the OS
+ * notification for a visible app and the toast is the only alert.
  */
-export async function pushShowsOverOpenApp(
-	isRegistered: PushBackend['isRegistered'],
-	browser: PushBrowser = browserPush
-): Promise<boolean> {
+export async function pushShowsOverOpenApp(browser: PushBrowser = browserPush): Promise<boolean> {
 	if (!browser.isSupported() || !browser.showsPushItself()) {
 		return false;
 	}
+	return (await getDevicePushState(browser)) === 'on';
+}
+
+/**
+ * End this device's push subscription when the session ends. Only this device's:
+ * the account's other devices keep theirs. The server row is left behind, since a
+ * passive expiry has no session to delete it with; the push service answers the
+ * next push to it with 404/410 and `PushNotifier` prunes it. `unsubscribe()`
+ * itself works offline: it stops delivery here at once and tells the push service
+ * in the background (https://w3c.github.io/push-api/#dom-pushsubscription-unsubscribe).
+ */
+export async function unsubscribeDevicePush(browser: PushBrowser = browserPush): Promise<void> {
+	if (!browser.isSupported()) {
+		return;
+	}
 	try {
-		const found = await inspectBrowser(browser);
-		if (typeof found === 'string') {
-			return false;
-		}
-		// The browser keeps its subscription across logout, and the server ties it
-		// to whoever registered it, so on a shared device only the server knows
-		// whether this account's pushes come here.
-		return await isRegistered(found.endpoint);
-	} catch {
-		// A repeated alert beats a missing one, so a failed check keeps the toast.
-		return false;
+		const subscription = await browser.getSubscription();
+		await subscription?.unsubscribe();
+	} catch (error) {
+		Sentry.captureException(error, { tags: { source: 'push-unsubscribe' } });
 	}
 }
 

@@ -12,7 +12,8 @@ import {
 	getDevicePushState,
 	type PushBackend,
 	PushDevice,
-	pushShowsOverOpenApp
+	pushShowsOverOpenApp,
+	unsubscribeDevicePush
 } from './pushDevice.svelte';
 
 function fakeSubscription(complete = true) {
@@ -77,41 +78,42 @@ describe('getDevicePushState', () => {
 
 describe('pushShowsOverOpenApp', () => {
 	const sub = fakeSubscription() as unknown as PushSubscription;
-	const declarative = { getSubscription: () => Promise.resolve(sub), showsPushItself: () => true };
-	const registered = () => Promise.resolve(true);
+	const subscribed = { getSubscription: () => Promise.resolve(sub) };
 
-	it('is true where the browser shows pushes itself and this account is registered here', async () => {
-		expect(await pushShowsOverOpenApp(registered, fakeBrowser(declarative))).toBe(true);
+	it('is true only where the browser shows pushes itself and this device is subscribed', async () => {
+		expect(
+			await pushShowsOverOpenApp(fakeBrowser({ ...subscribed, showsPushItself: () => true }))
+		).toBe(true);
+		expect(await pushShowsOverOpenApp(fakeBrowser({ showsPushItself: () => true }))).toBe(false);
+		expect(await pushShowsOverOpenApp(fakeBrowser(subscribed))).toBe(false);
 	});
 
-	it('is false for another account on the same device', async () => {
-		// The browser keeps the previous account's subscription after a logout.
-		const isRegistered = vi.fn().mockResolvedValue(false);
-		expect(await pushShowsOverOpenApp(isRegistered, fakeBrowser(declarative))).toBe(false);
-		expect(isRegistered).toHaveBeenCalledWith(sub.endpoint);
+	it('is false when permission is denied', async () => {
+		const browser = fakeBrowser({
+			...subscribed,
+			showsPushItself: () => true,
+			permission: () => 'denied'
+		});
+		expect(await pushShowsOverOpenApp(browser)).toBe(false);
+	});
+});
+
+describe('unsubscribeDevicePush', () => {
+	it("unsubscribes this device's subscription", async () => {
+		const unsubscribe = vi.fn().mockResolvedValue(true);
+		const sub = { unsubscribe } as unknown as PushSubscription;
+		await unsubscribeDevicePush(fakeBrowser({ getSubscription: () => Promise.resolve(sub) }));
+		expect(unsubscribe).toHaveBeenCalledOnce();
 	});
 
-	it('is false without a subscription, permission or declarative push', async () => {
-		expect(
-			await pushShowsOverOpenApp(registered, fakeBrowser({ showsPushItself: () => true }))
-		).toBe(false);
-		expect(
-			await pushShowsOverOpenApp(
-				registered,
-				fakeBrowser({ ...declarative, permission: () => 'denied' })
-			)
-		).toBe(false);
-		expect(
-			await pushShowsOverOpenApp(
-				registered,
-				fakeBrowser({ ...declarative, showsPushItself: () => false })
-			)
-		).toBe(false);
-	});
-
-	it('keeps the toast when the server check fails', async () => {
-		const failing = () => Promise.reject(new Error('offline'));
-		expect(await pushShowsOverOpenApp(failing, fakeBrowser(declarative))).toBe(false);
+	it('does nothing without a subscription or push support, and never throws', async () => {
+		const getSubscription = vi.fn().mockResolvedValue(null);
+		await unsubscribeDevicePush(fakeBrowser({ getSubscription }));
+		await unsubscribeDevicePush(fakeBrowser({ isSupported: () => false, getSubscription }));
+		expect(getSubscription).toHaveBeenCalledOnce();
+		await expect(
+			unsubscribeDevicePush(fakeBrowser({ getSubscription: () => Promise.reject(new Error('x')) }))
+		).resolves.toBeUndefined();
 	});
 });
 

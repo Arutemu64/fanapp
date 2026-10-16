@@ -30,7 +30,14 @@ function setup({ reachable = true } = {}) {
 		goHome,
 		redirectToLogin: step('redirectToLogin')
 	};
-	const session = new Session({ queryClient, events, router, isReachable: () => reachable });
+	const unsubscribePush = step('unsubscribePush');
+	const session = new Session({
+		queryClient,
+		events,
+		router,
+		isReachable: () => reachable,
+		unsubscribePush
+	});
 	const userKey = currentUserOptions().queryKey;
 	// The root layout always observes the user query, so forgetting inactive
 	// queries never removes it.
@@ -39,7 +46,7 @@ function setup({ reachable = true } = {}) {
 	new QueryObserver(queryClient, { ...currentUserOptions(), staleTime: Infinity }).subscribe(
 		() => {}
 	);
-	return { queryClient, events, goHome, session, userKey, calls };
+	return { queryClient, events, goHome, unsubscribePush, session, userKey, calls };
 }
 
 beforeEach(() => {
@@ -92,7 +99,7 @@ describe('Session.logOut', () => {
 		await session.logOut(revoke);
 
 		expect(queryClient.getQueryData(userKey)).toBeNull();
-		expect(calls).toEqual(['revoke', 'goHome', 'restart']);
+		expect(calls).toEqual(['revoke', 'goHome', 'unsubscribePush', 'restart']);
 		expect(isLogoutPending()).toBe(false);
 	});
 
@@ -107,7 +114,7 @@ describe('Session.logOut', () => {
 	});
 
 	it('leaves everything as it was when the server refuses', async () => {
-		const { queryClient, session, userKey, events, goHome } = setup();
+		const { queryClient, session, userKey, events, goHome, unsubscribePush } = setup();
 		queryClient.setQueryData(userKey, USER);
 
 		await expect(session.logOut(() => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
@@ -115,10 +122,13 @@ describe('Session.logOut', () => {
 		expect(queryClient.getQueryData(userKey)).toEqual(USER);
 		expect(goHome).not.toHaveBeenCalled();
 		expect(events.restart).not.toHaveBeenCalled();
+		expect(unsubscribePush).not.toHaveBeenCalled();
 	});
 
 	it('offline: records the intent instead of calling the server, and still tears down', async () => {
-		const { queryClient, session, userKey, events } = setup({ reachable: false });
+		const { queryClient, session, userKey, events, unsubscribePush } = setup({
+			reachable: false
+		});
 		queryClient.setQueryData(userKey, USER);
 		const revoke = vi.fn();
 
@@ -128,6 +138,8 @@ describe('Session.logOut', () => {
 		expect(isLogoutPending()).toBe(true);
 		expect(queryClient.getQueryData(userKey)).toBeNull();
 		expect(events.restart).toHaveBeenCalledOnce();
+		// unsubscribe() is local and works offline, so it doesn't wait for the revoke.
+		expect(unsubscribePush).toHaveBeenCalledOnce();
 	});
 });
 
@@ -139,7 +151,7 @@ describe('Session.expired', () => {
 		await session.expired();
 
 		expect(queryClient.getQueryData(userKey)).toBeNull();
-		expect(calls).toEqual(['redirectToLogin', 'restart']);
+		expect(calls).toEqual(['redirectToLogin', 'unsubscribePush', 'restart']);
 	});
 
 	it('ends only once for a burst of 401s, and not at all for a guest', async () => {
