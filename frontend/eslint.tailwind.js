@@ -5,29 +5,32 @@ import betterTailwindcss from 'eslint-plugin-better-tailwindcss';
 
 // Design-system guardrails for Tailwind classes, grouped so a file can be exempted from
 // one group with a stated reason (see restrictedClassExemptions). The `(.*:)?` prefix
-// matches any variant stack (dark:, hover:, [&_h2]:...). Messages name the fix, because
+// matches any variant stack (dark:, hover:, [&_h2]:...) and MODIFIER a trailing line
+// height or opacity (text-sm/6, text-red-500/50). Messages name the fix, because
 // the reader is often an agent that will act on exactly what the message says.
 const VARIANTS = '^(?:.*:)?';
+const MODIFIER = '(?:/[^:]+)?$';
 const PALETTE_HUES =
 	'red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone';
 const COLOR_UTILITIES =
 	'text|bg|border(?:-[trblxyse])?|ring|ring-offset|fill|stroke|from|via|to|outline|decoration|divide|placeholder|caret|accent|shadow';
 
-const RESTRICTION_GROUPS = {
+export const RESTRICTION_GROUPS = {
 	// DESIGN.md §3 and docs/frontend.md "Typography Scale".
 	type: [
 		{
-			pattern: `${VARIANTS}(?:sm|md|lg|xl|2xl|@[a-z0-9]+|min-\\[[^\\]]+\\]|max-[a-z0-9-]+):text-(?:[23]?xs|sm|base|lg|[2-9]?xl|headline|section|body)$`,
+			// The breakpoint may sit anywhere in the stack: sm:hover:text-base.
+			pattern: `${VARIANTS}(?:sm|md|lg|xl|2xl|@[a-z0-9]+|min-\\[[^\\]]+\\]|max-[a-z0-9-]+):(?:.*:)?text-(?:[23]?xs|sm|base|lg|[2-9]?xl|headline|section|body)${MODIFIER}`,
 			message:
 				'Type sizes do not change with screen width (DESIGN.md Fixed-Scale Rule): drop the breakpoint and use one size, text-headline / text-section / text-body, or text-sm / text-xs for secondary text.'
 		},
 		{
-			pattern: `${VARIANTS}text-(?:lg|[2-9]?xl)$`,
+			pattern: `${VARIANTS}text-(?:lg|[2-9]?xl)${MODIFIER}`,
 			message:
 				'Use a type role from app.css @theme instead of a raw heading size: text-headline (page and card titles, 24px) or text-section (section headings, 18px). See docs/frontend.md "Typography Scale".'
 		},
 		{
-			pattern: `${VARIANTS}text-\\[(?:\\d|calc|length:|var\\().*\\]$`,
+			pattern: `${VARIANTS}text-\\[(?:\\d|calc|length:|var\\().*\\]${MODIFIER}`,
 			message:
 				'No arbitrary font sizes. Use a type role (text-headline / text-section / text-body) or text-sm / text-xs; a genuinely new role goes in app.css @theme and cn() in $lib/utils.ts.'
 		}
@@ -35,12 +38,12 @@ const RESTRICTION_GROUPS = {
 	// DESIGN.md "Color-Earns-Its-Place" and the semantic tokens in app.css.
 	palette: [
 		{
-			pattern: `${VARIANTS}(?:${COLOR_UTILITIES})-(?:${PALETTE_HUES})-\\d{2,3}(?:/\\d+)?$`,
+			pattern: `${VARIANTS}(?:${COLOR_UTILITIES})-(?:${PALETTE_HUES})-\\d{2,3}${MODIFIER}`,
 			message:
 				'Use a semantic colour token, not a raw palette hue: text-foreground / text-muted-foreground, bg-muted, border-border, text-destructive, text-success / text-warning / text-info, or the brand primary / secondary. See DESIGN.md §2.'
 		},
 		{
-			pattern: `${VARIANTS}(?:${COLOR_UTILITIES})-\\[(?:#|rgb|hsl|oklch|color:).*\\]$`,
+			pattern: `${VARIANTS}(?:${COLOR_UTILITIES})-\\[(?:#|rgb|hsl|oklch|color:).*\\]${MODIFIER}`,
 			message:
 				'No arbitrary colours. Use a semantic token from app.css, or add one there (light and dark values) if the meaning is new.'
 		}
@@ -48,7 +51,7 @@ const RESTRICTION_GROUPS = {
 	// docs/frontend.md "Z-Index Scale".
 	zIndex: [
 		{
-			pattern: `${VARIANTS}-?z-(?:[4-9]\\d|\\d{3,}|\\[.*\\])$`,
+			pattern: `${VARIANTS}-?z-(?:3[1-9]|[4-9]\\d|\\d{3,}|\\[.*\\])$`,
 			message:
 				'Above the in-page sticky band (z-10 to z-30), use the ladder tokens: z-(--z-chrome) or z-(--z-overlay). See docs/frontend.md "Z-Index Scale".'
 		}
@@ -95,7 +98,6 @@ const restrictedClassExemptions = [
 	}
 ];
 
-/** @type {import('eslint').Linter.Config[]} */
 export const tailwindConfigs = [
 	{
 		// Tailwind class linting (eslint-plugin-better-tailwindcss; ADR-0030). The
