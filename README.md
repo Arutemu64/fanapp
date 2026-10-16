@@ -26,7 +26,8 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Auth**: sign in via VK ID or Telegram (social providers are enabled per deployment), email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
 - **Guide**: the festival at a glance: date, times, age limit, social links, address, the rules, venue maps, and a page per festival activity. The activity pages are Markdown files in `frontend/src/content/guide/`, compiled with mdsvex, so adding or rewording one is a file edit ([ADR-0028](docs/adr/0028-mdsvex-for-guide-articles.md)).
-- **Organizer tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, and other admin screens, gated by permissions.
+- **Quest** (optional, off by default): players show a QR code from their profile, volunteers scan it and award points for tasks done around the venue, and a leaderboard ranks everyone, top places winning merch. Organizers switch it on and set the per-award cap from the festival settings ([ADR-0035](docs/adr/0035-quest-points-as-an-award-ledger.md)).
+- **Staff tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, quest awards and other admin screens for organizers and volunteers, each tool shown only to those granted its permission.
 - **Feedback**: user feedback submission.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
 - **Installable PWA**: installs to the home screen; screens show their last copy at once and refresh in the background, and the schedule, notifications and profile stay readable offline.
