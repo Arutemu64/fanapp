@@ -90,15 +90,21 @@ async def test_ties_rank_whoever_reached_the_score_first(
     login: Callable[[User], None],
 ) -> None:
     login(quest_volunteer)
+    # Each award takes its own created_at from the interactor's clock, so the
+    # visitor reaches 10 first. The manager's account is older, so its uuid7
+    # sorts first: a ranking that fell through to the user-id tiebreaker would
+    # put the manager on top and fail here.
     await _award(dishka_request, visitor, 10)
     await _award(dishka_request, quest_manager, 10)
+    assert quest_manager.id < visitor.id
 
     login(visitor)
     quest = await (await dishka_request.get(GetQuest))()
 
-    # The test runs in one transaction, so created_at is equal and the
-    # user-id tiebreaker decides; the point is that ranks never repeat.
-    assert [entry.rank for entry in quest.leaderboard] == [1, 2]
+    assert [(entry.rank, entry.player.id) for entry in quest.leaderboard] == [
+        (1, visitor.id),
+        (2, quest_manager.id),
+    ]
 
 
 @pytest.mark.usefixtures("quest_enabled")

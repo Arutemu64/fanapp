@@ -18,7 +18,17 @@
 	import LeaderboardRow from './components/LeaderboardRow.svelte';
 
 	const userQuery = createQuery(() => currentUserOptions());
-	const questQuery = createQuery(() => getQuestOptions());
+	// Other players' awards send this viewer no signal, so an open page polls to keep
+	// the standings current. One query per viewer every 30s is cheap (the ranking
+	// is a ~12 ms aggregate at festival scale), and a broadcast on every award would
+	// make every open client refetch at once instead. TanStack skips the tick while
+	// the app is in the background.
+	const LEADERBOARD_REFRESH_MS = 30_000;
+	const questQuery = createQuery(() => ({
+		...getQuestOptions(),
+		refetchInterval: LEADERBOARD_REFRESH_MS,
+		meta: { quietRefetchErrors: true }
+	}));
 
 	let user = $derived(userQuery.data ?? null);
 	let quest = $derived(questQuery.data);

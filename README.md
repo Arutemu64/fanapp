@@ -49,7 +49,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
     <td><img src="docs/assets/readme-gallery/notifications.webp" width="150" alt="Notifications: a subscription reminder, an on-stage announcement and organizer broadcasts"></td>
     <td><img src="docs/assets/readme-gallery/guide.webp" width="150" alt="Guide: the festival's date, times and social links, the address, the venue map, the rules and a page per festival activity"></td>
     <td><img src="docs/assets/readme-gallery/map.webp" width="150" alt="Map: both floor plans, then «Что где», the posters' numbered legend as a list"></td>
-    <td><img src="docs/assets/readme-gallery/profile.webp" width="150" alt="Profile: the account, a linked ticket, notification status and the theme switch"></td>
+    <td><img src="docs/assets/readme-gallery/profile.webp" width="150" alt="Profile: the account, the quest balance, a linked ticket, notification status and the theme switch"></td>
   </tr>
 </table>
 
