@@ -18,32 +18,27 @@
 	}
 </script>
 
-<!-- Decorative: the hint beside it says the same in words. Drawn the way a
-     TicketsCloud ticket's stub prints it: the barcode on its side, with the
-     number running up alongside. The group is laid out flat and turned -90°
-     about the viewBox centre; the viewBox frames the turned result. -->
+<!-- Decorative: the hint beside it says the same in words. -->
 <div class="flex justify-center rounded-lg bg-muted p-3" aria-hidden="true">
-	<svg viewBox="60 -38 80 160" class="h-40">
-		<g transform="rotate(-90 100 42)">
-			{#each BARS as bar (bar.x)}
-				<rect x={bar.x} y="6" width={bar.width} height="42" class="fill-foreground" />
-			{/each}
-			<rect
-				x="24"
-				y="54"
-				width="152"
-				height="24"
-				rx="6"
-				class="fill-primary/10 stroke-primary"
-				stroke-width="2"
-			/>
-			<text
-				x="100"
-				y="71"
-				text-anchor="middle"
-				class="fill-primary font-mono text-xs font-semibold"
-				letter-spacing="0.5">1234567890123456</text
-			>
-		</g>
+	<svg viewBox="0 0 200 84" class="w-48">
+		{#each BARS as bar (bar.x)}
+			<rect x={bar.x} y="6" width={bar.width} height="42" class="fill-foreground" />
+		{/each}
+		<rect
+			x="24"
+			y="54"
+			width="152"
+			height="24"
+			rx="6"
+			class="fill-primary/10 stroke-primary"
+			stroke-width="2"
+		/>
+		<text
+			x="100"
+			y="71"
+			text-anchor="middle"
+			class="fill-primary font-mono text-xs font-semibold"
+			letter-spacing="0.5">1234567890123456</text
+		>
 	</svg>
 </div>
