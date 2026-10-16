@@ -28,6 +28,30 @@ export function isNavItemActive(
 }
 
 /**
+ * Re-tapping the tab whose root you're already on returns to the top instead of
+ * navigating, the native bottom-bar affordance. Exact match only: from a nested page
+ * (active by prefix) the tap should navigate to the root.
+ */
+export function handleNavItemClick(
+	event: MouseEvent,
+	activeUrl: string,
+	href: Path,
+	scrollToTop: () => void
+): void {
+	if (activeUrl !== resolve(href)) return;
+	event.preventDefault();
+	scrollToTop();
+}
+
+/**
+ * Whether the item carries the "update available" dot: only Profile does, since the
+ * update row lives on that hub.
+ */
+export function hasUpdateDot(href: Path, updateAvailable: boolean): boolean {
+	return href === 'profile' && updateAvailable;
+}
+
+/**
  * A backend deep link ("/schedule", "/" for home) as an app `Path`. The API
  * sends root-relative pathnames, but `resolve()` reads a leading "/" as a route
  * ID, whose segments it would parse for [params] and (groups).

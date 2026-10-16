@@ -5,7 +5,7 @@
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
-	import { isNavItemActive } from '#lib/utils/nav.js';
+	import { handleNavItemClick, hasUpdateDot, isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
@@ -72,7 +72,7 @@
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{const { label, href, outlineIcon: Icon } = $derived(item)}
 			{const active = $derived(isNavItemActive(activeUrl, item))}
-			{const updateDot = $derived(href === 'profile' && appUpdate.available)}
+			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
 			<!-- "Голосование" must fit one fifth of the pill: measured in-app it is ~62px at
 			     10px, ~67px at 11px, ~73px at 12px. A tab gets ~67px on a 360px phone and
 			     ~74px from 400px (where the pill's side margin grows from 8px to 12px). So
@@ -85,15 +85,7 @@
 				href={resolve(href)}
 				aria-current={active ? 'page' : undefined}
 				class="group relative inline-flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-3xs font-medium tracking-tighter transition-colors min-[22.5rem]:text-2xs min-[25rem]:text-xs min-[25rem]:tracking-tight"
-				onclick={(event: MouseEvent) => {
-					// Re-tapping the tab whose root you're already on returns to the top, the
-					// native bottom-bar affordance. From a nested page (active by prefix, not
-					// exact) the tap should navigate to the root instead, so gate on an exact match.
-					if (activeUrl === resolve(href)) {
-						event.preventDefault();
-						scrollToTop();
-					}
-				}}
+				onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}
 			>
 				<!-- Colour and weight share the capsule's 300ms curve, so the old tab dims as
 				     the capsule leaves it and the new one lights up as it arrives; a snap
