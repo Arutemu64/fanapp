@@ -1,7 +1,7 @@
 import { expect, loggedInAs, test } from '../fixtures';
 
 test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
-	test('renders the home shell for a logged-out visitor', async ({ page, api }) => {
+	test('renders the home shell for a logged-out visitor', async ({ page }) => {
 		await page.goto('/');
 
 		// The boot splash is removed once the root layout mounts — proof the SPA
@@ -16,7 +16,6 @@ test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 		).toBeVisible();
 
 		// The baseline covered every boot request — nothing hit the loud 404.
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('shows the account surface for a logged-in visitor', async ({ page, api }) => {
@@ -26,6 +25,5 @@ test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 		await expect(page.locator('#app-splash')).toHaveCount(0);
 		// A logged-in user is not offered the login link on the home surface.
 		await expect(page.getByRole('link', { name: 'Войти' })).toHaveCount(0);
-		expect(api.unmatched).toEqual([]);
 	});
 });

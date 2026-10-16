@@ -1,20 +1,22 @@
 import { readFileSync } from 'node:fs';
 
-import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
+import type {
+	OAuthProvidersOutput,
+	OnlineUsersCountOutput
+} from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
 // The Profile tab is the hub for everything without a tab of its own: login for
 // guests; account settings, feedback, the organizer toolbox and logout for members.
 test.describe('profile hub', () => {
-	test('offers a guest the login entry point, returning to the hub', async ({ page, api }) => {
+	test('offers a guest the login entry point, returning to the hub', async ({ page }) => {
 		await page.goto('/profile');
 
 		const login = page.getByRole('main').getByRole('link', { name: 'Войти' });
 		await expect(login).toBeVisible();
 		await expect(login).toHaveAttribute('href', '/login?next=%2Fprofile');
 		await expect(page.getByRole('button', { name: 'Выйти' })).toHaveCount(0);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('carries the return path through a social login start', async ({ page, api }) => {
@@ -41,7 +43,6 @@ test.describe('profile hub', () => {
 		await expect(main.getByRole('link', { name: 'Обратная связь' })).toBeVisible();
 		await expect(main.getByRole('link', { name: 'Инструменты' })).toHaveCount(0);
 		await expect(main.getByRole('button', { name: 'Выйти' })).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
@@ -55,7 +56,11 @@ test.describe('profile hub', () => {
 	});
 
 	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
-		api.use(organizer());
+		api.use({
+			...organizer(),
+			// The toolbox hub polls this for its online-users card.
+			'GET /users/online-count': json<OnlineUsersCountOutput>({ count: 5 })
+		});
 		await page.goto('/profile');
 
 		await page.getByRole('main').getByRole('link', { name: 'Инструменты' }).click();
@@ -105,7 +110,6 @@ test.describe('profile settings on a phone', () => {
 		await expect(field).toHaveAttribute('aria-invalid', 'true');
 		await expect(page.getByRole('alert')).toHaveText('Билет не найден');
 		expect(sentBarcode).toBe('fan-7k4q9m');
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('links a ticket from a screenshot picked in the scanner', async ({ page, api }) => {
@@ -132,7 +136,6 @@ test.describe('profile settings on a phone', () => {
 		await expect(dialog).toHaveCount(0);
 		await expect(page.getByLabel('Номер билета')).toHaveValue('1234567890123456');
 		expect(sentBarcode).toBe('1234567890123456');
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('toggles a setting by tapping its title, without a success toast', async ({ page, api }) => {
@@ -158,7 +161,7 @@ test.describe('profile settings on a phone', () => {
 	});
 });
 
-test.describe('logging out', () => {
+test.describe('logging out', { tag: '@critical' }, () => {
 	test('asks first, and cancelling keeps the session', async ({ page, api }) => {
 		api.use({ ...loggedInAs(), 'POST /auth/logout': json({}) });
 		await page.goto('/profile');
@@ -206,7 +209,6 @@ test.describe('diagnostics', () => {
 		const report = await page.evaluate(() => (window as { copiedText?: string }).copiedText);
 		expect(report).toContain('Аккаунт: @test_visitor');
 		expect(report).toContain('Сборка целиком: 0123456789abcdef0123456789abcdef01234567');
-		expect(api.unmatched).toEqual([]);
 	});
 });
 
@@ -235,7 +237,6 @@ test.describe('avatar', () => {
 
 		await dialog.getByRole('button', { name: 'Сохранить' }).click();
 		await expect.poll(() => patched).toEqual({ avatar_seed: expect.stringMatching(/^[\w-]{12}$/) });
-		expect(api.unmatched).toEqual([]);
 	});
 });
 
@@ -256,7 +257,6 @@ test.describe('account dialogs start fresh on reopen', () => {
 
 		await page.getByRole('button', { name: 'Редактировать' }).click();
 		await expect(username).toHaveValue('test_visitor');
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('change password drops the typed password and its error', async ({ page, api }) => {
@@ -278,7 +278,6 @@ test.describe('account dialogs start fresh on reopen', () => {
 		await page.getByRole('button', { name: 'Изменить' }).click();
 		await expect(newPassword).toHaveValue('');
 		await expect(dialog.getByText(/^Новый пароль должен быть/)).toBeHidden();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('change email returns to the address step', async ({ page, api }) => {
@@ -297,6 +296,5 @@ test.describe('account dialogs start fresh on reopen', () => {
 		await page.getByRole('button', { name: 'Добавить' }).click();
 		await expect(newEmail).toBeEditable();
 		await expect(newEmail).toHaveValue('');
-		expect(api.unmatched).toEqual([]);
 	});
 });

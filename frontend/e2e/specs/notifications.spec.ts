@@ -43,7 +43,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		// cue for what the user hasn't seen yet must not vanish on arrival.
 		await expect(item.getByRole('link', { name: 'Новое: Скоро твоё событие' })).toBeVisible();
 		await expect(page.getByText('Новых: 1')).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('offers mark-all when unread items sit beyond the loaded page', async ({ page, api }) => {
@@ -70,7 +69,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 
 		await expect(markAll).toBeHidden();
 		expect(api.countCalls('POST /notifications/mark-all-read')).toBe(1);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('does not link an organizer mailing back to the feed it sits in', async ({ page, api }) => {
@@ -99,7 +97,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		// Only the organizer's own link in the body — no card link wrapping it.
 		await expect(item.getByRole('link')).toHaveCount(1);
 		await expect(item.getByRole('link', { name: 'Схема' })).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('the bell opens the feed on every screen size', async ({ page, api }) => {
@@ -112,7 +109,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		await page.getByRole('link', { name: 'Открыть уведомления, непрочитанных: 3' }).click();
 
 		await expect(page).toHaveURL(/\/notifications$/);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('pages by cursor and refetches later pages from the fresh first page', async ({
@@ -174,7 +170,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		await expect(item(newest.title)).toBeVisible();
 		await expect.poll(() => requests.at(-1)?.get('cursor')).toBe('cursor-after-refetch');
 		await expect(item(older.title)).toHaveCount(1);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('shows the empty state when there are no notifications', async ({ page, api }) => {
@@ -189,6 +184,5 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		);
 		// Nothing unread → no mark-read call.
 		expect(api.countCalls('POST /notifications/mark-read')).toBe(0);
-		expect(api.unmatched).toEqual([]);
 	});
 });

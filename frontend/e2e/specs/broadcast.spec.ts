@@ -48,7 +48,6 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		await expect(page.getByText('Отменена', { exact: true })).toBeVisible();
 		// The cancel action is gone for a terminal mailing.
 		await expect(page.getByRole('button', { name: 'Отменить' })).toHaveCount(0);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('shows the empty state when nothing has been sent', async ({ page, api }) => {
@@ -64,6 +63,5 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		await page.goto('/tools/broadcast');
 
 		await expect(page.getByText('Пока ничего не отправлено')).toBeVisible();
-		expect(api.unmatched).toEqual([]);
 	});
 });

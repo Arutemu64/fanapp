@@ -66,7 +66,6 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 		await expect(page.getByRole('button', { name: 'Отменить голос' })).toBeVisible();
 
 		expect(api.countCalls('POST /voting/votes')).toBe(1);
-		expect(api.unmatched).toEqual([]);
 	});
 
 	test('holds the counted vote until the refetch lands', async ({ page, api }) => {
@@ -151,6 +150,5 @@ test.describe('voting — taking a vote back', { tag: '@critical' }, () => {
 		await expect(page.getByRole('button', { name: 'Голосовать за Косплей на Мику' })).toBeVisible();
 
 		expect(api.countCalls(`DELETE /voting/votes/${VOTE_ID}`)).toBe(1);
-		expect(api.unmatched).toEqual([]);
 	});
 });

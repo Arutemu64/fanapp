@@ -40,5 +40,4 @@ test('links a ticket scanned with the camera, then turns the camera off', async 
 	await expect(page.getByRole('alert')).toHaveText('Билет не найден');
 	expect(sentBarcode).toBe(SCANNED_NUMBER);
 	await expect(page.locator('video')).toHaveCount(0);
-	expect(api.unmatched).toEqual([]);
 });
