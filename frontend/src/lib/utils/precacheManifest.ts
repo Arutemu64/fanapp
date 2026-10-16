@@ -1,12 +1,13 @@
 import type { PrecacheEntry } from 'workbox-precaching';
 
-// The app shell: code, styles, fonts, the SVG logo/favicon and the web app
-// manifest. Raster images are deliberately not on this list: the responsive
+// The app shell: code, styles, fonts, the SVG logo/favicon, the web app
+// manifest and the barcode decoder's .wasm (scanning has to work at the venue,
+// where the connection is worst; barcodeReader.ts). Raster images are deliberately not on this list: the responsive
 // AVIF/WebP/… variants <enhanced:img> emits would store every width and format
 // at install, which is wasteful and discouraged
 // (https://developer.chrome.com/docs/workbox/precaching-dos-and-donts); the
 // worker serves them cache-first at runtime instead.
-const SHELL_FILE = /\.(js|css|html|svg|ico|webmanifest|woff2|json)$/;
+const SHELL_FILE = /\.(js|css|html|svg|ico|webmanifest|woff2|json|wasm)$/;
 
 // PWA icons are the one raster set we precache: the manifest and push
 // notifications point at them, so they must resolve offline.

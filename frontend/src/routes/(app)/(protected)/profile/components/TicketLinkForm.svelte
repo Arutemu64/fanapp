@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleCheck } from '@lucide/svelte';
+	import { CircleCheck, ScanLine } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
@@ -10,6 +10,7 @@
 		getVotingStatusQueryKey,
 		linkTicketMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import BarcodeScannerDialog from '#lib/components/BarcodeScannerDialog.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -19,6 +20,7 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import SettingsSection from './SettingsSection.svelte';
+	import TicketNumberIllustration from './TicketNumberIllustration.svelte';
 
 	interface Props {
 		user: CurrentUserDto;
@@ -40,14 +42,28 @@
 	// Linking a ticket is a mutation — online only. A linked ticket still shows.
 	const offlineGate = offlineWriteGate();
 
+	// The QR code and both Code 128 stubs on a TicketsCloud ticket all encode the
+	// number printed beside them, so either scans straight into the field.
+	const TICKET_FORMATS = ['QRCode', 'Code128'] as const;
+
 	let barcode = $state('');
 	let submitError = $state('');
+	let scannerOpen = $state(false);
 	let barcodeDescribedBy = $derived(
 		submitError ? 'ticket-barcode-error ticket-barcode-hint' : 'ticket-barcode-hint'
 	);
 
 	function handleLinkTicket(event: SubmitEvent) {
 		event.preventDefault();
+		linkTicket();
+	}
+
+	function handleScanned(text: string) {
+		barcode = text;
+		linkTicket();
+	}
+
+	function linkTicket() {
 		submitError = '';
 
 		if (!barcode.trim()) {
@@ -88,11 +104,11 @@
 				<Field.FieldDescription id="ticket-barcode-hint">
 					{m.ticket_number_hint()}
 				</Field.FieldDescription>
+				<TicketNumberIllustration />
 				<Input
 					id="ticket-barcode"
 					name="ticket_barcode"
 					bind:value={barcode}
-					placeholder={m.ticket_number_placeholder()}
 					autocomplete="off"
 					autocapitalize="off"
 					enterkeyhint="go"
@@ -119,6 +135,24 @@
 					{m.ticket_link_action()}
 				{/if}
 			</Button>
+			<Button
+				type="button"
+				variant="outline"
+				class="w-full"
+				disabled={linkMutation.isPending}
+				aria-disabled={offlineGate.blocked}
+				onclick={offlineGate.guard(() => (scannerOpen = true))}
+			>
+				<ScanLine data-icon="inline-start" />
+				{m.ticket_scan_action()}
+			</Button>
 		</form>
+		<BarcodeScannerDialog
+			bind:open={scannerOpen}
+			title={m.ticket_scan_title()}
+			description={m.ticket_scan_description()}
+			formats={TICKET_FORMATS}
+			onDetect={handleScanned}
+		/>
 	{/if}
 </SettingsSection>

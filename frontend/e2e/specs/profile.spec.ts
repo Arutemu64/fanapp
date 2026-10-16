@@ -1,9 +1,15 @@
+import { readFileSync } from 'node:fs';
+
 import type {
 	OAuthProvidersOutput,
 	OnlineUsersCountOutput
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
+
+// A 1×1 white PNG: a valid image with no code in it.
+const BLANK_PNG =
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC';
 
 // The Profile tab is the hub for everything without a tab of its own: login for
 // guests; account settings, feedback, the organizer toolbox and logout for members.
@@ -108,6 +114,79 @@ test.describe('profile settings on a phone', () => {
 		await expect(field).toHaveAttribute('aria-invalid', 'true');
 		await expect(page.getByRole('alert')).toHaveText('Билет не найден');
 		expect(sentBarcode).toBe('fan-7k4q9m');
+	});
+
+	test('links a ticket from a screenshot picked in the scanner', async ({ page, api }) => {
+		let sentBarcode: unknown;
+		api.use({
+			...loggedInAs(),
+			'POST /me/ticket': (route) => {
+				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
+				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+			}
+		});
+		await page.goto('/profile/ticket');
+
+		await page.getByRole('button', { name: 'Сканировать билет' }).click();
+		const dialog = page.getByRole('dialog', { name: 'Сканирование билета' });
+		// The fake camera feed is a single JPEG frame, so it doubles as the screenshot;
+		// no camera here, so the read can only come from the image.
+		await dialog.locator('input[type="file"]').setInputFiles({
+			name: 'ticket.jpg',
+			mimeType: 'image/jpeg',
+			buffer: readFileSync(new URL('../media/ticket-qr.mjpeg', import.meta.url))
+		});
+
+		await expect(dialog).toHaveCount(0);
+		await expect(page.getByLabel('Номер билета')).toHaveValue('1234567890123456');
+		expect(sentBarcode).toBe('1234567890123456');
+	});
+
+	test('drops a screenshot read that finishes after the scanner was cancelled', async ({
+		page,
+		api
+	}) => {
+		let linkAttempts = 0;
+		api.use({
+			...loggedInAs(),
+			'POST /me/ticket': () => {
+				linkAttempts += 1;
+				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+			}
+		});
+		// Hold the decoder download, so the first read is still waiting on it when the
+		// scanner closes.
+		let releaseDecoder = () => {};
+		await page.route('**/*.wasm', (route) => {
+			releaseDecoder = () => void route.continue();
+		});
+		await page.goto('/profile/ticket');
+
+		const scan = page.getByRole('button', { name: 'Сканировать билет' });
+		const dialog = page.getByRole('dialog', { name: 'Сканирование билета' });
+		await scan.click();
+		await dialog.locator('input[type="file"]').setInputFiles({
+			name: 'ticket.jpg',
+			mimeType: 'image/jpeg',
+			buffer: readFileSync(new URL('../media/ticket-qr.mjpeg', import.meta.url))
+		});
+		await dialog.getByRole('button', { name: 'Отмена' }).click();
+		await expect(dialog).toHaveCount(0);
+
+		await scan.click();
+		await expect(dialog).toBeVisible();
+		releaseDecoder();
+		// Reads run in order on the one decoder, so once this codeless image is
+		// answered the cancelled read has been answered too.
+		await dialog.locator('input[type="file"]').setInputFiles({
+			name: 'blank.png',
+			mimeType: 'image/png',
+			buffer: Buffer.from(BLANK_PNG, 'base64')
+		});
+
+		await expect(dialog.getByText('На изображении не нашлось кода')).toBeVisible();
+		await expect(dialog).toBeVisible();
+		expect(linkAttempts).toBe(0);
 	});
 
 	test('toggles a setting by tapping its title, without a success toast', async ({ page, api }) => {
