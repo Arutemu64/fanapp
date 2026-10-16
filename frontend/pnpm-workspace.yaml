@@ -15,4 +15,3 @@ allowBuilds:
 # including the ones Renovate runs to update the lockfile, so nothing younger than
 # the cutoff can enter pnpm-lock.yaml. Keep the three in sync.
 minimumReleaseAge: 10080
-
