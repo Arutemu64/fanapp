@@ -37,6 +37,13 @@
 	// it is steady, without keeping a phone's CPU busy the whole time.
 	const SCAN_INTERVAL_MS = 150;
 
+	const CORNERS = [
+		'top-0 left-0 rounded-tl-lg border-t-4 border-l-4',
+		'top-0 right-0 rounded-tr-lg border-t-4 border-r-4',
+		'bottom-0 left-0 rounded-bl-lg border-b-4 border-l-4',
+		'right-0 bottom-0 rounded-br-lg border-r-4 border-b-4'
+	];
+
 	let cameraStatus = $state<CameraStatus>('starting');
 	let imageStatus = $state<ImageStatus>('idle');
 	let imageInput = $state<HTMLInputElement>();
@@ -186,7 +193,9 @@
 </script>
 
 <div class="flex flex-col gap-3">
-	<div class="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
+	<!-- 4:3 rather than square keeps the sheet short enough for a small phone; the
+	     decoder still reads the whole camera frame, not just the visible crop. -->
+	<div class="relative aspect-4/3 w-full overflow-hidden rounded-xl bg-muted">
 		<!-- muted + playsinline: iOS otherwise refuses to start the stream inline
 		     (https://webkit.org/blog/6784/new-video-policies-for-ios/). -->
 		<video
@@ -196,6 +205,14 @@
 			playsinline
 			aria-hidden="true"
 		></video>
+		{#if cameraStatus === 'scanning'}
+			<!-- Aiming guide only: corner brackets show where to hold the code. -->
+			<div class="pointer-events-none absolute inset-x-[18%] inset-y-[14%]" aria-hidden="true">
+				{#each CORNERS as corner (corner)}
+					<span class={['absolute size-8 border-white drop-shadow-md', corner]}></span>
+				{/each}
+			</div>
+		{/if}
 		<div
 			class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground"
 			role="status"
