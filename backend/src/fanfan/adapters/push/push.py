@@ -17,6 +17,7 @@ from fanfan.core.exceptions.notifications import (
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationType
+from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +51,12 @@ class PushNotifier(PushNotifierPort):
         push_sub_gateway: PushSubscriptionGateway,
         uow: UnitOfWork,
         client: WebPushClient,
+        web_config: WebConfig,
     ) -> None:
         self.push_sub_gateway = push_sub_gateway
         self.uow = uow
         self.client = client
+        self.web_config = web_config
 
     @staticmethod
     def _sanitize_text(text: str) -> str:
@@ -69,21 +72,33 @@ class PushNotifier(PushNotifierPort):
         # Identical for every subscription of this user, so build it once; only
         # the per-subscription encryption downstream varies.
         topic = _TOPIC_TAGS.get(notification.type)
+        title = self._sanitize_text(notification.title)
+        body = self._sanitize_text(notification.body)
+        # Deep link opened on click; the app root when unset.
+        navigate = self.web_config.build_url(notification.path or "/")
+        # A topic tag groups the notification with its lane so a new one replaces
+        # the displayed one; renotify keeps that replacement alerting. Falls back
+        # to the notification id, which still collapses re-pushes of the same
+        # notification across a user's devices without grouping.
+        tag = topic or str(notification.id)
+        renotify = topic is not None
+        is_test = notification.type == NotificationType.TEST
         return {
-            # A topic tag groups the notification with its lane so a new one
-            # replaces the displayed one; renotify keeps that replacement alerting.
-            # Falls back to the notification id, which still collapses re-pushes of
-            # the same notification across a user's devices without grouping.
-            "tag": topic or str(notification.id),
-            "renotify": topic is not None,
-            "title": self._sanitize_text(notification.title),
-            "body": self._sanitize_text(notification.body),
-            # Deep-link the service worker navigates to on click; root when unset.
-            "url": notification.path or "/",
-            # Test pushes must always render the OS notification, even when the
-            # app is in the foreground (the service worker otherwise suppresses
-            # it to avoid duplicating the in-app toast).
-            "test": notification.type == NotificationType.TEST,
+            "title": title,
+            "url": navigate,
+            "tag": tag,
+            "renotify": renotify,
+            "test": is_test,
+            "web_push": 8030,
+            "mutable": True,
+            "notification": {
+                "title": title,
+                "body": body,
+                "navigate": navigate,
+                "tag": tag,
+                "renotify": renotify,
+                "data": {"test": is_test},
+            },
         }
 
     async def send_notification(self, notification: Notification) -> None:

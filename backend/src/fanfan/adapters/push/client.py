@@ -1,5 +1,5 @@
 import logging
-from typing import Any, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 
 import httpx2
 from pydantic import AnyHttpUrl
@@ -19,19 +19,60 @@ logger = logging.getLogger(__name__)
 _PUSH_TTL_SECONDS = 3600
 
 
-class MessageData(TypedDict):
-    # The payload the service worker unpacks in its `push` handler. Serialized to
-    # JSON by the library, so every value must be JSON-native.
+class NotificationData(TypedDict):
+    # Read by the service worker only; the browser's declarative parser passes
+    # `data` through untouched.
+    # Test pushes must render the OS notification even when the app is in the
+    # foreground (the service worker otherwise suppresses it to avoid
+    # duplicating the in-app toast).
+    test: bool
+
+
+class DeclarativeNotification(TypedDict):
+    title: str
+    body: str
+    # Absolute URL the browser opens on click. WebKit's examples use absolute
+    # URLs, and the spec doesn't promise to resolve a relative one.
+    navigate: str
     tag: str
     # Whether a replacement of the same tag should re-alert (sound/vibration).
     # True only for topic-grouped notifications, where a new one replaces the
     # displayed one and must still buzz; the Notification API requires a
     # non-empty tag alongside it, which we always provide.
     renotify: bool
+    data: NotificationData
+
+
+class LegacyMessageFields(TypedDict):
+    # TODO: drop once workers older than the declarative format are gone — a
+    # worker installed before it reads these flat fields until the app is next
+    # opened and updates it, and would otherwise show a generic notification.
+    # The declarative parser ignores keys it doesn't know. `body` is left out:
+    # it has no length cap, and a second copy could push a long broadcast past
+    # the ~4 KB push payload limit; an older worker shows its default body.
     title: str
-    body: str
     url: str
+    tag: str
+    renotify: bool
     test: bool
+
+
+class MessageData(LegacyMessageFields):
+    """A Declarative Web Push message (W3C Push API draft).
+
+    Safari 18.4+ Home Screen apps show it without running the service worker's
+    `push` handler; other browsers hand the same JSON to that handler. WebKit
+    revokes the subscription of an imperative handler that skips a notification,
+    which ours does while the app is visible, and the declarative path carries
+    no such penalty: https://webkit.org/blog/16535/meet-declarative-web-push/
+    Serialized to JSON by the library, so every value must be JSON-native.
+    """
+
+    web_push: Literal[8030]
+    notification: DeclarativeNotification
+    # Still dispatch the `push` event where the message is parsed
+    # declaratively, so the worker can flag the app-icon badge.
+    mutable: bool
 
 
 class WebPushClient:

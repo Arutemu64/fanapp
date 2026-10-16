@@ -36,6 +36,13 @@ const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
 // Matches the API base path and anything under it, anchored at the start.
 const API_PATH_PATTERN = new RegExp(`^${API_BASE_PATH}(/|$)`);
 
+// lib.webworker types `install` as a plain ExtendableEvent. The Service Worker
+// static routing API adds `addRoutes` (Chrome 123, Safari 27; not Firefox):
+// https://developer.mozilla.org/en-US/docs/Web/API/InstallEvent/addRoutes
+interface StaticRoutingInstallEvent extends ExtendableEvent {
+	addRoutes?: (rules: { condition: { urlPattern: string }; source: 'network' }) => Promise<void>;
+}
+
 // Caching only runs in a production build. In dev `$app/manifest` lists no build
 // output, and cache-first would be wrong anyway — that strategy assumes the
 // immutable, versioned shell only a real build emits — so the worker stays
@@ -52,6 +59,27 @@ if (!dev) {
 		buildPrecacheManifest({ immutable, assets, fallbackPage: FALLBACK_PAGE, version })
 	);
 	cleanupOutdatedCaches();
+
+	// --- API bypass: static route ---------------------------------------------
+	// Where the browser supports static routing, API requests skip the worker
+	// entirely, so a fetch, the SSE stream or the reachability probe never waits
+	// on a worker start-up. Elsewhere they still reach the `fetch` handler, where
+	// no route matches and they go to the network, so the route changes speed
+	// only. A rejected rule must not fail the install, hence the catch.
+	// https://developer.chrome.com/blog/service-worker-static-routing
+	self.addEventListener('install', (event: StaticRoutingInstallEvent) => {
+		if (!event.addRoutes) {
+			return;
+		}
+		event.waitUntil(
+			event
+				.addRoutes({
+					condition: { urlPattern: `${API_URL.origin}${API_BASE_PATH}/*` },
+					source: 'network'
+				})
+				.catch(() => undefined)
+		);
+	});
 
 	// --- SPA navigation fallback ----------------------------------------------
 	// Every route renders from the same client-built shell, precached above as
@@ -99,22 +127,37 @@ if (!dev) {
 	clientsClaim();
 }
 
-interface PushNotificationPayload {
-	title: string;
-	body: string;
-	url: string;
-	// Grouping key set by the backend: a topic ("schedule", "broadcast") so a burst
-	// collapses to the latest, or `notification.id` for ungrouped types (which
-	// only collapses re-pushes of the same notification).
-	tag?: string;
-	// Set by the backend when `tag` is a topic: a replacement of the displayed
-	// notification should still re-alert (sound/vibration) rather than update
-	// silently. Requires a non-empty tag, which the topic path always provides.
-	renotify?: boolean;
-	// Set by the backend for self-test pushes. Forces the OS-level notification
-	// even when the app is visible, so the user can verify push delivery without
-	// backgrounding the app.
-	test?: boolean;
+// The backend sends every push in the Declarative Web Push format (WebKit's
+// "Meet Declarative Web Push", https://webkit.org/blog/16535/meet-declarative-web-push/,
+// now in the W3C Push API draft). A browser that parses it shows the notification
+// itself; every other browser hands the same JSON to the `push` handler below.
+interface DeclarativePushMessage {
+	notification: {
+		title: string;
+		body: string;
+		// Absolute deep link, opened on click.
+		navigate: string;
+		// Grouping key set by the backend: a topic ("schedule", "broadcast") so a
+		// burst collapses to the latest, or `notification.id` for ungrouped types
+		// (which only collapses re-pushes of the same notification).
+		tag?: string;
+		// Set by the backend when `tag` is a topic: a replacement of the displayed
+		// notification should still re-alert (sound/vibration) rather than update
+		// silently. Requires a non-empty tag, which the topic path always provides.
+		renotify?: boolean;
+		data?: {
+			// Set by the backend for self-test pushes. Forces the OS-level
+			// notification even when the app is visible, so the user can verify
+			// push delivery without backgrounding the app.
+			test?: boolean;
+		};
+	};
+}
+
+// lib.webworker doesn't type it yet: in a browser that supports Declarative Web
+// Push, a `mutable` message reaches the handler already parsed, with `data` null.
+interface DeclarativePushEvent extends PushEvent {
+	readonly notification?: Notification | null;
 }
 
 interface NotificationClickData {
@@ -139,38 +182,56 @@ self.addEventListener('message', (event) => {
 	}
 });
 
-self.addEventListener('push', (event: PushEvent) => {
-	let data: PushNotificationPayload = {
-		title: m.app_name(),
-		body: m.push_default_body(),
-		url: '/'
-	};
+function readPushMessage(data: PushMessageData | null): DeclarativePushMessage['notification'] {
+	const fallback = { title: m.app_name(), body: m.push_default_body(), navigate: '/' };
+	if (!data) {
+		return fallback;
+	}
+	try {
+		const message = data.json() as Partial<DeclarativePushMessage>;
+		return { ...fallback, ...message.notification };
+	} catch {
+		// Not JSON — treat as plain text body
+		return { ...fallback, body: data.text() };
+	}
+}
 
-	if (event.data) {
-		try {
-			// Try parsing as JSON first (expected format: { title, body, url })
-			const json = event.data.json() as Partial<PushNotificationPayload>;
-			data = { ...data, ...json };
-		} catch {
-			// Not JSON — treat as plain text body
-			data.body = event.data.text();
-		}
+// Mirror the push onto the app-icon badge (Badging API, no-op where
+// unsupported). The payload carries no unread count, so set the count-less
+// "flag" badge; the in-app bell replaces it with the exact number (or clears
+// it) once the app opens.
+async function flagAppBadge() {
+	if ('setAppBadge' in self.navigator) {
+		await self.navigator.setAppBadge().catch(() => undefined);
+	}
+}
+
+self.addEventListener('push', (event: DeclarativePushEvent) => {
+	// The browser parsed a declarative message and shows it once this handler
+	// settles without showing one. So the foreground skip below can't apply here,
+	// and a visible app also gets the OS notification. Showing nothing is safe in
+	// this mode: WebKit revokes the subscription only when an imperative handler
+	// skips a notification.
+	if (event.notification) {
+		event.waitUntil(flagAppBadge());
+		return;
 	}
 
+	const notification = readPushMessage(event.data);
 	const options = {
-		body: data.body,
+		body: notification.body,
 		icon: '/icons/icon-192.png',
 		// Android renders the badge as a monochrome silhouette from the alpha
 		// channel alone, re-tinted with the system accent — so it must be a
 		// transparent-background mark, not the opaque full-color app icon.
 		badge: '/icons/badge-96.png',
-		tag: data.tag,
+		tag: notification.tag,
 		// Re-alert on a same-tag replacement only for topic-grouped notifications;
 		// the OS ignores it without a tag, and a unique-tag push has nothing to
 		// replace anyway.
-		renotify: data.renotify ?? false,
+		renotify: notification.renotify ?? false,
 		data: {
-			url: data.url || '/'
+			url: notification.navigate
 		}
 	};
 
@@ -179,23 +240,19 @@ self.addEventListener('push', (event: PushEvent) => {
 			// When the app is already visible, the user will see the in-app toast and bell update.
 			// Skip the OS-level push notification to avoid duplicate alerts for the same message.
 			// Test pushes are the exception: always show them so the user can confirm delivery.
-			if (!data.test && (await hasVisibleAppClient())) {
+			if (!notification.data?.test && (await hasVisibleAppClient())) {
 				return;
 			}
 
-			// Mirror the push onto the app-icon badge (Badging API, no-op where
-			// unsupported). The payload carries no unread count, so set the
-			// count-less "flag" badge; the in-app bell replaces it with the exact
-			// number (or clears it) once the app opens.
-			if ('setAppBadge' in self.navigator) {
-				await self.navigator.setAppBadge().catch(() => undefined);
-			}
-
-			await self.registration.showNotification(data.title, options);
+			await flagAppBadge();
+			await self.registration.showNotification(notification.title, options);
 		})()
 	);
 });
 
+// Only notifications this worker showed land here: a declarative one opens its
+// `navigate` URL itself, and no `notificationclick` fires for it
+// (https://notifications.spec.whatwg.org/#activating-a-notification).
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
 	event.notification.close();
 
