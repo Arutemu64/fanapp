@@ -1,10 +1,10 @@
 import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
-import { resolve } from '$app/paths';
 import { Calendar, CircleUser, Compass, House, ThumbsUp } from '@lucide/svelte';
 
 import { m } from '#lib/paraglide/messages.js';
+import { resolvePath } from '#lib/utils/paths.js';
 
 export interface PrimaryNavItem {
 	/** Russian label shown under (bottom nav) or beside (sidebar) the icon. */
@@ -58,5 +58,5 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
  * Derived from the primary destinations so it can never fall out of sync with them.
  */
 export const TAB_ROOTS: ReadonlySet<string> = new Set(
-	PRIMARY_NAV_ITEMS.map((item) => resolve(item.href))
+	PRIMARY_NAV_ITEMS.map((item) => resolvePath(item.href))
 );

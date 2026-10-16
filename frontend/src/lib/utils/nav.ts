@@ -1,6 +1,6 @@
 import type { Path } from '$app/types';
 
-import { resolve } from '$app/paths';
+import { resolvePath } from '#lib/utils/paths.js';
 
 /**
  * Shared navigation helpers used by both navigation surfaces (sidebar + bottom nav)
@@ -24,7 +24,7 @@ export function isNavItemActive(
 	item: { href: Path; nestedRoots?: readonly Path[] }
 ): boolean {
 	const roots = [item.href, ...(item.nestedRoots ?? [])];
-	return roots.some((root) => isActivePath(activeUrl, resolve(root)));
+	return roots.some((root) => isActivePath(activeUrl, resolvePath(root)));
 }
 
 /**
@@ -38,7 +38,7 @@ export function handleNavItemClick(
 	href: Path,
 	scrollToTop: () => void
 ): void {
-	if (activeUrl !== resolve(href)) return;
+	if (activeUrl !== resolvePath(href)) return;
 	event.preventDefault();
 	scrollToTop();
 }

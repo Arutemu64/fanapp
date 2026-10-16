@@ -92,7 +92,7 @@
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
 			<AlertDialog.Action variant="destructive" onclick={handleConfirm}>
-				{m.quest_tool_cancel()}
+				{m.quest_tool_cancel_confirm()}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

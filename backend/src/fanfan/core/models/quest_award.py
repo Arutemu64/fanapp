@@ -72,7 +72,7 @@ class QuestAward(AggregateRoot):
                 notification=NewNotification(
                     id=generate_notification_id(),
                     user_id=user_id,
-                    title=f"+{format_points(amount)}",
+                    title=f"+{format_points(amount)} в квесте",
                     body=message,
                     type=NotificationType.QUEST,
                     path=QUEST_PATH,

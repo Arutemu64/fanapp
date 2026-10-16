@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import {
 		Bell,
@@ -19,6 +18,7 @@
 	import { minuteClock } from '#lib/services/minuteClock.js';
 	import { formatRelativeTime } from '#lib/utils/formatters.js';
 	import { toAppPath } from '#lib/utils/nav.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	interface Props {
 		notification: NotificationDto;
@@ -49,7 +49,7 @@
 	// (organizer mailings link to the feed itself), where a tap would do nothing.
 	let href = $derived.by(() => {
 		if (!notification.path) return undefined;
-		const target = resolve(toAppPath(notification.path));
+		const target = resolvePath(toAppPath(notification.path));
 		if (target === page.url.pathname) return undefined;
 		return target;
 	});

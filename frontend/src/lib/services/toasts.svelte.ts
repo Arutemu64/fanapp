@@ -1,5 +1,4 @@
 import { goto } from '$app/navigation';
-import { resolve } from '$app/paths';
 import { createContext } from 'svelte';
 import { toast } from 'svelte-sonner';
 import { SvelteSet } from 'svelte/reactivity';
@@ -9,6 +8,7 @@ import type { NotificationDto } from '#lib/api/generated/index.js';
 import { getApiErrorDetail } from '#lib/api/errors.js';
 import { m } from '#lib/paraglide/messages.js';
 import { toAppPath } from '#lib/utils/nav.js';
+import { resolvePath } from '#lib/utils/paths.js';
 
 export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
 
@@ -88,7 +88,7 @@ export class ToastService {
 					? {
 							label: m.common_open(),
 							onClick: () => {
-								void goto(resolve(path));
+								void goto(resolvePath(path));
 							}
 						}
 					: undefined

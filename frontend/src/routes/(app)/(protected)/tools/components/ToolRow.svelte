@@ -2,11 +2,11 @@
 	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
-	import { resolve } from '$app/paths';
 	import { ChevronRight, Lock } from '@lucide/svelte';
 
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	interface Props {
 		title: string;
@@ -53,7 +53,7 @@
 {:else}
 	<Item.Root class="rounded-none">
 		{#snippet child({ props })}
-			<a href={resolve(href)} {...props}>
+			<a href={resolvePath(href)} {...props}>
 				{@render body()}
 			</a>
 		{/snippet}

@@ -54,7 +54,7 @@ def test_create_notifies_the_player() -> None:
 
     assert isinstance(event, NotificationQueued)
     assert event.notification.user_id == PLAYER
-    assert event.notification.title == "+21 балл"
+    assert event.notification.title == "+21 балл в квесте"
     assert event.notification.type is NotificationType.QUEST
 
 

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { prefersReducedMotion } from 'svelte/motion';
@@ -10,6 +9,7 @@
 	import SkipLink from '#lib/components/SkipLink.svelte';
 	import { DESKTOP_MEDIA_QUERY } from '#lib/constants/layout.js';
 	import { TAB_ROOTS } from '#lib/data/nav.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	import type { LayoutProps } from './$types';
 
@@ -211,7 +211,7 @@
 		const kind = navTransitionKind({
 			from: navigation.from.url.pathname,
 			to: navigation.to.url.pathname,
-			fromBackHref: page.data.back && resolve(page.data.back.href),
+			fromBackHref: page.data.back && resolvePath(page.data.back.href),
 			tabRoots: TAB_ROOTS
 		});
 		if (!kind) return;

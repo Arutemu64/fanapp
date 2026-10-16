@@ -1,6 +1,8 @@
 import { resolve } from '$app/paths';
 import { describe, expect, it, vi } from 'vitest';
 
+import { resolvePath } from '#lib/utils/paths.js';
+
 import { handleNavItemClick, hasUpdateDot, isActivePath, isNavItemActive, toAppPath } from './nav';
 
 describe('isActivePath', () => {
@@ -81,7 +83,7 @@ describe('toAppPath', () => {
 	});
 
 	it('resolves to the same pathname the backend named', () => {
-		expect(resolve(toAppPath('/schedule/changes'))).toBe('/schedule/changes');
-		expect(resolve(toAppPath('/'))).toBe('/');
+		expect(resolvePath(toAppPath('/schedule/changes'))).toBe('/schedule/changes');
+		expect(resolvePath(toAppPath('/'))).toBe('/');
 	});
 });

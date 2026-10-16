@@ -2,10 +2,10 @@
 	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
-	import { resolve } from '$app/paths';
 	import { ChevronRight } from '@lucide/svelte';
 
 	import * as Item from '#lib/components/ui/item/index.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	interface Props {
 		href: Path;
@@ -22,7 +22,7 @@
 
 <Item.Root class="rounded-none">
 	{#snippet child({ props })}
-		<a href={resolve(href)} {...props}>
+		<a href={resolvePath(href)} {...props}>
 			<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
 				<Icon class="size-5" aria-hidden="true" />
 			</Item.Media>

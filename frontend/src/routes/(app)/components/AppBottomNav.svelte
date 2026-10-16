@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { handleNavItemClick, hasUpdateDot, isNavItemActive } from '#lib/utils/nav.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	interface Props {
 		activeUrl: string;
@@ -82,7 +81,7 @@
 			     margin: that reads fine where an ellipsis would not. A shorter label was
 			     rejected: the tab would stop matching the page title and the glossary term. -->
 			<a
-				href={resolve(href)}
+				href={resolvePath(href)}
 				aria-current={active ? 'page' : undefined}
 				class="group relative inline-flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-3xs font-medium tracking-tighter transition-colors min-[22.5rem]:text-2xs min-[25rem]:text-xs min-[25rem]:tracking-tight"
 				onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}

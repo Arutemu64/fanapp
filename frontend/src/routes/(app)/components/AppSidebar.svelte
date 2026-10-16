@@ -8,6 +8,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { handleNavItemClick, hasUpdateDot, isNavItemActive } from '#lib/utils/nav.js';
+	import { resolvePath } from '#lib/utils/paths.js';
 
 	interface Props {
 		activeUrl: string;
@@ -41,7 +42,7 @@
 			{const active = $derived(isNavItemActive(activeUrl, item))}
 			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
 			<a
-				href={resolve(href)}
+				href={resolvePath(href)}
 				aria-current={active ? 'page' : undefined}
 				class={[
 					'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
