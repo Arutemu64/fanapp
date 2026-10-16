@@ -98,6 +98,14 @@ test.describe('native feel', () => {
 			await expect(title).not.toBeInViewport();
 		}
 		/* eslint-enable playwright/no-conditional-in-test, playwright/no-conditional-expect */
+		// WCAG 2.4.11: focus landing in the hidden bar brings it back rather than
+		// leaving the focused control off-screen. preventScroll, because a plain focus()
+		// scrolls the page up in Chromium, which reveals the bar on its own and would
+		// pass without the shell's focusin handling.
+		await page
+			.getByRole('link', { name: /^Открыть уведомления/ })
+			.evaluate((link: HTMLElement) => link.focus({ preventScroll: true }));
+		await expect(title).toBeInViewport();
 		const scrolledTo = await page.evaluate(() => window.scrollY);
 
 		const tabs = page.getByRole('navigation', { name: 'Разделы' });
