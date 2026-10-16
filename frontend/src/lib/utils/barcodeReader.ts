@@ -28,10 +28,38 @@ export async function readBarcode(
 	frame: ImageData,
 	formats: readonly BarcodeFormat[]
 ): Promise<string | null> {
-	const [result] = await readBarcodes(frame, {
-		formats: [...formats],
-		maxNumberOfSymbols: 1,
-		tryHarder: true
-	});
+	// Formats narrow the search; one symbol lets ZXing stop at the first hit
+	// (its default is 255). tryHarder, tryRotate and tryInvert already default on.
+	const [result] = await readBarcodes(frame, { formats: [...formats], maxNumberOfSymbols: 1 });
 	return result?.text ?? null;
+}
+
+// A full-resolution phone photo is ~12 MP, 48 MB of RGBA once copied into the
+// decoder's memory. A screenshot's code survives this cap with room to spare.
+const MAX_IMAGE_SIDE = 3000;
+
+/**
+ * Like `readBarcode`, for a picked image file. The browser decodes the file:
+ * ZXing's own loader reads only PNG and JPEG, and an iPhone photo can be HEIC.
+ * Rejects when the browser can't open the file as an image.
+ */
+export async function readBarcodeFromImage(
+	file: Blob,
+	formats: readonly BarcodeFormat[]
+): Promise<string | null> {
+	const bitmap = await createImageBitmap(file);
+	const scale = Math.min(1, MAX_IMAGE_SIDE / Math.max(bitmap.width, bitmap.height));
+	const width = Math.round(bitmap.width * scale);
+	const height = Math.round(bitmap.height * scale);
+	const canvas = document.createElement('canvas');
+	canvas.width = width;
+	canvas.height = height;
+	const context = canvas.getContext('2d');
+	if (context === null) {
+		bitmap.close();
+		throw new Error('Canvas 2D context unavailable');
+	}
+	context.drawImage(bitmap, 0, 0, width, height);
+	bitmap.close();
+	return readBarcode(context.getImageData(0, 0, width, height), formats);
 }

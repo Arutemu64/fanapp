@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
@@ -103,6 +105,33 @@ test.describe('profile settings on a phone', () => {
 		await expect(field).toHaveAttribute('aria-invalid', 'true');
 		await expect(page.getByRole('alert')).toHaveText('Билет не найден');
 		expect(sentBarcode).toBe('fan-7k4q9m');
+		expect(api.unmatched).toEqual([]);
+	});
+
+	test('links a ticket from a screenshot picked in the scanner', async ({ page, api }) => {
+		let sentBarcode: unknown;
+		api.use({
+			...loggedInAs(),
+			'POST /me/ticket': (route) => {
+				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
+				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+			}
+		});
+		await page.goto('/profile/ticket');
+
+		await page.getByRole('button', { name: 'Сканировать билет' }).click();
+		const dialog = page.getByRole('dialog', { name: 'Сканирование билета' });
+		// The fake camera feed is a single JPEG frame, so it doubles as the screenshot;
+		// no camera here, so the read can only come from the image.
+		await dialog.locator('input[type="file"]').setInputFiles({
+			name: 'ticket.jpg',
+			mimeType: 'image/jpeg',
+			buffer: readFileSync(new URL('../media/ticket-qr.mjpeg', import.meta.url))
+		});
+
+		await expect(dialog).toHaveCount(0);
+		await expect(page.getByLabel('Номер билета')).toHaveValue('1234567890123456');
+		expect(sentBarcode).toBe('1234567890123456');
 		expect(api.unmatched).toEqual([]);
 	});
 
