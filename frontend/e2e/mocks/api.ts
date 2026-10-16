@@ -19,12 +19,15 @@ export interface MockResponse {
 // take the route over entirely (e.g. `route.abort()` to simulate a dead network,
 // which is how the mocked tier drives the app's offline states). A function that
 // fulfils/aborts the route itself returns nothing.
+/* eslint-disable @typescript-eslint/no-invalid-void-type -- an async handler that fulfils the route itself resolves to void, which `undefined` rejects */
 type MockHandler =
 	MockResponse | ((route: Route) => MockResponse | void | Promise<MockResponse | void>);
+/* eslint-enable @typescript-eslint/no-invalid-void-type */
 
 export type Handlers = Partial<Record<RouteKey, MockHandler>>;
 
 /** Typed 200-by-default JSON response, so `json<Schema>(…)` checks the shape. */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- callers pass T explicitly to type-check the literal
 export function json<T>(value: T, status = 200): MockResponse {
 	return { status, json: value };
 }
@@ -40,7 +43,7 @@ export function json<T>(value: T, status = 200): MockResponse {
 export class ApiMock {
 	readonly unmatched: string[] = [];
 	readonly calls: string[] = [];
-	#handlers: Handlers;
+	readonly #handlers: Handlers;
 
 	constructor(
 		private readonly context: BrowserContext,

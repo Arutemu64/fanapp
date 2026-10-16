@@ -93,11 +93,11 @@ interface SyncRunUpdatedPayload {
  */
 interface SSEEventMap {
 	connection_established: EventsHandshakePayload;
-	schedule_updated: void;
+	schedule_updated: undefined;
 	notification_created: NotificationDto;
 	sync_run_updated: SyncRunUpdatedPayload;
-	config_updated: void;
-	ping: void;
+	config_updated: undefined;
+	ping: undefined;
 }
 
 export type SSEEventName = keyof SSEEventMap;
@@ -160,20 +160,21 @@ export class EventsClient {
 	// Live events only carry server-side *changes*, so whatever moved while it was
 	// down is missed; the next handshake invalidates the query cache to catch up.
 	#needsCatchUp = false;
-	#queryClient: QueryClient;
+	readonly #queryClient: QueryClient;
 	// True while the stream is intentionally paused because the app is backgrounded.
 	#pausedForVisibility = false;
 	// Terminal flag set by destroy(); a destroyed client never reconnects.
 	#destroyed = false;
 	// One Sentry issue per outage, reset on the next successful handshake.
 	#failureReported = false;
-	#unsubscribeReachable: () => void;
+	readonly #unsubscribeReachable: () => void;
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
 	// Each entry keeps the user handler (for identity on off()) and the JSON-parsing
 	// wrapper actually attached to the EventSource.
-	#listeners: Record<string, RegisteredListener[]> = {};
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- listener bookkeeping, never rendered
+	readonly #listeners = new Map<string, RegisteredListener[]>();
 
 	constructor(queryClient: QueryClient) {
 		this.#queryClient = queryClient;
@@ -194,7 +195,11 @@ export class EventsClient {
 	 * (typed per {@link SSEEventMap}). Survives reconnects automatically.
 	 */
 	on<K extends SSEEventName>(event: K, handler: SSEHandler<K>) {
-		const handlers = this.#listeners[event] ?? (this.#listeners[event] = []);
+		let handlers = this.#listeners.get(event);
+		if (!handlers) {
+			handlers = [];
+			this.#listeners.set(event, handlers);
+		}
 		if (handlers.some((registered) => registered.handler === handler)) return;
 
 		const wrapper: EventListener = (domEvent) => {
@@ -208,7 +213,7 @@ export class EventsClient {
 
 	/** Unsubscribe from a named SSE event. */
 	off<K extends SSEEventName>(event: K, handler: SSEHandler<K>) {
-		const handlers = this.#listeners[event];
+		const handlers = this.#listeners.get(event);
 		if (!handlers) return;
 
 		const registered = handlers.find((entry) => entry.handler === handler);
@@ -219,9 +224,9 @@ export class EventsClient {
 
 		// Clean up empty listener lists.
 		if (nextHandlers.length === 0) {
-			delete this.#listeners[event];
+			this.#listeners.delete(event);
 		} else {
-			this.#listeners[event] = nextHandlers;
+			this.#listeners.set(event, nextHandlers);
 		}
 	}
 
@@ -281,7 +286,7 @@ export class EventsClient {
 		}
 
 		// Re-attach all registered listeners to the new EventSource instance.
-		for (const [event, handlers] of Object.entries(this.#listeners)) {
+		for (const [event, handlers] of this.#listeners) {
 			for (const { wrapper } of handlers) {
 				source.addEventListener(event, wrapper);
 			}
@@ -304,19 +309,19 @@ export class EventsClient {
 		this.#needsCatchUp = true;
 	}
 
-	#handleOffline = () => {
+	readonly #handleOffline = () => {
 		this.#suspend();
 	};
 
 	// While backgrounded, the visibility resume handles the redial instead.
-	#handleOnline = () => {
+	readonly #handleOnline = () => {
 		if (!this.#pausedForVisibility) this.#resume();
 	};
 
 	// App backgrounded: after a grace window, drop the stream to stop radio churn.
 	// The timer is left alone by offline/online flaps, which don't change how long
 	// the app has been hidden — and visibilitychange won't fire again while hidden.
-	#handleVisibilityChange = () => {
+	readonly #handleVisibilityChange = () => {
 		if (document.visibilityState === 'hidden') {
 			if (this.#pausedForVisibility || this.#visibilityTimerId) return;
 			this.#visibilityTimerId = setTimeout(() => {
@@ -345,11 +350,11 @@ export class EventsClient {
 
 	// The backend is confirmed reachable again (a probe, a load) while we sit out a
 	// backoff wait — up to a minute by then. Good enough evidence to dial now.
-	#handleReachableChange = () => {
+	readonly #handleReachableChange = () => {
 		if (isReachable() && this.#dialTimerId !== null) this.#resume();
 	};
 
-	#handleHandshake = () => {
+	readonly #handleHandshake = () => {
 		// A live stream proves the backend is reachable — feed that to the probe.
 		markReachable(true);
 		this.#reconnectAttempts = 0;
@@ -372,7 +377,7 @@ export class EventsClient {
 	};
 
 	// Resets the liveness watchdog; fires on every observed event (see #connect()).
-	#handleAnyEvent = () => {
+	readonly #handleAnyEvent = () => {
 		this.#lastEventAt = Date.now();
 		this.#armWatchdog(HEARTBEAT_TIMEOUT_MS, 'heartbeat_silence');
 	};

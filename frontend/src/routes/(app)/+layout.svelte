@@ -162,7 +162,12 @@
 		if (navigation.shallow) return;
 		const to = navigation.to?.url.pathname ?? '';
 		const savedTop = scrollPositions[to];
-		if (navigation.type !== 'popstate' && TAB_ROOTS.has(to) && savedTop) {
+		if (
+			navigation.type !== 'popstate' &&
+			TAB_ROOTS.has(to) &&
+			savedTop !== undefined &&
+			savedTop > 0
+		) {
 			window.scrollTo({ top: savedTop, behavior: 'instant' });
 		}
 		syncChromeToScroll();
@@ -183,9 +188,9 @@
 
 	onNavigate((navigation) => {
 		if (navigation.shallow) return;
-		if (!document.startViewTransition) return;
+		if (!('startViewTransition' in document)) return;
 		if (isDesktop.current || prefersReducedMotion.current) return;
-		if (navigation.willUnload || !navigation.from || !navigation.to) return;
+		if (!navigation.from || !navigation.to) return;
 		if (!navigation.to.route.id?.startsWith('/(app)')) return;
 
 		const kind = navTransitionKind({

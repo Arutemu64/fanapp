@@ -142,8 +142,8 @@
 		</Item.Root>
 
 		{#each connectionRows as provider (provider)}
-			{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
-			{@const Icon = meta.icon}
+			{const meta = $derived(SOCIAL_PROVIDER_PRESENTATION[provider])}
+			{const Icon = $derived(meta.icon)}
 			<SocialConnectionRow
 				label={meta.name}
 				connected={linkedProviders.includes(provider)}

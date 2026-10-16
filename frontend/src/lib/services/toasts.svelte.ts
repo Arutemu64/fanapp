@@ -18,11 +18,11 @@ const [getToast, setToast] = createContext<ToastService>();
 // (`&amp;`, `&lt;`) on screen; the parser decodes them. DOMParser never runs
 // scripts or loads resources from the parsed document.
 function htmlToPlainText(html: string): string {
-	return new DOMParser().parseFromString(html, 'text/html').body.textContent ?? '';
+	return new DOMParser().parseFromString(html, 'text/html').body.textContent;
 }
 
 export class ToastService {
-	#seenPushIds = new SvelteSet<string>();
+	readonly #seenPushIds = new SvelteSet<string>();
 
 	add(message: string, type: StatusToastType = 'info') {
 		const isProblem = type === 'error' || type === 'warning';
@@ -83,14 +83,15 @@ export class ToastService {
 			// Notifications drop in top-right, like an OS notification stack, clear
 			// of the top bar — distinct from action feedback at bottom-center (add()).
 			position: 'top-right',
-			action: path
-				? {
-						label: m.common_open(),
-						onClick: () => {
-							void goto(resolve(path));
+			action:
+				path !== undefined && path !== ''
+					? {
+							label: m.common_open(),
+							onClick: () => {
+								void goto(resolve(path));
+							}
 						}
-					}
-				: undefined
+					: undefined
 		});
 	}
 

@@ -29,8 +29,8 @@ interface PersistedOptions<T extends string> {
  * caller adds it then, rather than everyone paying for it now.
  */
 export class Persisted<T extends string> {
-	#key: string;
-	#kind: StorageKind;
+	readonly #key: string;
+	readonly #kind: StorageKind;
 	#value = $state<T>() as T;
 
 	constructor(key: string, fallback: T, options: PersistedOptions<T> = {}) {

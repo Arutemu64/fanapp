@@ -10,7 +10,7 @@ export class CaptchaGate {
 	awaitingCaptcha = $state(false);
 
 	#timer: ReturnType<typeof setTimeout> | undefined;
-	#timeoutMs: number;
+	readonly #timeoutMs: number;
 
 	constructor(timeoutMs: number = DEFAULT_CAPTCHA_WAIT_TIMEOUT_MS) {
 		this.#timeoutMs = timeoutMs;

@@ -51,7 +51,7 @@
 </svelte:head>
 
 {#if map}
-	{@const plan = map.plan}
+	{const plan = $derived(map.plan)}
 	<div class="flex flex-col gap-4">
 		<ToggleGroup.Root
 			type="single"
@@ -159,7 +159,7 @@
 					{/each}
 
 					{#each plan.zones as zone, index (index)}
-						{@const isSelected = zone.point === selectedNumber}
+						{const isSelected = $derived(zone.point === selectedNumber)}
 						<!-- Pointer-only by design; the list below is the keyboard path (see above). -->
 						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 						<g
@@ -223,7 +223,7 @@
 				<MenuGroup>
 					<ol class="divide-y divide-border">
 						{#each map.points as point (point.number)}
-							{@const isSelected = point.number === selectedNumber}
+							{const isSelected = $derived(point.number === selectedNumber)}
 							<li>
 								<button
 									type="button"

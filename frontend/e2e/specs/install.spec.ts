@@ -43,6 +43,7 @@ test.describe('in a desktop browser that cannot install', () => {
 
 		// The library's fallback reports availability on a 1 s timer, so give it
 		// longer than that before asserting the row never appeared.
+		// eslint-disable-next-line playwright/no-wait-for-timeout -- proving an absence needs the time to pass
 		await page.waitForTimeout(2000);
 		await expect(page.getByRole('button', { name: /Установить приложение/ })).toHaveCount(0);
 	});

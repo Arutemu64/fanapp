@@ -227,9 +227,7 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 			}
 
 			// No window open at all — open a fresh one.
-			if (self.clients.openWindow) {
-				await self.clients.openWindow(urlToOpen);
-			}
+			await self.clients.openWindow(urlToOpen);
 		})()
 	);
 });

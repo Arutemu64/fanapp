@@ -9,8 +9,8 @@ export class ResendCooldown {
 	// Seconds left before another send is allowed; 0 means ready.
 	remaining = $state(0);
 
-	#seconds: number;
-	#ticker: Interval;
+	readonly #seconds: number;
+	readonly #ticker: Interval;
 
 	constructor(seconds: number = DEFAULT_COOLDOWN_SECONDS) {
 		this.#seconds = seconds;

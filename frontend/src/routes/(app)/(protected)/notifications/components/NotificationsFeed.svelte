@@ -88,7 +88,7 @@
 	// Ids already sent (or in flight) to mark-read, so each one is posted once.
 	// Deliberately not reactive: the effect below reads it, and a failed request
 	// removing ids would re-run the effect and retry in a tight loop while offline.
-	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- non-reactive on purpose, see above
 	const requestedReadIds = new Set<NotificationDto['id']>();
 
 	// Holds back "Прочитать все" until the opening mark-read round has settled:

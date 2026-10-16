@@ -20,7 +20,7 @@ import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
 // genuine frontend JS bug is a real Error (no `status`) and still reports.
 // See https://swiftmade.co/blog/2026-01-05-sentry-error-reporting-best-practices/
 function isServerSideHttpError(exception: unknown): boolean {
-	if (!exception || typeof exception !== 'object') {
+	if (typeof exception !== 'object' || exception === null) {
 		return false;
 	}
 	const status = (exception as { status?: unknown }).status;
@@ -36,9 +36,10 @@ function isServerSideHttpError(exception: unknown): boolean {
 const STALE_CHUNK_MESSAGE = /dynamically imported module|Importing a module script failed/i;
 
 function isStaleChunkError(exception: unknown): boolean {
-	if (!exception) return false;
-	const message =
-		typeof exception === 'string' ? exception : (exception as { message?: unknown }).message;
+	let message: unknown = exception;
+	if (typeof exception === 'object' && exception !== null) {
+		message = (exception as { message?: unknown }).message;
+	}
 	return typeof message === 'string' && STALE_CHUNK_MESSAGE.test(message);
 }
 
@@ -46,7 +47,7 @@ function isStaleChunkError(exception: unknown): boolean {
 // no connection (a `true` can still lie behind a captive portal, so we never infer
 // "online" from it, only "offline" from `false`).
 function isDeviceOffline(): boolean {
-	return navigator.onLine === false;
+	return !navigator.onLine;
 }
 
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
@@ -71,7 +72,7 @@ if (PUBLIC_SENTRY_DSN) {
 		// value (see applyDefaultOptions in @sentry/browser).
 		tracesSampleRate,
 		beforeSend(event, hint) {
-			if (isServerSideHttpError(hint?.originalException)) {
+			if (isServerSideHttpError(hint.originalException)) {
 				return null;
 			}
 
@@ -81,7 +82,7 @@ if (PUBLIC_SENTRY_DSN) {
 			// Drop the raw TypeError here so it never files as a JS error — the
 			// SvelteKit load wrapper, the browser's unhandledrejection handler and
 			// Vite's re-thrown preload error all funnel through here.
-			if (isStaleChunkError(hint?.originalException)) {
+			if (isStaleChunkError(hint.originalException)) {
 				return null;
 			}
 

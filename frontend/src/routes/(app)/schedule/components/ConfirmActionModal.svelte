@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle, BellRing } from '@lucide/svelte';
+	import { BellRing, CircleAlert } from '@lucide/svelte';
 
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -42,7 +42,7 @@
 	<AlertDialog.Content>
 		<AlertDialog.Header>
 			<AlertDialog.Title class="flex items-center gap-2">
-				<AlertCircle class="size-5 text-muted-foreground" />
+				<CircleAlert class="size-5 text-muted-foreground" />
 				{title}
 			</AlertDialog.Title>
 			<AlertDialog.Description>{message}</AlertDialog.Description>

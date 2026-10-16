@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Ellipsis, Eye, EyeOff, Play, Shuffle, XCircle } from '@lucide/svelte';
+	import { CircleX, Ellipsis, Eye, EyeOff, Play, Shuffle } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
@@ -223,7 +223,7 @@
 						onclick={offlineGate.guard(() => runFromSheet(askToggleCurrent))}
 					>
 						{#if event.is_current}
-							<XCircle data-icon="inline-start" />
+							<CircleX data-icon="inline-start" />
 						{:else}
 							<Play data-icon="inline-start" />
 						{/if}

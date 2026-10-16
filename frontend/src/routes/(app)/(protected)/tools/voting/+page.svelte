@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle, Award, Gift, Users } from '@lucide/svelte';
+	import { Award, CircleAlert, Gift, Users } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
@@ -176,7 +176,7 @@
 
 		{#if drawError}
 			<Alert.Root variant="destructive">
-				<AlertCircle class="size-4" />
+				<CircleAlert class="size-4" />
 				<Alert.Description>{drawError}</Alert.Description>
 			</Alert.Root>
 		{/if}

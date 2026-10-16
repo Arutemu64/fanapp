@@ -86,7 +86,7 @@
 		// asks with a popup, which a passing visitor shouldn't get
 		// (https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
 		if (pwa.isInstalled) {
-			void navigator.storage?.persist().catch(() => {
+			void (navigator.storage as StorageManager | undefined)?.persist().catch(() => {
 				// Denied or unsupported: the cache stays best-effort.
 			});
 		}
@@ -158,8 +158,8 @@
 	$effect(() => {
 		if (user.data) {
 			Sentry.setUser({
-				id: String(user.data.id),
-				username: user.data.username ?? undefined
+				id: user.data.id,
+				username: user.data.username
 			});
 		} else {
 			Sentry.setUser(null);

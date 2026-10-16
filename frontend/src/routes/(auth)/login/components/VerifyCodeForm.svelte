@@ -12,7 +12,7 @@
 		loginWithCodeMutation,
 		requestLoginCodeMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
+	import CaptchaWidget from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
@@ -23,6 +23,7 @@
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { captchaEnabled } from '#lib/utils/smartcaptcha.js';
 	import { isValidOtp } from '#lib/utils/validation.js';
 
 	interface Props {
@@ -250,7 +251,7 @@
 			variant="outline"
 			class="w-full"
 			disabled={busy || cooldown.remaining > 0}
-			onclick={() => void handleLoginCodeRequest()}
+			onclick={() => handleLoginCodeRequest()}
 		>
 			{#if isResending}
 				<Spinner data-icon="inline-start" />

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { AlertCircle } from '@lucide/svelte';
+	import { CircleAlert } from '@lucide/svelte';
 
 	import type { GetVotingStateOutput, VotingStatus } from '#lib/api/generated/index.js';
 
@@ -39,7 +39,7 @@
 
 {#if votingState && votingState.status !== 'open'}
 	<Alert.Root {variant} class={className}>
-		<AlertCircle class="shrink-0" />
+		<CircleAlert class="shrink-0" />
 		<Alert.Description class="flex items-center gap-1">
 			<span>{getStatusMessage(votingState.status)}</span>
 			{#if votingState.status === 'no_ticket'}

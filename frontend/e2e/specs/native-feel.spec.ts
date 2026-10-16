@@ -91,11 +91,13 @@ test.describe('native feel', () => {
 		// the same `scroll` events the shell's hide-on-scroll listens to.
 		await page.evaluate(() => window.scrollBy(0, 1500));
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+		/* eslint-disable playwright/no-conditional-in-test, playwright/no-conditional-expect -- the desktop shell keeps its bar; each device project takes one branch */
 		if (isDesktop(testInfo.project.name)) {
 			await expect(title).toBeInViewport();
 		} else {
 			await expect(title).not.toBeInViewport();
 		}
+		/* eslint-enable playwright/no-conditional-in-test, playwright/no-conditional-expect */
 		const scrolledTo = await page.evaluate(() => window.scrollY);
 
 		const tabs = page.getByRole('navigation', { name: 'Разделы' });
@@ -144,8 +146,10 @@ test.describe('native feel', () => {
 			.click();
 		await expect(page).toHaveURL('/guide');
 
+		/* eslint-disable playwright/no-conditional-in-test -- the expectation is per device project and browser support */
 		const expected =
 			supported && !isDesktop(testInfo.project.name) ? ['forward', 'back', 'fade'] : [];
+		/* eslint-enable playwright/no-conditional-in-test */
 		await expect.poll(() => recordedTransitions(page)).toEqual(expected);
 		await expect
 			.poll(() => page.evaluate(() => document.documentElement.dataset.navTransition))
@@ -163,9 +167,13 @@ test.describe('native feel', () => {
 		await dialog.evaluate((element) =>
 			Promise.allSettled(element.getAnimations().map((animation) => animation.finished))
 		);
-		const box = (await dialog.boundingBox())!;
-		const viewport = page.viewportSize()!;
+		const box = await dialog.boundingBox();
+		const viewport = page.viewportSize();
+		expect(box).not.toBeNull();
+		expect(viewport).not.toBeNull();
 
+		/* eslint-disable playwright/no-conditional-in-test, playwright/no-conditional-expect -- the null guard only narrows the types; the layout differs per device project by design */
+		if (box === null || viewport === null) return;
 		if (isDesktop(testInfo.project.name)) {
 			expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThan(2);
 			expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(2);
@@ -173,5 +181,6 @@ test.describe('native feel', () => {
 			expect(box.width).toBe(viewport.width);
 			expect(Math.round(box.y + box.height)).toBe(viewport.height);
 		}
+		/* eslint-enable playwright/no-conditional-in-test, playwright/no-conditional-expect */
 	});
 });

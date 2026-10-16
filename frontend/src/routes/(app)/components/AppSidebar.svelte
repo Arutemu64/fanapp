@@ -34,9 +34,9 @@
 	</a>
 	<div class="flex flex-col gap-1">
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
-			{@const { label, href, outlineIcon: Icon } = item}
-			{@const active = isNavItemActive(activeUrl, item)}
-			{@const updateDot = href === 'profile' && appUpdate.available}
+			{const { label, href, outlineIcon: Icon } = $derived(item)}
+			{const active = $derived(isNavItemActive(activeUrl, item))}
+			{const updateDot = $derived(href === 'profile' && appUpdate.available)}
 			<a
 				href={resolve(href)}
 				aria-current={active ? 'page' : undefined}

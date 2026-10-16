@@ -29,7 +29,9 @@
 
 	let { notification, isNew }: Props = $props();
 
-	const TYPE_ICONS: Record<NotificationType, Component<{ class?: string }>> = {
+	// Typed as possibly missing a key, though `satisfies` keeps it exhaustive: a tab
+	// opened before a deploy can receive a type over SSE that its bundle predates.
+	const TYPE_ICONS: Partial<Record<string, Component<{ class?: string }>>> = {
 		default: Bell,
 		test: Bell,
 		schedule_change: CalendarClock,
@@ -37,7 +39,7 @@
 		message: MessageCircle,
 		points_received: Coins,
 		broadcast: Megaphone
-	};
+	} satisfies Record<NotificationType, Component<{ class?: string }>>;
 
 	let Icon = $derived(TYPE_ICONS[notification.type] ?? Bell);
 	let createdAt = $derived(formatRelativeTime(notification.created_at, minuteClock.now));
@@ -89,8 +91,7 @@
 			{/if}
 		</p>
 		{#if notification.body}
-			<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
-			<!-- eslint-disable svelte/no-at-html-tags -->
+			<!-- eslint-disable svelte/no-at-html-tags -- body is sanitized to a safe HTML subset on the backend (HtmlSanitizer) -->
 			<div
 				class="mt-0.5 text-body whitespace-pre-line text-foreground/80 [&_a]:relative [&_a]:underline [&_a]:underline-offset-2"
 			>

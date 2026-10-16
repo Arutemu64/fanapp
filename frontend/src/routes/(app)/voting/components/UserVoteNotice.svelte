@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CheckCircle2, X } from '@lucide/svelte';
+	import { CircleCheck, X } from '@lucide/svelte';
 	import { createMutation } from '@tanstack/svelte-query';
 
 	import type { ParticipantFullDto, ParticipantVoteDto } from '#lib/api/generated/index.js';
@@ -35,7 +35,7 @@
 	}));
 
 	let participantLabel = $derived(
-		participant.voting_number
+		participant.voting_number !== null
 			? `№${participant.voting_number} · ${participant.title}`
 			: participant.title
 	);
@@ -53,7 +53,7 @@
 <!-- role="status", not the Alert default "alert": this is the standing state of
      the ballot, not an urgent interruption to announce on every page load. -->
 <Alert.Root variant="success" role="status" class="flex items-center gap-3">
-	<CheckCircle2 class="shrink-0" />
+	<CircleCheck class="shrink-0" />
 	<div class="min-w-0 flex-1">
 		<Alert.Title>{m.voting_your_choice()}</Alert.Title>
 		<Alert.Description class="wrap-break-word">{participantLabel}</Alert.Description>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle } from '@lucide/svelte';
+	import { CircleAlert } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
@@ -193,7 +193,7 @@
 >
 	{#if submitError}
 		<Alert.Root variant="destructive">
-			<AlertCircle class="size-4" />
+			<CircleAlert class="size-4" />
 			<Alert.Description>{submitError}</Alert.Description>
 		</Alert.Root>
 	{/if}

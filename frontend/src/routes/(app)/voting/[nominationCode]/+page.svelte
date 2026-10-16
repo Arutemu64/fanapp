@@ -214,6 +214,7 @@
 		     where clearing the search would do nothing. -->
 		<EmptyState icon={Users} title={m.common_nothing_found()} message={m.voting_try_other_query()}>
 			<button
+				type="button"
 				onclick={() => (searchQuery = '')}
 				class="mt-3 text-sm font-medium text-primary hover:underline"
 			>

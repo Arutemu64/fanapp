@@ -171,7 +171,8 @@
 	// the filters (which mount and unmount rows) or the page root change.
 	$effect(() => {
 		const eventId = currentEvent?.id;
-		void groupedSchedule;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- read only to track the filters
+		groupedSchedule;
 		if (!eventId || !pageRoot) return;
 
 		const row = findEventRow(eventId);

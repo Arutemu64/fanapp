@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
+	import { CircleAlert, CircleCheck } from '@lucide/svelte';
 	import { useIsFetching } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 	import { slide } from 'svelte/transition';
@@ -123,11 +123,11 @@
 		]}
 	>
 		{#if phase === 'offline'}
-			<AlertCircle class="size-4 shrink-0" aria-hidden="true" />
+			<CircleAlert class="size-4 shrink-0" aria-hidden="true" />
 		{:else if phase === 'catching-up'}
 			<Spinner class="shrink-0" aria-hidden="true" />
 		{:else}
-			<CheckCircle2 class="size-4 shrink-0" aria-hidden="true" />
+			<CircleCheck class="size-4 shrink-0" aria-hidden="true" />
 		{/if}
 		<p class="flex-1 leading-snug" aria-hidden="true">{shownMessage}</p>
 		{#if phase === 'offline'}

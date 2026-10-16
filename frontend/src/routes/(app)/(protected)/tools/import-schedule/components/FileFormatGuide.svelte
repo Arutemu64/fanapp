@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { asset } from '$app/paths';
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { AlertCircle, Download, Info } from '@lucide/svelte';
+	import { CircleAlert, Download, Info } from '@lucide/svelte';
 
 	import type { MessageTagProps } from '#lib/types/markup.js';
 
@@ -70,7 +70,7 @@
 	</p>
 
 	<Alert.Root variant="warning" class="mt-4">
-		<AlertCircle class="size-5 shrink-0" />
+		<CircleAlert class="size-5 shrink-0" />
 		<Alert.Description>
 			<ParaglideMessage message={m.import_guide_replaces}>
 				{#snippet strong({ children }: MessageTagProps)}<span class="font-semibold"

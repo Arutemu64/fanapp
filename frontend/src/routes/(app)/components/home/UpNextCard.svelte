@@ -26,8 +26,8 @@
 </script>
 
 {#snippet eventRow(event: ScheduleEventWithSubscription)}
-	{@const number = formatEventNumber(event.number)}
-	{@const until = untilLabel(event)}
+	{const number = $derived(formatEventNumber(event.number))}
+	{const until = $derived(untilLabel(event))}
 	<div class="flex min-w-0 items-center gap-3">
 		{#if number !== null}
 			<NumberBadge {number} />

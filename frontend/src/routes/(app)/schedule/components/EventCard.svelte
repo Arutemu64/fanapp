@@ -179,6 +179,7 @@
 			<div class="ml-auto flex shrink-0 items-start">
 				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
+					type="button"
 					onclick={offlineGate.guard(event.user_subscription ? handleUnsubscribe : handleSubscribe)}
 					aria-disabled={offlineGate.blocked}
 					class={[
