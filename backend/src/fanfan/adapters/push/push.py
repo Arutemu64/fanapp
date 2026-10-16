@@ -72,32 +72,22 @@ class PushNotifier(PushNotifierPort):
         # Identical for every subscription of this user, so build it once; only
         # the per-subscription encryption downstream varies.
         topic = _TOPIC_TAGS.get(notification.type)
-        title = self._sanitize_text(notification.title)
-        body = self._sanitize_text(notification.body)
-        # Deep link opened on click; the app root when unset.
-        navigate = self.web_config.build_url(notification.path or "/")
-        # A topic tag groups the notification with its lane so a new one replaces
-        # the displayed one; renotify keeps that replacement alerting. Falls back
-        # to the notification id, which still collapses re-pushes of the same
-        # notification across a user's devices without grouping.
-        tag = topic or str(notification.id)
-        renotify = topic is not None
-        is_test = notification.type == NotificationType.TEST
         return {
-            "title": title,
-            "url": navigate,
-            "tag": tag,
-            "renotify": renotify,
-            "test": is_test,
             "web_push": 8030,
             "mutable": True,
             "notification": {
-                "title": title,
-                "body": body,
-                "navigate": navigate,
-                "tag": tag,
-                "renotify": renotify,
-                "data": {"test": is_test},
+                "title": self._sanitize_text(notification.title),
+                "body": self._sanitize_text(notification.body),
+                # Deep link opened on click; the app root when unset.
+                "navigate": self.web_config.build_url(notification.path or "/"),
+                # A topic tag groups the notification with its lane so a new one
+                # replaces the displayed one; renotify keeps that replacement
+                # alerting. Falls back to the notification id, which still
+                # collapses re-pushes of the same notification across a user's
+                # devices without grouping.
+                "tag": topic or str(notification.id),
+                "renotify": topic is not None,
+                "data": {"test": notification.type == NotificationType.TEST},
             },
         }
 

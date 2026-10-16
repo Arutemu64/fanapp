@@ -43,21 +43,7 @@ class DeclarativeNotification(TypedDict):
     data: NotificationData
 
 
-class LegacyMessageFields(TypedDict):
-    # TODO: drop once workers older than the declarative format are gone — a
-    # worker installed before it reads these flat fields until the app is next
-    # opened and updates it, and would otherwise show a generic notification.
-    # The declarative parser ignores keys it doesn't know. `body` is left out:
-    # it has no length cap, and a second copy could push a long broadcast past
-    # the ~4 KB push payload limit; an older worker shows its default body.
-    title: str
-    url: str
-    tag: str
-    renotify: bool
-    test: bool
-
-
-class MessageData(LegacyMessageFields):
+class MessageData(TypedDict):
     """A Declarative Web Push message (W3C Push API draft).
 
     Safari 18.4+ Home Screen apps show it without running the service worker's

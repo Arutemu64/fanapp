@@ -77,11 +77,6 @@ def _client(tmp_path: Path, transport: httpx2.MockTransport) -> WebPushClient:
 
 def _message_data() -> MessageData:
     return {
-        "title": "Внимание",
-        "url": "https://fanfan.example/schedule",
-        "tag": "42",
-        "renotify": False,
-        "test": False,
         "web_push": 8030,
         "mutable": True,
         "notification": {
@@ -411,30 +406,6 @@ async def test_notifier_sends_declarative_web_push_message() -> None:
     assert message["web_push"] == 8030
     assert message["mutable"] is True
     assert message["notification"]["title"] == "Внимание"
-
-
-async def test_notifier_keeps_flat_fields_for_older_workers() -> None:
-    """A worker installed before the declarative format reads the flat fields."""
-    client = _RecordingClient()
-    notifier = PushNotifier(
-        push_sub_gateway=_StubGateway(
-            [_browser_subscription(endpoint="https://push.example/one")]
-        ),
-        uow=_StubUow(),
-        client=client,
-        web_config=WEB_CONFIG,
-    )
-
-    await notifier.send_notification(_notification(NotificationType.BROADCAST))
-
-    message = client.calls[0]["message_data"]
-    notification = message["notification"]
-    assert message["title"] == notification["title"]
-    assert "body" not in message
-    assert message["url"] == notification["navigate"]
-    assert message["tag"] == notification["tag"] == "broadcast"
-    assert message["renotify"] is notification["renotify"] is True
-    assert message["test"] is notification["data"]["test"] is False
 
 
 def test_message_data_round_trips_as_json() -> None:
