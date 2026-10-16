@@ -114,8 +114,12 @@ site needs no group, just its own review PR.
   still has to *exist* in the workflow, though: action-setup v6 cannot read
   `packageManager` from the subdirectory `frontend/package.json`
   ([pnpm/action-setup#227](https://github.com/pnpm/action-setup/issues/227)).
-* Third-party GitHub Actions are pinned to commit SHAs
-  (`helpers:pinGitHubActionDigests`) with a `# vX` tag comment.
+* Third-party GitHub Actions are pinned to commit SHAs with a full `# vX.Y.Z`
+  comment (`helpers:pinGitHubActionDigestsToSemver`). A floating `# vX` comment
+  only gets `digest` updates, which Renovate ages against the newest `vX.y.z`
+  ([docs](https://docs.renovatebot.com/key-concepts/minimum-release-age/#digest-updates)),
+  so an action that releases more often than every 7 days never clears
+  `minimumReleaseAge` and its PR waits on `renovate/stability-days` forever.
 
 **Adding a new pin site for an already-tracked dependency means extending the
 matching group or custom manager in the same change** — otherwise Renovate bumps
@@ -167,13 +171,33 @@ and a CSS or component-substrate minor can move the layout with every gate green
 are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
 `svelte-check`, `vitest` and `@hey-api/openapi-ts` keep automerging.
 
+Runtime dependencies automerge on **patch only**, after **14 days** instead of
+the global 7 — Renovate's advice once third-party deps automerge
+([upgrade best practices](https://docs.renovatebot.com/upgrade-best-practices/)).
+0.x packages stay on review PRs, since any 0.x release may break. Database and
+service images, majors and the shipped-bundle list never automerge.
+
+Lock file maintenance automerges with Renovate's own release age switched off:
+Renovate cannot age a lock file refresh, and the `timestamp-required` default
+then holds the PR forever. pnpm's `minimumReleaseAge` and uv's `exclude-newer`
+enforce the same 7 days while relocking, so the cooldown still applies.
+
+### Schedule
+
+Renovate works in one window, Monday 00:00–05:59 Moscow time, with
+`updateNotScheduled: false`. Outside it Renovate still *runs* — Mend
+schedules jobs every few hours and on repository webhooks, and no repo setting
+changes that — but it neither opens nor re-pushes branches. Without the flag,
+every merge to `main` rebased every open automerge PR and re-ran its CI. Security
+updates ignore the window (`vulnerabilityAlerts` defaults to no schedule).
+
 ### Rule order matters
 
 `packageRules` are applied in order and a later rule overrides an earlier one.
 Two consequences to keep in mind when editing:
 
-* The shipped-bundle carve-out must stay **below** the `devDependencies`
-  automerge rule it is carving out of, or it silently does nothing.
+* The shipped-bundle carve-out must stay **below** the `devDependencies` and
+  runtime-patch automerge rules it carves out of, or it silently does nothing.
 * The shared-pin groups stay **last**, so nothing above them can claim a pinned
   dependency for a different `groupName`.
 
