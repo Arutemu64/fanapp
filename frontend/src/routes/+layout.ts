@@ -62,8 +62,9 @@ function reportUnexpectedRequestError(error: unknown) {
 // app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
 // cache in it — lives for the whole session. Without SSR a module singleton
 // would be just as safe from cross-user leaks; it is load data so `Session`
-// receives it as a dependency and every identity transition clears the one
-// cache the app reads (Session.#forgetAccount).
+// receives the same cache the app reads and resets it on each identity
+// transition: login marks every query stale, logout and expiry drop the
+// inactive ones and mark the rest stale to refetch as the guest.
 export const load: LayoutLoad = async () => {
 	const queryClient = new QueryClient({
 		// A failed query or mutation is caught by TanStack Query, so it never reaches
