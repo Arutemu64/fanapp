@@ -63,7 +63,7 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0016](0016-workbox-precaching-via-vite-pwa.md) | Workbox precaching via vite-pwa for the service worker | Superseded by [0020](0020-workbox-precache-list-from-app-manifest.md) |
 | [0017](0017-hey-api-for-the-frontend-api-client.md) | `@hey-api/openapi-ts` for the frontend API client | Accepted; per-call client superseded by [0021](0021-tanstack-query-for-server-state.md) |
 | [0018](0018-psycopg-3-as-the-postgres-driver.md) | psycopg 3 as the PostgreSQL driver | Accepted |
-| [0019](0019-photoswipe-for-the-map-viewer.md) | PhotoSwipe for the map viewer | Accepted |
+| [0019](0019-photoswipe-for-the-map-viewer.md) | PhotoSwipe for the map viewer | Superseded by [0029](0029-inline-svg-floor-plans.md) |
 | [0020](0020-workbox-precache-list-from-app-manifest.md) | Workbox precache list from `$app/manifest`, without vite-pwa | Accepted |
 | [0021](0021-tanstack-query-for-server-state.md) | TanStack Query for server state, persisted to IndexedDB | Accepted; mutations superseded by [0022](0022-createmutation-for-writes.md) |
 | [0022](0022-createmutation-for-writes.md) | `createMutation` for writes, online-only | Accepted |
@@ -73,3 +73,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0026](0026-schedule-blocks-as-block-start-entries.md) | Schedule blocks as block-start entries | Accepted |
 | [0027](0027-paraglide-js-for-user-facing-copy.md) | Paraglide JS for user-facing copy | Accepted |
 | [0028](0028-mdsvex-for-guide-articles.md) | mdsvex for guide articles | Accepted |
+| [0029](0029-inline-svg-floor-plans.md) | Inline SVG floor plans instead of poster images | Accepted |

@@ -24,8 +24,6 @@ declare global {
 			actions?: NavbarAction[];
 		}
 		interface PageState {
-			/** Index into `maps` of the map open in the map page's fullscreen viewer. */
-			mapViewerIndex?: number;
 			/** The login page's current step; absent means the options screen. */
 			loginStep?: 'email' | 'password' | 'code';
 			/** The address the login code went to; set alongside `loginStep: 'code'`. */
