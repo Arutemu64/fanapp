@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Images } from '@lucide/svelte';
+	import { onDestroy } from 'svelte';
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -166,6 +167,14 @@
 		};
 	}
 
+	// The dialog unmounts this scanner on close. An image still decoding then (the
+	// first read also waits for the decoder to load) must not deliver into a
+	// dialog reopened since, which would submit a code the user cancelled.
+	let destroyed = false;
+	onDestroy(() => {
+		destroyed = true;
+	});
+
 	// A screenshot of an e-ticket is the way to scan a code that is on this very
 	// phone's screen, which the camera can't see.
 	async function handleImagePicked(event: Event & { currentTarget: HTMLInputElement }) {
@@ -183,6 +192,7 @@
 			imageStatus = 'unreadable';
 			return;
 		}
+		if (destroyed) return;
 		if (text === null || text === '') {
 			imageStatus = 'no-code';
 			return;

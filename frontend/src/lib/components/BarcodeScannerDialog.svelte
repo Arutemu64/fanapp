@@ -30,7 +30,9 @@
 </script>
 
 <Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-md">
+	<!-- From sm up the dialog is centred with no height cap of its own, and the
+	     camera view makes this one taller than a landscape phone. -->
+	<Dialog.Content class="sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<ScanLine class="size-5 text-muted-foreground" />
