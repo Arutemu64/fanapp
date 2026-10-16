@@ -8,6 +8,7 @@ import httpx2
 import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from pydantic import HttpUrl, SecretStr
 
 from fanfan.adapters.push.client import MessageData, WebPushClient
 from fanfan.adapters.push.config import PushConfig
@@ -26,10 +27,17 @@ from fanfan.core.vo.notification import NotificationType, generate_notification_
 from fanfan.core.vo.push_subscription import generate_push_subscription_id
 from fanfan.core.vo.user import UserId
 from fanfan.main.generate_vapid import write_vapid_keys
+from fanfan.presentation.web.config import WebConfig
 
 pytestmark = pytest.mark.unit
 
 USER_ID = UserId(uuid7())
+WEB_CONFIG = WebConfig(
+    host="127.0.0.1",
+    port=8000,
+    public_url=HttpUrl("https://fanfan.example/"),
+    secret_key=SecretStr("test-secret"),
+)
 
 
 def _b64url(raw: bytes) -> str:
@@ -69,12 +77,16 @@ def _client(tmp_path: Path, transport: httpx2.MockTransport) -> WebPushClient:
 
 def _message_data() -> MessageData:
     return {
-        "tag": "42",
-        "renotify": False,
-        "title": "Внимание",
-        "body": "Тело уведомления",
-        "url": "/schedule",
-        "test": False,
+        "web_push": 8030,
+        "mutable": True,
+        "notification": {
+            "title": "Внимание",
+            "body": "Тело уведомления",
+            "navigate": "https://fanfan.example/schedule",
+            "tag": "42",
+            "renotify": False,
+            "data": {"test": False},
+        },
     }
 
 
@@ -108,7 +120,7 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     # The payload is encrypted, so it must not carry the plaintext body. Match
     # the whole encoded body: a short byte sequence also turns up in random
     # ciphertext by chance (a 2-byte one failed ~0.5% of runs).
-    assert _message_data()["body"].encode() not in sent.content
+    assert _message_data()["notification"]["body"].encode() not in sent.content
 
 
 async def test_send_returns_response_with_status(tmp_path: Path) -> None:
@@ -199,6 +211,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
         push_sub_gateway=gateway,
         uow=_StubUow(),
         client=client,
+        web_config=WEB_CONFIG,
     )
 
     await notifier.send_notification(_notification())
@@ -207,12 +220,13 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     call = client.calls[0]
     # The unmapped domain aggregate is handed straight to the client.
     assert call["subscription"] is sub
-    data = call["message_data"]
+    data = call["message_data"]["notification"]
     # HTML is flattened to plain text; <br> becomes a newline.
     assert "<b>" not in data["body"]
     assert data["body"] == "Тело уведомления\nвторая строка"
-    assert data["url"] == "/schedule"
-    assert data["test"] is False
+    # Declarative pushes need an absolute URL, built from the public origin.
+    assert data["navigate"] == "https://fanfan.example/schedule"
+    assert data["data"] == {"test": False}
     # An ungrouped type keeps a unique per-notification tag and does not re-alert.
     assert data["tag"] not in {"schedule", "broadcast"}
     assert data["renotify"] is False
@@ -236,11 +250,12 @@ async def test_notifier_groups_topic_notifications_by_tag(
         push_sub_gateway=_StubGateway([sub]),
         uow=_StubUow(),
         client=(client := _RecordingClient()),
+        web_config=WEB_CONFIG,
     )
 
     await notifier.send_notification(_notification(notification_type))
 
-    data = client.calls[0]["message_data"]
+    data = client.calls[0]["message_data"]["notification"]
     assert data["tag"] == expected_tag
     assert data["renotify"] is True
 
@@ -256,6 +271,7 @@ async def test_notifier_prunes_gone_subscription() -> None:
         push_sub_gateway=gateway,
         uow=uow,
         client=_RecordingClient(status=410),
+        web_config=WEB_CONFIG,
     )
 
     await notifier.send_notification(_notification())
@@ -271,6 +287,7 @@ async def test_notifier_decodes_html_entities_to_plain_text() -> None:
         push_sub_gateway=_StubGateway([sub]),
         uow=_StubUow(),
         client=client,
+        web_config=WEB_CONFIG,
     )
     notification = Notification(
         id=generate_notification_id(),
@@ -285,12 +302,12 @@ async def test_notifier_decodes_html_entities_to_plain_text() -> None:
 
     await notifier.send_notification(notification)
 
-    data = client.calls[0]["message_data"]
+    data = client.calls[0]["message_data"]["notification"]
     # nh3 leaves entities encoded; the notifier decodes them so the OS
     # notification shows real characters, not "&amp;"/"&lt;".
     assert data["body"] == "Скидка 5 < 10 & выше"
     assert data["title"] == "Кафе «U & I»"
-    assert data["url"] == "/"
+    assert data["navigate"] == "https://fanfan.example/"
 
 
 async def test_notifier_raises_channel_unavailable_on_auth_failure() -> None:
@@ -300,6 +317,7 @@ async def test_notifier_raises_channel_unavailable_on_auth_failure() -> None:
         push_sub_gateway=gateway,
         uow=_StubUow(),
         client=_RecordingClient(status=401),
+        web_config=WEB_CONFIG,
     )
 
     # 401 is a VAPID/auth failure: a channel-wide misconfiguration the consumer
@@ -316,6 +334,7 @@ async def test_notifier_retries_on_throttle_with_default_backoff() -> None:
         ),
         uow=_StubUow(),
         client=_RecordingClient(status=429),
+        web_config=WEB_CONFIG,
     )
 
     with pytest.raises(NotificationRetryAfter) as exc:
@@ -331,6 +350,7 @@ async def test_notifier_honors_retry_after_header() -> None:
         ),
         uow=_StubUow(),
         client=_RecordingClient(status=429, headers={"Retry-After": "30"}),
+        web_config=WEB_CONFIG,
     )
 
     with pytest.raises(NotificationRetryAfter) as exc:
@@ -345,6 +365,7 @@ async def test_notifier_retries_on_server_error() -> None:
         ),
         uow=_StubUow(),
         client=_RecordingClient(status=503),
+        web_config=WEB_CONFIG,
     )
 
     with pytest.raises(NotificationRetryAfter):
@@ -358,11 +379,33 @@ async def test_notifier_test_type_sets_foreground_flag() -> None:
         push_sub_gateway=_StubGateway([sub]),
         uow=_StubUow(),
         client=client,
+        web_config=WEB_CONFIG,
     )
 
     await notifier.send_notification(_notification(NotificationType.TEST))
 
-    assert client.calls[0]["message_data"]["test"] is True
+    assert client.calls[0]["message_data"]["notification"]["data"]["test"] is True
+
+
+async def test_notifier_sends_declarative_web_push_message() -> None:
+    """Safari parses the message itself only when it opts in with `web_push: 8030`;
+    `mutable` keeps the service worker's `push` handler running there."""
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+
+    await notifier.send_notification(_notification())
+
+    message = client.calls[0]["message_data"]
+    assert message["web_push"] == 8030
+    assert message["mutable"] is True
+    assert message["notification"]["title"] == "Внимание"
 
 
 def test_message_data_round_trips_as_json() -> None:

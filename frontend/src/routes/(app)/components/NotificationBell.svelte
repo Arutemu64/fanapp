@@ -11,6 +11,7 @@
 	import { NOTIFICATION_BADGE_MAX } from '#lib/constants/notifications.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { pushShowsOverOpenApp } from '#lib/services/pushDevice.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
 
@@ -46,19 +47,32 @@
 		setAppBadgeCount(unreadCount);
 	});
 
+	// The bell unmounts on every session end, so a check still in flight then
+	// belongs to the previous account and must not toast its notification.
+	let sessionEnded = false;
+
 	function handleNewNotification(notification: NotificationDto) {
 		// On the notifications page the item already appears at the top of the
 		// list, so a toast would only repeat it — Apple's HIG: in the foreground,
 		// insert new data into the current view rather than notify:
 		// https://developer.apple.com/design/human-interface-guidelines/notifications
 		if (page.route.id === '/(app)/(protected)/notifications') return;
-		toastService.push(notification);
+		// Where the browser shows pushes itself (Declarative Web Push on iOS), the
+		// OS notification appears over the open app too and nothing can stop it,
+		// so the toast would repeat it. Checked per event because push can be
+		// switched on or off while the bell stays mounted.
+		void pushShowsOverOpenApp().then((osShowsIt) => {
+			if (!osShowsIt && !sessionEnded) {
+				toastService.push(notification);
+			}
+		});
 	}
 
 	onMount(() => {
 		eventsClient.on('notification_created', handleNewNotification);
 
 		return () => {
+			sessionEnded = true;
 			eventsClient.off('notification_created', handleNewNotification);
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed

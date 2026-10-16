@@ -30,6 +30,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
+	import { unsubscribeDevicePush } from '#lib/services/pushDevice.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
 	import { isReachable } from '#lib/services/reachability.js';
 	import { startReachabilityMonitor } from '#lib/services/reachabilityMonitor.js';
@@ -52,7 +53,8 @@
 		queryClient,
 		events: eventsClient,
 		router: browserSessionRouter,
-		isReachable
+		isReachable,
+		unsubscribePush: unsubscribeDevicePush
 	});
 	const toastService = setToastService();
 	const pwa = setPwaService();

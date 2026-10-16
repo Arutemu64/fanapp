@@ -5,6 +5,11 @@
 export interface PushBrowser {
 	/** Service worker, Push API and Notification API are all present. */
 	isSupported: () => boolean;
+	/**
+	 * Pushes arrive as Declarative Web Push, which the browser shows itself, even
+	 * over the open app.
+	 */
+	showsPushItself: () => boolean;
 	permission: () => NotificationPermission;
 	requestPermission: () => Promise<NotificationPermission>;
 	getSubscription: () => Promise<PushSubscription | null>;
@@ -48,6 +53,11 @@ export const browserPush: PushBrowser = {
 	// agent sniffed.
 	isSupported: () =>
 		'serviceWorker' in navigator && 'PushManager' in window && typeof Notification !== 'undefined',
+
+	// Only browsers that implement Declarative Web Push expose a page-level
+	// `window.pushManager` (Safari 18.4+ Home Screen apps):
+	// https://webkit.org/blog/16535/meet-declarative-web-push/
+	showsPushItself: () => 'pushManager' in window,
 
 	permission: () => Notification.permission,
 
