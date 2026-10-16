@@ -1,20 +1,14 @@
-import { error } from '@sveltejs/kit';
-
 import type { BackTarget } from '#lib/types/navigation.js';
 
+import { requireTool } from '#lib/data/tools.js';
 import { m } from '#lib/paraglide/messages.js';
-import { canSendNotifications } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {
-	const { user } = await parent();
+	const { toolConfig, user } = await parent();
 
-	// Mirror the backend NOTIFICATIONS_SEND check so the page is not shown to
-	// users who would be rejected on submit.
-	if (!canSendNotifications(user)) {
-		error(403, m.broadcast_forbidden());
-	}
+	requireTool('broadcast', user, toolConfig);
 
 	return {
 		title: m.tool_broadcast(),

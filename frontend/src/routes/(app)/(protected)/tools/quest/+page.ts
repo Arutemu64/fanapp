@@ -1,20 +1,14 @@
-import { error } from '@sveltejs/kit';
-
 import type { BackTarget } from '#lib/types/navigation.js';
 
+import { requireTool } from '#lib/data/tools.js';
 import { m } from '#lib/paraglide/messages.js';
-import { canAwardQuest, canManageQuest } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {
-	const { user } = await parent();
+	const { toolConfig, user } = await parent();
 
-	// Mirror the backend: quest:award gives points, quest:manage reviews and
-	// cancels every award.
-	if (!canAwardQuest(user) && !canManageQuest(user)) {
-		error(403, m.tool_quest_forbidden());
-	}
+	requireTool('quest', user, toolConfig);
 
 	return {
 		title: m.tool_quest(),

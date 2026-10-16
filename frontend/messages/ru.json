@@ -913,7 +913,6 @@
 	"unsubscribe_done": "Подписка на уведомления отключена",
 	"unsubscribe_title": "Отписка от уведомлений",
 	"user_email": "Почта",
-	"user_forbidden": "У тебя нет доступа к карточкам пользователей",
 	"user_linked_accounts": "Привязанные аккаунты",
 	"user_load_failed": "Не удалось загрузить пользователя",
 	"user_no_linked_accounts": "Нет привязанных аккаунтов.",
