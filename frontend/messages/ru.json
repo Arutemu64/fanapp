@@ -570,7 +570,7 @@
 	"quest_code_hint": "Покажи код волонтёру, когда выполнишь задание.",
 	"quest_code_label": "QR-код игрока @{username}",
 	"quest_code_title": "Твой код",
-	"quest_intro": "Выполняй задания и зарабатывай очки.",
+	"quest_intro": "Выполняй задания и зарабатывай баллы.",
 	"quest_leaderboard_empty": "Баллов пока нет ни у кого. Первое задание\u00a0— твоё.",
 	"quest_leaderboard_gap": "Часть мест пропущена",
 	"quest_leaderboard_title": "Таблица лидеров",
