@@ -3,6 +3,7 @@
 	import {
 		Bell,
 		ChevronRight,
+		Coins,
 		Download,
 		Heart,
 		MessageSquare,
@@ -17,18 +18,23 @@
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
 
+	import {
+		getPublicConfigOptions,
+		getQuestOptions
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { currentUserOptions } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
-	import { isOrganizer } from '#lib/utils/permissions.js';
+	import { isOrganizer, isStaff } from '#lib/utils/permissions.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import DiagnosticsDialog from './components/DiagnosticsDialog.svelte';
@@ -54,11 +60,30 @@
 		});
 	});
 
-	// "Инструменты" is the organizer toolbox: a single link to the /tools dashboard
-	// rather than a row per tool, so the hub stays short as the tool list grows. It
-	// is organizer-only for now; per-tool permission gating lives on the dashboard, where
-	// locked tools show as a discovery cue.
-	let showTools = $derived(isOrganizer(user));
+	// "Инструменты" is the staff toolbox: a single link to the /tools dashboard
+	// rather than a row per tool, so the hub stays short as the tool list grows.
+	// Organizers always see it, locked tools there being a discovery cue; a
+	// volunteer sees it once granted a tool, since theirs lists held tools only.
+	let showTools = $derived(
+		isOrganizer(user) || (isStaff(user) && (user?.permissions.length ?? 0) > 0)
+	);
+
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	let questEnabled = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_enabled);
+	const questQuery = createQuery(() => ({
+		...getQuestOptions(),
+		enabled: questEnabled && user !== null
+	}));
+	let questValue = $derived.by(() => {
+		const quest = questQuery.data;
+		if (!quest) {
+			return undefined;
+		}
+		if (quest.rank === null) {
+			return m.quest_no_points();
+		}
+		return `${m.quest_points({ count: quest.points })} · ${m.quest_rank({ rank: quest.rank })}`;
+	});
 
 	const pwa = getPwaService();
 	const appUpdate = getAppUpdateService();
@@ -153,6 +178,12 @@
 					{/snippet}
 				</Item.Root>
 			</MenuGroup>
+
+			{#if questEnabled}
+				<MenuGroup>
+					<MenuLink href="profile/quest" label={m.quest_title()} icon={Coins} value={questValue} />
+				</MenuGroup>
+			{/if}
 
 			<MenuGroup>
 				<MenuLink

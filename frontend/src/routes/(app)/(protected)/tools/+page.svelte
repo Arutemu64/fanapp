@@ -4,6 +4,7 @@
 
 	import {
 		Award,
+		Coins,
 		FileUp,
 		Megaphone,
 		MessageSquare,
@@ -12,19 +13,25 @@
 		Ticket,
 		Users
 	} from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
+	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import {
+		canAwardQuest,
 		canGenerateTickets,
 		canImportSchedule,
+		canManageQuest,
 		canManageSettings,
 		canManageVoting,
 		canReadFeedback,
 		canReadUsers,
 		canRunSync,
-		canSendNotifications
+		canSendNotifications,
+		isOrganizer
 	} from '#lib/utils/permissions.js';
 
 	import type { PageProps } from './$types';
@@ -35,6 +42,10 @@
 	let { data }: PageProps = $props();
 	// The (protected) guard's snapshot: these rows only gate links.
 	let user = $derived(data.user);
+	let organizer = $derived(isOrganizer(user));
+
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	let questEnabled = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_enabled);
 
 	interface Tool {
 		key: string;
@@ -46,9 +57,10 @@
 		canAccess: boolean;
 	}
 
-	// Locked tools stay in the list so an organizer sees the whole toolbox and knows what
-	// they'd need granted, rather than the section silently shrinking per account.
-	let tools = $derived<Tool[]>([
+	// Locked tools stay in an organizer's list so they see the whole toolbox and know
+	// what they'd need granted. A volunteer sees only what they hold: the organizer
+	// tools are not theirs to ask for.
+	let allTools = $derived<Tool[]>([
 		{
 			key: 'settings',
 			title: m.tool_settings(),
@@ -112,19 +124,39 @@
 			icon: Users,
 			href: 'tools/users',
 			canAccess: canReadUsers(user)
+		},
+		{
+			key: 'quest',
+			title: m.tool_quest(),
+			description: m.tool_quest_description(),
+			icon: Coins,
+			href: 'tools/quest',
+			canAccess: canAwardQuest(user) || canManageQuest(user)
 		}
 	]);
+
+	// The quest tool hides with the quest itself, like the profile card.
+	let tools = $derived(
+		allTools.filter((tool) => {
+			if (tool.key === 'quest' && !questEnabled) {
+				return false;
+			}
+			return organizer || tool.canAccess;
+		})
+	);
 </script>
 
 <!-- Capped and centred like the /profile hub this menu continues. -->
 <div class="mx-auto max-w-2xl">
 	<SectionIntro description={m.tools_intro()} />
 
-	<!-- Shown to every organizeranizer: the tools layout already gates this whole section to the
-	     organizer role, so no per-tool permission scopes the live count. -->
-	<div class="mb-4">
-		<OnlineNowCard />
-	</div>
+	<!-- Shown to every organizer, with no per-tool permission scoping the live count;
+	     volunteers come here for their own tools only. -->
+	{#if organizer}
+		<div class="mb-4">
+			<OnlineNowCard />
+		</div>
+	{/if}
 
 	<MenuGroup>
 		{#each tools as tool (tool.key)}

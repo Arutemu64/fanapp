@@ -19,4 +19,5 @@ class GetPublicConfig:
             festival_start=settings.festival_start,
             festival_end=settings.festival_end,
             quest_enabled=settings.quest.enabled,
+            quest_max_award=settings.quest.max_award,
         )

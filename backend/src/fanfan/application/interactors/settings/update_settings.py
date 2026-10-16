@@ -89,8 +89,8 @@ class UpdateSettings:
             or quest_cancel_window is not None
         )
         if quest_touched:
-            # Only the on/off switch is public: it shows or hides the quest card.
-            if quest_enabled is not None and quest_enabled != settings.quest.enabled:
+            # The switch and the cap are public; the cancel window is not.
+            if quest_enabled is not None or quest_max_award is not None:
                 public_config_changed = True
             settings.update_quest(
                 enabled=quest_enabled,

@@ -22,6 +22,8 @@ const FEEDBACK_READ: Permission = 'feedback:read';
 const VOTING_MANAGE: Permission = 'voting:manage';
 const USERS_READ: Permission = 'users:read';
 const USERS_MANAGE: Permission = 'users:manage';
+const QUEST_AWARD: Permission = 'quest:award';
+const QUEST_MANAGE: Permission = 'quest:manage';
 
 export function hasPermission(user: CurrentUserDto | null, permission: Permission): boolean {
 	if (!user) {
@@ -32,11 +34,15 @@ export function hasPermission(user: CurrentUserDto | null, permission: Permissio
 	return granted.includes(WILDCARD) || granted.includes(permission);
 }
 
-// The toolbox is an organizer surface: only the organizer role reaches it at all.
-// Access to each individual tool inside stays permission-based (an organizer may hold
-// any subset), so this gate governs visibility of the section, never the actions.
 export function isOrganizer(user: CurrentUserDto | null): boolean {
 	return user?.role === 'organizer';
+}
+
+// The toolbox is a staff surface: volunteers and organizers reach it. Access to
+// each tool inside stays permission-based, so this gate governs visibility of the
+// section, never the actions.
+export function isStaff(user: CurrentUserDto | null): boolean {
+	return user?.role === 'organizer' || user?.role === 'volunteer';
 }
 
 export function canManageSchedule(user: CurrentUserDto | null): boolean {
@@ -79,6 +85,14 @@ export function canManageUsers(user: CurrentUserDto | null): boolean {
 	return hasPermission(user, USERS_MANAGE);
 }
 
+export function canAwardQuest(user: CurrentUserDto | null): boolean {
+	return hasPermission(user, QUEST_AWARD);
+}
+
+export function canManageQuest(user: CurrentUserDto | null): boolean {
+	return hasPermission(user, QUEST_MANAGE);
+}
+
 // Handing out permissions takes the superuser grant itself: whoever may grant
 // them can give any of them to a second account of their own.
 export function canManagePermissions(user: CurrentUserDto | null): boolean {
@@ -99,5 +113,7 @@ export const PERMISSION_LABELS: Record<Permission, () => string> = {
 	'feedback:read': m.permission_feedback_read,
 	'voting:manage': m.permission_voting_manage,
 	'users:read': m.permission_users_read,
-	'users:manage': m.permission_users_manage
+	'users:manage': m.permission_users_manage,
+	'quest:award': m.permission_quest_award,
+	'quest:manage': m.permission_quest_manage
 };

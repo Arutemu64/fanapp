@@ -3,17 +3,17 @@ import { error, redirect } from '@sveltejs/kit';
 
 import { m } from '#lib/paraglide/messages.js';
 import { isReachable } from '#lib/services/reachability.js';
-import { isOrganizer } from '#lib/utils/permissions.js';
+import { isStaff } from '#lib/utils/permissions.js';
 
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, url }) => {
 	const { user } = await parent();
 
-	// The toolbox is organizer-only for now: the dashboard lists every tool an organizer may
-	// hold and marks the ones they lack as locked, so an organizer with no tool
-	// permissions still sees the section. Each page enforces its own permission.
-	if (!isOrganizer(user)) {
+	// The toolbox is for staff. The dashboard shows an organizer every tool, the
+	// ones they lack locked, and a volunteer only the tools they hold. Each page
+	// enforces its own permission.
+	if (!isStaff(user)) {
 		error(403, m.tools_forbidden());
 	}
 

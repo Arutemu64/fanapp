@@ -971,6 +971,10 @@ export type PublicConfigDto = {
 	 * Quest Enabled
 	 */
 	quest_enabled: boolean;
+	/**
+	 * Quest Max Award
+	 */
+	quest_max_award: number;
 };
 
 /**

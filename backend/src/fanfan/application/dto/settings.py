@@ -48,3 +48,6 @@ class PublicConfigDTO(BaseModel):
     festival_end: datetime
     # Shows or hides the quest card and tool; the quest endpoints enforce it too.
     quest_enabled: bool
+    # Lets the volunteer's award form validate before sending; volunteers cannot
+    # read the organizer settings.
+    quest_max_award: int

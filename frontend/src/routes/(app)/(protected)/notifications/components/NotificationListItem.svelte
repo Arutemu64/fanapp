@@ -37,7 +37,7 @@
 		schedule_change: CalendarClock,
 		schedule_subscription: BellRing,
 		message: MessageCircle,
-		points_received: Coins,
+		quest: Coins,
 		broadcast: Megaphone
 	} satisfies Record<NotificationType, Component<{ class?: string }>>;
 

@@ -2,16 +2,19 @@
 	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 
 	import { beforeNavigate } from '$app/navigation';
+	import * as Sentry from '@sentry/sveltekit';
 
 	import '../app.css';
 
-	import * as Sentry from '@sentry/sveltekit';
 	import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
+
+	import type { NotificationDto } from '#lib/api/generated/index.js';
 
 	import {
 		countUnreadNotificationsQueryKey,
 		getPublicConfigQueryKey,
+		getQuestQueryKey,
 		getScheduleQueryKey,
 		getSyncSourcesQueryKey,
 		getVotingStatusQueryKey,
@@ -139,9 +142,14 @@
 		void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
 	}
 
-	function handleNotificationCreated() {
+	function handleNotificationCreated(notification: NotificationDto) {
 		void queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
 		void queryClient.invalidateQueries({ queryKey: listUserNotificationsQueryKey() });
+		// Every award and cancellation notifies the player, so the notification
+		// doubles as the signal that their balance and rank moved.
+		if (notification.type === 'quest') {
+			void queryClient.invalidateQueries({ queryKey: getQuestQueryKey() });
+		}
 	}
 
 	// The payload only names the run; GET /sync/sources stays the source of truth.
