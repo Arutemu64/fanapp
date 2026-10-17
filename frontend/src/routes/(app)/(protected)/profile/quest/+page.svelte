@@ -103,6 +103,9 @@
 			label={m.quest_code_label({ username: user.username })}
 			class="w-full max-w-64 rounded-lg"
 		/>
+		<!-- The fallback when the camera won't read the code: the volunteer's tool
+		     can find the player by this name. -->
+		<p class="text-section break-all text-foreground">@{user.username}</p>
 		<p class="text-sm text-muted-foreground">{m.quest_code_hint()}</p>
 	</Card.Root>
 {/if}
