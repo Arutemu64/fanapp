@@ -7,7 +7,7 @@ import { onDestroy } from 'svelte';
  *
  * Must be created during component initialization (it registers `onDestroy`) —
  * e.g. from the constructor of a class a component instantiates in its
- * `<script>`. Mirrors `listen.ts`: the teardown wiring lives with the helper,
+ * `<script>`. The teardown wiring lives with the helper,
  * so a caller can't forget the matching `clearInterval`. `start()` restarts a
  * running timer rather than stacking a second one, and is a no-op once the
  * component is destroyed: code after an `await` (a request that settles after

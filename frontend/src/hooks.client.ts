@@ -43,13 +43,6 @@ function isStaleChunkError(exception: unknown): boolean {
 	return typeof message === 'string' && STALE_CHUNK_MESSAGE.test(message);
 }
 
-// `navigator.onLine === false` is a trustworthy negative — the device really has
-// no connection (a `true` can still lie behind a captive portal, so we never infer
-// "online" from it, only "offline" from `false`).
-function isDeviceOffline(): boolean {
-	return !navigator.onLine;
-}
-
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
 // to infer from a missing or fat-fingered value, so both fall back to the
 // documented default. An explicit `0` (sampling off) is honoured.
@@ -143,7 +136,10 @@ function recoverFromStaleChunk(preventDefault: () => void): void {
 		location.reload();
 		return;
 	}
-	if (plan === 'persistent' && !isDeviceOffline()) {
+	// `navigator.onLine === false` is a trustworthy negative — the device really has
+	// no connection (a `true` can still lie behind a captive portal, so we never infer
+	// "online" from it, only "offline" from `false`).
+	if (plan === 'persistent' && navigator.onLine) {
 		// Re-file the guarded-out failure as a distinct, deduped signal that a deploy
 		// left a chunk unreachable — the raw TypeError is dropped in `beforeSend`.
 		// Skip it when the device is offline: there the reload simply couldn't reach

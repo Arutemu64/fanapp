@@ -10,7 +10,7 @@ import { m } from '#lib/paraglide/messages.js';
 import { toAppPath } from '#lib/utils/nav.js';
 import { resolvePath } from '#lib/utils/paths.js';
 
-export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
+type StatusToastType = 'success' | 'info' | 'warning' | 'error';
 
 const [getToast, setToast] = createContext<ToastService>();
 
@@ -21,7 +21,7 @@ function htmlToPlainText(html: string): string {
 	return new DOMParser().parseFromString(html, 'text/html').body.textContent;
 }
 
-export class ToastService {
+class ToastService {
 	readonly #seenPushIds = new SvelteSet<string>();
 
 	add(message: string, type: StatusToastType = 'info') {

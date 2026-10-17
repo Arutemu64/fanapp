@@ -8,10 +8,6 @@ export interface UserFilters {
 	hasTicket: boolean | null;
 }
 
-// URL value of the ticket filter: short words rather than true/false, so a
-// shared link reads as what it shows.
-const TICKET_PARAM = { yes: true, no: false } as const;
-
 function isUserRole(value: string | null): value is UserRole {
 	return USER_ROLES.some((role) => role === value);
 }
@@ -22,9 +18,11 @@ function isUserRole(value: string | null): value is UserRole {
 export function parseUserFilters(params: Pick<URLSearchParams, 'get'>): UserFilters {
 	const role = params.get('role');
 	const ticket = params.get('ticket');
+	// URL value of the ticket filter: short words rather than true/false, so a
+	// shared link reads as what it shows.
 	let hasTicket: boolean | null = null;
 	if (ticket === 'yes' || ticket === 'no') {
-		hasTicket = TICKET_PARAM[ticket];
+		hasTicket = ticket === 'yes';
 	}
 	return {
 		search: params.get('q')?.trim() ?? '',
