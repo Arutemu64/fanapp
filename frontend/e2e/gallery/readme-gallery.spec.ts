@@ -167,11 +167,6 @@ test('quest', async ({ page, api }) => {
 	await expect(page.getByRole('img', { name: 'QR-код игрока @sakura_cosplay' })).toBeVisible();
 	await expect(page.locator('li[aria-current="true"]')).toContainText('@sakura_cosplay');
 	await settle(page);
-	// The code fills the first screen; scrolled to the standings, the shot shows the
-	// podium medals and the player's own row instead of a bare QR.
-	await page.getByRole('heading', { name: 'Таблица лидеров' }).evaluate((heading) => {
-		heading.scrollIntoView({ block: 'center' });
-	});
 	await saveWebp(page, 'quest');
 });
 

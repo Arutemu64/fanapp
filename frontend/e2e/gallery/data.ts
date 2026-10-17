@@ -157,7 +157,7 @@ export const notifications: NotificationDto[] = [
 
 // The quest standings behind the profile hub's quest row and the quest page: the
 // gallery's visitor (persona id and avatar) sits fourth, just off the podium, so
-// the page shows the medals and the player's own highlighted row together.
+// a capture scrolled to the board shows the medals and their own row together.
 const QUEST_RIVALS = [
 	{ username: 'kitsune_mika', points: 185 },
 	{ username: 'senpai_kun', points: 160 },
