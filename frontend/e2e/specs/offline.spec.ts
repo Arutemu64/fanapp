@@ -155,22 +155,21 @@ test.describe('offline', { tag: '@critical' }, () => {
 		expect(patched).toBe(false);
 	});
 
-	test('a cold start with no saved identity shows the offline state, not login', async ({
+	test('a cold start with no saved identity shows the connection screen, not login', async ({
 		page,
 		api
 	}) => {
-		// The identity check runs before the API interceptors exist, so only the root
-		// load's own probe tells the protected guard that a failed /me/ means
-		// "offline" rather than "guest".
+		// A failed /me/ with nothing saved is "unknown", never "guest": the protected
+		// guard's own probe keeps it off /login while the root layout holds the app.
 		api.use({
 			'GET /me/': (route) => route.abort(),
 			'GET /debug/health': (route) => route.abort()
 		});
 		await page.goto('/notifications');
 
-		// The device still reports a network, so the probe sits out its 5s offline
-		// confirm window before giving a verdict.
-		await expect(page.getByRole('main').getByText('Нет связи с сервером')).toBeVisible({
+		// The device still reports a network, so the guard's probe sits out its 5s
+		// offline confirm window before the load settles.
+		await expect(page.getByRole('heading', { name: 'Нет связи с сервером' })).toBeVisible({
 			timeout: 10_000
 		});
 		await expect(page).toHaveURL('/notifications');
@@ -211,5 +210,43 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.reload();
 
 		await expect(page).toHaveURL(/\/login\?next=%2Fnotifications$/);
+	});
+
+	test('a first boot with nothing saved holds the app until the server answers', async ({
+		page,
+		api
+	}) => {
+		// Nothing is cached yet, and the config read dies on the way: there is no
+		// honest copy of the festival dates to render, so no screen opens.
+		api.use({
+			'GET /config': (route) => route.abort(),
+			'GET /debug/health': (route) => route.abort()
+		});
+		await page.goto('/');
+
+		await expect(page.getByRole('heading', { name: 'Нет связи с сервером' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Главная' })).toHaveCount(0);
+
+		// Retry checks the server before reloading, so a tap while it is still down
+		// keeps this screen instead of trading it for the browser's error page. The
+		// device still reports a network, so that check sits out the probe's 5s
+		// offline confirm window.
+		const retry = page.getByRole('button', { name: 'Попробовать снова' });
+		await retry.click();
+		await expect(retry).toBeEnabled({ timeout: 10_000 });
+		await expect(page.getByRole('heading', { name: 'Нет связи с сервером' })).toBeVisible();
+
+		api.use({
+			'GET /config': json<PublicConfigDto>({
+				festival_start: '2027-03-13T11:30:00+03:00',
+				festival_end: '2027-03-13T19:30:00+03:00',
+				quest_enabled: false,
+				quest_max_award: 100
+			}),
+			'GET /debug/health': json({ status: 'healthy' })
+		});
+		await retry.click();
+
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
 	});
 });

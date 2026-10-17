@@ -4,9 +4,9 @@
 	import type { QuestPlayerDto } from '#lib/api/generated/index.js';
 
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { requirePublicConfig } from '#lib/api/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
-	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { canAwardQuest, canManageQuest } from '#lib/utils/permissions.js';
 
@@ -21,7 +21,7 @@
 	let canManage = $derived(canManageQuest(data.user));
 
 	const configQuery = createQuery(() => getPublicConfigOptions());
-	let maxAward = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_max_award);
+	let maxAward = $derived(requirePublicConfig(configQuery.data).quest_max_award);
 
 	let player = $state.raw<QuestPlayerDto | null>(null);
 

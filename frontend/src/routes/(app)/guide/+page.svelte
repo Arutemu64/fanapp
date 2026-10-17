@@ -15,11 +15,11 @@
 	import IconVk from '~icons/simple-icons/vk';
 
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { requirePublicConfig } from '#lib/api/index.js';
 	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
 	import * as Item from '#lib/components/ui/item/index.js';
-	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatFestivalDate, formatFestivalTime } from '#lib/utils/formatters.js';
@@ -77,10 +77,10 @@
 	];
 
 	// The date and start come from the public config organizers edit, the same source
-	// as Home, so the two tabs can't disagree; the cached copy or the shipped
-	// defaults fill in offline. The doors time isn't in the config.
+	// as Home, so the two tabs can't disagree; offline, the cached copy fills in.
+	// The doors time isn't in the config.
 	const configQuery = createQuery(() => getPublicConfigOptions());
-	const config = $derived(configQuery.data ?? FALLBACK_CONFIG);
+	const config = $derived(requirePublicConfig(configQuery.data));
 	const facts = $derived([
 		formatFestivalDate(config.festival_start),
 		m.guide_doors(),

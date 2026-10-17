@@ -22,13 +22,12 @@
 		getPublicConfigOptions,
 		getQuestOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
+	import { currentUserOptions, requirePublicConfig } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
-	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
@@ -65,9 +64,9 @@
 	// rather than a row per tool, so the hub stays short as the tool list grows.
 	// The dashboard lists only held tools, so the link waits for the first one.
 	const configQuery = createQuery(() => getPublicConfigOptions());
-	let questEnabled = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_enabled);
+	let questEnabled = $derived(requirePublicConfig(configQuery.data).quest_enabled);
 	let showTools = $derived(
-		isStaff(user) && toolsFor(user, configQuery.data ?? FALLBACK_CONFIG).length > 0
+		isStaff(user) && toolsFor(user, requirePublicConfig(configQuery.data)).length > 0
 	);
 	const questQuery = createQuery(() => ({
 		...getQuestOptions(),

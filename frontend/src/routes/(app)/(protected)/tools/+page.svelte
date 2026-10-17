@@ -2,9 +2,9 @@
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { requirePublicConfig } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { isOrganizer } from '#lib/utils/permissions.js';
@@ -21,7 +21,7 @@
 
 	const configQuery = createQuery(() => getPublicConfigOptions());
 
-	let tools = $derived(toolsFor(user, configQuery.data ?? FALLBACK_CONFIG));
+	let tools = $derived(toolsFor(user, requirePublicConfig(configQuery.data)));
 </script>
 
 <!-- Capped and centred like the /profile hub this menu continues. -->

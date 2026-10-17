@@ -7,6 +7,7 @@ import { gotNoApiAnswer, isUnexpectedRequestError } from '#lib/api/errors.js';
 import {
 	countUnreadNotificationsQueryKey,
 	getCurrentUserQueryKey,
+	getPublicConfigOptions,
 	getPublicConfigQueryKey,
 	getScheduleQueryKey,
 	getSubscriptionsQueryKey,
@@ -135,10 +136,25 @@ export const load: LayoutLoad = async () => {
 	// (protected) guard has to resolve: it asks the reachability probe itself, so
 	// a guest opening Home or the programme on a dead network isn't held on the
 	// splash for the probe's offline-confirm window as well.
-	await queryForLoad(queryClient, {
-		...currentUserOptions(),
-		staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
-	}).catch(() => {});
+	// The public config is fetched alongside it only on a cache miss: a saved copy,
+	// however old, answers at once, and the pages observing it revalidate.
+	await Promise.all([
+		queryForLoad(queryClient, {
+			...currentUserOptions(),
+			staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
+		}).catch(() => {}),
+		queryForLoad(queryClient, { ...getPublicConfigOptions(), staleTime: 'static' }).catch(() => {})
+	]);
 
-	return { queryClient };
+	// Every screen reads identity and the festival dates, and there is no honest
+	// stand-in for either: a guessed guest would bounce a signed-in user to /login,
+	// and shipped dates go wrong the moment organizers move the festival. So when
+	// neither the network nor the saved cache has them — a first visit, a cache
+	// evicted or busted by a deploy — the root layout shows a connection screen
+	// with a retry instead of the app. A saved copy of both never blocks.
+	const bootReady =
+		queryClient.getQueryData(currentUserOptions().queryKey) !== undefined &&
+		queryClient.getQueryData(getPublicConfigQueryKey()) !== undefined;
+
+	return { queryClient, bootReady };
 };

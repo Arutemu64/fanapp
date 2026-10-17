@@ -7,6 +7,7 @@ import {
 } from '@tanstack/svelte-query';
 
 import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
+import type { PublicConfigDto } from '#lib/api/generated/index.js';
 
 import { getApiErrorCode, gotNoApiAnswer } from '#lib/api/errors.js';
 import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -53,6 +54,18 @@ export function currentUserOptions() {
 			return data;
 		}
 	});
+}
+
+/**
+ * The public config a page renders from. The root load holds the app on its
+ * connection screen until a copy is cached, and `Session` never forgets it, so
+ * a missing copy here is a broken invariant, not a state to render around.
+ */
+export function requirePublicConfig(config: PublicConfigDto | undefined): PublicConfigDto {
+	if (config === undefined) {
+		throw new Error('Public config is not cached; the root load should have held the app');
+	}
+	return config;
 }
 
 /**

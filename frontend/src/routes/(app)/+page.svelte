@@ -10,9 +10,8 @@
 		getVotingStatusOptions,
 		getVotingStatusQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
+	import { currentUserOptions, requirePublicConfig } from '#lib/api/index.js';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
-	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
@@ -38,9 +37,9 @@
 	let user = $derived(userQuery.data ?? null);
 
 	// Public config drives the hero's phase and countdown, so it renders for guests
-	// and offline: the cached copy, or the shipped defaults on a first-ever visit
-	// made offline. The phase is computed from the clock, so a cached copy still
-	// flips to "after" on time; only an organizer's date edit waits for the refetch.
+	// and offline from the cached copy the root load guarantees. The phase is
+	// computed from the clock, so a cached copy still flips to "after" on time; only
+	// an organizer's date edit waits for the refetch.
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	const scheduleQuery = createQuery(() => getScheduleOptions());
 	const subscriptionsQuery = createQuery(() => ({
@@ -49,7 +48,7 @@
 	}));
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
-	let config = $derived(configQuery.data ?? FALLBACK_CONFIG);
+	let config = $derived(requirePublicConfig(configQuery.data));
 	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
 	let schedule = $derived(

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
+import { getPublicConfigQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions } from '#lib/api/index.js';
 import { fakeStorage } from '#lib/testing/storage.js';
 import { isLogoutPending, markLogoutPending } from '#lib/utils/pendingLogout.js';
@@ -111,6 +112,16 @@ describe('Session.logOut', () => {
 		await session.logOut(() => Promise.resolve());
 
 		expect(queryClient.getQueryData(['notifications'])).toBeUndefined();
+	});
+
+	it('keeps the public config, which every account shares and boot guarantees', async () => {
+		const { queryClient, session, userKey } = setup();
+		queryClient.setQueryData(userKey, USER);
+		queryClient.setQueryData(getPublicConfigQueryKey(), { quest_enabled: false });
+
+		await session.logOut(() => Promise.resolve());
+
+		expect(queryClient.getQueryData(getPublicConfigQueryKey())).toEqual({ quest_enabled: false });
 	});
 
 	it('leaves everything as it was when the server refuses', async () => {

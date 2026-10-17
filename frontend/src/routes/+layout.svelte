@@ -26,6 +26,7 @@
 		watchApiResponses,
 		watchBackgroundRefetchErrors
 	} from '#lib/api/index.js';
+	import BootOfflineState from '#lib/components/BootOfflineState.svelte';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
@@ -197,7 +198,11 @@
 </svelte:head>
 
 <QueryClientProvider client={queryClient}>
-	{@render children()}
+	{#if data.bootReady}
+		{@render children()}
+	{:else}
+		<BootOfflineState />
+	{/if}
 </QueryClientProvider>
 
 <Toaster />
