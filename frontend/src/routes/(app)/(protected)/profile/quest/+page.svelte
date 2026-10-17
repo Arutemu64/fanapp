@@ -106,7 +106,7 @@
 		/>
 		<!-- The fallback when the camera won't read the code: the volunteer's tool
 		     can find the player by this name. -->
-		<p class="text-section text-foreground"><Username username={user.username} /></p>
+		<p class="font-sans text-section text-foreground"><Username username={user.username} /></p>
 		<p class="text-sm text-muted-foreground">{m.quest_code_hint()}</p>
 	</Card.Root>
 {/if}
@@ -116,13 +116,13 @@
 		<dl class="grid auto-cols-fr grid-flow-col gap-4 text-center">
 			<div>
 				<dt class="text-sm text-muted-foreground">{m.quest_summary_points()}</dt>
-				<dd class="text-headline text-foreground tabular-nums">{quest.points}</dd>
+				<dd class="font-sans text-headline text-foreground tabular-nums">{quest.points}</dd>
 			</div>
 			<!-- No place until the first points: there is nothing to rank yet. -->
 			{#if quest.rank !== null}
 				<div>
 					<dt class="text-sm text-muted-foreground">{m.quest_summary_rank()}</dt>
-					<dd class="text-headline text-foreground tabular-nums">{quest.rank}</dd>
+					<dd class="font-sans text-headline text-foreground tabular-nums">{quest.rank}</dd>
 				</div>
 			{/if}
 		</dl>
