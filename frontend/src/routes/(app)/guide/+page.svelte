@@ -145,7 +145,7 @@
 	</section>
 
 	<section aria-labelledby="guide-important" class="flex flex-col gap-2">
-		<h2 id="guide-important" class="px-1 text-sm font-medium text-muted-foreground">
+		<h2 id="guide-important" class="px-1 text-section text-foreground">
 			{m.guide_important_heading()}
 		</h2>
 		<MenuGroup>
@@ -166,7 +166,7 @@
 	</section>
 
 	<section aria-labelledby="guide-activities" class="flex flex-col gap-2">
-		<h2 id="guide-activities" class="px-1 text-sm font-medium text-muted-foreground">
+		<h2 id="guide-activities" class="px-1 text-section text-foreground">
 			{m.guide_activities_heading()}
 		</h2>
 		<MenuGroup>
@@ -183,7 +183,7 @@
 
 	<!-- Rarely needed on the day, so below the activities rather than in the hero. -->
 	<section aria-labelledby="guide-contacts" class="flex flex-col gap-2">
-		<h2 id="guide-contacts" class="px-1 text-sm font-medium text-muted-foreground">
+		<h2 id="guide-contacts" class="px-1 text-section text-foreground">
 			{m.guide_contacts_heading()}
 		</h2>
 		<MenuGroup>
