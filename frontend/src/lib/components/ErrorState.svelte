@@ -100,7 +100,7 @@
 </script>
 
 <div class={wrapperClass}>
-	<Card.Root class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
+	<Card.Root class="w-full max-w-md p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<div class="mb-4 flex size-16 items-center justify-center rounded-full {iconColorClass}">
 				<StatusIcon class="size-8" />

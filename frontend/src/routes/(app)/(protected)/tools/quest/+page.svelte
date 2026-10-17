@@ -48,7 +48,7 @@
 	{#if canAward}
 		<SectionIntro description={m.tool_quest_description()} />
 
-		<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+		<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 			{#if player}
 				<!-- Keyed so a second player gets a fresh award ID and cleared errors. -->
 				{#key player.id}
