@@ -46,7 +46,7 @@ export interface CacheEntry {
 	updatedAt: number;
 }
 
-export interface DiagnosticsRow {
+interface DiagnosticsRow {
 	label: string;
 	value: string;
 }

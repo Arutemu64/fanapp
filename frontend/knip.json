@@ -3,5 +3,7 @@
 	"ignore": ["src/lib/components/ui/**", "src/lib/api/generated/**"],
 	// Read by inlang from project.inlang/settings.json, not imported by any source file.
 	"ignoreDependencies": ["@inlang/plugin-message-format"],
-	"entry": ["src/env.ts"]
+	// Loaded by path, not imported: the PostToolUse edit hook runs eslint with
+	// eslint.tailwind.config.js, and `just readme-gallery` passes the gallery config.
+	"entry": ["src/env.ts", "eslint.tailwind.config.js", "playwright.gallery.config.ts"]
 }

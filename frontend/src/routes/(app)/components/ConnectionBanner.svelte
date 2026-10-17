@@ -13,8 +13,6 @@
 	const MIN_DISPLAY_MS = 4000;
 	// Long enough to read two words, short enough not to linger on a working app.
 	const RESTORED_DISPLAY_MS = 3000;
-	const UPDATING_MESSAGE = m.connection_updating();
-	const RESTORED_MESSAGE = m.connection_restored();
 
 	// Only one state reaches the user: whether the backend is reachable. The SSE
 	// stream's own reconnects stay silent — it only carries change signals, the
@@ -51,8 +49,8 @@
 
 	let shownMessage = $derived.by(() => {
 		if (phase === 'offline') return lastOfflineMessage;
-		if (phase === 'catching-up') return UPDATING_MESSAGE;
-		if (phase === 'restored') return RESTORED_MESSAGE;
+		if (phase === 'catching-up') return m.connection_updating();
+		if (phase === 'restored') return m.connection_restored();
 		return '';
 	});
 

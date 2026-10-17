@@ -3,7 +3,7 @@ import type { CurrentUserDto, Permission } from '#lib/api/generated/index.js';
 import { m } from '#lib/paraglide/messages.js';
 
 // Permission identifiers, from the backend `Permission` enum via the OpenAPI
-// spec (just frontend-generate-api). Typing each constant as Permission is the
+// spec (just frontend-generate-api). Typing each literal as Permission is the
 // drift guard: if the backend renames or removes a permission, its literal stops
 // being assignable to this union and `pnpm check` fails here — instead of
 // silently shipping a stale string that fails every permission check at runtime.
@@ -11,11 +11,6 @@ import { m } from '#lib/paraglide/messages.js';
 // Superuser grant: a holder passes every permission check. Kept in sync with the
 // backend Permission enum through the generated union above.
 const WILDCARD: Permission = '*';
-
-const SCHEDULE_MANAGE: Permission = 'schedule:manage';
-const USERS_MANAGE: Permission = 'users:manage';
-const QUEST_AWARD: Permission = 'quest:award';
-const QUEST_MANAGE: Permission = 'quest:manage';
 
 export function hasPermission(user: CurrentUserDto | null, permission: Permission): boolean {
 	if (!user) {
@@ -38,19 +33,19 @@ export function isStaff(user: CurrentUserDto | null): boolean {
 }
 
 export function canManageSchedule(user: CurrentUserDto | null): boolean {
-	return hasPermission(user, SCHEDULE_MANAGE);
+	return hasPermission(user, 'schedule:manage');
 }
 
 export function canManageUsers(user: CurrentUserDto | null): boolean {
-	return hasPermission(user, USERS_MANAGE);
+	return hasPermission(user, 'users:manage');
 }
 
 export function canAwardQuest(user: CurrentUserDto | null): boolean {
-	return hasPermission(user, QUEST_AWARD);
+	return hasPermission(user, 'quest:award');
 }
 
 export function canManageQuest(user: CurrentUserDto | null): boolean {
-	return hasPermission(user, QUEST_MANAGE);
+	return hasPermission(user, 'quest:manage');
 }
 
 // Handing out permissions takes the superuser grant itself: whoever may grant

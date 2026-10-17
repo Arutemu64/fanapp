@@ -67,7 +67,7 @@ const STALE_ON_RESUME_MS = 30000;
  */
 const HIDDEN_PAUSE_GRACE_MS = 60000;
 
-export interface EventsHandshakePayload {
+interface EventsHandshakePayload {
 	server_time: string;
 	authenticated: boolean;
 	connection_id: string;

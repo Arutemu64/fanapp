@@ -26,7 +26,7 @@ export type PushToggleOutcome =
 	| 'failed'
 	| 'disable-failed';
 
-export interface PushRegistration {
+interface PushRegistration {
 	endpoint: string;
 	p256dh: string;
 	auth: string;

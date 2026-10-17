@@ -38,20 +38,18 @@ const ACTS: Act[] = [
 
 const CURRENT_NUMBER = 3;
 
-export const schedule: ScheduleEventFullDto[] = ACTS.map(
-	([title, , nomination, duration], index) => ({
-		type: 'event',
-		id: `event-${index + 1}`,
-		number: index + 1,
-		title,
-		duration,
-		order: index + 1,
-		is_current: index + 1 === CURRENT_NUMBER,
-		is_skipped: false,
-		nomination_title: nomination,
-		position: index + 1
-	})
-);
+const schedule: ScheduleEventFullDto[] = ACTS.map(([title, , nomination, duration], index) => ({
+	type: 'event',
+	id: `event-${index + 1}`,
+	number: index + 1,
+	title,
+	duration,
+	order: index + 1,
+	is_current: index + 1 === CURRENT_NUMBER,
+	is_skipped: false,
+	nomination_title: nomination,
+	position: index + 1
+}));
 
 // The events with a block start ahead of each block, as GET /schedule/ serves them.
 export const scheduleEntries: ScheduleEntryDto[] = schedule.flatMap((event, index) => {
