@@ -93,7 +93,7 @@
 {#if user}
 	<!-- First on the page: showing the code is what a player opens it for. -->
 	<Card.Root
-		class="w-full max-w-none items-center gap-3 rounded-2xl p-4 text-center sm:p-6"
+		class="w-full max-w-none items-center gap-3 p-4 text-center sm:p-6"
 		{@attach keepScreenAwake}
 	>
 		<h2 class="text-section text-foreground">{m.quest_code_title()}</h2>
@@ -112,7 +112,7 @@
 {/if}
 
 {#if quest}
-	<Card.Root class="w-full max-w-none rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none p-4 sm:p-6">
 		<dl class="grid auto-cols-fr grid-flow-col gap-4 text-center">
 			<div>
 				<dt class="text-sm text-muted-foreground">{m.quest_summary_points()}</dt>
@@ -143,7 +143,7 @@
 			{#if standings.leaderboard.length === 0}
 				<EmptyState message={m.quest_leaderboard_empty()} />
 			{:else}
-				<Card.Root class="w-full max-w-none gap-0 overflow-hidden rounded-2xl p-0">
+				<Card.Root class="w-full max-w-none gap-0 overflow-hidden p-0">
 					<ol class="divide-y divide-border">
 						{#each standings.leaderboard as entry (entry.player.id)}
 							<LeaderboardRow {entry} isOwn={entry.player.id === user?.id} />

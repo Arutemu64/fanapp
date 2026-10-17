@@ -1,5 +1,5 @@
 /* Self-hosted variable fonts via Fontsource (includes Cyrillic subsets). */
-@import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/onest/index.css';
 @import '@fontsource-variable/unbounded/index.css';
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -49,8 +49,8 @@
 }
 
 @theme {
-	--font-sans: 'Inter Variable', sans-serif;
-	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Unbounded Variable', 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
 
 	/*
 	 * Two steps below Tailwind's text-xs, for compact chrome only: bottom-nav labels
@@ -72,13 +72,15 @@
 	 *
 	 * headline: page titles, Material 3 Headline Small (24sp); between iOS Title 2 (22pt)
 	 *   and Title 1 (28pt). section: section headings, one step under it and over body.
+	 * Both heading roles set in Unbounded (base layer below) at 600, not 700: its wide,
+	 *   heavy strokes read a weight darker than a humanist sans at the same number.
 	 * body: reading text, Material 3 Body Large (16sp); iOS Body is 17pt.
 	 * https://developer.android.com/develop/ui/compose/designsystems/material3
 	 * https://developer.apple.com/design/human-interface-guidelines/typography
 	 */
 	--text-headline: 1.5rem;
 	--text-headline--line-height: 1.375;
-	--text-headline--font-weight: 700;
+	--text-headline--font-weight: 600;
 	--text-section: 1.125rem;
 	--text-section--line-height: 1.375;
 	--text-section--font-weight: 600;
@@ -200,6 +202,15 @@
 		 */
 		-webkit-tap-highlight-color: transparent;
 		@apply font-sans;
+	}
+
+	/*
+	 * The heading roles carry the display face. A `--text-*` theme key can't set a
+	 * family, so it lives here, in the base layer, where a `font-sans` class still wins.
+	 */
+	.text-headline,
+	.text-section {
+		font-family: var(--font-display);
 	}
 
 	/* disable chrome cancel button */

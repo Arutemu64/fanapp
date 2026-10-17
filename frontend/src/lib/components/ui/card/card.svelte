@@ -20,13 +20,19 @@
 	} = $props();
 </script>
 
+<!--
+	Deviates from upstream: `rounded-2xl` (18px), not `rounded-xl`, so a card sits with the
+	pill buttons and the `MenuGroup` lists beside it; between Material 3's Large (16dp)
+	and Large Increased (20dp) container shapes. Content inside the 16–24px padding
+	reads as its own surface, not a concentric inner curve, so it keeps its own radius.
+-->
 <svelte:element
 	this={as}
 	bind:this={ref}
 	data-slot="card"
 	data-size={size}
 	class={cn(
-		'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground shadow-xs ring-1 ring-foreground/10 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl',
+		'group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl bg-card py-(--card-spacing) text-sm text-card-foreground shadow-xs ring-1 ring-foreground/10 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl',
 		className
 	)}
 	{...restProps}

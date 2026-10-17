@@ -48,10 +48,12 @@
 	inert={hidden}
 	bind:clientHeight={barHeight}
 >
+	<!-- Stays a pill while pressed: the play disc sits concentric in its end, and the
+	     button's pressed square-off would break that. -->
 	<Button
 		variant="floating"
 		onclick={onjump}
-		class="pointer-events-auto mx-auto flex h-14 w-full max-w-md justify-start gap-3 rounded-full py-2 pr-5 pl-2 text-left"
+		class="pointer-events-auto mx-auto flex h-14 w-full max-w-md justify-start gap-3 rounded-full py-2 pr-5 pl-2 text-left active:not-aria-[haspopup]:rounded-full"
 	>
 		<span
 			class="flex size-10 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"

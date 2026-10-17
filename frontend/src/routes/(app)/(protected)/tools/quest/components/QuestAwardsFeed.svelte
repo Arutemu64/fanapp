@@ -96,7 +96,7 @@
 		{#if awards.length === 0}
 			<EmptyState message={m.quest_tool_history_empty()} />
 		{:else}
-			<Card.Root class="w-full max-w-none gap-0 overflow-hidden rounded-2xl p-0">
+			<Card.Root class="w-full max-w-none gap-0 overflow-hidden p-0">
 				<ul class="divide-y divide-border">
 					{#each awards as award (award.id)}
 						<QuestAwardItem
