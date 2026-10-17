@@ -93,14 +93,15 @@
 			});
 		}
 
-		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
-		// re-creating this layout doesn't stack duplicates.
 		// Revoke a session the user logged out of while offline. A boot that is
 		// already online never crosses the recovery edge, so flush here too; offline
 		// this is a no-op and the edge picks it up on reconnect. Until it clears, the
 		// pending flag keeps the /me refetch on reconnect logged-out, so there's no
 		// "logged back in" flicker in between.
 		void flushPendingLogout();
+
+		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
+		// re-creating this layout doesn't stack duplicates.
 		const stopMonitor = startReachabilityMonitor({ onRecovered: () => void flushPendingLogout() });
 		const stopUpdates = appUpdate.start();
 		const stopWatching = watchApiResponses(queryClient, () => void session.expired());

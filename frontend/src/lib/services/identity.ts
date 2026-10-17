@@ -8,8 +8,8 @@ import { readStorage, removeStorage, writeStorage } from '#lib/utils/safeStorage
 /**
  * Who is signed in on this device: the `/me` query, its boot variant, and a
  * logout the user requested while offline. They live together because the
- * pending logout changes what `/me` answers, and a shared phone leaks the last
- * account the moment any one of them is read without the others.
+ * pending logout changes what `/me` answers: a reader of either that ignores the
+ * other would show a shared phone's last account to the next person.
  *
  * The session lives in an HttpOnly cookie, so JS cannot clear it. A purely local
  * logout (drop the caches, show guest UI) would therefore be dishonest: the
@@ -96,8 +96,7 @@ export function currentUserOptions() {
 
 /**
  * Settle identity into the cache before any guard reads it (root load). Never
- * rejects: a `/me` that fails leaves the user unknown, which only the
- * (protected) guard has to resolve.
+ * rejects.
  *
  * A restored user answers at once (the components reading it revalidate, and a
  * /me 401 ends an expired session). A restored guest is re-checked: a social
@@ -107,9 +106,10 @@ export function currentUserOptions() {
  * offline logout is re-checked too, whose queryFn answers `null` without the
  * network: the logout flag is saved at once but the cache only on the
  * persister's throttle, so a restart in between can restore the account the
- * user just left. The guard asks the reachability probe itself, so a guest
- * opening Home or the programme on a dead network isn't held on the splash for
- * the probe's offline-confirm window as well.
+ * user just left. A /me that fails leaves the user unknown, which only the
+ * (protected) guard has to resolve: it asks the reachability probe itself, so a
+ * guest opening Home or the programme on a dead network isn't held on the
+ * splash for the probe's offline-confirm window as well.
  */
 export async function settleIdentityForBoot(queryClient: QueryClient): Promise<void> {
 	await queryForLoad(queryClient, {

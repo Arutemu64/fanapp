@@ -33,6 +33,16 @@ describe('flushPendingLogout', () => {
 		expect(logoutUser).not.toHaveBeenCalled();
 	});
 
+	it('clears the intent once the revoke succeeds', async () => {
+		logoutUser.mockResolvedValue({ response: { ok: true, status: 204 } });
+		markLogoutPending();
+
+		await flushPendingLogout();
+
+		expect(logoutUser).toHaveBeenCalledOnce();
+		expect(isLogoutPending()).toBe(false);
+	});
+
 	it('clears the intent on a 401, since the session is already gone', async () => {
 		logoutUser.mockResolvedValue({ response: { ok: false, status: 401 } });
 		markLogoutPending();
@@ -40,6 +50,15 @@ describe('flushPendingLogout', () => {
 		await flushPendingLogout();
 
 		expect(isLogoutPending()).toBe(false);
+	});
+
+	it('keeps the intent on a 5xx, so the next reconnect retries', async () => {
+		logoutUser.mockResolvedValue({ response: { ok: false, status: 503 } });
+		markLogoutPending();
+
+		await flushPendingLogout();
+
+		expect(isLogoutPending()).toBe(true);
 	});
 
 	it('keeps the intent while the backend gives no answer, so the next reconnect retries', async () => {

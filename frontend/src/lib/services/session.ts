@@ -2,7 +2,6 @@ import type { QueryClient } from '@tanstack/svelte-query';
 
 import { createContext } from 'svelte';
 
-import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import {
@@ -11,7 +10,7 @@ import {
 	flushPendingLogout,
 	isLogoutPending,
 	markLogoutPending
-} from './identity';
+} from './identity.js';
 
 // The user is waiting on the provider button, so a stalled revoke must give up
 // and let them retry instead of spinning until the browser's own TCP timeout.
@@ -80,7 +79,7 @@ export class Session {
 		// /me/ refetch the invalidation just started instead of aborting it.
 		void this.#queryClient.invalidateQueries();
 		await this.#queryClient.refetchQueries(
-			{ queryKey: getCurrentUserQueryKey() },
+			{ queryKey: currentUserOptions().queryKey },
 			{ cancelRefetch: false }
 		);
 
