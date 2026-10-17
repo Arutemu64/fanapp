@@ -9,16 +9,16 @@ import type { Handlers } from './api';
 import { json } from './api';
 
 const NAMES = [
-	'kitsune_mika',
-	'senpai_kun',
-	'totoro_fan',
-	'akira_neo',
-	'sakura_chan',
-	'ramen_lord',
-	'nyan_cat',
-	'kawaii_desu',
-	'otaku_max',
-	'mecha_pilot'
+	'РыжийКот09',
+	'СонныйСамурай15',
+	'НочнойФилин88',
+	'НеоновыйПилот31',
+	'МятныйПончик50',
+	'ОгненныйРамен21',
+	'ПушистыйХомяк77',
+	'ДобрыйДракон36',
+	'ШустрыйНиндзя03',
+	'ЗолотойГрифон58'
 ];
 
 export function questPlayer(index: number, points: number): QuestPlayerDto {
@@ -41,7 +41,7 @@ export const QUEST: GetQuestOutput = {
 		rank: 23,
 		player: {
 			id: '01890000-0000-7000-8000-000000000001',
-			username: 'test_visitor',
+			username: 'ЛунныйЛис07',
 			avatar_seed: 'e2eSeedVisitor',
 			points: 35
 		}
@@ -59,8 +59,8 @@ export const QUEST_AWARDS: ListQuestAwardsOutput = {
 			message: 'Нашла все пасхалки на карте',
 			created_at: minutesAgo(2),
 			cancelled_at: null,
-			user: { id: questPlayer(0, 0).id, username: 'kitsune_mika' },
-			awarded_by: { id: '01890000-0000-7000-8000-000000000002', username: 'test_volunteer' },
+			user: { id: questPlayer(0, 0).id, username: 'РыжийКот09' },
+			awarded_by: { id: '01890000-0000-7000-8000-000000000002', username: 'ЛовкийСтраж12' },
 			can_cancel: true
 		},
 		{
@@ -69,8 +69,8 @@ export const QUEST_AWARDS: ListQuestAwardsOutput = {
 			message: 'Викторина по Гибли',
 			created_at: minutesAgo(40),
 			cancelled_at: null,
-			user: { id: questPlayer(2, 0).id, username: 'totoro_fan' },
-			awarded_by: { id: '01890000-0000-7000-8000-000000000002', username: 'test_volunteer' },
+			user: { id: questPlayer(2, 0).id, username: 'НочнойФилин88' },
+			awarded_by: { id: '01890000-0000-7000-8000-000000000002', username: 'ЛовкийСтраж12' },
 			can_cancel: false
 		},
 		{
@@ -79,8 +79,8 @@ export const QUEST_AWARDS: ListQuestAwardsOutput = {
 			message: 'Косплей-челлендж',
 			created_at: minutesAgo(55),
 			cancelled_at: minutesAgo(50),
-			user: { id: questPlayer(5, 0).id, username: 'ramen_lord' },
-			awarded_by: { id: '01890000-0000-7000-8000-000000000002', username: 'test_volunteer' },
+			user: { id: questPlayer(5, 0).id, username: 'ОгненныйРамен21' },
+			awarded_by: { id: '01890000-0000-7000-8000-000000000002', username: 'ЛовкийСтраж12' },
 			can_cancel: false
 		}
 	]

@@ -8,7 +8,7 @@ function snapshot(overrides: Partial<DiagnosticsSnapshot> = {}): DiagnosticsSnap
 	return {
 		version: '1.4.0',
 		build: '0123456789abcdef',
-		account: '@test_visitor · Зритель',
+		account: '@ЛунныйЛис07 · Зритель',
 		installed: false,
 		userAgent: 'TestBrowser/1.0',
 		serverReachable: true,
@@ -75,7 +75,7 @@ describe('buildSections', () => {
 describe('formatReport', () => {
 	it('carries the full build and user agent for whoever reads it', () => {
 		const report = formatReport(snapshot(), NOW);
-		expect(report).toContain('Аккаунт: @test_visitor · Зритель');
+		expect(report).toContain('Аккаунт: @ЛунныйЛис07 · Зритель');
 		expect(report).toContain('Сборка целиком: 0123456789abcdef');
 		expect(report).toContain('Браузер: TestBrowser/1.0');
 		expect(report).toContain('Время: 2026-10-14T12:00:00.000Z');

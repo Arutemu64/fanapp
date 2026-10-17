@@ -8,7 +8,7 @@ import { expect, json, organizer, test } from '../fixtures';
 
 const ANNA: UserListItemDto = {
 	id: '01890000-0000-7000-8000-0000000000a1',
-	username: 'anna_cosplay',
+	username: 'ХитрыйЕнот42',
 	role: 'participant',
 	email: 'anna@example.com',
 	avatar_seed: 'annaSeed0001',
@@ -18,7 +18,7 @@ const ANNA: UserListItemDto = {
 
 const BORIS: UserListItemDto = {
 	id: '01890000-0000-7000-8000-0000000000b2',
-	username: 'boris',
+	username: 'ТихийРонин64',
 	role: 'visitor',
 	email: null,
 	avatar_seed: 'borisSeed001',
@@ -57,9 +57,9 @@ test.describe('organizer user directory', () => {
 		});
 		await page.goto('/tools/users');
 
-		await expect(page.getByRole('link', { name: /anna_cosplay/ })).toBeVisible();
+		await expect(page.getByRole('link', { name: /ХитрыйЕнот42/ })).toBeVisible();
 		await page.getByRole('button', { name: 'Показать ещё' }).click();
-		await expect(page.getByRole('link', { name: /boris/ })).toBeVisible();
+		await expect(page.getByRole('link', { name: /ТихийРонин64/ })).toBeVisible();
 
 		await page.getByRole('button', { name: 'Роль' }).click();
 		await page.getByRole('option', { name: 'Участник' }).click();
@@ -67,7 +67,7 @@ test.describe('organizer user directory', () => {
 		await expect(page).toHaveURL(/role=participant/);
 		// Scoped to <main>: the shell's connection banner is a status region too.
 		await expect(page.getByRole('main').getByRole('status')).toHaveText('1 пользователь');
-		await expect(page.getByRole('link', { name: /boris/ })).toBeHidden();
+		await expect(page.getByRole('link', { name: /ТихийРонин64/ })).toBeHidden();
 		expect(listRequests.at(-1)?.get('role')).toBe('participant');
 	});
 

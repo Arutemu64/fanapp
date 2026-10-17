@@ -27,6 +27,7 @@
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import Username from '#lib/components/Username.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -158,8 +159,8 @@
 								<UserAvatar seed={user.avatar_seed} class="size-12" />
 							</Item.Media>
 							<Item.Content class="min-w-0">
-								<Item.Title class="max-w-full text-base">
-									<span class="truncate">@{user.username}</span>
+								<Item.Title class="line-clamp-none max-w-full text-base">
+									<Username username={user.username} class="min-w-0" />
 								</Item.Title>
 								<Item.Description
 									>{m.profile_menu_account_description({

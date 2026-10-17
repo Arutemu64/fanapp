@@ -190,7 +190,7 @@
 						<Award class="size-6 shrink-0 text-primary" aria-hidden="true" />
 						<div class="min-w-0">
 							<p class="text-xs text-muted-foreground">{m.voting_winner()}</p>
-							<p class="truncate text-base font-semibold text-foreground">
+							<p class="text-base font-semibold wrap-anywhere text-foreground">
 								{winner.username}
 							</p>
 						</div>

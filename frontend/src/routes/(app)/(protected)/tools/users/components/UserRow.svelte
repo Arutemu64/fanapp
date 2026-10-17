@@ -29,7 +29,7 @@
 	<UserAvatar seed={user.avatar_seed} class="size-10" />
 	<span class="flex min-w-0 flex-1 flex-col gap-0.5">
 		<span class="flex min-w-0 items-center gap-2">
-			<span class="truncate text-sm font-medium text-foreground">{user.username}</span>
+			<span class="min-w-0 text-sm font-medium wrap-anywhere text-foreground">{user.username}</span>
 			<Badge variant="secondary" class="shrink-0">{getRoleLabel(user.role)}</Badge>
 		</span>
 		<span class={['truncate text-xs text-muted-foreground', user.ticket_number && 'font-mono']}>

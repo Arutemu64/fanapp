@@ -145,7 +145,7 @@ test('profile', async ({ page, api }) => {
 	// the quest row shows a balance mid-festival.
 	api.use({
 		...loggedInAs({
-			username: 'sakura_cosplay',
+			username: 'ПушистыйПингвин42',
 			ticket: { id: 'ticket-1', barcode: '4600000000017', role: 'visitor' },
 			social_identities: [{ provider: 'telegram' }]
 		}),
@@ -160,12 +160,12 @@ test('profile', async ({ page, api }) => {
 
 test('quest', async ({ page, api }) => {
 	api.use({
-		...loggedInAs({ username: 'sakura_cosplay' }),
+		...loggedInAs({ username: 'ПушистыйПингвин42' }),
 		'GET /quest': json(questStanding)
 	});
 	await page.goto('/profile/quest');
-	await expect(page.getByRole('img', { name: 'QR-код игрока @sakura_cosplay' })).toBeVisible();
-	await expect(page.locator('li[aria-current="true"]')).toContainText('@sakura_cosplay');
+	await expect(page.getByRole('img', { name: 'QR-код игрока @ПушистыйПингвин42' })).toBeVisible();
+	await expect(page.locator('li[aria-current="true"]')).toContainText('@ПушистыйПингвин42');
 	await settle(page);
 	await saveWebp(page, 'quest');
 });

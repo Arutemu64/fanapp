@@ -937,7 +937,7 @@
 	"user_title": "Пользователь",
 	"username_label": "Имя пользователя",
 	"username_pattern": "Начинается с буквы; далее буквы, цифры и подчёркивание",
-	"username_placeholder": "Например, sakura_chan",
+	"username_placeholder": "Например, ЛунныйЛис07",
 	"username_required": "Введи имя пользователя",
 	"username_rule_length": "от {min} до {max} символов",
 	"username_rule_rest": "далее буквы, цифры и подчёркивание",

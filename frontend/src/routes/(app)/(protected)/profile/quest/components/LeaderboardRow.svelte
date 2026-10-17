@@ -2,6 +2,7 @@
 	import type { LeaderboardEntryDto } from '#lib/api/generated/index.js';
 
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
@@ -35,11 +36,12 @@
 		{entry.rank}
 	</span>
 	<UserAvatar seed={entry.player.avatar_seed} class="size-8" />
-	<!-- Only the name truncates: «(ты)» is what marks the row besides its tint. -->
-	<span class="flex min-w-0 flex-1 items-baseline gap-1 text-base">
-		<span class="truncate text-foreground">@{entry.player.username}</span>
+	<!-- Inline flow, not flex: the name wraps at its seams and «(ты)», which marks the
+	     row besides its tint, follows it whole instead of squeezing it into a sliver. -->
+	<span class="min-w-0 flex-1 text-base">
+		<Username username={entry.player.username} class="text-foreground" />
 		{#if isOwn}
-			<span class="shrink-0 text-muted-foreground">({m.quest_leaderboard_you()})</span>
+			<span class="whitespace-nowrap text-muted-foreground">({m.quest_leaderboard_you()})</span>
 		{/if}
 	</span>
 	<span class="shrink-0 text-sm font-medium text-foreground tabular-nums">
