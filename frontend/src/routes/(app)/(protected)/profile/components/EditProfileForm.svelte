@@ -163,7 +163,7 @@
 			type="button"
 			variant="secondary"
 			size="icon"
-			class="absolute right-0 bottom-0 size-11 rounded-full border border-border shadow-sm"
+			class="absolute right-0 bottom-0 size-11 border border-border shadow-sm"
 			aria-label={m.avatar_another()}
 			onclick={() => (avatarSeed = createAvatarSeed())}
 		>
