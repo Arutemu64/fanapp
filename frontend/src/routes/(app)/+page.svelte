@@ -10,11 +10,11 @@
 		getVotingStatusOptions,
 		getVotingStatusQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';

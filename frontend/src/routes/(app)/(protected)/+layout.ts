@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 
-import { currentUserOptions } from '#lib/api/index.js';
 import { m } from '#lib/paraglide/messages.js';
+import { currentUserOptions } from '#lib/services/identity.js';
 import { isReachable, probeReachability } from '#lib/services/reachability.js';
 import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 

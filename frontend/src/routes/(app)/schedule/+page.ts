@@ -3,8 +3,8 @@ import { RotateCcwClock } from '@lucide/svelte';
 import type { NavbarAction } from '#lib/types/navigation.js';
 
 import { getScheduleOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-import { currentUserOptions } from '#lib/api/index.js';
 import { m } from '#lib/paraglide/messages.js';
+import { currentUserOptions } from '#lib/services/identity.js';
 import { canManageSchedule } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';

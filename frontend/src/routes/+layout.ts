@@ -12,9 +12,8 @@ import {
 	getSubscriptionsQueryKey,
 	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-import { currentUserOptions, queryForLoad } from '#lib/api/index.js';
 import { createIdbPersister } from '#lib/api/queryPersister.js';
-import { isLogoutPending } from '#lib/utils/pendingLogout.js';
+import { settleIdentityForBoot } from '#lib/services/identity.js';
 
 import type { LayoutLoad } from './$types';
 
@@ -122,23 +121,8 @@ export const load: LayoutLoad = async () => {
 	});
 	await restored;
 
-	// Identity gates the route guards, so settle it before any child load reads
-	// it. A restored user answers at once (the components reading it revalidate,
-	// and a /me 401 ends an expired session). A restored guest is re-checked: a
-	// social login arrives here as a full page load with a fresh session cookie,
-	// and trusting the saved `null` would bounce the new user to /login. A first
-	// boot and a guest wait on /me no longer than first paint can afford. A pending
-	// offline logout is re-checked too, whose queryFn answers `null` without the
-	// network: the logout flag is saved at once but the cache only on the
-	// persister's throttle, so a restart in between can restore the account the
-	// user just left. A /me that fails leaves the user unknown, which only the
-	// (protected) guard has to resolve: it asks the reachability probe itself, so
-	// a guest opening Home or the programme on a dead network isn't held on the
-	// splash for the probe's offline-confirm window as well.
-	await queryForLoad(queryClient, {
-		...currentUserOptions(),
-		staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
-	}).catch(() => {});
+	// Identity gates the route guards, so settle it before any child load reads it.
+	await settleIdentityForBoot(queryClient);
 
 	return { queryClient };
 };
