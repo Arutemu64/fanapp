@@ -1,16 +1,15 @@
 <script lang="ts">
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { listScheduleChangesInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
-	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
-	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
+	import QueryState from '#lib/components/QueryState.svelte';
 	import { SCHEDULE_CHANGES_PAGE_SIZE } from '#lib/constants/scheduleChanges.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { queryView } from '#lib/utils/queryView.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
@@ -30,9 +29,13 @@
 	}));
 
 	let changes = $derived(changesQuery.data?.pages.flatMap((page) => page.schedule_changes) ?? []);
-	// Offline the query pauses instead of failing, so without this a cold miss
-	// would spin forever.
-	let offlineMiss = $derived(changesQuery.data === undefined && !reachability.current);
+	let changesView = $derived(
+		queryView(changesQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.schedule_changes_load_failed()
+		})
+	);
 
 	async function loadMore() {
 		const result = await changesQuery.fetchNextPage();
@@ -42,35 +45,28 @@
 	}
 </script>
 
-{#if offlineMiss}
-	<OfflineUnavailableState />
-{:else if changesQuery.data === undefined}
-	{#if changesQuery.isError}
-		<ErrorState
-			variant="inline"
-			onRetry={() => void changesQuery.refetch()}
-			error={{
-				status: 500,
-				message: getApiErrorDetail(changesQuery.error) ?? m.schedule_changes_load_failed()
-			}}
-		/>
-	{:else}
+<QueryState view={changesView}>
+	{#snippet loading()}
 		<SectionSpinner />
-	{/if}
-{:else if changes.length === 0}
-	<EmptyState message={m.schedule_changes_empty()} />
-{:else}
-	<div class="flex flex-col gap-3">
-		{#each changes as change (change.id)}
-			<ScheduleChangeCard {change} />
-		{/each}
-	</div>
+	{/snippet}
 
-	{#if changesQuery.hasNextPage}
-		<LoadMoreButton
-			loading={changesQuery.isFetchingNextPage}
-			busy={changesQuery.isFetching}
-			onclick={loadMore}
-		/>
-	{/if}
-{/if}
+	{#snippet ready()}
+		{#if changes.length === 0}
+			<EmptyState message={m.schedule_changes_empty()} />
+		{:else}
+			<div class="flex flex-col gap-3">
+				{#each changes as change (change.id)}
+					<ScheduleChangeCard {change} />
+				{/each}
+			</div>
+
+			{#if changesQuery.hasNextPage}
+				<LoadMoreButton
+					loading={changesQuery.isFetchingNextPage}
+					busy={changesQuery.isFetching}
+					onclick={loadMore}
+				/>
+			{/if}
+		{/if}
+	{/snippet}
+</QueryState>
