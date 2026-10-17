@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 
-import { currentUserOptions } from '#lib/api/index.js';
+import { currentUserOptions } from '#lib/services/identity.js';
 import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';

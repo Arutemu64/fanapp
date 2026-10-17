@@ -6,7 +6,7 @@ The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/
 
 ## Core Concept: Single Source of Truth
 
-- **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `#lib/api/generated`, query options and keys from `#lib/api/generated/@tanstack/svelte-query.gen.js`, and the app wiring (`currentUserOptions`, `forgetSession`, `watchApiResponses`) from `#lib/api`.
+- **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `#lib/api/generated`, query options and keys from `#lib/api/generated/@tanstack/svelte-query.gen.js`, the app wiring (`queryForLoad`, `watchApiResponses`) from `#lib/api`, and identity (`currentUserOptions`) from `#lib/services/identity`.
 - **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 - **Binary / file uploads**: hey-api types binary fields as `Blob | File` and serializes `multipart/form-data` (and `application/x-www-form-urlencoded`) bodies for you — pass `body: { file }` and it builds the `FormData`. No custom transform is needed.
 

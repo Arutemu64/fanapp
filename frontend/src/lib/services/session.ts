@@ -2,15 +2,15 @@ import type { QueryClient } from '@tanstack/svelte-query';
 
 import { createContext } from 'svelte';
 
-import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-import { currentUserOptions } from '#lib/api/index.js';
 import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
+
 import {
 	clearLogoutPending,
+	currentUserOptions,
 	flushPendingLogout,
 	isLogoutPending,
 	markLogoutPending
-} from '#lib/utils/pendingLogout.js';
+} from './identity.js';
 
 // The user is waiting on the provider button, so a stalled revoke must give up
 // and let them retry instead of spinning until the browser's own TCP timeout.
@@ -70,7 +70,7 @@ export class Session {
 	 */
 	async loggedIn(): Promise<void> {
 		// A logout queued while offline must not outlive a deliberate re-login: clear
-		// it so the reconnect flush can't revoke this fresh session (see pendingLogout).
+		// it so the reconnect flush can't revoke this fresh session (see identity).
 		clearLogoutPending();
 
 		// Everything cached so far was fetched as a guest: mark it all stale, so what
@@ -79,7 +79,7 @@ export class Session {
 		// /me/ refetch the invalidation just started instead of aborting it.
 		void this.#queryClient.invalidateQueries();
 		await this.#queryClient.refetchQueries(
-			{ queryKey: getCurrentUserQueryKey() },
+			{ queryKey: currentUserOptions().queryKey },
 			{ cancelRefetch: false }
 		);
 
@@ -93,7 +93,7 @@ export class Session {
 	 * owns the request (and its busy state), the session owns what follows.
 	 *
 	 * Offline there is no server to ask and the HttpOnly cookie can't be cleared
-	 * from JS, so the intent is recorded instead (see pendingLogout) and local
+	 * from JS, so the intent is recorded instead (see identity) and local
 	 * state is torn down now, so a shared device stops showing this account.
 	 */
 	async logOut(revokeOnServer: () => Promise<unknown>): Promise<void> {

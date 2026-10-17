@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 
-	import { currentUserOptions } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 
 	import type { PageProps } from './$types';
 

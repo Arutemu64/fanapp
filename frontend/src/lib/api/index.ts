@@ -2,8 +2,7 @@ import {
 	CancelledError,
 	type QueryClient,
 	type QueryExecuteOptions,
-	type QueryKey,
-	queryOptions
+	type QueryKey
 } from '@tanstack/svelte-query';
 
 import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
@@ -11,49 +10,12 @@ import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js'
 import { getApiErrorCode, gotNoApiAnswer } from '#lib/api/errors.js';
 import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { client } from '#lib/api/generated/client.gen.js';
-import { getCurrentUser } from '#lib/api/generated/index.js';
 import {
 	isBackendUnreachableStatus,
 	markReachable,
 	probeReachability
 } from '#lib/services/reachability.js';
 import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
-import { isLogoutPending } from '#lib/utils/pendingLogout.js';
-
-/**
- * The signed-in user, or `null` for a guest. Shared by the root load (which
- * settles it before any guard runs), the guards, and every component that
- * renders identity.
- *
- * Only an explicit 401/403 means "guest". Any other failure (5xx, network)
- * throws, and TanStack Query keeps the last good user on error — a transient
- * outage must not flip a logged-in user to guest.
- */
-export function currentUserOptions() {
-	return queryOptions({
-		queryKey: getCurrentUserQueryKey(),
-		queryFn: async ({ signal }) => {
-			// A logout requested offline is still pending server-side (the HttpOnly
-			// cookie can't be cleared by JS). Present as logged-out until the queued
-			// POST /auth/logout revokes the session — otherwise a still-valid cookie
-			// would let /me resurrect the account we just left. The flush
-			// (reachabilityMonitor) clears the intent once it succeeds; a fresh login
-			// clears it too (Session.loggedIn).
-			if (isLogoutPending()) return null;
-
-			const { data, error, response } = await getCurrentUser({ signal });
-			if (response?.status === 401 || response?.status === 403) return null;
-			// Rethrow the SDK's error as-is, like every generated query does, so the
-			// retry rule and error reporting can tell a dropped connection from an
-			// API error body.
-			if (data === undefined) {
-				// eslint-disable-next-line @typescript-eslint/only-throw-error -- the API error body is a plain object
-				throw error;
-			}
-			return data;
-		}
-	});
-}
 
 /**
  * Run a query a `load` waits for, bounded so a navigation can't hang. A load has
@@ -151,7 +113,7 @@ export function watchApiResponses(
 			} else {
 				// Joins a /me/ fetch already in flight, so a burst of 401s asks once.
 				void queryClient.refetchQueries(
-					{ queryKey: currentUserOptions().queryKey },
+					{ queryKey: getCurrentUserQueryKey() },
 					{ cancelRefetch: false }
 				);
 			}

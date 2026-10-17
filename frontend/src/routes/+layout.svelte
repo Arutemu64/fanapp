@@ -21,15 +21,12 @@
 		listScheduleChangesQueryKey,
 		listUserNotificationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import {
-		currentUserOptions,
-		watchApiResponses,
-		watchBackgroundRefetchErrors
-	} from '#lib/api/index.js';
+	import { watchApiResponses, watchBackgroundRefetchErrors } from '#lib/api/index.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
+	import { currentUserOptions, flushPendingLogout } from '#lib/services/identity.js';
 	import { unsubscribeDevicePush } from '#lib/services/pushDevice.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
 	import { isReachable } from '#lib/services/reachability.js';
@@ -96,9 +93,16 @@
 			});
 		}
 
+		// Revoke a session the user logged out of while offline. A boot that is
+		// already online never crosses the recovery edge, so flush here too; offline
+		// this is a no-op and the edge picks it up on reconnect. Until it clears, the
+		// pending flag keeps the /me refetch on reconnect logged-out, so there's no
+		// "logged back in" flicker in between.
+		void flushPendingLogout();
+
 		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
 		// re-creating this layout doesn't stack duplicates.
-		const stopMonitor = startReachabilityMonitor();
+		const stopMonitor = startReachabilityMonitor({ onRecovered: () => void flushPendingLogout() });
 		const stopUpdates = appUpdate.start();
 		const stopWatching = watchApiResponses(queryClient, () => void session.expired());
 		// Fixed copy, not the mapped code: the user didn't act, so «Билет не найден»

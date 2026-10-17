@@ -14,13 +14,13 @@
 		getScheduleOptions,
 		getSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
 	import QueryState from '#lib/components/QueryState.svelte';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { queryView } from '#lib/utils/queryView.js';
 	import {

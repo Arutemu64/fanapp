@@ -5,10 +5,10 @@
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
 
-	import { currentUserOptions } from '#lib/api/index.js';
 	import SkipLink from '#lib/components/SkipLink.svelte';
 	import { DESKTOP_MEDIA_QUERY } from '#lib/constants/layout.js';
 	import { TAB_ROOTS } from '#lib/data/nav.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 	import { resolvePath } from '#lib/utils/paths.js';
 
 	import type { LayoutProps } from './$types';

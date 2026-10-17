@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 
 	import { listOauthProvidersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '#lib/utils/oauthErrors.js';
 

@@ -3,9 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
-import { currentUserOptions } from '#lib/api/index.js';
+import { currentUserOptions, isLogoutPending, markLogoutPending } from '#lib/services/identity.js';
 import { fakeStorage } from '#lib/testing/storage.js';
-import { isLogoutPending, markLogoutPending } from '#lib/utils/pendingLogout.js';
 
 import { Session, type SessionRouter } from './session.js';
 

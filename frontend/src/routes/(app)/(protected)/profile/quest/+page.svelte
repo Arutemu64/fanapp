@@ -5,13 +5,13 @@
 	import type { ReadyView } from '#lib/utils/queryView.js';
 
 	import { getQuestOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import QrCode from '#lib/components/QrCode.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { queryView } from '#lib/utils/queryView.js';
 	import { questCodeFor } from '#lib/utils/questCode.js';

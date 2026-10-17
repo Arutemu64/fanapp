@@ -22,7 +22,6 @@
 		getPublicConfigOptions,
 		getQuestOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { currentUserOptions } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuLink from '#lib/components/MenuLink.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
@@ -32,6 +31,7 @@
 	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
+	import { currentUserOptions } from '#lib/services/identity.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';

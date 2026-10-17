@@ -1,7 +1,5 @@
 import { onlineManager } from '@tanstack/svelte-query';
 
-import { flushPendingLogout } from '#lib/utils/pendingLogout.js';
-
 import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
 
 // While unreachable, poll for recovery so the offline banner clears on its own.
@@ -21,10 +19,11 @@ const RECOVERY_POLL_MAX_MS = 30000;
  * default `navigator.onLine` events: while the backend is unreachable queries
  * pause instead of burning their retries, and on the offline→online edge every
  * query on screen refetches (`refetchOnReconnect`) — the catch-up for screens
- * showing cached copies. The edge also fires an offline logout's queued revoke.
+ * showing cached copies. `onRecovered` runs on that edge too, for work that has
+ * to wait for the backend (the root layout passes the offline logout's revoke).
  * https://tanstack.com/query/latest/docs/reference/onlineManager
  */
-export function startReachabilityMonitor(): () => void {
+export function startReachabilityMonitor({ onRecovered }: { onRecovered: () => void }): () => void {
 	let pollTimerId: ReturnType<typeof setTimeout> | null = null;
 	let pollDelayMs = RECOVERY_POLL_MIN_MS;
 
@@ -62,10 +61,7 @@ export function startReachabilityMonitor(): () => void {
 		}
 
 		stopPolling();
-		// Revoke a session the user logged out of while offline. The pending flag
-		// keeps the /me refetch on reconnect logged-out until this clears, so there's
-		// no "logged back in" flicker in between.
-		void flushPendingLogout();
+		onRecovered();
 	});
 
 	// Replacing the listener cleans up the previous one, so an HMR restart doesn't
@@ -91,11 +87,6 @@ export function startReachabilityMonitor(): () => void {
 	// is no longer a change the listener above would see.
 	if (!isReachable()) startPolling();
 	void probeReachability();
-
-	// Fire any logout queued while offline. A boot that is already online never
-	// crosses the edge above, so flush here too; offline this is a no-op and the
-	// edge picks it up on reconnect.
-	void flushPendingLogout();
 
 	return () => {
 		unsubscribe();
