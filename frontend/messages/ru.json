@@ -588,10 +588,12 @@
 			}
 		}
 	],
-	"quest_rank": "{rank}-е место",
+	"quest_summary_points": "Баллы",
+	"quest_summary_rank": "Место",
 	"quest_title": "Квест",
 	"quest_tool_amount_hint": "От 1 до {max} за одно начисление.",
 	"quest_tool_amount_label": "Баллы",
+	"quest_tool_amount_presets": "Быстрый выбор",
 	"quest_tool_award_failed": "Не удалось начислить баллы",
 	"quest_tool_awarded": "@{username}: +{points}",
 	"quest_tool_awarded_by": "от @{username}",
@@ -599,6 +601,7 @@
 	"quest_tool_cancel_confirm": "Отменить начисление",
 	"quest_tool_cancel_description": "У @{username} снимем {points}. Игрок получит уведомление.",
 	"quest_tool_cancel_failed": "Не удалось отменить начисление",
+	"quest_tool_cancel_keep": "Оставить",
 	"quest_tool_cancel_title": "Отменить начисление?",
 	"quest_tool_cancelled": "Начисление отменено",
 	"quest_tool_cancelled_badge": "Отменено",
@@ -615,8 +618,20 @@
 	"quest_tool_scan": "Сканировать код игрока",
 	"quest_tool_scan_description": "Наведи камеру на QR-код в разделе «Квест» у игрока.",
 	"quest_tool_scan_title": "Код игрока",
-	"quest_tool_search_empty": "Никого не нашли",
+	"quest_tool_search_empty": "Никого не нашли. Проверь имя или отсканируй код.",
 	"quest_tool_search_failed": "Не удалось найти игроков",
+	"quest_tool_search_found": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Нашли {count} игрока",
+				"countPlural=few": "Нашли {count} игроков",
+				"countPlural=many": "Нашли {count} игроков",
+				"countPlural=*": "Нашли {count} игрока"
+			}
+		}
+	],
 	"quest_tool_search_label": "Или найди по имени пользователя",
 	"quest_tool_search_placeholder": "Хватит первых букв",
 	"quest_tool_submit": "Начислить",

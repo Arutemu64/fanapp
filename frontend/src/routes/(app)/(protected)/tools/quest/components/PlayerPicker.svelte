@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ScanLine } from '@lucide/svelte';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+	import { onMount } from 'svelte';
 
 	import type { QuestPlayerDto } from '#lib/api/generated/index.js';
 
@@ -21,9 +22,11 @@
 
 	interface Props {
 		onPick: (player: QuestPlayerDto) => void;
+		/** Set when the award form just closed: its focused control is gone. */
+		focusOnMount: boolean;
 	}
 
-	let { onPick }: Props = $props();
+	let { onPick, focusOnMount }: Props = $props();
 
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
@@ -33,6 +36,7 @@
 	const QUEST_FORMATS = ['QRCode'] as const;
 	const SEARCH_DEBOUNCE_MS = 300;
 
+	let scanButton = $state<HTMLButtonElement | null>(null);
 	let scannerOpen = $state(false);
 	let lookingUp = $state(false);
 	let searchValue = $state('');
@@ -44,6 +48,27 @@
 		enabled: searchTerm !== ''
 	}));
 	let players = $derived(searchQuery.data?.players ?? []);
+	let showResults = $derived(searchTerm !== '' && searchQuery.isSuccess && players.length > 0);
+	// Read out without moving focus off the search box (WCAG 4.1.3 names "no
+	// results" as a status message): https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html
+	let searchStatus = $derived.by(() => {
+		if (searchTerm === '' || searchQuery.isPending) {
+			return '';
+		}
+		if (searchQuery.isError) {
+			return m.quest_tool_search_failed();
+		}
+		if (players.length === 0) {
+			return m.quest_tool_search_empty();
+		}
+		return m.quest_tool_search_found({ count: players.length });
+	});
+
+	onMount(() => {
+		if (focusOnMount) {
+			scanButton?.focus();
+		}
+	});
 
 	function handleSearchInput() {
 		clearTimeout(searchTimer);
@@ -83,6 +108,7 @@
 
 <div class="flex flex-col gap-4">
 	<Button
+		bind:ref={scanButton}
 		type="button"
 		size="lg"
 		class="w-full"
@@ -112,32 +138,42 @@
 		/>
 	</Field.Field>
 
-	{#if searchTerm !== ''}
-		{#if searchQuery.isPending}
-			<div class="flex justify-center py-2"><Spinner /></div>
-		{:else if searchQuery.isError}
-			<p class="text-sm text-destructive">{m.quest_tool_search_failed()}</p>
-		{:else if players.length === 0}
-			<p class="text-sm text-muted-foreground">{m.quest_tool_search_empty()}</p>
-		{:else}
-			<ul class="flex flex-col divide-y divide-border rounded-xl border border-border">
-				{#each players as player (player.id)}
-					<li>
-						<button
-							type="button"
-							class="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted"
-							onclick={() => onPick(player)}
-						>
-							<UserAvatar seed={player.avatar_seed} class="size-8" />
-							<span class="min-w-0 flex-1 truncate text-base">@{player.username}</span>
-							<span class="shrink-0 text-sm text-muted-foreground tabular-nums">
-								{m.quest_points({ count: player.points })}
-							</span>
-						</button>
-					</li>
-				{/each}
-			</ul>
-		{/if}
+	{#if searchTerm !== '' && searchQuery.isPending}
+		<div class="flex justify-center py-2"><Spinner /></div>
+	{/if}
+
+	<!-- Always mounted: a live region only announces changes it was present for.
+	     sr-only rather than hidden while empty or showing the count, which is for
+	     screen readers (sighted users see the list); being out of flow, it adds no gap. -->
+	<p
+		role="status"
+		class={[
+			'text-sm',
+			searchQuery.isError ? 'text-destructive' : 'text-muted-foreground',
+			(searchStatus === '' || showResults) && 'sr-only'
+		]}
+	>
+		{searchStatus}
+	</p>
+
+	{#if showResults}
+		<ul class="flex flex-col divide-y divide-border rounded-xl border border-border">
+			{#each players as player (player.id)}
+				<li>
+					<button
+						type="button"
+						class="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left outline-none first:rounded-t-xl last:rounded-b-xl hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset active:bg-muted"
+						onclick={() => onPick(player)}
+					>
+						<UserAvatar seed={player.avatar_seed} class="size-8" />
+						<span class="min-w-0 flex-1 truncate text-base">@{player.username}</span>
+						<span class="shrink-0 text-sm text-muted-foreground tabular-nums">
+							{m.quest_points({ count: player.points })}
+						</span>
+					</button>
+				</li>
+			{/each}
+		</ul>
 	{/if}
 </div>
 
