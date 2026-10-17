@@ -20,6 +20,9 @@ from fanfan.application.interactors.current_user.get_current_user import GetCurr
 from fanfan.application.interactors.current_user.link_social_account import (
     LinkSocialAccount,
 )
+from fanfan.application.interactors.current_user.suggest_username import (
+    SuggestUsername,
+)
 from fanfan.application.interactors.current_user.unlink_social_account import (
     UnlinkSocialAccount,
 )
@@ -239,6 +242,7 @@ class InteractorsProvider(Provider):
         LinkSocialAccount,
         UnlinkSocialAccount,
         UpdateCurrentUser,
+        SuggestUsername,
         UpdateUserSettings,
         ChangePassword,
         SendEmailConfirmationCode,

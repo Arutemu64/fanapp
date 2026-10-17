@@ -71,6 +71,7 @@ import {
 	startSocialLogin,
 	submitFeedback,
 	subscribe,
+	suggestUsername,
 	uncheckCurrentEvent,
 	undoScheduleChange,
 	unlinkTelegramAccount,
@@ -261,6 +262,9 @@ import type {
 	SubscribeData,
 	SubscribeError,
 	SubscribeResponse,
+	SuggestUsernameData,
+	SuggestUsernameError,
+	SuggestUsernameResponse,
 	UncheckCurrentEventData,
 	UncheckCurrentEventError,
 	UncheckCurrentEventResponse,
@@ -659,6 +663,33 @@ export const updateCurrentUserMutation = (
 	};
 	return mutationOptions;
 };
+
+export const suggestUsernameQueryKey = (options?: Options<SuggestUsernameData>) =>
+	createQueryKey('suggestUsername', options);
+
+/**
+ * Suggest a username
+ *
+ * Generates a random free username for the profile editor to offer. Nothing is saved: the name is only reserved once the user saves it, so it can still be taken in between.
+ */
+export const suggestUsernameOptions = (options?: Options<SuggestUsernameData>) =>
+	queryOptions<
+		SuggestUsernameResponse,
+		SuggestUsernameError,
+		SuggestUsernameResponse,
+		ReturnType<typeof suggestUsernameQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await suggestUsername({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: suggestUsernameQueryKey(options)
+	});
 
 /**
  * Update current user settings

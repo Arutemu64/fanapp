@@ -6,29 +6,47 @@ import pytest
 
 from fanfan.adapters.profanity.filter import WordListProfanityFilter
 from fanfan.application.services.user import (
+    FEMININE_NOUNS,
+    MASCULINE_NOUNS,
     RUSSIAN_ADJECTIVES,
-    RUSSIAN_NOUNS,
     UserService,
 )
 from fanfan.core.vo.fields import USERNAME_PATTERN
 
 pytestmark = pytest.mark.unit
 
+MASCULINE_ADJECTIVES = tuple(masculine for masculine, _ in RUSSIAN_ADJECTIVES)
+FEMININE_ADJECTIVES = tuple(feminine for _, feminine in RUSSIAN_ADJECTIVES)
+WORD_LISTS = [
+    MASCULINE_ADJECTIVES,
+    FEMININE_ADJECTIVES,
+    MASCULINE_NOUNS,
+    FEMININE_NOUNS,
+]
+# Each gender's adjectives only ever meet that gender's nouns.
+PAIRINGS = [
+    (MASCULINE_ADJECTIVES, MASCULINE_NOUNS),
+    (FEMININE_ADJECTIVES, FEMININE_NOUNS),
+]
+
 GENERATED_SHAPE = re.compile(r"^[А-Я][а-я]+[А-Я][а-я]+\d{2}$")
 
 
-@pytest.mark.parametrize("words", [RUSSIAN_ADJECTIVES, RUSSIAN_NOUNS])
+@pytest.mark.parametrize("words", WORD_LISTS)
 def test_word_lists_have_no_duplicates(words: tuple[str, ...]) -> None:
     assert len(set(words)) == len(words)
 
 
-@pytest.mark.parametrize("words", [RUSSIAN_ADJECTIVES, RUSSIAN_NOUNS])
+@pytest.mark.parametrize("words", WORD_LISTS)
 def test_words_avoid_yo(words: tuple[str, ...]) -> None:
     assert [word for word in words if "ё" in word.lower()] == []
 
 
-def test_longest_pair_fits_the_username_rules() -> None:
-    longest = max(RUSSIAN_ADJECTIVES, key=len) + max(RUSSIAN_NOUNS, key=len) + "99"
+@pytest.mark.parametrize(("adjectives", "nouns"), PAIRINGS)
+def test_longest_pair_fits_the_username_rules(
+    adjectives: tuple[str, ...], nouns: tuple[str, ...]
+) -> None:
+    longest = max(adjectives, key=len) + max(nouns, key=len) + "99"
 
     # Well under the 25-character limit on purpose: the quest leaderboard gives
     # a name about 130px on a 360px phone, where each word of a 17-character
@@ -37,14 +55,17 @@ def test_longest_pair_fits_the_username_rules() -> None:
     assert re.fullmatch(USERNAME_PATTERN, longest)
 
 
-def test_no_pair_trips_the_profanity_filter() -> None:
+@pytest.mark.parametrize(("adjectives", "nouns"), PAIRINGS)
+def test_no_pair_trips_the_profanity_filter(
+    adjectives: tuple[str, ...], nouns: tuple[str, ...]
+) -> None:
     # A user who keeps the generated name and edits nothing else must not be
     # told their own name is profane, and the filter matches roots across the
     # adjective/noun seam.
     profanity_filter = WordListProfanityFilter()
     flagged = [
         adjective + noun
-        for adjective, noun in product(RUSSIAN_ADJECTIVES, RUSSIAN_NOUNS)
+        for adjective, noun in product(adjectives, nouns)
         if profanity_filter.contains_profanity(adjective + noun)
     ]
 
@@ -73,3 +94,16 @@ async def test_generate_username_retries_until_a_free_name() -> None:
     assert GENERATED_SHAPE.fullmatch(username)
     assert gateway.lookups[-1] == username
     assert len(gateway.lookups) == 3
+
+
+async def test_generated_adjective_agrees_with_its_noun() -> None:
+    agreeing = {
+        adjective + noun
+        for adjectives, nouns in PAIRINGS
+        for adjective, noun in product(adjectives, nouns)
+    }
+    service = UserService(cast("Any", _TakenUsernames(taken_count=0)))
+
+    for _ in range(200):
+        username = await service.generate_username()
+        assert username[:-2] in agreeing

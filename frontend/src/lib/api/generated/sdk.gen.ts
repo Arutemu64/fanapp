@@ -198,6 +198,9 @@ import type {
 	SubscribeData,
 	SubscribeErrors,
 	SubscribeResponses,
+	SuggestUsernameData,
+	SuggestUsernameErrors,
+	SuggestUsernameResponses,
 	UncheckCurrentEventData,
 	UncheckCurrentEventErrors,
 	UncheckCurrentEventResponses,
@@ -458,6 +461,26 @@ export const updateCurrentUser = <ThrowOnError extends boolean = false>(
 			'Content-Type': 'application/json',
 			...options.headers
 		}
+	});
+
+/**
+ * Suggest a username
+ *
+ * Generates a random free username for the profile editor to offer. Nothing is saved: the name is only reserved once the user saves it, so it can still be taken in between.
+ */
+export const suggestUsername = <ThrowOnError extends boolean = false>(
+	options?: Options<SuggestUsernameData, ThrowOnError>
+): RequestResult<SuggestUsernameResponses, SuggestUsernameErrors, ThrowOnError> =>
+	(options?.client ?? client).get<SuggestUsernameResponses, SuggestUsernameErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/me/username-suggestion',
+		...options
 	});
 
 /**
