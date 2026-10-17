@@ -158,6 +158,23 @@ test('profile', async ({ page, api }) => {
 	await saveWebp(page, 'profile');
 });
 
+test('quest', async ({ page, api }) => {
+	api.use({
+		...loggedInAs({ username: 'sakura_cosplay' }),
+		'GET /quest': json(questStanding)
+	});
+	await page.goto('/profile/quest');
+	await expect(page.getByRole('img', { name: 'QR-код игрока @sakura_cosplay' })).toBeVisible();
+	await expect(page.locator('li[aria-current="true"]')).toContainText('@sakura_cosplay');
+	await settle(page);
+	// The code fills the first screen; scrolled to the standings, the shot shows the
+	// podium medals and the player's own row instead of a bare QR.
+	await page.getByRole('heading', { name: 'Таблица лидеров' }).evaluate((heading) => {
+		heading.scrollIntoView({ block: 'center' });
+	});
+	await saveWebp(page, 'quest');
+});
+
 // The README hero (docs/assets/readme-header.webp): Home on a laptop and an iPhone,
 // framed by device-frames.html. Each device gets its own mocked context, since the
 // test's `page` is the gallery's 390px phone. Every option is spelled out because

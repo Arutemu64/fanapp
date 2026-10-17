@@ -1,6 +1,7 @@
 import type {
 	GetQuestOutput,
 	GetVotingNominationOutput,
+	LeaderboardEntryDto,
 	NotificationDto,
 	ScheduleEntryDto,
 	ScheduleEventFullDto,
@@ -154,10 +155,49 @@ export const notifications: NotificationDto[] = [
 	)
 ];
 
-// The profile hub's quest row: a balance part-way up the leaderboard.
+// The quest standings behind the profile hub's quest row and the quest page: the
+// gallery's visitor (persona id and avatar) sits fourth, just off the podium, so
+// the page shows the medals and the player's own highlighted row together.
+const QUEST_RIVALS = [
+	{ username: 'kitsune_mika', points: 185 },
+	{ username: 'senpai_kun', points: 160 },
+	{ username: 'totoro_fan', points: 140 }
+];
+const QUEST_CHASERS = [
+	{ username: 'akira_neo', points: 95 },
+	{ username: 'ramen_lord', points: 80 },
+	{ username: 'nyan_cat', points: 65 }
+];
+
+function questEntry(rank: number, username: string, points: number): LeaderboardEntryDto {
+	return {
+		rank,
+		player: {
+			id: `01890000-0000-7000-8000-0000000004${String(rank).padStart(2, '0')}`,
+			username,
+			avatar_seed: `galleryQuest${username}`,
+			points
+		}
+	};
+}
+
+const ownQuestEntry: LeaderboardEntryDto = {
+	rank: 4,
+	player: {
+		id: '01890000-0000-7000-8000-000000000001',
+		username: 'sakura_cosplay',
+		avatar_seed: 'e2eSeedVisitor',
+		points: 120
+	}
+};
+
 export const questStanding: GetQuestOutput = {
 	points: 120,
 	rank: 4,
-	leaderboard: [],
+	leaderboard: [
+		...QUEST_RIVALS.map((rival, index) => questEntry(index + 1, rival.username, rival.points)),
+		ownQuestEntry,
+		...QUEST_CHASERS.map((chaser, index) => questEntry(index + 5, chaser.username, chaser.points))
+	],
 	own_entry: null
 };

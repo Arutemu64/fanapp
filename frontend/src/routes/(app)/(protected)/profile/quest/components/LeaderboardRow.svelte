@@ -35,10 +35,11 @@
 		{entry.rank}
 	</span>
 	<UserAvatar seed={entry.player.avatar_seed} class="size-8" />
-	<span class="min-w-0 flex-1 truncate text-base text-foreground">
-		@{entry.player.username}
+	<!-- Only the name truncates: «(ты)» is what marks the row besides its tint. -->
+	<span class="flex min-w-0 flex-1 items-baseline gap-1 text-base">
+		<span class="truncate text-foreground">@{entry.player.username}</span>
 		{#if isOwn}
-			<span class="text-muted-foreground">({m.quest_leaderboard_you()})</span>
+			<span class="shrink-0 text-muted-foreground">({m.quest_leaderboard_you()})</span>
 		{/if}
 	</span>
 	<span class="shrink-0 text-sm font-medium text-foreground tabular-nums">
