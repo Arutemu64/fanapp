@@ -11,6 +11,7 @@
 		award: QuestAwardItemDto;
 		/** Show who gave the award: only a manager's list mixes volunteers. */
 		showAwarder: boolean;
+		/** Any cancel in flight blocks every row: the list shares one mutation. */
 		cancelling: boolean;
 		onCancel: (award: QuestAwardItemDto) => void;
 	}

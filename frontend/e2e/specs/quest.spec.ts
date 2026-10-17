@@ -90,4 +90,30 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.getByLabel('Баллы')).toBeFocused();
 		expect(api.countCalls('POST /quest/awards')).toBe(0);
 	});
+
+	test('a field the server refuses gets the focus', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...volunteer(),
+			'GET /quest/awards': json(QUEST_AWARDS),
+			'GET /quest/players': json<FindQuestPlayersOutput>({ players: [questPlayer(0, 240)] }),
+			'POST /quest/awards': json(
+				{
+					code: 'VALIDATION_ERROR',
+					details: { errors: [{ loc: ['body', 'message'], type: 'string_too_long' }] }
+				},
+				422
+			)
+		});
+
+		await page.goto('/tools/quest');
+		await page.getByLabel('Или найди по имени пользователя').fill('kits');
+		await page.getByRole('button', { name: /@kitsune_mika/ }).click();
+		await page.getByLabel('Баллы').fill('15');
+		await page.getByLabel('За что').fill('Викторина');
+		await page.getByRole('button', { name: 'Начислить' }).click();
+
+		await expect(page.getByLabel('За что')).toBeFocused();
+		await expect(page.getByLabel('За что')).toHaveAttribute('aria-invalid', 'true');
+	});
 });

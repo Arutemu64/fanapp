@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CircleAlert } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { tick } from 'svelte';
 
 	import type { QuestPlayerDto } from '#lib/api/generated/index.js';
 
@@ -106,7 +107,10 @@
 		handleAmountInput();
 	}
 
-	function focusFirstError() {
+	// After tick(), so the field's aria-describedby already names the error when it
+	// takes focus.
+	async function focusFirstError() {
+		await tick();
 		if (amountError) {
 			amountInput?.focus();
 		} else if (messageError) {
@@ -123,7 +127,7 @@
 		const isMessageValid = validateMessage();
 		const awardedAmount = parseAmount();
 		if (!isAmountValid || !isMessageValid || awardedAmount === null) {
-			focusFirstError();
+			void focusFirstError();
 			return;
 		}
 
@@ -151,7 +155,7 @@
 					amountError = getApiFieldError(error, 'amount') ?? '';
 					messageError = getApiFieldError(error, 'message') ?? '';
 					if (amountError || messageError) {
-						focusFirstError();
+						void focusFirstError();
 						return;
 					}
 					// An earlier press went through but its response was lost, and the
@@ -194,6 +198,10 @@
 		</Alert.Root>
 	{/if}
 
+	<!-- The text fields go readonly, not disabled, while an award is in flight: a
+	     field the server refuses takes focus in onError, and TanStack only reports
+	     isPending false to the component a macrotask later. A disabled field can't
+	     be focused. -->
 	<Field.FieldGroup class="gap-4">
 		<Field.Field data-invalid={amountError ? true : undefined}>
 			<Field.FieldLabel for="quest-amount">{m.quest_tool_amount_label()}</Field.FieldLabel>
@@ -207,7 +215,7 @@
 				inputmode="numeric"
 				autocomplete="off"
 				bind:value={amount}
-				disabled={awardMutation.isPending}
+				readonly={awardMutation.isPending}
 				oninput={handleAmountInput}
 				aria-invalid={amountError ? true : undefined}
 				aria-describedby={amountError ? 'quest-amount-error' : 'quest-amount-hint'}
@@ -249,7 +257,7 @@
 				autocomplete="off"
 				placeholder={m.quest_tool_message_placeholder()}
 				bind:value={message}
-				disabled={awardMutation.isPending}
+				readonly={awardMutation.isPending}
 				oninput={handleMessageInput}
 				aria-invalid={messageError ? true : undefined}
 				aria-describedby={messageError ? 'quest-message-error' : 'quest-message-hint'}

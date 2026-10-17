@@ -55,15 +55,17 @@
 	let awardToCancel = $state.raw<QuestAwardItemDto | null>(null);
 	let pointsToCancel = $derived(m.quest_points({ count: awardToCancel?.amount ?? 0 }));
 
+	// The toasts live here, not in mutate(): the list shares this one mutation, and
+	// a later mutate() replaces an earlier call's callbacks.
 	const cancelMutation = createMutation(() => ({
 		...cancelQuestAwardMutation(),
+		onSuccess: () => toastService.add(m.quest_tool_cancelled(), 'success'),
+		onError: (error) =>
+			toastService.add(getApiErrorDetail(error) ?? m.quest_tool_cancel_failed(), 'error'),
 		// Refetch whichever way it went: a refusal (window expired, cancelled
 		// elsewhere) also means this row's button is out of date.
 		onSettled: () => queryClient.invalidateQueries({ queryKey: listQuestAwardsQueryKey() })
 	}));
-	let cancellingId = $derived(
-		cancelMutation.isPending ? cancelMutation.variables.path.award_id : undefined
-	);
 
 	function askToCancel(award: QuestAwardItemDto) {
 		awardToCancel = award;
@@ -74,14 +76,7 @@
 		if (!awardToCancel) {
 			return;
 		}
-		cancelMutation.mutate(
-			{ path: { award_id: awardToCancel.id } },
-			{
-				onSuccess: () => toastService.add(m.quest_tool_cancelled(), 'success'),
-				onError: (error) =>
-					toastService.add(getApiErrorDetail(error) ?? m.quest_tool_cancel_failed(), 'error')
-			}
-		);
+		cancelMutation.mutate({ path: { award_id: awardToCancel.id } });
 	}
 
 	async function loadMore() {
@@ -107,7 +102,7 @@
 						<QuestAwardItem
 							{award}
 							{showAwarder}
-							cancelling={cancellingId === award.id}
+							cancelling={cancelMutation.isPending}
 							onCancel={askToCancel}
 						/>
 					{/each}
