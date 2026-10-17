@@ -230,6 +230,24 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Rate limited — editing too fast.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         }
       }
@@ -6831,7 +6849,8 @@
           "captcha_token": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 4096
               },
               {
                 "type": "null"

@@ -1,12 +1,13 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request, Response
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from starlette import status
 
 from fanfan.application.dto.captcha import CaptchaChallengeDTO
 from fanfan.application.interactors.auth.get_captcha_challenge import (
     GetCaptchaChallenge,
+    GetCaptchaChallengeInput,
 )
 from fanfan.application.interactors.auth.login_with_code import (
     LoginWithCode,
@@ -27,7 +28,9 @@ from fanfan.presentation.web.utils import get_client_ip
 # must come from the connection, never from a body the client controls.
 class RequestLoginCodeBody(BaseModel):
     email: EmailStr
-    captcha_token: str | None = None
+    # A real ALTCHA payload is well under 4 KB; capping it keeps a hostile
+    # megabyte out of the parser (https://altcha.org/legal/security-advisory/).
+    captcha_token: str | None = Field(default=None, max_length=4096)
 
 
 login_code_router = APIRouter()
@@ -42,14 +45,16 @@ login_code_router = APIRouter()
         "`challenge` is null when captcha is disabled; send no token then."
     ),
     responses={
+        **RATE_LIMIT_RESPONSES,
         200: {"description": "A challenge, or null when captcha is disabled."},
     },
 )
 @inject
 async def get_captcha_challenge(
+    request: Request,
     interactor: FromDishka[GetCaptchaChallenge],
 ) -> CaptchaChallengeDTO:
-    return await interactor()
+    return await interactor(GetCaptchaChallengeInput(client_ip=get_client_ip(request)))
 
 
 @login_code_router.post(

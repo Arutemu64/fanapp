@@ -1891,6 +1891,10 @@ export type GetCaptchaChallengeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationErrorResponse;
+	/**
+	 * Rate limited — editing too fast.
+	 */
+	429: ErrorMessage;
 };
 
 export type GetCaptchaChallengeError = GetCaptchaChallengeErrors[keyof GetCaptchaChallengeErrors];

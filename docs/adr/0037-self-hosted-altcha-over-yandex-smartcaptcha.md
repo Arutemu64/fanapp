@@ -53,7 +53,13 @@ We will replace SmartCaptcha with **self-hosted
   which Caddy overwrites for untrusted clients
   ([Caddy: reverse_proxy defaults](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)).
   The cap is generous because venue Wi-Fi and carrier-grade NAT share one
-  address among many attendees.
+  address among many attendees. The challenge endpoint gets its own looser
+  per-IP cap (60 per 10 minutes), following ALTCHA's advice to rate-limit
+  challenge generation as well as verification
+  ([ALTCHA: security recommendations](https://altcha.org/docs/integration/security-recommendations/)),
+  and `captcha_token` is capped at 4 KB: real payloads are well under that, and
+  ALTCHA's advisories show parsers are where hostile payloads strike first
+  ([ALTCHA: security advisory](https://altcha.org/legal/security-advisory/)).
 
 ## Consequences
 
