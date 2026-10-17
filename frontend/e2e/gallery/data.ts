@@ -159,14 +159,14 @@ export const notifications: NotificationDto[] = [
 // gallery's visitor (persona id and avatar) sits fourth, just off the podium, so
 // a capture scrolled to the board shows the medals and their own row together.
 const QUEST_RIVALS = [
-	{ username: 'kitsune_mika', points: 185 },
-	{ username: 'senpai_kun', points: 160 },
-	{ username: 'totoro_fan', points: 140 }
+	{ username: 'РыжийКот09', points: 185 },
+	{ username: 'СонныйСамурай15', points: 160 },
+	{ username: 'НочнойФилин88', points: 140 }
 ];
 const QUEST_CHASERS = [
-	{ username: 'akira_neo', points: 95 },
-	{ username: 'ramen_lord', points: 80 },
-	{ username: 'nyan_cat', points: 65 }
+	{ username: 'НеоновыйПилот31', points: 95 },
+	{ username: 'ОгненныйРамен21', points: 80 },
+	{ username: 'ПушистыйХомяк77', points: 65 }
 ];
 
 function questEntry(rank: number, username: string, points: number): LeaderboardEntryDto {
@@ -175,7 +175,7 @@ function questEntry(rank: number, username: string, points: number): Leaderboard
 		player: {
 			id: `01890000-0000-7000-8000-0000000004${String(rank).padStart(2, '0')}`,
 			username,
-			avatar_seed: `galleryQuest${username}`,
+			avatar_seed: `galleryQuest${String(rank).padStart(2, '0')}`,
 			points
 		}
 	};
@@ -185,7 +185,7 @@ const ownQuestEntry: LeaderboardEntryDto = {
 	rank: 4,
 	player: {
 		id: '01890000-0000-7000-8000-000000000001',
-		username: 'sakura_cosplay',
+		username: 'ПушистыйПингвин42',
 		avatar_seed: 'e2eSeedVisitor',
 		points: 120
 	}

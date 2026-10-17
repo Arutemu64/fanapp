@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSocialProfileUrl, getSocialProviderLabel } from './users';
+import { buildSocialProfileUrl, getSocialProviderLabel, splitUsernameWords } from './users';
 
 describe('buildSocialProfileUrl', () => {
 	it('builds a public VK profile URL from the numeric id', () => {
@@ -24,5 +24,19 @@ describe('getSocialProviderLabel', () => {
 
 	it('falls back to the raw provider for unknown ones', () => {
 		expect(getSocialProviderLabel('myspace')).toBe('myspace');
+	});
+});
+
+describe('splitUsernameWords', () => {
+	it('splits a generated name at its case change, keeping the digits on the noun', () => {
+		expect(splitUsernameWords('ЛунныйЛис07')).toEqual(['Лунный', 'Лис07']);
+	});
+
+	it('splits after an underscore run', () => {
+		expect(splitUsernameWords('sakura__chan')).toEqual(['sakura__', 'chan']);
+	});
+
+	it('leaves a name without seams whole', () => {
+		expect(splitUsernameWords('ANNA2026')).toEqual(['ANNA2026']);
 	});
 });

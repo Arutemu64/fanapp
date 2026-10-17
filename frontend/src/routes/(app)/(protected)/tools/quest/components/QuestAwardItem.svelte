@@ -3,6 +3,7 @@
 
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatRelativeTime } from '#lib/utils/formatters.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
@@ -28,7 +29,7 @@
 	<div class="min-w-0 flex-1">
 		<p class={['text-base text-foreground', cancelled && 'text-muted-foreground line-through']}>
 			<span class="font-semibold tabular-nums">+{points}</span>
-			<span class="break-all">@{award.user.username}</span>
+			<Username username={award.user.username} />
 		</p>
 		<p class="text-sm wrap-break-word text-muted-foreground">{award.message}</p>
 		<p class="text-xs text-muted-foreground">

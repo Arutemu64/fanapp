@@ -11,6 +11,7 @@
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
+	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
@@ -105,7 +106,7 @@
 		/>
 		<!-- The fallback when the camera won't read the code: the volunteer's tool
 		     can find the player by this name. -->
-		<p class="text-section break-all text-foreground">@{user.username}</p>
+		<p class="text-section text-foreground"><Username username={user.username} /></p>
 		<p class="text-sm text-muted-foreground">{m.quest_code_hint()}</p>
 	</Card.Root>
 {/if}

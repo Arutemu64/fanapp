@@ -38,3 +38,16 @@ export function buildSocialProfileUrl(provider: string, id: string): string | nu
 			return null;
 	}
 }
+
+// Seams inside a username where a line may break: a lower-to-upper case change
+// ("Лунный|Лис07") or the end of an underscore run ("sakura_|chan").
+const USERNAME_SEAM = /(?<=\p{Ll})(?=\p{Lu})|(?<=_)(?=[^_])/u;
+
+/**
+ * Split a username at its word seams, so a narrow row can wrap the generated
+ * «ЛунныйЛис07» as «Лунный» / «Лис07» instead of truncating away the digits
+ * that tell two namesakes apart.
+ */
+export function splitUsernameWords(username: string): string[] {
+	return username.split(USERNAME_SEAM);
+}

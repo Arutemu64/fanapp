@@ -15,7 +15,7 @@ const DEFAULT_SETTINGS: UserSettingsDto = {
 function user(overrides: Partial<User> = {}): User {
 	return {
 		id: '01890000-0000-7000-8000-000000000001',
-		username: 'test_visitor',
+		username: 'ЛунныйЛис07',
 		role: 'visitor',
 		email: null,
 		avatar_seed: 'e2eSeedVisitor',
@@ -35,5 +35,10 @@ export function loggedInAs(overrides: Partial<User> = {}): Handlers {
 
 /** An organizer with full permissions — for tools/ and other gated surfaces. */
 export function organizer(overrides: Partial<User> = {}): Handlers {
-	return loggedInAs({ role: 'organizer', username: 'test_org', permissions: ['*'], ...overrides });
+	return loggedInAs({
+		role: 'organizer',
+		username: 'ВажныйФилин01',
+		permissions: ['*'],
+		...overrides
+	});
 }

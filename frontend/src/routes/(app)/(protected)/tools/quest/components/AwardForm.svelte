@@ -16,6 +16,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
@@ -174,19 +175,17 @@
 <!-- novalidate: a browser bubble would pre-empt the Russian field errors with
      English text; validateAmount and validateMessage own every rule. -->
 <form novalidate class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
-	<div class="flex items-center gap-3">
+	<!-- flex-wrap + min-w-32: on a narrow phone the button drops to its own line
+	     rather than leaving the volunteer a name too cramped to check. -->
+	<div class="flex flex-wrap items-center gap-3">
 		<UserAvatar seed={player.avatar_seed} class="size-12" />
-		<div class="min-w-0 flex-1">
-			<h2
-				{@attach focusOnMount}
-				tabindex="-1"
-				class="truncate text-base font-semibold text-foreground"
-			>
-				@{player.username}
+		<div class="min-w-32 flex-1">
+			<h2 {@attach focusOnMount} tabindex="-1" class="text-base font-semibold text-foreground">
+				<Username username={player.username} />
 			</h2>
 			<p class="text-sm text-muted-foreground">{m.quest_points({ count: player.points })}</p>
 		</div>
-		<Button type="button" variant="outline" size="sm" onclick={onDone}>
+		<Button type="button" variant="outline" size="sm" class="ml-auto" onclick={onDone}>
 			{m.quest_tool_change_player()}
 		</Button>
 	</div>

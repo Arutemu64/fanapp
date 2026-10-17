@@ -6,6 +6,7 @@
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
@@ -39,8 +40,8 @@
 	<UserAvatar seed={user.avatar_seed} class="size-16" />
 
 	<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
-		<h2 class="min-w-0 text-headline wrap-break-word text-foreground">
-			@{user.username}
+		<h2 class="min-w-0 text-headline text-foreground">
+			<Username username={user.username} />
 		</h2>
 		<Badge variant="secondary" class="text-xs">
 			{getRoleLabel(user.role)}

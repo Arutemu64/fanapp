@@ -7,7 +7,7 @@ import { expect, json, loggedInAs, test } from '../fixtures';
 import { QUEST, QUEST_AWARDS, questConfig, questPlayer } from '../mocks/quest';
 
 const volunteer = () =>
-	loggedInAs({ role: 'volunteer', username: 'test_volunteer', permissions: ['quest:award'] });
+	loggedInAs({ role: 'volunteer', username: 'ЛовкийСтраж12', permissions: ['quest:award'] });
 
 test.describe('quest', { tag: '@critical' }, () => {
 	test('a player sees their score, code and place', async ({ page, api }) => {
@@ -19,10 +19,10 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await page.getByRole('link', { name: /Квест/ }).click();
 		await expect(page.locator('dl')).toContainText(/Баллы\s*35/);
 		await expect(page.locator('dl')).toContainText(/Место\s*23/);
-		await expect(page.getByRole('img', { name: 'QR-код игрока @test_visitor' })).toBeVisible();
+		await expect(page.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toBeVisible();
 		// The top ten, then the player's own row below the gap.
 		await expect(page.getByRole('listitem')).toHaveCount(11);
-		await expect(page.locator('li[aria-current="true"]')).toContainText('@test_visitor');
+		await expect(page.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
 	});
 
 	test('the quest row is hidden while the quest is off', async ({ page, api }) => {
@@ -53,20 +53,20 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.getByRole('link', { name: /Пользователи/ })).toHaveCount(0);
 
 		await page.getByRole('link', { name: /Квест/ }).click();
-		await page.getByLabel('Или найди по имени пользователя').fill('kits');
-		await page.getByRole('button', { name: /@kitsune_mika/ }).click();
+		await page.getByLabel('Или найди по имени пользователя').fill('Рыж');
+		await page.getByRole('button', { name: /@РыжийКот09/ }).click();
 		await page.getByLabel('Баллы').fill('15');
 		await page.getByLabel('За что').fill('Викторина');
 		await page.getByRole('button', { name: 'Начислить' }).click();
 
-		await expect(page.getByText('@kitsune_mika: +15 баллов')).toBeVisible();
+		await expect(page.getByText('@РыжийКот09: +15 баллов')).toBeVisible();
 		expect(awarded).toMatchObject({ user_id: player.id, amount: 15, message: 'Викторина' });
 
 		// Back at the picker with focus on the scan button, and the next player starts
 		// from the same award: a station hands out one task over and over.
 		await expect(page.getByRole('button', { name: 'Сканировать код игрока' })).toBeFocused();
-		await page.getByLabel('Или найди по имени пользователя').fill('kits');
-		await page.getByRole('button', { name: /@kitsune_mika/ }).click();
+		await page.getByLabel('Или найди по имени пользователя').fill('Рыж');
+		await page.getByRole('button', { name: /@РыжийКот09/ }).click();
 		await expect(page.getByLabel('Баллы')).toHaveValue('15');
 		await expect(page.getByLabel('За что')).toHaveValue('Викторина');
 	});
@@ -80,8 +80,8 @@ test.describe('quest', { tag: '@critical' }, () => {
 		});
 
 		await page.goto('/tools/quest');
-		await page.getByLabel('Или найди по имени пользователя').fill('kits');
-		await page.getByRole('button', { name: /@kitsune_mika/ }).click();
+		await page.getByLabel('Или найди по имени пользователя').fill('Рыж');
+		await page.getByRole('button', { name: /@РыжийКот09/ }).click();
 		await page.getByLabel('Баллы').fill('500');
 		await page.getByLabel('За что').fill('Опечатка');
 		await page.getByRole('button', { name: 'Начислить' }).click();
@@ -107,8 +107,8 @@ test.describe('quest', { tag: '@critical' }, () => {
 		});
 
 		await page.goto('/tools/quest');
-		await page.getByLabel('Или найди по имени пользователя').fill('kits');
-		await page.getByRole('button', { name: /@kitsune_mika/ }).click();
+		await page.getByLabel('Или найди по имени пользователя').fill('Рыж');
+		await page.getByRole('button', { name: /@РыжийКот09/ }).click();
 		await page.getByLabel('Баллы').fill('15');
 		await page.getByLabel('За что').fill('Викторина');
 		await page.getByRole('button', { name: 'Начислить' }).click();

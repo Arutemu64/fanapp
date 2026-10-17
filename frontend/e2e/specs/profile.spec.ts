@@ -40,7 +40,7 @@ test.describe('profile hub', () => {
 		await page.goto('/profile');
 
 		const main = page.getByRole('main');
-		await expect(main.getByRole('link', { name: /@test_visitor/ })).toBeVisible();
+		await expect(main.getByRole('link', { name: /@ЛунныйЛис07/ })).toBeVisible();
 		await expect(main.getByRole('link', { name: /Билет/ })).toContainText('Не привязан');
 		// No push subscription in a fresh browser: the row says so at a glance.
 		await expect(main.getByRole('link', { name: /Уведомления/ })).toContainText('Выключены');
@@ -258,7 +258,7 @@ test.describe('diagnostics', () => {
 		await dialog.getByRole('button', { name: 'Скопировать отчёт' }).click();
 		await expect(page.getByText('Отчёт скопирован')).toBeVisible();
 		const report = await page.evaluate(() => (window as { copiedText?: string }).copiedText);
-		expect(report).toContain('Аккаунт: @test_visitor');
+		expect(report).toContain('Аккаунт: @ЛунныйЛис07');
 		expect(report).toContain('Сборка целиком: 0123456789abcdef0123456789abcdef01234567');
 	});
 });
@@ -302,12 +302,12 @@ test.describe('account dialogs start fresh on reopen', () => {
 		const username = dialog.getByLabel('Имя пользователя');
 
 		await page.getByRole('button', { name: 'Редактировать' }).click();
-		await username.fill('draft_name');
+		await username.fill('ЯсныйСокол05');
 		await page.keyboard.press('Escape');
 		await expect(dialog).toBeHidden();
 
 		await page.getByRole('button', { name: 'Редактировать' }).click();
-		await expect(username).toHaveValue('test_visitor');
+		await expect(username).toHaveValue('ЛунныйЛис07');
 	});
 
 	test('change password drops the typed password and its error', async ({ page, api }) => {

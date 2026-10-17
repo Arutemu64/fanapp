@@ -16,6 +16,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
+	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { parseQuestCode } from '#lib/utils/questCode.js';
@@ -166,7 +167,7 @@
 						onclick={() => onPick(player)}
 					>
 						<UserAvatar seed={player.avatar_seed} class="size-8" />
-						<span class="min-w-0 flex-1 truncate text-base">@{player.username}</span>
+						<Username username={player.username} class="min-w-0 flex-1 text-base" />
 						<span class="shrink-0 text-sm text-muted-foreground tabular-nums">
 							{m.quest_points({ count: player.points })}
 						</span>
