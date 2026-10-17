@@ -7,6 +7,7 @@
 	import PasswordInput from '#lib/components/PasswordInput.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -133,12 +134,19 @@
 		</Field.Field>
 	</Field.FieldGroup>
 
-	<Button type="submit" class="w-full" disabled={pending}>
-		{#if pending}
-			<Spinner data-icon="inline-start" />
-			{m.common_saving()}
-		{:else}
-			{hasPassword ? m.password_change_action() : m.password_set_action()}
-		{/if}
-	</Button>
+	<div class="flex flex-col-reverse gap-2 sm:grid sm:grid-cols-2">
+		<Dialog.Close>
+			{#snippet child({ props })}
+				<Button variant="outline" {...props}>{m.common_cancel()}</Button>
+			{/snippet}
+		</Dialog.Close>
+		<Button type="submit" disabled={pending}>
+			{#if pending}
+				<Spinner data-icon="inline-start" />
+				{m.common_saving()}
+			{:else}
+				{hasPassword ? m.password_change_action() : m.password_set_action()}
+			{/if}
+		</Button>
+	</div>
 </form>

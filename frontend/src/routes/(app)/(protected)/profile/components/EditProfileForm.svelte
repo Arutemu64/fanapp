@@ -7,6 +7,7 @@
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -165,12 +166,19 @@
 		</ul>
 	</Field.Field>
 
-	<Button type="submit" class="w-full" disabled={pending}>
-		{#if pending}
-			<Spinner data-icon="inline-start" />
-			{m.common_saving()}
-		{:else}
-			{m.common_save()}
-		{/if}
-	</Button>
+	<div class="flex flex-col-reverse gap-2 sm:grid sm:grid-cols-2">
+		<Dialog.Close>
+			{#snippet child({ props })}
+				<Button variant="outline" {...props}>{m.common_cancel()}</Button>
+			{/snippet}
+		</Dialog.Close>
+		<Button type="submit" disabled={pending}>
+			{#if pending}
+				<Spinner data-icon="inline-start" />
+				{m.common_saving()}
+			{:else}
+				{m.common_save()}
+			{/if}
+		</Button>
+	</div>
 </form>
