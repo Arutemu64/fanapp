@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { RefreshCw, User } from '@lucide/svelte';
+	import { Dices, User } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
 	import type { CurrentUserDto, UpdateCurrentUserInput } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { suggestUsernameOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -34,6 +36,9 @@
 
 	let usernameError = $state('');
 	let formError = $state('');
+	let suggestingUsername = $state(false);
+
+	const queryClient = useQueryClient();
 
 	// Validation patterns (must match backend)
 	const USERNAME_MIN_LENGTH = 3;
@@ -73,6 +78,35 @@
 
 	function handleUsernameBlur() {
 		usernameError = validateUsername(username);
+	}
+
+	// The server generates the name: it checks the name is free, and keeps the
+	// curated word lists in one place.
+	async function suggestUsername() {
+		suggestingUsername = true;
+		formError = '';
+		const usernameBeforeRequest = username;
+		try {
+			// A new name on every tap, so never served from the cache. `always` fails
+			// at once offline instead of pausing the spinner until the network returns.
+			const suggestion = await queryClient.query({
+				...suggestUsernameOptions(),
+				staleTime: 0,
+				gcTime: 0,
+				retry: false,
+				networkMode: 'always'
+			});
+			// On slow venue wifi the field stays editable meanwhile; a name typed after
+			// the tap wins over a suggestion that arrives late.
+			if (username === usernameBeforeRequest) {
+				username = suggestion.username;
+				usernameError = '';
+			}
+		} catch (error) {
+			formError = getApiErrorDetail(error) ?? m.username_suggestion_failed();
+		} finally {
+			suggestingUsername = false;
+		}
 	}
 
 	function hasChanges(): boolean {
@@ -133,28 +167,45 @@
 			aria-label={m.avatar_another()}
 			onclick={() => (avatarSeed = createAvatarSeed())}
 		>
-			<RefreshCw aria-hidden="true" />
+			<Dices aria-hidden="true" />
 		</Button>
 	</div>
 
 	<Field.Field data-invalid={usernameError ? true : undefined}>
 		<Field.FieldLabel for="username">{m.username_label()}</Field.FieldLabel>
-		<div class="relative flex items-center">
-			<User class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-			<Input
-				id="username"
-				name="username"
-				type="text"
-				placeholder={m.username_placeholder()}
-				autocomplete="nickname"
-				autocapitalize="off"
-				spellcheck={false}
-				bind:value={username}
-				oninput={handleUsernameInput}
-				onblur={handleUsernameBlur}
-				aria-invalid={usernameError ? true : undefined}
-				class="pl-9"
-			/>
+		<div class="flex items-center gap-2">
+			<div class="relative flex flex-1 items-center">
+				<User class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+				<Input
+					id="username"
+					name="username"
+					type="text"
+					placeholder={m.username_placeholder()}
+					autocomplete="nickname"
+					autocapitalize="off"
+					spellcheck={false}
+					bind:value={username}
+					oninput={handleUsernameInput}
+					onblur={handleUsernameBlur}
+					aria-invalid={usernameError ? true : undefined}
+					class="pl-9"
+				/>
+			</div>
+			<Button
+				type="button"
+				variant="outline"
+				size="icon"
+				class="size-11 shrink-0"
+				aria-label={m.username_another()}
+				disabled={suggestingUsername}
+				onclick={suggestUsername}
+			>
+				{#if suggestingUsername}
+					<Spinner />
+				{:else}
+					<Dices aria-hidden="true" />
+				{/if}
+			</Button>
 		</div>
 		{#if usernameError}
 			<Field.FieldError>{usernameError}</Field.FieldError>

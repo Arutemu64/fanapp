@@ -1698,6 +1698,16 @@ export type UserTicketDto = {
 };
 
 /**
+ * UsernameSuggestionDTO
+ */
+export type UsernameSuggestionDto = {
+	/**
+	 * Username
+	 */
+	username: string;
+};
+
+/**
  * ValidationErrorDetail
  */
 export type ValidationErrorDetail = {
@@ -2125,6 +2135,39 @@ export type UpdateCurrentUserResponses = {
 
 export type UpdateCurrentUserResponse =
 	UpdateCurrentUserResponses[keyof UpdateCurrentUserResponses];
+
+export type SuggestUsernameData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/me/username-suggestion';
+};
+
+export type SuggestUsernameErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type SuggestUsernameError = SuggestUsernameErrors[keyof SuggestUsernameErrors];
+
+export type SuggestUsernameResponses = {
+	/**
+	 * Username suggested successfully.
+	 */
+	200: UsernameSuggestionDto;
+};
+
+export type SuggestUsernameResponse = SuggestUsernameResponses[keyof SuggestUsernameResponses];
 
 export type UpdateCurrentUserSettingsData = {
 	body: UpdateUserSettingsInput;

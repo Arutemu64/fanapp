@@ -2,8 +2,11 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 
-from fanfan.application.dto.user import CurrentUserDTO
+from fanfan.application.dto.user import CurrentUserDTO, UsernameSuggestionDTO
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
+from fanfan.application.interactors.current_user.suggest_username import (
+    SuggestUsername,
+)
 from fanfan.application.interactors.current_user.update_current_user import (
     UpdateCurrentUser,
     UpdateCurrentUserInput,
@@ -48,6 +51,23 @@ async def update_current_user(
     interactor: FromDishka[UpdateCurrentUser],
 ) -> None:
     await interactor(data)
+
+
+@profile_router.get(
+    "/username-suggestion",
+    summary="Suggest a username",
+    description="Generates a random free username for the profile editor to offer. "
+    "Nothing is saved: the name is only reserved once the user saves it, so it can "
+    "still be taken in between.",
+    responses={
+        200: {"description": "Username suggested successfully."},
+    },
+)
+@inject
+async def suggest_username(
+    interactor: FromDishka[SuggestUsername],
+) -> UsernameSuggestionDTO:
+    return await interactor()
 
 
 @profile_router.patch(

@@ -94,3 +94,7 @@ class CurrentUserDTO(UserBaseDTO):
     permissions: list[Permission]
     settings: UserSettingsDTO
     social_identities: list[UserSocialIdentityDTO]
+
+
+class UsernameSuggestionDTO(BaseModel):
+    username: str
