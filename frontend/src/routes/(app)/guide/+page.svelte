@@ -129,11 +129,14 @@
      rows that each lead somewhere. Grouped rows with a trailing indicator are the
      phone-settings shape for "drill in"
      (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables),
-     so every target is a full-width tap. Capped and centred like the profile column. -->
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
+     so every target is a full-width tap. Capped and centred like the profile column.
+     Read as a magazine: the tagline is the cover line, a step above the section heads,
+     and each head sits over three times nearer its list than the block before it, so
+     it reads as that list's title (https://practicaltypography.com/space-above-and-below.html). -->
+<div class="mx-auto flex w-full max-w-2xl flex-col gap-10">
 	<section aria-labelledby="guide-heading" class="rounded-2xl border bg-card p-5 sm:p-6">
 		<img src={logo} alt={m.app_name()} class="h-10 w-auto dark:invert" />
-		<h2 id="guide-heading" class="mt-4 text-section text-balance">
+		<h2 id="guide-heading" class="mt-4 text-headline text-balance">
 			{m.guide_tagline()}
 		</h2>
 		<p class="mt-1.5 text-body leading-relaxed text-muted-foreground">{m.guide_about()}</p>
@@ -144,7 +147,7 @@
 		</ul>
 	</section>
 
-	<section aria-labelledby="guide-important" class="flex flex-col gap-2">
+	<section aria-labelledby="guide-important" class="flex flex-col gap-3">
 		<h2 id="guide-important" class="px-1 text-section text-foreground">
 			{m.guide_important_heading()}
 		</h2>
@@ -165,7 +168,7 @@
 		</MenuGroup>
 	</section>
 
-	<section aria-labelledby="guide-activities" class="flex flex-col gap-2">
+	<section aria-labelledby="guide-activities" class="flex flex-col gap-3">
 		<h2 id="guide-activities" class="px-1 text-section text-foreground">
 			{m.guide_activities_heading()}
 		</h2>
@@ -182,7 +185,7 @@
 	</section>
 
 	<!-- Rarely needed on the day, so below the activities rather than in the hero. -->
-	<section aria-labelledby="guide-contacts" class="flex flex-col gap-2">
+	<section aria-labelledby="guide-contacts" class="flex flex-col gap-3">
 		<h2 id="guide-contacts" class="px-1 text-section text-foreground">
 			{m.guide_contacts_heading()}
 		</h2>
