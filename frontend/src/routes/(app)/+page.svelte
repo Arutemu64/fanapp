@@ -18,6 +18,7 @@
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
+	import { queryView } from '#lib/utils/queryView.js';
 	import { mergeSubscriptions, scheduleEvents } from '#lib/utils/scheduleData.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
@@ -129,9 +130,16 @@
 	// From xl only: below that the sidebar leaves too little width for a usable side
 	// pane, and even at 2:1 rather than Material's 70/30 it is only ~310px wide.
 	let twoColumns = $derived(showStage && hasSupportingContent);
-	let showStaleNotice = $derived(
-		showStage && (scheduleQuery.isRefetchError || !reachability.current)
+	// Home renders no offline or error state of its own (it falls back to the hero),
+	// so it reads only the stale flag.
+	let scheduleView = $derived(
+		queryView(scheduleQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.schedule_load_failed()
+		})
 	);
+	let showStaleNotice = $derived(showStage && scheduleView.kind === 'ready' && scheduleView.stale);
 
 	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
 	// past this (~24.8 days) overflows and fires immediately, so longer waits are
