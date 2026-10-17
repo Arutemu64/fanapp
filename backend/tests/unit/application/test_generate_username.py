@@ -30,6 +30,10 @@ def test_words_avoid_yo(words: tuple[str, ...]) -> None:
 def test_longest_pair_fits_the_username_rules() -> None:
     longest = max(RUSSIAN_ADJECTIVES, key=len) + max(RUSSIAN_NOUNS, key=len) + "99"
 
+    # Well under the 25-character limit on purpose: the quest leaderboard gives
+    # a name about 130px on a 360px phone, where each word of a 17-character
+    # name still fits its own line; longer words start breaking mid-word.
+    assert len(longest) <= 17
     assert re.fullmatch(USERNAME_PATTERN, longest)
 
 
