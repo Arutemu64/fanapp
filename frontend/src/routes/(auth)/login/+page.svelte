@@ -183,7 +183,7 @@
 	<title>{m.document_title({ title: m.login_title() })}</title>
 </svelte:head>
 
-<Card.Root class="w-full rounded-2xl p-4 sm:p-6">
+<Card.Root class="w-full p-4 sm:p-6">
 	<div class="flex flex-col gap-4">
 		{#if step !== 'options'}
 			<Button

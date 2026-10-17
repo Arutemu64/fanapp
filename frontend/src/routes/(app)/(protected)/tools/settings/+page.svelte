@@ -278,7 +278,7 @@
 		</Alert.Root>
 	{/if}
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 		<h2 class="text-section text-foreground">
 			{m.settings_festival_section()}
 		</h2>
@@ -330,7 +330,7 @@
 		</Field.FieldGroup>
 	</Card.Root>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 		<h2 class="text-section text-foreground">{m.nav_schedule()}</h2>
 
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
@@ -359,7 +359,7 @@
 		</Field.Field>
 	</Card.Root>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 		<h2 class="text-section text-foreground">{m.quest_title()}</h2>
 
 		<Field.FieldGroup class="gap-4">
