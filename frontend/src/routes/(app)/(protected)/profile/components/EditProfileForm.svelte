@@ -85,6 +85,7 @@
 	async function suggestUsername() {
 		suggestingUsername = true;
 		formError = '';
+		const usernameBeforeRequest = username;
 		try {
 			// A new name on every tap, so never served from the cache. `always` fails
 			// at once offline instead of pausing the spinner until the network returns.
@@ -95,8 +96,12 @@
 				retry: false,
 				networkMode: 'always'
 			});
-			username = suggestion.username;
-			usernameError = '';
+			// On slow venue wifi the field stays editable meanwhile; a name typed after
+			// the tap wins over a suggestion that arrives late.
+			if (username === usernameBeforeRequest) {
+				username = suggestion.username;
+				usernameError = '';
+			}
 		} catch (error) {
 			formError = getApiErrorDetail(error) ?? m.username_suggestion_failed();
 		} finally {
