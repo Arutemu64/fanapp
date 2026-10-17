@@ -8,19 +8,20 @@
 
 	import type { ListUsersData } from '#lib/api/generated/index.js';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { listUsersInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
-	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { USER_ROLES, USERS_PAGE_SIZE } from '#lib/constants/users.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { queryView } from '#lib/utils/queryView.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
@@ -58,6 +59,13 @@
 
 	let users = $derived(usersQuery.data?.pages.flatMap((usersPage) => usersPage.users) ?? []);
 	let total = $derived(usersQuery.data?.pages[0]?.total ?? 0);
+	let usersView = $derived(
+		queryView(usersQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.users_load_failed()
+		})
+	);
 	let resultsSummary = $derived(m.users_count({ count: total }));
 
 	function applyFilters(next: UserFilters) {
@@ -201,39 +209,34 @@
 		</div>
 	</div>
 
-	{#if usersQuery.data === undefined}
-		{#if usersQuery.isError}
-			<ErrorState
-				variant="inline"
-				onRetry={() => void usersQuery.refetch()}
-				error={{
-					status: 500,
-					message: getApiErrorDetail(usersQuery.error) ?? m.users_load_failed()
-				}}
-			/>
-		{:else}
+	<QueryState view={usersView}>
+		{#snippet loading()}
 			<SectionSpinner />
-		{/if}
-	{:else if users.length === 0}
-		<EmptyState
-			title={m.users_empty_title()}
-			message={hasActiveFilters ? m.users_empty_filtered() : m.users_empty()}
-		/>
-	{:else}
-		<div class={['transition-opacity', usersQuery.isPlaceholderData && 'opacity-60']}>
-			<MenuGroup class="divide-y divide-border">
-				{#each users as listedUser (listedUser.id)}
-					<UserRow user={listedUser} />
-				{/each}
-			</MenuGroup>
+		{/snippet}
 
-			{#if usersQuery.hasNextPage}
-				<LoadMoreButton
-					loading={usersQuery.isFetchingNextPage}
-					busy={usersQuery.isFetching}
-					onclick={loadMore}
+		{#snippet ready()}
+			{#if users.length === 0}
+				<EmptyState
+					title={m.users_empty_title()}
+					message={hasActiveFilters ? m.users_empty_filtered() : m.users_empty()}
 				/>
+			{:else}
+				<div class={['transition-opacity', usersQuery.isPlaceholderData && 'opacity-60']}>
+					<MenuGroup class="divide-y divide-border">
+						{#each users as listedUser (listedUser.id)}
+							<UserRow user={listedUser} />
+						{/each}
+					</MenuGroup>
+
+					{#if usersQuery.hasNextPage}
+						<LoadMoreButton
+							loading={usersQuery.isFetchingNextPage}
+							busy={usersQuery.isFetching}
+							onclick={loadMore}
+						/>
+					{/if}
+				</div>
 			{/if}
-		</div>
-	{/if}
+		{/snippet}
+	</QueryState>
 </div>

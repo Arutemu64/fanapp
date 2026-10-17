@@ -12,7 +12,6 @@
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		countUnreadNotificationsOptions,
 		countUnreadNotificationsQueryKey,
@@ -24,8 +23,8 @@
 	// submits, with its own retry bookkeeping (requestedReadIds below).
 	import { markNotificationsRead } from '#lib/api/generated/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
-	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { NOTIFICATION_PAGE_SIZE } from '#lib/constants/notifications.js';
@@ -35,6 +34,7 @@
 	import { minuteClock } from '#lib/services/minuteClock.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { queryView } from '#lib/utils/queryView.js';
 
 	import { groupByDay } from '../groupByDay.js';
 	import NotificationListItem from './NotificationListItem.svelte';
@@ -64,9 +64,13 @@
 	);
 	let dayGroups = $derived(groupByDay(notifications, minuteClock.now));
 
-	// Nothing saved yet and no way to fetch it: a calm inline state that keeps the
-	// app shell usable, not an error.
-	let offlineMiss = $derived(notificationsQuery.data === undefined && !reachability.current);
+	let notificationsView = $derived(
+		queryView(notificationsQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.notifications_load_failed()
+		})
+	);
 
 	// This page shows no push toast (the item lands in the list instead), so it
 	// announces arrivals to screen readers itself.
@@ -220,91 +224,91 @@
 	text is not reliably announced. -->
 <p class="sr-only" aria-live="polite" aria-atomic="true">{liveAnnouncement}</p>
 
-{#if offlineMiss}
-	<EmptyState title={m.notifications_offline_title()} message={m.notifications_offline_message()} />
-{:else if notificationsQuery.data === undefined}
-	{#if notificationsQuery.isError}
-		<ErrorState
-			variant="inline"
-			onRetry={() => void notificationsQuery.refetch()}
-			error={{
-				status: 500,
-				message: getApiErrorDetail(notificationsQuery.error) ?? m.notifications_load_failed()
-			}}
-		/>
-	{:else}
+<QueryState view={notificationsView}>
+	{#snippet loading()}
 		<NotificationsSkeleton />
-	{/if}
-{:else if notifications.length === 0}
-	<EmptyState
-		icon={Bell}
-		title={m.notifications_empty_title()}
-		message={m.notifications_empty_message()}
-	>
-		<Button variant="outline" href={resolve('profile/notifications')}>
-			<Settings data-icon="inline-start" />
-			{m.notifications_configure()}
-		</Button>
-	</EmptyState>
-{:else}
-	<SectionIntro>
-		<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-			<p class="text-sm text-muted-foreground">
-				{#if newCount > 0}
-					{m.notifications_new_count({ count: newCount })}
-				{:else if unreadCount === 0}
-					{m.notifications_all_read()}
-				{/if}
-			</p>
-			<div class="-me-3 flex items-center">
-				{#if showMarkAll}
-					<Button
-						variant="ghost"
-						size="sm"
-						onclick={markAllRead}
-						disabled={markAllReadMutation.isPending}
-					>
-						{m.notifications_mark_all_read()}
-					</Button>
-				{/if}
-				<Button variant="ghost" size="sm" href={resolve('profile/notifications')}>
-					<Settings data-icon="inline-start" />
-					{m.notifications_settings()}
-				</Button>
-			</div>
-		</div>
-	</SectionIntro>
+	{/snippet}
 
-	<div bind:this={listElement} class="flex flex-col gap-6">
-		{#each dayGroups as group (group.key)}
-			<section aria-labelledby="notifications-day-{group.key}">
-				<h2
-					id="notifications-day-{group.key}"
-					class="mb-2 text-sm font-semibold text-muted-foreground"
-				>
-					{group.heading}
-				</h2>
-				<ul class="flex flex-col gap-3">
-					{#each group.items as notification (notification.id)}
-						<!-- Focus target after "Показать ещё" for an item without a link. -->
-						<li
-							data-notification-id={notification.id}
-							tabindex="-1"
-							class="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						>
-							<NotificationListItem {notification} isNew={isNew(notification)} />
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/each}
-	</div>
-
-	{#if notificationsQuery.hasNextPage}
-		<LoadMoreButton
-			loading={notificationsQuery.isFetchingNextPage}
-			busy={notificationsQuery.isFetching}
-			onclick={loadMore}
+	{#snippet offline()}
+		<EmptyState
+			title={m.notifications_offline_title()}
+			message={m.notifications_offline_message()}
 		/>
-	{/if}
-{/if}
+	{/snippet}
+
+	{#snippet ready()}
+		{#if notifications.length === 0}
+			<EmptyState
+				icon={Bell}
+				title={m.notifications_empty_title()}
+				message={m.notifications_empty_message()}
+			>
+				<Button variant="outline" href={resolve('profile/notifications')}>
+					<Settings data-icon="inline-start" />
+					{m.notifications_configure()}
+				</Button>
+			</EmptyState>
+		{:else}
+			<SectionIntro>
+				<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+					<p class="text-sm text-muted-foreground">
+						{#if newCount > 0}
+							{m.notifications_new_count({ count: newCount })}
+						{:else if unreadCount === 0}
+							{m.notifications_all_read()}
+						{/if}
+					</p>
+					<div class="-me-3 flex items-center">
+						{#if showMarkAll}
+							<Button
+								variant="ghost"
+								size="sm"
+								onclick={markAllRead}
+								disabled={markAllReadMutation.isPending}
+							>
+								{m.notifications_mark_all_read()}
+							</Button>
+						{/if}
+						<Button variant="ghost" size="sm" href={resolve('profile/notifications')}>
+							<Settings data-icon="inline-start" />
+							{m.notifications_settings()}
+						</Button>
+					</div>
+				</div>
+			</SectionIntro>
+
+			<div bind:this={listElement} class="flex flex-col gap-6">
+				{#each dayGroups as group (group.key)}
+					<section aria-labelledby="notifications-day-{group.key}">
+						<h2
+							id="notifications-day-{group.key}"
+							class="mb-2 text-sm font-semibold text-muted-foreground"
+						>
+							{group.heading}
+						</h2>
+						<ul class="flex flex-col gap-3">
+							{#each group.items as notification (notification.id)}
+								<!-- Focus target after "Показать ещё" for an item without a link. -->
+								<li
+									data-notification-id={notification.id}
+									tabindex="-1"
+									class="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+								>
+									<NotificationListItem {notification} isNew={isNew(notification)} />
+								</li>
+							{/each}
+						</ul>
+					</section>
+				{/each}
+			</div>
+
+			{#if notificationsQuery.hasNextPage}
+				<LoadMoreButton
+					loading={notificationsQuery.isFetchingNextPage}
+					busy={notificationsQuery.isFetching}
+					onclick={loadMore}
+				/>
+			{/if}
+		{/if}
+	{/snippet}
+</QueryState>

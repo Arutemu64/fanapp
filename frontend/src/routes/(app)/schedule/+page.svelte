@@ -8,20 +8,21 @@
 		ScheduleEntryWithSubscription,
 		ScheduleEventWithSubscription
 	} from '#lib/types/schedule.js';
+	import type { ReadyView } from '#lib/utils/queryView.js';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		getScheduleOptions,
 		getSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { currentUserOptions } from '#lib/api/index.js';
-	import ErrorState from '#lib/components/ErrorState.svelte';
+	import QueryState from '#lib/components/QueryState.svelte';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
+	import { queryView } from '#lib/utils/queryView.js';
 	import {
 		blockTitleByEventId,
 		mergeSubscriptions,
@@ -53,9 +54,13 @@
 		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions)
 	);
 	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
-	// Nothing saved yet and no way to fetch it: a calm inline state that keeps the
-	// app shell usable, not an error.
-	let offlineMiss = $derived(scheduleQuery.data === undefined && !reachability.current);
+	let scheduleView = $derived(
+		queryView(scheduleQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.schedule_load_failed()
+		})
+	);
 
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
@@ -78,12 +83,6 @@
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
-
-	// What's on screen may be out of date: the last refetch failed, or the server
-	// is out of reach.
-	let showStaleNotice = $derived(
-		scheduleQuery.data !== undefined && (scheduleQuery.isRefetchError || !reachability.current)
-	);
 
 	// Rebuilt only when the schedule reloads, so a keystroke re-runs token
 	// comparisons instead of re-normalizing every field of every row.
@@ -194,139 +193,136 @@
 	<title>{m.document_title({ title: m.nav_schedule() })}</title>
 </svelte:head>
 
-{#if scheduleQuery.data === undefined && !offlineMiss}
-	{#if scheduleQuery.isError}
-		<ErrorState
-			variant="inline"
-			onRetry={() => void scheduleQuery.refetch()}
-			error={{
-				status: 500,
-				message: getApiErrorDetail(scheduleQuery.error) ?? m.schedule_load_failed()
-			}}
-		/>
-	{:else}
+<QueryState view={scheduleView}>
+	{#snippet loading()}
 		<ScheduleSkeleton />
-	{/if}
-{:else}
-	<div {@attach capturePageRoot} class="flex flex-col gap-4">
-		{#if showStaleNotice}
-			<StaleDataNotice
-				message={m.schedule_cached_notice()}
-				cachedAt={scheduleQuery.dataUpdatedAt}
-			/>
-		{/if}
+	{/snippet}
 
-		<!-- Controls sit straight on the page, not in a card: DESIGN "When not to" use a
+	<!-- Nothing saved yet and no way to fetch it: a calm inline state that keeps the
+	     app shell usable, and promises the programme works offline once loaded. -->
+	{#snippet offline()}
+		<div
+			class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
+		>
+			<p class="text-base font-bold text-foreground">{m.schedule_offline_title()}</p>
+			<p class="mt-1 text-sm text-muted-foreground">{m.schedule_offline_message()}</p>
+		</div>
+	{/snippet}
+
+	{#snippet ready({ stale, cachedAt }: ReadyView<unknown>)}
+		<div {@attach capturePageRoot} class="flex flex-col gap-4">
+			{#if stale}
+				<StaleDataNotice message={m.schedule_cached_notice()} {cachedAt} />
+			{/if}
+
+			<!-- Controls sit straight on the page, not in a card: DESIGN "When not to" use a
 	     card. Search plus a scope switch under it is the iOS search-field + scope-bar
 	     pattern (https://developer.apple.com/design/human-interface-guidelines/search-fields).
 	     Kept static so the schedule's block headers can be the sticky ones. -->
-		<div class="flex flex-col gap-3">
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					bind:value={searchQuery}
-					name="schedule_search"
-					aria-label={m.schedule_search_label()}
-					placeholder={m.schedule_search_placeholder()}
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-				/>
-				{#if searchQuery}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (searchQuery = '')}
-						aria-label={m.common_clear_search()}
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
-			</div>
-
-			<div class="flex items-center justify-between gap-3">
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					size="sm"
-					bind:value={getScope, setScope}
-					aria-label={m.schedule_filter_label()}
-				>
-					<ToggleGroup.Item value="all">{m.common_all()}</ToggleGroup.Item>
-					<ToggleGroup.Item value="subscribed">{m.schedule_my_subscriptions()}</ToggleGroup.Item>
-				</ToggleGroup.Root>
-
-				<!-- Always mounted so screen readers hear the list shrink and grow, but shown
-			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
-				<p
-					class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
-					aria-live="polite"
-					role="status"
-				>
-					{resultsSummary}
-				</p>
-			</div>
-		</div>
-
-		<div class="flex flex-col gap-6">
-			{#each groupedSchedule as node (node.key)}
-				{#if node.kind === 'interlude'}
-					<!-- A row above the first block (the opening) sits outside the block sections
-				     as a lighter, dashed row so it reads as an interlude, not a block card.
-				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
-					<div
-						data-event-id={node.event.id}
-						class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
-					>
-						<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
-					</div>
-				{:else}
-					{@render blockSection(node)}
-				{/if}
-			{:else}
-				<div
-					class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
-				>
-					<p class="text-base font-bold text-foreground">
-						{#if offlineMiss}
-							{m.schedule_offline_title()}
-						{:else if hasActiveFilters}
-							{m.common_nothing_found()}
-						{:else}
-							{m.schedule_empty_title()}
-						{/if}
-					</p>
-					<p class="mt-1 text-sm text-muted-foreground">
-						{#if offlineMiss}
-							{m.schedule_offline_message()}
-						{:else if hasActiveFilters}
-							{m.schedule_try_other_filters()}
-						{:else}
-							{m.schedule_empty_message()}
-						{/if}
-					</p>
-
-					<!-- No-results recovery: one tap clears every active filter. Hidden on the
-				     first-use empty state, where there's nothing to reset. -->
-					{#if hasActiveFilters}
-						<Button variant="outline" size="sm" class="mt-4" onclick={resetFilters}>
-							<X data-icon="inline-start" />
-							{m.schedule_reset_filters()}
-						</Button>
+			<div class="flex flex-col gap-3">
+				<div class="relative flex items-center">
+					<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+					<Input
+						bind:value={searchQuery}
+						name="schedule_search"
+						aria-label={m.schedule_search_label()}
+						placeholder={m.schedule_search_placeholder()}
+						autocomplete="off"
+						spellcheck={false}
+						class="pr-8 pl-9"
+					/>
+					{#if searchQuery}
+						<button
+							type="button"
+							class="absolute right-2 text-muted-foreground hover:text-foreground"
+							onclick={() => (searchQuery = '')}
+							aria-label={m.common_clear_search()}
+						>
+							<X class="size-4" />
+						</button>
 					{/if}
 				</div>
-			{/each}
-		</div>
 
-		{#if currentEvent}
-			<CurrentEventBar
-				event={currentEvent}
-				hidden={isCurrentRowOnScreen}
-				onjump={scrollToCurrentEvent}
-			/>
-		{/if}
-	</div>
-{/if}
+				<div class="flex items-center justify-between gap-3">
+					<ToggleGroup.Root
+						type="single"
+						variant="outline"
+						size="sm"
+						bind:value={getScope, setScope}
+						aria-label={m.schedule_filter_label()}
+					>
+						<ToggleGroup.Item value="all">{m.common_all()}</ToggleGroup.Item>
+						<ToggleGroup.Item value="subscribed">{m.schedule_my_subscriptions()}</ToggleGroup.Item>
+					</ToggleGroup.Root>
+
+					<!-- Always mounted so screen readers hear the list shrink and grow, but shown
+			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
+					<p
+						class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
+						aria-live="polite"
+						role="status"
+					>
+						{resultsSummary}
+					</p>
+				</div>
+			</div>
+
+			<div class="flex flex-col gap-6">
+				{#each groupedSchedule as node (node.key)}
+					{#if node.kind === 'interlude'}
+						<!-- A row above the first block (the opening) sits outside the block sections
+				     as a lighter, dashed row so it reads as an interlude, not a block card.
+				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
+						<div
+							data-event-id={node.event.id}
+							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
+						>
+							<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
+						</div>
+					{:else}
+						{@render blockSection(node)}
+					{/if}
+				{:else}
+					<div
+						class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
+					>
+						<p class="text-base font-bold text-foreground">
+							{#if hasActiveFilters}
+								{m.common_nothing_found()}
+							{:else}
+								{m.schedule_empty_title()}
+							{/if}
+						</p>
+						<p class="mt-1 text-sm text-muted-foreground">
+							{#if hasActiveFilters}
+								{m.schedule_try_other_filters()}
+							{:else}
+								{m.schedule_empty_message()}
+							{/if}
+						</p>
+
+						<!-- No-results recovery: one tap clears every active filter. Hidden on the
+				     first-use empty state, where there's nothing to reset. -->
+						{#if hasActiveFilters}
+							<Button variant="outline" size="sm" class="mt-4" onclick={resetFilters}>
+								<X data-icon="inline-start" />
+								{m.schedule_reset_filters()}
+							</Button>
+						{/if}
+					</div>
+				{/each}
+			</div>
+
+			{#if currentEvent}
+				<CurrentEventBar
+					event={currentEvent}
+					hidden={isCurrentRowOnScreen}
+					onjump={scrollToCurrentEvent}
+				/>
+			{/if}
+		</div>
+	{/snippet}
+</QueryState>
 
 <!-- A block section: sticky block header + its nomination cards. Taken as a
 	snippet so the {#each} above narrows a node to a concrete ScheduleBlockGroup

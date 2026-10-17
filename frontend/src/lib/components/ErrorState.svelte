@@ -17,17 +17,22 @@
 	// rendering error. Prefer it to `page.error`: every failing boundary — the
 	// navbar's bell included — writes its error there, so a later failure
 	// elsewhere could replace this page's message and «Код ошибки».
-	// A page showing a failed query passes one too, status included: the page
-	// itself rendered fine, so `page.status` is a 200. It also passes `onRetry`,
-	// which refetches that query instead of reloading the whole app.
+	// A page showing a failed query passes one too (via QueryState), with no
+	// status: the client rethrows the API body without it, and `page.status` is
+	// the page's own 200, so no «Ошибка 500» label is made up for it. It also
+	// passes `onRetry`, which refetches that query instead of reloading the app.
 	let {
 		variant = 'fullscreen',
 		error,
 		onRetry
-	}: { variant?: Variant; error?: App.Error; onRetry?: () => void } = $props();
+	}: {
+		variant?: Variant;
+		error?: Omit<App.Error, 'status'> & { status?: number };
+		onRetry?: () => void;
+	} = $props();
 
 	let shownError = $derived(error ?? page.error);
-	let status = $derived(error?.status ?? page.status);
+	let status = $derived(error === undefined ? page.status : error.status);
 	let errorMessage = $derived(shownError?.message);
 	let errorId = $derived(shownError?.errorId);
 
@@ -37,6 +42,9 @@
 	let online = $derived(reachability.current);
 	// A genuine 403/404 is a real server answer — never reframe it as offline.
 	let offline = $derived(!online && status !== 403 && status !== 404);
+	let canRetry = $derived(
+		offline || onRetry !== undefined || (status !== undefined && status >= 500)
+	);
 
 	// Within an offline state, tell the two causes apart so we never blame the
 	// user's internet for a server outage. `navigator.onLine === false` is a
@@ -98,9 +106,15 @@
 				<StatusIcon class="size-8" />
 			</div>
 
-			<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-				{offline ? m.error_state_offline_title() : m.error_state_status_title({ status })}
-			</span>
+			{#if offline}
+				<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+					{m.error_state_offline_title()}
+				</span>
+			{:else if status !== undefined}
+				<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+					{m.error_state_status_title({ status })}
+				</span>
+			{/if}
 
 			<h2 class="mb-2 text-headline text-foreground">
 				{title}
@@ -119,14 +133,14 @@
 			{/if}
 
 			<div class="flex w-full flex-col gap-2">
-				{#if offline || status >= 500}
+				{#if canRetry}
 					<Button class="w-full" onclick={handleRetry}>
 						<RotateCw data-icon="inline-start" />
 						{m.common_try_again()}
 					</Button>
 				{/if}
 
-				<Button href="/" variant={offline || status >= 500 ? 'outline' : 'default'} class="w-full">
+				<Button href="/" variant={canRetry ? 'outline' : 'default'} class="w-full">
 					<House data-icon="inline-start" />
 					{m.common_to_home()}
 				</Button>

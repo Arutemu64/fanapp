@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
-	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { listQuestAwardsInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
-	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import QueryState from '#lib/components/QueryState.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { queryView } from '#lib/utils/queryView.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import QuestAwardItem from './QuestAwardItem.svelte';
@@ -31,6 +32,13 @@
 	}));
 
 	let awards = $derived(awardsQuery.data?.pages.flatMap((page) => page.awards) ?? []);
+	let awardsView = $derived(
+		queryView(awardsQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.quest_tool_history_failed()
+		})
+	);
 
 	async function loadMore() {
 		const result = await awardsQuery.fetchNextPage();
@@ -40,35 +48,30 @@
 	}
 </script>
 
-{#if awardsQuery.data === undefined}
-	{#if awardsQuery.isError}
-		<ErrorState
-			variant="inline"
-			onRetry={() => void awardsQuery.refetch()}
-			error={{
-				status: 500,
-				message: getApiErrorDetail(awardsQuery.error) ?? m.quest_tool_history_failed()
-			}}
-		/>
-	{:else}
+<QueryState view={awardsView}>
+	{#snippet loading()}
 		<SectionSpinner />
-	{/if}
-{:else if awards.length === 0}
-	<EmptyState message={m.quest_tool_history_empty()} />
-{:else}
-	<Card.Root class="w-full max-w-none gap-0 overflow-hidden rounded-2xl p-0">
-		<ul class="divide-y divide-border">
-			{#each awards as award (award.id)}
-				<QuestAwardItem {award} {showAwarder} />
-			{/each}
-		</ul>
-	</Card.Root>
+	{/snippet}
 
-	{#if awardsQuery.hasNextPage}
-		<LoadMoreButton
-			loading={awardsQuery.isFetchingNextPage}
-			busy={awardsQuery.isFetching}
-			onclick={loadMore}
-		/>
-	{/if}
-{/if}
+	{#snippet ready()}
+		{#if awards.length === 0}
+			<EmptyState message={m.quest_tool_history_empty()} />
+		{:else}
+			<Card.Root class="w-full max-w-none gap-0 overflow-hidden rounded-2xl p-0">
+				<ul class="divide-y divide-border">
+					{#each awards as award (award.id)}
+						<QuestAwardItem {award} {showAwarder} />
+					{/each}
+				</ul>
+			</Card.Root>
+
+			{#if awardsQuery.hasNextPage}
+				<LoadMoreButton
+					loading={awardsQuery.isFetchingNextPage}
+					busy={awardsQuery.isFetching}
+					onclick={loadMore}
+				/>
+			{/if}
+		{/if}
+	{/snippet}
+</QueryState>
