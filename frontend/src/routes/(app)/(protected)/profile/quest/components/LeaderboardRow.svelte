@@ -10,13 +10,28 @@
 	}
 
 	let { entry, isOwn }: Props = $props();
+
+	const MEDAL_FILLS: Partial<Record<number, string>> = {
+		1: 'bg-medal-gold',
+		2: 'bg-medal-silver',
+		3: 'bg-medal-bronze'
+	};
+	let medalFill = $derived(MEDAL_FILLS[entry.rank]);
 </script>
 
 <li
 	class={['flex items-center gap-3 px-3 py-2.5 sm:px-4', isOwn && 'bg-primary/10']}
 	aria-current={isOwn ? 'true' : undefined}
 >
-	<span class="w-7 shrink-0 text-right text-sm font-semibold text-muted-foreground tabular-nums">
+	<!-- min-w, not a fixed size: a four-digit rank still fits the pill. -->
+	<span
+		class={[
+			'inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1 text-sm font-semibold tabular-nums',
+			medalFill
+				? [medalFill, 'text-medal-foreground ring-1 ring-foreground/10 ring-inset']
+				: 'text-muted-foreground'
+		]}
+	>
 		{entry.rank}
 	</span>
 	<UserAvatar seed={entry.player.avatar_seed} class="size-8" />

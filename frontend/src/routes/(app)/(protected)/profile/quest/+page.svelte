@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
+	import { on } from 'svelte/events';
 
 	import type { GetQuestOutput } from '#lib/api/generated/index.js';
 	import type { ReadyView } from '#lib/utils/queryView.js';
@@ -43,16 +44,43 @@
 			errorMessage: m.quest_load_failed()
 		})
 	);
-	let summary = $derived.by(() => {
-		if (!quest) {
-			return '';
+
+	// A player holds the code up to a volunteer and waits; a dimming screen makes
+	// the scan fail. The browser drops the lock whenever the page is hidden, so it
+	// is re-requested on return. Refusals (power saving, no support) just leave the
+	// screen on its usual timeout.
+	// https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
+	function keepScreenAwake() {
+		if (!('wakeLock' in navigator)) {
+			return;
 		}
-		// No place until the first points: there is nothing to rank yet.
-		if (quest.rank === null) {
-			return m.quest_points({ count: quest.points });
+		let sentinel: WakeLockSentinel | null = null;
+		let released = false;
+
+		async function request() {
+			if (document.visibilityState !== 'visible') {
+				return;
+			}
+			try {
+				const lock = await navigator.wakeLock.request('screen');
+				if (released) {
+					void lock.release();
+					return;
+				}
+				sentinel = lock;
+			} catch {
+				// Refused: nothing to undo.
+			}
 		}
-		return `${m.quest_points({ count: quest.points })} · ${m.quest_rank({ rank: quest.rank })}`;
-	});
+
+		void request();
+		const stopListening = on(document, 'visibilitychange', () => void request());
+		return () => {
+			released = true;
+			stopListening();
+			void sentinel?.release();
+		};
+	}
 </script>
 
 <svelte:head>
@@ -61,14 +89,12 @@
 
 <SectionIntro description={m.quest_intro()} />
 
-{#if summary}
-	<Card.Root class="w-full max-w-none items-center rounded-2xl p-4 text-center sm:p-6">
-		<p class="text-headline text-foreground">{summary}</p>
-	</Card.Root>
-{/if}
-
 {#if user}
-	<Card.Root class="w-full max-w-none items-center gap-3 rounded-2xl p-4 text-center sm:p-6">
+	<!-- First on the page: showing the code is what a player opens it for. -->
+	<Card.Root
+		class="w-full max-w-none items-center gap-3 rounded-2xl p-4 text-center sm:p-6"
+		{@attach keepScreenAwake}
+	>
 		<h2 class="text-section text-foreground">{m.quest_code_title()}</h2>
 		<!-- Large and edge-to-edge on a phone: the volunteer's camera reads it from
 		     arm's length, often in poor hall lighting. -->
@@ -78,6 +104,24 @@
 			class="w-full max-w-64 rounded-lg"
 		/>
 		<p class="text-sm text-muted-foreground">{m.quest_code_hint()}</p>
+	</Card.Root>
+{/if}
+
+{#if quest}
+	<Card.Root class="w-full max-w-none rounded-2xl p-4 sm:p-6">
+		<dl class="grid auto-cols-fr grid-flow-col gap-4 text-center">
+			<div>
+				<dt class="text-sm text-muted-foreground">{m.quest_summary_points()}</dt>
+				<dd class="text-headline text-foreground tabular-nums">{quest.points}</dd>
+			</div>
+			<!-- No place until the first points: there is nothing to rank yet. -->
+			{#if quest.rank !== null}
+				<div>
+					<dt class="text-sm text-muted-foreground">{m.quest_summary_rank()}</dt>
+					<dd class="text-headline text-foreground tabular-nums">{quest.rank}</dd>
+				</div>
+			{/if}
+		</dl>
 	</Card.Root>
 {/if}
 

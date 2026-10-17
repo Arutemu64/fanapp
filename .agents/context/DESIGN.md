@@ -31,6 +31,7 @@ A watermelon duo over a cool gray neutral field: warm crimson-pink for action an
 
 ### Tertiary — semantic status
 - **Success / Warning / Info** are semantic tokens (`--success`, `--warning`, `--info` in `app.css`), not raw palette classes. Success is festival green (from the rind), warning is key-art amber (offline/stale/caution), info is the cyan-teal secondary hue (DESIGN's "occasional informational moment"). Error reuses the existing `--destructive`. Each token doubles as a readable text colour on its own `/10` tint and as a solid fill with its `-foreground`, and flips value between light and dark, so call sites use `text-success` / `bg-warning/10` / `border-info/30` with **no `dark:` override**. Used only as semantic accents on state — success (voted, live, linked), warning (offline/stale/destructive-confirm), info (sync/status) — never as decoration.
+- **Medal** tokens (`--medal-gold` / `--medal-silver` / `--medal-bronze`, text in `--medal-foreground`) fill the quest leaderboard's top-three rank pills and nothing else. They are fills, not text colours, and stay the same in both themes, because the metal should look like metal on either surface. A podium place is the state they mark.
 
 ### Neutral
 - **Ink** (`#111827`, `gray-900` / white in dark): Headings and high-emphasis text.

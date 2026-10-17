@@ -17,7 +17,8 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.getByRole('link', { name: /Квест/ })).toContainText('35 баллов');
 
 		await page.getByRole('link', { name: /Квест/ }).click();
-		await expect(page.getByText('35 баллов · 23-е место')).toBeVisible();
+		await expect(page.locator('dl')).toContainText(/Баллы\s*35/);
+		await expect(page.locator('dl')).toContainText(/Место\s*23/);
 		await expect(page.getByRole('img', { name: 'QR-код игрока @test_visitor' })).toBeVisible();
 		// The top ten, then the player's own row below the gap.
 		await expect(page.getByRole('listitem')).toHaveCount(11);
@@ -60,6 +61,14 @@ test.describe('quest', { tag: '@critical' }, () => {
 
 		await expect(page.getByText('@kitsune_mika: +15 баллов')).toBeVisible();
 		expect(awarded).toMatchObject({ user_id: player.id, amount: 15, message: 'Викторина' });
+
+		// Back at the picker with focus on the scan button, and the next player starts
+		// from the same award: a station hands out one task over and over.
+		await expect(page.getByRole('button', { name: 'Сканировать код игрока' })).toBeFocused();
+		await page.getByLabel('Или найди по имени пользователя').fill('kits');
+		await page.getByRole('button', { name: /@kitsune_mika/ }).click();
+		await expect(page.getByLabel('Баллы')).toHaveValue('15');
+		await expect(page.getByLabel('За что')).toHaveValue('Викторина');
 	});
 
 	test('an amount above the cap is refused before sending', async ({ page, api }) => {
@@ -78,6 +87,7 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await page.getByRole('button', { name: 'Начислить' }).click();
 
 		await expect(page.getByText('Введи целое число от 1 до 100')).toBeVisible();
+		await expect(page.getByLabel('Баллы')).toBeFocused();
 		expect(api.countCalls('POST /quest/awards')).toBe(0);
 	});
 });

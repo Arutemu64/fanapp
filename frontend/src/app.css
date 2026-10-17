@@ -163,6 +163,10 @@
 	--color-warning-foreground: var(--warning-foreground);
 	--color-info: var(--info);
 	--color-info-foreground: var(--info-foreground);
+	--color-medal-gold: var(--medal-gold);
+	--color-medal-silver: var(--medal-silver);
+	--color-medal-bronze: var(--medal-bronze);
+	--color-medal-foreground: var(--medal-foreground);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent: var(--accent);
 	--color-muted-foreground: var(--muted-foreground);
@@ -270,6 +274,16 @@
 	--warning-foreground: oklch(0.985 0 0);
 	--info: oklch(0.52 0.09 218);
 	--info-foreground: oklch(0.985 0 0);
+	/*
+	 * Leaderboard podium fills (quest top three). Fills only, always under
+	 * --medal-foreground, so .dark keeps them: metal reads as metal on either
+	 * surface. Dark text on each clears AA with room (gold 10.7:1, silver 11.3:1,
+	 * bronze 7.5:1); the fill itself is decoration, since the digit carries the rank.
+	 */
+	--medal-gold: #f2c230;
+	--medal-silver: #c9ced6;
+	--medal-bronze: #d99a5b;
+	--medal-foreground: #171717;
 	--border: oklch(0.922 0 0);
 	--input: oklch(0.922 0 0);
 	/*

@@ -23,12 +23,29 @@
 	interface Props {
 		player: QuestPlayerDto;
 		maxAward: number;
+		/** Owned by the page so a station's next player starts from the same award. */
+		amount: string;
+		message: string;
 		onDone: () => void;
 	}
 
-	let { player, maxAward, onDone }: Props = $props();
+	let { player, maxAward, amount = $bindable(), message = $bindable(), onDone }: Props = $props();
 
 	const MESSAGE_MAX_LENGTH = 200;
+	const AMOUNT_PRESETS = [5, 10, 20, 50];
+	const WHOLE_NUMBER = /^\d+$/;
+
+	let presets = $derived(AMOUNT_PRESETS.filter((preset) => preset <= maxAward));
+
+	let amountInput = $state<HTMLInputElement | null>(null);
+	let messageInput = $state<HTMLInputElement | null>(null);
+
+	// The picker that held focus is gone; land on the player so a screen reader
+	// hears who the form is for. The heading, not the amount field, so a phone
+	// doesn't throw up its keyboard over the presets.
+	function focusOnMount(node: HTMLElement) {
+		node.focus();
+	}
 
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
@@ -43,15 +60,24 @@
 	// player twice (docs/adr/0034).
 	let awardId = uuidv7();
 
-	let amount = $state<number | undefined>(undefined);
-	let message = $state('');
 	let amountError = $state('');
 	let messageError = $state('');
 	let submitError = $state('');
 
+	function parseAmount(): number | null {
+		const trimmed = amount.trim();
+		if (!WHOLE_NUMBER.test(trimmed)) {
+			return null;
+		}
+		const value = Number(trimmed);
+		if (value < 1 || value > maxAward) {
+			return null;
+		}
+		return value;
+	}
+
 	function validateAmount() {
-		const valid =
-			amount !== undefined && Number.isInteger(amount) && amount >= 1 && amount <= maxAward;
+		const valid = parseAmount() !== null;
 		amountError = valid ? '' : m.quest_tool_validation_amount({ max: maxAward });
 		return valid;
 	}
@@ -75,6 +101,19 @@
 		}
 	}
 
+	function pickPreset(preset: number) {
+		amount = String(preset);
+		handleAmountInput();
+	}
+
+	function focusFirstError() {
+		if (amountError) {
+			amountInput?.focus();
+		} else if (messageError) {
+			messageInput?.focus();
+		}
+	}
+
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
@@ -82,10 +121,11 @@
 		submitError = '';
 		const isAmountValid = validateAmount();
 		const isMessageValid = validateMessage();
-		if (!isAmountValid || !isMessageValid || amount === undefined) {
+		const awardedAmount = parseAmount();
+		if (!isAmountValid || !isMessageValid || awardedAmount === null) {
+			focusFirstError();
 			return;
 		}
-		const awardedAmount = amount;
 
 		awardMutation.mutate(
 			{
@@ -111,6 +151,7 @@
 					amountError = getApiFieldError(error, 'amount') ?? '';
 					messageError = getApiFieldError(error, 'message') ?? '';
 					if (amountError || messageError) {
+						focusFirstError();
 						return;
 					}
 					// An earlier press went through but its response was lost, and the
@@ -126,13 +167,19 @@
 	}
 </script>
 
-<!-- novalidate: the browser's own bubble for min/max would pre-empt the Russian
-     field error with English text; validateAmount covers the same bounds. -->
+<!-- novalidate: a browser bubble would pre-empt the Russian field errors with
+     English text; validateAmount and validateMessage own every rule. -->
 <form novalidate class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
 	<div class="flex items-center gap-3">
 		<UserAvatar seed={player.avatar_seed} class="size-12" />
 		<div class="min-w-0 flex-1">
-			<p class="truncate text-base font-semibold text-foreground">@{player.username}</p>
+			<h2
+				{@attach focusOnMount}
+				tabindex="-1"
+				class="truncate text-base font-semibold text-foreground"
+			>
+				@{player.username}
+			</h2>
 			<p class="text-sm text-muted-foreground">{m.quest_points({ count: player.points })}</p>
 		</div>
 		<Button type="button" variant="outline" size="sm" onclick={onDone}>
@@ -150,32 +197,52 @@
 	<Field.FieldGroup class="gap-4">
 		<Field.Field data-invalid={amountError ? true : undefined}>
 			<Field.FieldLabel for="quest-amount">{m.quest_tool_amount_label()}</Field.FieldLabel>
+			<!-- Text, not type="number": a scroll wheel or arrow key would quietly change
+			     the points, and the native number field gives no feedback on bad input.
+			     https://design-system.service.gov.uk/components/text-input/ -->
 			<Input
+				bind:ref={amountInput}
 				id="quest-amount"
 				name="amount"
-				type="number"
-				min="1"
-				max={maxAward}
-				step="1"
 				inputmode="numeric"
 				autocomplete="off"
 				bind:value={amount}
 				disabled={awardMutation.isPending}
 				oninput={handleAmountInput}
 				aria-invalid={amountError ? true : undefined}
+				aria-describedby={amountError ? 'quest-amount-error' : 'quest-amount-hint'}
 			/>
+			{#if presets.length > 0}
+				<div class="flex flex-wrap gap-2" role="group" aria-label={m.quest_tool_amount_presets()}>
+					{#each presets as preset (preset)}
+						{const selected = $derived(amount.trim() === String(preset))}
+						<Button
+							type="button"
+							variant={selected ? 'default' : 'outline'}
+							size="sm"
+							class="min-w-11 tabular-nums"
+							aria-pressed={selected}
+							disabled={awardMutation.isPending}
+							onclick={() => pickPreset(preset)}
+						>
+							{preset}
+						</Button>
+					{/each}
+				</div>
+			{/if}
 			{#if amountError}
-				<Field.FieldError>{amountError}</Field.FieldError>
+				<Field.FieldError id="quest-amount-error">{amountError}</Field.FieldError>
 			{:else}
-				<Field.FieldDescription
-					>{m.quest_tool_amount_hint({ max: maxAward })}</Field.FieldDescription
-				>
+				<Field.FieldDescription id="quest-amount-hint">
+					{m.quest_tool_amount_hint({ max: maxAward })}
+				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
 
 		<Field.Field data-invalid={messageError ? true : undefined}>
 			<Field.FieldLabel for="quest-message">{m.quest_tool_message_label()}</Field.FieldLabel>
 			<Input
+				bind:ref={messageInput}
 				id="quest-message"
 				name="message"
 				maxlength={MESSAGE_MAX_LENGTH}
@@ -185,11 +252,14 @@
 				disabled={awardMutation.isPending}
 				oninput={handleMessageInput}
 				aria-invalid={messageError ? true : undefined}
+				aria-describedby={messageError ? 'quest-message-error' : 'quest-message-hint'}
 			/>
 			{#if messageError}
-				<Field.FieldError>{messageError}</Field.FieldError>
+				<Field.FieldError id="quest-message-error">{messageError}</Field.FieldError>
 			{:else}
-				<Field.FieldDescription>{m.quest_tool_message_hint()}</Field.FieldDescription>
+				<Field.FieldDescription id="quest-message-hint">
+					{m.quest_tool_message_hint()}
+				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
 	</Field.FieldGroup>
