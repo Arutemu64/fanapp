@@ -1,8 +1,25 @@
 import type { Page } from '@playwright/test';
 
-import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
+import type {
+	CaptchaChallengeDto,
+	OAuthProvidersOutput
+} from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, test } from '../fixtures';
+
+// A real ALTCHA challenge at the API's own difficulty. The browser never checks
+// the signature (only the API does), and with no expiresAt it never goes stale.
+const CAPTCHA_CHALLENGE = {
+	parameters: {
+		algorithm: 'PBKDF2/SHA-256',
+		cost: 5000,
+		keyLength: 32,
+		keyPrefix: '00',
+		nonce: '11117ad420a68f3dc620fbe2c6e49b54',
+		salt: 'ca7bbb00be942a730b9832a8de58be80'
+	},
+	signature: '68110f326f4f458e02832b9d29844ae1ad903b3e0e5e37175e4b1d728d9575df'
+};
 
 async function openEmailStep(page: Page) {
 	await page.goto('/login');
@@ -44,6 +61,34 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await page.goBack();
 		await expect(page).toHaveURL('/login');
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
+	});
+
+	test('solves the captcha in the background and sends its proof with the request', async ({
+		page,
+		api
+	}) => {
+		let sentToken: unknown;
+		api.use({
+			'GET /auth/captcha-challenge': json<CaptchaChallengeDto>({ challenge: CAPTCHA_CHALLENGE }),
+			'POST /auth/request-login-code': (route) => {
+				sentToken = (route.request().postDataJSON() as { captcha_token: unknown }).captcha_token;
+				return json(null);
+			}
+		});
+		const email = await openEmailStep(page);
+		await email.fill('ann@example.com');
+		await email.press('Enter');
+		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
+
+		// The token is the ALTCHA payload: the challenge as issued plus a solution
+		// whose derived key carries the required prefix.
+		expect(typeof sentToken).toBe('string');
+		const payload = JSON.parse(atob(sentToken as string)) as {
+			challenge: unknown;
+			solution: { counter: number; derivedKey: string };
+		};
+		expect(payload.challenge).toEqual(CAPTCHA_CHALLENGE);
+		expect(payload.solution.derivedKey).toMatch(/^00[0-9a-f]{62}$/);
 	});
 
 	test('the on-screen back returns focus to the control that opened the step', async ({ page }) => {

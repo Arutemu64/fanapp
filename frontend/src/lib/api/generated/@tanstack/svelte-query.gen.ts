@@ -25,6 +25,7 @@ import {
 	drawVotingContestWinner,
 	findQuestPlayers,
 	generateTickets,
+	getCaptchaChallenge,
 	getCurrentUser,
 	getPublicConfig,
 	getQuest,
@@ -132,6 +133,9 @@ import type {
 	GenerateTicketsData,
 	GenerateTicketsError,
 	GenerateTicketsResponse,
+	GetCaptchaChallengeData,
+	GetCaptchaChallengeError,
+	GetCaptchaChallengeResponse,
 	GetCurrentUserData,
 	GetCurrentUserError,
 	GetCurrentUserResponse,
@@ -429,6 +433,33 @@ export const confirmEmailCodeMutation = (
 	};
 	return mutationOptions;
 };
+
+export const getCaptchaChallengeQueryKey = (options?: Options<GetCaptchaChallengeData>) =>
+	createQueryKey('getCaptchaChallenge', options);
+
+/**
+ * Get a captcha challenge
+ *
+ * Issues a single-use ALTCHA proof-of-work challenge for the login-code request. The client solves it and sends the result as `captcha_token`. `challenge` is null when captcha is disabled; send no token then.
+ */
+export const getCaptchaChallengeOptions = (options?: Options<GetCaptchaChallengeData>) =>
+	queryOptions<
+		GetCaptchaChallengeResponse,
+		GetCaptchaChallengeError,
+		GetCaptchaChallengeResponse,
+		ReturnType<typeof getCaptchaChallengeQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await getCaptchaChallenge({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: getCaptchaChallengeQueryKey(options)
+	});
 
 /**
  * Request email login code

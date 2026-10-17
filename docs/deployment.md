@@ -15,9 +15,8 @@ repository and publish images from your fork instead.
 Two things make them deployment-specific. The frontend is a static SPA, so its
 `PUBLIC_*` values are inlined into the bundle at build time (see
 [frontend.md](frontend.md)) from this repository's Actions variables:
-`PUBLIC_VAPID_KEY` must match the private VAPID PEM held by *our* backend,
-`PUBLIC_SMARTCAPTCHA_CLIENT_KEY` is a Yandex sitekey bound to our account and
-domains, and `PUBLIC_SENTRY_DSN` points at our error-reporting project. And both
+`PUBLIC_VAPID_KEY` must match the private VAPID PEM held by *our* backend, and
+`PUBLIC_SENTRY_DSN` points at our error-reporting project. And both
 images ship the festival branding, which the [README's license
 section](../README.md#license) excludes from the MIT grant.
 
@@ -31,9 +30,8 @@ From a fork, five things need to change:
    respect (maskable safe-zone padding, the transparent push badge, the
    `dark:invert` logo).
 2. **Actions variables.** Set your own `PUBLIC_VAPID_KEY` (the public half of the
-   keypair `just bootstrap` generates into `secrets/`), plus
-   `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` and the `PUBLIC_SENTRY_*` values if you use
-   those integrations. Leave a variable unset to disable its feature. Set
+   keypair `just bootstrap` generates into `secrets/`), plus the
+   `PUBLIC_SENTRY_*` values if you use Sentry. Leave a variable unset to disable its feature. Set
    `PUBLIC_SITE_URL` to your public origin (no trailing slash) so the social
    share preview's `og:image`/`og:url` are absolute — Telegram and other
    crawlers drop relative image URLs (see [frontend.md](frontend.md) §2). Left

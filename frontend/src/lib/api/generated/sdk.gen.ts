@@ -60,6 +60,9 @@ import type {
 	GenerateTicketsData,
 	GenerateTicketsErrors,
 	GenerateTicketsResponses,
+	GetCaptchaChallengeData,
+	GetCaptchaChallengeErrors,
+	GetCaptchaChallengeResponses,
 	GetCurrentUserData,
 	GetCurrentUserErrors,
 	GetCurrentUserResponses,
@@ -314,6 +317,20 @@ export const confirmEmailCode = <ThrowOnError extends boolean = false>(
 			...options.headers
 		}
 	});
+
+/**
+ * Get a captcha challenge
+ *
+ * Issues a single-use ALTCHA proof-of-work challenge for the login-code request. The client solves it and sends the result as `captcha_token`. `challenge` is null when captcha is disabled; send no token then.
+ */
+export const getCaptchaChallenge = <ThrowOnError extends boolean = false>(
+	options?: Options<GetCaptchaChallengeData, ThrowOnError>
+): RequestResult<GetCaptchaChallengeResponses, GetCaptchaChallengeErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		GetCaptchaChallengeResponses,
+		GetCaptchaChallengeErrors,
+		ThrowOnError
+	>({ url: '/auth/captcha-challenge', ...options });
 
 /**
  * Request email login code

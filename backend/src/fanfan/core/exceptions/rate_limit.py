@@ -41,3 +41,7 @@ class TooManyOtpAttempts(TooManyAttempts):
 
 class TooManyLoginAttempts(TooManyAttempts):
     code = "TOO_MANY_LOGIN_ATTEMPTS"
+
+
+class TooManyLoginCodeRequests(TooManyAttempts):
+    code = "TOO_MANY_LOGIN_CODE_REQUESTS"

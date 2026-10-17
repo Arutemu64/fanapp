@@ -108,6 +108,18 @@ export type BodySetUserRole = {
 };
 
 /**
+ * CaptchaChallengeDTO
+ */
+export type CaptchaChallengeDto = {
+	/**
+	 * Challenge
+	 */
+	challenge: {
+		[key: string]: unknown;
+	} | null;
+};
+
+/**
  * ChangeEmailInput
  */
 export type ChangeEmailInput = {
@@ -344,6 +356,7 @@ export type ErrorMessage = {
 		| 'TICKET_REVOKED'
 		| 'TOO_MANY_ATTEMPTS'
 		| 'TOO_MANY_LOGIN_ATTEMPTS'
+		| 'TOO_MANY_LOGIN_CODE_REQUESTS'
 		| 'TOO_MANY_OTP_ATTEMPTS'
 		| 'USERNAME_ALREADY_TAKEN'
 		| 'USERNAME_PROFANITY'
@@ -1074,9 +1087,9 @@ export type QuestPlayerDto = {
 };
 
 /**
- * RequestLoginCodeInput
+ * RequestLoginCodeBody
  */
-export type RequestLoginCodeInput = {
+export type RequestLoginCodeBody = {
 	/**
 	 * Email
 	 */
@@ -1866,8 +1879,34 @@ export type ConfirmEmailCodeResponses = {
 
 export type ConfirmEmailCodeResponse = ConfirmEmailCodeResponses[keyof ConfirmEmailCodeResponses];
 
+export type GetCaptchaChallengeData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/auth/captcha-challenge';
+};
+
+export type GetCaptchaChallengeErrors = {
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GetCaptchaChallengeError = GetCaptchaChallengeErrors[keyof GetCaptchaChallengeErrors];
+
+export type GetCaptchaChallengeResponses = {
+	/**
+	 * A challenge, or null when captcha is disabled.
+	 */
+	200: CaptchaChallengeDto;
+};
+
+export type GetCaptchaChallengeResponse =
+	GetCaptchaChallengeResponses[keyof GetCaptchaChallengeResponses];
+
 export type RequestLoginCodeData = {
-	body: RequestLoginCodeInput;
+	body: RequestLoginCodeBody;
 	path?: never;
 	query?: never;
 	url: '/auth/request-login-code';

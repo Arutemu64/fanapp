@@ -26,10 +26,10 @@ keep a server running in a second terminal and Playwright reuses it instead of
 rebuilding (`reuseExistingServer` is on outside CI). Restart it after you change
 app code, or the tests run against the stale build. Playwright applies
 `webServer.env` only to a server it starts itself, so this command repeats those
-overrides; without them the captcha blocks login and the diagnostics test fails:
+overrides; without them the diagnostics test fails:
 
 ```sh
-cd frontend && PUBLIC_SMARTCAPTCHA_CLIENT_KEY= PUBLIC_SENTRY_DSN= \
+cd frontend && PUBLIC_SENTRY_DSN= \
 	APP_VERSION=1.0.0 APP_BUILD=0123456789abcdef0123456789abcdef01234567 \
 	pnpm build && pnpm preview --port 4173 --strictPort
 ```
@@ -116,10 +116,12 @@ for the closed/open, offline and SSE patterns respectively.
 - An endpoint nobody mocked returns a **loud 404** and lands in `api.unmatched`.
   The `api` fixture fails the test at teardown if it isn't empty, so add the
   missing route; specs don't assert it themselves.
-- The build runs with **SmartCaptcha and Sentry off** (`webServer.env` in
-  `playwright.config.ts`), whatever CI's repository variables or your `.env` set:
-  the captcha widget refuses `127.0.0.1`, and Sentry's sampled traces would post to
-  an `/api/…/envelope/` path the mock records as unmatched.
+- The build runs with **Sentry off** (`webServer.env` in `playwright.config.ts`),
+  whatever CI's repository variables or your `.env` set: its sampled traces would
+  post to an `/api/…/envelope/` path the mock records as unmatched.
+- The login captcha is off too, because the default mock answers
+  `GET /auth/captcha-challenge` with `{ challenge: null }` — the same answer the
+  real API gives when no `ALTCHA__HMAC_KEY` is set.
 - **Never inline a large payload in a spec** — put reusable fixtures in `mocks/`.
 - **Camera**: Chromium plays a file in `media/` as the camera (`scanner.spec.ts`).
   Encode a frame as a 4:2:0 MJPEG (`ffmpeg -i frame.png -frames:v 1 -pix_fmt yuvj420p -f mjpeg out.mjpeg`);

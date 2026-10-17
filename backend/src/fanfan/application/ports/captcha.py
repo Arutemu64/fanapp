@@ -1,18 +1,29 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 
 class CaptchaVerifier(Protocol):
-    """Verifies a captcha token solved by the user before a sensitive action.
+    """Issues captcha challenges and verifies their solutions before a sensitive
+    action.
 
-    Implementations either call an external captcha service (e.g. Yandex
-    SmartCaptcha) or accept everything when captcha is disabled. Keeping this as a
-    port lets the application layer stay unaware of which one is wired in.
+    Implementations either run a real captcha (ALTCHA proof-of-work) or accept
+    everything when captcha is disabled. Keeping this as a port lets the
+    application layer stay unaware of which one is wired in.
     """
+
+    async def issue_challenge(self) -> dict[str, Any] | None:
+        """Return a fresh challenge for the client to solve, or ``None`` when
+        captcha is disabled and the client should send no token at all.
+
+        The challenge is opaque to the application: the client hands it to the
+        provider's solver unchanged.
+        """
+        ...
 
     async def verify(self, token: str | None) -> None:
         """Validate a captcha ``token``.
 
         Raises CaptchaVerificationFailed when the token is missing, malformed,
-        or rejected by the captcha service. Returns ``None`` on success.
+        expired, already spent, or otherwise rejected. Returns ``None`` on
+        success.
         """
         ...

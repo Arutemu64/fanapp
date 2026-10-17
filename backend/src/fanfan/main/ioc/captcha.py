@@ -1,14 +1,8 @@
-from collections.abc import AsyncIterable
-
-import httpx2
 from dishka import Provider, Scope, provide
+from redis.asyncio import Redis
 
-from fanfan.adapters.captcha.config import SmartCaptchaConfig
-from fanfan.adapters.captcha.yandex import (
-    VALIDATE_TIMEOUT,
-    NoOpCaptchaVerifier,
-    SmartCaptchaVerifier,
-)
+from fanfan.adapters.captcha.altcha import AltchaCaptchaVerifier, NoOpCaptchaVerifier
+from fanfan.adapters.captcha.config import AltchaConfig
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
 
@@ -17,19 +11,14 @@ class CaptchaProvider(Provider):
     scope = Scope.APP
 
     @provide
-    def get_smartcaptcha_config(self, config: EnvConfig) -> SmartCaptchaConfig | None:
-        return config.smartcaptcha
+    def get_altcha_config(self, config: EnvConfig) -> AltchaConfig | None:
+        return config.altcha
 
     @provide
-    async def get_captcha_verifier(
-        self, config: SmartCaptchaConfig | None
-    ) -> AsyncIterable[CaptchaVerifier]:
-        # No SmartCaptcha config means captcha is disabled, so accept everything.
+    def get_captcha_verifier(
+        self, config: AltchaConfig | None, redis: Redis
+    ) -> CaptchaVerifier:
+        # No ALTCHA key means captcha is disabled, so accept everything.
         if config is None:
-            yield NoOpCaptchaVerifier()
-            return
-
-        # APP scope: one client (and its pool) reused across every login check,
-        # instead of a fresh client per request.
-        async with httpx2.AsyncClient(timeout=VALIDATE_TIMEOUT) as client:
-            yield SmartCaptchaVerifier(config=config, client=client)
+            return NoOpCaptchaVerifier()
+        return AltchaCaptchaVerifier(config=config, redis=redis)

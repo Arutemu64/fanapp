@@ -8,6 +8,9 @@ from fanfan.application.interactors.auth.authorize_social_login import (
 from fanfan.application.interactors.auth.change_email import ChangeEmail
 from fanfan.application.interactors.auth.change_password import ChangePassword
 from fanfan.application.interactors.auth.confirm_email_code import ConfirmEmailCode
+from fanfan.application.interactors.auth.get_captcha_challenge import (
+    GetCaptchaChallenge,
+)
 from fanfan.application.interactors.auth.login_with_code import LoginWithCode
 from fanfan.application.interactors.auth.logout_user import LogoutUser
 from fanfan.application.interactors.auth.request_login_code import RequestLoginCode
@@ -247,6 +250,7 @@ class InteractorsProvider(Provider):
         ChangePassword,
         SendEmailConfirmationCode,
         SendLoginCodeEmail,
+        GetCaptchaChallenge,
         RequestLoginCode,
         ConfirmEmailCode,
         ChangeEmail,

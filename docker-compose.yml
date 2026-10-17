@@ -15,7 +15,6 @@ services:
         PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN}
         PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT}
         PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${PUBLIC_SENTRY_TRACES_SAMPLE_RATE}
-        PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${PUBLIC_SMARTCAPTCHA_CLIENT_KEY}
         PUBLIC_VK_GROUP_ID: ${PUBLIC_VK_GROUP_ID}
         # Release number for the profile footer, from backend/pyproject.toml.
         # `just run-prod` supplies it; empty hides the footer line.
