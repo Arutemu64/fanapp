@@ -58,7 +58,12 @@
 		}
 		if (!target) return;
 
-		const control = target.querySelector<HTMLElement>('a[href], button:not([disabled])');
+		// The item may itself be the link (a whole-row <a>), which querySelector,
+		// searching descendants only, would miss.
+		const focusable = 'a[href], button:not([disabled])';
+		const control = target.matches(focusable)
+			? target
+			: target.querySelector<HTMLElement>(focusable);
 		if (control) {
 			control.focus();
 			return;
