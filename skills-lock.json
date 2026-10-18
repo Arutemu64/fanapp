@@ -331,6 +331,12 @@
       "skillPath": "skills/engineering/wayfinder/SKILL.md",
       "computedHash": "71d1296ae9f1ea0397f385f72d11ca3473827f5d067df4d06c58eb03377a57ce"
     },
+    "web-component-design": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/ui-design/skills/web-component-design/SKILL.md",
+      "computedHash": "784a5a753400c54579a62974bdd867c6455555d1a7f806de8483ea5da899d154"
+    },
     "writing-for-agents": {
       "source": "mattpocock/skills",
       "sourceType": "github",
