@@ -48,7 +48,9 @@ test.describe('organizer user directory', () => {
 				}
 				return json<ListUsersOutput>({ users: [ANNA], total: 2, next_cursor: 'next' });
 			},
-			// SvelteKit preloads a row's card when the pointer passes over its link.
+			// SvelteKit preloads a row's card when the pointer passes over its link,
+			// which the clicks below can do on either row.
+			[`GET /users/${ANNA.id}`]: json<UserDetailsDto>(ANNA_DETAILS),
 			[`GET /users/${BORIS.id}`]: json<UserDetailsDto>({
 				...BORIS,
 				social_links: [],

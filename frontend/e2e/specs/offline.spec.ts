@@ -105,11 +105,19 @@ test.describe('offline', { tag: '@critical' }, () => {
 		// the offline wording's minimum time on screen.
 		await page.clock.fastForward('01:05');
 
+		// The installed clock keeps running after the fast-forward, so the 3s recovery
+		// poll can reach a healthy endpoint before the click and take «Повторить»
+		// away. Holding the health check until the click is made keeps the button.
+		let reconnect = () => {};
+		const reconnected = new Promise<void>((resolve) => (reconnect = resolve));
 		// Hold one of Home's refetches open to watch the catch-up state.
 		let release = () => {};
 		const released = new Promise<void>((resolve) => (release = resolve));
 		api.use({
-			'GET /debug/health': json({ status: 'healthy' }),
+			'GET /debug/health': async () => {
+				await reconnected;
+				return json({ status: 'healthy' });
+			},
 			'GET /voting/status': async () => {
 				await released;
 				return json({
@@ -121,6 +129,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 			}
 		});
 		await page.getByRole('button', { name: 'Повторить' }).click();
+		reconnect();
 
 		await expect(page.getByRole('status').getByText('Обновляем…')).toBeAttached();
 		release();
@@ -136,9 +145,18 @@ test.describe('offline', { tag: '@critical' }, () => {
 				return json({});
 			}
 		});
+		// Every API response marks the backend reachable, and the switch renders
+		// before the boot probe and the bell's unread count have answered. Either one
+		// landing after the `offline` event below would flip the app back online.
+		const bootRequestsDone = Promise.all(
+			['/api/debug/health', '/api/notifications/unread-count'].map((path) =>
+				page.waitForEvent('requestfinished', (request) => request.url().endsWith(path))
+			)
+		);
 		await page.goto('/profile/notifications');
 		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
 		await expect(allAnnouncements).toBeChecked();
+		await bootRequestsDone;
 
 		api.use({ 'GET /debug/health': (route) => route.abort() });
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
