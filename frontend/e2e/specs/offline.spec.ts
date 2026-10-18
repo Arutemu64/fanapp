@@ -1,7 +1,8 @@
 import type {
 	GetScheduleOutput,
 	GetVotingStateOutput,
-	PublicConfigDto
+	PublicConfigDto,
+	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, test } from '../fixtures';
@@ -140,23 +141,23 @@ test.describe('offline', { tag: '@critical' }, () => {
 		let patched = false;
 		api.use({
 			...loggedInAs(),
+			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 1 }),
 			'PATCH /me/settings': () => {
 				patched = true;
 				return json({});
 			}
 		});
-		// Every API response marks the backend reachable, and the switch renders
-		// before the boot probe and the bell's unread count have answered. Either one
-		// landing after the `offline` event below would flip the app back online.
-		const bootRequestsDone = Promise.all(
-			['/api/debug/health', '/api/notifications/unread-count'].map((path) =>
-				page.waitForEvent('requestfinished', (request) => request.url().endsWith(path))
-			)
-		);
 		await page.goto('/profile/notifications');
 		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
 		await expect(allAnnouncements).toBeChecked();
-		await bootRequestsDone;
+		// Every API response the app handles marks the backend reachable, and the
+		// switch renders before the bell's unread count has answered: handled after
+		// the `offline` event below, it would flip the app back online. Waiting for
+		// the request to finish isn't enough on WebKit, where the page can handle the
+		// response later still; the count in the bell's name shows it has been handled.
+		await expect(
+			page.getByRole('link', { name: 'Открыть уведомления, непрочитанных: 1' })
+		).toBeVisible();
 
 		api.use({ 'GET /debug/health': (route) => route.abort() });
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
