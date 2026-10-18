@@ -142,9 +142,9 @@ export default defineConfig(({ mode }) => {
 			unstubGlobals: true,
 			// Same for vi.stubEnv.
 			unstubEnvs: true,
-			// Transforms are ~75% of a run; persisting them (in node_modules/.vitest-cache,
-			// so a reinstall clears it) takes a rerun from ~25s to ~7s. Off by
-			// default in Vitest 5.0. https://vitest.dev/config/fsmodulecache
+			// Persist transforms (in node_modules/.vitest-cache, so a reinstall clears
+			// it) so a rerun skips them. Off by default in Vitest 5.0.
+			// https://vitest.dev/config/fsmodulecache
 			fsModuleCache: true
 		},
 		// Tests exercise browser code, so resolve packages' browser entry points

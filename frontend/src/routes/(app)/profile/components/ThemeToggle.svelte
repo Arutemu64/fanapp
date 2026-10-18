@@ -1,7 +1,9 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	import { Monitor, Moon, Sun } from '@lucide/svelte';
+	import Monitor from '@lucide/svelte/icons/monitor';
+	import Moon from '@lucide/svelte/icons/moon';
+	import Sun from '@lucide/svelte/icons/sun';
 
 	import { m } from '#lib/paraglide/messages.js';
 	import { getThemeService, type ThemeMode } from '#lib/services/theme.svelte.js';

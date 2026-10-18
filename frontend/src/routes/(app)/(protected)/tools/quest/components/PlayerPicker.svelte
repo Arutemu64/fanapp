@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ScanLine } from '@lucide/svelte';
+	import ScanLine from '@lucide/svelte/icons/scan-line';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 

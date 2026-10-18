@@ -1,17 +1,15 @@
 import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
-import {
-	Award,
-	Coins,
-	FileUp,
-	Megaphone,
-	MessageSquare,
-	RotateCw,
-	SlidersHorizontal,
-	Ticket,
-	Users
-} from '@lucide/svelte';
+import Award from '@lucide/svelte/icons/award';
+import Coins from '@lucide/svelte/icons/coins';
+import FileUp from '@lucide/svelte/icons/file-up';
+import Megaphone from '@lucide/svelte/icons/megaphone';
+import MessageSquare from '@lucide/svelte/icons/message-square';
+import RotateCw from '@lucide/svelte/icons/rotate-cw';
+import SlidersHorizontal from '@lucide/svelte/icons/sliders-horizontal';
+import Ticket from '@lucide/svelte/icons/ticket';
+import Users from '@lucide/svelte/icons/users';
 import { error } from '@sveltejs/kit';
 
 import type { CurrentUserDto, Permission, PublicConfigDto } from '#lib/api/generated/index.js';

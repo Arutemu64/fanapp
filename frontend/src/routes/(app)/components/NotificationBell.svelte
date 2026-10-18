@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Bell } from '@lucide/svelte';
+	import Bell from '@lucide/svelte/icons/bell';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 

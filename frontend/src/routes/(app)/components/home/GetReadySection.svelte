@@ -2,7 +2,11 @@
 	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
-	import { Bell, CalendarHeart, Download, Ticket, UserPlus } from '@lucide/svelte';
+	import Bell from '@lucide/svelte/icons/bell';
+	import CalendarHeart from '@lucide/svelte/icons/calendar-heart';
+	import Download from '@lucide/svelte/icons/download';
+	import Ticket from '@lucide/svelte/icons/ticket';
+	import UserPlus from '@lucide/svelte/icons/user-plus';
 
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuRow from '#lib/components/MenuRow.svelte';

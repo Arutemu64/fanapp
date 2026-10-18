@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail } from '@lucide/svelte';
+	import Mail from '@lucide/svelte/icons/mail';
 
 	import type { ChangeEmailInput } from '#lib/api/generated/index.js';
 

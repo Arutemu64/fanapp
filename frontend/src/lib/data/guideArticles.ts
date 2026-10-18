@@ -1,6 +1,11 @@
 import type { Component } from 'svelte';
 
-import { Drama, Gamepad2, Palette, Store, Tent, Trophy } from '@lucide/svelte';
+import Drama from '@lucide/svelte/icons/drama';
+import Gamepad2 from '@lucide/svelte/icons/gamepad-2';
+import Palette from '@lucide/svelte/icons/palette';
+import Store from '@lucide/svelte/icons/store';
+import Tent from '@lucide/svelte/icons/tent';
+import Trophy from '@lucide/svelte/icons/trophy';
 
 export interface GuideArticle {
 	slug: string;

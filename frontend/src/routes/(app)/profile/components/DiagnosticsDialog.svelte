@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Copy, RotateCcw, Stethoscope } from '@lucide/svelte';
+	import Copy from '@lucide/svelte/icons/copy';
+	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+	import Stethoscope from '@lucide/svelte/icons/stethoscope';
 	import { type QueryClient, useQueryClient } from '@tanstack/svelte-query';
 	import { del } from 'idb-keyval';
 	import { untrack } from 'svelte';

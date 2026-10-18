@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { CircleX, Ellipsis, Eye, EyeOff, Play, Shuffle } from '@lucide/svelte';
+	import CircleX from '@lucide/svelte/icons/circle-x';
+	import Ellipsis from '@lucide/svelte/icons/ellipsis';
+	import Eye from '@lucide/svelte/icons/eye';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import Play from '@lucide/svelte/icons/play';
+	import Shuffle from '@lucide/svelte/icons/shuffle';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';

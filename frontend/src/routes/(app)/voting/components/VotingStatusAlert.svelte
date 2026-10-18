@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { CircleAlert } from '@lucide/svelte';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
 	import type { GetVotingStateOutput, VotingStatus } from '#lib/api/generated/index.js';
 

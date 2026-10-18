@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Bell, Settings } from '@lucide/svelte';
+	import Bell from '@lucide/svelte/icons/bell';
+	import Settings from '@lucide/svelte/icons/settings';
 	import {
 		createInfiniteQuery,
 		createMutation,

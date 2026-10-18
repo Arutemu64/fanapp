@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { Bell } from '@lucide/svelte';
+	import Bell from '@lucide/svelte/icons/bell';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { MessageTagProps } from '#lib/types/markup.js';

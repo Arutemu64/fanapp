@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CircleCheck, ScanLine } from '@lucide/svelte';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import ScanLine from '@lucide/svelte/icons/scan-line';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';

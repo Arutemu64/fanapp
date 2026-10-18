@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { ExternalLink, Users } from '@lucide/svelte';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
+	import Users from '@lucide/svelte/icons/users';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { GetVotingNominationOutput } from '#lib/api/generated/index.js';

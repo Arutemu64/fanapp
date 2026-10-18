@@ -2,7 +2,8 @@
 	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
-	import { ChevronRight, ExternalLink } from '@lucide/svelte';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
 
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { m } from '#lib/paraglide/messages.js';

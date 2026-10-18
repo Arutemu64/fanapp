@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail } from '@lucide/svelte';
+	import Mail from '@lucide/svelte/icons/mail';
 	import { createMutation } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';

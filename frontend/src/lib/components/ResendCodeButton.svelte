@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RotateCw } from '@lucide/svelte';
+	import RotateCw from '@lucide/svelte/icons/rotate-cw';
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';

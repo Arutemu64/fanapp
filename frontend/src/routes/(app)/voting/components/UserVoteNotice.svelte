@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CircleCheck, X } from '@lucide/svelte';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import X from '@lucide/svelte/icons/x';
 	import { createMutation } from '@tanstack/svelte-query';
 
 	import type { ParticipantFullDto, ParticipantVoteDto } from '#lib/api/generated/index.js';

@@ -1,7 +1,12 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	import { Globe, Mail, Map as MapIcon, MapPin, MessageCircle, ScrollText } from '@lucide/svelte';
+	import Globe from '@lucide/svelte/icons/globe';
+	import Mail from '@lucide/svelte/icons/mail';
+	import MapIcon from '@lucide/svelte/icons/map';
+	import MapPin from '@lucide/svelte/icons/map-pin';
+	import MessageCircle from '@lucide/svelte/icons/message-circle';
+	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import { createQuery } from '@tanstack/svelte-query';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';

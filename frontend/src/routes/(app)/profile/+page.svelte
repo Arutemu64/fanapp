@@ -1,18 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import {
-		Bell,
-		ChevronRight,
-		Download,
-		Heart,
-		MessageSquare,
-		Palette,
-		RotateCw,
-		Ticket,
-		Trophy,
-		UserRound,
-		Wrench
-	} from '@lucide/svelte';
+	import Bell from '@lucide/svelte/icons/bell';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Download from '@lucide/svelte/icons/download';
+	import Heart from '@lucide/svelte/icons/heart';
+	import MessageSquare from '@lucide/svelte/icons/message-square';
+	import Palette from '@lucide/svelte/icons/palette';
+	import RotateCw from '@lucide/svelte/icons/rotate-cw';
+	import Ticket from '@lucide/svelte/icons/ticket';
+	import Trophy from '@lucide/svelte/icons/trophy';
+	import UserRound from '@lucide/svelte/icons/user-round';
+	import Wrench from '@lucide/svelte/icons/wrench';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';

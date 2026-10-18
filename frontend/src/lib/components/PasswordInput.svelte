@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Eye, EyeOff, Lock } from '@lucide/svelte';
+	import Eye from '@lucide/svelte/icons/eye';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import Lock from '@lucide/svelte/icons/lock';
 
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { m } from '#lib/paraglide/messages.js';

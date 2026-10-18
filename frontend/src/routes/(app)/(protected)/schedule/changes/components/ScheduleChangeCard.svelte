@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Undo2 } from '@lucide/svelte';
+	import Undo2 from '@lucide/svelte/icons/undo-2';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type {

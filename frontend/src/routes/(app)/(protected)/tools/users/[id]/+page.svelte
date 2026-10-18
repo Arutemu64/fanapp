@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { ExternalLink, Link2 } from '@lucide/svelte';
+	import ExternalLink from '@lucide/svelte/icons/external-link';
+	import Link2 from '@lucide/svelte/icons/link-2';
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { getUserOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';

@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { BellRing, CircleAlert } from '@lucide/svelte';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';

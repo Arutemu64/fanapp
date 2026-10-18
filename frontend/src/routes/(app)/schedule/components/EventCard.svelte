@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { Ban, Bell, BellRing, Clock, Hourglass } from '@lucide/svelte';
+	import Ban from '@lucide/svelte/icons/ban';
+	import Bell from '@lucide/svelte/icons/bell';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
+	import Clock from '@lucide/svelte/icons/clock';
+	import Hourglass from '@lucide/svelte/icons/hourglass';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleAlert } from '@lucide/svelte';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { m } from '#lib/paraglide/messages.js';

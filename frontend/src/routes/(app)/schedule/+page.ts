@@ -1,4 +1,4 @@
-import { RotateCcwClock } from '@lucide/svelte';
+import RotateCcwClock from '@lucide/svelte/icons/rotate-ccw-clock';
 
 import type { NavbarAction } from '#lib/types/navigation.js';
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Pencil } from '@lucide/svelte';
+	import Pencil from '@lucide/svelte/icons/pencil';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 

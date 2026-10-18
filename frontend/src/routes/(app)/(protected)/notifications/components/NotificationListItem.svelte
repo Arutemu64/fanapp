@@ -2,15 +2,13 @@
 	import type { Component } from 'svelte';
 
 	import { page } from '$app/state';
-	import {
-		Bell,
-		BellRing,
-		CalendarClock,
-		ChevronRight,
-		Coins,
-		Megaphone,
-		MessageCircle
-	} from '@lucide/svelte';
+	import Bell from '@lucide/svelte/icons/bell';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
+	import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Coins from '@lucide/svelte/icons/coins';
+	import Megaphone from '@lucide/svelte/icons/megaphone';
+	import MessageCircle from '@lucide/svelte/icons/message-circle';
 
 	import type { NotificationDto, NotificationType } from '#lib/api/generated/index.js';
 

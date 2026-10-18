@@ -113,7 +113,21 @@ export default defineConfig(
 			// `!!x` is the idiomatic boolean cast; the rule is here for `+x` and `'' + x`.
 			'no-implicit-coercion': ['error', { allow: ['!!'] }],
 			'no-param-reassign': 'error',
-			'no-console': ['error', { allow: ['warn', 'error'] }]
+			'no-console': ['error', { allow: ['warn', 'error'] }],
+			// The barrel re-exports every Lucide icon, and Vitest transforms all of them
+			// for any test that reaches it: one test importing src/lib/data/tools.ts
+			// took 26s of a 27s cold run. https://vite.dev/guide/performance#avoid-barrel-files
+			'no-restricted-imports': [
+				'error',
+				{
+					paths: [
+						{
+							name: '@lucide/svelte',
+							message: "Import each icon from '@lucide/svelte/icons/<name>' instead."
+						}
+					]
+				}
+			]
 		}
 	},
 	{
