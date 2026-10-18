@@ -386,12 +386,13 @@ against that build — a mocked route still fulfils under `context.setOffline`, 
 failing the read is what reaches the offline path.
 
 Two guards ride along on every spec: an **accessibility** scan
-(`@axe-core/playwright`, WCAG 2.0/2.1 A/AA) on key screens, and a **console-error /
-uncaught-exception** guard that fails a test on a silent browser error the visible
-assertions would miss. Specs are tagged (`@smoke`, `@critical`, `@a11y`) for
-lane filtering. See the README for the how-to. Full WCAG A/AA is enforced,
-contrast included — the suite drove the muted-text and active-nav token fixes
-that got it there.
+(`@axe-core/playwright`, WCAG 2.0/2.1/2.2 A/AA, light and dark theme) on key
+screens, and a **console-error / uncaught-exception** guard that fails a test on a
+silent browser error the visible assertions would miss. Specs are tagged
+(`@smoke`, `@critical`, `@a11y`) for lane filtering. See the README for the
+how-to. Full WCAG A/AA is enforced, contrast included — the suite drove the
+muted-text and active-nav token fixes that got it there — and so is contrast axe
+can't decide, which fails until a human checks it.
 
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
 `**/api/**` (typed off the generated hey-api types, so a drifted mock fails to compile).

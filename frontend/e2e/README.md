@@ -185,24 +185,31 @@ test('...', async ({ page, api, consoleErrors }) => {
 
 ### Accessibility (axe)
 
-`accessibility.spec.ts` scans key screens with `@axe-core/playwright` and asserts
-zero WCAG 2.0/2.1 A/AA violations. Use the `makeAxeBuilder` fixture (pre-scoped to
-the WCAG tags):
+`accessibility.spec.ts` scans key screens with `@axe-core/playwright` in both the
+light and dark theme and asserts zero WCAG 2.0/2.1/2.2 A/AA violations (2.2 brings
+`target-size`). Use the `expectAccessible` fixture, which scans with the WCAG tags,
+attaches the full axe results to the report, and fails on violations:
 
 ```ts
-test('home is accessible', async ({ page, makeAxeBuilder }) => {
+test('home is accessible', async ({ page, expectAccessible }) => {
 	await page.goto('/');
 	await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
-	const { violations } = await makeAxeBuilder().analyze();
-	expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+	await expectAccessible();
 });
 ```
+
+It also fails on contrast axe **could not decide**: text over a gradient, a
+background image or an overlapping element lands in axe's `incomplete`, not its
+`violations`, so it would otherwise pass unseen. Glyph-only text and deliberately
+invisible inputs (axe's `nonBmp`, `shortTextContent`, `equalRatio`) are not
+contrast questions and are skipped. For text over a photo, check the contrast by
+hand and list the region in `contrastCheckedByHand`; the test then notes it in the
+report instead of failing. To narrow a scan, pass a builder from `makeAxeBuilder()`
+with `.include(selector)` as `builder`.
 
 Scan the settled page — wait for a real landmark first (or axe flags the boot
 splash), and for entrance animations to finish (the home countdown fades in, so
 the scans wait for its cells to reach full opacity, and emulate reduced motion).
-Narrow with `.include(selector)`. All WCAG A/AA rules are enforced, contrast
-included.
 
 ### Tags (running a subset)
 

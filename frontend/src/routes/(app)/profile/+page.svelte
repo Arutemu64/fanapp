@@ -279,13 +279,13 @@
 			<IconFastapi class="inline size-3.5 text-[#009688]" />
 			FastAPI
 		</p>
-		<p class="mt-0.5 flex items-center justify-center gap-1">
+		<p class="flex items-center justify-center gap-1">
 			{m.footer_with_love()}
 			<a
 				href="https://arutemu64.com/"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="underline hover:text-foreground"
+				class="inline-flex min-h-6 items-center underline hover:text-foreground"
 			>
 				Arutemu64
 			</a>
@@ -293,8 +293,13 @@
 		</p>
 		{#if appVersion}
 			<!-- A button so a keyboard reaches the diagnostics too, styled as the plain
-			     line it was so the gesture stays out of sight. -->
-			<button type="button" class="mt-0.5 cursor-default select-none" onclick={handleVersionTap}>
+			     line it was so the gesture stays out of sight. Still 24px tall, the
+			     WCAG 2.5.8 floor, so a thumb can hit it apart from the link above. -->
+			<button
+				type="button"
+				class="inline-flex min-h-6 cursor-default items-center select-none"
+				onclick={handleVersionTap}
+			>
 				{m.footer_version({ version: appVersion })}
 				{#if buildId}· {buildId}{/if}
 			</button>
