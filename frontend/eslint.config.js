@@ -14,11 +14,16 @@ import ts from 'typescript-eslint';
 import { tailwindConfigs } from './eslint.tailwind.js';
 
 // SvelteKit 3 keeps the Svelte config in vite.config.ts; load-config reads it from
-// there (https://sveltejs.github.io/eslint-plugin-svelte/user-guide/). The resolved
-// config carries a function default under `typescript`, which `eslint --cache`
-// cannot serialize, so it is dropped — the parser doesn't read it.
-const { typescript: _typescript, ...svelteConfig } =
-	(await loadConfig('./', { traverse: false }))?.config ?? {};
+// there (https://sveltejs.github.io/eslint-plugin-svelte/user-guide/). Two resolved
+// keys are dropped; neither the parser nor the plugin reads them:
+// - `typescript` holds a function default, which `eslint --cache` cannot serialize.
+// - `version.name` defaults to Date.now() (https://svelte.dev/docs/kit/configuration#version),
+//   so it changes the config hash on every run and `--cache` re-lints every Svelte file.
+const {
+	typescript: _typescript,
+	version: _version,
+	...svelteConfig
+} = (await loadConfig('./', { traverse: false }))?.config ?? {};
 
 const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
