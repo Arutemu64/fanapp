@@ -6,8 +6,8 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { generateTicketsMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -164,11 +164,7 @@
 			</Field.Field>
 		</Field.FieldGroup>
 
-		{#if submitError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{submitError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+		<FormError message={submitError} />
 
 		<Button
 			type="submit"

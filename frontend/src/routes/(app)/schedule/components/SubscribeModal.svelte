@@ -12,7 +12,7 @@
 		getSubscriptionsQueryKey,
 		newSubscriptionMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -68,11 +68,7 @@
 			</Dialog.Title>
 		</Dialog.Header>
 
-		{#if formError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{formError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+		<FormError message={formError} />
 
 		<Dialog.Description>
 			<ParaglideMessage message={m.subscribe_intro} inputs={{ title: event.title }}>

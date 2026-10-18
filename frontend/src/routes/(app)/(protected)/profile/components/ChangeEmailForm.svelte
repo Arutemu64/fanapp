@@ -1,19 +1,17 @@
 <script lang="ts">
-	import type { PinInputCell } from 'bits-ui';
-
 	import { Mail } from '@lucide/svelte';
 
 	import type { ChangeEmailInput } from '#lib/api/generated/index.js';
 
 	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
+	import FormError from '#lib/components/FormError.svelte';
+	import ResendCodeButton from '#lib/components/ResendCodeButton.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
-	import { Label } from '#lib/components/ui/label/index.js';
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import VerificationCodeInput from '#lib/components/VerificationCodeInput.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
@@ -134,35 +132,34 @@
 	<!-- novalidate: the browser's own type="email" bubble would pre-empt the
 	     field error handleSubmit shows. -->
 	<form onsubmit={handleSubmit} novalidate class="flex flex-col gap-4">
-		{#if formError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{formError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+		<FormError message={formError} />
 
 		<Field.FieldGroup class="gap-4">
 			{#if currentEmail}
 				<Field.Field data-disabled={true}>
 					<Field.FieldLabel>{m.email_current_label()}</Field.FieldLabel>
-					<div class="relative flex items-center">
-						<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-						<Input
+					<InputGroup.Root data-disabled="true">
+						<InputGroup.Addon>
+							<Mail aria-hidden="true" />
+						</InputGroup.Addon>
+						<InputGroup.Input
 							type="text"
 							name="current_email"
 							value={currentEmail}
 							disabled
 							autocomplete="email"
-							class="pl-9"
 						/>
-					</div>
+					</InputGroup.Root>
 				</Field.Field>
 			{/if}
 
 			<Field.Field data-invalid={emailError ? true : undefined}>
 				<Field.FieldLabel for="new_email">{m.email_new_label()}</Field.FieldLabel>
-				<div class="relative flex items-center">
-					<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-					<Input
+				<InputGroup.Root>
+					<InputGroup.Addon>
+						<Mail aria-hidden="true" />
+					</InputGroup.Addon>
+					<InputGroup.Input
 						id="new_email"
 						name="new_email"
 						type="email"
@@ -172,11 +169,10 @@
 						autocapitalize="off"
 						spellcheck={false}
 						bind:value={newEmail}
-						class="pl-9"
 						aria-invalid={emailError ? true : undefined}
 						oninput={handleEmailInput}
 					/>
-				</div>
+				</InputGroup.Root>
 				{#if emailError}
 					<Field.FieldError>{emailError}</Field.FieldError>
 				{:else}
@@ -205,54 +201,31 @@
 	</form>
 {:else}
 	<div class="flex flex-col gap-4">
-		{#if formError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{formError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+		<FormError message={formError} />
 
 		<Field.Field data-disabled={true}>
 			<Field.FieldLabel>{m.email_new_label()}</Field.FieldLabel>
-			<div class="relative flex items-center">
-				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input type="text" value={normalizeEmail(newEmail)} disabled class="pl-9" />
-			</div>
+			<InputGroup.Root data-disabled="true">
+				<InputGroup.Addon>
+					<Mail aria-hidden="true" />
+				</InputGroup.Addon>
+				<InputGroup.Input type="text" value={normalizeEmail(newEmail)} disabled />
+			</InputGroup.Root>
 			<Field.FieldDescription>{m.email_code_sent_here()}</Field.FieldDescription>
 		</Field.Field>
 
-		<div class="flex flex-col items-center gap-2">
-			<Label>{m.verification_code_label()}</Label>
-			<InputOTP.Root
-				maxlength={6}
-				bind:value={verificationCode}
-				disabled={isBusy}
-				aria-invalid={Boolean(verificationCodeError)}
-				onValueChange={() => {
-					verificationCodeError = '';
-					formError = '';
-				}}
-				onComplete={submitVerificationCode}
-			>
-				{#snippet children({ cells }: { cells: PinInputCell[] })}
-					<InputOTP.Group>
-						{#each cells.slice(0, 3) as cell, index (index)}
-							<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
-						{/each}
-					</InputOTP.Group>
-					<InputOTP.Separator />
-					<InputOTP.Group>
-						{#each cells.slice(3, 6) as cell, index (index + 3)}
-							<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
-						{/each}
-					</InputOTP.Group>
-				{/snippet}
-			</InputOTP.Root>
-			{#if verificationCodeError}
-				<p class="text-center text-sm text-destructive">{verificationCodeError}</p>
-			{:else}
-				<p class="text-center text-sm text-muted-foreground">{m.verification_code_hint()}</p>
-			{/if}
-		</div>
+		<VerificationCodeInput
+			id="email-change-code"
+			bind:value={verificationCode}
+			hint={m.verification_code_hint()}
+			error={verificationCodeError}
+			busy={isBusy}
+			onValueChange={() => {
+				verificationCodeError = '';
+				formError = '';
+			}}
+			onComplete={submitVerificationCode}
+		/>
 
 		<div class="flex flex-col gap-2 pt-2">
 			<Button class="w-full" disabled={isBusy} onclick={submitVerificationCode}>
@@ -264,22 +237,7 @@
 				{/if}
 			</Button>
 
-			<Button
-				type="button"
-				variant="outline"
-				class="w-full"
-				disabled={isBusy || cooldown.remaining > 0}
-				onclick={sendOtp}
-			>
-				{#if sending}
-					<Spinner data-icon="inline-start" />
-					{m.common_sending()}
-				{:else if cooldown.remaining > 0}
-					{m.verification_resend_countdown({ remaining: cooldown.remaining })}
-				{:else}
-					{m.verification_resend()}
-				{/if}
-			</Button>
+			<ResendCodeButton {sending} remaining={cooldown.remaining} busy={isBusy} onclick={sendOtp} />
 		</div>
 	</div>
 {/if}

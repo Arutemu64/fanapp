@@ -5,10 +5,10 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { requestLoginCodeMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { Captcha } from '#lib/services/captcha.svelte.js';
@@ -115,11 +115,7 @@
 </script>
 
 <form novalidate onsubmit={handleSubmit} class="flex flex-col gap-4">
-	{#if formError}
-		<Alert.Root variant="destructive">
-			<Alert.Description>{formError}</Alert.Description>
-		</Alert.Root>
-	{/if}
+	<FormError message={formError} />
 
 	<!-- Errors appear on submit only, never while typing: a half-typed address is
 		not a mistake yet, and FieldError's role="alert" would announce it mid-word.
@@ -128,14 +124,16 @@
 		https://design-system.service.gov.uk/patterns/validation/ -->
 	<Field.Field data-invalid={emailError ? true : undefined}>
 		<Field.FieldLabel for="code-email">{m.email_label()}</Field.FieldLabel>
-		<div class="relative flex items-center">
-			<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+		<InputGroup.Root>
+			<InputGroup.Addon>
+				<Mail aria-hidden="true" />
+			</InputGroup.Addon>
 			<!-- Read-only, not disabled, while sending: disabling a focused input
 				drops focus to <body> and closes the phone keyboard. `username`, not
 				`email`: password managers offer saved sign-ins on that token, so an
 				account with a password autofills its address here too.
 				https://web.dev/articles/sign-in-form-best-practices -->
-			<Input
+			<InputGroup.Input
 				id="code-email"
 				name="email"
 				type="email"
@@ -147,12 +145,11 @@
 				spellcheck={false}
 				required
 				readonly={isRequesting}
-				class="pl-9"
 				aria-invalid={emailError ? true : undefined}
 				aria-describedby={emailError ? 'code-email-error' : 'code-email-description'}
 				oninput={resetEmailFeedback}
 			/>
-		</div>
+		</InputGroup.Root>
 		{#if emailError}
 			<Field.FieldError id="code-email-error">{emailError}</Field.FieldError>
 		{:else}

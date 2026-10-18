@@ -3,6 +3,7 @@
 
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import MenuRow from '#lib/components/MenuRow.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { toolsFor } from '#lib/data/tools.js';
@@ -12,7 +13,6 @@
 	import type { PageProps } from './$types';
 
 	import OnlineNowCard from './components/OnlineNowCard.svelte';
-	import ToolRow from './components/ToolRow.svelte';
 
 	let { data }: PageProps = $props();
 	// The (protected) guard's snapshot: these rows only gate links.
@@ -36,13 +36,15 @@
 		</div>
 	{/if}
 
+	<!-- The /profile hub's row shape, so the toolbox reads as the next level of that
+	     menu rather than a separate dashboard. -->
 	<MenuGroup>
 		{#each tools as tool (tool.key)}
-			<ToolRow
-				title={tool.title}
+			<MenuRow
+				href={tool.href}
+				label={tool.title}
 				description={tool.description}
 				icon={tool.icon}
-				href={tool.href}
 			/>
 		{/each}
 	</MenuGroup>

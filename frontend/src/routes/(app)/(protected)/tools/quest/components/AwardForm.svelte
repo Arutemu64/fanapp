@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { CircleAlert } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { tick } from 'svelte';
 
@@ -10,7 +9,7 @@
 		awardQuestPointsMutation,
 		listQuestAwardsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -190,12 +189,7 @@
 		</Button>
 	</div>
 
-	{#if submitError}
-		<Alert.Root variant="destructive">
-			<CircleAlert class="size-4" />
-			<Alert.Description>{submitError}</Alert.Description>
-		</Alert.Root>
-	{/if}
+	<FormError message={submitError} />
 
 	<!-- The text fields go readonly, not disabled, while an award is in flight: a
 	     field the server refuses takes focus in onError, and TanStack only reports

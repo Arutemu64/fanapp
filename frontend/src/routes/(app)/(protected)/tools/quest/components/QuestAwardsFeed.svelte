@@ -79,12 +79,7 @@
 		cancelMutation.mutate({ path: { award_id: awardToCancel.id } });
 	}
 
-	async function loadMore() {
-		const result = await awardsQuery.fetchNextPage();
-		if (result.isFetchNextPageError) {
-			toastService.add(m.quest_tool_history_failed(), 'error');
-		}
-	}
+	let listElement = $state<HTMLElement | null>(null);
 </script>
 
 <QueryState view={awardsView}>
@@ -97,7 +92,7 @@
 			<EmptyState message={m.quest_tool_history_empty()} />
 		{:else}
 			<Card.Root class="w-full max-w-none gap-0 overflow-hidden p-0">
-				<ul class="divide-y divide-border">
+				<ul class="divide-y divide-border" bind:this={listElement}>
 					{#each awards as award (award.id)}
 						<QuestAwardItem
 							{award}
@@ -109,13 +104,11 @@
 				</ul>
 			</Card.Root>
 
-			{#if awardsQuery.hasNextPage}
-				<LoadMoreButton
-					loading={awardsQuery.isFetchingNextPage}
-					busy={awardsQuery.isFetching}
-					onclick={loadMore}
-				/>
-			{/if}
+			<LoadMoreButton
+				query={awardsQuery}
+				list={listElement}
+				errorMessage={m.quest_tool_history_failed()}
+			/>
 		{/if}
 	{/snippet}
 </QueryState>

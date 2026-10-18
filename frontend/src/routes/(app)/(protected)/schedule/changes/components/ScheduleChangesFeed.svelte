@@ -8,13 +8,10 @@
 	import { SCHEDULE_CHANGES_PAGE_SIZE } from '#lib/constants/scheduleChanges.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { queryView } from '#lib/utils/queryView.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
-
-	const toastService = getToastService();
 
 	// Staff-only operational feed: it renders whatever is cached and refetches, but
 	// is not meant for offline use.
@@ -37,12 +34,7 @@
 		})
 	);
 
-	async function loadMore() {
-		const result = await changesQuery.fetchNextPage();
-		if (result.isFetchNextPageError) {
-			toastService.add(m.schedule_changes_load_failed(), 'error');
-		}
-	}
+	let listElement = $state<HTMLElement | null>(null);
 </script>
 
 <QueryState view={changesView}>
@@ -54,19 +46,17 @@
 		{#if changes.length === 0}
 			<EmptyState message={m.schedule_changes_empty()} />
 		{:else}
-			<div class="flex flex-col gap-3">
+			<div class="flex flex-col gap-3" bind:this={listElement}>
 				{#each changes as change (change.id)}
 					<ScheduleChangeCard {change} />
 				{/each}
 			</div>
 
-			{#if changesQuery.hasNextPage}
-				<LoadMoreButton
-					loading={changesQuery.isFetchingNextPage}
-					busy={changesQuery.isFetching}
-					onclick={loadMore}
-				/>
-			{/if}
+			<LoadMoreButton
+				query={changesQuery}
+				list={listElement}
+				errorMessage={m.schedule_changes_load_failed()}
+			/>
 		{/if}
 	{/snippet}
 </QueryState>

@@ -23,7 +23,7 @@
 		getQuestOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
-	import MenuLink from '#lib/components/MenuLink.svelte';
+	import MenuRow from '#lib/components/MenuRow.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
@@ -132,21 +132,13 @@
 			     the same, since the next page change applies the update anyway (see the
 			     root layout's beforeNavigate). -->
 			<MenuGroup>
-				<Item.Root class="rounded-none hover:bg-muted">
-					{#snippet child({ props })}
-						<button type="button" {...props} onclick={() => appUpdate.apply()}>
-							<Item.Media
-								class="size-9 rounded-lg bg-primary/10 text-primary-700 dark:text-primary"
-							>
-								<RotateCw class="size-5" aria-hidden="true" />
-							</Item.Media>
-							<Item.Content>
-								<Item.Title class="text-base">{m.profile_update_app()}</Item.Title>
-								<Item.Description>{m.profile_update_app_description()}</Item.Description>
-							</Item.Content>
-						</button>
-					{/snippet}
-				</Item.Root>
+				<MenuRow
+					onclick={() => appUpdate.apply()}
+					label={m.profile_update_app()}
+					description={m.profile_update_app_description()}
+					icon={RotateCw}
+					tone="primary"
+				/>
 			</MenuGroup>
 		{/if}
 
@@ -178,18 +170,18 @@
 
 			{#if questEnabled}
 				<MenuGroup>
-					<MenuLink href="profile/quest" label={m.quest_title()} icon={Trophy} value={questValue} />
+					<MenuRow href="profile/quest" label={m.quest_title()} icon={Trophy} value={questValue} />
 				</MenuGroup>
 			{/if}
 
 			<MenuGroup>
-				<MenuLink
+				<MenuRow
 					href="profile/ticket"
 					label={m.ticket_title()}
 					icon={Ticket}
 					value={ticketStatus}
 				/>
-				<MenuLink
+				<MenuRow
 					href="profile/notifications"
 					label={m.notifications_title()}
 					icon={Bell}
@@ -198,9 +190,9 @@
 			</MenuGroup>
 
 			<MenuGroup>
-				<MenuLink href="feedback" label={m.feedback_title()} icon={MessageSquare} />
+				<MenuRow href="feedback" label={m.feedback_title()} icon={MessageSquare} />
 				{#if showTools}
-					<MenuLink href="tools" label={m.tools_title()} icon={Wrench} />
+					<MenuRow href="tools" label={m.tools_title()} icon={Wrench} />
 				{/if}
 			</MenuGroup>
 		{:else}
@@ -235,21 +227,13 @@
 		<MenuGroup>
 			{#if pwa.canInstall}
 				<!-- Opens the @khmyznikov/pwa-install dialog, which renders its own
-			     platform-specific instructions (Chromium prompt, iOS "На экран Домой").
-			     hover:bg-muted by hand: Item only highlights rows rendered as <a>. -->
-				<Item.Root class="rounded-none hover:bg-muted">
-					{#snippet child({ props })}
-						<button type="button" {...props} onclick={() => pwa.showInstallDialog()}>
-							<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
-								<Download class="size-5" aria-hidden="true" />
-							</Item.Media>
-							<Item.Content>
-								<Item.Title class="text-base">{m.install_title()}</Item.Title>
-								<Item.Description>{m.profile_install_description()}</Item.Description>
-							</Item.Content>
-						</button>
-					{/snippet}
-				</Item.Root>
+			     platform-specific instructions (Chromium prompt, iOS "На экран Домой"). -->
+				<MenuRow
+					onclick={() => pwa.showInstallDialog()}
+					label={m.install_title()}
+					description={m.profile_install_description()}
+					icon={Download}
+				/>
 			{/if}
 			<!-- An icon like every other hub row: the install row above shares this card,
 			     and a list that gives icons to only some rows reads as two layouts. -->

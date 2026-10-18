@@ -140,7 +140,7 @@ test.describe('voting — taking a vote back', { tag: '@critical' }, () => {
 		await expect(page.getByText('Твой выбор')).toBeVisible();
 
 		// Filter the list down to the participant the user did NOT vote for.
-		await page.getByRole('textbox', { name: 'Поиск участников в номинации' }).fill('Мику');
+		await page.getByRole('searchbox', { name: 'Поиск участников в номинации' }).fill('Мику');
 		await expect(page.getByText('Показано 1 из 2')).toBeVisible();
 
 		await page.getByRole('button', { name: 'Отменить голос' }).click();

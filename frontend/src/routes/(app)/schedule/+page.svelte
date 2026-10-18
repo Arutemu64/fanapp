@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search as SearchIcon, X } from '@lucide/svelte';
+	import { X } from '@lucide/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { tick } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
@@ -14,10 +14,11 @@
 		getScheduleOptions,
 		getSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
+	import SearchInput from '#lib/components/SearchInput.svelte';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
@@ -201,12 +202,7 @@
 	<!-- Nothing saved yet and no way to fetch it: a calm inline state that keeps the
 	     app shell usable, and promises the programme works offline once loaded. -->
 	{#snippet offline()}
-		<div
-			class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
-		>
-			<p class="text-base font-bold text-foreground">{m.schedule_offline_title()}</p>
-			<p class="mt-1 text-sm text-muted-foreground">{m.schedule_offline_message()}</p>
-		</div>
+		<EmptyState title={m.schedule_offline_title()} message={m.schedule_offline_message()} />
 	{/snippet}
 
 	{#snippet ready({ stale, cachedAt }: ReadyView<unknown>)}
@@ -220,28 +216,12 @@
 	     pattern (https://developer.apple.com/design/human-interface-guidelines/search-fields).
 	     Kept static so the schedule's block headers can be the sticky ones. -->
 			<div class="flex flex-col gap-3">
-				<div class="relative flex items-center">
-					<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-					<Input
-						bind:value={searchQuery}
-						name="schedule_search"
-						aria-label={m.schedule_search_label()}
-						placeholder={m.schedule_search_placeholder()}
-						autocomplete="off"
-						spellcheck={false}
-						class="pr-8 pl-9"
-					/>
-					{#if searchQuery}
-						<button
-							type="button"
-							class="absolute right-2 text-muted-foreground hover:text-foreground"
-							onclick={() => (searchQuery = '')}
-							aria-label={m.common_clear_search()}
-						>
-							<X class="size-4" />
-						</button>
-					{/if}
-				</div>
+				<SearchInput
+					bind:value={searchQuery}
+					name="schedule_search"
+					label={m.schedule_search_label()}
+					placeholder={m.schedule_search_placeholder()}
+				/>
 
 				<div class="flex items-center justify-between gap-3">
 					<ToggleGroup.Root
@@ -283,33 +263,17 @@
 						{@render blockSection(node)}
 					{/if}
 				{:else}
-					<div
-						class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
-					>
-						<p class="text-base font-bold text-foreground">
-							{#if hasActiveFilters}
-								{m.common_nothing_found()}
-							{:else}
-								{m.schedule_empty_title()}
-							{/if}
-						</p>
-						<p class="mt-1 text-sm text-muted-foreground">
-							{#if hasActiveFilters}
-								{m.schedule_try_other_filters()}
-							{:else}
-								{m.schedule_empty_message()}
-							{/if}
-						</p>
-
-						<!-- No-results recovery: one tap clears every active filter. Hidden on the
-				     first-use empty state, where there's nothing to reset. -->
-						{#if hasActiveFilters}
-							<Button variant="outline" size="sm" class="mt-4" onclick={resetFilters}>
+					{#if hasActiveFilters}
+						<!-- No-results recovery: one tap clears every active filter. -->
+						<EmptyState title={m.common_nothing_found()} message={m.schedule_try_other_filters()}>
+							<Button variant="outline" size="sm" onclick={resetFilters}>
 								<X data-icon="inline-start" />
 								{m.schedule_reset_filters()}
 							</Button>
-						{/if}
-					</div>
+						</EmptyState>
+					{:else}
+						<EmptyState title={m.schedule_empty_title()} message={m.schedule_empty_message()} />
+					{/if}
 				{/each}
 			</div>
 

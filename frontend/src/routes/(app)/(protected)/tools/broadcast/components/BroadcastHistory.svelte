@@ -48,13 +48,6 @@
 
 	let mailings = $derived(mailingsQuery.data?.pages.flatMap((page) => page.mailings) ?? []);
 
-	async function loadMore() {
-		const result = await mailingsQuery.fetchNextPage();
-		if (result.isFetchNextPageError) {
-			toastService.add(m.broadcast_history_load_failed_toast(), 'error');
-		}
-	}
-
 	const STATUS_LABELS: Record<MailingStatus, string> = {
 		pending: m.status_queued(),
 		sending: m.mailing_status_sending(),
@@ -90,6 +83,8 @@
 	function cancel(mailing: MailingDto) {
 		cancelMutation.mutate({ path: { mailing_id: mailing.id } });
 	}
+
+	let listElement = $state<HTMLElement | null>(null);
 </script>
 
 <section class="mx-auto w-full max-w-2xl">
@@ -110,7 +105,7 @@
 	{:else}
 		<!-- One divided list, not a card per mailing: the entries are all the same
 		     shape, so a list scans faster and fits more on a phone screen. -->
-		<MenuGroup class="divide-y divide-border">
+		<MenuGroup class="divide-y divide-border" bind:ref={listElement}>
 			{#each mailings as mailing (mailing.id)}
 				<div class="p-4">
 					<div class="flex flex-col gap-2">
@@ -161,12 +156,10 @@
 			{/each}
 		</MenuGroup>
 
-		{#if mailingsQuery.hasNextPage}
-			<LoadMoreButton
-				loading={mailingsQuery.isFetchingNextPage}
-				busy={mailingsQuery.isFetching}
-				onclick={loadMore}
-			/>
-		{/if}
+		<LoadMoreButton
+			query={mailingsQuery}
+			list={listElement}
+			errorMessage={m.broadcast_history_load_failed_toast()}
+		/>
 	{/if}
 </section>

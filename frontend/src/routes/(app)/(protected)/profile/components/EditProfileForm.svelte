@@ -7,11 +7,11 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { suggestUsernameOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { m } from '#lib/paraglide/messages.js';
@@ -150,11 +150,7 @@
 </script>
 
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
-	{#if formError}
-		<Alert.Root variant="destructive">
-			<Alert.Description>{formError}</Alert.Description>
-		</Alert.Root>
-	{/if}
+	<FormError message={formError} />
 
 	<!-- A new face is only previewed here; it is saved with the form, so closing keeps the old one. -->
 	<div class="relative mx-auto">
@@ -174,9 +170,11 @@
 	<Field.Field data-invalid={usernameError ? true : undefined}>
 		<Field.FieldLabel for="username">{m.username_label()}</Field.FieldLabel>
 		<div class="flex items-center gap-2">
-			<div class="relative flex flex-1 items-center">
-				<User class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
+			<InputGroup.Root class="flex-1">
+				<InputGroup.Addon>
+					<User aria-hidden="true" />
+				</InputGroup.Addon>
+				<InputGroup.Input
 					id="username"
 					name="username"
 					type="text"
@@ -188,9 +186,8 @@
 					oninput={handleUsernameInput}
 					onblur={handleUsernameBlur}
 					aria-invalid={usernameError ? true : undefined}
-					class="pl-9"
 				/>
-			</div>
+			</InputGroup.Root>
 			<Button
 				type="button"
 				variant="outline"

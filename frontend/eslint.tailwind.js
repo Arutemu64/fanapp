@@ -75,8 +75,7 @@ const restrictedClassExemptions = [
 			'src/routes/(app)/components/home/HeroCard.svelte',
 			'src/routes/(app)/components/AppBottomNav.svelte',
 			'src/routes/(app)/(protected)/tools/components/OnlineNowCard.svelte',
-			'src/routes/(auth)/login/components/VerifyCodeForm.svelte',
-			'src/routes/(app)/(protected)/profile/components/ChangeEmailForm.svelte'
+			'src/lib/components/VerificationCodeInput.svelte'
 		],
 		rules: {
 			'better-tailwindcss/no-restricted-classes': [

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Award, CircleAlert, Gift, Users } from '@lucide/svelte';
+	import { Award, Gift, Users } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
@@ -12,18 +12,20 @@
 		setVotingTimeRangeMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
+	import FormError from '#lib/components/FormError.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '#lib/utils/formatters.js';
 
 	import type { PageProps } from './$types';
+
+	import ToolSection from '../components/ToolSection.svelte';
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
@@ -50,17 +52,17 @@
 
 	let canDraw = $derived(poolSize > 0);
 
+	// The window is edited on the venue clock, like the festival dates in settings:
+	// the device's own zone would shift it for an organizer whose phone isn't on
+	// Moscow time.
 	function toLocalInput(iso: string | null): string {
 		if (!iso) return '';
-		const d = new Date(iso);
-		const offset = d.getTimezoneOffset();
-		const local = new Date(d.getTime() - offset * 60_000);
-		return local.toISOString().slice(0, 16);
+		return toEventDateTimeLocal(iso);
 	}
 
 	function fromLocalInput(value: string): string | null {
 		if (!value) return null;
-		return new Date(value).toISOString();
+		return fromEventDateTimeLocal(value);
 	}
 
 	function handleSave() {
@@ -112,9 +114,7 @@
 <SectionIntro description={m.voting_admin_description()} />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<h2 class="text-section text-foreground">{m.voting_period_title()}</h2>
-
+	<ToolSection title={m.voting_period_title()}>
 		<p class="text-sm leading-5 text-muted-foreground">
 			{m.voting_period_hint()}
 		</p>
@@ -156,13 +156,9 @@
 				{m.common_reset()}
 			</Button>
 		</div>
-	</Card.Root>
+	</ToolSection>
 
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<div class="flex items-center gap-2">
-			<Gift class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-section text-foreground">{m.voting_draw_title()}</h2>
-		</div>
+	<ToolSection title={m.voting_draw_title()} icon={Gift}>
 		<p class="text-sm leading-5 text-muted-foreground">
 			{m.voting_draw_hint()}
 		</p>
@@ -174,12 +170,7 @@
 			</span>
 		</div>
 
-		{#if drawError}
-			<Alert.Root variant="destructive">
-				<CircleAlert class="size-4" />
-				<Alert.Description>{drawError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+		<FormError message={drawError} />
 
 		{#if hasDrawn}
 			<!-- aria-live so the drawn name is announced to screen readers, which
@@ -221,14 +212,9 @@
 				{m.voting_draw_disabled_hint()}
 			</p>
 		{/if}
-	</Card.Root>
+	</ToolSection>
 
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<div class="flex items-center gap-2">
-			<Award class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-section text-foreground">{m.voting_leaders_title()}</h2>
-		</div>
-
+	<ToolSection title={m.voting_leaders_title()} icon={Award}>
 		{#if nominations.length > 0}
 			<ul class="flex flex-col gap-3">
 				{#each nominations as nomination (nomination.id)}
@@ -259,5 +245,5 @@
 				message={m.voting_no_nominations_message()}
 			/>
 		{/if}
-	</Card.Root>
+	</ToolSection>
 </div>
