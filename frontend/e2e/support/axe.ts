@@ -58,23 +58,31 @@ async function isInsideAny(page: Page, node: NodeResult, selectors: string[]): P
 	);
 }
 
-async function undecidedContrast(
+interface ContrastSplit {
+	undecided: NodeResult[];
+	checkedByHand: NodeResult[];
+}
+
+async function splitUndecidedContrast(
 	page: Page,
 	results: AxeResults,
-	checkedByHand: string[]
-): Promise<NodeResult[]> {
+	checkedByHandSelectors: string[]
+): Promise<ContrastSplit> {
 	const nodes = results.incomplete
 		.filter((result) => result.id === 'color-contrast')
 		.flatMap((result) => result.nodes);
 
-	const undecided: NodeResult[] = [];
+	const split: ContrastSplit = { undecided: [], checkedByHand: [] };
 	for (const node of nodes) {
 		const reason = contrastReason(node);
 		if (reason && NOT_A_CONTRAST_QUESTION.has(reason)) continue;
-		if (await isInsideAny(page, node, checkedByHand)) continue;
-		undecided.push(node);
+		if (await isInsideAny(page, node, checkedByHandSelectors)) {
+			split.checkedByHand.push(node);
+		} else {
+			split.undecided.push(node);
+		}
 	}
-	return undecided;
+	return split;
 }
 
 /**
@@ -100,7 +108,7 @@ export async function expectAccessible(
 	// over another element) under `incomplete`, not `violations`, so it would pass
 	// unseen. Fail on it so a human decides: fix the surface, or check it by hand
 	// and list it in `contrastCheckedByHand`.
-	const undecided = await undecidedContrast(page, results, [
+	const { undecided, checkedByHand } = await splitUndecidedContrast(page, results, [
 		...CHECKED_BY_HAND_ON_EVERY_PAGE,
 		...contrastCheckedByHand
 	]);
@@ -109,10 +117,12 @@ export async function expectAccessible(
 		'axe could not decide the contrast of these elements'
 	).toEqual([]);
 
-	if (contrastCheckedByHand.length > 0) {
+	// Name what the hand check let through, so a reader of the report sees which
+	// elements passed on a human's word rather than axe's.
+	if (checkedByHand.length > 0) {
 		testInfo.annotations.push({
 			type: 'contrast checked by hand',
-			description: contrastCheckedByHand.join(', ')
+			description: checkedByHand.map((node) => String(node.target[0])).join(', ')
 		});
 	}
 }
