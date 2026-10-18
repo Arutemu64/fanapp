@@ -1,46 +1,125 @@
-// Invisible-captcha gate shared by the login forms. When the user submits
-// before the captcha has produced a token, we "hold" the action and let the
-// widget's onSolve callback re-fire it once the token lands — so the user never
-// taps twice. The timeout is a safety net: if the widget never resolves (network
-// or script error), we stop waiting and surface a retryable error.
-const DEFAULT_CAPTCHA_WAIT_TIMEOUT_MS = 10000;
+import { type Challenge, solveChallengeWorkers } from 'altcha/lib';
+import Pbkdf2Worker from 'altcha/workers/pbkdf2?worker';
 
-export class CaptchaGate {
-	// True while a submit is parked waiting for the captcha token.
-	awaitingCaptcha = $state(false);
+import { getCaptchaChallenge } from '#lib/api/generated/sdk.gen.js';
 
-	#timer: ReturnType<typeof setTimeout> | undefined;
-	readonly #timeoutMs: number;
+// One budget for fetching the challenge and solving it. The API sets a difficulty
+// a phone at the venue clears in a second or two; this only catches a dead
+// network or a device far slower than that.
+const CAPTCHA_TIMEOUT_MS = 20_000;
+// A pre-solved token this close to its expiry would die on the way to the API,
+// so solve a fresh one instead.
+const EXPIRY_MARGIN_MS = 30_000;
 
-	constructor(timeoutMs: number = DEFAULT_CAPTCHA_WAIT_TIMEOUT_MS) {
-		this.#timeoutMs = timeoutMs;
+// The solve timed out or the captcha was disposed mid-solve.
+export class CaptchaFailedError extends Error {}
+
+interface Solved {
+	/** Single-use proof for `captcha_token`; null when the API has captcha off. */
+	token: string | null;
+	/** Epoch milliseconds, or null for a challenge that never expires. */
+	expiresAt: number | null;
+}
+
+/**
+ * ALTCHA proof-of-work for the login-code request, solved in Web Workers with no
+ * UI (ADR-0037).
+ * Instantiate one per form: `prefetch()` on mount solves in the background so a
+ * token is usually ready by submit, and `take()` hands one out exactly once.
+ */
+export class Captcha {
+	// True while a submit waits on take(), so the form can show it as sending.
+	solving = $state(false);
+
+	#pending: Promise<Solved> | undefined;
+	#controller: AbortController | undefined;
+	// A form's error path may call prefetch() after it unmounted; nothing would
+	// ever abort that solve.
+	#disposed = false;
+
+	prefetch(): void {
+		if (this.#disposed || this.#pending) {
+			return;
+		}
+		const pending = this.#solve();
+		// A prefetch nobody takes must not surface as an unhandled rejection;
+		// take() still sees the failure when it awaits the same promise.
+		pending.catch(() => {});
+		this.#pending = pending;
 	}
 
 	/**
-	 * Park the action and arm the safety-net timeout. `onTimeout` runs only if
-	 * the token never arrives in time (the gate is still waiting when it fires).
+	 * A fresh token for `captcha_token` (null when captcha is off). Throws the
+	 * SDK's error when the challenge request failed (e.g. the per-IP limit, whose
+	 * retry_after the form should show), or CaptchaFailedError when the solve did.
 	 */
-	hold(onTimeout: () => void): void {
-		this.awaitingCaptcha = true;
-		this.clear();
-		this.#timer = setTimeout(() => {
-			if (this.awaitingCaptcha) {
-				this.awaitingCaptcha = false;
-				onTimeout();
+	async take(): Promise<string | null> {
+		const pending = this.#pending ?? this.#solve();
+		// Tokens are single-use: whatever happens next, the next take() solves anew.
+		this.#pending = undefined;
+		this.solving = true;
+		try {
+			let solved = await pending;
+			if (solved.expiresAt !== null && Date.now() > solved.expiresAt - EXPIRY_MARGIN_MS) {
+				solved = await this.#solve();
 			}
-		}, this.#timeoutMs);
+			return solved.token;
+		} finally {
+			this.solving = false;
+		}
 	}
 
-	// Stop waiting (token arrived, validation failed, or the form was reset).
-	release(): void {
-		this.awaitingCaptcha = false;
-		this.clear();
+	// Stop the workers when the form unmounts mid-solve.
+	dispose(): void {
+		this.#disposed = true;
+		this.#controller?.abort();
+		this.#pending = undefined;
 	}
 
-	// Cancel the pending timeout without touching the waiting flag. Call from
-	// onMount/onDestroy cleanup to avoid a leaked timer.
-	clear(): void {
-		clearTimeout(this.#timer);
-		this.#timer = undefined;
+	async #solve(): Promise<Solved> {
+		const controller = new AbortController();
+		this.#controller = controller;
+		const timer = setTimeout(() => controller.abort(), CAPTCHA_TIMEOUT_MS);
+		try {
+			const { data, error } = await getCaptchaChallenge({ signal: controller.signal });
+			if (data === undefined) {
+				// Rethrown as-is, like every generated query does, so the form can
+				// tell the per-IP limit (and its retry_after) from a dropped connection.
+				// eslint-disable-next-line @typescript-eslint/only-throw-error -- the API error body is a plain object
+				throw error;
+			}
+			if (data.challenge === null) {
+				return { token: null, expiresAt: null };
+			}
+
+			// The API passes the challenge through untyped so the signed JSON reaches
+			// the solver unchanged; its shape is ALTCHA's own Challenge.
+			const challenge = data.challenge as unknown as Challenge;
+			const solution = await solveChallengeWorkers({
+				challenge,
+				concurrency: navigator.hardwareConcurrency || 2,
+				// Only the PBKDF2 worker ships: the API issues nothing else, and an
+				// unexpected algorithm fails the solve loudly rather than hanging.
+				createWorker: () => new Pbkdf2Worker(),
+				controller
+			});
+			if (solution === null) {
+				throw new CaptchaFailedError('Captcha solve timed out or was aborted');
+			}
+
+			// The payload the ALTCHA widget would submit: base64 JSON of the challenge
+			// (without codeChallenge) and its solution.
+			const token = btoa(
+				JSON.stringify({
+					challenge: { parameters: challenge.parameters, signature: challenge.signature },
+					solution
+				})
+			);
+			const expiresAtSeconds = challenge.parameters.expiresAt;
+			const expiresAt = expiresAtSeconds === undefined ? null : expiresAtSeconds * 1000;
+			return { token, expiresAt };
+		} finally {
+			clearTimeout(timer);
+		}
 	}
 }

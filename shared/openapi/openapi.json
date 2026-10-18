@@ -202,6 +202,56 @@
         ]
       }
     },
+    "/auth/captcha-challenge": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get a captcha challenge",
+        "description": "Issues a single-use ALTCHA proof-of-work challenge for the login-code request. The client solves it and sends the result as `captcha_token`. `challenge` is null when captcha is disabled; send no token then.",
+        "operationId": "get_captcha_challenge",
+        "responses": {
+          "200": {
+            "description": "A challenge, or null when captcha is disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaptchaChallengeDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — editing too fast.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/request-login-code": {
       "post": {
         "tags": [
@@ -214,7 +264,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestLoginCodeInput"
+                "$ref": "#/components/schemas/RequestLoginCodeBody"
               }
             }
           },
@@ -5202,6 +5252,27 @@
         ],
         "title": "Body_set_user_role"
       },
+      "CaptchaChallengeDTO": {
+        "properties": {
+          "challenge": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Challenge"
+          }
+        },
+        "type": "object",
+        "required": [
+          "challenge"
+        ],
+        "title": "CaptchaChallengeDTO"
+      },
       "ChangeEmailInput": {
         "properties": {
           "new_email": {
@@ -5542,6 +5613,7 @@
               "TICKET_REVOKED",
               "TOO_MANY_ATTEMPTS",
               "TOO_MANY_LOGIN_ATTEMPTS",
+              "TOO_MANY_LOGIN_CODE_REQUESTS",
               "TOO_MANY_OTP_ATTEMPTS",
               "USERNAME_ALREADY_TAKEN",
               "USERNAME_PROFANITY",
@@ -6767,7 +6839,7 @@
         ],
         "title": "QuestPlayerDTO"
       },
-      "RequestLoginCodeInput": {
+      "RequestLoginCodeBody": {
         "properties": {
           "email": {
             "type": "string",
@@ -6777,7 +6849,8 @@
           "captcha_token": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 4096
               },
               {
                 "type": "null"
@@ -6790,7 +6863,7 @@
         "required": [
           "email"
         ],
-        "title": "RequestLoginCodeInput"
+        "title": "RequestLoginCodeBody"
       },
       "ScheduleBlockStartDTO": {
         "properties": {

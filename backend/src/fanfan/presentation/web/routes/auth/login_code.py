@@ -1,8 +1,14 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
+from pydantic import BaseModel, EmailStr, Field
 from starlette import status
 
+from fanfan.application.dto.captcha import CaptchaChallengeDTO
+from fanfan.application.interactors.auth.get_captcha_challenge import (
+    GetCaptchaChallenge,
+    GetCaptchaChallengeInput,
+)
 from fanfan.application.interactors.auth.login_with_code import (
     LoginWithCode,
     LoginWithCodeInput,
@@ -15,8 +21,40 @@ from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.utils import get_client_ip
+
+
+# Not RequestLoginCodeInput itself: that DTO also carries the client IP, which
+# must come from the connection, never from a body the client controls.
+class RequestLoginCodeBody(BaseModel):
+    email: EmailStr
+    # A real ALTCHA payload is well under 4 KB; capping it keeps a hostile
+    # megabyte out of the parser (https://altcha.org/legal/security-advisory/).
+    captcha_token: str | None = Field(default=None, max_length=4096)
+
 
 login_code_router = APIRouter()
+
+
+@login_code_router.get(
+    "/captcha-challenge",
+    summary="Get a captcha challenge",
+    description=(
+        "Issues a single-use ALTCHA proof-of-work challenge for the login-code "
+        "request. The client solves it and sends the result as `captcha_token`. "
+        "`challenge` is null when captcha is disabled; send no token then."
+    ),
+    responses={
+        **RATE_LIMIT_RESPONSES,
+        200: {"description": "A challenge, or null when captcha is disabled."},
+    },
+)
+@inject
+async def get_captcha_challenge(
+    request: Request,
+    interactor: FromDishka[GetCaptchaChallenge],
+) -> CaptchaChallengeDTO:
+    return await interactor(GetCaptchaChallengeInput(client_ip=get_client_ip(request)))
 
 
 @login_code_router.post(
@@ -41,10 +79,17 @@ login_code_router = APIRouter()
 )
 @inject
 async def request_login_code(
-    data: RequestLoginCodeInput,
+    request: Request,
+    data: RequestLoginCodeBody,
     interactor: FromDishka[RequestLoginCode],
 ) -> None:
-    await interactor(data)
+    await interactor(
+        RequestLoginCodeInput(
+            email=data.email,
+            captcha_token=data.captcha_token,
+            client_ip=get_client_ip(request),
+        )
+    )
 
 
 @login_code_router.post(

@@ -1,8 +1,29 @@
 import type { Page } from '@playwright/test';
 
-import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
+import type {
+	CaptchaChallengeDto,
+	OAuthProvidersOutput
+} from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, test } from '../fixtures';
+
+// A real deterministic ALTCHA challenge at the API's own difficulty, pinned to
+// counter 750. The browser never checks the signatures (only the API does), and
+// with no expiresAt it never goes stale. Nothing here is secret: keyPrefix is the
+// public difficulty target every client sees, which gitleaks' entropy rule
+// mistakes for an API key.
+const CAPTCHA_CHALLENGE = {
+	parameters: {
+		algorithm: 'PBKDF2/SHA-256',
+		cost: 5000,
+		keyLength: 32,
+		keyPrefix: '687afc72cc05a84c0d4dd5ded62b86ed', // gitleaks:allow
+		nonce: '1d8fa1307004e5bf19a024e955438c3e',
+		salt: 'eb91ea0efa8c99bcbf08a8cd17d95e62',
+		keySignature: 'cf27fc8a37aca2adec2a919739effb46e4873301fd81de1b3b0f6ab0612487f6'
+	},
+	signature: 'f43d43a355226d46303581c2f1b09278be5b5e1482d291efd5c799387c6f058e'
+};
 
 async function openEmailStep(page: Page) {
 	await page.goto('/login');
@@ -44,6 +65,56 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await page.goBack();
 		await expect(page).toHaveURL('/login');
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
+	});
+
+	test('solves the captcha in the background and sends its proof with the request', async ({
+		page,
+		api
+	}) => {
+		let sentToken: unknown;
+		api.use({
+			'GET /auth/captcha-challenge': json<CaptchaChallengeDto>({ challenge: CAPTCHA_CHALLENGE }),
+			'POST /auth/request-login-code': (route) => {
+				sentToken = (route.request().postDataJSON() as { captcha_token: unknown }).captcha_token;
+				return json(null);
+			}
+		});
+		const email = await openEmailStep(page);
+		await email.fill('ann@example.com');
+		await email.press('Enter');
+		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
+
+		// The token is the ALTCHA payload: the challenge as issued plus the one
+		// solution its prefix pins.
+		expect(typeof sentToken).toBe('string');
+		const payload = JSON.parse(atob(sentToken as string)) as {
+			challenge: unknown;
+			solution: { counter: number; derivedKey: string };
+		};
+		expect(payload.challenge).toEqual(CAPTCHA_CHALLENGE);
+		expect(payload.solution.counter).toBe(750);
+		expect(payload.solution.derivedKey.startsWith(CAPTCHA_CHALLENGE.parameters.keyPrefix)).toBe(
+			true
+		);
+	});
+
+	test('a rate-limited captcha says when to retry', async ({ page, api }) => {
+		// Venue NAT can put many visitors behind one IP, so the challenge cap is
+		// reachable; its retry_after must survive the captcha layer.
+		api.use({
+			'GET /auth/captcha-challenge': json(
+				{
+					code: 'TOO_MANY_LOGIN_CODE_REQUESTS',
+					details: { retry_after: 42 }
+				},
+				429
+			)
+		});
+		const email = await openEmailStep(page);
+		await email.fill('ann@example.com');
+		await email.press('Enter');
+
+		await expect(page.getByRole('alert')).toHaveText('Попробуй ещё раз через 42 сек.');
 	});
 
 	test('the on-screen back returns focus to the control that opened the step', async ({ page }) => {

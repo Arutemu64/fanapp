@@ -12,18 +12,16 @@
 		loginWithCodeMutation,
 		requestLoginCodeMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import CaptchaWidget from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
+	import { Captcha } from '#lib/services/captcha.svelte.js';
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { captchaEnabled } from '#lib/utils/smartcaptcha.js';
 	import { isValidOtp } from '#lib/utils/validation.js';
 
 	interface Props {
@@ -52,33 +50,21 @@
 
 	const cooldown = new ResendCooldown();
 
-	// Captcha state for the "resend code" request (same endpoint as the first one).
-	let captchaToken = $state<string | null>(null);
-	let resetCaptcha = $state<(() => void) | undefined>(undefined);
-	let executeCaptcha = $state<(() => void) | undefined>(undefined);
+	// Captcha for the "resend code" request (same endpoint as the first one). Not
+	// prefetched: resending is rare, and a token solved now would mostly expire
+	// unused.
+	const captcha = new Captcha();
 
-	// Holds a resend the user tapped before the invisible captcha had a token.
-	const captchaGate = new CaptchaGate();
-
-	// Resend is in flight when its request runs or we're holding it for the captcha.
-	let isResending = $derived(resendMutation.isPending || captchaGate.awaitingCaptcha);
+	// Resend is in flight while its captcha solves or its request runs.
+	let isResending = $derived(resendMutation.isPending || captcha.solving);
 	// Any in-flight work in this form (verifying the code, or resending it).
-	let busy = $derived(
-		loginMutation.isPending || resendMutation.isPending || captchaGate.awaitingCaptcha
-	);
-
-	// Fulfill a deferred resend the moment the invisible captcha solves.
-	function handleCaptchaSolved() {
-		if (captchaGate.awaitingCaptcha) {
-			handleLoginCodeRequest();
-		}
-	}
+	let busy = $derived(loginMutation.isPending || isResending);
 
 	onMount(() => {
 		cooldown.start();
 		return () => {
 			cooldown.stop();
-			captchaGate.clear();
+			captcha.dispose();
 		};
 	});
 
@@ -128,21 +114,20 @@
 		);
 	}
 
-	function handleLoginCodeRequest() {
-		// The captcha runs invisibly. If its token isn't ready yet, start the
-		// challenge and hold the resend; handleCaptchaSolved re-runs this once the
-		// token arrives.
-		if (captchaEnabled && !captchaToken) {
-			executeCaptcha?.();
-			captchaGate.hold(() => {
-				formError = m.captcha_failed();
-			});
+	async function handleLoginCodeRequest() {
+		if (busy) {
 			return;
 		}
-
-		captchaGate.release();
 		loginCodeError = '';
 		formError = '';
+
+		let captchaToken: string | null;
+		try {
+			captchaToken = await captcha.take();
+		} catch (error) {
+			formError = getApiErrorDetail(error) ?? m.captcha_failed();
+			return;
+		}
 
 		resendMutation.mutate(
 			{ body: { email, captcha_token: captchaToken } },
@@ -150,16 +135,10 @@
 				onSuccess: () => {
 					loginCode = '';
 					toastService.add(m.login_code_resent(), 'success');
-					// Each resend needs its own fresh token.
-					resetCaptcha?.();
-					captchaToken = null;
 					cooldown.start();
 				},
 				onError: (error) => {
 					formError = getApiErrorDetail(error) ?? m.login_code_resend_failed();
-					// The token is single-use, so fetch a fresh one before a retry.
-					resetCaptcha?.();
-					captchaToken = null;
 				}
 			}
 		);
@@ -239,13 +218,6 @@
 	</Button>
 
 	<div class="flex flex-col gap-2">
-		<CaptchaWidget
-			bind:token={captchaToken}
-			bind:reset={resetCaptcha}
-			bind:execute={executeCaptcha}
-			onSolve={handleCaptchaSolved}
-		/>
-
 		<Button
 			type="button"
 			variant="outline"

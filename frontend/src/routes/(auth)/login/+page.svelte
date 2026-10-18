@@ -45,9 +45,9 @@
 	const providersQuery = createQuery(() => listOauthProvidersOptions());
 	const providers = $derived(providersQuery.data?.providers ?? ALL_SOCIAL_PROVIDERS);
 
-	// The first screen offers the login options only; the email form (and its
-	// third-party captcha script) lives on its own step, so someone using an
-	// OAuth provider never loads it. 'password' is a factor under 'email', not a
+	// The first screen offers the login options only; the email form (and the
+	// captcha proof-of-work it starts on mount) lives on its own step, so someone
+	// using an OAuth provider never runs it. 'password' is a factor under 'email', not a
 	// peer option, so it's reached from the email step rather than the options.
 	//
 	// Each step is its own history entry (shallow routing), so the phone's back

@@ -1,6 +1,6 @@
 # ADR-0009: Yandex SmartCaptcha over Cloudflare Turnstile
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0037
 - **Date:** 2026-07-23
 - **Deciders:** Project maintainers
 

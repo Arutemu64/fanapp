@@ -51,17 +51,15 @@ export default defineConfig({
 		url: BASE_URL,
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,
-		// Real environment variables beat the .env file, so these switch off two
-		// integrations whatever keys CI's repository variables or a local .env
-		// carry. The SmartCaptcha widget refuses 127.0.0.1 and blocks the email
-		// login step. Sentry posts sampled performance traces to the DSN's
-		// /api/<project>/envelope/ path, which the API mock catches as unmatched.
+		// Real environment variables beat the .env file, so this switches Sentry
+		// off whatever DSN CI's repository variables or a local .env carry: it
+		// posts sampled performance traces to the DSN's /api/<project>/envelope/
+		// path, which the API mock catches as unmatched.
 		// A release number puts the profile footer's version line on screen, which
 		// is also the diagnostics sheet's hidden trigger.
 		// The hand-started server in e2e/README.md "A faster loop" repeats these;
 		// change both together.
 		env: {
-			PUBLIC_SMARTCAPTCHA_CLIENT_KEY: '',
 			PUBLIC_SENTRY_DSN: '',
 			APP_VERSION: '1.0.0',
 			APP_BUILD: '0123456789abcdef0123456789abcdef01234567'

@@ -289,7 +289,8 @@ const RETRY_AFTER_CODES = [
 	'TEST_NOTIFICATION_TOO_FAST',
 	'TOO_MANY_ATTEMPTS',
 	'TOO_MANY_OTP_ATTEMPTS',
-	'TOO_MANY_LOGIN_ATTEMPTS'
+	'TOO_MANY_LOGIN_ATTEMPTS',
+	'TOO_MANY_LOGIN_CODE_REQUESTS'
 ] as const satisfies readonly ApiErrorCode[];
 
 // Codes intentionally left to the generic fallback toast: not individually

@@ -1,4 +1,5 @@
 import type {
+	CaptchaChallengeDto,
 	GetScheduleOutput,
 	GetVotingStateOutput,
 	HealthCheckOutput,
@@ -50,5 +51,8 @@ export const baselineHandlers: Handlers = {
 	// Not a boot request, but the login surface fetches it on mount — and any test
 	// that lands on /login (e.g. a protected route bouncing a guest) would otherwise
 	// hit the loud 404 and trip the console guard. Empty = email-only login.
-	'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: [] })
+	'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: [] }),
+	// The email login forms pre-solve a captcha on mount. null = captcha off, the
+	// API's own answer without ALTCHA__HMAC_KEY, so no spec has to solve one.
+	'GET /auth/captcha-challenge': json<CaptchaChallengeDto>({ challenge: null })
 };

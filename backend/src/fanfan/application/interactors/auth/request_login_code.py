@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import BaseModel, EmailStr
 
 from fanfan.application.interactors.auth.send_login_code_email import (
@@ -7,14 +9,29 @@ from fanfan.application.interactors.auth.send_login_code_email import (
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
-from fanfan.core.exceptions.rate_limit import CooldownActive, EmailCodeRequestTooFast
+from fanfan.core.exceptions.rate_limit import (
+    CooldownActive,
+    EmailCodeRequestTooFast,
+    TooManyAttempts,
+    TooManyLoginCodeRequests,
+)
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import UserRole, generate_user_id
+
+logger = logging.getLogger(__name__)
+
+# The per-email cooldown cannot stop one source spraying codes at many different
+# addresses (spam complaints that burn the sender's reputation); this per-IP cap
+# does. Generous because venue Wi-Fi and carrier-grade NAT put many attendees
+# behind one address, and each of them may resend a few times.
+LOGIN_CODE_IP_MAX_REQUESTS = 20
+LOGIN_CODE_IP_WINDOW_SECONDS = 600
 
 
 class RequestLoginCodeInput(BaseModel):
@@ -22,6 +39,8 @@ class RequestLoginCodeInput(BaseModel):
     # Captcha token solved by the user. Optional so the same endpoint works
     # when captcha is disabled (no token sent, no verification performed).
     captcha_token: str | None = None
+    # Caller (web route) fills this in; the interactor stays framework-agnostic.
+    client_ip: str | None = None
 
 
 class RequestLoginCode:
@@ -32,6 +51,7 @@ class RequestLoginCode:
         uow: UnitOfWork,
         user_service: UserService,
         cooldown: Cooldown,
+        rate_limiter: RateLimiter,
         captcha_verifier: CaptchaVerifier,
     ) -> None:
         self.user_gateway = user_gateway
@@ -39,10 +59,16 @@ class RequestLoginCode:
         self.uow = uow
         self.user_service = user_service
         self.cooldown = cooldown
+        self.rate_limiter = rate_limiter
         self.captcha_verifier = captcha_verifier
 
     async def __call__(self, data: RequestLoginCodeInput) -> None:
-        # Reject bots before touching the database or rate-limit budget.
+        # Count the attempt first, so a source sending bad or replayed captcha
+        # tokens burns its own budget too.
+        if data.client_ip:
+            await self._register_ip_attempt(data.client_ip)
+
+        # Reject bots before touching the database or the per-email cooldown.
         await self.captcha_verifier.verify(data.captcha_token)
 
         email = Email(data.email)
@@ -90,3 +116,17 @@ class RequestLoginCode:
                 )
         except CooldownActive as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e
+
+    async def _register_ip_attempt(self, client_ip: str) -> None:
+        try:
+            await self.rate_limiter.hit(
+                f"login_code:ip:{client_ip}",
+                limit=LOGIN_CODE_IP_MAX_REQUESTS,
+                window_seconds=LOGIN_CODE_IP_WINDOW_SECONDS,
+            )
+        except TooManyAttempts as e:
+            logger.warning(
+                "Login code request blocked: too many requests",
+                extra={"client_ip": client_ip},
+            )
+            raise TooManyLoginCodeRequests(retry_after=e.details["retry_after"]) from e

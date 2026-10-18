@@ -1,19 +1,17 @@
 <script lang="ts">
 	import { Mail } from '@lucide/svelte';
 	import { createMutation } from '@tanstack/svelte-query';
-	import { onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { requestLoginCodeMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import CaptchaWidget from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
-	import { captchaEnabled } from '#lib/utils/smartcaptcha.js';
+	import { Captcha } from '#lib/services/captcha.svelte.js';
 	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
 
 	interface Props {
@@ -30,29 +28,16 @@
 	let emailError = $state('');
 	let formError = $state('');
 
-	// Captcha state (only relevant when a SmartCaptcha client key is configured).
-	let captchaToken = $state<string | null>(null);
-	let resetCaptcha = $state<(() => void) | undefined>(undefined);
-	let executeCaptcha = $state<(() => void) | undefined>(undefined);
+	const captcha = new Captcha();
 
-	// Holds the request when the user submits before the invisible captcha has a
-	// token; the widget's onSolve fires it once the token lands, so the user never
-	// has to tap "Продолжить" a second time.
-	const captchaGate = new CaptchaGate();
+	// In flight from the user's point of view: the captcha is still solving, or
+	// the request is running.
+	let isRequesting = $derived(requestCodeMutation.isPending || captcha.solving);
 
-	// In flight from the user's point of view: the request is running, or we're
-	// holding it until the background captcha resolves.
-	let isRequesting = $derived(requestCodeMutation.isPending || captchaGate.awaitingCaptcha);
-
-	// Fulfill a deferred submit the moment the invisible captcha solves.
-	function handleCaptchaSolved() {
-		if (captchaGate.awaitingCaptcha) {
-			handleLoginCodeRequest();
-		}
-	}
-
-	onDestroy(() => {
-		captchaGate.clear();
+	// Solve while the user types the address, so the submit rarely waits on it.
+	onMount(() => {
+		captcha.prefetch();
+		return () => captcha.dispose();
 	});
 
 	let normalizedEmail = $derived(normalizeEmail(email));
@@ -60,8 +45,6 @@
 	function resetEmailFeedback() {
 		emailError = '';
 		formError = '';
-		// Editing the email cancels any submit we were holding for the captcha.
-		captchaGate.release();
 	}
 
 	function validateEmailCodeRequestForm(): boolean {
@@ -80,29 +63,27 @@
 		return true;
 	}
 
-	function handleLoginCodeRequest() {
-		if (requestCodeMutation.isPending) {
+	async function handleLoginCodeRequest() {
+		if (isRequesting) {
 			return;
 		}
 
 		if (!validateEmailCodeRequestForm()) {
-			captchaGate.release();
 			return;
 		}
 
-		// The captcha runs invisibly. If its token isn't ready yet, start the
-		// challenge and hold the request; handleCaptchaSolved re-runs this once the
-		// token arrives.
-		if (captchaEnabled && !captchaToken) {
-			executeCaptcha?.();
-			captchaGate.hold(() => {
-				formError = m.captcha_failed();
-			});
-			return;
-		}
-
-		captchaGate.release();
+		// Captured before the await: the input is read-only while the captcha
+		// solves, but the request must go to the address that was validated.
 		const trimmedEmail = normalizedEmail;
+		let captchaToken: string | null;
+		try {
+			captchaToken = await captcha.take();
+		} catch (error) {
+			formError = getApiErrorDetail(error) ?? m.captcha_failed();
+			// Solve the next one in the background for the retry.
+			captcha.prefetch();
+			return;
+		}
 
 		requestCodeMutation.mutate(
 			{ body: { email: trimmedEmail, captcha_token: captchaToken } },
@@ -119,9 +100,9 @@
 					} else {
 						formError = getApiErrorDetail(error) ?? m.login_code_send_failed();
 					}
-					// The token is single-use, so fetch a fresh one before a retry.
-					resetCaptcha?.();
-					captchaToken = null;
+					// The token is spent, so solve a fresh one in the background for the
+					// retry.
+					captcha.prefetch();
 				}
 			}
 		);
@@ -129,8 +110,7 @@
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		if (requestCodeMutation.isPending) return;
-		handleLoginCodeRequest();
+		void handleLoginCodeRequest();
 	}
 </script>
 
@@ -181,13 +161,6 @@
 			</Field.FieldDescription>
 		{/if}
 	</Field.Field>
-
-	<CaptchaWidget
-		bind:token={captchaToken}
-		bind:reset={resetCaptcha}
-		bind:execute={executeCaptcha}
-		onSolve={handleCaptchaSolved}
-	/>
 
 	<Button type="submit" class="w-full" disabled={isRequesting}>
 		{#if isRequesting}
