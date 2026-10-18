@@ -15,11 +15,9 @@
 	];
 </script>
 
-<div
-	class="flex w-full rounded-lg border border-border p-1"
-	role="group"
-	aria-label={m.theme_aria_label()}
->
+<!-- A tonal track, not a bordered box: it sits inside a MenuGroup card, and DESIGN.md
+     keeps boxes out of boxes. The picked segment lifts onto the card surface. -->
+<div class="flex w-full rounded-lg bg-muted p-1" role="group" aria-label={m.theme_aria_label()}>
 	{#each options as { mode, label, Icon } (mode)}
 		<button
 			type="button"
@@ -28,7 +26,7 @@
 			class={[
 				'flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-1 text-sm transition-colors',
 				theme.mode === mode
-					? 'bg-muted font-medium text-foreground'
+					? 'bg-card font-medium text-foreground shadow-xs'
 					: 'text-muted-foreground hover:text-foreground'
 			]}
 		>

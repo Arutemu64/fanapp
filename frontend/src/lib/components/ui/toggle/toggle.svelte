@@ -11,11 +11,14 @@
 				default: 'bg-transparent',
 				outline: 'border-input hover:bg-muted border bg-transparent shadow-xs'
 			},
+			// Deviates from upstream: sizes run one rung above upstream shadcn, matching
+			// button.svelte, so a toggle meets the 44px phone tap target in the base:
+			// default = 44px (h-11), sm = 40px, lg = 48px.
 			size: {
 				default:
-					'h-9 min-w-9 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
-				sm: 'h-8 min-w-8 px-2.5 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
-				lg: 'h-10 min-w-10 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2'
+					'h-11 min-w-11 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
+				sm: 'h-10 min-w-10 px-2.5 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
+				lg: 'h-12 min-w-12 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2'
 			}
 		},
 		defaultVariants: {

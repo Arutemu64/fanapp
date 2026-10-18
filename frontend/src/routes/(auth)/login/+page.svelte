@@ -44,6 +44,9 @@
 	// authoritative empty list stays empty.
 	const providersQuery = createQuery(() => listOauthProvidersOptions());
 	const providers = $derived(providersQuery.data?.providers ?? ALL_SOCIAL_PROVIDERS);
+	// The methods are peers, so each is an outline button, but a lone email button
+	// is the screen's one action and takes the primary fill.
+	const emailButtonVariant = $derived(providers.length === 0 ? 'default' : 'outline');
 
 	// The first screen offers the login options only; the email form (and the
 	// captcha proof-of-work it starts on mount) lives on its own step, so someone
@@ -239,7 +242,7 @@
 
 					<Button
 						type="button"
-						variant="outline"
+						variant={emailButtonVariant}
 						class="w-full"
 						data-step-focus
 						onclick={showEmailLogin}

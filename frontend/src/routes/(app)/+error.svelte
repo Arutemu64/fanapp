@@ -10,4 +10,4 @@
 	sidebar and bottom nav stay in place and the user can navigate away.
 	Renders in-content rather than taking over the viewport.
 -->
-<ErrorState variant="inline" {error} />
+<ErrorState variant="inline" {error} isPageHeading />

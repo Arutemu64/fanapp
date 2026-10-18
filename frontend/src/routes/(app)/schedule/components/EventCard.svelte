@@ -119,9 +119,11 @@
 				{#if event.is_current || isSkipped}
 					<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
 						{#if event.is_current}
+							<!-- Card fill, not a success tint: a /10 tint on the row's own /10 tint
+								stacks to ~4.2:1, under AA for the badge's 12px text. -->
 							<Badge
 								variant="outline"
-								class="inline-flex items-center gap-1.5 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
+								class="inline-flex items-center gap-1.5 border-success/30 bg-card px-2 py-0.5 text-xs font-medium text-success"
 							>
 								<!-- Live dot reads as "on stage now" at a glance. The ping runs three
 									     times and stops (WCAG 2.2.2, see --animate-ping-brief); reduced motion

@@ -17,4 +17,4 @@
 </svelte:head>
 
 <!-- Global fallback: no app shell above this boundary, so render full screen. -->
-<ErrorState variant="fullscreen" {error} />
+<ErrorState variant="fullscreen" {error} isPageHeading />

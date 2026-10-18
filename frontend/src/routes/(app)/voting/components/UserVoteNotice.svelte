@@ -52,9 +52,12 @@
 
 <!-- role="status", not the Alert default "alert": this is the standing state of
      the ballot, not an urgent interruption to announce on every page load. -->
-<Alert.Root variant="success" role="status" class="flex items-center gap-3">
+<!-- Wraps: on a 360px phone the button beside the text squeezed a long participant
+     name into a narrow column, so once the text would drop under 12rem the button
+     moves to its own line, flush right. -->
+<Alert.Root variant="success" role="status" class="flex flex-wrap items-center gap-3">
 	<CircleCheck class="shrink-0" />
-	<div class="min-w-0 flex-1">
+	<div class="min-w-0 grow basis-48">
 		<Alert.Title>{m.voting_your_choice()}</Alert.Title>
 		<Alert.Description class="wrap-break-word">{participantLabel}</Alert.Description>
 	</div>
@@ -64,7 +67,7 @@
 		<Button
 			variant="outline"
 			size="sm"
-			class="min-h-11 shrink-0"
+			class="ml-auto min-h-11 shrink-0"
 			disabled={cancelMutation.isPending}
 			onclick={handleCancelVote}
 			aria-label={m.voting_cancel_vote()}

@@ -84,9 +84,11 @@
 
 		{#if isVotedFor}
 			<div class="mt-1.5">
+				<!-- Card fill, not a success tint: a /10 tint on the row's own /10 tint
+					stacks to ~4.2:1, under AA for the badge's 12px text. -->
 				<Badge
 					variant="outline"
-					class="inline-flex items-center gap-1 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
+					class="inline-flex items-center gap-1 border-success/30 bg-card px-2 py-0.5 text-xs font-medium text-success"
 				>
 					<CircleCheck class="size-3.5" />
 					{m.voting_your_vote()}

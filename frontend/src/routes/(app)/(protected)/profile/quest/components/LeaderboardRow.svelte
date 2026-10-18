@@ -18,6 +18,9 @@
 		3: 'bg-medal-bronze'
 	};
 	let medalFill = $derived(MEDAL_FILLS[entry.rank]);
+	// Muted grey on the own row's primary tint measures ~4.45:1, just under AA, so
+	// that row's secondary text steps up to a softened foreground instead.
+	let secondaryText = $derived(isOwn ? 'text-foreground/80' : 'text-muted-foreground');
 </script>
 
 <li
@@ -30,7 +33,7 @@
 			'inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1 text-sm font-semibold tabular-nums',
 			medalFill
 				? [medalFill, 'text-medal-foreground ring-1 ring-foreground/10 ring-inset']
-				: 'text-muted-foreground'
+				: secondaryText
 		]}
 	>
 		{entry.rank}
@@ -41,7 +44,7 @@
 	<span class="min-w-0 flex-1 text-base">
 		<Username username={entry.player.username} class="text-foreground" />
 		{#if isOwn}
-			<span class="whitespace-nowrap text-muted-foreground">({m.quest_leaderboard_you()})</span>
+			<span class={['whitespace-nowrap', secondaryText]}>({m.quest_leaderboard_you()})</span>
 		{/if}
 	</span>
 	<span class="shrink-0 text-sm font-medium text-foreground tabular-nums">

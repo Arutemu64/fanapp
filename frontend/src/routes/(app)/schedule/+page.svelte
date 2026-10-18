@@ -247,7 +247,6 @@
 					<ToggleGroup.Root
 						type="single"
 						variant="outline"
-						size="sm"
 						bind:value={getScope, setScope}
 						aria-label={m.schedule_filter_label()}
 					>

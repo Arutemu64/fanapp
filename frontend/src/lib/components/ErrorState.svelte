@@ -21,15 +21,21 @@
 	// status: the client rethrows the API body without it, and `page.status` is
 	// the page's own 200, so no «Ошибка 500» label is made up for it. It also
 	// passes `onRetry`, which refetches that query instead of reloading the app.
+	// `isPageHeading` makes the title the page's <h1>, for the error boundaries: no
+	// page load ran there, so the navbar has no `page.data.title` to render as one.
 	let {
 		variant = 'fullscreen',
 		error,
-		onRetry
+		onRetry,
+		isPageHeading = false
 	}: {
 		variant?: Variant;
 		error?: Omit<App.Error, 'status'> & { status?: number };
 		onRetry?: () => void;
+		isPageHeading?: boolean;
 	} = $props();
+
+	let headingTag = $derived(isPageHeading ? 'h1' : 'h2');
 
 	let shownError = $derived(error ?? page.error);
 	let status = $derived(error === undefined ? page.status : error.status);
@@ -116,9 +122,9 @@
 				</span>
 			{/if}
 
-			<h2 class="mb-2 text-headline text-foreground">
+			<svelte:element this={headingTag} class="mb-2 text-headline text-foreground">
 				{title}
-			</h2>
+			</svelte:element>
 
 			<p class="mb-6 text-body text-muted-foreground">
 				{description}

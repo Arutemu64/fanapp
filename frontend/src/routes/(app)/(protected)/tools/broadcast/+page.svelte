@@ -162,7 +162,12 @@
 
 		<Field.FieldSet data-invalid={rolesError ? true : undefined}>
 			<Field.FieldLegend variant="label">{m.broadcast_roles_label()}</Field.FieldLegend>
-			<Field.FieldGroup data-slot="checkbox-group" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+			<!-- Each label stretches to a 44px row, so the tap target is the whole line
+			     rather than the 16px box; the rows then need no gap of their own. -->
+			<Field.FieldGroup
+				data-slot="checkbox-group"
+				class="grid grid-cols-1 gap-x-3 gap-y-0 sm:grid-cols-2"
+			>
 				<Field.Field orientation="horizontal">
 					<Checkbox
 						id="role-visitor"
@@ -170,7 +175,10 @@
 						onCheckedChange={(v) => toggleRole('visitor', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
-					<Field.FieldLabel for="role-visitor" class="cursor-pointer font-normal">
+					<Field.FieldLabel
+						for="role-visitor"
+						class="min-h-11 cursor-pointer items-center font-normal"
+					>
 						{m.audience_visitors()}
 					</Field.FieldLabel>
 				</Field.Field>
@@ -181,7 +189,10 @@
 						onCheckedChange={(v) => toggleRole('participant', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
-					<Field.FieldLabel for="role-participant" class="cursor-pointer font-normal">
+					<Field.FieldLabel
+						for="role-participant"
+						class="min-h-11 cursor-pointer items-center font-normal"
+					>
 						{m.audience_participants()}
 					</Field.FieldLabel>
 				</Field.Field>
@@ -192,7 +203,10 @@
 						onCheckedChange={(v) => toggleRole('volunteer', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
-					<Field.FieldLabel for="role-volunteer" class="cursor-pointer font-normal">
+					<Field.FieldLabel
+						for="role-volunteer"
+						class="min-h-11 cursor-pointer items-center font-normal"
+					>
 						{m.audience_volunteers()}
 					</Field.FieldLabel>
 				</Field.Field>
@@ -203,7 +217,10 @@
 						onCheckedChange={(v) => toggleRole('organizer', v === true)}
 						disabled={broadcastMutation.isPending}
 					/>
-					<Field.FieldLabel for="role-organizer" class="cursor-pointer font-normal">
+					<Field.FieldLabel
+						for="role-organizer"
+						class="min-h-11 cursor-pointer items-center font-normal"
+					>
 						{m.audience_organizers()}
 					</Field.FieldLabel>
 				</Field.Field>
