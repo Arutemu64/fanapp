@@ -5,7 +5,7 @@ test.describe('realtime (SSE)', { tag: '@critical' }, () => {
 		await page.goto('/schedule');
 		// The search field renders once the schedule has arrived, by which time the
 		// app shell has mounted and attached its SSE listeners.
-		await expect(page.getByRole('textbox', { name: 'Поиск по программе' })).toBeVisible();
+		await expect(page.getByRole('searchbox', { name: 'Поиск по программе' })).toBeVisible();
 
 		const before = api.countCalls('GET /schedule/');
 		await emitSse(page, 'schedule_updated', {});

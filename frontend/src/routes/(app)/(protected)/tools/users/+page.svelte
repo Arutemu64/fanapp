@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Search as SearchIcon, X } from '@lucide/svelte';
 	import { createInfiniteQuery, keepPreviousData } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
@@ -13,22 +12,19 @@
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
+	import SearchInput from '#lib/components/SearchInput.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { USER_ROLES, USERS_PAGE_SIZE } from '#lib/constants/users.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { queryView } from '#lib/utils/queryView.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 	import UserRow from './components/UserRow.svelte';
 	import { buildUserFiltersQuery, parseUserFilters, type UserFilters } from './userFilters';
-
-	const toastService = getToastService();
 
 	let filters = $derived(parseUserFilters(page.url.searchParams));
 	let hasActiveFilters = $derived(
@@ -127,12 +123,7 @@
 		applyFilters({ ...filters, hasTicket });
 	}
 
-	async function loadMore() {
-		const result = await usersQuery.fetchNextPage();
-		if (result.isFetchNextPageError) {
-			toastService.add(m.users_load_failed(), 'error');
-		}
-	}
+	let listElement = $state<HTMLElement | null>(null);
 </script>
 
 <svelte:head>
@@ -143,34 +134,13 @@
 	<SectionIntro description={m.users_description()} />
 
 	<div class="flex flex-col gap-3">
-		<div class="relative flex items-center">
-			<SearchIcon
-				class="pointer-events-none absolute left-3 size-4 text-muted-foreground"
-				aria-hidden="true"
-			/>
-			<Input
-				type="search"
-				bind:value={searchValue}
-				placeholder={m.users_search_placeholder()}
-				aria-label={m.users_search_label()}
-				autocomplete="off"
-				autocapitalize="off"
-				spellcheck={false}
-				enterkeyhint="search"
-				class="pr-10 pl-9 [&::-webkit-search-cancel-button]:hidden"
-				oninput={() => onSearchInput(searchValue)}
-			/>
-			{#if searchValue}
-				<button
-					type="button"
-					class="absolute right-0 flex size-11 items-center justify-center text-muted-foreground hover:text-foreground"
-					onclick={clearSearch}
-					aria-label={m.common_clear_search()}
-				>
-					<X class="size-4" />
-				</button>
-			{/if}
-		</div>
+		<SearchInput
+			bind:value={searchValue}
+			label={m.users_search_label()}
+			placeholder={m.users_search_placeholder()}
+			oninput={() => onSearchInput(searchValue)}
+			onclear={clearSearch}
+		/>
 
 		<!-- Two selects side by side rather than rows of chips: four roles and three
 		     ticket states fit one line on a phone, and the current choice stays
@@ -222,19 +192,17 @@
 				/>
 			{:else}
 				<div class={['transition-opacity', usersQuery.isPlaceholderData && 'opacity-60']}>
-					<MenuGroup class="divide-y divide-border">
+					<MenuGroup class="divide-y divide-border" bind:ref={listElement}>
 						{#each users as listedUser (listedUser.id)}
 							<UserRow user={listedUser} />
 						{/each}
 					</MenuGroup>
 
-					{#if usersQuery.hasNextPage}
-						<LoadMoreButton
-							loading={usersQuery.isFetchingNextPage}
-							busy={usersQuery.isFetching}
-							onclick={loadMore}
-						/>
-					{/if}
+					<LoadMoreButton
+						query={usersQuery}
+						list={listElement}
+						errorMessage={m.users_load_failed()}
+					/>
 				</div>
 			{/if}
 		{/snippet}

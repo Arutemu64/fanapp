@@ -2,10 +2,13 @@
 	// Deviates from upstream: the focus ring is solid `ring-ring`, not `ring-ring/50`.
 	// At half alpha it measures ~2.4:1 against the surface, under the 3:1 WCAG 1.4.11
 	// asks of a focus indicator; see `--ring` in app.css.
+	// Deviates from upstream: a row rendered as a <button> highlights on hover like
+	// one rendered as <a>; upstream only styles links, so every action row (install,
+	// update) re-added the hover by hand.
 	import { tv, type VariantProps } from 'tailwind-variants';
 
 	export const itemVariants = tv({
-		base: '[a]:hover:bg-muted rounded-md border text-sm group/item flex w-full flex-wrap items-center transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring [a]:transition-colors',
+		base: '[a]:hover:bg-muted [button]:hover:bg-muted rounded-md border text-sm group/item flex w-full flex-wrap items-center transition-colors duration-100 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring [a]:transition-colors',
 		variants: {
 			variant: {
 				default: 'border-transparent',

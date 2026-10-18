@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleAlert, CircleCheck } from '@lucide/svelte';
+	import { CircleCheck } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
@@ -7,6 +7,7 @@
 		getScheduleQueryKey,
 		importScheduleMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -106,12 +107,7 @@
 				</Field.FieldDescription>
 			</Field.Field>
 
-			{#if inlineError}
-				<Alert.Root variant="destructive">
-					<CircleAlert class="size-4" />
-					<Alert.Description>{inlineError}</Alert.Description>
-				</Alert.Root>
-			{/if}
+			<FormError message={inlineError} />
 
 			{#if successMessage}
 				<Alert.Root variant="success">

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
+	import { ArrowUpDown, BellRing } from '@lucide/svelte';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEntryDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
@@ -12,10 +12,11 @@
 		getScheduleQueryKey,
 		moveScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import FormError from '#lib/components/FormError.svelte';
+	import SearchInput from '#lib/components/SearchInput.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
@@ -105,11 +106,7 @@
 		</Dialog.Header>
 
 		<div class="flex flex-col gap-4 sm:gap-5">
-			{#if formError}
-				<Alert.Root variant="destructive">
-					<Alert.Description>{formError}</Alert.Description>
-				</Alert.Root>
-			{/if}
+			<FormError message={formError} />
 
 			<Dialog.Description class="text-body">
 				<ParaglideMessage message={m.event_move_choose} inputs={{ title: event.title }}>
@@ -130,29 +127,13 @@
 				</Alert.Description>
 			</Alert.Root>
 
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					name="schedule_move_search"
-					aria-label={m.event_move_search_label()}
-					placeholder={m.event_move_search_placeholder()}
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-					bind:value={query}
-					oninput={() => (formError = '')}
-				/>
-				{#if query}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (query = '')}
-						aria-label={m.common_clear_search()}
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
-			</div>
+			<SearchInput
+				bind:value={query}
+				name="schedule_move_search"
+				label={m.event_move_search_label()}
+				placeholder={m.event_move_search_placeholder()}
+				oninput={() => (formError = '')}
+			/>
 
 			<div class="max-h-48 overflow-y-auto rounded-lg border border-border sm:max-h-60">
 				{#each filtered as entry (entry.id)}

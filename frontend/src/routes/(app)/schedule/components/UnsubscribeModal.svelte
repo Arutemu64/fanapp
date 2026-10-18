@@ -11,8 +11,8 @@
 		deleteSubscriptionMutation,
 		getSubscriptionsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
-	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
@@ -75,11 +75,7 @@
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 
-		{#if formError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{formError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+		<FormError message={formError} />
 
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>

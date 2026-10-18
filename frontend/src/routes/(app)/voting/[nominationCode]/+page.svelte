@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { ExternalLink, Search as SearchIcon, Users, X } from '@lucide/svelte';
+	import { ExternalLink, Users } from '@lucide/svelte';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { GetVotingNominationOutput } from '#lib/api/generated/index.js';
@@ -13,9 +13,9 @@
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
+	import SearchInput from '#lib/components/SearchInput.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
@@ -143,28 +143,12 @@
 		<!-- Search sits straight on the page, as on the schedule, so the two lists read
 	     alike (DESIGN "When not to" use a card). -->
 		<div class="mb-4 flex flex-col gap-2">
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					bind:value={searchQuery}
-					name="participant_search"
-					aria-label={m.voting_participants_search_label()}
-					placeholder={m.voting_participants_search_placeholder()}
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-				/>
-				{#if searchQuery}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (searchQuery = '')}
-						aria-label={m.common_clear_search()}
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
-			</div>
+			<SearchInput
+				bind:value={searchQuery}
+				name="participant_search"
+				label={m.voting_participants_search_label()}
+				placeholder={m.voting_participants_search_placeholder()}
+			/>
 
 			<!-- Announce filter result changes to screen readers, which otherwise get no
 		     feedback that the list shrank or grew. Shown only while searching, as on the

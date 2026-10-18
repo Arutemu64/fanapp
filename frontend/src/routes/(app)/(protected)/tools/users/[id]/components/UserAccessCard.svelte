@@ -18,7 +18,6 @@
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { USER_ROLES } from '#lib/constants/users.js';
@@ -30,6 +29,8 @@
 		PERMISSION_LABELS
 	} from '#lib/utils/permissions.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
+
+	import ToolSection from '../../../components/ToolSection.svelte';
 
 	interface Props {
 		profile: UserDetailsDto;
@@ -121,12 +122,7 @@
 	}
 </script>
 
-<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-	<div class="flex items-center gap-2">
-		<ShieldCheck class="size-5 text-primary" aria-hidden="true" />
-		<h2 class="text-section text-foreground">{m.access_title()}</h2>
-	</div>
-
+<ToolSection title={m.access_title()} icon={ShieldCheck}>
 	{#if isSelf}
 		<p class="text-sm text-muted-foreground">
 			{m.access_self_note()}
@@ -203,4 +199,4 @@
 			<p class="text-sm text-muted-foreground">{m.access_no_permissions()}</p>
 		{/if}
 	</div>
-</Card.Root>
+</ToolSection>

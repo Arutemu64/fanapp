@@ -4,8 +4,8 @@
 	import type { ChangePasswordInput } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import PasswordInput from '#lib/components/PasswordInput.svelte';
-	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -77,11 +77,7 @@
 			class="sr-only"
 		/>
 	{/if}
-	{#if formError}
-		<Alert.Root variant="destructive">
-			<Alert.Description>{formError}</Alert.Description>
-		</Alert.Root>
-	{/if}
+	<FormError message={formError} />
 
 	<Field.FieldGroup class="gap-4">
 		{#if hasPassword}

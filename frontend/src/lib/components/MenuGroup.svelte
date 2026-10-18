@@ -5,10 +5,12 @@
 
 	interface Props {
 		class?: string;
+		/** The bordered block, for a list that moves focus among its rows. */
+		ref?: HTMLElement | null;
 		children: Snippet;
 	}
 
-	let { class: className, children }: Props = $props();
+	let { class: className, ref = $bindable(null), children }: Props = $props();
 </script>
 
 <!-- One bordered block per group of rows: the grouped-list shape of a phone's
@@ -16,6 +18,9 @@
      rows read as one set rather than as boxes-inside-a-box — and the /profile hub
      stays short enough that logout sits about a screen down instead of under a
      stack of cards. -->
-<div class={cn('overflow-hidden rounded-2xl border border-border bg-card', className)}>
+<div
+	bind:this={ref}
+	class={cn('overflow-hidden rounded-2xl border border-border bg-card', className)}
+>
 	{@render children()}
 </div>

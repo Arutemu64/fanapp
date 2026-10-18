@@ -1090,7 +1090,7 @@
 	"voting_participants_loading": "Загружаем участников…",
 	"voting_participants_search_label": "Поиск участников в номинации",
 	"voting_participants_search_placeholder": "Поиск по имени или номеру…",
-	"voting_period_hint": "Зрители смогут голосовать только в указанный период.",
+	"voting_period_hint": "Зрители смогут голосовать только в указанный период. Время московское.",
 	"voting_period_save_failed": "Не удалось сохранить время голосования",
 	"voting_period_saved": "Время голосования обновлено",
 	"voting_period_title": "Период голосования",

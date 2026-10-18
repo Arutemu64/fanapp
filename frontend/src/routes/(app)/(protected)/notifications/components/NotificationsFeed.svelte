@@ -7,7 +7,7 @@
 		createQuery,
 		useQueryClient
 	} from '@tanstack/svelte-query';
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
@@ -180,34 +180,6 @@
 
 	let listElement = $state<HTMLElement>();
 
-	// Move focus to the first item of the page just loaded, the usual advice for a
-	// load-more control: keyboard and screen-reader users continue where the new
-	// content starts, and focus isn't dropped to <body> when the button unmounts
-	// after the last page.
-	async function loadMore() {
-		const idsBefore = new Set(notifications.map((notification) => notification.id));
-		const result = await notificationsQuery.fetchNextPage();
-		if (result.isFetchNextPageError) {
-			toastService.add(m.notifications_load_failed(), 'error');
-			return;
-		}
-
-		let target = notifications.find((notification) => !idsBefore.has(notification.id));
-		// An empty or all-duplicate last page adds nothing but still removes the
-		// button, so hand focus to the end of the list instead.
-		if (!target && !notificationsQuery.hasNextPage) {
-			target = notifications.at(-1);
-		}
-		if (!target) return;
-
-		await tick();
-		const item = listElement?.querySelector<HTMLElement>(
-			`[data-notification-id="${CSS.escape(target.id)}"]`
-		);
-		const link = item?.querySelector<HTMLElement>('a');
-		(link ?? item)?.focus();
-	}
-
 	function announceNotification(notification: NotificationDto) {
 		liveAnnouncement = m.notifications_announce_new({ title: notification.title });
 	}
@@ -302,13 +274,12 @@
 				{/each}
 			</div>
 
-			{#if notificationsQuery.hasNextPage}
-				<LoadMoreButton
-					loading={notificationsQuery.isFetchingNextPage}
-					busy={notificationsQuery.isFetching}
-					onclick={loadMore}
-				/>
-			{/if}
+			<LoadMoreButton
+				query={notificationsQuery}
+				list={listElement}
+				itemSelector="[data-notification-id]"
+				errorMessage={m.notifications_load_failed()}
+			/>
 		{/if}
 	{/snippet}
 </QueryState>

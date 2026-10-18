@@ -5,13 +5,13 @@
 
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { canAwardQuest, canManageQuest } from '#lib/utils/permissions.js';
 
 	import type { PageProps } from './$types';
 
+	import ToolSection from '../components/ToolSection.svelte';
 	import AwardForm from './components/AwardForm.svelte';
 	import PlayerPicker from './components/PlayerPicker.svelte';
 	import QuestAwardsFeed from './components/QuestAwardsFeed.svelte';
@@ -48,7 +48,7 @@
 	{#if canAward}
 		<SectionIntro description={m.tool_quest_description()} />
 
-		<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
+		<ToolSection>
 			{#if player}
 				<!-- Keyed so a second player gets a fresh award ID and cleared errors. -->
 				{#key player.id}
@@ -57,7 +57,7 @@
 			{:else}
 				<PlayerPicker onPick={handlePick} focusOnMount={returnedFromForm} />
 			{/if}
-		</Card.Root>
+		</ToolSection>
 	{/if}
 
 	<section class="flex flex-col gap-3" aria-labelledby="quest-history-title">

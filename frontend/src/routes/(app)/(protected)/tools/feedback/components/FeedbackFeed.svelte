@@ -9,13 +9,10 @@
 	import { FEEDBACK_PAGE_SIZE } from '#lib/constants/feedback.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { queryView } from '#lib/utils/queryView.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import FeedbackItem from './FeedbackItem.svelte';
-
-	const toastService = getToastService();
 
 	const feedbackQuery = createInfiniteQuery(() => ({
 		...listFeedbackInfiniteOptions({ query: { limit: FEEDBACK_PAGE_SIZE } }),
@@ -34,12 +31,7 @@
 		})
 	);
 
-	async function loadMore() {
-		const result = await feedbackQuery.fetchNextPage();
-		if (result.isFetchNextPageError) {
-			toastService.add(m.feedback_load_failed(), 'error');
-		}
-	}
+	let listElement = $state<HTMLElement | null>(null);
 </script>
 
 <QueryState view={feedbackView}>
@@ -53,19 +45,17 @@
 		{:else}
 			<!-- One divided list, not a card per item: the entries are all the same shape,
 	     so a list scans faster and fits more on a phone screen. -->
-			<MenuGroup class="divide-y divide-border">
+			<MenuGroup class="divide-y divide-border" bind:ref={listElement}>
 				{#each feedback as item (item.id)}
 					<FeedbackItem feedback={item} />
 				{/each}
 			</MenuGroup>
 
-			{#if feedbackQuery.hasNextPage}
-				<LoadMoreButton
-					loading={feedbackQuery.isFetchingNextPage}
-					busy={feedbackQuery.isFetching}
-					onclick={loadMore}
-				/>
-			{/if}
+			<LoadMoreButton
+				query={feedbackQuery}
+				list={listElement}
+				errorMessage={m.feedback_load_failed()}
+			/>
 		{/if}
 	{/snippet}
 </QueryState>

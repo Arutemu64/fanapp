@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { CircleAlert } from '@lucide/svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
@@ -9,10 +8,9 @@
 		getSettingsQueryKey,
 		updateSettingsMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
-	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -23,6 +21,17 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import type { PageProps } from './$types';
+
+	import ToolSection from '../components/ToolSection.svelte';
+	import {
+		checkAnnouncementTimeout,
+		checkFestivalEnd,
+		checkFestivalStart,
+		checkQuestCancelWindow,
+		checkQuestMaxAward,
+		QUEST_CANCEL_WINDOW_LIMIT,
+		QUEST_MAX_AWARD_LIMIT
+	} from './settingsValidation';
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
@@ -62,10 +71,6 @@
 	let questCancelWindowError = $state('');
 	let submitError = $state('');
 
-	// Mirror the backend bounds (UpdateAppSettingsInput).
-	const QUEST_MAX_AWARD_LIMIT = 10_000;
-	const QUEST_CANCEL_WINDOW_LIMIT = 1440;
-
 	let hasChanges = $derived(
 		festivalStart !== savedFestivalStart ||
 			festivalEnd !== savedFestivalEnd ||
@@ -76,13 +81,8 @@
 	);
 
 	function validateFestivalStart() {
-		if (!festivalStart) {
-			festivalStartError = m.settings_validation_start();
-			return false;
-		}
-
-		festivalStartError = '';
-		return true;
+		festivalStartError = checkFestivalStart(festivalStart);
+		return !festivalStartError;
 	}
 
 	function handleFestivalStartInput() {
@@ -94,21 +94,8 @@
 	}
 
 	function validateFestivalEnd() {
-		if (!festivalEnd) {
-			festivalEndError = m.settings_validation_end();
-			return false;
-		}
-
-		// Guard the range: the backend stores the two instants independently with no
-		// ordering check, and an end at or before the start collapses the home page's
-		// "during" phase entirely — the countdown would jump straight to the farewell.
-		if (festivalStart && festivalEnd <= festivalStart) {
-			festivalEndError = m.error_invalid_festival_time_range();
-			return false;
-		}
-
-		festivalEndError = '';
-		return true;
+		festivalEndError = checkFestivalEnd(festivalStart, festivalEnd);
+		return !festivalEndError;
 	}
 
 	function handleFestivalEndInput() {
@@ -120,18 +107,8 @@
 	}
 
 	function validateAnnouncementTimeout() {
-		if (announcementTimeout === undefined || Number.isNaN(announcementTimeout)) {
-			announcementTimeoutError = m.settings_validation_timeout_required();
-			return false;
-		}
-
-		if (!Number.isInteger(announcementTimeout) || announcementTimeout < 1) {
-			announcementTimeoutError = m.settings_validation_timeout_integer();
-			return false;
-		}
-
-		announcementTimeoutError = '';
-		return true;
+		announcementTimeoutError = checkAnnouncementTimeout(announcementTimeout);
+		return !announcementTimeoutError;
 	}
 
 	function handleAnnouncementTimeoutInput() {
@@ -142,20 +119,14 @@
 		}
 	}
 
-	function isIntegerInRange(value: number | undefined, min: number, max: number): boolean {
-		return value !== undefined && Number.isInteger(value) && value >= min && value <= max;
-	}
-
 	function validateQuestMaxAward() {
-		const valid = isIntegerInRange(questMaxAward, 1, QUEST_MAX_AWARD_LIMIT);
-		questMaxAwardError = valid ? '' : m.settings_validation_quest_max();
-		return valid;
+		questMaxAwardError = checkQuestMaxAward(questMaxAward);
+		return !questMaxAwardError;
 	}
 
 	function validateQuestCancelWindow() {
-		const valid = isIntegerInRange(questCancelWindow, 0, QUEST_CANCEL_WINDOW_LIMIT);
-		questCancelWindowError = valid ? '' : m.settings_validation_quest_window();
-		return valid;
+		questCancelWindowError = checkQuestCancelWindow(questCancelWindow);
+		return !questCancelWindowError;
 	}
 
 	function handleQuestMaxAwardInput() {
@@ -271,18 +242,9 @@
 	class="mx-auto flex w-full max-w-2xl flex-col gap-5"
 	onsubmit={offlineGate.guard(handleSubmit)}
 >
-	{#if submitError}
-		<Alert.Root variant="destructive">
-			<CircleAlert class="size-4" />
-			<Alert.Description>{submitError}</Alert.Description>
-		</Alert.Root>
-	{/if}
+	<FormError message={submitError} />
 
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<h2 class="text-section text-foreground">
-			{m.settings_festival_section()}
-		</h2>
-
+	<ToolSection title={m.settings_festival_section()}>
 		<Field.FieldGroup class="gap-4">
 			<Field.Field data-invalid={festivalStartError ? true : undefined}>
 				<Field.FieldLabel for="festival-start">{m.settings_start_label()}</Field.FieldLabel>
@@ -328,11 +290,9 @@
 				{/if}
 			</Field.Field>
 		</Field.FieldGroup>
-	</Card.Root>
+	</ToolSection>
 
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<h2 class="text-section text-foreground">{m.nav_schedule()}</h2>
-
+	<ToolSection title={m.nav_schedule()}>
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
 			<Field.FieldLabel for="announcement-timeout">{m.settings_timeout_label()}</Field.FieldLabel>
 			<Input
@@ -357,11 +317,9 @@
 				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
-	</Card.Root>
+	</ToolSection>
 
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<h2 class="text-section text-foreground">{m.quest_title()}</h2>
-
+	<ToolSection title={m.quest_title()}>
 		<Field.FieldGroup class="gap-4">
 			<Field.Field orientation="horizontal">
 				<Field.FieldContent>
@@ -427,7 +385,7 @@
 				{/if}
 			</Field.Field>
 		</Field.FieldGroup>
-	</Card.Root>
+	</ToolSection>
 
 	<Button
 		type="submit"

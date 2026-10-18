@@ -4,11 +4,11 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { loginMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import FormError from '#lib/components/FormError.svelte';
 	import PasswordInput from '#lib/components/PasswordInput.svelte';
-	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getSession } from '#lib/services/session.js';
@@ -109,20 +109,18 @@
 </script>
 
 <form novalidate onsubmit={handlePasswordSubmit} class="flex flex-col gap-4">
-	{#if formError}
-		<Alert.Root variant="destructive">
-			<Alert.Description>{formError}</Alert.Description>
-		</Alert.Root>
-	{/if}
+	<FormError message={formError} />
 
 	<!-- Errors appear on submit only, and the inputs go read-only rather than
 		disabled while signing in — see CodeLoginForm for why. -->
 	<Field.FieldGroup class="gap-4">
 		<Field.Field data-invalid={emailError ? true : undefined}>
 			<Field.FieldLabel for="password-email">{m.email_label()}</Field.FieldLabel>
-			<div class="relative flex items-center">
-				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
+			<InputGroup.Root>
+				<InputGroup.Addon>
+					<Mail aria-hidden="true" />
+				</InputGroup.Addon>
+				<InputGroup.Input
 					id="password-email"
 					name="email"
 					type="email"
@@ -134,12 +132,11 @@
 					spellcheck={false}
 					required
 					readonly={busy}
-					class="pl-9"
 					aria-invalid={emailError ? true : undefined}
 					aria-describedby={emailError ? 'password-email-error' : undefined}
 					oninput={resetEmailFeedback}
 				/>
-			</div>
+			</InputGroup.Root>
 			{#if emailError}
 				<Field.FieldError id="password-email-error">{emailError}</Field.FieldError>
 			{/if}

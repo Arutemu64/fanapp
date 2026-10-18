@@ -5,7 +5,6 @@
 	import { getUserOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
@@ -14,6 +13,7 @@
 
 	import type { PageProps } from './$types';
 
+	import ToolSection from '../../components/ToolSection.svelte';
 	import UnlinkTicketButton from './components/UnlinkTicketButton.svelte';
 	import UserAccessCard from './components/UserAccessCard.svelte';
 
@@ -29,7 +29,7 @@
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
+	<ToolSection>
 		<div class="flex items-center gap-4">
 			<UserAvatar seed={profile.avatar_seed} class="size-14" />
 			<div class="min-w-0">
@@ -70,16 +70,11 @@
 		{#if profile.ticket_number && canManageUsers(data.user)}
 			<UnlinkTicketButton userId={profile.id} username={profile.username} />
 		{/if}
-	</Card.Root>
+	</ToolSection>
 
 	<UserAccessCard {profile} currentUser={data.user} />
 
-	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
-		<div class="flex items-center gap-2">
-			<Link2 class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-section text-foreground">{m.user_linked_accounts()}</h2>
-		</div>
-
+	<ToolSection title={m.user_linked_accounts()} icon={Link2}>
 		{#if profile.social_links.length > 0}
 			<ul class="divide-y divide-border">
 				{#each profile.social_links as link (link.provider)}
@@ -112,5 +107,5 @@
 		{:else}
 			<EmptyState message={m.user_no_linked_accounts()} />
 		{/if}
-	</Card.Root>
+	</ToolSection>
 </div>

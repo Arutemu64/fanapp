@@ -59,7 +59,11 @@ test.describe('organizer user directory', () => {
 
 		await expect(page.getByRole('link', { name: /ХитрыйЕнот42/ })).toBeVisible();
 		await page.getByRole('button', { name: 'Показать ещё' }).click();
-		await expect(page.getByRole('link', { name: /ТихийРонин64/ })).toBeVisible();
+		// Focus lands on the first row of the new page, and that row link stays in
+		// the tab order.
+		const boris = page.getByRole('link', { name: /ТихийРонин64/ });
+		await expect(boris).toBeFocused();
+		await expect(boris).not.toHaveAttribute('tabindex');
 
 		await page.getByRole('button', { name: 'Роль' }).click();
 		await page.getByRole('option', { name: 'Участник' }).click();

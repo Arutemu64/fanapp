@@ -1,15 +1,7 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	import {
-		ExternalLink,
-		Globe,
-		Mail,
-		Map as MapIcon,
-		MapPin,
-		MessageCircle,
-		ScrollText
-	} from '@lucide/svelte';
+	import { Globe, Mail, Map as MapIcon, MapPin, MessageCircle, ScrollText } from '@lucide/svelte';
 	import { createQuery } from '@tanstack/svelte-query';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
@@ -17,8 +9,7 @@
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
-	import MenuLink from '#lib/components/MenuLink.svelte';
-	import * as Item from '#lib/components/ui/item/index.js';
+	import MenuRow from '#lib/components/MenuRow.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -92,39 +83,6 @@
 	<title>{m.document_title({ title: m.nav_guide() })}</title>
 </svelte:head>
 
-{#snippet linkRow(
-	href: string,
-	Icon: Component,
-	title: string,
-	description: string,
-	external = true
-)}
-	<Item.Root class="rounded-none">
-		{#snippet child({ props })}
-			<a
-				{href}
-				target={external ? '_blank' : undefined}
-				rel={external ? 'noopener noreferrer' : undefined}
-				{...props}
-			>
-				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
-					<Icon class="size-5" aria-hidden="true" />
-				</Item.Media>
-				<Item.Content>
-					<Item.Title class="text-base">{title}</Item.Title>
-					<Item.Description>{description}</Item.Description>
-				</Item.Content>
-				{#if external}
-					<Item.Actions>
-						<ExternalLink class="size-4 text-muted-foreground" aria-hidden="true" />
-						<span class="sr-only">({m.guide_opens_in_new_tab()})</span>
-					</Item.Actions>
-				{/if}
-			</a>
-		{/snippet}
-	</Item.Root>
-{/snippet}
-
 <!-- A hub, like /profile: the intro with the facts, then grouped
      rows that each lead somewhere. Grouped rows with a trailing indicator are the
      phone-settings shape for "drill in"
@@ -152,19 +110,21 @@
 			{m.guide_important_heading()}
 		</h2>
 		<MenuGroup>
-			<MenuLink href="guide/map" label={m.nav_map()} icon={MapIcon} />
-			{@render linkRow(
-				yandexMapsUrl,
-				MapPin,
-				`${m.guide_venue_name()}, ${m.guide_venue_address()}`,
-				m.guide_open_in_yandex_maps()
-			)}
-			{@render linkRow(
-				'https://fancom.info/pages/rules',
-				ScrollText,
-				m.guide_rules(),
-				m.guide_rules_description()
-			)}
+			<MenuRow href="guide/map" label={m.nav_map()} icon={MapIcon} />
+			<MenuRow
+				externalHref={yandexMapsUrl}
+				newTab
+				label={`${m.guide_venue_name()}, ${m.guide_venue_address()}`}
+				description={m.guide_open_in_yandex_maps()}
+				icon={MapPin}
+			/>
+			<MenuRow
+				externalHref="https://fancom.info/pages/rules"
+				newTab
+				label={m.guide_rules()}
+				description={m.guide_rules_description()}
+				icon={ScrollText}
+			/>
 		</MenuGroup>
 	</section>
 
@@ -174,7 +134,7 @@
 		</h2>
 		<MenuGroup>
 			{#each guideArticles as article (article.slug)}
-				<MenuLink
+				<MenuRow
 					href={`guide/${article.slug}`}
 					label={article.title}
 					description={article.description}
@@ -191,7 +151,13 @@
 		</h2>
 		<MenuGroup>
 			{#each contactLinks as link (link.href)}
-				{@render linkRow(link.href, link.icon, link.label(), link.handle, link.external)}
+				<MenuRow
+					externalHref={link.href}
+					newTab={link.external}
+					label={link.label()}
+					description={link.handle}
+					icon={link.icon}
+				/>
 			{/each}
 		</MenuGroup>
 	</section>
