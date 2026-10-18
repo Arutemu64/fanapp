@@ -12,7 +12,13 @@
 		// Deviates from upstream: aria-disabled dims like disabled but keeps pointer
 		// events — an offline-gated button (offlineWriteGate) must still get the tap
 		// that explains why it's dead.
-		base: "rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring active:not-aria-[haspopup]:translate-y-px aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+		// Deviates from upstream: a pill that squares off while pressed, the Material 3
+		// Expressive button (round at rest, CornerSmall 8dp pressed). The rest radius is
+		// 26px (`4xl`), not `rounded-full`, so the morph animates: a 9999px radius only
+		// starts to visibly shrink near the end of the transition. 26px still caps every
+		// size here (≤48px tall) at a full half-circle end.
+		// https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/ButtonSmallTokens.kt
+		base: "rounded-4xl active:not-aria-[haspopup]:rounded-lg border border-transparent bg-clip-padding text-sm font-medium focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg:not([class*='size-'])]:size-4 group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-[color,background-color,border-color,box-shadow,border-radius] duration-200 ease-out outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 		variants: {
 			variant: {
 				default: 'bg-primary text-primary-foreground hover:bg-primary/80',
@@ -49,16 +55,17 @@
 				// (Apple HIG 44pt / Material 48dp; DESIGN.md "44px non-negotiable"). xs/icon-xs
 				// stay 24px (WCAG 2.2 AA floor) as a deliberate dense desktop-only opt-in, never
 				// a mobile tap target.
-				default:
-					'h-11 gap-1.5 px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
-				xs: "h-6 gap-1 rounded-[min(var(--radius-md),8px)] px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-				sm: 'h-10 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
-				lg: 'h-12 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
+				// Deviates from upstream: padding and gap follow Material 3 Expressive, which a
+				// pill needs (a 10px inset crowds the label into the curve): 16dp each side
+				// with or without an icon and an 8dp icon–label gap on 32–40dp buttons, 24dp on
+				// 56dp; lg (48px) takes the step between.
+				default: 'h-11 gap-2 px-4',
+				xs: "h-6 gap-1 px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3",
+				sm: 'h-10 gap-2 px-4',
+				lg: 'h-12 gap-2 px-5',
 				icon: 'size-11',
-				'icon-xs':
-					"size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
-				'icon-sm':
-					'size-10 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
+				'icon-xs': "size-6 [&_svg:not([class*='size-'])]:size-3",
+				'icon-sm': 'size-10',
 				'icon-lg': 'size-12'
 			}
 		},

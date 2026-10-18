@@ -110,7 +110,7 @@
 	{#snippet ready({ data: sources }: ReadyView<SyncSourceStatusDto[]>)}
 		<div class="mx-auto flex w-full max-w-2xl flex-col gap-4">
 			{#each sources as source (source.source)}
-				<Card.Root class="w-full max-w-none rounded-2xl p-4 sm:p-6">
+				<Card.Root class="w-full max-w-none p-4 sm:p-6">
 					<div class="flex flex-wrap items-start justify-between gap-3">
 						<div class="min-w-0">
 							<h2 class="text-section text-foreground">

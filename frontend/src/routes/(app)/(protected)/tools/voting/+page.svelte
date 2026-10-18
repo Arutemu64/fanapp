@@ -112,7 +112,7 @@
 <SectionIntro description={m.voting_admin_description()} />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 		<h2 class="text-section text-foreground">{m.voting_period_title()}</h2>
 
 		<p class="text-sm leading-5 text-muted-foreground">
@@ -158,7 +158,7 @@
 		</div>
 	</Card.Root>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Gift class="size-5 text-primary" aria-hidden="true" />
 			<h2 class="text-section text-foreground">{m.voting_draw_title()}</h2>
@@ -223,7 +223,7 @@
 		{/if}
 	</Card.Root>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Award class="size-5 text-primary" aria-hidden="true" />
 			<h2 class="text-section text-foreground">{m.voting_leaders_title()}</h2>
