@@ -141,7 +141,11 @@ export default defineConfig(({ mode }) => {
 			// Same for vi.stubGlobal (the fake Web Storage in the storage tests).
 			unstubGlobals: true,
 			// Same for vi.stubEnv.
-			unstubEnvs: true
+			unstubEnvs: true,
+			// Transforms are ~75% of a run; persisting them (in node_modules/.vitest-cache,
+			// so a reinstall clears it) takes a rerun from ~25s to ~7s. Off by
+			// default in Vitest 5.0. https://vitest.dev/config/fsmodulecache
+			fsModuleCache: true
 		},
 		// Tests exercise browser code, so resolve packages' browser entry points
 		// even though the runner is Node. Scoped to test runs so the app build
