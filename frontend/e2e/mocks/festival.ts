@@ -16,8 +16,8 @@ const now = GALLERY_NOW.getTime();
 /**
  * The festival in full swing at GALLERY_NOW: an event on stage, voting open with a
  * cast vote, quest standings and two unread notifications. The README gallery
- * captures it, and the a11y and tap-target specs scan it, because the stacked
- * state tints (current event, own vote, own leaderboard row) only appear here.
+ * captures it, and the a11y spec scans it, because the stacked state tints
+ * (current event, own vote, own leaderboard row) only appear here.
  * Pin the clock (`page.clock.setFixedTime(GALLERY_NOW)`) and layer a persona.
  */
 export const festivalInProgress: Handlers = {
