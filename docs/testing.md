@@ -386,7 +386,8 @@ against that build — a mocked route still fulfils under `context.setOffline`, 
 failing the read is what reaches the offline path.
 
 Two guards ride along on every spec: an **accessibility** scan
-(`@axe-core/playwright`, WCAG 2.0/2.1 A/AA) on key screens, and a **console-error /
+(`@axe-core/playwright`, WCAG 2.0/2.1 A/AA plus one-`<h1>` and heading order) on
+key screens, in light and dark and in the busy mid-festival states, and a **console-error /
 uncaught-exception** guard that fails a test on a silent browser error the visible
 assertions would miss. Specs are tagged (`@smoke`, `@critical`, `@a11y`) for
 lane filtering. See the README for the how-to. Full WCAG A/AA is enforced,

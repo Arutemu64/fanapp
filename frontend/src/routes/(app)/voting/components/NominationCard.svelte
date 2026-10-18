@@ -46,14 +46,14 @@
 		{/if}
 	</div>
 
-	<h3 class="flex-1 text-base leading-snug font-bold wrap-break-word text-foreground">
+	<h2 class="flex-1 text-base leading-snug font-bold wrap-break-word text-foreground">
 		<a
 			href={resolve(`voting/${nomination.code}`)}
 			class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
 		>
 			{nomination.title}
 		</a>
-	</h3>
+	</h2>
 
 	<!-- Footer row: navigation cue. Arrow signals this navigates, not votes directly. -->
 	<div

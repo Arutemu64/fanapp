@@ -21,7 +21,8 @@ export interface Fixtures {
 	consoleErrors: ConsoleGuard;
 	// A WCAG-scoped AxeBuilder factory for the page under test. `await
 	// makeAxeBuilder().analyze()` and assert `results.violations` is empty; narrow
-	// with `.include()` or relax a known issue with `.disableRules()`.
+	// with `.include()` / `.exclude()` (not `.disableRules()`, which drops the
+	// helper's heading rules; see support/axe.ts).
 	makeAxeBuilder: () => AxeBuilder;
 }
 

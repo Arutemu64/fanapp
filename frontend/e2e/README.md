@@ -201,8 +201,17 @@ test('home is accessible', async ({ page, makeAxeBuilder }) => {
 Scan the settled page — wait for a real landmark first (or axe flags the boot
 splash), and for entrance animations to finish (the home countdown fades in, so
 the scans wait for its cells to reach full opacity, and emulate reduced motion).
-Narrow with `.include(selector)`. All WCAG A/AA rules are enforced, contrast
-included.
+Narrow with `.include(selector)` / `.exclude(selector)`, not `.disableRules()`,
+which would also drop the two extra rules below. All WCAG A/AA rules are enforced,
+contrast included, plus two of axe's best-practice rules: one `<h1>` per page and
+no skipped heading level (`support/axe.ts`).
+
+Every scan runs in light and dark, since dark mode's colours are tuned
+separately. Default mocks render a quiet app, so the spec also scans the festival
+in full swing (`mocks/festival.ts`, the README gallery's data, with the clock
+pinned to `GALLERY_NOW`): an event on stage, a cast vote, the player's own
+leaderboard row. Those rows carry the stacked state tints where contrast slips. A
+screen that gains a new state tint deserves a scan in that state.
 
 ### Tags (running a subset)
 
@@ -253,6 +262,7 @@ e2e/
   mocks/
     api.ts           # ApiMock: catch-all route registry + json() helper
     defaults.ts      # baseline (guest) boot handlers
+    festival.ts      # the festival mid-run (gallery data): a11y scans + README gallery
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()
   support/

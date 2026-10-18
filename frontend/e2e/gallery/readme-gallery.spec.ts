@@ -8,15 +8,9 @@ import type { Handlers } from '../mocks/api';
 import { expect, json, loggedInAs, test } from '../fixtures';
 import { ApiMock } from '../mocks/api';
 import { baselineHandlers } from '../mocks/defaults';
+import { festivalInProgress } from '../mocks/festival';
 import { installSseDouble } from '../mocks/sse';
-import {
-	GALLERY_NOW,
-	notifications,
-	questStanding,
-	scheduleEntries,
-	singleDefile,
-	subscriptions
-} from './data';
+import { GALLERY_NOW, questStanding } from './data';
 
 // One test per README image: the gallery, then the hero. Run with
 // `just readme-gallery`, then review the image diff in docs/assets/ before committing.
@@ -25,30 +19,11 @@ const OUT_DIR = new URL('../../../docs/assets/readme-gallery/', import.meta.url)
 const HEADER_OUT = new URL('../../../docs/assets/readme-header.webp', import.meta.url);
 const WEBP_QUALITY = 0.85;
 
-const HOUR_MS = 3_600_000;
-const now = GALLERY_NOW.getTime();
-
 // A logged-in visitor during the festival, with voting open and two unread
 // notifications for the bell badge.
 const visitorAtFestival: Handlers = {
 	...loggedInAs({ ticket: null }),
-	'GET /config': json({
-		festival_start: new Date(now - 2 * HOUR_MS).toISOString(),
-		festival_end: new Date(now + 6 * HOUR_MS).toISOString(),
-		quest_enabled: true,
-		quest_max_award: 100
-	}),
-	'GET /notifications/unread-count': json({ count: 2 }),
-	'GET /voting/status': json({
-		can_vote: true,
-		status: 'open',
-		voting_start: new Date(now - HOUR_MS).toISOString(),
-		voting_end: new Date(now + 4 * HOUR_MS).toISOString()
-	}),
-	'GET /schedule/': json({ schedule: scheduleEntries }),
-	'GET /schedule/subscriptions/': json({ subscriptions }),
-	'GET /voting/nominations/single': json(singleDefile),
-	'GET /notifications/': json({ notifications, next_cursor: null })
+	...festivalInProgress
 };
 
 // Playwright only writes PNG or JPEG, so the browser that took the shot re-encodes

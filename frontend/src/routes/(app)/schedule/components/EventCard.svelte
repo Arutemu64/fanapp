@@ -29,6 +29,9 @@
 	}
 
 	let { event, currentEvent, user, variant = 'default' }: Props = $props();
+	// An interlude sits beside the block sections, not inside one, so its title is
+	// their sibling (h2) rather than a row under a block's h2.
+	let titleTag = $derived(variant === 'interlude' ? 'h2' : 'h3');
 	const toastService = getToastService();
 
 	// Subscribe/unsubscribe and the staff actions all POST to the server — online
@@ -106,14 +109,15 @@
 	<div class="min-w-0 flex-1">
 		<div class="flex items-start gap-2">
 			<div class="min-w-0 flex-1">
-				<h3
+				<svelte:element
+					this={titleTag}
 					class={[
 						'text-base leading-snug font-semibold text-foreground',
 						isSkipped && 'line-through'
 					]}
 				>
 					{event.title}
-				</h3>
+				</svelte:element>
 
 				<!-- Colored state badges get their own row so they read as a distinct tier above the quiet meta, and wrap predictably on narrow screens. Rendered only when a state is present, so the common no-badge row stays single-line. -->
 				{#if event.is_current || isSkipped}
