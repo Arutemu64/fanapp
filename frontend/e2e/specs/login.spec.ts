@@ -203,26 +203,26 @@ test('password login offers the code as the way out', async ({ page }) => {
 test(
 	'the options, email and code steps have no WCAG A/AA violations',
 	{ tag: '@a11y' },
-	async ({ page, api, makeAxeBuilder }) => {
+	async ({ page, api, expectAccessible }) => {
 		api.use({
 			'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: ['vk', 'telegram'] }),
 			'POST /auth/request-login-code': json(null)
 		});
 		await page.goto('/login');
 		await expect(page.getByRole('link', { name: 'Войти через VK ID' })).toBeVisible();
-		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+		await expectAccessible();
 
 		await page.getByRole('button', { name: 'Войти по почте' }).click();
 		const email = page.getByLabel('Почта');
 		await email.press('Enter');
 		await expect(page.getByRole('alert')).toBeVisible();
-		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+		await expectAccessible();
 
 		await email.fill('ann@example.com');
 		await email.press('Enter');
 		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
 		// The address sits inside a tag of the markup message.
 		await expect(page.getByText('Код отправлен на ann@example.com.')).toBeVisible();
-		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+		await expectAccessible();
 	}
 );

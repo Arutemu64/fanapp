@@ -104,7 +104,9 @@
 		/>
 	{/if}
 	<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
-		 layer under it to hold contrast wherever the crop lands. -->
+		 layer under it to hold contrast wherever the crop lands. The phase label
+		 sits near the scrim's light top end, so it stays solid white: at
+		 `white/85` it measured 4.1:1 over the brightest pixel of the phone crop. -->
 	<div
 		aria-hidden="true"
 		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/60 to-black/35"
@@ -112,7 +114,7 @@
 
 	<div class="flex flex-col gap-3 p-4 pt-16 sm:p-6 sm:pt-24">
 		{#if phase === 'before'}
-			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white/85 uppercase">
+			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
 				{m.home_before_festival()}
 			</h2>
 			<!-- Hide the live-ticking grid from screen readers; the static start date conveys it -->
@@ -149,7 +151,7 @@
 		{:else if phase === 'during' && featured}
 			<h2
 				id="hero-heading"
-				class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white/85 uppercase"
+				class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white uppercase"
 			>
 				{#if featured.live}
 					<!-- Live dot, as on the schedule's current row. The ping runs three

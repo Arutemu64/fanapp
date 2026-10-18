@@ -2,12 +2,13 @@ import type AxeBuilder from '@axe-core/playwright';
 
 import { test as base, expect } from '@playwright/test';
 
+import type { AccessibleOptions } from './support/axe';
 import type { ConsoleGuard } from './support/console';
 
 import { ApiMock } from './mocks/api';
 import { baselineHandlers } from './mocks/defaults';
 import { installSseDouble } from './mocks/sse';
-import { axeBuilder } from './support/axe';
+import { axeBuilder, expectAccessible } from './support/axe';
 import { watchConsole } from './support/console';
 
 export interface Fixtures {
@@ -19,10 +20,14 @@ export interface Fixtures {
 	// console error or uncaught exception fails the spec. Reference it only to
 	// `allow(...)` an error a test deliberately provokes.
 	consoleErrors: ConsoleGuard;
-	// A WCAG-scoped AxeBuilder factory for the page under test. `await
-	// makeAxeBuilder().analyze()` and assert `results.violations` is empty; narrow
-	// with `.include()` or relax a known issue with `.disableRules()`.
+	// A WCAG-scoped AxeBuilder factory for the page under test. Narrow it with
+	// `.include()` or relax a known issue with `.disableRules()`, then hand it to
+	// `expectAccessible`.
 	makeAxeBuilder: () => AxeBuilder;
+	// Scan the page, attach the results to the report, and fail on violations or
+	// on contrast axe couldn't decide: `await expectAccessible()`. Pass a narrowed
+	// `builder`, or `contrastCheckedByHand` for text over a photo.
+	expectAccessible: (options?: AccessibleOptions) => Promise<void>;
 }
 
 export const test = base.extend<Fixtures>({
@@ -59,6 +64,10 @@ export const test = base.extend<Fixtures>({
 
 	makeAxeBuilder: async ({ page }, use) => {
 		await use(() => axeBuilder(page));
+	},
+
+	expectAccessible: async ({ page }, use, testInfo) => {
+		await use((options) => expectAccessible(page, testInfo, options));
 	}
 });
 
