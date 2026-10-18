@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ShieldCheck } from '@lucide/svelte';
+	import ShieldCheck from '@lucide/svelte/icons/shield-check';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type {

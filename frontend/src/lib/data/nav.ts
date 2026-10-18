@@ -1,7 +1,11 @@
 import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
-import { Calendar, CircleUser, Compass, House, ThumbsUp } from '@lucide/svelte';
+import Calendar from '@lucide/svelte/icons/calendar';
+import CircleUser from '@lucide/svelte/icons/circle-user';
+import Compass from '@lucide/svelte/icons/compass';
+import House from '@lucide/svelte/icons/house';
+import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
 
 import { m } from '#lib/paraglide/messages.js';
 import { resolvePath } from '#lib/utils/paths.js';

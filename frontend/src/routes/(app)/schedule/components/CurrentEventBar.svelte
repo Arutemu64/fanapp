@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Play } from '@lucide/svelte';
+	import Play from '@lucide/svelte/icons/play';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 

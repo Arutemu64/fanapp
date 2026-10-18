@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { User } from '@lucide/svelte';
+	import User from '@lucide/svelte/icons/user';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto, UpdateCurrentUserInput } from '#lib/api/generated/index.js';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X } from '@lucide/svelte';
+	import X from '@lucide/svelte/icons/x';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { tick } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';

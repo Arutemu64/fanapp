@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { ArrowRight, BellRing, Hourglass } from '@lucide/svelte';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
+	import Hourglass from '@lucide/svelte/icons/hourglass';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 

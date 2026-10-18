@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CircleCheck, ThumbsUp } from '@lucide/svelte';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
 	import { createMutation, useIsMutating } from '@tanstack/svelte-query';
 
 	import type { ParticipantFullDto } from '#lib/api/generated/index.js';

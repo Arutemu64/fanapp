@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { ArrowLeft, CircleAlert, House, Lock, RotateCw } from '@lucide/svelte';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import House from '@lucide/svelte/icons/house';
+	import Lock from '@lucide/svelte/icons/lock';
+	import RotateCw from '@lucide/svelte/icons/rotate-cw';
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';

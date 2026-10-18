@@ -1,7 +1,8 @@
 import type {
 	GetScheduleOutput,
 	GetVotingStateOutput,
-	PublicConfigDto
+	PublicConfigDto,
+	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, test } from '../fixtures';
@@ -105,11 +106,19 @@ test.describe('offline', { tag: '@critical' }, () => {
 		// the offline wording's minimum time on screen.
 		await page.clock.fastForward('01:05');
 
+		// The installed clock keeps running after the fast-forward, so the 3s recovery
+		// poll can reach a healthy endpoint before the click and take «Повторить»
+		// away. Holding the health check until the click is made keeps the button.
+		let reconnect = () => {};
+		const reconnected = new Promise<void>((resolve) => (reconnect = resolve));
 		// Hold one of Home's refetches open to watch the catch-up state.
 		let release = () => {};
 		const released = new Promise<void>((resolve) => (release = resolve));
 		api.use({
-			'GET /debug/health': json({ status: 'healthy' }),
+			'GET /debug/health': async () => {
+				await reconnected;
+				return json({ status: 'healthy' });
+			},
 			'GET /voting/status': async () => {
 				await released;
 				return json({
@@ -121,6 +130,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 			}
 		});
 		await page.getByRole('button', { name: 'Повторить' }).click();
+		reconnect();
 
 		await expect(page.getByRole('status').getByText('Обновляем…')).toBeAttached();
 		release();
@@ -131,6 +141,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		let patched = false;
 		api.use({
 			...loggedInAs(),
+			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 1 }),
 			'PATCH /me/settings': () => {
 				patched = true;
 				return json({});
@@ -139,6 +150,14 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.goto('/profile/notifications');
 		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
 		await expect(allAnnouncements).toBeChecked();
+		// Every API response the app handles marks the backend reachable, and the
+		// switch renders before the bell's unread count has answered: handled after
+		// the `offline` event below, it would flip the app back online. Waiting for
+		// the request to finish isn't enough on WebKit, where the page can handle the
+		// response later still; the count in the bell's name shows it has been handled.
+		await expect(
+			page.getByRole('link', { name: 'Открыть уведомления, непрочитанных: 1' })
+		).toBeVisible();
 
 		api.use({ 'GET /debug/health': (route) => route.abort() });
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));

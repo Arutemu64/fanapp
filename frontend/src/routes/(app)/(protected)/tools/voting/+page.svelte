@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Award, Gift, Users } from '@lucide/svelte';
+	import Award from '@lucide/svelte/icons/award';
+	import Gift from '@lucide/svelte/icons/gift';
+	import Users from '@lucide/svelte/icons/users';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 

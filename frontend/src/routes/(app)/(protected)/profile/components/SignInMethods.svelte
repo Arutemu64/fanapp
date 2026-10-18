@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$app/env/public';
-	import { Mail, Shield } from '@lucide/svelte';
+	import Mail from '@lucide/svelte/icons/mail';
+	import Shield from '@lucide/svelte/icons/shield';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto, SocialProvider } from '#lib/api/generated/index.js';

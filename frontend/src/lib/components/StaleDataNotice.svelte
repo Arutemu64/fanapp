@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock } from '@lucide/svelte';
+	import Clock from '@lucide/svelte/icons/clock';
 
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { m } from '#lib/paraglide/messages.js';

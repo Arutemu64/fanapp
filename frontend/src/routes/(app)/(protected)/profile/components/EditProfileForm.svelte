@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Dices, User } from '@lucide/svelte';
+	import Dices from '@lucide/svelte/icons/dices';
+	import User from '@lucide/svelte/icons/user';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 

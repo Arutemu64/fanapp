@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CircleCheck } from '@lucide/svelte';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';

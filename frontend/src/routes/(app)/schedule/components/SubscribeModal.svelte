@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { BellRing, Minus, Plus } from '@lucide/svelte';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
+	import Minus from '@lucide/svelte/icons/minus';
+	import Plus from '@lucide/svelte/icons/plus';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';

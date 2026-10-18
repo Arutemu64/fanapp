@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { asset } from '$app/paths';
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { CircleAlert, Download, Info } from '@lucide/svelte';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import Download from '@lucide/svelte/icons/download';
+	import Info from '@lucide/svelte/icons/info';
 
 	import type { MessageTagProps } from '#lib/types/markup.js';
 

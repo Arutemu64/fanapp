@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Unlink } from '@lucide/svelte';
+	import Unlink from '@lucide/svelte/icons/unlink';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import {

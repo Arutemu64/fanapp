@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ThumbsUp } from '@lucide/svelte';
+	import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import type { ListVotingNominationsOutput } from '#lib/api/generated/index.js';

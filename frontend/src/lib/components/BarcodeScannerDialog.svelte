@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ScanLine } from '@lucide/svelte';
+	import ScanLine from '@lucide/svelte/icons/scan-line';
 
 	import type { BarcodeFormat } from '#lib/utils/barcodeReader.js';
 

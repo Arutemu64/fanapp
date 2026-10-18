@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ClipboardCopy } from '@lucide/svelte';
+	import ClipboardCopy from '@lucide/svelte/icons/clipboard-copy';
 	import { createMutation } from '@tanstack/svelte-query';
 
 	import type { UserRole } from '#lib/api/generated/index.js';

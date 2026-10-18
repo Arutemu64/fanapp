@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CircleAlert, CircleCheck } from '@lucide/svelte';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import { useIsFetching } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 	import { slide } from 'svelte/transition';

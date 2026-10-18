@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ThumbsUp } from '@lucide/svelte';
+	import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
 
 	import type { VotingStatus } from '#lib/api/generated/index.js';
 

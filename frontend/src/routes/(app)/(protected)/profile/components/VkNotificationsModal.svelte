@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { MessageSquare } from '@lucide/svelte';
+	import MessageSquare from '@lucide/svelte/icons/message-square';
 
 	import type { MessageTagProps } from '#lib/types/markup.js';
 

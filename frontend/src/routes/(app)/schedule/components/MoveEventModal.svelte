@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
-	import { ArrowUpDown, BellRing } from '@lucide/svelte';
+	import ArrowUpDown from '@lucide/svelte/icons/arrow-up-down';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEntryDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';

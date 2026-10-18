@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Activity } from '@lucide/svelte';
+	import Activity from '@lucide/svelte/icons/activity';
 	import { createQuery } from '@tanstack/svelte-query';
 
 	import { countOnlineUsersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';

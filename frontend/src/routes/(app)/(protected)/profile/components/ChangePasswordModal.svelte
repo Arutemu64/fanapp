@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Lock } from '@lucide/svelte';
+	import Lock from '@lucide/svelte/icons/lock';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ChangePasswordInput } from '#lib/api/generated/index.js';

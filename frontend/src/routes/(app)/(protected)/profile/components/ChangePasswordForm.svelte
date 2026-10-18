@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { CircleCheck, CircleX } from '@lucide/svelte';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import CircleX from '@lucide/svelte/icons/circle-x';
 
 	import type { ChangePasswordInput } from '#lib/api/generated/index.js';
 

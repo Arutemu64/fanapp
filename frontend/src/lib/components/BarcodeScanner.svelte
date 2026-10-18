@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Images } from '@lucide/svelte';
+	import Images from '@lucide/svelte/icons/images';
 	import { onDestroy } from 'svelte';
 
 	import { Button } from '#lib/components/ui/button/index.js';

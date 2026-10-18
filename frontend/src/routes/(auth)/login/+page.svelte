@@ -4,7 +4,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ArrowLeft, Mail } from '@lucide/svelte';
+	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import Mail from '@lucide/svelte/icons/mail';
 	import { onMount } from 'svelte';
 
 	import { Button } from '#lib/components/ui/button/index.js';

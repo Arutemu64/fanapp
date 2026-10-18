@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ArrowRight, CircleCheck } from '@lucide/svelte';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
 
 	import type { NominationVotingDto } from '#lib/api/generated/index.js';
 

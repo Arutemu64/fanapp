@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { LogOut } from '@lucide/svelte';
+	import LogOut from '@lucide/svelte/icons/log-out';
 	import { createMutation } from '@tanstack/svelte-query';
 
 	import { logoutUserMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';

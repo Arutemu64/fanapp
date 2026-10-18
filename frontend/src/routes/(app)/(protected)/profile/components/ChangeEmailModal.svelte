@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail } from '@lucide/svelte';
+	import Mail from '@lucide/svelte/icons/mail';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ChangeEmailInput } from '#lib/api/generated/index.js';
