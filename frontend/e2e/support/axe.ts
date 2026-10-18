@@ -23,6 +23,11 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22a', 'wcag2
 // The keys are axe-core's `color-contrast` incomplete messages (locales/_template.json).
 const NOT_A_CONTRAST_QUESTION = new Set(['nonBmp', 'shortTextContent', 'equalRatio']);
 
+// Regions on every page whose backdrop is whatever scrolls under them, so axe can
+// never decide their contrast. The glass bottom nav's label colours are set for
+// its worst backdrop instead; the numbers live beside them in AppBottomNav.svelte.
+const CHECKED_BY_HAND_ON_EVERY_PAGE = ['[data-bottom-nav]'];
+
 export interface AccessibleOptions {
 	builder?: AxeBuilder;
 	// Selectors of regions whose contrast axe can't measure (text over a photo)
@@ -95,7 +100,10 @@ export async function expectAccessible(
 	// over another element) under `incomplete`, not `violations`, so it would pass
 	// unseen. Fail on it so a human decides: fix the surface, or check it by hand
 	// and list it in `contrastCheckedByHand`.
-	const undecided = await undecidedContrast(page, results, contrastCheckedByHand);
+	const undecided = await undecidedContrast(page, results, [
+		...CHECKED_BY_HAND_ON_EVERY_PAGE,
+		...contrastCheckedByHand
+	]);
 	expect(
 		undecided.map((node) => ({ target: node.target, reason: contrastReason(node) })),
 		'axe could not decide the contrast of these elements'

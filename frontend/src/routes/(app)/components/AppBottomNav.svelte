@@ -47,6 +47,7 @@
      (preload-data="hover" on <body> fires on touchstart). -->
 <nav
 	aria-label={m.nav_aria_label()}
+	data-bottom-nav
 	data-sveltekit-preload-code="viewport"
 	class="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-gap) z-(--z-overlay) px-2 select-none [-webkit-touch-callout:none] min-[25rem]:px-3 md:hidden"
 >
@@ -55,10 +56,13 @@
 	>
 		<!-- One capsule that slides between tabs rather than one per tab, so a switch
 		     reads as motion from the old tab to the new one. It spans exactly one of the
-		     five equal columns, so translating by its own width steps one tab. The tint is
-		     strong enough to track mid-slide, so the active label steps down to primary-700
-		     in light mode, the `tonal` button's trick: primary-600 measured 4.38:1 on a mere
-		     /10, primary-700 is 5.6:1 on this /12. Dark keeps the token (5.3:1 on /20). -->
+		     five equal columns, so translating by its own width steps one tab.
+		     Label colours are set for the worst backdrop, not a white page: the glass lets
+		     whatever scrolls under it tint the pill, and over a dark photo (light mode) or
+		     white content (dark mode) the tokens fell below AA, muted-foreground to 3.7:1
+		     and the active primary-700 / primary to 4.05:1 / 3.5:1. So idle is gray-600 in
+		     light mode (5.3:1 worst) and active is primary-800 / primary-300 (5.1:1 / 5.2:1
+		     worst, on this /12 and /20 capsule). Dark idle keeps muted-foreground (5.2:1). -->
 		<span
 			aria-hidden="true"
 			class={[
@@ -106,8 +110,8 @@
 							class={[
 								'size-5 transition-[color,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none',
 								active
-									? 'text-primary-700 dark:text-primary'
-									: 'text-muted-foreground group-hover:text-foreground'
+									? 'text-primary-800 dark:text-primary-300'
+									: 'text-gray-600 group-hover:text-foreground dark:text-muted-foreground'
 							]}
 						/>
 					{/if}
@@ -124,8 +128,8 @@
 					class={[
 						'whitespace-nowrap transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
 						active
-							? 'font-semibold text-primary-700 dark:text-primary'
-							: 'text-muted-foreground group-hover:text-foreground'
+							? 'font-semibold text-primary-800 dark:text-primary-300'
+							: 'text-gray-600 group-hover:text-foreground dark:text-muted-foreground'
 					]}
 				>
 					{label()}
