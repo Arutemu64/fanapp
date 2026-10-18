@@ -35,7 +35,7 @@
 		"@iconify-json/simple-icons": "1.2.99",
 		"@inlang/paraglide-js": "2.26.0",
 		"@inlang/paraglide-js-svelte": "1.0.4",
-		"@inlang/plugin-message-format": "4.4.0",
+		"@inlang/plugin-message-format": "4.4.4",
 		"@internationalized/date": "3.12.3",
 		"@lucide/svelte": "1.35.0",
 		"@playwright/test": "1.64.0",
