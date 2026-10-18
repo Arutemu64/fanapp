@@ -7,7 +7,11 @@ from dishka import AsyncContainer
 from pydantic import SecretStr
 from redis.asyncio import Redis
 
-from fanfan.adapters.captcha.altcha import AltchaCaptchaVerifier
+from fanfan.adapters.captcha.altcha import (
+    CHALLENGE_COUNTER_MAX,
+    CHALLENGE_COUNTER_MIN,
+    AltchaCaptchaVerifier,
+)
 from fanfan.adapters.captcha.config import AltchaConfig
 from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
 
@@ -75,3 +79,17 @@ async def test_missing_or_malformed_token_is_rejected(
 
     with pytest.raises(CaptchaVerificationFailed):
         await verifier.verify(token)
+
+
+async def test_challenge_makes_the_client_find_the_issued_counter(
+    dishka_request: AsyncContainer,
+) -> None:
+    verifier = await make_verifier(dishka_request)
+    challenge = Challenge.from_dict(await verifier.issue_challenge())
+
+    # Deterministic mode: the prefix pins one counter in the configured range,
+    # so every client does the same amount of work.
+    solution = solve_challenge(challenge)
+    assert solution is not None
+    assert CHALLENGE_COUNTER_MIN <= solution.counter <= CHALLENGE_COUNTER_MAX
+    assert challenge.parameters.key_signature is not None

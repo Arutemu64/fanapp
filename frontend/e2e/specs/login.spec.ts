@@ -7,18 +7,20 @@ import type {
 
 import { expect, json, test } from '../fixtures';
 
-// A real ALTCHA challenge at the API's own difficulty. The browser never checks
-// the signature (only the API does), and with no expiresAt it never goes stale.
+// A real deterministic ALTCHA challenge at the API's own difficulty, pinned to
+// counter 750. The browser never checks the signatures (only the API does), and
+// with no expiresAt it never goes stale.
 const CAPTCHA_CHALLENGE = {
 	parameters: {
 		algorithm: 'PBKDF2/SHA-256',
 		cost: 5000,
 		keyLength: 32,
-		keyPrefix: '00',
-		nonce: '11117ad420a68f3dc620fbe2c6e49b54',
-		salt: 'ca7bbb00be942a730b9832a8de58be80'
+		keyPrefix: '687afc72cc05a84c0d4dd5ded62b86ed',
+		nonce: '1d8fa1307004e5bf19a024e955438c3e',
+		salt: 'eb91ea0efa8c99bcbf08a8cd17d95e62',
+		keySignature: 'cf27fc8a37aca2adec2a919739effb46e4873301fd81de1b3b0f6ab0612487f6'
 	},
-	signature: '68110f326f4f458e02832b9d29844ae1ad903b3e0e5e37175e4b1d728d9575df'
+	signature: 'f43d43a355226d46303581c2f1b09278be5b5e1482d291efd5c799387c6f058e'
 };
 
 async function openEmailStep(page: Page) {
@@ -80,15 +82,18 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await email.press('Enter');
 		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
 
-		// The token is the ALTCHA payload: the challenge as issued plus a solution
-		// whose derived key carries the required prefix.
+		// The token is the ALTCHA payload: the challenge as issued plus the one
+		// solution its prefix pins.
 		expect(typeof sentToken).toBe('string');
 		const payload = JSON.parse(atob(sentToken as string)) as {
 			challenge: unknown;
 			solution: { counter: number; derivedKey: string };
 		};
 		expect(payload.challenge).toEqual(CAPTCHA_CHALLENGE);
-		expect(payload.solution.derivedKey).toMatch(/^00[0-9a-f]{62}$/);
+		expect(payload.solution.counter).toBe(750);
+		expect(payload.solution.derivedKey.startsWith(CAPTCHA_CHALLENGE.parameters.keyPrefix)).toBe(
+			true
+		);
 	});
 
 	test('the on-screen back returns focus to the control that opened the step', async ({ page }) => {

@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import logging
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -12,12 +15,16 @@ from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
 logger = logging.getLogger(__name__)
 
 # PBKDF2 runs natively in every browser through WebCrypto, so no WASM solver is
-# shipped. cost is the PBKDF2 iteration count per attempt; the default keyPrefix
-# "00" makes the solver try ~256 counters on average. Together they are the
-# difficulty knob: raise them if bots get through, lower them if phones at the
-# venue solve too slowly.
+# shipped. cost is the PBKDF2 iteration count per attempt.
 CHALLENGE_ALGORITHM = "PBKDF2/SHA-256"
 CHALLENGE_COST = 5_000
+# Deterministic mode: the server picks the counter, so the client must run
+# exactly that many derivations, with none of probabilistic mode's unlucky long
+# tail. Together with cost this is the difficulty knob. ALTCHA suggests
+# 5000-10000 (https://altcha.org/docs/integration/proof-of-work-captcha/); we
+# stay 10x lower so a phone at the venue still finishes in a second or two.
+CHALLENGE_COUNTER_MIN = 500
+CHALLENGE_COUNTER_MAX = 1_000
 # Long enough for someone to type an email after the client pre-solves on page
 # load; the replay guard keeps each spent challenge for exactly this long.
 CHALLENGE_TTL = timedelta(minutes=10)
@@ -29,18 +36,27 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
     """
 
     def __init__(self, config: AltchaConfig, redis: Redis) -> None:
-        self.config = config
         self.redis = redis
+        # Two secrets, one for the challenge signature and one for the
+        # derived-key signature, as ALTCHA's examples use; derived from the one
+        # configured key so deploying needs a single env var.
+        master = config.hmac_key.get_secret_value().encode()
+        self._challenge_secret = _subkey(master, b"challenge-signature")
+        self._key_secret = _subkey(master, b"derived-key-signature")
 
     async def issue_challenge(self) -> dict[str, Any]:
-        # Not the deterministic `counter` mode ALTCHA also offers: that pre-solves
-        # every challenge on the server, so each anonymous GET would cost us the
-        # same PBKDF2 work it is meant to cost the client.
+        counter = CHALLENGE_COUNTER_MIN + secrets.randbelow(
+            CHALLENGE_COUNTER_MAX - CHALLENGE_COUNTER_MIN + 1
+        )
+        # Pre-solving costs one derivation (~1 ms) per challenge; the endpoint's
+        # per-IP limit bounds what an anonymous caller can make us spend.
         challenge = create_challenge(
             algorithm=CHALLENGE_ALGORITHM,
             cost=CHALLENGE_COST,
+            counter=counter,
             expires_at=datetime.now(UTC) + CHALLENGE_TTL,
-            hmac_secret=self.config.hmac_key.get_secret_value(),
+            hmac_secret=self._challenge_secret,
+            hmac_key_secret=self._key_secret,
         )
         return challenge.to_dict()
 
@@ -50,7 +66,12 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
 
         # verify_solution parses the raw token itself and reports malformed input
         # as unverified, so untrusted bytes never reach our own parsing.
-        result = verify_solution(token, self.config.hmac_key.get_secret_value())
+        # With the key secret this is the fast path: an HMAC of the submitted
+        # key, no re-derivation. It must match the secret the challenge was
+        # issued with, or verification falls back to re-deriving.
+        result = verify_solution(
+            token, self._challenge_secret, hmac_key_secret=self._key_secret
+        )
         if not result.verified:
             logger.warning(
                 "Captcha verification rejected",
@@ -82,6 +103,10 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
         if not first_use:
             logger.warning("Captcha verification rejected: challenge replayed")
             raise CaptchaVerificationFailed
+
+
+def _subkey(master: bytes, purpose: bytes) -> str:
+    return hmac.new(master, purpose, hashlib.sha256).hexdigest()
 
 
 class NoOpCaptchaVerifier(CaptchaVerifier):

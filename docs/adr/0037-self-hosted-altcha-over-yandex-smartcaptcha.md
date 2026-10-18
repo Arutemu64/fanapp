@@ -31,12 +31,17 @@ We will replace SmartCaptcha with **self-hosted
 `request-login-code`. Both run inside the existing API; no new container.
 
 - **Challenge:** `GET /auth/captcha-challenge` returns a PoW v2 challenge from the
-  `altcha` Python library (PBKDF2/SHA-256, cost 5000, default keyPrefix `00`,
-  10-minute expiry), HMAC-signed with `ALTCHA__HMAC_KEY`. It returns
+  `altcha` Python library (PBKDF2/SHA-256, cost 5000, 10-minute expiry),
+  HMAC-signed with a key derived from `ALTCHA__HMAC_KEY`. It returns
   `{ challenge: null }` when the key is unset, which disables the captcha.
-  Challenges are non-deterministic: the deterministic `counter` mode pre-solves
-  each one on the server, so every anonymous GET would cost us the work it is
-  meant to cost the client.
+  Challenges use **deterministic mode**, which ALTCHA recommends for login
+  protection ([ALTCHA: proof of work](https://altcha.org/docs/integration/proof-of-work-captcha/)):
+  the server picks a random counter in 500–1000 and pre-solves it, so every
+  client does exactly that much work, and a second derived key signs the
+  solution so verification is a single HMAC. ALTCHA suggests counters of
+  5000–10000; we stay 10× lower so a phone at the venue still finishes in a
+  second or two. Pre-solving costs the server one derivation (~1 ms) per
+  challenge, which the endpoint's per-IP limit below bounds.
 - **Verification:** `AltchaCaptchaVerifier` (`adapters/captcha/altcha.py`) checks
   the solution locally. The library proves a solution is valid but cannot tell a
   replay, so the adapter records each spent challenge signature in Redis with
@@ -68,11 +73,13 @@ We will replace SmartCaptcha with **self-hosted
   rebuild.
 - Proof-of-work raises the cost per request; it does not detect bots. An attacker
   willing to burn CPU can still solve challenges, and the per-IP limit is what
-  caps one source. If abuse appears, raise `CHALLENGE_COST` or the keyPrefix
-  length, or lower the IP cap.
-- Difficulty is a trade-off against slow phones at the venue. The setting follows
-  ALTCHA's suggested PBKDF2 cost of 5000; the expected solve time on a phone is
-  an estimate, not a measurement on venue hardware.
+  caps one source. If abuse appears, raise `CHALLENGE_COUNTER_MIN`/`_MAX` or
+  `CHALLENGE_COST`, or lower the IP cap.
+- Difficulty is a trade-off against slow phones at the venue. The cost follows
+  ALTCHA's suggestion; the counter is deliberately below it. A counter of 750
+  took 0.66 s single-threaded on a 4-core server and the client splits it across
+  workers, but the solve time on a phone is an estimate, not a measurement on
+  venue hardware.
 - Each login-code request now costs one Redis write for the replay guard and one
   for the IP counter.
 - Deploying requires setting `ALTCHA__HMAC_KEY` on the server; without it the

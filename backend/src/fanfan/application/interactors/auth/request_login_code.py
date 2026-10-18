@@ -63,8 +63,8 @@ class RequestLoginCode:
         self.captcha_verifier = captcha_verifier
 
     async def __call__(self, data: RequestLoginCodeInput) -> None:
-        # Count the attempt first: it is one Redis call, while checking the
-        # captcha costs a PBKDF2 derivation we don't want to run for a flood.
+        # Count the attempt first, so a source sending bad or replayed captcha
+        # tokens burns its own budget too.
         if data.client_ip:
             await self._register_ip_attempt(data.client_ip)
 

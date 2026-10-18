@@ -129,7 +129,7 @@ async def test_request_login_code_caps_requests_per_ip(
                 email="spray-over@example.com", client_ip="203.0.113.7"
             )
         )
-    # Counted before the captcha, so a flood never reaches its PBKDF2 check.
+    # Counted before the captcha, so a flood is turned away before verification.
     assert len(captcha.verified_tokens) == LOGIN_CODE_IP_MAX_REQUESTS
     assert len(email_sender.sent_messages) == LOGIN_CODE_IP_MAX_REQUESTS
 
