@@ -78,8 +78,8 @@
 		let captchaToken: string | null;
 		try {
 			captchaToken = await captcha.take();
-		} catch {
-			formError = m.captcha_failed();
+		} catch (error) {
+			formError = getApiErrorDetail(error) ?? m.captcha_failed();
 			// Solve the next one in the background for the retry.
 			captcha.prefetch();
 			return;

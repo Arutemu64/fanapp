@@ -124,8 +124,8 @@
 		let captchaToken: string | null;
 		try {
 			captchaToken = await captcha.take();
-		} catch {
-			formError = m.captcha_failed();
+		} catch (error) {
+			formError = getApiErrorDetail(error) ?? m.captcha_failed();
 			return;
 		}
 

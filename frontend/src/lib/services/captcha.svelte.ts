@@ -11,7 +11,7 @@ const CAPTCHA_TIMEOUT_MS = 20_000;
 // so solve a fresh one instead.
 const EXPIRY_MARGIN_MS = 30_000;
 
-// The fetch failed, the solve timed out, or the captcha was disposed mid-solve.
+// The solve timed out or the captcha was disposed mid-solve.
 export class CaptchaFailedError extends Error {}
 
 interface Solved {
@@ -33,9 +33,12 @@ export class Captcha {
 
 	#pending: Promise<Solved> | undefined;
 	#controller: AbortController | undefined;
+	// A form's error path may call prefetch() after it unmounted; nothing would
+	// ever abort that solve.
+	#disposed = false;
 
 	prefetch(): void {
-		if (this.#pending) {
+		if (this.#disposed || this.#pending) {
 			return;
 		}
 		const pending = this.#solve();
@@ -46,8 +49,9 @@ export class Captcha {
 	}
 
 	/**
-	 * A fresh token for `captcha_token` (null when captcha is off). Throws
-	 * CaptchaFailedError when no token could be produced.
+	 * A fresh token for `captcha_token` (null when captcha is off). Throws the
+	 * SDK's error when the challenge request failed (e.g. the per-IP limit, whose
+	 * retry_after the form should show), or CaptchaFailedError when the solve did.
 	 */
 	async take(): Promise<string | null> {
 		const pending = this.#pending ?? this.#solve();
@@ -67,6 +71,7 @@ export class Captcha {
 
 	// Stop the workers when the form unmounts mid-solve.
 	dispose(): void {
+		this.#disposed = true;
 		this.#controller?.abort();
 		this.#pending = undefined;
 	}
@@ -76,9 +81,12 @@ export class Captcha {
 		this.#controller = controller;
 		const timer = setTimeout(() => controller.abort(), CAPTCHA_TIMEOUT_MS);
 		try {
-			const { data } = await getCaptchaChallenge({ signal: controller.signal });
+			const { data, error } = await getCaptchaChallenge({ signal: controller.signal });
 			if (data === undefined) {
-				throw new CaptchaFailedError('Captcha challenge request failed');
+				// Rethrown as-is, like every generated query does, so the form can
+				// tell the per-IP limit (and its retry_after) from a dropped connection.
+				// eslint-disable-next-line @typescript-eslint/only-throw-error -- the API error body is a plain object
+				throw error;
 			}
 			if (data.challenge === null) {
 				return { token: null, expiresAt: null };

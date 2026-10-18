@@ -98,6 +98,25 @@ test.describe('email login', { tag: '@critical' }, () => {
 		);
 	});
 
+	test('a rate-limited captcha says when to retry', async ({ page, api }) => {
+		// Venue NAT can put many visitors behind one IP, so the challenge cap is
+		// reachable; its retry_after must survive the captcha layer.
+		api.use({
+			'GET /auth/captcha-challenge': json(
+				{
+					code: 'TOO_MANY_LOGIN_CODE_REQUESTS',
+					details: { retry_after: 42 }
+				},
+				429
+			)
+		});
+		const email = await openEmailStep(page);
+		await email.fill('ann@example.com');
+		await email.press('Enter');
+
+		await expect(page.getByRole('alert')).toHaveText('Попробуй ещё раз через 42 сек.');
+	});
+
 	test('the on-screen back returns focus to the control that opened the step', async ({ page }) => {
 		await openEmailStep(page);
 		await page.getByRole('button', { name: 'Назад' }).click();
