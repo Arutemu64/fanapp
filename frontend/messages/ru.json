@@ -93,6 +93,18 @@
 	"confirm_notify_subscribers": "Подписчики получат уведомление об изменении.",
 	"connection_no_internet": "Нет интернета",
 	"connection_no_server": "Нет связи с сервером",
+	"connection_queued": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} действие ждёт отправки",
+				"countPlural=few": "{count} действия ждут отправки",
+				"countPlural=many": "{count} действий ждут отправки",
+				"countPlural=*": "{count} действия ждут отправки"
+			}
+		}
+	],
 	"connection_restored": "Связь восстановлена",
 	"connection_updating": "Обновляем…",
 	"day_today": "Сегодня",
@@ -315,6 +327,7 @@
 	"feedback_field_label": "Твоё сообщение",
 	"feedback_load_failed": "Не удалось загрузить сообщения",
 	"feedback_placeholder": "Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…",
+	"feedback_queued": "Отправим, когда появится связь",
 	"feedback_send_failed": "Не удалось отправить сообщение",
 	"feedback_sent": "Спасибо, сообщение отправлено",
 	"feedback_submit": "Отправить сообщение",
@@ -604,6 +617,8 @@
 	"quest_tool_amount_label": "Баллы",
 	"quest_tool_amount_presets": "Быстрый выбор",
 	"quest_tool_award_failed": "Не удалось начислить баллы",
+	"quest_tool_award_queued": "Начислим, когда появится связь",
+	"quest_tool_award_sent": "Отложенные баллы начислены",
 	"quest_tool_awarded": "@{username}: +{points}",
 	"quest_tool_awarded_by": "от @{username}",
 	"quest_tool_cancel": "Отменить",
@@ -644,8 +659,11 @@
 	"quest_tool_search_label": "Или найди по имени пользователя",
 	"quest_tool_search_placeholder": "Хватит первых букв",
 	"quest_tool_submit": "Начислить",
+	"quest_tool_unverified_hint": "Нет связи, поэтому имя и баланс не проверить. Баллы начислим, когда связь появится.",
+	"quest_tool_unverified_player": "Игрок по QR-коду",
 	"quest_tool_validation_amount": "Введи целое число от 1 до {max}",
 	"quest_tool_validation_message": "Напиши, за что баллы",
+	"queued_write_failed": "{action}. {detail}",
 	"ready_account_description": "Нужен для голосования и подписки на выступления программы.",
 	"ready_account_title": "Создать аккаунт",
 	"ready_notifications_description": "Напоминания о выступлениях и новости фестиваля придут сразу на телефон.",
@@ -758,6 +776,7 @@
 	"stale_data_refresh_on_reconnect": "Обновим, когда появится связь.",
 	"stale_data_retry_later": "Обновить не получилось\u00a0— попробуем ещё раз позже.",
 	"stale_data_synced": "Синхронизировано {syncedLabel}",
+	"stale_data_updated": "Обновлено {syncedLabel}",
 	"status_done": "Готово",
 	"status_error": "Ошибка",
 	"status_not_set": "Не установлен",
@@ -782,6 +801,8 @@
 	"subscribe_hint": "Напоминание придёт в уведомления\u00a0— проверь, что они включены в {#link}профиле{/link}.",
 	"subscribe_increase": "Увеличить",
 	"subscribe_intro": "За сколько выступлений до {#eventName}{title}{/eventName} начать присылать тебе уведомления?",
+	"subscribe_queued": "Подпишем, когда появится связь",
+	"subscribe_queued_badge": "Ждёт связи",
 	"subscribe_reminder": [
 		{
 			"declarations": ["input count", "local countPlural = count: plural"],
@@ -794,6 +815,7 @@
 			}
 		}
 	],
+	"subscribe_still_sending": "Подписка ещё отправляется. Попробуй чуть позже.",
 	"subscribe_title": "Подписка на уведомления",
 	"sync_action": "Синхронизировать",
 	"sync_description": "Данные подтягиваются автоматически. Запусти вручную, если нужно увидеть свежие данные прямо сейчас.",
@@ -935,6 +957,8 @@
 	],
 	"unsubscribe_confirm": "Хочешь отписаться от уведомлений о выступлении {#eventName}{title}{/eventName}?",
 	"unsubscribe_done": "Подписка на уведомления отключена",
+	"unsubscribe_failed": "Не удалось отписаться",
+	"unsubscribe_queued": "Отпишем, когда появится связь",
 	"unsubscribe_title": "Отписка от уведомлений",
 	"user_email": "Почта",
 	"user_linked_accounts": "Привязанные аккаунты",

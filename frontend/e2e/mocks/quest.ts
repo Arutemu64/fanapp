@@ -114,7 +114,11 @@ export const QUEST_AWARDS: ListQuestAwardsOutput = {
 	]
 };
 
-/** The public config with the quest switched on. */
+/**
+ * The public config with the quest switched on. With the quest on, a signed-in
+ * boot also saves the player's score and history for offline (warmOfflineCache),
+ * so those two answer by default; a spec that cares overrides them.
+ */
 export function questConfig(): Handlers {
 	const now = Date.now();
 	const day = 24 * 60 * 60 * 1000;
@@ -124,6 +128,8 @@ export function questConfig(): Handlers {
 			festival_end: new Date(now + day).toISOString(),
 			quest_enabled: true,
 			quest_max_award: 100
-		})
+		}),
+		'GET /quest': json(QUEST),
+		'GET /quest/history': json(QUEST_HISTORY)
 	};
 }

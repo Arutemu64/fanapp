@@ -6,11 +6,12 @@
 
 	import '../app.css';
 
-	import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
+	import { createQuery, focusManager, QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
 
+	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		countUnreadNotificationsQueryKey,
 		getPublicConfigQueryKey,
@@ -23,6 +24,8 @@
 		listUserNotificationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { watchApiResponses, watchBackgroundRefetchErrors } from '#lib/api/index.js';
+	import { warmOfflineCache } from '#lib/api/offlineQueries.js';
+	import { type QueuedWriteOutcome, watchQueuedWrites } from '#lib/api/writeQueue.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
@@ -103,7 +106,23 @@
 
 		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
 		// re-creating this layout doesn't stack duplicates.
-		const stopMonitor = startReachabilityMonitor({ onRecovered: () => void flushPendingLogout() });
+		const stopMonitor = startReachabilityMonitor({
+			onRecovered: () => {
+				void flushPendingLogout();
+				warmOfflineCache(queryClient);
+			}
+		});
+		// Writes saved by an earlier visit are paused in the restored cache, and the
+		// online edge that resumes paused writes only fires on a change. With the
+		// watcher already listening, so their outcome is reported.
+		const stopWatchingQueue = watchQueuedWrites(queryClient, reportQueuedWrite);
+		void queryClient.resumePausedMutations();
+		warmOfflineCache(queryClient);
+		// Back in the app is when a Wi-Fi spot was most likely found meanwhile. Only
+		// the queries on screen refetch on focus; this refreshes the other saved ones.
+		const stopWarmingOnFocus = focusManager.subscribe((focused) => {
+			if (focused) warmOfflineCache(queryClient);
+		});
 		const stopUpdates = appUpdate.start();
 		const stopWatching = watchApiResponses(queryClient, () => void session.expired());
 		// Fixed copy, not the mapped code: the user didn't act, so «Билет не найден»
@@ -119,6 +138,8 @@
 
 		return () => {
 			stopMonitor();
+			stopWarmingOnFocus();
+			stopWatchingQueue();
 			stopUpdates();
 			stopWatching();
 			stopWatchingRefetches();
@@ -128,6 +149,29 @@
 			eventsClient.off('sync_run_updated', handleSyncRunUpdated);
 		};
 	});
+
+	// A write that waited in the queue reports here: the screen that sent it handed
+	// it off and may be closed by now.
+	const QUEUED_WRITE_COPY = {
+		subscribe: { sent: m.subscribe_done, failed: m.subscribe_failed },
+		unsubscribe: { sent: m.unsubscribe_done, failed: m.unsubscribe_failed },
+		award: { sent: m.quest_tool_award_sent, failed: m.quest_tool_award_failed },
+		feedback: { sent: m.feedback_sent, failed: m.feedback_send_failed }
+	};
+
+	function reportQueuedWrite(outcome: QueuedWriteOutcome) {
+		const copy = QUEUED_WRITE_COPY[outcome.kind];
+		if (outcome.ok) {
+			toastService.add(copy.sent(), 'success');
+			return;
+		}
+		// The screen is gone, so the action is named alongside the server's reason.
+		const detail = getApiErrorDetail(outcome.error);
+		const message = detail
+			? m.queued_write_failed({ action: copy.failed(), detail })
+			: copy.failed();
+		toastService.add(message, 'error');
+	}
 
 	// SSE carries change signals only, so each event marks the queries it affects
 	// stale: those on screen refetch at once, the rest when next shown. Keys match
@@ -170,6 +214,13 @@
 		() => currentUserOptions(),
 		() => queryClient
 	);
+
+	// Save the signed-in viewer's offline screens, again for each account after a
+	// login: the guest's copy holds none of theirs.
+	let userId = $derived(user.data?.id ?? null);
+	$effect(() => {
+		if (userId !== null) warmOfflineCache(queryClient);
+	});
 
 	$effect(() => {
 		if (user.data) {

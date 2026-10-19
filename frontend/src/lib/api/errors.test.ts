@@ -148,4 +148,57 @@ describe('fetchRecordingConnectionFailures', () => {
 		expect(error).toBeInstanceOf(SyntaxError);
 		expect(isConnectionFailure(error)).toBe(false);
 	});
+
+	it('times out a request that never answers, as a connection failure', async () => {
+		vi.useFakeTimers();
+		// The native timeout runs on Node's own timer, which fake timers don't reach.
+		vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
+			const controller = new AbortController();
+			setTimeout(() => controller.abort(new DOMException('signal timed out', 'TimeoutError')), ms);
+			return controller.signal;
+		});
+		try {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn<typeof fetch>(
+					(_input, init) =>
+						new Promise((_resolve, reject) => {
+							init?.signal?.addEventListener('abort', () => {
+								reject(init.signal?.reason as DOMException);
+							});
+						})
+				)
+			);
+			const pending = rejection(fetchRecordingConnectionFailures(new Request('https://api.test/')));
+			await vi.advanceTimersByTimeAsync(15_000);
+			expect(isConnectionFailure(await pending)).toBe(true);
+		} finally {
+			vi.useRealTimers();
+			vi.restoreAllMocks();
+		}
+	});
+
+	it("keeps the caller's abort, which is not a connection failure", async () => {
+		const controller = new AbortController();
+		vi.stubGlobal(
+			'fetch',
+			vi.fn<typeof fetch>(
+				(_input, init) =>
+					new Promise((_resolve, reject) => {
+						init?.signal?.addEventListener('abort', () => {
+							reject(init.signal?.reason as DOMException);
+						});
+					})
+			)
+		);
+		const pending = rejection(
+			fetchRecordingConnectionFailures(
+				new Request('https://api.test/', { signal: controller.signal })
+			)
+		);
+		controller.abort();
+		const error = await pending;
+		expect(error).toBeInstanceOf(DOMException);
+		expect(isConnectionFailure(error)).toBe(false);
+	});
 });

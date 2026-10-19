@@ -1,14 +1,12 @@
 <script lang="ts">
+	import CloudOff from '@lucide/svelte/icons/cloud-off';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { tick } from 'svelte';
 
-	import type { QuestPlayerDto } from '#lib/api/generated/index.js';
-
 	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import {
-		awardQuestPointsMutation,
-		listQuestAwardsQueryKey
-	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { listQuestAwardsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { handOffWhenQueued } from '#lib/api/queuedWrite.svelte.js';
+	import { queuedAwardOptions } from '#lib/api/writeQueue.js';
 	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -18,11 +16,12 @@
 	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { uuidv7 } from '#lib/utils/uuidv7.js';
 
+	import { type AwardTarget, isUnverified } from '../awardTarget.js';
+
 	interface Props {
-		player: QuestPlayerDto;
+		player: AwardTarget;
 		maxAward: number;
 		/** Owned by the page so a station's next player starts from the same award. */
 		amount: string;
@@ -35,6 +34,9 @@
 	const MESSAGE_MAX_LENGTH = 200;
 	const AMOUNT_PRESETS = [5, 10, 20, 50];
 	const WHOLE_NUMBER = /^\d+$/;
+
+	// Null for a player picked by code alone, whose name and balance are unknown.
+	let verifiedPlayer = $derived(isUnverified(player) ? null : player);
 
 	let presets = $derived(AMOUNT_PRESETS.filter((preset) => preset <= maxAward));
 
@@ -51,10 +53,13 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	const awardMutation = createMutation(() => ({
-		...awardQuestPointsMutation(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: listQuestAwardsQueryKey() })
-	}));
+	// Queued (ADR-0038): a station that loses the connection keeps awarding, and
+	// each award goes out when it returns. The award ID makes a resend safe.
+	const awardMutation = createMutation(() => queuedAwardOptions());
+	handOffWhenQueued(awardMutation, () => {
+		toastService.add(m.quest_tool_award_queued(), 'info');
+		onDone();
+	});
 
 	// One ID per award, kept across submits: if the response is lost on the
 	// festival Wi-Fi, pressing again replays the award instead of paying the
@@ -118,8 +123,6 @@
 		}
 	}
 
-	const offlineGate = offlineWriteGate();
-
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
@@ -142,13 +145,14 @@
 			},
 			{
 				onSuccess: () => {
-					toastService.add(
-						m.quest_tool_awarded({
-							username: player.username,
-							points: m.quest_points({ count: awardedAmount })
-						}),
-						'success'
-					);
+					// A player picked by code alone has no name to show yet.
+					const done = verifiedPlayer
+						? m.quest_tool_awarded({
+								username: verifiedPlayer.username,
+								points: m.quest_points({ count: awardedAmount })
+							})
+						: m.quest_tool_award_sent();
+					toastService.add(done, 'success');
 					onDone();
 				},
 				onError: (error) => {
@@ -173,17 +177,33 @@
 
 <!-- novalidate: a browser bubble would pre-empt the Russian field errors with
      English text; validateAmount and validateMessage own every rule. -->
-<form novalidate class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
+<form novalidate class="flex flex-col gap-4" onsubmit={handleSubmit}>
 	<!-- flex-wrap + min-w-32: on a narrow phone the button drops to its own line
 	     rather than leaving the volunteer a name too cramped to check. -->
 	<div class="flex flex-wrap items-center gap-3">
-		<UserAvatar seed={player.avatar_seed} class="size-12" />
-		<div class="min-w-32 flex-1">
-			<h2 {@attach focusOnMount} tabindex="-1" class="text-base font-semibold text-foreground">
-				<Username username={player.username} />
-			</h2>
-			<p class="text-sm text-muted-foreground">{m.quest_points({ count: player.points })}</p>
-		</div>
+		{#if verifiedPlayer}
+			<UserAvatar seed={verifiedPlayer.avatar_seed} class="size-12" />
+			<div class="min-w-32 flex-1">
+				<h2 {@attach focusOnMount} tabindex="-1" class="text-base font-semibold text-foreground">
+					<Username username={verifiedPlayer.username} />
+				</h2>
+				<p class="text-sm text-muted-foreground">
+					{m.quest_points({ count: verifiedPlayer.points })}
+				</p>
+			</div>
+		{:else}
+			<div
+				class="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+			>
+				<CloudOff class="size-5" aria-hidden="true" />
+			</div>
+			<div class="min-w-32 flex-1">
+				<h2 {@attach focusOnMount} tabindex="-1" class="text-base font-semibold text-foreground">
+					{m.quest_tool_unverified_player()}
+				</h2>
+				<p class="text-sm text-muted-foreground">{m.quest_tool_unverified_hint()}</p>
+			</div>
+		{/if}
 		<Button type="button" variant="outline" size="sm" class="ml-auto" onclick={onDone}>
 			{m.quest_tool_change_player()}
 		</Button>
@@ -265,13 +285,7 @@
 		</Field.Field>
 	</Field.FieldGroup>
 
-	<Button
-		type="submit"
-		size="lg"
-		class="w-full"
-		disabled={awardMutation.isPending}
-		aria-disabled={offlineGate.blocked}
-	>
+	<Button type="submit" size="lg" class="w-full" disabled={awardMutation.isPending}>
 		{#if awardMutation.isPending}
 			<Spinner data-icon="inline-start" />
 		{/if}

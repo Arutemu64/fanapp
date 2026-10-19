@@ -1,6 +1,6 @@
 # ADR-0022: `createMutation` for writes, online-only
 
-- **Status:** Accepted
+- **Status:** Accepted; "mutations never pause offline" superseded for four idempotent writes by [ADR-0038](0038-offline-write-queue-for-idempotent-writes.md)
 - **Date:** 2026-10-13
 - **Deciders:** Project maintainers
 

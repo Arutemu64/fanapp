@@ -4,16 +4,14 @@
 	import BellRing from '@lucide/svelte/icons/bell-ring';
 	import Minus from '@lucide/svelte/icons/minus';
 	import Plus from '@lucide/svelte/icons/plus';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import {
-		getSubscriptionsQueryKey,
-		newSubscriptionMutation
-	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { handOffWhenQueued } from '#lib/api/queuedWrite.svelte.js';
+	import { queuedSubscribeOptions } from '#lib/api/writeQueue.js';
 	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -25,13 +23,15 @@
 		event: ScheduleEventFullDto;
 	}
 	let { open = $bindable(), event }: Props = $props();
-	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	const subscribeMutation = createMutation(() => ({
-		...newSubscriptionMutation(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
-	}));
+	// Queued (ADR-0038): offline it waits for the connection, shown on the card in
+	// the meantime, and the subscription list refreshes when it lands.
+	const subscribeMutation = createMutation(() => queuedSubscribeOptions());
+	handOffWhenQueued(subscribeMutation, () => {
+		toastService.add(m.subscribe_queued(), 'info');
+		open = false;
+	});
 
 	// No reset on open: EventCard mounts this modal only while it is open.
 	let counter = $state(5);

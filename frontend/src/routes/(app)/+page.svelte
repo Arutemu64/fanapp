@@ -10,6 +10,7 @@
 		getVotingStatusOptions,
 		getVotingStatusQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { useQueuedSubscriptionChanges } from '#lib/api/queuedWrite.svelte.js';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -51,10 +52,13 @@
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
 	let config = $derived(configQuery.data ?? FALLBACK_CONFIG);
+	const queuedSubscriptions = useQueuedSubscriptionChanges();
 	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
 	let schedule = $derived(
-		scheduleEvents(mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions))
+		scheduleEvents(
+			mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
+		)
 	);
 	// Voting status is a live read: a stale "open" offline would lead to a ballot
 	// that can't be submitted, so offline it is treated as unknown and every

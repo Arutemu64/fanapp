@@ -16,19 +16,18 @@
 	import {
 		countUnreadNotificationsOptions,
 		countUnreadNotificationsQueryKey,
-		listUserNotificationsInfiniteOptions,
 		listUserNotificationsQueryKey,
 		markAllNotificationsReadMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	// A plain SDK call, not a mutation: read-on-view is a background sync no one
 	// submits, with its own retry bookkeeping (requestedReadIds below).
 	import { markNotificationsRead } from '#lib/api/generated/index.js';
+	import { notificationsFeedOptions } from '#lib/api/offlineQueries.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { NOTIFICATION_PAGE_SIZE } from '#lib/constants/notifications.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
@@ -50,15 +49,7 @@
 	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
 
 	// New arrivals (SSE) invalidate the query, which refetches every loaded page.
-	const notificationsQuery = createInfiniteQuery(() => ({
-		...listUserNotificationsInfiniteOptions({
-			query: { limit: NOTIFICATION_PAGE_SIZE }
-		}),
-		// An object page param is request overrides to hey-api, a string the cursor:
-		// an empty object asks for the first page.
-		initialPageParam: {},
-		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
-	}));
+	const notificationsQuery = createInfiniteQuery(() => notificationsFeedOptions());
 
 	let notifications = $derived(
 		notificationsQuery.data?.pages.flatMap((page) => page.notifications) ?? []

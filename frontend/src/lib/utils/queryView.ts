@@ -7,7 +7,7 @@ import { getApiErrorDetail, isConnectionFailure } from '#lib/api/errors.js';
  *   complete miss is the offline state.
  * - `live`: never shown offline, not even a copy still in memory — voting, where
  *   a stale open/closed or already-voted state leads to a ballot that can't be
- *   submitted (docs/frontend.md §2 "Online-only surfaces").
+ *   submitted (docs/offline.md "Screens offline").
  */
 export type QueryPolicy = 'cached' | 'live';
 

@@ -4,6 +4,7 @@ import { CancelledError } from '@tanstack/svelte-query';
 import type { ErrorMessage } from '#lib/api/generated/index.js';
 
 import { m } from '#lib/paraglide/messages.js';
+import { anySignal, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
@@ -341,17 +342,33 @@ function recordBodyReadFailures(response: Response): Response {
 	return response;
 }
 
+// A connection a network blocks without refusing it — a mobile operator's
+// whitelist mode, a congested venue cell — can leave a request hanging until the
+// OS gives up on TCP, a minute or more, with nothing on screen saying so. The
+// deadline turns that hang into a TimeoutError, which the retries, the
+// reachability probe and the offline states already treat as no answer. It
+// covers the body read too, and is generous enough for an upload on slow Wi-Fi.
+const REQUEST_TIMEOUT_MS = 15_000;
+
 /**
  * The `fetch` the generated client calls (`clientConfig.ts`): the real one,
- * remembering the TypeErrors the network produces — from `fetch` itself or from
- * reading the body — so `isConnectionFailure` can tell a dropped connection from
- * a bug that happens to throw the same type.
+ * bounded by `REQUEST_TIMEOUT_MS` and remembering the TypeErrors the network
+ * produces — from `fetch` itself or from reading the body — so
+ * `isConnectionFailure` can tell a dropped connection from a bug that happens
+ * to throw the same type.
  */
 export function fetchRecordingConnectionFailures(
 	input: RequestInfo | URL,
 	init?: RequestInit
 ): Promise<Response> {
-	return globalThis.fetch(input, init).then(recordBodyReadFailures, recordConnectionFailure);
+	// The generated client passes a Request carrying the caller's signal (TanStack
+	// Query's, which cancels an unused query); `init.signal` would replace it.
+	const callerSignal = input instanceof Request ? input.signal : init?.signal;
+	const deadline = timeoutSignal(REQUEST_TIMEOUT_MS);
+	const signal = callerSignal ? anySignal([callerSignal, deadline]) : deadline;
+	return globalThis
+		.fetch(input, { ...init, signal })
+		.then(recordBodyReadFailures, recordConnectionFailure);
 }
 
 // The generated client never throws: a request that got no response comes back

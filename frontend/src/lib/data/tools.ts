@@ -38,6 +38,8 @@ interface Tool {
 	anyOf: Permission[];
 	/** The tool is also off while the festival quest is. */
 	requiresQuest?: boolean;
+	/** Opens offline: its writes wait in the queue (ADR-0038). Every other tool is online-only. */
+	worksOffline?: boolean;
 	/** Copy for the 403 a direct visit gets. */
 	forbidden: () => string;
 }
@@ -128,6 +130,7 @@ const TOOLS: Tool[] = [
 		href: 'tools/quest',
 		anyOf: ['quest:award', 'quest:manage'],
 		requiresQuest: true,
+		worksOffline: true,
 		forbidden: m.tool_quest_forbidden
 	}
 ];
@@ -146,9 +149,15 @@ export function toolsFor(user: CurrentUserDto | null, config: ToolConfig) {
 		title: tool.title(),
 		description: tool.description(),
 		icon: tool.icon,
-		href: tool.href
+		href: tool.href,
+		worksOffline: tool.worksOffline === true
 	}));
 }
+
+/** The tool pages that open offline, for the toolbox's offline redirect. */
+export const OFFLINE_TOOL_HREFS: Path[] = TOOLS.filter((tool) => tool.worksOffline).map(
+	(tool) => tool.href
+);
 
 /** Page guard: throws the tool's own 403 unless this user may open it. */
 export function requireTool(key: ToolKey, user: CurrentUserDto | null, config: ToolConfig): void {

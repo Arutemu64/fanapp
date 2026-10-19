@@ -1,57 +1,23 @@
-import { version } from '$app/env';
 import * as Sentry from '@sentry/sveltekit';
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
 
 import { gotNoApiAnswer, isUnexpectedRequestError } from '#lib/api/errors.js';
+import { responseSchemaHashes } from '#lib/api/generated/responseSchemaHashes.gen.js';
 import {
-	countUnreadNotificationsQueryKey,
-	getCurrentUserQueryKey,
-	getPublicConfigQueryKey,
-	getQuestQueryKey,
-	getScheduleQueryKey,
-	getSubscriptionsQueryKey,
-	listQuestHistoryQueryKey,
-	listUserNotificationsQueryKey
-} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-import { createIdbPersister } from '#lib/api/queryPersister.js';
+	CACHE_MAX_AGE_MS,
+	isOfflineQuery,
+	OFFLINE_QUERY_KEYS,
+	operationIdOf
+} from '#lib/api/offlineQueries.js';
+import { createIdbPersister, QUERY_CACHE_FORMAT } from '#lib/api/queryPersister.js';
+import { registerQueuedWrites, shouldPersistMutation } from '#lib/api/writeQueue.js';
 import { settleIdentityForBoot } from '#lib/services/identity.js';
 
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
-
-// The screens that must open offline: the identity the guards and the profile
-// read, the home hero, the programme with the viewer's subscriptions, the
-// notifications with their badge, the quest score and standings (shown with
-// their sync time, since ranks move during the festival) and the player's award
-// history. Only these are written to IndexedDB. Every
-// other query is online-only: fetched fresh after a cold start and dropped from
-// memory five minutes after its screen closes (TanStack's default gcTime) —
-// voting must not show a stale ballot, and the organizer tools hold other people's
-// details that have no business on the device.
-const OFFLINE_QUERY_KEYS = [
-	getCurrentUserQueryKey(),
-	getPublicConfigQueryKey(),
-	getScheduleQueryKey(),
-	getSubscriptionsQueryKey(),
-	listUserNotificationsQueryKey(),
-	countUnreadNotificationsQueryKey(),
-	getQuestQueryKey(),
-	listQuestHistoryQueryKey()
-];
-// Matched by operation id, the first part of every hey-api query key, so a
-// list key also covers its paginated variant.
-const OFFLINE_QUERY_IDS = new Set(OFFLINE_QUERY_KEYS.map(([{ _id }]) => _id));
-
-// How long a cached copy may serve the app offline: a festival weekend plus the
-// trip there and back, where the persister's 24h default would drop the
-// programme for anyone who didn't open the app for a day. StaleDataNotice shows
-// how old what's on screen is. The offline queries keep this gcTime too, or they
-// are garbage-collected before they are ever persisted:
-// https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
-const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 // API error bodies and dropped connections are expected and reported elsewhere
 // (the backend files its own errors), so only a failure in our own query code is
@@ -101,28 +67,34 @@ export const load: LayoutLoad = async () => {
 			}
 		}
 	});
-	// Set before the restore below: restored queries take their options from here.
+	// Set before the restore below: restored queries and queued writes take their
+	// options from here.
 	for (const queryKey of OFFLINE_QUERY_KEYS) {
 		queryClient.setQueryDefaults(queryKey, { gcTime: CACHE_MAX_AGE_MS });
 	}
+	registerQueuedWrites(queryClient);
 
 	// One IndexedDB entry holds the offline queries, so those screens open offline
 	// once they have loaded. Restored before any guard reads identity from it.
-	// The build `version` busts it on deploy, so a client never reads a payload
-	// shaped by an older API.
+	// Not busted by the build version: a deploy that lands while the attendee is
+	// still online but about to lose the network (a mobile shutdown) would wipe
+	// the saved programme exactly then. Each query carries its response schema's
+	// hash instead, and only a query whose response shape changed is dropped, so
+	// a client never reads a payload shaped by an older API.
 	const [, restored] = persistQueryClient({
 		queryClient,
-		persister: createIdbPersister(),
+		persister: createIdbPersister({
+			schemaHashOf: (queryKey) => responseSchemaHashes[operationIdOf(queryKey)]
+		}),
 		maxAge: CACHE_MAX_AGE_MS,
-		buster: version,
+		buster: QUERY_CACHE_FORMAT,
 		dehydrateOptions: {
 			// Not TanStack's default (successful queries only): a refetch that failed
 			// leaves the query in error with its last good data, and dropping it here
 			// would erase the saved programme right when the network is bad.
-			shouldDehydrateQuery: (query) => {
-				const [{ _id }] = query.queryKey as [{ _id: string }];
-				return OFFLINE_QUERY_IDS.has(_id) && query.state.data !== undefined;
-			}
+			shouldDehydrateQuery: (query) =>
+				isOfflineQuery(query.queryKey) && query.state.data !== undefined,
+			shouldDehydrateMutation: shouldPersistMutation
 		}
 	});
 	await restored;

@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 
 // The app is a client-rendered SPA whose service worker and offline behaviour are
 // active ONLY in a production build — the SW's caching is inert under `vite dev`
-// (src/service-worker/index.ts guards on `dev`, see docs/frontend.md §2). So the E2E
+// (src/service-worker/index.ts guards on `dev`, see docs/offline.md). So the E2E
 // suite drives `vite preview` of a real build, never the dev server, or the whole
 // PWA / offline surface would go untested.
 const PORT = 4173;

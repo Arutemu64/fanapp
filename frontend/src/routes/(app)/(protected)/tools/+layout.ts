@@ -3,8 +3,10 @@ import { error, redirect } from '@sveltejs/kit';
 
 import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { queryForLoad } from '#lib/api/index.js';
+import { OFFLINE_TOOL_HREFS } from '#lib/data/tools.js';
 import { m } from '#lib/paraglide/messages.js';
 import { isReachable } from '#lib/services/reachability.js';
+import { resolvePath } from '#lib/utils/paths.js';
 import { isStaff } from '#lib/utils/permissions.js';
 
 import type { LayoutLoad } from './$types';
@@ -18,13 +20,15 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		error(403, m.tools_forbidden());
 	}
 
-	// Every tool is an online-only mutation surface (import, broadcast, settings,
-	// sync…) with nothing to read offline. Offline, redirect any sub-tool to the
-	// hub: each sub-page load does `await parent()` first, so this redirect aborts
-	// it before it fires a doomed API request. The hub itself has a static load, so
-	// it lands safely and +layout.svelte renders the shared online-only state there.
+	// Almost every tool is an online-only mutation surface (import, broadcast,
+	// settings, sync…) with nothing to read offline. Offline, redirect any such
+	// sub-tool to the hub: each sub-page load does `await parent()` first, so this
+	// redirect aborts it before it fires a doomed API request. The hub itself has a
+	// static load, so it lands safely and lists only the tools that work offline —
+	// the quest, whose station scans codes and queues its awards (ADR-0038).
 	const offline = !isReachable();
-	if (offline && url.pathname !== resolve('tools')) {
+	const worksOffline = OFFLINE_TOOL_HREFS.some((href) => url.pathname === resolvePath(href));
+	if (offline && !worksOffline && url.pathname !== resolve('tools')) {
 		redirect(307, resolve('tools'));
 	}
 

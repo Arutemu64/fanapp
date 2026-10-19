@@ -17,7 +17,7 @@ just frontend-e2e-ui     # Playwright UI, for debugging a spec (local)
 
 The config builds the app and serves it with `vite preview` automatically — a
 production build is required because the service worker and offline caching are
-inert in `vite dev` (docs/frontend.md §2).
+inert in `vite dev` (docs/offline.md).
 
 ### A faster loop
 

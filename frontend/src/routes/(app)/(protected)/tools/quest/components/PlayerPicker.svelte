@@ -3,9 +3,7 @@
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
-	import type { QuestPlayerDto } from '#lib/api/generated/index.js';
-
-	import { getApiErrorCode } from '#lib/api/errors.js';
+	import { getApiErrorCode, gotNoApiAnswer } from '#lib/api/errors.js';
 	import {
 		findQuestPlayersOptions,
 		getQuestPlayerOptions
@@ -18,11 +16,14 @@
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import { isReachable } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { parseQuestCode } from '#lib/utils/questCode.js';
 
+	import { type AwardTarget } from '../awardTarget.js';
+
 	interface Props {
-		onPick: (player: QuestPlayerDto) => void;
+		onPick: (player: AwardTarget) => void;
 		/** Set when the award form just closed: its focused control is gone. */
 		focusOnMount: boolean;
 	}
@@ -87,6 +88,12 @@
 			toastService.add(m.quest_tool_invalid_code(), 'error');
 			return;
 		}
+		// No connection to look the player up: award by the code alone, which the
+		// queue sends when it returns, rather than turn a player away.
+		if (!isReachable()) {
+			onPick({ id: userId, unverified: true });
+			return;
+		}
 		lookingUp = true;
 		try {
 			// Fresh, not cached: the form shows the player's current balance.
@@ -98,6 +105,8 @@
 		} catch (error) {
 			if (getApiErrorCode(error) === 'USER_NOT_FOUND') {
 				toastService.add(m.quest_tool_player_not_found(), 'error');
+			} else if (gotNoApiAnswer(error)) {
+				onPick({ id: userId, unverified: true });
 			} else {
 				toastService.add(m.quest_tool_search_failed(), 'error');
 			}

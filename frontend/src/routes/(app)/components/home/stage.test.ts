@@ -22,7 +22,7 @@ function event(
 	};
 }
 
-const SUBSCRIPTION = { id: 'sub', counter: 3 };
+const SUBSCRIPTION = { id: 'sub', counter: 3, queued: false } as const;
 
 function ids(events: ScheduleEventWithSubscription[]): string[] {
 	return events.map((item) => item.id);

@@ -1,6 +1,6 @@
 # ADR-0021: TanStack Query for server state, persisted to IndexedDB
 
-- **Status:** Accepted; plain-SDK mutations superseded by [ADR-0022](0022-createmutation-for-writes.md); `createAsyncStoragePersister` superseded by [ADR-0033](0033-indexeddb-persister-without-json.md)
+- **Status:** Accepted; plain-SDK mutations superseded by [ADR-0022](0022-createmutation-for-writes.md); `createAsyncStoragePersister` superseded by [ADR-0033](0033-indexeddb-persister-without-json.md); the build-`version` buster superseded by [ADR-0039](0039-schema-scoped-cache-busting.md)
 - **Date:** 2026-10-13
 - **Deciders:** Project maintainers
 

@@ -54,6 +54,7 @@ test.describe('quest', { tag: '@critical' }, () => {
 			'GET /quest': json(QUEST),
 			'GET /quest/history': json(QUEST_HISTORY)
 		});
+		await page.clock.install();
 		await page.goto('/profile/quest');
 		const badge = page.getByRole('tabpanel', { name: 'Бейдж' });
 		await expect(badge.locator('dl')).toContainText(/Баллы\s*35/);
@@ -68,7 +69,12 @@ test.describe('quest', { tag: '@critical' }, () => {
 
 		await page.getByRole('tab', { name: 'Лидеры' }).click();
 		const leaderboard = page.getByRole('tabpanel', { name: 'Лидеры' });
-		await expect(leaderboard.getByText('Показаны сохранённые баллы и места.')).toBeVisible();
+		// A fresh copy gets a quiet line; past half an hour the standings have likely
+		// moved, and the notice turns into the warning.
+		await expect(leaderboard.getByText(/Обновлено сегодня/)).toBeVisible();
+		await expect(leaderboard.getByText('Показаны сохранённые баллы и места.')).toHaveCount(0);
+		await page.clock.fastForward('31:00');
+		await expect(leaderboard.getByText(/Показаны сохранённые баллы и места\./)).toBeVisible();
 		await expect(leaderboard.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
 
 		await page.getByRole('tab', { name: 'История' }).click();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
-	import { listQuestHistoryInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { questHistoryFeedOptions } from '#lib/api/offlineQueries.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
@@ -14,15 +14,7 @@
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 
-	const PAGE_SIZE = 20;
-
-	const historyQuery = createInfiniteQuery(() => ({
-		...listQuestHistoryInfiniteOptions({ query: { limit: PAGE_SIZE } }),
-		// An object page param is request overrides to hey-api, a string the cursor:
-		// an empty object asks for the first page.
-		initialPageParam: {},
-		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
-	}));
+	const historyQuery = createInfiniteQuery(() => questHistoryFeedOptions());
 
 	let awards = $derived(historyQuery.data?.pages.flatMap((page) => page.awards) ?? []);
 	let historyView = $derived(
