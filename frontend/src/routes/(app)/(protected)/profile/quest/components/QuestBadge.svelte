@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { on } from 'svelte/events';
-
 	import type { CurrentUserDto, GetQuestOutput } from '#lib/api/generated/index.js';
 
 	import QrCode from '#lib/components/QrCode.svelte';
@@ -17,44 +15,6 @@
 	}
 
 	let { user, quest }: Props = $props();
-
-	// A player holds the code up to a volunteer and waits; a dimming screen makes
-	// the scan fail. Attached to the badge, so the lock holds only while the code is
-	// on screen, not while the leaderboard tab is. The browser drops the lock
-	// whenever the page is hidden, so it is re-requested on return. Refusals (power
-	// saving, no support) just leave the screen on its usual timeout.
-	// https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
-	function keepScreenAwake() {
-		if (!('wakeLock' in navigator)) {
-			return;
-		}
-		let sentinel: WakeLockSentinel | null = null;
-		let released = false;
-
-		async function request() {
-			if (document.visibilityState !== 'visible') {
-				return;
-			}
-			try {
-				const lock = await navigator.wakeLock.request('screen');
-				if (released) {
-					void lock.release();
-					return;
-				}
-				sentinel = lock;
-			} catch {
-				// Refused: nothing to undo.
-			}
-		}
-
-		void request();
-		const stopListening = on(document, 'visibilitychange', () => void request());
-		return () => {
-			released = true;
-			stopListening();
-			void sentinel?.release();
-		};
-	}
 </script>
 
 <!-- Shaped like a festival lanyard badge: the name leads, since it is what a
@@ -62,7 +22,7 @@
      the code sits in the flat centre, and the stats close it off below a
      perforation. Badge guides put the name first and the code centred:
      https://www.zoho.com/backstage/event-badge-design-guide.html -->
-<Card.Root class="mx-auto w-full max-w-sm gap-0 overflow-hidden p-0" {@attach keepScreenAwake}>
+<Card.Root class="mx-auto w-full max-w-sm gap-0 overflow-hidden p-0">
 	<div class="relative flex items-end justify-between gap-3 bg-primary px-4 pt-7 pb-3">
 		<!-- The lanyard slot, punched through to the page behind it. -->
 		<span

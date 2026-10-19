@@ -43,9 +43,6 @@
 			errorMessage: m.quest_load_failed()
 		})
 	);
-
-	// Opens on the badge: showing the code is what a player opens the page for.
-	let tab = $state('badge');
 </script>
 
 <svelte:head>
@@ -56,18 +53,16 @@
      one plan at another level, the radio-group "segmented control" job, but these
      swap in unrelated panels, which is the tabs job.
      https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ -->
-<Tabs.Root bind:value={tab} class="gap-4">
+<!-- Opens on the badge: showing the code is what a player opens the page for. -->
+<Tabs.Root value="badge" class="gap-4">
 	<Tabs.List aria-label={m.quest_tabs_label()} class="w-full sm:w-auto">
 		<Tabs.Trigger value="badge">{m.quest_tab_badge()}</Tabs.Trigger>
 		<Tabs.Trigger value="leaderboard">{m.quest_tab_leaderboard()}</Tabs.Trigger>
 		<Tabs.Trigger value="history">{m.quest_tab_history()}</Tabs.Trigger>
 	</Tabs.List>
 
-	<!-- bits-ui keeps every panel in the DOM and only hides it, so the badge and
-	     the history render while their tab is open: the badge's wake lock then holds
-	     only while the code is visible, and the history loads when first asked for. -->
 	<Tabs.Content value="badge">
-		{#if tab === 'badge' && user}
+		{#if user}
 			<QuestBadge {user} {quest} />
 		{/if}
 	</Tabs.Content>
@@ -108,8 +103,6 @@
 	</Tabs.Content>
 
 	<Tabs.Content value="history">
-		{#if tab === 'history'}
-			<QuestHistoryFeed />
-		{/if}
+		<QuestHistoryFeed />
 	</Tabs.Content>
 </Tabs.Root>

@@ -11,7 +11,12 @@ const volunteer = () =>
 
 test.describe('quest', { tag: '@critical' }, () => {
 	test('a player sees their score, code and place', async ({ page, api }) => {
-		api.use({ ...questConfig(), ...loggedInAs(), 'GET /quest': json(QUEST) });
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json(QUEST),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
 
 		await page.goto('/profile');
 		await expect(page.getByRole('link', { name: /Квест/ })).toContainText('35 баллов');

@@ -3,6 +3,7 @@ import type { Browser, BrowserContextOptions, Page } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
+import type { ListQuestHistoryOutput } from '../../src/lib/api/generated/types.gen';
 import type { Handlers } from '../mocks/api';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
@@ -161,7 +162,8 @@ test('profile', async ({ page, api }) => {
 test('quest', async ({ page, api }) => {
 	api.use({
 		...loggedInAs({ username: 'ПушистыйПингвин42' }),
-		'GET /quest': json(questStanding)
+		'GET /quest': json(questStanding),
+		'GET /quest/history': json<ListQuestHistoryOutput>({ awards: [], next_cursor: null })
 	});
 	await page.goto('/profile/quest');
 	await expect(page.getByRole('img', { name: 'QR-код игрока @ПушистыйПингвин42' })).toBeVisible();
