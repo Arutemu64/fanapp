@@ -47,7 +47,7 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(badge.getByRole('button', { name: 'Попробовать снова' })).toBeVisible();
 	});
 
-	test('offline, the saved score shows with its sync time', async ({ page, api }) => {
+	test('offline, the saved score and history stay on screen', async ({ page, api }) => {
 		api.use({
 			...questConfig(),
 			...loggedInAs(),
@@ -70,6 +70,10 @@ test.describe('quest', { tag: '@critical' }, () => {
 		const leaderboard = page.getByRole('tabpanel', { name: 'Лидеры' });
 		await expect(leaderboard.getByText('Показаны сохранённые баллы и места.')).toBeVisible();
 		await expect(leaderboard.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
+
+		await page.getByRole('tab', { name: 'История' }).click();
+		const history = page.getByRole('tabpanel', { name: 'История' });
+		await expect(history.getByRole('listitem')).toHaveCount(3);
 	});
 
 	test('a player sees the awards they received', async ({ page, api }) => {

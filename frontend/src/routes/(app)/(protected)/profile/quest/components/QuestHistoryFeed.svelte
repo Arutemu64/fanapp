@@ -41,6 +41,10 @@
 		<SectionSpinner />
 	{/snippet}
 
+	{#snippet offline()}
+		<EmptyState title={m.quest_history_offline_title()} message={m.quest_offline_message()} />
+	{/snippet}
+
 	{#snippet ready()}
 		{#if awards.length === 0}
 			<EmptyState message={m.quest_history_empty()} />
