@@ -1,10 +1,14 @@
-import { version } from '$app/env';
 import * as Sentry from '@sentry/sveltekit';
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
 
 import { gotNoApiAnswer, isUnexpectedRequestError } from '#lib/api/errors.js';
-import { CACHE_MAX_AGE_MS, isOfflineQuery, OFFLINE_QUERY_KEYS } from '#lib/api/offlineQueries.js';
+import {
+	CACHE_MAX_AGE_MS,
+	isOfflineQuery,
+	OFFLINE_QUERY_KEYS,
+	QUERY_CACHE_BUSTER
+} from '#lib/api/offlineQueries.js';
 import { createIdbPersister } from '#lib/api/queryPersister.js';
 import { registerQueuedWrites, shouldPersistMutation } from '#lib/api/writeQueue.js';
 import { settleIdentityForBoot } from '#lib/services/identity.js';
@@ -71,16 +75,11 @@ export const load: LayoutLoad = async () => {
 
 	// One IndexedDB entry holds the offline queries, so those screens open offline
 	// once they have loaded. Restored before any guard reads identity from it.
-	// The build `version` busts it on deploy, so a client never reads a payload
-	// shaped by an older API.
-	// TODO: bust only the queries whose response shape a deploy changed — a deploy
-	// applied just before a mobile shutdown wipes the saved programme and the
-	// queued writes; deferred as more machinery than it is worth for now.
 	const [, restored] = persistQueryClient({
 		queryClient,
 		persister: createIdbPersister(),
 		maxAge: CACHE_MAX_AGE_MS,
-		buster: version,
+		buster: QUERY_CACHE_BUSTER,
 		dehydrateOptions: {
 			// Not TanStack's default (successful queries only): a refetch that failed
 			// leaves the query in error with its last good data, and dropping it here

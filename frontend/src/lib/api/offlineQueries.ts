@@ -58,6 +58,18 @@ export function isOfflineQuery(queryKey: QueryKey): boolean {
 // https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
 export const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * The persisted cache's `buster`: a saved cache with a different value is
+ * discarded whole on restore, queued writes included. Bump it (any new string)
+ * in the same change as a breaking change to what is saved — a persisted
+ * query's response or a queued write's request losing, renaming or retyping a
+ * field, or gaining one the frontend now relies on — so no build reads a body
+ * its types don't describe (docs/offline.md "Cache buster"). Hand-bumped rather
+ * than the build version: every deploy would then wipe the saved programme, and
+ * one applied just before a mobile shutdown would leave nothing offline.
+ */
+export const QUERY_CACHE_BUSTER = '1';
+
 const QUEST_HISTORY_PAGE_SIZE = 20;
 
 // The two feeds are infinite queries, so the key carries the page size: the warm

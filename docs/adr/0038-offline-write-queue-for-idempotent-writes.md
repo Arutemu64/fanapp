@@ -68,10 +68,10 @@ every other write online-only.
   need a client ID on `SubmitFeedbackInput`; not worth it for a duplicate message.
 - A write in flight when the app is killed is not saved (only paused ones are),
   and a write logged out of while offline is dropped.
-- A deploy discards waiting writes with the rest of the persisted cache, since
-  the build `version` is its buster (ADR-0021). Busting only what a deploy
-  changed is deferred; until then, a request schema can't change under a
-  queued write.
+- A write survives a deploy, since the cache's buster is bumped by hand only on
+  a breaking change to saved data (docs/offline.md "Cache buster"). A bump
+  discards waiting writes with the rest of the cache, which is also what keeps a
+  changed request schema from replaying a stale body.
 - A new queued write needs: a resend that is harmless, an entry in
   `QUEUED_WRITES` with defaults, a screen built from its `queued…Options()` with
   `handOffWhenQueued`, and copy for its queued, sent and failed outcomes.
