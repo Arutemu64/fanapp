@@ -20,6 +20,9 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.locator('dl')).toContainText(/Баллы\s*35/);
 		await expect(page.locator('dl')).toContainText(/Место\s*23/);
 		await expect(page.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toBeVisible();
+
+		await page.getByRole('tab', { name: 'Таблица лидеров' }).click();
+		await expect(page.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toHaveCount(0);
 		// The top ten, then the player's own row below the gap.
 		await expect(page.getByRole('listitem')).toHaveCount(11);
 		await expect(page.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');

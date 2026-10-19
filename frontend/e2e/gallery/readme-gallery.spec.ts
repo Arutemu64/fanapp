@@ -165,7 +165,7 @@ test('quest', async ({ page, api }) => {
 	});
 	await page.goto('/profile/quest');
 	await expect(page.getByRole('img', { name: 'QR-код игрока @ПушистыйПингвин42' })).toBeVisible();
-	await expect(page.locator('li[aria-current="true"]')).toContainText('@ПушистыйПингвин42');
+	await expect(page.getByText('Место')).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'quest');
 });
