@@ -635,6 +635,20 @@ export type ListQuestAwardsOutput = {
 };
 
 /**
+ * ListQuestHistoryOutput
+ */
+export type ListQuestHistoryOutput = {
+	/**
+	 * Awards
+	 */
+	awards: Array<QuestHistoryItemDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
+};
+
+/**
  * ListScheduleChangesOutput
  */
 export type ListScheduleChangesOutput = {
@@ -1062,6 +1076,32 @@ export type QuestConfigDto = {
 	 * Cancel Window Minutes
 	 */
 	cancel_window_minutes: number;
+};
+
+/**
+ * QuestHistoryItemDTO
+ */
+export type QuestHistoryItemDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Amount
+	 */
+	amount: number;
+	/**
+	 * Message
+	 */
+	message: string;
+	/**
+	 * Created At
+	 */
+	created_at: string;
+	/**
+	 * Cancelled At
+	 */
+	cancelled_at: string | null;
 };
 
 /**
@@ -4354,6 +4394,50 @@ export type GetQuestResponses = {
 };
 
 export type GetQuestResponse = GetQuestResponses[keyof GetQuestResponses];
+
+export type ListQuestHistoryData = {
+	body?: never;
+	path?: never;
+	query?: {
+		/**
+		 * Limit
+		 */
+		limit?: number;
+		/**
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
+		 */
+		cursor?: string | null;
+	};
+	url: '/quest/history';
+};
+
+export type ListQuestHistoryErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * The quest is disabled.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type ListQuestHistoryError = ListQuestHistoryErrors[keyof ListQuestHistoryErrors];
+
+export type ListQuestHistoryResponses = {
+	/**
+	 * Awards retrieved successfully.
+	 */
+	200: ListQuestHistoryOutput;
+};
+
+export type ListQuestHistoryResponse = ListQuestHistoryResponses[keyof ListQuestHistoryResponses];
 
 export type FindQuestPlayersData = {
 	body?: never;

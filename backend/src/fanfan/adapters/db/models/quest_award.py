@@ -20,6 +20,14 @@ class QuestAwardORM(UUIDPrimaryKeyMixin, BaseORM):
             "user_id",
             postgresql_where=text("cancelled_at IS NULL"),
         ),
+        # A player's own history, newest first, cancelled awards included, so
+        # the partial index above cannot serve it. created_at is inherited from
+        # BaseORM, so reference it as SQL text.
+        Index(
+            "ix_quest_awards_user_id_created_at",
+            "user_id",
+            text("created_at DESC"),
+        ),
     )
 
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))

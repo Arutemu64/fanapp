@@ -33,6 +33,15 @@ class QuestAwardDTO(BaseModel):
     awarded_by: QuestAwardUserDTO | None
 
 
+class QuestHistoryItemDTO(BaseModel):
+    # A player's own view of an award: who gave it stays with the staff.
+    id: QuestAwardId
+    amount: int
+    message: str
+    created_at: datetime
+    cancelled_at: datetime | None
+
+
 class QuestAwardItemDTO(QuestAwardDTO):
     # Whether the viewer may cancel this award right now, so the list offers
     # the button only when the server would accept it.

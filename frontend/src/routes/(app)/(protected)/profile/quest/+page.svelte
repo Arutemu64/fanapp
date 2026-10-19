@@ -7,7 +7,6 @@
 	import { getQuestOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
-	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -18,6 +17,7 @@
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 	import LeaderboardRow from './components/LeaderboardRow.svelte';
 	import QuestBadge from './components/QuestBadge.svelte';
+	import QuestHistoryFeed from './components/QuestHistoryFeed.svelte';
 
 	const userQuery = createQuery(() => currentUserOptions());
 	// Other players' awards send this viewer no signal, so an open page polls to keep
@@ -52,19 +52,22 @@
 	<title>{m.document_title({ title: m.quest_title() })}</title>
 </svelte:head>
 
-<SectionIntro description={m.quest_intro()} />
-
-<!-- Tabs rather than the map's toggle group: each option here swaps in a
-     separate panel, which is the ARIA tabs pattern, while a toggle group only
-     reports pressed state. https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ -->
+<!-- Tabs, while the map's floor switch is a toggle group: the map's options show
+     one plan at another level, the radio-group "segmented control" job, but these
+     swap in unrelated panels, which is the tabs job.
+     https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ -->
 <Tabs.Root bind:value={tab} class="gap-4">
 	<Tabs.List aria-label={m.quest_tabs_label()} class="w-full sm:w-auto">
 		<Tabs.Trigger value="badge">{m.quest_tab_badge()}</Tabs.Trigger>
-		<Tabs.Trigger value="leaderboard">{m.quest_leaderboard_title()}</Tabs.Trigger>
+		<Tabs.Trigger value="leaderboard">{m.quest_tab_leaderboard()}</Tabs.Trigger>
+		<Tabs.Trigger value="history">{m.quest_tab_history()}</Tabs.Trigger>
 	</Tabs.List>
 
+	<!-- bits-ui keeps every panel in the DOM and only hides it, so the badge and
+	     the history render while their tab is open: the badge's wake lock then holds
+	     only while the code is visible, and the history loads when first asked for. -->
 	<Tabs.Content value="badge">
-		{#if user}
+		{#if tab === 'badge' && user}
 			<QuestBadge {user} {quest} />
 		{/if}
 	</Tabs.Content>
@@ -102,5 +105,11 @@
 				{/if}
 			{/snippet}
 		</QueryState>
+	</Tabs.Content>
+
+	<Tabs.Content value="history">
+		{#if tab === 'history'}
+			<QuestHistoryFeed />
+		{/if}
 	</Tabs.Content>
 </Tabs.Root>

@@ -113,6 +113,7 @@ from fanfan.application.interactors.quest.find_quest_players import FindQuestPla
 from fanfan.application.interactors.quest.get_quest import GetQuest
 from fanfan.application.interactors.quest.get_quest_player import GetQuestPlayer
 from fanfan.application.interactors.quest.list_quest_awards import ListQuestAwards
+from fanfan.application.interactors.quest.list_quest_history import ListQuestHistory
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
 from fanfan.application.interactors.schedule.publish_schedule_updated import (
     PublishScheduleUpdated,
@@ -234,6 +235,7 @@ class InteractorsProvider(Provider):
         AwardQuestPoints,
         CancelQuestAward,
         ListQuestAwards,
+        ListQuestHistory,
         ListUsers,
         GetUser,
         SetUserRole,

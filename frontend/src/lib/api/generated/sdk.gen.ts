@@ -123,6 +123,9 @@ import type {
 	ListQuestAwardsData,
 	ListQuestAwardsErrors,
 	ListQuestAwardsResponses,
+	ListQuestHistoryData,
+	ListQuestHistoryErrors,
+	ListQuestHistoryResponses,
 	ListScheduleChangesData,
 	ListScheduleChangesErrors,
 	ListScheduleChangesResponses,
@@ -1716,6 +1719,26 @@ export const getQuest = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/quest',
+		...options
+	});
+
+/**
+ * List my quest awards
+ *
+ * Lists the awards the current user received, newest first, cancelled ones included.
+ */
+export const listQuestHistory = <ThrowOnError extends boolean = false>(
+	options?: Options<ListQuestHistoryData, ThrowOnError>
+): RequestResult<ListQuestHistoryResponses, ListQuestHistoryErrors, ThrowOnError> =>
+	(options?.client ?? client).get<ListQuestHistoryResponses, ListQuestHistoryErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/quest/history',
 		...options
 	});
 

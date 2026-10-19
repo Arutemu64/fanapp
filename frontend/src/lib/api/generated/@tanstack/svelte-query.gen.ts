@@ -46,6 +46,7 @@ import {
 	listFeedback,
 	listOauthProviders,
 	listQuestAwards,
+	listQuestHistory,
 	listScheduleChanges,
 	listUserNotifications,
 	listUsers,
@@ -195,6 +196,9 @@ import type {
 	ListQuestAwardsData,
 	ListQuestAwardsError,
 	ListQuestAwardsResponse,
+	ListQuestHistoryData,
+	ListQuestHistoryError,
+	ListQuestHistoryResponse,
 	ListScheduleChangesData,
 	ListScheduleChangesError,
 	ListScheduleChangesResponse,
@@ -2430,6 +2434,82 @@ export const getQuestOptions = (options?: Options<GetQuestData>) =>
 		},
 		queryKey: getQuestQueryKey(options)
 	});
+
+export const listQuestHistoryQueryKey = (options?: Options<ListQuestHistoryData>) =>
+	createQueryKey('listQuestHistory', options);
+
+/**
+ * List my quest awards
+ *
+ * Lists the awards the current user received, newest first, cancelled ones included.
+ */
+export const listQuestHistoryOptions = (options?: Options<ListQuestHistoryData>) =>
+	queryOptions<
+		ListQuestHistoryResponse,
+		ListQuestHistoryError,
+		ListQuestHistoryResponse,
+		ReturnType<typeof listQuestHistoryQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await listQuestHistory({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: listQuestHistoryQueryKey(options)
+	});
+
+export const listQuestHistoryInfiniteQueryKey = (
+	options?: Options<ListQuestHistoryData>
+): QueryKey<Options<ListQuestHistoryData>> => createQueryKey('listQuestHistory', options, true);
+
+/**
+ * List my quest awards
+ *
+ * Lists the awards the current user received, newest first, cancelled ones included.
+ */
+export const listQuestHistoryInfiniteOptions = (options?: Options<ListQuestHistoryData>) => {
+	const opts = infiniteQueryOptions<
+		ListQuestHistoryResponse,
+		ListQuestHistoryError,
+		InfiniteData<ListQuestHistoryResponse>,
+		QueryKey<Options<ListQuestHistoryData>>,
+		| string
+		| null
+		| Pick<QueryKey<Options<ListQuestHistoryData>>[0], 'body' | 'headers' | 'path' | 'query'>
+	>(
+		// @ts-ignore
+		{
+			queryFn: async ({ pageParam, queryKey, signal }) => {
+				// @ts-ignore
+				const page: Pick<
+					QueryKey<Options<ListQuestHistoryData>>[0],
+					'body' | 'headers' | 'path' | 'query'
+				> =
+					typeof pageParam === 'object'
+						? pageParam
+						: {
+								query: {
+									cursor: pageParam
+								}
+							};
+				const params = createInfiniteParams(queryKey, page);
+				const { data } = await listQuestHistory({
+					...options,
+					...params,
+					signal,
+					throwOnError: true
+				});
+				return data;
+			},
+			queryKey: listQuestHistoryInfiniteQueryKey(options)
+		}
+	);
+	return opts as Omit<typeof opts, 'initialData'>;
+};
 
 export const findQuestPlayersQueryKey = (options: Options<FindQuestPlayersData>) =>
 	createQueryKey('findQuestPlayers', options);

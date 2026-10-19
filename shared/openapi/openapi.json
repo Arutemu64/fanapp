@@ -4693,6 +4693,96 @@
         ]
       }
     },
+    "/quest/history": {
+      "get": {
+        "tags": [
+          "Quest"
+        ],
+        "summary": "List my quest awards",
+        "description": "Lists the awards the current user received, newest first, cancelled ones included.",
+        "operationId": "list_quest_history",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Awards retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListQuestHistoryOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The quest is disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/quest/players": {
       "get": {
         "tags": [
@@ -6103,6 +6193,34 @@
         ],
         "title": "ListQuestAwardsOutput"
       },
+      "ListQuestHistoryOutput": {
+        "properties": {
+          "awards": {
+            "items": {
+              "$ref": "#/components/schemas/QuestHistoryItemDTO"
+            },
+            "type": "array",
+            "title": "Awards"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "awards",
+          "next_cursor"
+        ],
+        "title": "ListQuestHistoryOutput"
+      },
       "ListScheduleChangesOutput": {
         "properties": {
           "schedule_changes": {
@@ -6809,6 +6927,49 @@
           "cancel_window_minutes"
         ],
         "title": "QuestConfigDTO"
+      },
+      "QuestHistoryItemDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "message",
+          "created_at",
+          "cancelled_at"
+        ],
+        "title": "QuestHistoryItemDTO"
       },
       "QuestPlayerDTO": {
         "properties": {
