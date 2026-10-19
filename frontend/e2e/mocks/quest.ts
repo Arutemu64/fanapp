@@ -1,6 +1,7 @@
 import type {
 	GetQuestOutput,
 	ListQuestAwardsOutput,
+	ListQuestHistoryOutput,
 	PublicConfigDto,
 	QuestPlayerDto
 } from '../../src/lib/api/generated/types.gen';
@@ -49,6 +50,33 @@ export const QUEST: GetQuestOutput = {
 };
 
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+
+export const QUEST_HISTORY: ListQuestHistoryOutput = {
+	next_cursor: null,
+	awards: [
+		{
+			id: '01890000-0000-7000-8000-000000000401',
+			amount: 15,
+			message: 'Косплей-фотозона',
+			created_at: minutesAgo(5),
+			cancelled_at: null
+		},
+		{
+			id: '01890000-0000-7000-8000-000000000402',
+			amount: 20,
+			message: 'Викторина на главной сцене',
+			created_at: minutesAgo(40),
+			cancelled_at: null
+		},
+		{
+			id: '01890000-0000-7000-8000-000000000403',
+			amount: 10,
+			message: 'Ошибочное начисление',
+			created_at: minutesAgo(50),
+			cancelled_at: minutesAgo(45)
+		}
+	]
+};
 
 export const QUEST_AWARDS: ListQuestAwardsOutput = {
 	next_cursor: null,

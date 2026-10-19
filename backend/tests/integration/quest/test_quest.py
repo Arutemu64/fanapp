@@ -20,6 +20,10 @@ from fanfan.application.interactors.quest.list_quest_awards import (
     ListQuestAwards,
     ListQuestAwardsInput,
 )
+from fanfan.application.interactors.quest.list_quest_history import (
+    ListQuestHistory,
+    ListQuestHistoryInput,
+)
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
@@ -127,6 +131,30 @@ async def test_cancelled_award_leaves_the_balance(
     assert quest.points == 0
     assert quest.rank is None
     assert [award.can_cancel for award in page.awards] == [False]
+
+
+@pytest.mark.usefixtures("quest_enabled")
+async def test_history_lists_only_the_players_own_awards(
+    dishka_request: AsyncContainer,
+    quest_volunteer: User,
+    quest_manager: User,
+    visitor: User,
+    login: Callable[[User], None],
+) -> None:
+    login(quest_volunteer)
+    first = await _award(dishka_request, visitor, 10)
+    second = await _award(dishka_request, visitor, 5)
+    await _award(dishka_request, quest_manager, 7)
+    await (await dishka_request.get(CancelQuestAward))(first)
+
+    login(visitor)
+    history = await (await dishka_request.get(ListQuestHistory))(
+        ListQuestHistoryInput(pagination=CursorPagination(limit=10))
+    )
+
+    assert [award.id for award in history.awards] == [second, first]
+    assert [award.cancelled_at is None for award in history.awards] == [True, False]
+    assert history.next_cursor is None
 
 
 @pytest.mark.usefixtures("quest_enabled")

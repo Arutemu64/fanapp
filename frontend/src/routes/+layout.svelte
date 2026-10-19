@@ -18,6 +18,7 @@
 		getScheduleQueryKey,
 		getSyncSourcesQueryKey,
 		getVotingStatusQueryKey,
+		listQuestHistoryQueryKey,
 		listScheduleChangesQueryKey,
 		listUserNotificationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -152,9 +153,10 @@
 		void queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
 		void queryClient.invalidateQueries({ queryKey: listUserNotificationsQueryKey() });
 		// Every award and cancellation notifies the player, so the notification
-		// doubles as the signal that their balance and rank moved.
+		// doubles as the signal that their balance, rank and history moved.
 		if (notification.type === 'quest') {
 			void queryClient.invalidateQueries({ queryKey: getQuestQueryKey() });
+			void queryClient.invalidateQueries({ queryKey: listQuestHistoryQueryKey() });
 		}
 	}
 

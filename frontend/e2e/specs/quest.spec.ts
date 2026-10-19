@@ -4,14 +4,19 @@ import type {
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
-import { QUEST, QUEST_AWARDS, questConfig, questPlayer } from '../mocks/quest';
+import { QUEST, QUEST_AWARDS, QUEST_HISTORY, questConfig, questPlayer } from '../mocks/quest';
 
 const volunteer = () =>
 	loggedInAs({ role: 'volunteer', username: 'ЛовкийСтраж12', permissions: ['quest:award'] });
 
 test.describe('quest', { tag: '@critical' }, () => {
 	test('a player sees their score, code and place', async ({ page, api }) => {
-		api.use({ ...questConfig(), ...loggedInAs(), 'GET /quest': json(QUEST) });
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json(QUEST),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
 
 		await page.goto('/profile');
 		await expect(page.getByRole('link', { name: /Квест/ })).toContainText('35 баллов');
@@ -20,9 +25,72 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.locator('dl')).toContainText(/Баллы\s*35/);
 		await expect(page.locator('dl')).toContainText(/Место\s*23/);
 		await expect(page.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toBeVisible();
+
+		await page.getByRole('tab', { name: 'Лидеры' }).click();
+		await expect(page.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toHaveCount(0);
 		// The top ten, then the player's own row below the gap.
 		await expect(page.getByRole('listitem')).toHaveCount(11);
 		await expect(page.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
+	});
+
+	test('a failed score load shows its retry on the badge tab', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json({ detail: 'Ошибка' }, 500),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
+
+		await page.goto('/profile/quest');
+		const badge = page.getByRole('tabpanel', { name: 'Бейдж' });
+		await expect(badge.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toBeVisible();
+		await expect(badge.getByRole('button', { name: 'Попробовать снова' })).toBeVisible();
+	});
+
+	test('offline, the saved score and history stay on screen', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json(QUEST),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
+		await page.goto('/profile/quest');
+		const badge = page.getByRole('tabpanel', { name: 'Бейдж' });
+		await expect(badge.locator('dl')).toContainText(/Баллы\s*35/);
+
+		// Dispatched by hand, as in offline.spec.ts: context.setOffline would also fail
+		// the build's chunk loads, and the aborted health check keeps the probes down.
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+
+		await expect(badge.getByText(/Синхронизировано сегодня/)).toBeVisible();
+		await expect(badge.locator('dl')).toContainText(/Баллы\s*35/);
+
+		await page.getByRole('tab', { name: 'Лидеры' }).click();
+		const leaderboard = page.getByRole('tabpanel', { name: 'Лидеры' });
+		await expect(leaderboard.getByText('Показаны сохранённые баллы и места.')).toBeVisible();
+		await expect(leaderboard.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
+
+		await page.getByRole('tab', { name: 'История' }).click();
+		const history = page.getByRole('tabpanel', { name: 'История' });
+		await expect(history.getByRole('listitem')).toHaveCount(3);
+	});
+
+	test('a player sees the awards they received', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json(QUEST),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
+
+		await page.goto('/profile/quest');
+		await page.getByRole('tab', { name: 'История' }).click();
+
+		const panel = page.getByRole('tabpanel', { name: 'История' });
+		await expect(panel.getByRole('listitem')).toHaveCount(3);
+		await expect(panel.getByRole('listitem').first()).toContainText('Косплей-фотозона');
+		await expect(panel.getByRole('listitem').last()).toContainText('Отменено');
 	});
 
 	test('the quest row is hidden while the quest is off', async ({ page, api }) => {

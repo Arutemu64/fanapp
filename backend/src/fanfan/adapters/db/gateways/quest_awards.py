@@ -213,7 +213,11 @@ class SqlQuestAwardGateway(QuestAwardGateway):
         return top, own
 
     async def read_awards_page(
-        self, *, pagination: CursorPagination, awarded_by: UserId | None
+        self,
+        *,
+        pagination: CursorPagination,
+        awarded_by: UserId | None = None,
+        user_id: UserId | None = None,
     ) -> list[QuestAwardDTO]:
         stmt = (
             select(QuestAwardORM)
@@ -226,6 +230,8 @@ class SqlQuestAwardGateway(QuestAwardGateway):
         )
         if awarded_by is not None:
             stmt = stmt.where(QuestAwardORM.awarded_by == awarded_by)
+        if user_id is not None:
+            stmt = stmt.where(QuestAwardORM.user_id == user_id)
         if pagination.after is not None:
             stmt = stmt.where(
                 rows_after(QuestAwardORM.created_at, QuestAwardORM.id, pagination.after)

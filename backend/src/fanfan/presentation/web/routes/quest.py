@@ -24,6 +24,11 @@ from fanfan.application.interactors.quest.list_quest_awards import (
     ListQuestAwardsInput,
     ListQuestAwardsOutput,
 )
+from fanfan.application.interactors.quest.list_quest_history import (
+    ListQuestHistory,
+    ListQuestHistoryInput,
+    ListQuestHistoryOutput,
+)
 from fanfan.core.vo.quest import QuestAwardId
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
@@ -52,6 +57,28 @@ quest_router = APIRouter(
 @inject
 async def get_quest(interactor: FromDishka[GetQuest]) -> GetQuestOutput:
     return await interactor()
+
+
+@quest_router.get(
+    "/history",
+    summary="List my quest awards",
+    description="Lists the awards the current user received, newest first, "
+    "cancelled ones included.",
+    responses={
+        200: {"description": "Awards retrieved successfully."},
+        403: {"model": ErrorMessage, "description": "The quest is disabled."},
+    },
+)
+@inject
+async def list_quest_history(
+    interactor: FromDishka[ListQuestHistory],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    cursor: PageCursorQuery = None,
+) -> ListQuestHistoryOutput:
+    data = ListQuestHistoryInput(
+        pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
+    )
+    return await interactor(data)
 
 
 @quest_router.get(

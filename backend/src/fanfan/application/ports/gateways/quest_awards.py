@@ -39,7 +39,15 @@ class QuestAwardGateway(Protocol):
         ...
 
     async def read_awards_page(
-        self, *, pagination: CursorPagination, awarded_by: UserId | None
+        self,
+        *,
+        pagination: CursorPagination,
+        awarded_by: UserId | None = None,
+        user_id: UserId | None = None,
     ) -> list[QuestAwardDTO]:
-        """Newest first; ``awarded_by`` narrows to one staff member's awards."""
+        """Newest first.
+
+        ``awarded_by`` narrows to one staff member's awards, ``user_id`` to one
+        player's.
+        """
         ...
