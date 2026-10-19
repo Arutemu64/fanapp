@@ -33,6 +33,20 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
 	});
 
+	test('a failed score load shows its retry on the badge tab', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json({ detail: 'Ошибка' }, 500),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
+
+		await page.goto('/profile/quest');
+		const badge = page.getByRole('tabpanel', { name: 'Бейдж' });
+		await expect(badge.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toBeVisible();
+		await expect(badge.getByRole('button', { name: 'Попробовать снова' })).toBeVisible();
+	});
+
 	test('a player sees the awards they received', async ({ page, api }) => {
 		api.use({
 			...questConfig(),

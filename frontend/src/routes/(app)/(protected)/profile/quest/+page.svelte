@@ -61,10 +61,17 @@
 		<Tabs.Trigger value="history">{m.quest_tab_history()}</Tabs.Trigger>
 	</Tabs.List>
 
-	<Tabs.Content value="badge">
+	<Tabs.Content value="badge" class="flex flex-col gap-4">
 		{#if user}
 			<QuestBadge {user} {quest} />
 		{/if}
+		<!-- The badge shows the code without the standings, so a failed load would
+		     only drop its stats; the error and its retry show here too, not just on
+		     the leaderboard tab. -->
+		<QueryState view={questView}>
+			{#snippet loading()}{/snippet}
+			{#snippet ready()}{/snippet}
+		</QueryState>
 	</Tabs.Content>
 
 	<Tabs.Content value="leaderboard">
