@@ -27,7 +27,7 @@
 
 	// Queued (ADR-0038): offline it waits for the connection, shown on the card in
 	// the meantime, and the subscription list refreshes when it lands.
-	const subscribeMutation = createMutation(() => queuedSubscribeOptions());
+	const subscribeMutation = createMutation(() => queuedSubscribeOptions(event.id));
 	handOffWhenQueued(subscribeMutation, () => {
 		toastService.add(m.subscribe_queued(), 'info');
 		open = false;

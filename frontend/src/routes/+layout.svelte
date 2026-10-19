@@ -109,7 +109,7 @@
 		const stopMonitor = startReachabilityMonitor({
 			onRecovered: () => {
 				void flushPendingLogout();
-				warmOfflineCache(queryClient);
+				void warmOfflineCache(queryClient);
 			}
 		});
 		// Writes saved by an earlier visit are paused in the restored cache, and the
@@ -117,11 +117,11 @@
 		// watcher already listening, so their outcome is reported.
 		const stopWatchingQueue = watchQueuedWrites(queryClient, reportQueuedWrite);
 		void queryClient.resumePausedMutations();
-		warmOfflineCache(queryClient);
+		void warmOfflineCache(queryClient);
 		// Back in the app is when a Wi-Fi spot was most likely found meanwhile. Only
 		// the queries on screen refetch on focus; this refreshes the other saved ones.
 		const stopWarmingOnFocus = focusManager.subscribe((focused) => {
-			if (focused) warmOfflineCache(queryClient);
+			if (focused) void warmOfflineCache(queryClient);
 		});
 		const stopUpdates = appUpdate.start();
 		const stopWatching = watchApiResponses(queryClient, () => void session.expired());
@@ -219,7 +219,7 @@
 	// login: the guest's copy holds none of theirs.
 	let userId = $derived(user.data?.id ?? null);
 	$effect(() => {
-		if (userId !== null) warmOfflineCache(queryClient);
+		if (userId !== null) void warmOfflineCache(queryClient);
 	});
 
 	$effect(() => {

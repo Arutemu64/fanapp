@@ -7,22 +7,27 @@ import {
 	cancelQueuedSubscribe,
 	dropQueuedWrites,
 	queuedSubscribeOptions,
+	queuedUnsubscribeOptions,
 	type QueuedWriteOutcome,
 	registerQueuedWrites,
 	shouldPersistMutation,
 	watchQueuedWrites
 } from './writeQueue';
 
-const { newSubscription } = vi.hoisted(() => ({ newSubscription: vi.fn() }));
+const { deleteSubscription, newSubscription } = vi.hoisted(() => ({
+	deleteSubscription: vi.fn(),
+	newSubscription: vi.fn()
+}));
 vi.mock('#lib/api/generated/index.js', async (importOriginal) => ({
 	...(await importOriginal<object>()),
+	deleteSubscription,
 	newSubscription
 }));
 
 const SUBSCRIBE = { body: { event_id: 'event-1', counter: 3 } };
 
 function subscribeObserver(queryClient: QueryClient) {
-	return new MutationObserver(queryClient, queuedSubscribeOptions());
+	return new MutationObserver(queryClient, queuedSubscribeOptions('event-1'));
 }
 
 function pendingWrites(queryClient: QueryClient) {
@@ -113,5 +118,38 @@ describe('write queue', () => {
 
 		await vi.waitFor(() => expect(outcomes).toEqual([{ kind: 'subscribe', ok: true }]));
 		stop();
+	});
+
+	it("sends one act's unsubscribe and resubscribe in the order they were made", async () => {
+		const sent: string[] = [];
+		deleteSubscription.mockImplementation(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			sent.push('unsubscribe');
+			return { data: undefined };
+		});
+		newSubscription.mockImplementation(() => {
+			sent.push('subscribe');
+			return Promise.resolve({ data: { subscription_id: 'sub-2' } });
+		});
+
+		onlineManager.setOnline(false);
+		void new MutationObserver(queryClient, queuedUnsubscribeOptions('event-1')).mutate({
+			path: { subscription_id: 'sub-1' }
+		});
+		void subscribeObserver(queryClient).mutate(SUBSCRIBE);
+		await vi.waitFor(() => expect(pendingWrites(queryClient)).toHaveLength(2));
+
+		onlineManager.setOnline(true);
+		await vi.waitFor(() => expect(sent).toEqual(['unsubscribe', 'subscribe']));
+	});
+
+	it('keeps a subscribe that may have landed instead of cancelling it', async () => {
+		newSubscription.mockRejectedValueOnce(await droppedConnectionError());
+		void subscribeObserver(queryClient).mutate(SUBSCRIBE);
+		await vi.waitFor(() => expect(newSubscription).toHaveBeenCalledOnce());
+		onlineManager.setOnline(false);
+		await vi.waitFor(() => expect(pendingWrites(queryClient)[0]?.state.isPaused).toBe(true));
+
+		expect(cancelQueuedSubscribe(queryClient, 'event-1')).toBe(false);
 	});
 });

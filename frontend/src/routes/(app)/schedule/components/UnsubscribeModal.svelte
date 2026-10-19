@@ -24,7 +24,7 @@
 	const toastService = getToastService();
 
 	// Queued (ADR-0038), like the subscribe it undoes.
-	const unsubscribeMutation = createMutation(() => queuedUnsubscribeOptions());
+	const unsubscribeMutation = createMutation(() => queuedUnsubscribeOptions(event.id));
 	handOffWhenQueued(unsubscribeMutation, () => {
 		toastService.add(m.unsubscribe_queued(), 'info');
 		open = false;

@@ -69,12 +69,30 @@ async function unsubscribe(variables: Options<DeleteSubscriptionData>) {
 // defaults below, always match. They carry no `onSuccess`: an option set here
 // would replace the default's invalidation for the mutations this screen sends.
 
-export function queuedSubscribeOptions() {
-	return { mutationKey: QUEUED_WRITES.subscribe, mutationFn: subscribe };
+// One scope per act, so its subscribe and unsubscribe go out in the order they
+// were made: queued writes otherwise resume in parallel, and an unsubscribe that
+// lands after a later subscribe would delete the reminder the person asked for.
+// TanStack runs mutations that share a scope serially, and the scope is saved
+// with a persisted write
+// (https://tanstack.com/query/latest/docs/framework/react/guides/mutations#mutation-scopes).
+function subscriptionScope(eventId: string) {
+	return { id: `subscription:${eventId}` };
 }
 
-export function queuedUnsubscribeOptions() {
-	return { mutationKey: QUEUED_WRITES.unsubscribe, mutationFn: unsubscribe };
+export function queuedSubscribeOptions(eventId: string) {
+	return {
+		mutationKey: QUEUED_WRITES.subscribe,
+		mutationFn: subscribe,
+		scope: subscriptionScope(eventId)
+	};
+}
+
+export function queuedUnsubscribeOptions(eventId: string) {
+	return {
+		mutationKey: QUEUED_WRITES.unsubscribe,
+		mutationFn: unsubscribe,
+		scope: subscriptionScope(eventId)
+	};
 }
 
 export function queuedAwardOptions() {
@@ -108,12 +126,12 @@ export function registerQueuedWrites(queryClient: QueryClient): void {
 
 	queryClient.setMutationDefaults(QUEUED_WRITES.subscribe, {
 		...queued,
-		...queuedSubscribeOptions(),
+		mutationFn: subscribe,
 		onSuccess: refreshSubscriptions
 	});
 	queryClient.setMutationDefaults(QUEUED_WRITES.unsubscribe, {
 		...queued,
-		...queuedUnsubscribeOptions(),
+		mutationFn: unsubscribe,
 		onSuccess: refreshSubscriptions
 	});
 	queryClient.setMutationDefaults(QUEUED_WRITES.award, {
@@ -145,14 +163,17 @@ export function dropQueuedWrites(queryClient: QueryClient): void {
 	}
 }
 
-/** Cancel a subscription still waiting to be sent; false if it already left. */
+/** Cancel a subscription not yet sent; false if it is in flight or may have landed. */
 export function cancelQueuedSubscribe(queryClient: QueryClient, eventId: string): boolean {
 	const mutationCache = queryClient.getMutationCache();
 	const queued = mutationCache
 		.findAll({ mutationKey: QUEUED_WRITES.subscribe })
 		.find((mutation) => {
 			const variables = mutation.state.variables as Options<NewSubscriptionData> | undefined;
-			return mutation.state.isPaused && variables?.body.event_id === eventId;
+			// Never attempted: one that failed may have landed with its answer lost,
+			// and dropping it would leave that reminder on the server.
+			const neverSent = mutation.state.isPaused && mutation.state.failureCount === 0;
+			return neverSent && variables?.body.event_id === eventId;
 		});
 	if (!queued) return false;
 	mutationCache.remove(queued);

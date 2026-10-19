@@ -106,10 +106,10 @@ export function questHistoryFeedOptions() {
  * does nothing, and a failed fetch leaves the saved copy as it was: the next
  * window tries again.
  */
-export function warmOfflineCache(queryClient: QueryClient): void {
+export async function warmOfflineCache(queryClient: QueryClient): Promise<void> {
 	if (!isReachable()) return;
 
-	void queryClient.query(getPublicConfigOptions()).catch(() => {});
+	const configFetch = queryClient.query(getPublicConfigOptions()).catch(() => undefined);
 	void queryClient.query(getScheduleOptions()).catch(() => {});
 
 	const user = queryClient.getQueryData(currentUserOptions().queryKey);
@@ -119,8 +119,12 @@ export function warmOfflineCache(queryClient: QueryClient): void {
 	void queryClient.query(countUnreadNotificationsOptions()).catch(() => {});
 	void queryClient.infiniteQuery(notificationsFeedOptions()).catch(() => {});
 
-	const config = queryClient.getQueryData(getPublicConfigOptions().queryKey);
-	if (config?.quest_enabled) {
+	// Awaited, not read from the cache: on a first launch nothing is saved yet,
+	// and the quest data would be skipped even with the quest on. The user is
+	// read again, since a logout can land while the config is on its way.
+	const config = await configFetch;
+	const stillSignedIn = queryClient.getQueryData(currentUserOptions().queryKey);
+	if (config?.quest_enabled && stillSignedIn) {
 		void queryClient.query(getQuestOptions()).catch(() => {});
 		void queryClient.infiniteQuery(questHistoryFeedOptions()).catch(() => {});
 	}
