@@ -8,6 +8,7 @@ import {
 	countUnreadNotificationsQueryKey,
 	getCurrentUserQueryKey,
 	getPublicConfigQueryKey,
+	getQuestQueryKey,
 	getScheduleQueryKey,
 	getSubscriptionsQueryKey,
 	listUserNotificationsQueryKey
@@ -21,8 +22,9 @@ import type { LayoutLoad } from './$types';
 export const ssr = false;
 
 // The screens that must open offline: the identity the guards and the profile
-// read, the home hero, the programme with the viewer's subscriptions, and the
-// notifications with their badge. Only these are written to IndexedDB. Every
+// read, the home hero, the programme with the viewer's subscriptions, the
+// notifications with their badge, and the quest score and standings (shown with
+// their sync time, since ranks move during the festival). Only these are written to IndexedDB. Every
 // other query is online-only: fetched fresh after a cold start and dropped from
 // memory five minutes after its screen closes (TanStack's default gcTime) —
 // voting must not show a stale ballot, and the organizer tools hold other people's
@@ -33,7 +35,8 @@ const OFFLINE_QUERY_KEYS = [
 	getScheduleQueryKey(),
 	getSubscriptionsQueryKey(),
 	listUserNotificationsQueryKey(),
-	countUnreadNotificationsQueryKey()
+	countUnreadNotificationsQueryKey(),
+	getQuestQueryKey()
 ];
 // Matched by operation id, the first part of every hey-api query key, so a
 // list key also covers its paginated variant.

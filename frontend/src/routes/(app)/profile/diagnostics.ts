@@ -66,7 +66,8 @@ export const CACHE_LABELS: Record<string, () => string> = {
 	getPublicConfig: m.tool_settings,
 	getSchedule: m.nav_schedule,
 	getSubscriptions: m.diag_subscriptions,
-	listUserNotifications: m.notifications_title
+	listUserNotifications: m.notifications_title,
+	getQuest: m.quest_title
 };
 
 const SERVICE_WORKER_LABELS: Record<ServiceWorkerStatus, () => string> = {

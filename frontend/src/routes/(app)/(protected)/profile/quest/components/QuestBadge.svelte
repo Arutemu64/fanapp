@@ -6,15 +6,18 @@
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import Username from '#lib/components/Username.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import { formatSyncedAt } from '#lib/utils/formatters.js';
 	import { questCodeFor } from '#lib/utils/questCode.js';
 
 	interface Props {
 		user: CurrentUserDto;
 		/** Absent until the standings load; the code shows without them. */
 		quest: GetQuestOutput | undefined;
+		/** Epoch millis of the saved copy, set only while `quest` may be out of date. */
+		syncedAt?: number;
 	}
 
-	let { user, quest }: Props = $props();
+	let { user, quest, syncedAt }: Props = $props();
 </script>
 
 <!-- Shaped like a festival lanyard badge: the name leads, since it is what a
@@ -68,5 +71,12 @@
 				</div>
 			{/if}
 		</dl>
+		<!-- On the badge itself, not in a notice below it: on a phone the badge fills
+		     the screen, and a place shown from a saved copy can be out of date. -->
+		{#if syncedAt !== undefined}
+			<p class="px-4 pb-3 text-center text-xs text-muted-foreground">
+				{m.stale_data_synced({ syncedLabel: formatSyncedAt(syncedAt) })}
+			</p>
+		{/if}
 	{/if}
 </Card.Root>

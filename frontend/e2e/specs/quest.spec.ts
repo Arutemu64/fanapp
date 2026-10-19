@@ -47,6 +47,31 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(badge.getByRole('button', { name: 'Попробовать снова' })).toBeVisible();
 	});
 
+	test('offline, the saved score shows with its sync time', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...loggedInAs(),
+			'GET /quest': json(QUEST),
+			'GET /quest/history': json(QUEST_HISTORY)
+		});
+		await page.goto('/profile/quest');
+		const badge = page.getByRole('tabpanel', { name: 'Бейдж' });
+		await expect(badge.locator('dl')).toContainText(/Баллы\s*35/);
+
+		// Dispatched by hand, as in offline.spec.ts: context.setOffline would also fail
+		// the build's chunk loads, and the aborted health check keeps the probes down.
+		api.use({ 'GET /debug/health': (route) => route.abort() });
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+
+		await expect(badge.getByText(/Синхронизировано сегодня/)).toBeVisible();
+		await expect(badge.locator('dl')).toContainText(/Баллы\s*35/);
+
+		await page.getByRole('tab', { name: 'Лидеры' }).click();
+		const leaderboard = page.getByRole('tabpanel', { name: 'Лидеры' });
+		await expect(leaderboard.getByText('Показаны сохранённые баллы и места.')).toBeVisible();
+		await expect(leaderboard.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
+	});
+
 	test('a player sees the awards they received', async ({ page, api }) => {
 		api.use({
 			...questConfig(),

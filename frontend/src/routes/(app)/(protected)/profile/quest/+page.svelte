@@ -7,6 +7,7 @@
 	import { getQuestOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -43,6 +44,9 @@
 			errorMessage: m.quest_load_failed()
 		})
 	);
+	let badgeSyncedAt = $derived(
+		questView.kind === 'ready' && questView.stale ? questView.cachedAt : undefined
+	);
 </script>
 
 <svelte:head>
@@ -63,24 +67,33 @@
 
 	<Tabs.Content value="badge" class="flex flex-col gap-4">
 		{#if user}
-			<QuestBadge {user} {quest} />
+			<QuestBadge {user} {quest} syncedAt={badgeSyncedAt} />
 		{/if}
 		<!-- The badge shows the code without the standings, so a failed load would
 		     only drop its stats; the error and its retry show here too, not just on
-		     the leaderboard tab. -->
+		     the leaderboard tab. Offline with nothing saved, the code still works and
+		     the connection banner already says why the stats are missing. -->
 		<QueryState view={questView}>
 			{#snippet loading()}{/snippet}
+			{#snippet offline()}{/snippet}
 			{#snippet ready()}{/snippet}
 		</QueryState>
 	</Tabs.Content>
 
-	<Tabs.Content value="leaderboard">
+	<Tabs.Content value="leaderboard" class="flex flex-col gap-4">
 		<QueryState view={questView}>
 			{#snippet loading()}
 				<SectionSpinner />
 			{/snippet}
 
-			{#snippet ready({ data: standings }: ReadyView<GetQuestOutput>)}
+			{#snippet offline()}
+				<EmptyState title={m.quest_offline_title()} message={m.quest_offline_message()} />
+			{/snippet}
+
+			{#snippet ready({ data: standings, stale, cachedAt }: ReadyView<GetQuestOutput>)}
+				{#if stale}
+					<StaleDataNotice message={m.quest_cached_notice()} {cachedAt} />
+				{/if}
 				{#if standings.leaderboard.length === 0}
 					<EmptyState message={m.quest_leaderboard_empty()} />
 				{:else}

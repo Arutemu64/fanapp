@@ -569,6 +569,7 @@
 	"push_types_title": "Типы уведомлений",
 	"quest_code_hint": "Покажи код волонтёру, когда выполнишь задание.",
 	"quest_code_label": "QR-код игрока @{username}",
+	"quest_cached_notice": "Показаны сохранённые баллы и места.",
 	"quest_history_cancelled": "Отменено",
 	"quest_history_empty": "Начислений пока нет. Выполни задание и покажи бейдж волонтёру.",
 	"quest_history_failed": "Не удалось загрузить историю",
@@ -576,6 +577,8 @@
 	"quest_leaderboard_gap": "Часть мест пропущена",
 	"quest_leaderboard_you": "ты",
 	"quest_load_failed": "Не удалось загрузить квест",
+	"quest_offline_message": "Появится после подключения к интернету",
+	"quest_offline_title": "Таблица лидеров недоступна офлайн",
 	"quest_points": [
 		{
 			"declarations": ["input count", "local countPlural = count: plural"],
