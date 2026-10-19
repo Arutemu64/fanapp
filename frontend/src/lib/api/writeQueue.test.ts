@@ -145,11 +145,19 @@ describe('write queue', () => {
 
 	it('keeps a subscribe that may have landed instead of cancelling it', async () => {
 		newSubscription.mockRejectedValueOnce(await droppedConnectionError());
-		void subscribeObserver(queryClient).mutate(SUBSCRIBE);
-		await vi.waitFor(() => expect(newSubscription).toHaveBeenCalledOnce());
-		onlineManager.setOnline(false);
-		await vi.waitFor(() => expect(pendingWrites(queryClient)[0]?.state.isPaused).toBe(true));
+		vi.useFakeTimers();
+		try {
+			void subscribeObserver(queryClient).mutate(SUBSCRIBE);
+			await vi.advanceTimersByTimeAsync(0);
+			expect(newSubscription).toHaveBeenCalledOnce();
+			onlineManager.setOnline(false);
+			// The retry notices the lost connection only once its delay (1s) is up.
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(pendingWrites(queryClient)[0]?.state.isPaused).toBe(true);
 
-		expect(cancelQueuedSubscribe(queryClient, 'event-1')).toBe(false);
+			expect(cancelQueuedSubscribe(queryClient, 'event-1')).toBe(false);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
