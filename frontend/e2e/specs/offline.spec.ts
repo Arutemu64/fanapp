@@ -137,6 +137,62 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await expect(page.getByRole('status').getByText('Связь восстановлена')).toBeAttached();
 	});
 
+	test('feedback written offline waits in the queue and goes out on reconnect', async ({
+		page,
+		api
+	}) => {
+		const sent: unknown[] = [];
+		api.use({
+			...loggedInAs(),
+			'POST /feedback/': (route) => {
+				sent.push(route.request().postDataJSON());
+				return json({ feedback_id: 'feedback-1' }, 201);
+			}
+		});
+		// A boot or warm-up response the page handles after the `offline` event marks
+		// the backend reachable again, so let the signed-in warm-up land first.
+		const warmedUp = Promise.all(
+			['/notifications/', '/schedule/subscriptions/'].map((path) =>
+				page.waitForResponse((response) => new URL(response.url()).pathname.endsWith(path))
+			)
+		);
+		await page.goto('/feedback');
+		const field = page.getByRole('textbox', { name: 'Твоё сообщение' });
+		await expect(field).toBeVisible();
+		await warmedUp;
+
+		api.use({
+			'GET /debug/health': (route) => route.abort(),
+			'POST /feedback/': (route) => route.abort()
+		});
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
+
+		await field.fill('Карта зала очень помогла');
+		await page.getByRole('button', { name: 'Отправить сообщение' }).click();
+
+		// Should a late response still flip the app online, the send gets no answer
+		// and pauses once the probe's confirm window runs out: slower, same outcome.
+		await expect(page.getByText('Отправим, когда появится связь')).toBeVisible({
+			timeout: 10_000
+		});
+		await expect(field).toHaveValue('');
+		await expect(page.getByRole('status').getByText('1 действие ждёт отправки')).toBeAttached();
+		expect(sent).toEqual([]);
+
+		api.use({
+			'GET /debug/health': json({ status: 'healthy' }),
+			'POST /feedback/': (route) => {
+				sent.push(route.request().postDataJSON());
+				return json({ feedback_id: 'feedback-1' }, 201);
+			}
+		});
+		await page.getByRole('button', { name: 'Повторить' }).click();
+
+		await expect(page.getByText('Спасибо, сообщение отправлено')).toBeVisible();
+		expect(sent).toEqual([{ text: 'Карта зала очень помогла' }]);
+	});
+
 	test('an online-only switch explains itself offline instead of saving', async ({ page, api }) => {
 		let patched = false;
 		api.use({

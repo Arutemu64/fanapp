@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/svelte-query';
 
 import { createContext } from 'svelte';
 
+import { dropQueuedWrites } from '#lib/api/writeQueue.js';
 import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import {
@@ -145,13 +146,15 @@ export class Session {
 	 * Drop what the previous account left behind once the app shows the guest
 	 * state. Queries no screen is using are removed, so the persisted cache stops
 	 * holding them for the next person on a shared device; the ones on screen
-	 * refetch as the guest. The event stream redials as the guest too — otherwise
+	 * refetch as the guest. Writes still waiting in the queue are dropped, or they
+	 * would go out under the next session's cookie. The event stream redials as the guest too — otherwise
 	 * it keeps delivering the previous user's `notification_created` events. The
 	 * push subscription ends for the same reason: the server ties it to this
 	 * account, so the next person would get its pushes on the lock screen.
 	 */
 	async #forgetAccount(): Promise<void> {
 		this.#queryClient.removeQueries({ type: 'inactive' });
+		dropQueuedWrites(this.#queryClient);
 		void this.#queryClient.invalidateQueries();
 		this.#events.restart();
 		// Last, so a slow browser call can't hold up the rest of the teardown, but

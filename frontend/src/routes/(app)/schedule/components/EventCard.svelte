@@ -3,6 +3,7 @@
 	import Bell from '@lucide/svelte/icons/bell';
 	import BellRing from '@lucide/svelte/icons/bell-ring';
 	import Clock from '@lucide/svelte/icons/clock';
+	import CloudOff from '@lucide/svelte/icons/cloud-off';
 	import Hourglass from '@lucide/svelte/icons/hourglass';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
@@ -13,7 +14,6 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { formatDuration, formatEventNumber, formatUntil } from '#lib/utils/formatters.js';
-	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { canManageSchedule } from '#lib/utils/permissions.js';
 
 	import EventStaffActions from './EventStaffActions.svelte';
@@ -34,10 +34,6 @@
 
 	let { event, currentEvent, user, variant = 'default' }: Props = $props();
 	const toastService = getToastService();
-
-	// Subscribe/unsubscribe and the staff actions all POST to the server — online
-	// only. The cached schedule (and each row's subscription state) still renders.
-	const offlineGate = offlineWriteGate();
 
 	let subscribeModal = $state(false);
 	let unsubscribeModal = $state(false);
@@ -175,6 +171,14 @@
 							<BellRing class="mt-px size-3.5 shrink-0" />
 							{m.subscribe_reminder({ count: event.user_subscription.counter })}
 						</span>
+						<!-- Subscribing works offline (ADR-0038): until it is sent, say so beside the
+						     threshold rather than pretend the reminder is already set up. -->
+						{#if event.user_subscription.queued}
+							<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+								<CloudOff class="mt-px size-3.5 shrink-0" />
+								{m.subscribe_queued_badge()}
+							</span>
+						{/if}
 					{/if}
 				</div>
 			</div>
@@ -184,10 +188,9 @@
 				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
 					type="button"
-					onclick={offlineGate.guard(event.user_subscription ? handleUnsubscribe : handleSubscribe)}
-					aria-disabled={offlineGate.blocked}
+					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
 					class={[
-						'flex size-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-40',
+						'flex size-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
 						event.user_subscription
 							? 'text-primary hover:bg-primary/10'
 							: 'text-muted-foreground hover:bg-accent hover:text-foreground'

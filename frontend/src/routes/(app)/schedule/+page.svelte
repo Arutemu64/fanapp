@@ -14,6 +14,7 @@
 		getScheduleOptions,
 		getSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { useQueuedSubscriptionChanges } from '#lib/api/queuedWrite.svelte.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SearchInput from '#lib/components/SearchInput.svelte';
@@ -49,10 +50,11 @@
 		enabled: user !== null
 	}));
 
+	const queuedSubscriptions = useQueuedSubscriptionChanges();
 	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
 	let entries: ScheduleEntryWithSubscription[] = $derived(
-		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions)
+		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
 	);
 	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
 	let scheduleView = $derived(

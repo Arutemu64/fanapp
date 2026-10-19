@@ -379,7 +379,7 @@ and the boundaries.
 **What it's for.** The surface Vitest can't reach (node-only, ADR-0011): SPA
 routing and guards, the service worker, offline / PWA behaviour, and real DOM
 interaction. It drives a **production `vite preview` build**, not `vite dev` —
-the SW and offline caching are inert in dev (docs/frontend.md §2), so only a real
+the SW and offline caching are inert in dev (docs/offline.md), so only a real
 build exercises them. Aborting the relevant reads simulates a dead network and
 exercises the offline surface (stale notices, online-only states, queued logout)
 against that build — a mocked route still fulfils under `context.setOffline`, so

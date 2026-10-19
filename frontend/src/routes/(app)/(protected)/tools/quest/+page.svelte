@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 
-	import type { QuestPlayerDto } from '#lib/api/generated/index.js';
-
 	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
@@ -12,6 +10,7 @@
 	import type { PageProps } from './$types';
 
 	import ToolSection from '../components/ToolSection.svelte';
+	import { type AwardTarget } from './awardTarget.js';
 	import AwardForm from './components/AwardForm.svelte';
 	import PlayerPicker from './components/PlayerPicker.svelte';
 	import QuestAwardsFeed from './components/QuestAwardsFeed.svelte';
@@ -23,14 +22,14 @@
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	let maxAward = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_max_award);
 
-	let player = $state.raw<QuestPlayerDto | null>(null);
+	let player = $state.raw<AwardTarget | null>(null);
 	// Kept across players: a station awards the same task over and over.
 	let amount = $state('');
 	let message = $state('');
 	// Only a return from the form moves focus; the first visit leaves it alone.
 	let returnedFromForm = $state(false);
 
-	function handlePick(picked: QuestPlayerDto) {
+	function handlePick(picked: AwardTarget) {
 		player = picked;
 	}
 

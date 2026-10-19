@@ -1,14 +1,7 @@
 import { m } from '#lib/paraglide/messages.js';
-import { isReachable } from '#lib/services/reachability.js';
 
 import type { PageLoad } from './$types';
 
-// Feedback is a submit-only surface — there is nothing to read offline. When the
-// backend is unreachable, flag it so the page shows an honest online-only state
-// instead of a form whose submit is doomed. Mirrors the voting load's pattern.
-export const load: PageLoad = () => {
-	return {
-		title: m.feedback_title(),
-		offlineUnavailable: !isReachable()
-	};
-};
+// Opened offline, the form still works: a message waits in the write queue
+// (ADR-0038) and goes out when the connection returns.
+export const load: PageLoad = () => ({ title: m.feedback_title() });

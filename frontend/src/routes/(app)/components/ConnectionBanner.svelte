@@ -1,10 +1,11 @@
 <script lang="ts">
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
-	import { useIsFetching } from '@tanstack/svelte-query';
+	import { useIsFetching, useMutationState } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 	import { slide } from 'svelte/transition';
 
+	import { shouldPersistMutation } from '#lib/api/writeQueue.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -47,6 +48,17 @@
 	// actually reloads, and a page with nothing to reload skips straight to
 	// «Связь восстановлена».
 	const fetchingOnScreen = useIsFetching({ type: 'active' });
+
+	// Writes waiting in the queue (ADR-0038): offline, the strip says how many will
+	// go out on reconnect, so a subscription or award made meanwhile isn't a mystery.
+	const queuedWrites = useMutationState({
+		filters: { predicate: shouldPersistMutation }
+	});
+	let queuedLabel = $derived(
+		phase === 'offline' && queuedWrites.length > 0
+			? m.connection_queued({ count: queuedWrites.length })
+			: ''
+	);
 
 	let shownMessage = $derived.by(() => {
 		if (phase === 'offline') return lastOfflineMessage;
@@ -107,7 +119,7 @@
 	role="status" inserted together with its text
 	(https://github.com/FreedomScientific/standards-support/issues/696). It carries the
 	text alone, so the retry button's label and spinner aren't read out as status. -->
-<div role="status" class="sr-only">{shownMessage}</div>
+<div role="status" class="sr-only">{shownMessage} {queuedLabel}</div>
 
 {#if phase !== 'hidden'}
 	<div
@@ -128,7 +140,12 @@
 		{:else}
 			<CircleCheck class="size-4 shrink-0" aria-hidden="true" />
 		{/if}
-		<p class="flex-1 leading-snug" aria-hidden="true">{shownMessage}</p>
+		<p class="flex-1 leading-snug" aria-hidden="true">
+			{shownMessage}
+			{#if queuedLabel}
+				<span class="block text-xs opacity-80">{queuedLabel}</span>
+			{/if}
+		</p>
 		{#if phase === 'offline'}
 			<!-- Negative margin fits the 40px tap target inside the 44px strip. -->
 			<Button

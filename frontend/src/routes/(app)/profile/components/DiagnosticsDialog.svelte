@@ -190,7 +190,10 @@
 </script>
 
 <Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-w-md">
+	<!-- Capped and scrolled on wider screens too: the cache section grows with every
+	     saved screen (the offline warm-up saves them all), and the shared dialog only
+	     scrolls below `sm`; on a short laptop window the actions would fall off-screen. -->
+	<Dialog.Content class="sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Stethoscope class="size-5 text-muted-foreground" />

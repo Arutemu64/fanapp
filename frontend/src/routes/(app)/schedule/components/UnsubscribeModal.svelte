@@ -7,10 +7,8 @@
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import {
-		deleteSubscriptionMutation,
-		getSubscriptionsQueryKey
-	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { handOffWhenQueued } from '#lib/api/queuedWrite.svelte.js';
+	import { cancelQueuedSubscribe, queuedUnsubscribeOptions } from '#lib/api/writeQueue.js';
 	import FormError from '#lib/components/FormError.svelte';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -25,10 +23,12 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	const unsubscribeMutation = createMutation(() => ({
-		...deleteSubscriptionMutation(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
-	}));
+	// Queued (ADR-0038), like the subscribe it undoes.
+	const unsubscribeMutation = createMutation(() => queuedUnsubscribeOptions(event.id));
+	handOffWhenQueued(unsubscribeMutation, () => {
+		toastService.add(m.unsubscribe_queued(), 'info');
+		open = false;
+	});
 
 	// No reset on open: EventCard mounts this modal only while it is open.
 	let formError = $state('');
@@ -36,6 +36,17 @@
 	function handleUnsubscribe() {
 		if (!event.user_subscription) {
 			open = false;
+			return;
+		}
+
+		// A subscription still waiting in the queue has no ID to delete: undo it there.
+		if (event.user_subscription.id === null) {
+			if (cancelQueuedSubscribe(queryClient, event.id)) {
+				toastService.add(m.unsubscribe_done(), 'success');
+				open = false;
+			} else {
+				formError = m.subscribe_still_sending();
+			}
 			return;
 		}
 
@@ -48,7 +59,7 @@
 					open = false;
 				},
 				onError: (error) => {
-					formError = getApiErrorDetail(error) ?? m.push_error_disable_failed();
+					formError = getApiErrorDetail(error) ?? m.unsubscribe_failed();
 				}
 			}
 		);

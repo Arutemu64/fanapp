@@ -15,8 +15,10 @@ import { getToastService } from '#lib/services/toasts.svelte.js';
  *
  * Call during component init (it reads the toast context). A control opts in
  * with one pair: `aria-disabled={gate.blocked}` and `onclick={gate.guard(handler)}`
- * (or `onsubmit`, `onCheckedChange`). Whole-surface mutation pages (feedback,
- * tools, voting) opened offline show a page-level online-only state instead.
+ * (or `onsubmit`, `onCheckedChange`). Whole-surface mutation pages (tools,
+ * voting) opened offline show a page-level online-only state instead, and a
+ * queued write (`QUEUED_WRITES`, ADR-0038) is never gated: it waits for the
+ * connection.
  */
 export function offlineWriteGate() {
 	const toastService = getToastService();
@@ -36,7 +38,7 @@ export function offlineWriteGate() {
 				const [first] = args;
 				if (first instanceof Event) first.preventDefault();
 				// Mirrors the page-level "…доступно только онлайн" empty states (voting,
-				// feedback, tools) so a blocked control and a blocked page speak with one voice.
+				// tools) so a blocked control and a blocked page speak with one voice.
 				toastService.add(m.offline_action_hint(), 'info');
 			};
 		}
