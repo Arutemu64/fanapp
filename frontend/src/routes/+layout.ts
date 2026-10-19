@@ -1,16 +1,11 @@
+import { version } from '$app/env';
 import * as Sentry from '@sentry/sveltekit';
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
 
 import { gotNoApiAnswer, isUnexpectedRequestError } from '#lib/api/errors.js';
-import { responseSchemaHashes } from '#lib/api/generated/responseSchemaHashes.gen.js';
-import {
-	CACHE_MAX_AGE_MS,
-	isOfflineQuery,
-	OFFLINE_QUERY_KEYS,
-	operationIdOf
-} from '#lib/api/offlineQueries.js';
-import { createIdbPersister, QUERY_CACHE_FORMAT } from '#lib/api/queryPersister.js';
+import { CACHE_MAX_AGE_MS, isOfflineQuery, OFFLINE_QUERY_KEYS } from '#lib/api/offlineQueries.js';
+import { createIdbPersister } from '#lib/api/queryPersister.js';
 import { registerQueuedWrites, shouldPersistMutation } from '#lib/api/writeQueue.js';
 import { settleIdentityForBoot } from '#lib/services/identity.js';
 
@@ -76,18 +71,16 @@ export const load: LayoutLoad = async () => {
 
 	// One IndexedDB entry holds the offline queries, so those screens open offline
 	// once they have loaded. Restored before any guard reads identity from it.
-	// Not busted by the build version: a deploy that lands while the attendee is
-	// still online but about to lose the network (a mobile shutdown) would wipe
-	// the saved programme exactly then. Each query carries its response schema's
-	// hash instead, and only a query whose response shape changed is dropped, so
-	// a client never reads a payload shaped by an older API.
+	// The build `version` busts it on deploy, so a client never reads a payload
+	// shaped by an older API.
+	// TODO: bust only the queries whose response shape a deploy changed — a deploy
+	// applied just before a mobile shutdown wipes the saved programme and the
+	// queued writes; deferred as more machinery than it is worth for now.
 	const [, restored] = persistQueryClient({
 		queryClient,
-		persister: createIdbPersister({
-			schemaHashOf: (queryKey) => responseSchemaHashes[operationIdOf(queryKey)]
-		}),
+		persister: createIdbPersister(),
 		maxAge: CACHE_MAX_AGE_MS,
-		buster: QUERY_CACHE_FORMAT,
+		buster: version,
 		dehydrateOptions: {
 			// Not TanStack's default (successful queries only): a refetch that failed
 			// leaves the query in error with its last good data, and dropping it here

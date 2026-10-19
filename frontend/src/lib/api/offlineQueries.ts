@@ -45,13 +45,9 @@ export const OFFLINE_QUERY_KEYS = [
 // list key also covers its paginated variant.
 const OFFLINE_QUERY_IDS = new Set(OFFLINE_QUERY_KEYS.map(([{ _id }]) => _id));
 
-export function operationIdOf(queryKey: QueryKey): string {
-	const [{ _id }] = queryKey as [{ _id: string }];
-	return _id;
-}
-
 export function isOfflineQuery(queryKey: QueryKey): boolean {
-	return OFFLINE_QUERY_IDS.has(operationIdOf(queryKey));
+	const [{ _id }] = queryKey as [{ _id: string }];
+	return OFFLINE_QUERY_IDS.has(_id);
 }
 
 // How long a cached copy may serve the app offline: a festival weekend plus the

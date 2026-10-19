@@ -100,7 +100,6 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 │   └── common/          # Shared static assets, path helpers
 ├── frontend/
 │   ├── messages/        # ru.json: all user-facing copy (Paraglide JS)
-│   ├── scripts/         # Build-time generators run by `pnpm` scripts (response schema hashes)
 │   └── src/
 │       ├── content/     # Markdown guide articles (mdsvex, ADR-0028)
 │       ├── routes/      # Pages & layouts
