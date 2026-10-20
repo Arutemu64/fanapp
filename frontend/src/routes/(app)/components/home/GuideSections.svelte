@@ -3,7 +3,6 @@
 
 	import Globe from '@lucide/svelte/icons/globe';
 	import Mail from '@lucide/svelte/icons/mail';
-	import MapIcon from '@lucide/svelte/icons/map';
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import MessageCircle from '@lucide/svelte/icons/message-circle';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
@@ -68,7 +67,10 @@
 	];
 </script>
 
-<!-- The festival guide, under Home's live part: grouped rows that each lead
+<!-- The festival guide, under Home's live part. The map isn't listed: its tab is
+     in view on every screen. Group names say what is inside, never a bare
+     «Важное», which could hold anything (NN/g, information scent:
+     https://www.nngroup.com/articles/information-scent/). Grouped rows that each lead
      somewhere, the phone-settings shape for "drill in"
      (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables).
      Read as a magazine: each head sits over three times nearer its list than the
@@ -77,15 +79,11 @@
      From lg the activities take a column of their own beside the two short groups,
      the same groups side by side rather than a second design. -->
 <div class="flex flex-col gap-10 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
-	<section aria-labelledby="guide-important" class="flex flex-col gap-3">
-		<h2 id="guide-important" class="text-section text-foreground">
-			{m.guide_important_heading()}
+	<section aria-labelledby="guide-visit" class="flex flex-col gap-3">
+		<h2 id="guide-visit" class="text-section text-foreground">
+			{m.guide_visit_heading()}
 		</h2>
 		<MenuGroup>
-			<!-- The map has its own tab too; it leads this group because "where is it?"
-			     is the question people ask most, and a reader scanning Home for it
-			     shouldn't have to know about the tab. -->
-			<MenuRow href="map" label={m.nav_map()} icon={MapIcon} />
 			<MenuRow
 				externalHref={yandexMapsUrl}
 				newTab

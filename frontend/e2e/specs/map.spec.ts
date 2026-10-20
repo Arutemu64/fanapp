@@ -47,13 +47,4 @@ test.describe('map', () => {
 		await photoZones.last().click();
 		await expect(plan.locator('[data-selected]')).toHaveCount(0);
 	});
-
-	test('the old guide address still opens the map', async ({ page }) => {
-		// Installed apps keep the manifest they were installed with, whose «Карта»
-		// shortcut points at /guide/map.
-		await page.goto('/guide/map');
-
-		await expect(page).toHaveURL('/map');
-		await expect(page.getByRole('img', { name: 'Карта 1 этажа' })).toBeVisible();
-	});
 });

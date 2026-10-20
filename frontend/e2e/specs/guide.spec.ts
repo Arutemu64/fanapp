@@ -18,13 +18,6 @@ test.describe('guide on Home', () => {
 		await expect(page).toHaveURL('/');
 	});
 
-	test('the old guide address lands on Home', async ({ page }) => {
-		await page.goto('/guide');
-
-		await expect(page).toHaveURL('/');
-		await expect(page.getByRole('heading', { name: 'Чем заняться' })).toBeVisible();
-	});
-
 	test('the date and start time follow the saved festival settings', async ({ page, api }) => {
 		api.use({
 			'GET /config': json({

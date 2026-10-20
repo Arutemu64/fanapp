@@ -22,8 +22,10 @@ export interface PrimaryNavItem {
 	 * Other route roots reached from this tab's page, which keep the tab lit so the
 	 * bar still says where you are. Home is the hub for the guide's articles, and Profile
 	 * the hub for feedback and the organizer toolbox; none of them has a tab of its own.
+	 * Pathname prefixes rather than `Path`s, since one needn't be a page itself:
+	 * `guide` holds only the articles.
 	 */
-	nestedRoots?: Path[];
+	nestedRoots?: string[];
 }
 
 /**

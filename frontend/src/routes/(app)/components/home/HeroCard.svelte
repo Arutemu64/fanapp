@@ -28,9 +28,11 @@
 	// Program start, on the venue clock. Configurable via GET /config and passed in
 	// by the page so the hero renders for guests and on a cold/offline load.
 	let startMs = $derived(new Date(festivalStart).getTime());
-	// The doors time isn't in the config, so it is copy.
+	// When and where, as on a ticket. The doors time and the venue aren't in the
+	// config, so they are copy; the address and route sit in Home's «Дорога и вход».
 	let facts = $derived([
 		formatFestivalDate(festivalStart),
+		m.guide_venue_name(),
 		m.guide_doors(),
 		m.guide_start({ time: formatFestivalTime(festivalStart) })
 	]);
@@ -98,8 +100,8 @@
 			 swapping the art busts every cache with no stale copy. LCP element:
 			 eager + fetchpriority="high", never lazy.
 			 `sizes` states the *cover* width, not the box width: `object-cover` scales
-			 the 16/9 art to fill the box, and on a phone the after-festival panel
-			 makes the box taller than 16/9, which upscales the art past 100vw. From
+			 the 16/9 art to fill the box, and on a phone a tall panel (the
+			 farewell) can make the box taller than 16/9, which upscales the art past 100vw. From
 			 lg the card is capped by the page column (max-w-5xl). -->
 		<enhanced:img
 			src="./main.webp"
@@ -113,15 +115,20 @@
 		/>
 	{/if}
 	<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
-		 layer under it to hold contrast wherever the crop lands. The phase label
-		 sits near the scrim's light top end, so it stays solid white: at
-		 `white/85` it measured 4.1:1 over the brightest pixel of the phone crop. -->
+		 layer under it to hold contrast wherever the crop lands. The card is sized
+		 to its content, so text reaches the top edge too, and the scrim's light end
+		 stays at 60%: even a pure-white pixel under it leaves solid white text at
+		 5.7:1 (WCAG AA 4.5:1). The phase label stays solid white rather than
+		 `white/85`, which measured 4.1:1 over the brightest pixel of the phone crop. -->
 	<div
 		aria-hidden="true"
-		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/60 to-black/35"
+		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 to-black/60"
 	></div>
 
-	<div class="flex flex-col gap-3 p-4 pt-16 sm:p-6 sm:pt-24">
+	<!-- Content-sized: the art is a backdrop, not a message, so it gets no empty band
+		 of its own above the text; on a phone that band pushed the next card down by
+		 a fifth of the first screen. -->
+	<div class="flex flex-col gap-3 p-4 sm:p-6">
 		{#if phase === 'before'}
 			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
 				{m.home_before_festival()}

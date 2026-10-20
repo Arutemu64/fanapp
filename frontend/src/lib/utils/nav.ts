@@ -21,9 +21,12 @@ export function isActivePath(activeUrl: string, href: string): boolean {
  */
 export function isNavItemActive(
 	activeUrl: string,
-	item: { href: Path; nestedRoots?: readonly Path[] }
+	item: { href: Path; nestedRoots?: readonly string[] }
 ): boolean {
-	const roots = [item.href, ...(item.nestedRoots ?? [])];
+	// A nested root is a pathname prefix, not necessarily a page, so it isn't typed
+	// as a `Path` (Home claims `guide`, which holds only the articles). `resolve`
+	// prefixes any argument that isn't a route ID with the base path, page or not.
+	const roots = [item.href, ...(item.nestedRoots ?? [])] as Path[];
 	return roots.some((root) => isActivePath(activeUrl, resolvePath(root)));
 }
 
