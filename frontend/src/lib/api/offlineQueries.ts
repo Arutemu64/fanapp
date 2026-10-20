@@ -97,6 +97,22 @@ export function questHistoryFeedOptions() {
 }
 
 /**
+ * A stale infinite query refetches every page it holds, one request after the
+ * other (https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries),
+ * so a feed scrolled ten pages deep would cost ten round trips on each warm.
+ * Off screen nobody reads the older pages: refetch the first one only, which
+ * also drops the rest from the saved copy, and the feed loads them again on
+ * scroll. On screen the feed's own refetch keeps every page it shows, and a
+ * one-page fetch it joined would cut the list short under the reader.
+ */
+function feedPagesToWarm(queryClient: QueryClient, queryKey: QueryKey): number | undefined {
+	const query = queryClient.getQueryCache().find({ queryKey, exact: true });
+	const onScreen = (query?.getObserversCount() ?? 0) > 0;
+	// undefined: as many pages as the feed holds.
+	return onScreen ? undefined : 1;
+}
+
+/**
  * Fetch every offline screen's data the viewer can see, so it is saved before
  * the network goes — not only the screens they happened to open. Mobile
  * shutdowns leave attendees hopping between Wi-Fi spots, so this runs whenever
@@ -117,7 +133,13 @@ export async function warmOfflineCache(queryClient: QueryClient): Promise<void> 
 
 	void queryClient.query(getSubscriptionsOptions()).catch(() => {});
 	void queryClient.query(countUnreadNotificationsOptions()).catch(() => {});
-	void queryClient.infiniteQuery(notificationsFeedOptions()).catch(() => {});
+	const notificationsFeed = notificationsFeedOptions();
+	void queryClient
+		.infiniteQuery({
+			...notificationsFeed,
+			pages: feedPagesToWarm(queryClient, notificationsFeed.queryKey)
+		})
+		.catch(() => {});
 
 	// Awaited, not read from the cache: on a first launch nothing is saved yet,
 	// and the quest data would be skipped even with the quest on. The user is
@@ -126,6 +148,12 @@ export async function warmOfflineCache(queryClient: QueryClient): Promise<void> 
 	const stillSignedIn = queryClient.getQueryData(currentUserOptions().queryKey);
 	if (config?.quest_enabled && stillSignedIn) {
 		void queryClient.query(getQuestOptions()).catch(() => {});
-		void queryClient.infiniteQuery(questHistoryFeedOptions()).catch(() => {});
+		const questHistoryFeed = questHistoryFeedOptions();
+		void queryClient
+			.infiniteQuery({
+				...questHistoryFeed,
+				pages: feedPagesToWarm(queryClient, questHistoryFeed.queryKey)
+			})
+			.catch(() => {});
 	}
 }

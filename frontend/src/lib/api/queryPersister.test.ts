@@ -1,3 +1,4 @@
+import type { FetchStatus } from '@tanstack/svelte-query';
 import type { PersistedClient } from '@tanstack/svelte-query-persist-client';
 
 import * as Sentry from '@sentry/sveltekit';
@@ -24,7 +25,11 @@ vi.mock('idb-keyval', () => ({
 }));
 vi.mock('@sentry/sveltekit', () => ({ captureException: vi.fn() }));
 
-function client(timestamp: number, error: Error | null = null): PersistedClient {
+function client(
+	timestamp: number,
+	error: Error | null = null,
+	fetchStatus: FetchStatus = 'idle'
+): PersistedClient {
 	return {
 		timestamp,
 		buster: '',
@@ -47,7 +52,7 @@ function client(timestamp: number, error: Error | null = null): PersistedClient 
 						fetchMeta: null,
 						isInvalidated: false,
 						status: error ? 'error' : 'success',
-						fetchStatus: 'idle'
+						fetchStatus
 					}
 				}
 			]
@@ -87,6 +92,30 @@ describe('createIdbPersister', () => {
 
 		expect(set).toHaveBeenCalledTimes(2);
 		expect(set).toHaveBeenLastCalledWith(QUERY_CACHE_KEY, client(2));
+	});
+
+	it('skips a save that would write what is already on disk', async () => {
+		const persister = createIdbPersister();
+
+		await persister.persistClient(client(1));
+		vi.advanceTimersByTime(1000);
+		// A fetch starting is a cache event too, but nothing saved has changed.
+		await persister.persistClient(client(1, null, 'fetching'));
+		vi.advanceTimersByTime(1000);
+
+		expect(set).toHaveBeenCalledOnce();
+	});
+
+	it('writes again after a failed write, though nothing changed since', async () => {
+		set.mockRejectedValueOnce(new DOMException('quota', 'QuotaExceededError'));
+		const persister = createIdbPersister();
+
+		await persister.persistClient(client(1));
+		await vi.advanceTimersByTimeAsync(1000);
+		await persister.persistClient(client(1));
+		await vi.advanceTimersByTimeAsync(1000);
+
+		expect(set).toHaveBeenCalledTimes(2);
 	});
 
 	it('restores a saved query error as an Error', async () => {
