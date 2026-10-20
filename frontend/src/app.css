@@ -15,9 +15,13 @@
  * mouse sees no change: it is already hovering by the time it presses. Overriding
  * the built-in variant is Tailwind's documented escape hatch for this:
  * https://tailwindcss.com/docs/upgrade-guide
+ *
+ * (pointer: fine) on top of Tailwind's (hover: hover): Chromium on Samsung phones
+ * reports the touchscreen as hover-capable, which would leave a tapped control
+ * stuck in its hover style. https://ctrl.blog/entry/css-media-hover-samsung.html
  */
 @custom-variant hover {
-	@media (hover: hover) {
+	@media (hover: hover) and (pointer: fine) {
 		&:hover {
 			@slot;
 		}
