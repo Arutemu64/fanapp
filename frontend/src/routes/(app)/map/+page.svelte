@@ -1,10 +1,14 @@
 <script lang="ts">
+	import SearchX from '@lucide/svelte/icons/search-x';
 	import { prefersReducedMotion } from 'svelte/motion';
 
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import SearchInput from '#lib/components/SearchInput.svelte';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { maps, WALL_WIDTH } from '#lib/data/maps.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { createSearchIndex } from '#lib/utils/search.js';
 
 	let floorId = $state(maps[0]?.id ?? '');
 	let selectedNumber = $state<number | null>(null);
@@ -13,6 +17,37 @@
 	let selectedPoint = $derived(map?.points.find((point) => point.number === selectedNumber));
 
 	let planElement: SVGSVGElement | undefined = $state();
+
+	type MapEntry = (typeof maps)[number];
+	type MapPoint = MapEntry['points'][number];
+
+	interface Place {
+		entry: MapEntry;
+		point: MapPoint;
+	}
+
+	// The search spans every floor: someone looking for the toilet doesn't know
+	// which floor it is on, so a match on the other floor is listed too and
+	// picking it switches the plan there. The plans never change at runtime, so
+	// the index is built once.
+	const searchIndex = createSearchIndex(
+		maps.flatMap((entry) => entry.points.map((point) => ({ entry, point }))),
+		({ point }: Place) => [point.name(), point.number]
+	);
+	const placeCount = maps.reduce((count, entry) => count + entry.points.length, 0);
+
+	let searchQuery = $state('');
+	let isSearching = $derived(searchQuery.trim().length > 0);
+	let searchResults = $derived(searchIndex.filter(searchQuery));
+	let floorPlaces = $derived.by((): Place[] => {
+		const current = map;
+		if (!current) return [];
+		return current.points.map((point) => ({ entry: current, point }));
+	});
+	let listedPlaces = $derived(isSearching ? searchResults : floorPlaces);
+	let resultsSummary = $derived(
+		m.results_shown_of({ count: searchResults.length, total: placeCount })
+	);
 
 	function getFloor() {
 		return floorId;
@@ -30,14 +65,33 @@
 		selectedNumber = selectedNumber === number ? null : number;
 	}
 
+	// Off the current floor only a search result can be tapped; it brings its
+	// floor up already selected rather than toggling.
+	function selectPlace(place: Place) {
+		if (place.entry.id === floorId) {
+			togglePoint(place.point.number);
+			return;
+		}
+		floorId = place.entry.id;
+		selectedNumber = place.point.number;
+	}
+
+	// While searching, every row names its floor, since the results mix floors;
+	// otherwise only the points off the plan's main floor do.
+	function floorLabel(place: Place): string | undefined {
+		if (place.point.floor) return place.point.floor();
+		if (isSearching) return place.entry.label();
+		return undefined;
+	}
+
 	// On a phone the list runs below the plan, so a row tapped far down would
 	// light up a zone off screen. `nearest` scrolls only when the plan isn't
 	// already in view; the layout's scroll-padding keeps it clear of the navbar.
 	// Only for a tap or click: Enter/Space fire a click with `detail` 0, and
 	// scrolling then would carry the focused row off screen (WCAG 2.4.11); the
 	// status line still announces the pick.
-	function selectFromList(event: MouseEvent, number: number) {
-		togglePoint(number);
+	function selectFromList(event: MouseEvent, place: Place) {
+		selectPlace(place);
 		if (event.detail === 0) return;
 		planElement?.scrollIntoView({
 			block: 'nearest',
@@ -221,39 +275,67 @@
 
 			<section aria-labelledby="map-where" class="flex flex-col gap-2">
 				<h2 id="map-where" class="px-1 text-section">{m.map_where_heading()}</h2>
-				<MenuGroup>
-					<ol class="divide-y divide-border">
-						{#each map.points as point (point.number)}
-							{const isSelected = $derived(point.number === selectedNumber)}
-							<li>
-								<button
-									type="button"
-									aria-pressed={isSelected}
-									onclick={(event) => selectFromList(event, point.number)}
-									class={[
-										'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600',
-										isSelected && 'bg-primary/10'
-									]}
-								>
-									<span
+				<SearchInput
+					bind:value={searchQuery}
+					name="map_search"
+					label={m.map_search_label()}
+					placeholder={m.map_search_placeholder()}
+				/>
+				<!-- Tells a screen reader the list changed; shown only while searching, as
+				on the schedule, since an unfiltered total tells a sighted user nothing. -->
+				<p
+					role="status"
+					aria-live="polite"
+					class={['px-1 text-xs text-muted-foreground', !isSearching && 'sr-only']}
+				>
+					{#if isSearching}
+						{resultsSummary}
+					{/if}
+				</p>
+				{#if listedPlaces.length > 0}
+					<MenuGroup>
+						<ol class="divide-y divide-border">
+							{#each listedPlaces as place (`${place.entry.id}-${place.point.number}`)}
+								{const isSelected = $derived(
+									place.entry.id === floorId && place.point.number === selectedNumber
+								)}
+								{const placeFloor = $derived(floorLabel(place))}
+								<li>
+									<button
+										type="button"
+										aria-pressed={isSelected}
+										onclick={(event) => selectFromList(event, place)}
 										class={[
-											'flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold tabular-nums',
-											isSelected
-												? 'bg-primary text-primary-foreground'
-												: 'bg-muted text-muted-foreground'
+											'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600',
+											isSelected && 'bg-primary/10'
 										]}
 									>
-										{point.number}
-									</span>
-									<span class="grow">{point.name()}</span>
-									{#if point.floor}
-										<span class="shrink-0 text-sm text-muted-foreground">{point.floor()}</span>
-									{/if}
-								</button>
-							</li>
-						{/each}
-					</ol>
-				</MenuGroup>
+										<span
+											class={[
+												'flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold tabular-nums',
+												isSelected
+													? 'bg-primary text-primary-foreground'
+													: 'bg-muted text-muted-foreground'
+											]}
+										>
+											{place.point.number}
+										</span>
+										<span class="grow">{place.point.name()}</span>
+										{#if placeFloor}
+											<span class="shrink-0 text-sm text-muted-foreground">{placeFloor}</span>
+										{/if}
+									</button>
+								</li>
+							{/each}
+						</ol>
+					</MenuGroup>
+				{:else}
+					<EmptyState
+						icon={SearchX}
+						title={m.common_nothing_found()}
+						message={m.map_search_try_other()}
+					/>
+				{/if}
 			</section>
 		</div>
 	</div>
