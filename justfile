@@ -186,7 +186,8 @@ backend-generate-auto MIGRATION_NAME:
 backend-generate-schedule-template:
     cd backend && uv run python scripts/generate_schedule_template.py
 
-# Fail if ORM models drift from migrations (spins a throwaway Postgres via testcontainers)
+# Fail if ORM models drift from migrations or a downgrade() is broken (spins a
+# throwaway Postgres via testcontainers)
 backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
 

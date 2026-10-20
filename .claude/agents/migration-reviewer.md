@@ -34,7 +34,8 @@ anything else. `Bash` is for inspection only — `git diff`, `git log`,
    stub that would fail.
 5. **Chain integrity.** `down_revision` points at the current head; exactly one
    head; the file is in `versions/`.
-6. **Model drift.** Run `just backend-check-migrations` and report the result.
+6. **Model drift and round trip.** Run `just backend-check-migrations` (drift
+   check plus the upgrade/downgrade stairway) and report the result.
 
 ## Output
 
