@@ -1,10 +1,29 @@
+import type { Page } from '@playwright/test';
+
+import { readFileSync } from 'node:fs';
+
 import type {
 	AwardQuestPointsInput,
-	FindQuestPlayersOutput
+	FindQuestPlayersOutput,
+	QuestPlayerDto
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 import { QUEST, QUEST_AWARDS, QUEST_HISTORY, questConfig, questPlayer } from '../mocks/quest';
+
+// The QR a player's badge shows for user number 482913, drawn with the app's own
+// encoder (uqr). The scanner's image picker reads it, so no camera is needed.
+const QUEST_QR = readFileSync(new URL('../media/quest-qr.png', import.meta.url));
+const SCANNED_PLAYER: QuestPlayerDto = { ...questPlayer(0, 240), number: 482913 };
+
+async function scanQuestCode(page: Page) {
+	await page.getByRole('button', { name: 'Сканировать код игрока' }).click();
+	const dialog = page.getByRole('dialog', { name: 'Код игрока' });
+	await dialog
+		.locator('input[type="file"]')
+		.setInputFiles({ name: 'badge.png', mimeType: 'image/png', buffer: QUEST_QR });
+	await expect(dialog).toHaveCount(0);
+}
 
 const volunteer = () =>
 	loggedInAs({ role: 'volunteer', username: 'ЛовкийСтраж12', permissions: ['quest:award'] });
@@ -143,6 +162,69 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await page.getByRole('button', { name: /@РыжийКот09/ }).click();
 		await expect(page.getByLabel('Баллы')).toHaveValue('15');
 		await expect(page.getByLabel('За что')).toHaveValue('Викторина');
+	});
+
+	test('a scanned code looks the player up by their number', async ({ page, api }) => {
+		api.use({
+			...questConfig(),
+			...volunteer(),
+			'GET /quest/awards': json(QUEST_AWARDS),
+			'GET /quest/players/482913': json(SCANNED_PLAYER)
+		});
+
+		await page.goto('/tools/quest');
+		await scanQuestCode(page);
+
+		await expect(page.getByRole('heading', { name: '@РыжийКот09' })).toBeVisible();
+		expect(api.countCalls('GET /quest/players/482913')).toBe(1);
+	});
+
+	test('offline, a scanned code queues the award by number', async ({ page, api }) => {
+		const sent: AwardQuestPointsInput[] = [];
+		api.use({
+			...questConfig(),
+			...volunteer(),
+			'GET /quest/awards': json(QUEST_AWARDS)
+		});
+		// Let the signed-in warm-up land first: a response handled after the
+		// `offline` event would mark the backend reachable again (offline.spec.ts).
+		const warmedUp = Promise.all(
+			['/quest', '/quest/history'].map((path) =>
+				page.waitForResponse((response) => new URL(response.url()).pathname.endsWith(path))
+			)
+		);
+		await page.goto('/tools/quest');
+		await expect(page.getByRole('button', { name: 'Сканировать код игрока' })).toBeVisible();
+		await warmedUp;
+
+		api.use({
+			'GET /debug/health': (route) => route.abort(),
+			'POST /quest/awards': (route) => route.abort()
+		});
+		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
+
+		await scanQuestCode(page);
+		await expect(page.getByRole('heading', { name: 'Игрок с ID 482913' })).toBeVisible();
+		await page.getByLabel('Баллы').fill('15');
+		await page.getByLabel('За что').fill('Викторина');
+		await page.getByRole('button', { name: 'Начислить' }).click();
+		await expect(page.getByText('Начислим, когда появится связь')).toBeVisible({
+			timeout: 10_000
+		});
+
+		api.use({
+			'GET /debug/health': json({ status: 'healthy' }),
+			'POST /quest/awards': (route) => {
+				const body = route.request().postDataJSON() as AwardQuestPointsInput;
+				sent.push(body);
+				return json({ award_id: body.award_id }, 201);
+			}
+		});
+		await page.getByRole('button', { name: 'Повторить' }).click();
+
+		await expect(page.getByText('Отложенные баллы начислены')).toBeVisible();
+		expect(sent).toMatchObject([{ user_number: 482913, amount: 15, message: 'Викторина' }]);
 	});
 
 	test('an amount above the cap is refused before sending', async ({ page, api }) => {
