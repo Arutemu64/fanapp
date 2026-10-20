@@ -73,6 +73,7 @@ describe('getReadySteps', () => {
 function member(overrides: Partial<CurrentUserDto> = {}): CurrentUserDto {
 	return {
 		id: 'u',
+		number: 100000,
 		username: 'visitor',
 		role: 'visitor',
 		email: null,

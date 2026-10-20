@@ -174,6 +174,7 @@ function questEntry(rank: number, username: string, points: number): Leaderboard
 		rank,
 		player: {
 			id: `01890000-0000-7000-8000-0000000004${String(rank).padStart(2, '0')}`,
+			number: 615200 + rank,
 			username,
 			avatar_seed: `galleryQuest${String(rank).padStart(2, '0')}`,
 			points
@@ -185,6 +186,7 @@ const ownQuestEntry: LeaderboardEntryDto = {
 	rank: 4,
 	player: {
 		id: '01890000-0000-7000-8000-000000000001',
+		number: 482913,
 		username: 'ПушистыйПингвин42',
 		avatar_seed: 'e2eSeedVisitor',
 		points: 120

@@ -83,22 +83,22 @@
 	}
 
 	async function handleScanned(text: string) {
-		const userId = parseQuestCode(text);
-		if (userId === null) {
+		const userNumber = parseQuestCode(text);
+		if (userNumber === null) {
 			toastService.add(m.quest_tool_invalid_code(), 'error');
 			return;
 		}
 		// No connection to look the player up: award by the code alone, which the
 		// queue sends when it returns, rather than turn a player away.
 		if (!isReachable()) {
-			onPick({ id: userId, unverified: true });
+			onPick({ number: userNumber, unverified: true });
 			return;
 		}
 		lookingUp = true;
 		try {
 			// Fresh, not cached: the form shows the player's current balance.
 			const player = await queryClient.query({
-				...getQuestPlayerOptions({ path: { user_id: userId } }),
+				...getQuestPlayerOptions({ path: { number: userNumber } }),
 				staleTime: 0
 			});
 			onPick(player);
@@ -106,7 +106,7 @@
 			if (getApiErrorCode(error) === 'USER_NOT_FOUND') {
 				toastService.add(m.quest_tool_player_not_found(), 'error');
 			} else if (gotNoApiAnswer(error)) {
-				onPick({ id: userId, unverified: true });
+				onPick({ number: userNumber, unverified: true });
 			} else {
 				toastService.add(m.quest_tool_search_failed(), 'error');
 			}

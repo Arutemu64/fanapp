@@ -4789,7 +4789,7 @@
           "Quest"
         ],
         "summary": "Find quest players",
-        "description": "Finds players whose username starts with the search term. Requires the quest:award permission.",
+        "description": "Finds players whose username starts with the search term, or whose user number it is. Requires the quest:award permission.",
         "operationId": "find_quest_players",
         "security": [
           {
@@ -4853,13 +4853,13 @@
         }
       }
     },
-    "/quest/players/{user_id}": {
+    "/quest/players/{number}": {
       "get": {
         "tags": [
           "Quest"
         ],
         "summary": "Get a quest player",
-        "description": "Returns one player's points, for the award form after a QR scan. Requires the quest:award permission.",
+        "description": "Returns one player by user number, with their points, for the award form after a QR scan. Requires the quest:award permission.",
         "operationId": "get_quest_player",
         "security": [
           {
@@ -4868,13 +4868,14 @@
         ],
         "parameters": [
           {
-            "name": "user_id",
+            "name": "number",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "User Id"
+              "type": "integer",
+              "maximum": 999999,
+              "minimum": 100000,
+              "title": "Number"
             }
           }
         ],
@@ -5256,10 +5257,11 @@
             "title": "Award Id",
             "description": "UUIDv7 the client generates once per award form."
           },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
+          "user_number": {
+            "type": "integer",
+            "maximum": 999999.0,
+            "minimum": 100000.0,
+            "title": "User Number"
           },
           "amount": {
             "type": "integer",
@@ -5276,7 +5278,7 @@
         "type": "object",
         "required": [
           "award_id",
-          "user_id",
+          "user_number",
           "amount",
           "message"
         ],
@@ -5514,6 +5516,10 @@
           "role": {
             "$ref": "#/components/schemas/UserRole"
           },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
           "email": {
             "anyOf": [
               {
@@ -5567,6 +5573,7 @@
           "id",
           "username",
           "role",
+          "number",
           "email",
           "avatar_seed",
           "has_password",
@@ -6978,6 +6985,10 @@
             "format": "uuid",
             "title": "Id"
           },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
           "username": {
             "type": "string",
             "title": "Username"
@@ -6994,6 +7005,7 @@
         "type": "object",
         "required": [
           "id",
+          "number",
           "username",
           "avatar_seed",
           "points"

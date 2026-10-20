@@ -1745,7 +1745,7 @@ export const listQuestHistory = <ThrowOnError extends boolean = false>(
 /**
  * Find quest players
  *
- * Finds players whose username starts with the search term. Requires the quest:award permission.
+ * Finds players whose username starts with the search term, or whose user number it is. Requires the quest:award permission.
  */
 export const findQuestPlayers = <ThrowOnError extends boolean = false>(
 	options: Options<FindQuestPlayersData, ThrowOnError>
@@ -1765,7 +1765,7 @@ export const findQuestPlayers = <ThrowOnError extends boolean = false>(
 /**
  * Get a quest player
  *
- * Returns one player's points, for the award form after a QR scan. Requires the quest:award permission.
+ * Returns one player by user number, with their points, for the award form after a QR scan. Requires the quest:award permission.
  */
 export const getQuestPlayer = <ThrowOnError extends boolean = false>(
 	options: Options<GetQuestPlayerData, ThrowOnError>
@@ -1778,7 +1778,7 @@ export const getQuestPlayer = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/quest/players/{user_id}',
+		url: '/quest/players/{number}',
 		...options
 	});
 

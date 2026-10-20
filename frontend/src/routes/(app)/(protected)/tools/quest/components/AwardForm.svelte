@@ -138,7 +138,7 @@
 			{
 				body: {
 					award_id: awardId,
-					user_id: player.id,
+					user_number: player.number,
 					amount: awardedAmount,
 					message: message.trim()
 				}
@@ -199,7 +199,7 @@
 			</div>
 			<div class="min-w-32 flex-1">
 				<h2 {@attach focusOnMount} tabindex="-1" class="text-base font-semibold text-foreground">
-					{m.quest_tool_unverified_player()}
+					{m.quest_tool_unverified_player({ number: player.number })}
 				</h2>
 				<p class="text-sm text-muted-foreground">{m.quest_tool_unverified_hint()}</p>
 			</div>

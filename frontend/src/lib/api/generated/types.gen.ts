@@ -51,9 +51,9 @@ export type AwardQuestPointsInput = {
 	 */
 	award_id: string;
 	/**
-	 * User Id
+	 * User Number
 	 */
-	user_id: string;
+	user_number: number;
 	/**
 	 * Amount
 	 */
@@ -226,6 +226,10 @@ export type CurrentUserDto = {
 	 */
 	username: string;
 	role: UserRole;
+	/**
+	 * Number
+	 */
+	number: number;
 	/**
 	 * Email
 	 */
@@ -1112,6 +1116,10 @@ export type QuestPlayerDto = {
 	 * Id
 	 */
 	id: string;
+	/**
+	 * Number
+	 */
+	number: number;
 	/**
 	 * Username
 	 */
@@ -4481,12 +4489,12 @@ export type GetQuestPlayerData = {
 	body?: never;
 	path: {
 		/**
-		 * User Id
+		 * Number
 		 */
-		user_id: string;
+		number: number;
 	};
 	query?: never;
-	url: '/quest/players/{user_id}';
+	url: '/quest/players/{number}';
 };
 
 export type GetQuestPlayerErrors = {

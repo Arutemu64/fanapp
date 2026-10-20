@@ -16,7 +16,7 @@ from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.quest_award import QuestAward
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.quest import QuestAwardId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import USER_NUMBER_MAX, USER_NUMBER_MIN, UserNumber
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,9 @@ class AwardQuestPointsInput(BaseModel):
         UuidVersion(7),
         Field(description="UUIDv7 the client generates once per award form."),
     ]
-    user_id: UserId
+    # The number, not the user ID: it is all a scanned code carries, and an
+    # award made offline from a scan has nothing else to send (docs/adr/0038).
+    user_number: Annotated[UserNumber, Field(ge=USER_NUMBER_MIN, le=USER_NUMBER_MAX)]
     # The upper bound is the organizer-set cap in app settings, checked by the
     # aggregate; 1 here only rejects nonsense before any lookup.
     amount: int = Field(ge=1)
@@ -66,10 +68,14 @@ class AwardQuestPoints:
         settings.ensure_quest_enabled()
 
         message = data.message.strip()
+        player = await self.user_gateway.get_by_number(data.user_number)
+        if player is None:
+            raise UserNotFound
+
         existing = await self.quest_award_gateway.get(data.award_id)
         if existing is not None:
             if not existing.is_same_award(
-                user_id=data.user_id,
+                user_id=player.id,
                 amount=data.amount,
                 message=message,
                 awarded_by=current_user.id,
@@ -83,10 +89,6 @@ class AwardQuestPoints:
                 },
             )
             return AwardQuestPointsOutput(award_id=existing.id)
-
-        player = await self.user_gateway.get_by_id(data.user_id)
-        if player is None:
-            raise UserNotFound
 
         award = QuestAward.create(
             award_id=data.award_id,

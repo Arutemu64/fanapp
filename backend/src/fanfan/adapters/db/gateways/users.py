@@ -1,10 +1,14 @@
 from typing import Any
 
 from sqlalchemy import Select, Subquery, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from fanfan.adapters.db.constraints import translate_integrity_error
+from fanfan.adapters.db.constraints import (
+    get_constraint_name,
+    translate_integrity_error,
+)
 from fanfan.adapters.db.models import (
     NominationORM,
     ParticipantORM,
@@ -38,7 +42,12 @@ from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.ticket import TicketId
-from fanfan.core.vo.user import UserId, Username, UserRole
+from fanfan.core.vo.user import UserId, Username, UserNumber, UserRole
+
+_NUMBER_CONSTRAINT = "uq_users_number"
+# Six digits leave 900,000 numbers. Even with 100,000 accounts a draw collides
+# about one time in nine, so five draws in a row all colliding is ~1 in 60,000.
+_NUMBER_ATTEMPTS = 5
 
 
 def _from_model(model: User) -> UserORM:
@@ -48,6 +57,7 @@ def _from_model(model: User) -> UserORM:
         hashed_password=model.hashed_password,
         email=model.email.value if model.email else None,
         avatar_seed=model.avatar_seed,
+        number=model.number,
         role=model.role,
         # Queryable notification flags go to columns; the JSON bag is an
         # extension point for future non-queryable prefs (currently empty).
@@ -65,6 +75,7 @@ def _to_model(orm: UserORM) -> User:
         hashed_password=orm.hashed_password,
         email=Email(orm.email) if orm.email else None,
         avatar_seed=orm.avatar_seed,
+        number=UserNumber(orm.number),
         role=UserRole(orm.role),
         settings=UserSettings(
             receive_all_announcements=orm.receive_all_announcements,
@@ -119,6 +130,7 @@ def _parse_details_dto(orm: UserORM) -> UserDetailsDTO:
 def _parse_current_user_dto(orm: UserORM) -> CurrentUserDTO:
     return CurrentUserDTO(
         id=UserId(orm.id),
+        number=UserNumber(orm.number),
         username=orm.username,
         role=orm.role,
         email=orm.email,
@@ -159,19 +171,37 @@ class SqlUserGateway(UserGateway):
         return user
 
     async def add(self, user: User) -> None:
-        user_orm = _from_model(user)
-        with translate_integrity_error(
-            {
-                "ix_users_email": UserAlreadyExists,
-                "ix_users_username_lower": UserAlreadyExists,
-            }
-        ):
-            self.session.add(user_orm)
-            await self.session.flush()
+        # The number is drawn at random, so it can land on one already taken.
+        # Each try runs in a SAVEPOINT: a failed INSERT then rolls back only
+        # itself and the caller's transaction stays usable for the next draw.
+        # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#using-savepoint
+        for attempt in range(1, _NUMBER_ATTEMPTS + 1):
+            try:
+                async with self.session.begin_nested():
+                    with translate_integrity_error(
+                        {
+                            "ix_users_email": UserAlreadyExists,
+                            "ix_users_username_lower": UserAlreadyExists,
+                        }
+                    ):
+                        self.session.add(_from_model(user))
+                        await self.session.flush()
+                break
+            except IntegrityError as e:
+                if get_constraint_name(e) != _NUMBER_CONSTRAINT:
+                    raise
+                if attempt == _NUMBER_ATTEMPTS:
+                    raise
+                user.redraw_number()
         self.uow.register(user)
 
     async def get_by_id(self, user_id: UserId) -> User | None:
         stmt = select(UserORM).where(UserORM.id == user_id).with_for_update()
+        user_orm = await self.session.scalar(stmt)
+        return self._to_tracked_model(user_orm)
+
+    async def get_by_number(self, number: UserNumber) -> User | None:
+        stmt = select(UserORM).where(UserORM.number == number).with_for_update()
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 

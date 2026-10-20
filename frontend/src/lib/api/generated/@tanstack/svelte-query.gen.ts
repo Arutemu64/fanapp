@@ -2517,7 +2517,7 @@ export const findQuestPlayersQueryKey = (options: Options<FindQuestPlayersData>)
 /**
  * Find quest players
  *
- * Finds players whose username starts with the search term. Requires the quest:award permission.
+ * Finds players whose username starts with the search term, or whose user number it is. Requires the quest:award permission.
  */
 export const findQuestPlayersOptions = (options: Options<FindQuestPlayersData>) =>
 	queryOptions<
@@ -2544,7 +2544,7 @@ export const getQuestPlayerQueryKey = (options: Options<GetQuestPlayerData>) =>
 /**
  * Get a quest player
  *
- * Returns one player's points, for the award form after a QR scan. Requires the quest:award permission.
+ * Returns one player by user number, with their points, for the award form after a QR scan. Requires the quest:award permission.
  */
 export const getQuestPlayerOptions = (options: Options<GetQuestPlayerData>) =>
 	queryOptions<

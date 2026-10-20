@@ -52,8 +52,20 @@ jobs:
             style
             revert
           # Fixed vocabulary, but a scope is optional: a repo-wide change
-          # legitimately carries none. `deps` mirrors renovate's semanticCommitScope.
+          # legitimately carries none. Two kinds: a feature scope when the
+          # change is about one feature, whichever layers it crosses (that is
+          # what a reader of `main` looks for); a layer scope when it is about
+          # the plumbing of one side. `deps` mirrors renovate's semanticCommitScope.
           scopes: |
+            auth
+            feedback
+            guide
+            notifications
+            profile
+            quest
+            schedule
+            tickets
+            voting
             backend
             frontend
             infra

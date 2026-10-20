@@ -20,7 +20,12 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.quest import QuestAwardAlreadyExists
 from fanfan.core.models.quest_award import QuestAward
 from fanfan.core.vo.quest import QuestAwardId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import (
+    USER_NUMBER_MAX,
+    USER_NUMBER_MIN,
+    UserId,
+    UserNumber,
+)
 
 
 def _from_model(model: QuestAward) -> QuestAwardORM:
@@ -71,6 +76,7 @@ def _parse_award_dto(orm: QuestAwardORM) -> QuestAwardDTO:
 def _parse_player_dto(row: Row[*tuple[Any, ...]]) -> QuestPlayerDTO:
     return QuestPlayerDTO(
         id=UserId(row.id),
+        number=UserNumber(row.number),
         username=row.username,
         avatar_seed=row.avatar_seed,
         points=row.points,
@@ -117,7 +123,7 @@ class SqlQuestAwardGateway(QuestAwardGateway):
 
     # Read projections (return DTOs, not aggregates)
 
-    def _players_stmt(self) -> Select[UUID, str, str, Any]:
+    def _players_stmt(self) -> Select[UUID, int, str, str, Any]:
         live_points = (
             select(
                 QuestAwardORM.user_id,
@@ -129,27 +135,34 @@ class SqlQuestAwardGateway(QuestAwardGateway):
         )
         return select(
             UserORM.id,
+            UserORM.number,
             UserORM.username,
             UserORM.avatar_seed,
             func.coalesce(live_points.c.points, 0).label("points"),
         ).outerjoin(live_points, live_points.c.user_id == UserORM.id)
 
-    async def read_player(self, user_id: UserId) -> QuestPlayerDTO | None:
-        stmt = self._players_stmt().where(UserORM.id == user_id)
+    async def read_player(self, number: UserNumber) -> QuestPlayerDTO | None:
+        stmt = self._players_stmt().where(UserORM.number == number)
         row = (await self.session.execute(stmt)).one_or_none()
         if row is None:
             return None
         return _parse_player_dto(row)
 
-    async def read_players_by_username(
+    async def read_players_by_search(
         self, search: str, limit: int
     ) -> list[QuestPlayerDTO]:
         # Prefix, case-insensitive: a volunteer types the start of the name the
         # player reads out. %/_ are escaped so they match literally.
-        pattern = f"{_escape_like(search.strip().lower())}%"
+        term = search.strip()
+        pattern = f"{_escape_like(term.lower())}%"
+        matches = func.lower(UserORM.username).like(pattern)
+        # A whole number is a lookup by it as well: usernames can be digits too,
+        # so it widens the match instead of replacing it.
+        if term.isdecimal() and USER_NUMBER_MIN <= int(term) <= USER_NUMBER_MAX:
+            matches = or_(matches, UserORM.number == int(term))
         stmt = (
             self._players_stmt()
-            .where(func.lower(UserORM.username).like(pattern))
+            .where(matches)
             .order_by(func.lower(UserORM.username))
             .limit(limit)
         )
@@ -193,6 +206,7 @@ class SqlQuestAwardGateway(QuestAwardGateway):
                 ranked.c.rank,
                 ranked.c.points,
                 UserORM.id,
+                UserORM.number,
                 UserORM.username,
                 UserORM.avatar_seed,
             )

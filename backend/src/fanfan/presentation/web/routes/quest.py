@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.quest import QuestPlayerDTO
@@ -30,7 +30,7 @@ from fanfan.application.interactors.quest.list_quest_history import (
     ListQuestHistoryOutput,
 )
 from fanfan.core.vo.quest import QuestAwardId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import USER_NUMBER_MAX, USER_NUMBER_MIN, UserNumber
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.schemas.page import PageCursorQuery
@@ -84,8 +84,8 @@ async def list_quest_history(
 @quest_router.get(
     "/players",
     summary="Find quest players",
-    description="Finds players whose username starts with the search term. "
-    "Requires the quest:award permission.",
+    description="Finds players whose username starts with the search term, "
+    "or whose user number it is. Requires the quest:award permission.",
     responses={200: {"description": "Players found."}},
 )
 @inject
@@ -97,10 +97,10 @@ async def find_quest_players(
 
 
 @quest_router.get(
-    "/players/{user_id}",
+    "/players/{number}",
     summary="Get a quest player",
-    description="Returns one player's points, for the award form after a QR "
-    "scan. Requires the quest:award permission.",
+    description="Returns one player by user number, with their points, for the "
+    "award form after a QR scan. Requires the quest:award permission.",
     responses={
         200: {"description": "Player retrieved successfully."},
         404: {"model": ErrorMessage, "description": "The user does not exist."},
@@ -108,10 +108,10 @@ async def find_quest_players(
 )
 @inject
 async def get_quest_player(
-    user_id: UserId,
+    number: Annotated[UserNumber, Path(ge=USER_NUMBER_MIN, le=USER_NUMBER_MAX)],
     interactor: FromDishka[GetQuestPlayer],
 ) -> QuestPlayerDTO:
-    return await interactor(user_id)
+    return await interactor(number)
 
 
 @quest_router.post(

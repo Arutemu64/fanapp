@@ -57,7 +57,7 @@ async def _award(
     result = await interactor(
         AwardQuestPointsInput(
             award_id=award_id or QuestAwardId(uuid7()),
-            user_id=player.id,
+            user_number=player.number,
             amount=amount,
             message="Задание выполнено",
         )
@@ -188,6 +188,22 @@ async def test_find_players_by_username_prefix(
 
     result = await (await dishka_request.get(FindQuestPlayers))(
         FindQuestPlayersInput(search="VIS")
+    )
+
+    assert [player.id for player in result.players] == [visitor.id]
+
+
+@pytest.mark.usefixtures("quest_enabled")
+async def test_find_players_by_number(
+    dishka_request: AsyncContainer,
+    quest_volunteer: User,
+    visitor: User,
+    login: Callable[[User], None],
+) -> None:
+    login(quest_volunteer)
+
+    result = await (await dishka_request.get(FindQuestPlayers))(
+        FindQuestPlayersInput(search=str(visitor.number))
     )
 
     assert [player.id for player in result.players] == [visitor.id]
