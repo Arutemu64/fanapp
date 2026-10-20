@@ -29,6 +29,31 @@ const volunteer = () =>
 	loggedInAs({ role: 'volunteer', username: 'ЛовкийСтраж12', permissions: ['quest:award'] });
 
 test.describe('quest', { tag: '@critical' }, () => {
+	test('Home links the badge while the quest runs, and hides it otherwise', async ({
+		page,
+		api
+	}) => {
+		api.use({ ...questConfig(), ...loggedInAs(), 'GET /quest': json(QUEST) });
+		await page.goto('/');
+
+		const badge = page.getByRole('link', { name: /Бейдж квеста/ });
+		await expect(badge).toContainText('35 баллов');
+		await badge.click();
+		await expect(page).toHaveURL('/profile/quest');
+
+		api.use({
+			'GET /config': json({
+				festival_start: '2027-03-13T11:30:00+03:00',
+				festival_end: '2027-03-13T19:30:00+03:00',
+				quest_enabled: false,
+				quest_max_award: 100
+			})
+		});
+		await page.goto('/');
+		await expect(page.getByRole('heading', { name: 'Чем заняться' })).toBeVisible();
+		await expect(page.getByRole('link', { name: /Бейдж квеста/ })).toHaveCount(0);
+	});
+
 	test('a player sees their score, code and place', async ({ page, api }) => {
 		api.use({
 			...questConfig(),

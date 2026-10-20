@@ -47,4 +47,25 @@ test.describe('map', () => {
 		await photoZones.last().click();
 		await expect(plan.locator('[data-selected]')).toHaveCount(0);
 	});
+
+	test('search finds a place on the other floor and lights it up', async ({ page }) => {
+		await page.goto('/map');
+
+		await page.getByRole('searchbox', { name: 'Поиск по карте' }).fill('wc');
+		await expect(page.getByRole('button', { name: /туалет/ })).toHaveCount(2);
+
+		await page.getByRole('button', { name: /Мужской туалет/ }).click();
+
+		await expect(page.getByRole('radio', { name: '2 и 3 этажи' })).toBeChecked();
+		await expect(page.getByRole('img', { name: 'Карта 2 и 3 этажа' })).toBeVisible();
+		await expect(page.getByRole('status').filter({ hasText: 'Мужской туалет' })).toBeVisible();
+	});
+
+	test('search says when nothing matches', async ({ page }) => {
+		await page.goto('/map');
+
+		await page.getByRole('searchbox', { name: 'Поиск по карте' }).fill('бассейн');
+
+		await expect(page.getByText('Ничего не нашлось')).toBeVisible();
+	});
 });

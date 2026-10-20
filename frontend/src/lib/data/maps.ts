@@ -7,6 +7,12 @@ interface MapPoint {
 	name: () => string;
 	/** Set where a point sits off the plan's main floor, e.g. «3 этаж». */
 	floor?: () => string;
+	/**
+	 * Search aliases: the words people type for a place whose name doesn't
+	 * contain them («туалет» finds «Женский туалет» already; «WC» or «кофе» needs
+	 * one). Matched, never shown, so they live here rather than in ru.json.
+	 */
+	keywords?: string[];
 }
 
 /** Axis-aligned box in the plan's own coordinates (the viewBox's units). */
@@ -54,8 +60,12 @@ interface MapEntry {
 
 export const WALL_WIDTH = 9;
 
-function numbered(names: (() => string)[]): MapPoint[] {
-	return names.map((name, index) => ({ number: index + 1, name }));
+function numbered(names: (() => string)[], keywords: Record<number, string[]> = {}): MapPoint[] {
+	return names.map((name, index) => ({
+		number: index + 1,
+		name,
+		keywords: keywords[index + 1]
+	}));
 }
 
 // Traced from the festival's printed posters, in their 900×1350 preview's
@@ -197,18 +207,30 @@ export const maps: MapEntry[] = [
 		label: m.map_floor_1_label,
 		alt: m.map_floor_1_alt,
 		plan: FLOOR_1,
-		points: numbered([
-			m.map_floor_1_point_01,
-			m.map_floor_1_point_02,
-			m.map_floor_1_point_03,
-			m.map_floor_1_point_04,
-			m.map_floor_1_point_05,
-			m.map_floor_1_point_06,
-			m.map_floor_1_point_07,
-			m.map_floor_1_point_08,
-			m.map_floor_1_point_09,
-			m.map_floor_1_point_10
-		])
+		points: numbered(
+			[
+				m.map_floor_1_point_01,
+				m.map_floor_1_point_02,
+				m.map_floor_1_point_03,
+				m.map_floor_1_point_04,
+				m.map_floor_1_point_05,
+				m.map_floor_1_point_06,
+				m.map_floor_1_point_07,
+				m.map_floor_1_point_08,
+				m.map_floor_1_point_09,
+				m.map_floor_1_point_10
+			],
+			{
+				1: ['выход'],
+				2: ['магазин', 'купить', 'мерч'],
+				3: ['лестница'],
+				5: ['еда', 'суши'],
+				6: ['сцена'],
+				8: ['кофе', 'кафе', 'еда', 'буфет'],
+				9: ['wc', 'уборная'],
+				10: ['гримерка']
+			}
+		)
 	},
 	{
 		id: 'floor-2-3',
@@ -216,23 +238,43 @@ export const maps: MapEntry[] = [
 		alt: m.map_floor_2_3_alt,
 		plan: FLOOR_2_3,
 		points: [
-			...numbered([
-				m.map_floor_2_3_point_01,
-				m.map_floor_2_3_point_02,
-				m.map_floor_2_3_point_03,
-				m.map_floor_2_3_point_04,
-				m.map_floor_2_3_point_05,
-				m.map_floor_2_3_point_06,
-				m.map_floor_2_3_point_07,
-				m.map_floor_2_3_point_08,
-				m.map_floor_2_3_point_09,
-				m.map_floor_2_3_point_10,
-				m.map_floor_2_3_point_11,
-				m.map_floor_2_3_point_12,
-				m.map_floor_2_3_point_13
-			]),
+			...numbered(
+				[
+					m.map_floor_2_3_point_01,
+					m.map_floor_2_3_point_02,
+					m.map_floor_2_3_point_03,
+					m.map_floor_2_3_point_04,
+					m.map_floor_2_3_point_05,
+					m.map_floor_2_3_point_06,
+					m.map_floor_2_3_point_07,
+					m.map_floor_2_3_point_08,
+					m.map_floor_2_3_point_09,
+					m.map_floor_2_3_point_10,
+					m.map_floor_2_3_point_11,
+					m.map_floor_2_3_point_12,
+					m.map_floor_2_3_point_13
+				],
+				{
+					1: ['автограф', 'гости'],
+					2: ['художники', 'косплееры', 'авторы'],
+					3: ['фото', 'рисунки'],
+					4: ['сцена'],
+					7: ['фото'],
+					8: ['настолки', 'настольные игры'],
+					9: ['корея', 'k-pop', 'кпоп'],
+					10: ['кафе'],
+					11: ['игры', 'файтинги'],
+					12: ['игры', 'ритм-игры'],
+					13: ['wc', 'уборная']
+				}
+			),
 			{ number: 14, name: m.map_floor_2_3_point_14, floor: m.map_point_on_floor_3 },
-			{ number: 15, name: m.map_floor_2_3_point_15, floor: m.map_point_on_floor_3 }
+			{
+				number: 15,
+				name: m.map_floor_2_3_point_15,
+				floor: m.map_point_on_floor_3,
+				keywords: ['танцы', 'игры']
+			}
 		]
 	}
 ];

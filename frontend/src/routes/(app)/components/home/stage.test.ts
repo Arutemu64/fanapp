@@ -63,7 +63,7 @@ describe('getStageSnapshot', () => {
 		expect(getStageSnapshot([]).featured).toBeNull();
 	});
 
-	it('leaves skipped acts out and caps the list at three', () => {
+	it('leaves skipped acts out and caps the list at two', () => {
 		const schedule = [
 			event({ id: 'now', order: 0, is_current: true }),
 			event({ id: 'a', order: 1 }),
@@ -73,7 +73,7 @@ describe('getStageSnapshot', () => {
 			event({ id: 'd', order: 5 })
 		];
 
-		expect(ids(getStageSnapshot(schedule).upNext)).toEqual(['a', 'b', 'c']);
+		expect(ids(getStageSnapshot(schedule).upNext)).toEqual(['a', 'b']);
 	});
 
 	it('finds the nearest subscribed act beyond the up-next list', () => {

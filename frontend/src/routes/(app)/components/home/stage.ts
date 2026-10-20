@@ -1,6 +1,8 @@
 import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
-const UP_NEXT_COUNT = 3;
+// Two, not three: the stage card has to leave the voting card on a phone's first
+// screen, and the schedule is one tap away for the rest.
+const UP_NEXT_COUNT = 2;
 
 export interface FeaturedAct {
 	event: ScheduleEventWithSubscription;

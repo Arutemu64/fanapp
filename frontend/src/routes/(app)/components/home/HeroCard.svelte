@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
+
 	import { prefersReducedMotion } from 'svelte/motion';
 
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -18,9 +20,14 @@
 		festivalStart: string;
 		/** During the festival: the act on stage, or the opening act before it starts. */
 		featured: FeaturedAct | null;
+		/**
+		 * During the festival: what follows the act on stage, set on the card's own
+		 * surface under the art, so "now" and "next" read as one card.
+		 */
+		stage?: Snippet;
 	}
 
-	let { phase, festivalStart, featured }: Props = $props();
+	let { phase, festivalStart, featured, stage }: Props = $props();
 
 	let featuredLabel = $derived(featured?.live ? m.home_on_stage() : m.home_starting_soon());
 	let featuredNumber = $derived(formatEventNumber(featured?.event.number));
@@ -87,13 +94,16 @@
 	 what sits on it is always the most useful thing for that moment. -->
 <section
 	aria-labelledby="hero-heading"
-	class="relative isolate overflow-hidden rounded-2xl bg-linear-to-br from-primary-900 via-gray-900 to-secondary-900 text-white shadow-sm"
+	class={['overflow-hidden rounded-2xl shadow-sm', stage && 'border border-border bg-card']}
 >
-	<!-- Key art as a backdrop. Decorative now that it carries no message of its
+	<div
+		class="relative isolate bg-linear-to-br from-primary-900 via-gray-900 to-secondary-900 text-white"
+	>
+		<!-- Key art as a backdrop. Decorative now that it carries no message of its
 		 own, so alt="" — the dark brand bed underneath keeps the card readable while
 		 the image streams in on weak con-venue wifi or if it fails to load at all. -->
-	{#if !imageFailed}
-		<!-- Static src, not a ?enhanced import: only the static-path form feeds
+		{#if !imageFailed}
+			<!-- Static src, not a ?enhanced import: only the static-path form feeds
 			 `sizes` back into the build, so it emits the full resized ladder — an
 			 imported Picture would ship just 1x/2x widths. Output is still
 			 content-hashed into `build`, which the service worker precaches, so
@@ -103,120 +113,125 @@
 			 the 16/9 art to fill the box, and on a phone a tall panel (the
 			 farewell) can make the box taller than 16/9, which upscales the art past 100vw. From
 			 lg the card is capped by the page column (max-w-5xl). -->
-		<enhanced:img
-			src="./main.webp"
-			alt=""
-			sizes="(min-width: 1024px) 960px, 125vw"
-			loading="eager"
-			decoding="async"
-			fetchpriority="high"
-			onerror={() => (imageFailed = true)}
-			class="absolute inset-0 -z-10 size-full object-cover"
-		/>
-	{/if}
-	<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
+			<enhanced:img
+				src="./main.webp"
+				alt=""
+				sizes="(min-width: 1024px) 960px, 125vw"
+				loading="eager"
+				decoding="async"
+				fetchpriority="high"
+				onerror={() => (imageFailed = true)}
+				class="absolute inset-0 -z-10 size-full object-cover"
+			/>
+		{/if}
+		<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
 		 layer under it to hold contrast wherever the crop lands. The card is sized
 		 to its content, so text reaches the top edge too, and the scrim's light end
 		 stays at 60%: even a pure-white pixel under it leaves solid white text at
 		 5.7:1 (WCAG AA 4.5:1). The phase label stays solid white rather than
 		 `white/85`, which measured 4.1:1 over the brightest pixel of the phone crop. -->
-	<div
-		aria-hidden="true"
-		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 to-black/60"
-	></div>
+		<div
+			aria-hidden="true"
+			class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 to-black/60"
+		></div>
 
-	<!-- Content-sized: the art is a backdrop, not a message, so it gets no empty band
+		<!-- Content-sized: the art is a backdrop, not a message, so it gets no empty band
 		 of its own above the text; on a phone that band pushed the next card down by
 		 a fifth of the first screen. -->
-	<div class="flex flex-col gap-3 p-4 sm:p-6">
-		{#if phase === 'before'}
-			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
-				{m.home_before_festival()}
-			</h2>
-			<!-- Hide the live-ticking grid from screen readers; the facts below convey it -->
-			<div class="grid max-w-md grid-cols-4 gap-2" aria-hidden="true">
-				{#each units as unit, index (unit.id)}
-					<div
-						class={[
-							'countdown-cell flex flex-col items-center rounded-lg bg-white/15 px-1 py-2',
-							!prefersReducedMotion.current && 'countdown-cell--animated'
-						]}
-						style:--enter-delay="{index * 80}ms"
-					>
-						{#if prefersReducedMotion.current || unit.id === 'seconds'}
-							<!-- Seconds change every tick; flipping them constantly is distracting -->
-							<span class="font-display text-xl leading-none font-bold tabular-nums sm:text-2xl">
-								{pad(unit.value)}
-							</span>
-						{:else}
-							{#key unit.value}
-								<span
-									class="tick font-display text-xl leading-none font-bold tabular-nums sm:text-2xl"
-								>
+		<div class="flex flex-col gap-3 p-4 sm:p-6">
+			{#if phase === 'before'}
+				<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
+					{m.home_before_festival()}
+				</h2>
+				<!-- Hide the live-ticking grid from screen readers; the facts below convey it -->
+				<div class="grid max-w-md grid-cols-4 gap-2" aria-hidden="true">
+					{#each units as unit, index (unit.id)}
+						<div
+							class={[
+								'countdown-cell flex flex-col items-center rounded-lg bg-white/15 px-1 py-2',
+								!prefersReducedMotion.current && 'countdown-cell--animated'
+							]}
+							style:--enter-delay="{index * 80}ms"
+						>
+							{#if prefersReducedMotion.current || unit.id === 'seconds'}
+								<!-- Seconds change every tick; flipping them constantly is distracting -->
+								<span class="font-display text-xl leading-none font-bold tabular-nums sm:text-2xl">
 									{pad(unit.value)}
 								</span>
-							{/key}
-						{/if}
-						<span class="mt-1 text-xs text-white/85">
-							{unit.label}
-						</span>
-					</div>
-				{/each}
-			</div>
-			<ul class="flex flex-wrap gap-2">
-				{#each facts as fact (fact)}
-					<li class="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">{fact}</li>
-				{/each}
-			</ul>
-		{:else if phase === 'during' && featured}
-			<h2
-				id="hero-heading"
-				class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white uppercase"
-			>
-				{#if featured.live}
-					<!-- Live dot, as on the schedule's current row. The ping runs three
+							{:else}
+								{#key unit.value}
+									<span
+										class="tick font-display text-xl leading-none font-bold tabular-nums sm:text-2xl"
+									>
+										{pad(unit.value)}
+									</span>
+								{/key}
+							{/if}
+							<span class="mt-1 text-xs text-white/85">
+								{unit.label}
+							</span>
+						</div>
+					{/each}
+				</div>
+				<ul class="flex flex-wrap gap-2">
+					{#each facts as fact (fact)}
+						<li class="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">{fact}</li>
+					{/each}
+				</ul>
+			{:else if phase === 'during' && featured}
+				<h2
+					id="hero-heading"
+					class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white uppercase"
+				>
+					{#if featured.live}
+						<!-- Live dot, as on the schedule's current row. The ping runs three
 					     times and stops (WCAG 2.2.2, see --animate-ping-brief); reduced motion
 					     mutes it via global CSS. -->
-					<span class="relative flex size-2" aria-hidden="true">
-						<span
-							class="absolute inline-flex size-full animate-ping-brief rounded-full bg-success opacity-75"
-						></span>
-						<span class="relative inline-flex size-2 rounded-full bg-success"></span>
-					</span>
-				{/if}
-				{featuredLabel}
-			</h2>
-			<div class="flex items-center gap-3">
-				{#if featuredNumber !== null}
-					<!-- The schedule's number badge, restyled for the dark art. -->
-					<div
-						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 p-1.5 text-center"
-					>
-						<span class="text-xs font-bold tracking-widest uppercase">№</span>
-						<span class="font-display text-base leading-none font-bold tabular-nums"
-							>{featuredNumber}</span
-						>
-					</div>
-				{/if}
-				<div class="min-w-0">
-					<p class="text-lg leading-snug font-semibold sm:text-xl">{featured.event.title}</p>
-					{#if featured.event.nomination_title}
-						<p class="mt-0.5 text-sm text-white/85">{featured.event.nomination_title}</p>
+						<span class="relative flex size-2" aria-hidden="true">
+							<span
+								class="absolute inline-flex size-full animate-ping-brief rounded-full bg-success opacity-75"
+							></span>
+							<span class="relative inline-flex size-2 rounded-full bg-success"></span>
+						</span>
 					{/if}
+					{featuredLabel}
+				</h2>
+				<div class="flex items-center gap-3">
+					{#if featuredNumber !== null}
+						<!-- The schedule's number badge, restyled for the dark art. -->
+						<div
+							class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 p-1.5 text-center"
+						>
+							<span class="text-xs font-bold tracking-widest uppercase">№</span>
+							<span class="font-display text-base leading-none font-bold tabular-nums"
+								>{featuredNumber}</span
+							>
+						</div>
+					{/if}
+					<div class="min-w-0">
+						<p class="text-lg leading-snug font-semibold sm:text-xl">{featured.event.title}</p>
+						{#if featured.event.nomination_title}
+							<p class="mt-0.5 text-sm text-white/85">{featured.event.nomination_title}</p>
+						{/if}
+					</div>
 				</div>
-			</div>
-		{:else if phase === 'during'}
-			<h2 id="hero-heading" class="text-section">{m.home_festival_ongoing()}</h2>
-		{:else}
-			<h2 id="hero-heading" class="text-section">{m.home_festival_finished()}</h2>
-			<p class="max-w-prose text-body leading-relaxed text-white/85">
-				{m.home_festival_farewell()}
-			</p>
-			<!-- Guests land on the auth-gated feedback page, which bounces them to
+			{:else if phase === 'during'}
+				<h2 id="hero-heading" class="text-section">{m.home_festival_ongoing()}</h2>
+			{:else}
+				<h2 id="hero-heading" class="text-section">{m.home_festival_finished()}</h2>
+				<p class="max-w-prose text-body leading-relaxed text-white/85">
+					{m.home_festival_farewell()}
+				</p>
+				<!-- Guests land on the auth-gated feedback page, which bounces them to
 				 login and returns them here after (LOGIN_NEXT_PARAM). -->
-			<Button href="/feedback" size="sm" class="self-start">{m.home_leave_feedback()}</Button>
-		{/if}
+				<Button href="/feedback" size="sm" class="self-start">{m.home_leave_feedback()}</Button>
+			{/if}
+		</div>
 	</div>
+
+	{#if stage}
+		{@render stage()}
+	{/if}
 </section>
 
 <style>

@@ -1,17 +1,20 @@
 <script lang="ts">
+	import QrCode from '@lucide/svelte/icons/qr-code';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import {
 		getPublicConfigOptions,
 		getPublicConfigQueryKey,
+		getQuestOptions,
 		getScheduleOptions,
 		getSubscriptionsOptions,
 		getVotingStatusOptions,
 		getVotingStatusQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { useQueuedSubscriptionChanges } from '#lib/api/queuedWrite.svelte.js';
-	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import MenuRow from '#lib/components/MenuRow.svelte';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
@@ -33,7 +36,7 @@
 		type InstallState
 	} from './components/home/readySteps';
 	import { getStageSnapshot } from './components/home/stage';
-	import UpNextCard from './components/home/UpNextCard.svelte';
+	import StageNext from './components/home/StageNext.svelte';
 	import VotingCard from './components/home/VotingCard.svelte';
 
 	const queryClient = useQueryClient();
@@ -53,6 +56,13 @@
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
 	let config = $derived(configQuery.data ?? FALLBACK_CONFIG);
+	// The badge row is how a player reaches their code at a stand, so it shows
+	// whenever the quest runs; the points are a cached read and fill in when known.
+	let showQuest = $derived(config.quest_enabled && user !== null);
+	const questQuery = createQuery(() => ({ ...getQuestOptions(), enabled: showQuest }));
+	let questPoints = $derived(
+		questQuery.data ? m.quest_points({ count: questQuery.data.points }) : undefined
+	);
 	const queuedSubscriptions = useQueuedSubscriptionChanges();
 	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
@@ -92,12 +102,6 @@
 	);
 	let showStage = $derived(phase === 'during' && hasProgramme);
 	let featuredAct = $derived(phase === 'during' ? snapshot.featured : null);
-	let showUpNext = $derived(
-		showStage &&
-			(snapshot.upNext.length > 0 ||
-				snapshot.nextSubscribed !== null ||
-				snapshot.featured?.live === true)
-	);
 	let ticketAskedElsewhere = $derived(votingOpen && votingStatus?.status === 'no_ticket');
 
 	// Read once per visit: coming back from the notifications page remounts home,
@@ -128,7 +132,7 @@
 		});
 	});
 
-	let hasSupportingContent = $derived(votingOpen || readySteps.length > 0);
+	let hasSupportingContent = $derived(votingOpen || showQuest || readySteps.length > 0);
 	// Material's supporting-pane layout: the live programme is the main pane (about
 	// two-thirds) and voting plus setup sit beside it on wide screens, stacked below
 	// on narrow ones (https://developer.android.com/guide/topics/ui/layout/canonical-layouts).
@@ -144,7 +148,9 @@
 			errorMessage: m.schedule_load_failed()
 		})
 	);
-	let showStaleNotice = $derived(showStage && scheduleView.kind === 'ready' && scheduleView.stale);
+	let stageCachedAt = $derived(
+		scheduleView.kind === 'ready' && scheduleView.stale ? scheduleQuery.dataUpdatedAt : undefined
+	);
 
 	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
 	// past this (~24.8 days) overflows and fires immediately, so longer waits are
@@ -198,19 +204,33 @@
 		<VotingCard status={votingStatus.status} />
 	{/if}
 
+	{#if showQuest}
+		<MenuGroup>
+			<MenuRow
+				href="profile/quest"
+				label={m.home_quest_badge()}
+				description={m.quest_code_hint()}
+				icon={QrCode}
+				tone="primary"
+				value={questPoints}
+			/>
+		</MenuGroup>
+	{/if}
+
 	<GetReadySection heading={readyHeading} steps={readySteps} />
 {/snippet}
 
 {#snippet main()}
-	<HeroCard {phase} festivalStart={config.festival_start} featured={featuredAct} />
+	<HeroCard
+		{phase}
+		festivalStart={config.festival_start}
+		featured={featuredAct}
+		stage={showStage ? stageNext : undefined}
+	/>
+{/snippet}
 
-	{#if showStaleNotice}
-		<StaleDataNotice message={m.schedule_cached_notice()} cachedAt={scheduleQuery.dataUpdatedAt} />
-	{/if}
-
-	{#if showUpNext}
-		<UpNextCard {snapshot} />
-	{/if}
+{#snippet stageNext()}
+	<StageNext {snapshot} cachedAt={stageCachedAt} />
 {/snippet}
 
 <!-- The live part (what's on, what to do) first, then the festival guide, which

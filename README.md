@@ -19,10 +19,10 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ## Features
 
-- **Home**: changes with the festival: a countdown before it, the act on stage and what's next during it, thanks and a feedback prompt after. An "open voting" card shows while voting runs, and a setup list (account, ticket, subscriptions, notifications, install) shows each person only the steps they still have.
+- **Home**: changes with the festival: a countdown before it, one stage card with the act on stage, the next two and your nearest subscription during it, thanks and a feedback prompt after. An "open voting" card shows while voting runs, a shortcut to the quest badge while the quest is on, and a setup list (account, ticket, subscriptions, notifications, install) shows each person only the steps they still have.
 - **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
 - **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
-- **Map**: its own tab, in the centre of the bar: both floor plans with tappable zones and «Что где», the numbered legend as a list.
+- **Map**: its own tab, in the centre of the bar: both floor plans with tappable zones, «Что где», the numbered legend as a list, and a search across both floors that also knows common aliases («wc», «кофе»).
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
 - **Auth**: sign in via VK ID or Telegram (social providers are enabled per deployment), email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.

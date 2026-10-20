@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { prefersReducedMotion } from 'svelte/motion';
 
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import SearchInput from '#lib/components/SearchInput.svelte';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { maps, WALL_WIDTH } from '#lib/data/maps.js';
 	import { m } from '#lib/paraglide/messages.js';
+
+	import { createMapSearch, type MapSearchResult } from './mapSearch';
 
 	let floorId = $state(maps[0]?.id ?? '');
 	let selectedNumber = $state<number | null>(null);
@@ -36,15 +40,92 @@
 	// Only for a tap or click: Enter/Space fire a click with `detail` 0, and
 	// scrolling then would carry the focused row off screen (WCAG 2.4.11); the
 	// status line still announces the pick.
-	function selectFromList(event: MouseEvent, number: number) {
-		togglePoint(number);
+	function revealPlan(event: MouseEvent) {
 		if (event.detail === 0) return;
 		planElement?.scrollIntoView({
 			block: 'nearest',
 			behavior: prefersReducedMotion.current ? 'auto' : 'smooth'
 		});
 	}
+
+	function selectFromList(event: MouseEvent, number: number) {
+		togglePoint(number);
+		revealPlan(event);
+	}
+
+	// Searches both floors at once: someone asking "where is the toilet?" doesn't
+	// know which floor to open first. The places are static, so the index is built once.
+	const searchPlaces = createMapSearch(maps);
+	let query = $state('');
+	let results = $derived(query.trim() ? searchPlaces(query) : null);
+
+	type PlaceResult = MapSearchResult<(typeof maps)[number]['points'][number]>;
+
+	// A result may sit on the other floor: switch to it, then light the place up.
+	function selectResult(event: MouseEvent, result: PlaceResult) {
+		floorId = result.mapId;
+		selectedNumber = result.point.number;
+		revealPlan(event);
+	}
 </script>
+
+<!-- One row for the floor's list and for search results alike, so a place looks
+     the same however it was found. -->
+{#snippet placeRow(row: {
+	number: number;
+	name: string;
+	aside?: string;
+	selected: boolean;
+	onclick: (event: MouseEvent) => void;
+})}
+	<button
+		type="button"
+		aria-pressed={row.selected}
+		onclick={row.onclick}
+		class={[
+			'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600',
+			row.selected && 'bg-primary/10'
+		]}
+	>
+		<span
+			class={[
+				'flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold tabular-nums',
+				row.selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+			]}
+		>
+			{row.number}
+		</span>
+		<span class="grow">{row.name}</span>
+		{#if row.aside}
+			<span class="shrink-0 text-sm text-muted-foreground">{row.aside}</span>
+		{/if}
+	</button>
+{/snippet}
+
+{#snippet searchResults(found: PlaceResult[])}
+	{#if found.length === 0}
+		<EmptyState title={m.common_nothing_found()} message={m.map_search_empty()} />
+	{:else}
+		<MenuGroup>
+			<ol class="divide-y divide-border">
+				{#each found as result (`${result.mapId}-${result.point.number}`)}
+					{const isSelected = $derived(
+						result.mapId === floorId && result.point.number === selectedNumber
+					)}
+					<li>
+						{@render placeRow({
+							number: result.point.number,
+							name: result.point.name(),
+							aside: result.floorLabel,
+							selected: isSelected,
+							onclick: (event) => selectResult(event, result)
+						})}
+					</li>
+				{/each}
+			</ol>
+		</MenuGroup>
+	{/if}
+{/snippet}
 
 <svelte:head>
 	<title>{m.document_title({ title: m.nav_map() })}</title>
@@ -53,6 +134,13 @@
 {#if map}
 	{const plan = $derived(map.plan)}
 	<div class="flex flex-col gap-4">
+		<SearchInput
+			bind:value={query}
+			name="map_search"
+			label={m.map_search_label()}
+			placeholder={m.map_search_placeholder()}
+		/>
+
 		<ToggleGroup.Root
 			type="single"
 			variant="outline"
@@ -221,39 +309,26 @@
 
 			<section aria-labelledby="map-where" class="flex flex-col gap-2">
 				<h2 id="map-where" class="px-1 text-section">{m.map_where_heading()}</h2>
-				<MenuGroup>
-					<ol class="divide-y divide-border">
-						{#each map.points as point (point.number)}
-							{const isSelected = $derived(point.number === selectedNumber)}
-							<li>
-								<button
-									type="button"
-									aria-pressed={isSelected}
-									onclick={(event) => selectFromList(event, point.number)}
-									class={[
-										'flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-600',
-										isSelected && 'bg-primary/10'
-									]}
-								>
-									<span
-										class={[
-											'flex size-7 shrink-0 items-center justify-center rounded-md text-sm font-semibold tabular-nums',
-											isSelected
-												? 'bg-primary text-primary-foreground'
-												: 'bg-muted text-muted-foreground'
-										]}
-									>
-										{point.number}
-									</span>
-									<span class="grow">{point.name()}</span>
-									{#if point.floor}
-										<span class="shrink-0 text-sm text-muted-foreground">{point.floor()}</span>
-									{/if}
-								</button>
-							</li>
-						{/each}
-					</ol>
-				</MenuGroup>
+				{#if results}
+					{@render searchResults(results)}
+				{:else}
+					<MenuGroup>
+						<ol class="divide-y divide-border">
+							{#each map.points as point (point.number)}
+								{const isSelected = $derived(point.number === selectedNumber)}
+								<li>
+									{@render placeRow({
+										number: point.number,
+										name: point.name(),
+										aside: point.floor?.(),
+										selected: isSelected,
+										onclick: (event) => selectFromList(event, point.number)
+									})}
+								</li>
+							{/each}
+						</ol>
+					</MenuGroup>
+				{/if}
 			</section>
 		</div>
 	</div>
