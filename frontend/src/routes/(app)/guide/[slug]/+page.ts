@@ -15,6 +15,6 @@ export const load: PageLoad = ({ params }) => {
 	return {
 		article,
 		title: article.title,
-		back: { href: 'guide', label: m.guide_back() } satisfies BackTarget
+		back: { href: '', label: m.home_back() } satisfies BackTarget
 	};
 };

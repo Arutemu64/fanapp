@@ -1,8 +1,8 @@
 import { expect, json, test } from '../fixtures';
 
-test.describe('guide articles', () => {
-	test('a hub row opens its article', async ({ page }) => {
-		await page.goto('/guide');
+test.describe('guide on Home', () => {
+	test('a Home row opens its article', async ({ page }) => {
+		await page.goto('/');
 
 		await page.getByRole('link', { name: /Ярмарка/ }).click();
 
@@ -10,14 +10,19 @@ test.describe('guide articles', () => {
 		await expect(page.getByText('Почти 500', { exact: false })).toBeVisible();
 	});
 
-	test('the back arrow leads to the guide even when the article is opened directly', async ({
-		page
-	}) => {
+	test('the back arrow leads Home even when the article is opened directly', async ({ page }) => {
 		await page.goto('/guide/fair');
 
-		await page.getByRole('link', { name: 'Назад в гид', exact: true }).click();
+		await page.getByRole('link', { name: 'Назад на главную', exact: true }).click();
 
-		await expect(page).toHaveURL('/guide');
+		await expect(page).toHaveURL('/');
+	});
+
+	test('the old guide address lands on Home', async ({ page }) => {
+		await page.goto('/guide');
+
+		await expect(page).toHaveURL('/');
+		await expect(page.getByRole('heading', { name: 'Чем заняться' })).toBeVisible();
 	});
 
 	test('the date and start time follow the saved festival settings', async ({ page, api }) => {
@@ -30,7 +35,9 @@ test.describe('guide articles', () => {
 			})
 		});
 
-		await page.goto('/guide');
+		// The hero lists them while it counts down, so the clock sits before the start.
+		await page.clock.setFixedTime(new Date('2027-03-01T12:00:00+03:00'));
+		await page.goto('/');
 
 		await expect(page.getByText('1 апреля 2027, четверг')).toBeVisible();
 		await expect(page.getByText('Начало в 09:00')).toBeVisible();

@@ -3,8 +3,8 @@ import type { Component } from 'svelte';
 
 import Calendar from '@lucide/svelte/icons/calendar';
 import CircleUser from '@lucide/svelte/icons/circle-user';
-import Compass from '@lucide/svelte/icons/compass';
 import House from '@lucide/svelte/icons/house';
+import MapIcon from '@lucide/svelte/icons/map';
 import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
 
 import { m } from '#lib/paraglide/messages.js';
@@ -20,8 +20,8 @@ export interface PrimaryNavItem {
 	solidIcon: Component;
 	/**
 	 * Other route roots reached from this tab's page, which keep the tab lit so the
-	 * bar still says where you are. Profile is the hub for feedback and the organizer
-	 * toolbox, which have no tab of their own.
+	 * bar still says where you are. Home is the hub for the guide's articles, and Profile
+	 * the hub for feedback and the organizer toolbox; none of them has a tab of its own.
 	 */
 	nestedRoots?: Path[];
 }
@@ -33,17 +33,20 @@ export interface PrimaryNavItem {
  * preserved-scroll roots below stay in step with them.
  */
 export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
-	{ label: m.nav_home, href: '', outlineIcon: House, solidIcon: House },
+	// Home is also the festival guide: its lower half is the guide hub, and the
+	// articles (/guide/<slug>) open one level below it.
+	{ label: m.nav_home, href: '', outlineIcon: House, solidIcon: House, nestedRoots: ['guide'] },
 	{
 		label: m.nav_schedule,
 		href: 'schedule',
 		outlineIcon: Calendar,
 		solidIcon: Calendar
 	},
-	// The guide takes the centre of the bar, the most prominent spot, as the tab people
-	// on site reach for most. Voting stays in an inner column, since its long
+	// The map takes the centre of the bar, the most prominent spot: "where is it?" is
+	// the question people on site ask most, and a tab is always in view where a row
+	// on a hub has to be found first. Voting stays in an inner column, since its long
 	// "Голосование" label would be clipped by the rounded screen corners at an edge.
-	{ label: m.nav_guide, href: 'guide', outlineIcon: Compass, solidIcon: Compass },
+	{ label: m.nav_map, href: 'map', outlineIcon: MapIcon, solidIcon: MapIcon },
 	{ label: m.nav_voting, href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
 	// Last, in the thumb's natural reach on the right, as the account tab sits in most
 	// tab bars. It is also the hub for everything without a tab of its own (feedback,

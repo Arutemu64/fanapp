@@ -2,7 +2,7 @@ import { expect, test } from '../fixtures';
 
 test.describe('map', () => {
 	test('a place picked in the list lights up and is named under the plan', async ({ page }) => {
-		await page.goto('/guide/map');
+		await page.goto('/map');
 		const row = page.getByRole('button', { name: /Женский туалет/ });
 
 		await row.click();
@@ -15,7 +15,7 @@ test.describe('map', () => {
 	});
 
 	test('switching floors swaps the plan and its list', async ({ page }) => {
-		await page.goto('/guide/map');
+		await page.goto('/map');
 		await expect(page.getByRole('img', { name: 'Карта 1 этажа' })).toBeVisible();
 
 		await page.getByRole('radio', { name: '2 и 3 этажи' }).click();
@@ -28,7 +28,7 @@ test.describe('map', () => {
 	test('tapping a zone lights every zone with its number, and tapping again clears it', async ({
 		page
 	}) => {
-		await page.goto('/guide/map');
+		await page.goto('/map');
 		await page.getByRole('radio', { name: '2 и 3 этажи' }).click();
 		const plan = page.getByRole('img', { name: 'Карта 2 и 3 этажа' });
 		const photoZones = plan.locator('[data-point="7"]');
@@ -46,5 +46,14 @@ test.describe('map', () => {
 
 		await photoZones.last().click();
 		await expect(plan.locator('[data-selected]')).toHaveCount(0);
+	});
+
+	test('the old guide address still opens the map', async ({ page }) => {
+		// Installed apps keep the manifest they were installed with, whose «Карта»
+		// shortcut points at /guide/map.
+		await page.goto('/guide/map');
+
+		await expect(page).toHaveURL('/map');
+		await expect(page.getByRole('img', { name: 'Карта 1 этажа' })).toBeVisible();
 	});
 });

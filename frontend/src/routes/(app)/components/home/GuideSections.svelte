@@ -7,18 +7,13 @@
 	import MapPin from '@lucide/svelte/icons/map-pin';
 	import MessageCircle from '@lucide/svelte/icons/message-circle';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
-	import { createQuery } from '@tanstack/svelte-query';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
 
-	import { getPublicConfigOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import logo from '#lib/assets/logo.svg';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuRow from '#lib/components/MenuRow.svelte';
-	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { formatFestivalDate, formatFestivalTime } from '#lib/utils/formatters.js';
 
 	// A text search, so there are no coordinates to keep in step with the venue.
 	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
@@ -71,51 +66,26 @@
 			external: false
 		}
 	];
-
-	// The date and start come from the public config organizers edit, the same source
-	// as Home, so the two tabs can't disagree; the cached copy or the shipped
-	// defaults fill in offline. The doors time isn't in the config.
-	const configQuery = createQuery(() => getPublicConfigOptions());
-	const config = $derived(configQuery.data ?? FALLBACK_CONFIG);
-	const facts = $derived([
-		formatFestivalDate(config.festival_start),
-		m.guide_doors(),
-		m.guide_start({ time: formatFestivalTime(config.festival_start) })
-	]);
 </script>
 
-<svelte:head>
-	<title>{m.document_title({ title: m.nav_guide() })}</title>
-</svelte:head>
-
-<!-- A hub, like /profile: the intro with the facts, then grouped
-     rows that each lead somewhere. Grouped rows with a trailing indicator are the
-     phone-settings shape for "drill in"
-     (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables),
-     so every target is a full-width tap. Capped and centred like the profile column.
-     Read as a magazine: the tagline is the cover line, a step above the section heads,
-     and each head sits over three times nearer its list than the block before it, so
-     it reads as that list's title (https://practicaltypography.com/space-above-and-below.html). -->
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-10">
-	<section aria-labelledby="guide-heading" class="rounded-2xl border bg-card p-5 sm:p-6">
-		<img src={logo} alt={m.app_name()} class="h-10 w-auto dark:invert" />
-		<h2 id="guide-heading" class="mt-4 text-headline text-balance">
-			{m.guide_tagline()}
-		</h2>
-		<p class="mt-1.5 text-body leading-relaxed text-muted-foreground">{m.guide_about()}</p>
-		<ul class="mt-3 flex flex-wrap gap-2">
-			{#each facts as fact (fact)}
-				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact}</li>
-			{/each}
-		</ul>
-	</section>
-
+<!-- The festival guide, under Home's live part: grouped rows that each lead
+     somewhere, the phone-settings shape for "drill in"
+     (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables).
+     Read as a magazine: each head sits over three times nearer its list than the
+     block before it, so it reads as that list's title
+     (https://practicaltypography.com/space-above-and-below.html).
+     From lg the activities take a column of their own beside the two short groups,
+     the same groups side by side rather than a second design. -->
+<div class="flex flex-col gap-10 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
 	<section aria-labelledby="guide-important" class="flex flex-col gap-3">
-		<h2 id="guide-important" class="px-1 text-section text-foreground">
+		<h2 id="guide-important" class="text-section text-foreground">
 			{m.guide_important_heading()}
 		</h2>
 		<MenuGroup>
-			<MenuRow href="guide/map" label={m.nav_map()} icon={MapIcon} />
+			<!-- The map has its own tab too; it leads this group because "where is it?"
+			     is the question people ask most, and a reader scanning Home for it
+			     shouldn't have to know about the tab. -->
+			<MenuRow href="map" label={m.nav_map()} icon={MapIcon} />
 			<MenuRow
 				externalHref={yandexMapsUrl}
 				newTab
@@ -133,8 +103,8 @@
 		</MenuGroup>
 	</section>
 
-	<section aria-labelledby="guide-activities" class="flex flex-col gap-3">
-		<h2 id="guide-activities" class="px-1 text-section text-foreground">
+	<section aria-labelledby="guide-activities" class="flex flex-col gap-3 lg:row-span-2">
+		<h2 id="guide-activities" class="text-section text-foreground">
 			{m.guide_activities_heading()}
 		</h2>
 		<MenuGroup>
@@ -149,9 +119,9 @@
 		</MenuGroup>
 	</section>
 
-	<!-- Rarely needed on the day, so below the activities rather than in the hero. -->
+	<!-- Rarely needed on the day, so last. -->
 	<section aria-labelledby="guide-contacts" class="flex flex-col gap-3">
-		<h2 id="guide-contacts" class="px-1 text-section text-foreground">
+		<h2 id="guide-contacts" class="text-section text-foreground">
 			{m.guide_contacts_heading()}
 		</h2>
 		<MenuGroup>

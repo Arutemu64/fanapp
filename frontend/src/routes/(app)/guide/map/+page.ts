@@ -1,13 +1,10 @@
-import type { BackTarget } from '#lib/types/navigation.js';
-
-import { m } from '#lib/paraglide/messages.js';
+import { resolve } from '$app/paths';
+import { redirect } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-// Static page; load only supplies the navbar title and back target.
+// The map has its own tab now. Installed apps keep the manifest they were installed
+// with, so their «Карта» shortcut still opens /guide/map until the browser refreshes it.
 export const load: PageLoad = () => {
-	return {
-		title: m.nav_map(),
-		back: { href: 'guide', label: m.guide_back() } satisfies BackTarget
-	};
+	redirect(308, resolve('map'));
 };

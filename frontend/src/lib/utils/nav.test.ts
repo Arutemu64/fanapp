@@ -34,8 +34,15 @@ describe('isNavItemActive', () => {
 	});
 
 	it('falls back to the item href alone without nested roots', () => {
-		expect(isNavItemActive('/guide', { href: 'guide' })).toBe(true);
-		expect(isNavItemActive('/feedback', { href: 'guide' })).toBe(false);
+		expect(isNavItemActive('/map', { href: 'map' })).toBe(true);
+		expect(isNavItemActive('/feedback', { href: 'map' })).toBe(false);
+	});
+
+	it('keeps Home lit on the guide articles it lists', () => {
+		const home = { href: '', nestedRoots: ['guide'] } as const;
+		expect(isNavItemActive('/', home)).toBe(true);
+		expect(isNavItemActive('/guide/fair', home)).toBe(true);
+		expect(isNavItemActive('/schedule', home)).toBe(false);
 	});
 });
 

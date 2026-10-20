@@ -22,10 +22,11 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Home**: changes with the festival: a countdown before it, the act on stage and what's next during it, thanks and a feedback prompt after. An "open voting" card shows while voting runs, and a setup list (account, ticket, subscriptions, notifications, install) shows each person only the steps they still have.
 - **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
 - **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
+- **Map**: its own tab, in the centre of the bar: both floor plans with tappable zones and «Что где», the numbered legend as a list.
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
 - **Auth**: sign in via VK ID or Telegram (social providers are enabled per deployment), email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
-- **Guide**: the festival at a glance: date, times, age limit, social links, address, the rules, venue maps, and a page per festival activity. The activity pages are Markdown files in `frontend/src/content/guide/`, compiled with mdsvex, so adding or rewording one is a file edit ([ADR-0028](docs/adr/0028-mdsvex-for-guide-articles.md)).
+- **Guide**: the lower half of Home: the address, the rules, a page per festival activity and the festival's channels; the hero lists the date and times while it counts down. The activity pages are Markdown files in `frontend/src/content/guide/`, compiled with mdsvex, so adding or rewording one is a file edit ([ADR-0028](docs/adr/0028-mdsvex-for-guide-articles.md)).
 - **Quest** (optional, off by default): players show a QR code from their profile, volunteers scan it and award points for tasks done around the venue, and a leaderboard ranks everyone, top places winning merch. Organizers switch it on and set the per-award cap from the festival settings ([ADR-0035](docs/adr/0035-quest-points-as-an-award-ledger.md)).
 - **Staff tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, quest awards and other admin screens for organizers and volunteers, each tool shown only to those granted its permission.
 - **Feedback**: user feedback submission.
@@ -39,7 +40,6 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
     <th>Schedule</th>
     <th>Voting</th>
     <th>Notifications</th>
-    <th>Guide</th>
     <th>Map</th>
     <th>Profile</th>
     <th>Quest</th>
@@ -48,7 +48,6 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
     <td><img src="docs/assets/readme-gallery/schedule.webp" width="150" alt="Schedule: performances grouped by block, the one on stage now highlighted, a bell to subscribe to each"></td>
     <td><img src="docs/assets/readme-gallery/voting.webp" width="150" alt="Voting: a nomination's participants with vote counts and the user's own choice marked"></td>
     <td><img src="docs/assets/readme-gallery/notifications.webp" width="150" alt="Notifications: a subscription reminder, an on-stage announcement and organizer broadcasts"></td>
-    <td><img src="docs/assets/readme-gallery/guide.webp" width="150" alt="Guide: the festival's date, times and social links, the address, the venue map, the rules and a page per festival activity"></td>
     <td><img src="docs/assets/readme-gallery/map.webp" width="150" alt="Map: both floor plans, then «Что где», the posters' numbered legend as a list"></td>
     <td><img src="docs/assets/readme-gallery/profile.webp" width="150" alt="Profile: the account, the quest balance, a linked ticket, notification status and the theme switch"></td>
     <td><img src="docs/assets/readme-gallery/quest.webp" width="150" alt="Quest: the player's QR code for volunteers with their @username under it, their points and place, and the top of the leaderboard"></td>

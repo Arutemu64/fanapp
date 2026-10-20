@@ -4,7 +4,11 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
-	import { formatEventNumber, formatFestivalDateTime } from '#lib/utils/formatters.js';
+	import {
+		formatEventNumber,
+		formatFestivalDate,
+		formatFestivalTime
+	} from '#lib/utils/formatters.js';
 
 	import type { FestivalPhase } from './festivalPhase';
 	import type { FeaturedAct } from './stage';
@@ -24,7 +28,12 @@
 	// Program start, on the venue clock. Configurable via GET /config and passed in
 	// by the page so the hero renders for guests and on a cold/offline load.
 	let startMs = $derived(new Date(festivalStart).getTime());
-	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
+	// The doors time isn't in the config, so it is copy.
+	let facts = $derived([
+		formatFestivalDate(festivalStart),
+		m.guide_doors(),
+		m.guide_start({ time: formatFestivalTime(festivalStart) })
+	]);
 
 	let now = $state(Date.now());
 
@@ -117,7 +126,7 @@
 			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
 				{m.home_before_festival()}
 			</h2>
-			<!-- Hide the live-ticking grid from screen readers; the static start date conveys it -->
+			<!-- Hide the live-ticking grid from screen readers; the facts below convey it -->
 			<div class="grid max-w-md grid-cols-4 gap-2" aria-hidden="true">
 				{#each units as unit, index (unit.id)}
 					<div
@@ -147,7 +156,11 @@
 					</div>
 				{/each}
 			</div>
-			<p class="sr-only">{m.home_festival_start({ date: festivalDate })}</p>
+			<ul class="flex flex-wrap gap-2">
+				{#each facts as fact (fact)}
+					<li class="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">{fact}</li>
+				{/each}
+			</ul>
 		{:else if phase === 'during' && featured}
 			<h2
 				id="hero-heading"
