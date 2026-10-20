@@ -15,7 +15,7 @@ paths:
 | `just backend-generate <name>` | Autogenerate against the running app DB |
 | `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres 18 (needs Docker, no app DB). **Use this in Claude Code on the web.** |
 | `just backend-migrate` | Apply (`alembic upgrade head`) |
-| `just backend-check-migrations` | Fail if ORM models drift from migrations |
+| `just backend-check-migrations` | Fail if ORM models drift from migrations, or any `downgrade()` fails a base→head upgrade/downgrade/upgrade stairway |
 
 Prefer autogenerate over hand-writing, then **always read the generated file
 before committing**. The three things autogenerate gets wrong here are below.
@@ -88,6 +88,12 @@ multi-step column type changes. Its zero-downtime rules are worth following for
 anything touching a large or hot table (`users`, `tickets`, `notifications`);
 this is a single-instance deployment updated by `just deploy`, so a brief lock on
 a small table is acceptable and the multi-step dance is not mandatory.
+
+`env.py` gives every migration run a 5s `lock_timeout` (`MIGRATION_LOCK_TIMEOUT`):
+a migration that can't get its lock fails, rolls back, and the Compose service
+retries it, rather than stalling the live app behind it. Don't add a per-migration
+`SET LOCAL lock_timeout`. There is deliberately no `statement_timeout`, so a long
+backfill or index build is not cut short — but while it runs it holds its locks.
 
 ## Before calling it done
 

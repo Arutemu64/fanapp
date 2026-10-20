@@ -142,7 +142,7 @@ it in memory and compares:
 |------|--------|--------------------|
 | `unit/presentation/test_openapi_spec.py` | `shared/openapi/openapi.json` vs. the routers and DTOs | `just frontend-generate-api` |
 | `unit/adapters/test_schedule_parser.py::test_parses_the_downloadable_template` | `frontend/static/schedule-template.xlsx` vs. the parser's required columns | `just backend-generate-schedule-template` |
-| `integration/test_migrations.py` | the ORM models vs. the migrations (needs Docker) | `just backend-generate <name>` |
+| `integration/test_migrations.py::test_no_migration_drift` | the ORM models vs. the migrations (needs Docker) | `just backend-generate <name>` |
 
 The second half of the API contract chain — the generated hey-api client
 (`frontend/src/lib/api/generated/`) vs. the spec — is checked by
