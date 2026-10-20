@@ -3,6 +3,7 @@ from alembic.command import check, downgrade, upgrade
 from alembic.config import Config as AlembicConfig
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, make_url, text
+from sqlalchemy.exc import OperationalError
 
 ROUND_TRIP_DATABASE = "migration_round_trip"
 
@@ -65,3 +66,22 @@ def test_migrations_round_trip(round_trip_alembic_config: AlembicConfig) -> None
         downgrade(config, "-1")
         upgrade(config, revision.revision)
     check(config)
+
+
+def test_migrations_fail_fast_on_a_held_lock(alembic_config: AlembicConfig) -> None:
+    """Fail if migrations would queue behind a lock instead of timing out.
+
+    Every Alembic run reads `alembic_version` first, so holding that table
+    exclusively blocks any run before it changes anything. The holder's idle
+    timeout ends the wait if env.py ever loses its lock_timeout, so a
+    regression shows as this test failing rather than hanging.
+    """
+    url = make_url(alembic_config.get_main_option("sqlalchemy.url", ""))
+    holder = create_engine(
+        url, connect_args={"options": "-c idle_in_transaction_session_timeout=30s"}
+    )
+    with holder.connect() as connection:
+        connection.execute(text("LOCK TABLE alembic_version IN ACCESS EXCLUSIVE MODE"))
+        with pytest.raises(OperationalError, match="lock timeout"):
+            upgrade(alembic_config, "head")
+    holder.dispose()

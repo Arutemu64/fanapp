@@ -28,6 +28,14 @@ DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 # CHECK added to or dropped from a model never reaches a migration.
 AUTOGENERATE_PLUGINS = ["alembic.autogenerate.*", "alembic.ext.checkconstraint_byname"]
 
+# Migrations run while the previous release still serves traffic (`just
+# deploy`). DDL waiting on a lock queues every later query on that table behind
+# it, stalling the app; failing fast instead rolls the whole run back, and the
+# Compose migration service's `restart: on-failure` retries it. No
+# statement_timeout, unlike the app's connections: it would kill a long
+# backfill or index build midway.
+MIGRATION_LOCK_TIMEOUT = "5s"
+
 
 def get_database_url() -> str:
     alembic_url = config.get_main_option("sqlalchemy.url")
@@ -89,6 +97,7 @@ async def run_async_migrations() -> None:
         section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"options": f"-c lock_timeout={MIGRATION_LOCK_TIMEOUT}"},
     )
 
     async with connectable.connect() as connection:

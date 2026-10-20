@@ -89,6 +89,12 @@ anything touching a large or hot table (`users`, `tickets`, `notifications`);
 this is a single-instance deployment updated by `just deploy`, so a brief lock on
 a small table is acceptable and the multi-step dance is not mandatory.
 
+`env.py` gives every migration run a 5s `lock_timeout` (`MIGRATION_LOCK_TIMEOUT`):
+a migration that can't get its lock fails, rolls back, and the Compose service
+retries it, rather than stalling the live app behind it. Don't add a per-migration
+`SET LOCAL lock_timeout`. There is deliberately no `statement_timeout`, so a long
+backfill or index build is not cut short — but while it runs it holds its locks.
+
 ## Before calling it done
 
 `just backend-lint`, `just backend-typecheck`, and `just backend-check-migrations`
