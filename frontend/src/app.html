@@ -30,8 +30,12 @@
 			pair) so it can follow the *app* theme, not the OS: the boot script below and
 			theme.svelte.ts rewrite content to match the resolved theme, which the manual
 			toggle can override away from the system scheme. Default is the light tint;
-			the boot script corrects it to the dark shell before paint when needed. -->
-		<meta name="theme-color" content="#d61450" />
+			the boot script corrects it to the dark shell before paint when needed.
+			Each value is the top bar's surface (--background), not the brand crimson, so
+			the status bar and the bar under it read as one band. iOS 26 Safari ignores
+			this tag and samples the sticky top bar itself, which lands on the same colour:
+			https://bugs.webkit.org/show_bug.cgi?id=301756 -->
+		<meta name="theme-color" content="#ffffff" />
 		<!-- Social share preview (Open Graph + Twitter Card). This app is a
 			client-rendered SPA (ssr = false), and social crawlers (Telegram, VK,
 			WhatsApp, Facebook, X) don't run JS — they read only this static shell,
