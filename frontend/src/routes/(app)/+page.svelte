@@ -236,7 +236,7 @@
 	<!-- Once the festival is over the venue, rules and activities lead nowhere useful,
 	     so Home is down to the farewell and the ways to stay in touch. -->
 	{#if phase !== 'after'}
-		<GuideSections />
+		<GuideSections {phase} />
 	{/if}
 
 	<ContactLinks />

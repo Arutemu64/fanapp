@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MapPin from '@lucide/svelte/icons/map-pin';
 	import { prefersReducedMotion } from 'svelte/motion';
 
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -31,6 +32,10 @@
 	let festivalDate = $derived(formatFestivalDate(festivalStart));
 	// The doors time isn't in the config, so it is written into the message.
 	let festivalTimes = $derived(m.home_festival_times({ time: formatFestivalTime(festivalStart) }));
+
+	// A text search, so there are no coordinates to keep in step with the venue.
+	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
+	const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent('Нижний Новгород, ДК ГАЗ')}`;
 
 	let now = $state(Date.now());
 
@@ -157,11 +162,24 @@
 					</div>
 				{/each}
 			</div>
-			<!-- The answer to "when is it" for anyone planning the trip, so it sits in
-				 the hero rather than in a list further down. -->
+			<!-- The answer to "when and where" for anyone planning the trip, so it sits
+				 in the hero rather than in a list further down. -->
 			<div>
 				<p class="text-base leading-snug font-semibold">{festivalDate}</p>
 				<p class="mt-0.5 text-sm text-white/85">{festivalTimes}</p>
+				<!-- min-h-11 gives the link a 44px tap height without a visible box
+					 (https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls). -->
+				<a
+					href={yandexMapsUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="-mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white underline underline-offset-4"
+				>
+					<MapPin class="size-4 shrink-0" aria-hidden="true" />
+					{m.home_venue()}
+					<span class="sr-only">({m.home_open_in_yandex_maps()}, {m.guide_opens_in_new_tab()})</span
+					>
+				</a>
 			</div>
 		{:else if phase === 'during' && featured}
 			<h2
