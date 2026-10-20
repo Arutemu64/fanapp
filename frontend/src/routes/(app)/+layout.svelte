@@ -28,11 +28,22 @@
 	// The document is the scroll region, so SvelteKit's own scroll handling restores the
 	// offset on back/forward (and across a reload) and resets it on a fresh push. The one
 	// thing it doesn't do is the native bottom-tab-bar convention: re-entering a primary
-	// tab by a fresh tap lands where you left it. scrollPositions remembers each tab's
-	// offset for that, and afterNavigate below applies it on top of SvelteKit's reset.
-	// A plain component-scoped object, never a module singleton, so it is discarded when a
-	// logout unmounts this layout rather than leaking into the next session.
-	const scrollPositions: Record<string, number> = {};
+	// tab by a fresh tap lands where you left it. tabMemory keeps each tab's place for
+	// that: the query it was left at (the schedule's filters, the map's picked place),
+	// which the tab links reopen, and the scroll offset, which afterNavigate below applies
+	// on top of SvelteKit's reset. The two belong together: an offset only means
+	// something on the list it was measured on.
+	// Rebuilt whenever the signed-in account changes. Logging out lands on Home, inside
+	// this same layout, so without the reset the next person on a shared phone would get
+	// the last account's search terms back.
+	let userId = $derived(user?.id ?? null);
+	let tabMemory = $derived.by(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- read only to reset on an account change
+		userId;
+		const lastSearches = $state<Record<string, string>>({});
+		const scrollTops: Record<string, number> = {};
+		return { lastSearches, scrollTops };
+	});
 
 	// Not the CSS scroll-behavior on <html>: SvelteKit's navigation scroll reset would
 	// animate with it.
@@ -168,7 +179,7 @@
 		if (navigation.shallow) return;
 		const from = navigation.from?.url.pathname;
 		if (from && TAB_ROOTS.has(from)) {
-			scrollPositions[from] = window.scrollY;
+			tabMemory.scrollTops[from] = window.scrollY;
 		}
 	});
 
@@ -176,7 +187,19 @@
 	afterNavigate((navigation) => {
 		if (navigation.shallow) return;
 		const to = navigation.to?.url.pathname ?? '';
-		const savedTop = scrollPositions[to];
+		if (TAB_ROOTS.has(to)) {
+			tabMemory.lastSearches[to] = navigation.to?.url.search ?? '';
+		}
+		// A query-only change (a filter, a picked place) is written with `reset: false`
+		// and leaves the page where it is: nothing to restore, and no jump to re-sync the
+		// chrome to. Not `enter`: on the first page SvelteKit passes `from` with a null
+		// url, whatever its type says.
+		const isQueryOnly =
+			navigation.type !== 'enter' &&
+			navigation.type !== 'popstate' &&
+			navigation.from?.url.pathname === to;
+		if (isQueryOnly) return;
+		const savedTop = tabMemory.scrollTops[to];
 		if (
 			navigation.type !== 'popstate' &&
 			TAB_ROOTS.has(to) &&
@@ -251,7 +274,12 @@
 >
 	<SkipLink />
 
-	<AppSidebar {activeUrl} avatarSeed={user?.avatar_seed ?? null} scrollToTop={scrollPageToTop} />
+	<AppSidebar
+		{activeUrl}
+		avatarSeed={user?.avatar_seed ?? null}
+		lastSearches={tabMemory.lastSearches}
+		scrollToTop={scrollPageToTop}
+	/>
 
 	<!-- overflow-x-clip, not overflow-hidden: clip guards against a wide child scrolling the
 		page sideways without making this column a scroll container, which would break every
@@ -279,7 +307,7 @@
 			style:transition-timing-function={chromeEasing}
 		>
 			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} {contentScrolled} />
+				<AppNavbar {user} {contentScrolled} lastSearches={tabMemory.lastSearches} />
 			</div>
 			<ConnectionBanner />
 		</div>
@@ -316,5 +344,10 @@
 		</main>
 	</div>
 
-	<AppBottomNav {activeUrl} avatarSeed={user?.avatar_seed ?? null} scrollToTop={scrollPageToTop} />
+	<AppBottomNav
+		{activeUrl}
+		avatarSeed={user?.avatar_seed ?? null}
+		lastSearches={tabMemory.lastSearches}
+		scrollToTop={scrollPageToTop}
+	/>
 </div>

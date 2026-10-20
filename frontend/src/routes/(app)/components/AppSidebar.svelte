@@ -7,17 +7,18 @@
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
-	import { handleNavItemClick, hasUpdateDot, isNavItemActive } from '#lib/utils/nav.js';
-	import { resolvePath } from '#lib/utils/paths.js';
+	import { handleNavItemClick, hasUpdateDot, isNavItemActive, tabHref } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
 		/** The signed-in user's face for the Profile item; null keeps the generic icon. */
 		avatarSeed: string | null;
+		/** Each tab's last query string, keyed by resolved root (see `tabHref`). */
+		lastSearches: Readonly<Record<string, string>>;
 		scrollToTop: () => void;
 	}
 
-	let { activeUrl, avatarSeed, scrollToTop }: Props = $props();
+	let { activeUrl, avatarSeed, lastSearches, scrollToTop }: Props = $props();
 
 	const appUpdate = getAppUpdateService();
 </script>
@@ -42,7 +43,7 @@
 			{const active = $derived(isNavItemActive(activeUrl, item))}
 			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
 			<a
-				href={resolvePath(href)}
+				href={tabHref(href, lastSearches)}
 				aria-current={active ? 'page' : undefined}
 				class={[
 					'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
