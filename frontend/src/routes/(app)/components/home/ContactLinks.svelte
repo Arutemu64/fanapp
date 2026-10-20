@@ -16,23 +16,45 @@
 		icon: Component;
 		/** mailto: stays in the app's tab; web links open elsewhere. */
 		external: boolean;
+		/** Lets the label be selected, against the Button's select-none. */
+		selectable: boolean;
 	}
 
-	// The address is the label rather than «Почта»: a phone with no mail app set up
-	// can't follow mailto:, and then the address is what the visitor copies.
+	// The address is the label rather than «Почта»: a device with no mail app set up
+	// can't follow mailto:, and then the address is what the visitor copies, so its
+	// label stays selectable.
 	const EMAIL = 'orgcom.fan@mail.ru';
 
 	const contactLinks: ContactLink[] = [
-		{ href: 'https://fancom.info/', label: m.guide_website, icon: Globe, external: true },
-		{ href: 'https://vk.com/ffest_nn', label: m.guide_vk, icon: IconVk, external: true },
+		{
+			href: 'https://fancom.info/',
+			label: m.guide_website,
+			icon: Globe,
+			external: true,
+			selectable: false
+		},
+		{
+			href: 'https://vk.com/ffest_nn',
+			label: m.guide_vk,
+			icon: IconVk,
+			external: true,
+			selectable: false
+		},
 		{
 			href: 'https://t.me/fanfan_fest_news',
 			label: m.guide_telegram,
 			icon: IconTelegram,
-			external: true
+			external: true,
+			selectable: false
 		},
-		{ href: 'https://max.ru/ffest_nn', label: m.guide_max, icon: MessageCircle, external: true },
-		{ href: `mailto:${EMAIL}`, label: () => EMAIL, icon: Mail, external: false }
+		{
+			href: 'https://max.ru/ffest_nn',
+			label: m.guide_max,
+			icon: MessageCircle,
+			external: true,
+			selectable: false
+		},
+		{ href: `mailto:${EMAIL}`, label: () => EMAIL, icon: Mail, external: false, selectable: true }
 	];
 </script>
 
@@ -53,6 +75,7 @@
 					rel={link.external ? 'noopener noreferrer' : undefined}
 					variant="outline"
 					size="sm"
+					class={link.selectable ? 'select-text' : undefined}
 				>
 					<link.icon data-icon="inline-start" aria-hidden="true" />
 					{link.label()}
