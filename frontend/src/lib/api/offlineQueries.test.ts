@@ -9,14 +9,14 @@ vi.mock('$app/env/public', () => ({ PUBLIC_API_URL: 'https://api.test' }));
 vi.mock('#lib/services/reachability.js', () => ({ isReachable: () => true }));
 
 // Answers every request with an empty body, except the feed, which always has a
-// next page, so a refetch would walk as many pages as the cache holds.
-function stubApi() {
-	const fetchMock = vi.fn<typeof fetch>((input) => {
+// next page, so a refetch would walk as many pages as the cache holds. The feed
+// answers once `feedGate` settles, to hold a fetch in flight.
+function stubApi(feedGate: Promise<unknown> = Promise.resolve()) {
+	const fetchMock = vi.fn<typeof fetch>(async (input) => {
 		const url = new URL(input instanceof Request ? input.url : String(input), 'https://api.test');
-		const body = url.pathname.endsWith('/notifications/')
-			? { notifications: [], next_cursor: 'next' }
-			: {};
-		return Promise.resolve(Response.json(body));
+		if (!url.pathname.endsWith('/notifications/')) return Response.json({});
+		await feedGate;
+		return Response.json({ notifications: [], next_cursor: 'next' });
 	});
 	vi.stubGlobal('fetch', fetchMock);
 	return fetchMock;
@@ -53,10 +53,40 @@ describe('warmOfflineCache', () => {
 		const queryClient = clientWithDeepFeed();
 
 		await warmOfflineCache(queryClient);
-		await vi.waitFor(() => expect(feedRequests(fetchMock)).toBe(1));
+		await vi.waitFor(() => expect(queryClient.isFetching()).toBe(0));
 
+		expect(feedRequests(fetchMock)).toBe(1);
 		const feed = queryClient.getQueryData(notificationsFeedOptions().queryKey);
 		expect(feed?.pages).toHaveLength(1);
+		queryClient.clear();
+	});
+
+	it('never shortens the list under a reader who opens the feed mid-warm', async () => {
+		const { promise: feedGate, resolve: answerFeed } = Promise.withResolvers<undefined>();
+		const fetchMock = stubApi(feedGate);
+		const queryClient = clientWithDeepFeed();
+
+		await warmOfflineCache(queryClient);
+		await vi.waitFor(() => expect(feedRequests(fetchMock)).toBe(1));
+
+		// The reader arrives while the first-page fetch is still on its way.
+		const shown: number[] = [];
+		const observer = new InfiniteQueryObserver(queryClient, {
+			...notificationsFeedOptions(),
+			enabled: false
+		});
+		shown.push(observer.getCurrentResult().data?.pages.length ?? 0);
+		const unsubscribe = observer.subscribe((result) => {
+			shown.push(result.data?.pages.length ?? 0);
+		});
+
+		answerFeed(undefined);
+		await vi.waitFor(() => expect(queryClient.isFetching()).toBe(0));
+
+		expect(shown.at(0)).toBe(1);
+		expect(shown.every((length) => length >= 1)).toBe(true);
+		expect(Math.min(...shown)).toBe(Math.max(...shown));
+		unsubscribe();
 		queryClient.clear();
 	});
 
@@ -69,7 +99,9 @@ describe('warmOfflineCache', () => {
 		}).subscribe(() => {});
 
 		await warmOfflineCache(queryClient);
-		await vi.waitFor(() => expect(feedRequests(fetchMock)).toBe(3));
+		await vi.waitFor(() => expect(queryClient.isFetching()).toBe(0));
+
+		expect(feedRequests(fetchMock)).toBe(3);
 
 		const feed = queryClient.getQueryData(notificationsFeedOptions().queryKey);
 		expect(feed?.pages).toHaveLength(3);

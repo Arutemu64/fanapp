@@ -1,4 +1,4 @@
-import type { QueryClient, QueryKey } from '@tanstack/svelte-query';
+import type { InfiniteData, QueryClient, QueryKey } from '@tanstack/svelte-query';
 
 import {
 	countUnreadNotificationsOptions,
@@ -72,6 +72,8 @@ export const QUERY_CACHE_BUSTER = '2';
 
 const QUEST_HISTORY_PAGE_SIZE = 20;
 
+type FeedData = InfiniteData<unknown>;
+
 // The two feeds are infinite queries, so the key carries the page size: the warm
 // prefetch below and the feed on screen must build the same options, or the
 // prefetch fills an entry the screen never reads.
@@ -100,16 +102,34 @@ export function questHistoryFeedOptions() {
  * A stale infinite query refetches every page it holds, one request after the
  * other (https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries),
  * so a feed scrolled ten pages deep would cost ten round trips on each warm.
- * Off screen nobody reads the older pages: refetch the first one only, which
- * also drops the rest from the saved copy, and the feed loads them again on
- * scroll. On screen the feed's own refetch keeps every page it shows, and a
- * one-page fetch it joined would cut the list short under the reader.
+ * Off screen nobody reads the older pages, so a stale feed is cut to its first
+ * page, which the warm then refetches alone; the saved copy drops the rest too,
+ * and the feed loads them again on scroll. On screen it is left whole, for the
+ * feed's own refetch of every page it shows.
+ *
+ * Cut in the cache before the fetch, not by fetching `pages: 1`: a reader who
+ * opens the feed mid-fetch joins the request in flight, and one returning fewer
+ * pages than they were shown would shorten the list under them.
+ *
+ * Returns whether it cut the feed. The write clears the stale flag, so the
+ * caller then forces the refetch.
  */
-function feedPagesToWarm(queryClient: QueryClient, queryKey: QueryKey): number | undefined {
-	const query = queryClient.getQueryCache().find({ queryKey, exact: true });
-	const onScreen = (query?.getObserversCount() ?? 0) > 0;
-	// undefined: as many pages as the feed holds.
-	return onScreen ? undefined : 1;
+function trimOffScreenFeed(queryClient: QueryClient, queryKey: QueryKey): boolean {
+	const query = queryClient.getQueryCache().find<FeedData>({ queryKey, exact: true });
+	if (!query || query.getObserversCount() > 0) return false;
+
+	// Unset means TanStack's own default, 0. A function or 'static' staleTime is
+	// not resolved here, so a feed given one is left whole.
+	const { staleTime = 0 } = queryClient.defaultQueryOptions({ queryKey });
+	if (typeof staleTime !== 'number' || !query.isStaleByTime(staleTime)) return false;
+
+	// The old timestamp stays: a first page cut from an old copy is no fresher.
+	queryClient.setQueryData<FeedData>(
+		queryKey,
+		(feed) => feed && { pages: feed.pages.slice(0, 1), pageParams: feed.pageParams.slice(0, 1) },
+		{ updatedAt: query.state.dataUpdatedAt }
+	);
+	return true;
 }
 
 /**
@@ -134,11 +154,11 @@ export async function warmOfflineCache(queryClient: QueryClient): Promise<void> 
 	void queryClient.query(getSubscriptionsOptions()).catch(() => {});
 	void queryClient.query(countUnreadNotificationsOptions()).catch(() => {});
 	const notificationsFeed = notificationsFeedOptions();
+	const notificationsTrimmed = trimOffScreenFeed(queryClient, notificationsFeed.queryKey);
 	void queryClient
-		.infiniteQuery({
-			...notificationsFeed,
-			pages: feedPagesToWarm(queryClient, notificationsFeed.queryKey)
-		})
+		.infiniteQuery(
+			notificationsTrimmed ? { ...notificationsFeed, staleTime: 0 } : notificationsFeed
+		)
 		.catch(() => {});
 
 	// Awaited, not read from the cache: on a first launch nothing is saved yet,
@@ -149,11 +169,9 @@ export async function warmOfflineCache(queryClient: QueryClient): Promise<void> 
 	if (config?.quest_enabled && stillSignedIn) {
 		void queryClient.query(getQuestOptions()).catch(() => {});
 		const questHistoryFeed = questHistoryFeedOptions();
+		const questHistoryTrimmed = trimOffScreenFeed(queryClient, questHistoryFeed.queryKey);
 		void queryClient
-			.infiniteQuery({
-				...questHistoryFeed,
-				pages: feedPagesToWarm(queryClient, questHistoryFeed.queryKey)
-			})
+			.infiniteQuery(questHistoryTrimmed ? { ...questHistoryFeed, staleTime: 0 } : questHistoryFeed)
 			.catch(() => {});
 	}
 }
