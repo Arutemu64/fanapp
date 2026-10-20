@@ -1,7 +1,9 @@
 from email import message_from_bytes, policy
 from email.headerregistry import AddressHeader
 
+import aiosmtplib
 import pytest
+from aiosmtplib import SMTPConnectError, SMTPServerDisconnected
 from pydantic import NameEmail, SecretStr
 
 from fanfan.adapters.mail.config import MailConfig
@@ -12,12 +14,12 @@ from fanfan.core.exceptions.email import EmailDeliveryFailed
 pytestmark = pytest.mark.unit
 
 
-def _config(port: int = 587) -> MailConfig:
+def _config() -> MailConfig:
     return MailConfig(
         username="robot",
         password=SecretStr("secret"),
         host="127.0.0.1",
-        port=port,
+        port=587,
         sender=NameEmail(name="ФАН-ФАН", email="noreply@fanfan.example"),
         timeout=1,
     )
@@ -88,11 +90,23 @@ def test_message_id_uses_sender_domain() -> None:
     assert mime["Message-ID"].endswith("@fanfan.example>")
 
 
-async def test_smtp_failure_becomes_domain_error() -> None:
+@pytest.mark.parametrize(
+    "error",
+    [
+        SMTPConnectError("Connection refused"),
+        # Raised mid-send — the production case.
+        SMTPServerDisconnected("Unexpected EOF received"),
+    ],
+)
+async def test_smtp_failure_becomes_domain_error(
+    error: Exception, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # A relay outage must surface as a domain error (mapped to 502) instead of an
     # unhandled exception, so the caller reports it and it stays out of Sentry.
-    # Port 1 on loopback refuses the connection, which aiosmtplib raises as
-    # SMTPConnectError.
-    sender = SmtpEmailSender(_config(port=1))
+    async def failing_send(*args: object, **kwargs: object) -> None:
+        raise error
+
+    monkeypatch.setattr(aiosmtplib, "send", failing_send)
+    sender = SmtpEmailSender(_config())
     with pytest.raises(EmailDeliveryFailed):
         await sender.send(_message())
