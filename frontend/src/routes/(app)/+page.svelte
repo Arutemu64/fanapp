@@ -25,6 +25,7 @@
 
 	import { getFestivalPhase, nextBoundary } from './components/home/festivalPhase';
 	import GetReadySection from './components/home/GetReadySection.svelte';
+	import GuideSections from './components/home/GuideSections.svelte';
 	import HeroCard from './components/home/HeroCard.svelte';
 	import {
 		getNotificationsOn,
@@ -212,20 +213,24 @@
 	{/if}
 {/snippet}
 
-{#if twoColumns}
-	<div
-		class="flex flex-col gap-5 sm:gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start"
-	>
+<div class="flex flex-col gap-10">
+	{#if twoColumns}
+		<div
+			class="flex flex-col gap-5 sm:gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start"
+		>
+			<div class="flex flex-col gap-5 sm:gap-6">
+				{@render main()}
+			</div>
+			<div class="flex flex-col gap-5 sm:gap-6">
+				{@render supporting()}
+			</div>
+		</div>
+	{:else}
 		<div class="flex flex-col gap-5 sm:gap-6">
 			{@render main()}
-		</div>
-		<div class="flex flex-col gap-5 sm:gap-6">
 			{@render supporting()}
 		</div>
-	</div>
-{:else}
-	<div class="flex flex-col gap-5 sm:gap-6">
-		{@render main()}
-		{@render supporting()}
-	</div>
-{/if}
+	{/if}
+
+	<GuideSections festivalStart={config.festival_start} />
+</div>

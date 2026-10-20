@@ -109,8 +109,8 @@ test.describe('native feel', () => {
 		const scrolledTo = await page.evaluate(() => window.scrollY);
 
 		const tabs = page.getByRole('navigation', { name: 'Разделы' });
-		await tabs.getByRole('link', { name: 'Гид' }).click();
-		await expect(page).toHaveURL('/guide');
+		await tabs.getByRole('link', { name: 'Карта' }).click();
+		await expect(page).toHaveURL('/map');
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 
 		await tabs.getByRole('link', { name: 'Программа' }).click();
@@ -150,9 +150,9 @@ test.describe('native feel', () => {
 		await expect(page).toHaveURL('/profile');
 		await page
 			.getByRole('navigation', { name: 'Разделы' })
-			.getByRole('link', { name: 'Гид' })
+			.getByRole('link', { name: 'Карта' })
 			.click();
-		await expect(page).toHaveURL('/guide');
+		await expect(page).toHaveURL('/map');
 
 		/* eslint-disable playwright/no-conditional-in-test -- the expectation is per device project and browser support */
 		const expected =
