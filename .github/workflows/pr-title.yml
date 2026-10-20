@@ -60,6 +60,7 @@ jobs:
             auth
             feedback
             guide
+            home
             notifications
             profile
             quest
