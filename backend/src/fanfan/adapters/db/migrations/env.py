@@ -1,10 +1,8 @@
 import asyncio
-import os
 from logging.config import fileConfig
-from typing import Any
 
 from alembic import context
-from sqlalchemy import CheckConstraint, pool
+from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -24,41 +22,14 @@ target_metadata = BaseORM.metadata
 # app settings instead, while tests may still override sqlalchemy.url explicitly.
 DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 
-# Alembic ≥1.19 ships checkconstraint_byname, which detects named CHECK
-# constraints by default. Its all_table_check_constraints() filters out
-# type-bound constraints (_type_bound=True) from the metadata side, but the
-# reflected DB side still has them — so every Enum(create_constraint=True,
-# native_enum=False) constraint shows up as a spurious "removed" op. We hide
-# only those reflected constraints whose names match a type-bound metadata
-# constraint, keeping the plugin active for non-enum CHECK constraints.
-_TYPE_BOUND_CK_NAMES: frozenset[str] = frozenset(
-    str(ck.name)
-    for table in target_metadata.sorted_tables
-    for ck in table.constraints
-    if isinstance(ck, CheckConstraint) and getattr(ck, "_type_bound", False) and ck.name
-)
-
-
-def _include_object(
-    obj: Any,  # noqa: ANN401  # Alembic's include_object hook signature
-    name: str | None,
-    type_: str,
-    reflected: bool,  # noqa: FBT001
-    compare_to: Any,  # noqa: ANN401  # Alembic's include_object hook signature
-) -> bool:
-    if type_ == "check_constraint" and reflected:
-        return name not in _TYPE_BOUND_CK_NAMES
-    return True
+# Named CHECK constraints are only diffed by this opt-in plugin (opt-in since
+# Alembic 1.19.2). It suits schemas whose constraints are all named by a
+# naming_convention, as ours are (adapters/db/models/base.py); without it, a
+# CHECK added to or dropped from a model never reaches a migration.
+AUTOGENERATE_PLUGINS = ["alembic.autogenerate.*", "alembic.ext.checkconstraint_byname"]
 
 
 def get_database_url() -> str:
-    # Explicit override for tooling that has no full app config to load (e.g.
-    # the throwaway-DB autogenerate flow in `just backend-generate-auto`). Only
-    # used when set; runtime migrations still fall through to app settings.
-    override = os.getenv("ALEMBIC_DATABASE_URL")
-    if override:
-        return override
-
     alembic_url = config.get_main_option("sqlalchemy.url")
     if alembic_url and alembic_url != DEFAULT_ALEMBIC_DATABASE_URL:
         return alembic_url
@@ -86,7 +57,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
-        include_object=_include_object,
+        autogenerate_plugins=AUTOGENERATE_PLUGINS,
     )
 
     with context.begin_transaction():
@@ -99,7 +70,7 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
-        include_object=_include_object,
+        autogenerate_plugins=AUTOGENERATE_PLUGINS,
     )
 
     with context.begin_transaction():
