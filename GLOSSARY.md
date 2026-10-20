@@ -37,7 +37,7 @@ Volunteers and organizers together: the people running the festival rather than 
 _Avoid_: Crew, team
 
 **User number**:
-A user's permanent six-digit number, drawn at random when the account is created, by which staff find the user in person — read aloud or scanned from the quest QR code. It is not secret and not an access credential. The screens call it «ID в приложении», or «ID» where the context is already clear.
+A user's permanent six-digit number, drawn at random when the account is created, by which staff find the user in person — read aloud or scanned from the quest QR code. It is not secret and not an access credential. The screens call it «ID пользователя», or «ID» where the context is already clear.
 _Avoid_: Public ID, participant number, «номер участника», bare «номер»
 
 ## Schedule

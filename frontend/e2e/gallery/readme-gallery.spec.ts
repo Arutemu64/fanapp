@@ -30,7 +30,9 @@ const HOUR_MS = 3_600_000;
 const now = GALLERY_NOW.getTime();
 
 // A logged-in visitor during the festival, with voting open and two unread
-// notifications for the bell badge.
+// notifications for the bell badge. The quest is on, so every signed-in boot
+// also saves the score and history for offline (warmOfflineCache): those two
+// answer on every screen, not just the quest's.
 const visitorAtFestival: Handlers = {
 	...loggedInAs({ ticket: null }),
 	'GET /config': json({
@@ -49,7 +51,9 @@ const visitorAtFestival: Handlers = {
 	'GET /schedule/': json({ schedule: scheduleEntries }),
 	'GET /schedule/subscriptions/': json({ subscriptions }),
 	'GET /voting/nominations/single': json(singleDefile),
-	'GET /notifications/': json({ notifications, next_cursor: null })
+	'GET /notifications/': json({ notifications, next_cursor: null }),
+	'GET /quest': json(questStanding),
+	'GET /quest/history': json<ListQuestHistoryOutput>({ awards: [], next_cursor: null })
 };
 
 // Playwright only writes PNG or JPEG, so the browser that took the shot re-encodes
@@ -149,8 +153,7 @@ test('profile', async ({ page, api }) => {
 			username: 'ПушистыйПингвин42',
 			ticket: { id: 'ticket-1', barcode: '4600000000017', role: 'visitor' },
 			social_identities: [{ provider: 'telegram' }]
-		}),
-		'GET /quest': json(questStanding)
+		})
 	});
 	await page.goto('/profile');
 	await expect(page.getByText('Включены')).toBeVisible();
@@ -160,11 +163,7 @@ test('profile', async ({ page, api }) => {
 });
 
 test('quest', async ({ page, api }) => {
-	api.use({
-		...loggedInAs({ username: 'ПушистыйПингвин42' }),
-		'GET /quest': json(questStanding),
-		'GET /quest/history': json<ListQuestHistoryOutput>({ awards: [], next_cursor: null })
-	});
+	api.use(loggedInAs({ username: 'ПушистыйПингвин42' }));
 	await page.goto('/profile/quest');
 	await expect(page.getByRole('img', { name: 'QR-код игрока @ПушистыйПингвин42' })).toBeVisible();
 	await expect(page.getByText('Место')).toBeVisible();
