@@ -3,7 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { resolvePath } from '#lib/utils/paths.js';
 
-import { handleNavItemClick, hasUpdateDot, isActivePath, isNavItemActive, toAppPath } from './nav';
+import {
+	handleNavItemClick,
+	hasUpdateDot,
+	isActivePath,
+	isNavItemActive,
+	tabHref,
+	toAppPath
+} from './nav';
 
 describe('isActivePath', () => {
 	it.each([
@@ -60,6 +67,17 @@ describe('handleNavItemClick', () => {
 		handleNavItemClick(event, resolve('schedule') + '/changes', 'schedule', scrollToTop);
 		expect(preventDefault).not.toHaveBeenCalled();
 		expect(scrollToTop).not.toHaveBeenCalled();
+	});
+});
+
+describe('tabHref', () => {
+	it('reopens the query the tab was left at', () => {
+		const lastSearches = { [resolve('schedule')]: '?scope=mine' };
+		expect(tabHref('schedule', lastSearches)).toBe(`${resolve('schedule')}?scope=mine`);
+	});
+
+	it('is the bare root for a tab with nothing remembered', () => {
+		expect(tabHref('map', {})).toBe(resolve('map'));
 	});
 });
 

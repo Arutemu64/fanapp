@@ -28,6 +28,16 @@ export function isNavItemActive(
 }
 
 /**
+ * A tab's link: its root plus the query string it was last left at (the schedule's
+ * filters, the map's picked place), so a fresh tap returns to the view the tab was
+ * left in, as a native tab bar does. `lastSearches` is keyed by resolved root.
+ */
+export function tabHref(href: Path, lastSearches: Readonly<Record<string, string>>): string {
+	const root = resolvePath(href);
+	return `${root}${lastSearches[root] ?? ''}`;
+}
+
+/**
  * Re-tapping the tab whose root you're already on returns to the top instead of
  * navigating, the native bottom-bar affordance. Exact match only: from a nested page
  * (active by prefix) the tap should navigate to the root.

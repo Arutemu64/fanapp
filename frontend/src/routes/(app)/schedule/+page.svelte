@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { afterNavigate, goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import X from '@lucide/svelte/icons/x';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { tick } from 'svelte';
+	import { onDestroy, tick, untrack } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 
 	import type {
@@ -36,10 +39,17 @@
 	import EventCard from './components/EventCard.svelte';
 	import ScheduleSkeleton from './components/ScheduleSkeleton.svelte';
 	import {
+		buildScheduleFiltersQuery,
+		parseScheduleFilters,
+		type ScheduleFilters
+	} from './scheduleFilters';
+	import {
 		buildScheduleGroups,
 		filterScheduleGroups,
 		type ScheduleBlockGroup
 	} from './scheduleGrouping';
+
+	const SEARCH_WRITE_DELAY_MS = 300;
 
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
@@ -65,9 +75,52 @@
 		})
 	);
 
-	// Store filter state locally because it only affects this page view.
-	let searchQuery: string = $state('');
-	let showOnlySubscribed: boolean = $state(false);
+	let filters = $derived(parseScheduleFilters(page.url.searchParams));
+	let showOnlySubscribed = $derived(filters.onlySubscribed);
+
+	// Local, editable mirror of the URL search term, so the list filters on every
+	// keystroke while the URL catches up after a short debounce. Seeded once (untrack);
+	// afterNavigate below re-seeds it when a navigation from elsewhere changes `q`.
+	let searchQuery = $state(untrack(() => filters.search));
+
+	// `replace` keeps the history stack from filling with every intermediate filter;
+	// `reset: false` leaves scroll and focus alone, so the keyboard stays open on the
+	// search field.
+	function applyFilters(next: ScheduleFilters) {
+		return goto(`${resolve('schedule')}${buildScheduleFiltersQuery(next)}`, {
+			replace: true,
+			reset: false
+		});
+	}
+
+	let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function cancelSearchWrite() {
+		clearTimeout(searchTimer);
+		searchTimer = undefined;
+	}
+
+	// Debounced, as replaceState is rate-limited: Safari throws a SecurityError past
+	// 100 calls in a window (https://azukiazusa.dev/blog/history-replacestate-rate-limit).
+	function writeSearchSoon() {
+		cancelSearchWrite();
+		searchTimer = setTimeout(() => {
+			searchTimer = undefined;
+			void applyFilters({ ...filters, search: searchQuery });
+		}, SEARCH_WRITE_DELAY_MS);
+	}
+
+	// A timer left running would fire after the user has moved on and navigate them
+	// back here.
+	onDestroy(cancelSearchWrite);
+
+	afterNavigate(() => {
+		// While a write is pending the URL lags behind the field on purpose.
+		if (searchTimer !== undefined) return;
+		if (filters.search !== searchQuery.trim()) {
+			searchQuery = filters.search;
+		}
+	});
 
 	// A single-select toggle group clears its value when the pressed item is tapped
 	// again. The function binding below keeps the group fully controlled
@@ -81,7 +134,9 @@
 
 	function setScope(value: string) {
 		if (value === '') return;
-		showOnlySubscribed = value === 'subscribed';
+		// Carries a search still waiting on its debounce along with it.
+		cancelSearchWrite();
+		void applyFilters({ search: searchQuery, onlySubscribed: value === 'subscribed' });
 	}
 
 	// We use the full schedule current event for countdown labels inside every row.
@@ -128,8 +183,9 @@
 	// Recovery for the no-results state: clear search + subscription filter in one tap
 	// so a user mid-event isn't stuck hunting back to two separate controls.
 	function resetFilters() {
+		cancelSearchWrite();
 		searchQuery = '';
-		showOnlySubscribed = false;
+		return applyFilters({ search: '', onlySubscribed: false });
 	}
 
 	let pageRoot: HTMLDivElement | null = null;
@@ -155,7 +211,7 @@
 		// The bar stays up while a filter hides the row, so tapping it clears the
 		// filters first and waits for the row to render.
 		if (isCurrentEventFiltered) {
-			resetFilters();
+			await resetFilters();
 			await tick();
 		}
 
@@ -223,6 +279,8 @@
 					name="schedule_search"
 					label={m.schedule_search_label()}
 					placeholder={m.schedule_search_placeholder()}
+					oninput={writeSearchSoon}
+					onclear={writeSearchSoon}
 				/>
 
 				<div class="flex items-center justify-between gap-3">

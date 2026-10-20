@@ -120,6 +120,25 @@ test.describe('native feel', () => {
 		await expect(title).toBeInViewport();
 	});
 
+	// The tab link reopens the query the tab was left at, so the restored offset lands on
+	// the same filtered list it was measured on.
+	test('reopens a tab with the filters it was left with', async ({ page, api }) => {
+		api.use({ ...loggedInAs(), 'GET /schedule/': json({ schedule: longSchedule }) });
+		await page.goto('/schedule');
+		const search = page.getByRole('searchbox', { name: 'Поиск по программе' });
+
+		await search.fill('Выступление 5');
+		await expect(page).toHaveURL((url) => url.searchParams.get('q') === 'Выступление 5');
+
+		const tabs = page.getByRole('navigation', { name: 'Разделы' });
+		await tabs.getByRole('link', { name: 'Карта' }).click();
+		await expect(page).toHaveURL('/map');
+		await tabs.getByRole('link', { name: 'Программа' }).click();
+
+		await expect(search).toHaveValue('Выступление 5');
+		await expect(page.getByText('Выступление 4', { exact: true })).toBeHidden();
+	});
+
 	// WCAG 2.4.11: a control that keyboard focus scrolls into view must not land under
 	// the top chrome, the schedule's sticky headers or the floating bottom nav.
 	test('keeps a focused control clear of the bars', async ({ page, api }) => {

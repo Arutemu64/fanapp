@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import SearchX from '@lucide/svelte/icons/search-x';
 	import { prefersReducedMotion } from 'svelte/motion';
 
@@ -10,8 +13,11 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
-	let floorId = $state(maps[0]?.id ?? '');
-	let selectedNumber = $state<number | null>(null);
+	import { buildMapSelectionQuery, type MapSelection, parseMapSelection } from './mapSelection';
+
+	let selection = $derived(parseMapSelection(page.url.searchParams));
+	let floorId = $derived(selection.floorId);
+	let selectedNumber = $derived(selection.placeNumber);
 
 	let map = $derived(maps.find((entry) => entry.id === floorId));
 	let selectedPoint = $derived(map?.points.find((point) => point.number === selectedNumber));
@@ -49,6 +55,15 @@
 		m.results_shown_of({ count: searchResults.length, total: placeCount })
 	);
 
+	// `replace` so picking places doesn't stack history entries Back would have to
+	// step through; `reset: false` leaves scroll and focus where the tap left them.
+	function select(next: MapSelection) {
+		void goto(`${resolve('map')}${buildMapSelectionQuery(next)}`, {
+			replace: true,
+			reset: false
+		});
+	}
+
 	function getFloor() {
 		return floorId;
 	}
@@ -56,13 +71,12 @@
 	// A single-select ToggleGroup hands back '' when the pressed item is tapped
 	// again; a floor must always be shown, so that tap changes nothing.
 	function setFloor(id: string) {
-		if (!id) return;
-		floorId = id;
-		selectedNumber = null;
+		if (!id || id === floorId) return;
+		select({ floorId: id, placeNumber: null });
 	}
 
 	function togglePoint(number: number) {
-		selectedNumber = selectedNumber === number ? null : number;
+		select({ floorId, placeNumber: selectedNumber === number ? null : number });
 	}
 
 	// Off the current floor only a search result can be tapped; it brings its
@@ -72,8 +86,7 @@
 			togglePoint(place.point.number);
 			return;
 		}
-		floorId = place.entry.id;
-		selectedNumber = place.point.number;
+		select({ floorId: place.entry.id, placeNumber: place.point.number });
 	}
 
 	// While searching, every row names its floor, since the results mix floors;

@@ -70,6 +70,22 @@ test.describe('map', () => {
 		await expect(page.getByRole('status').filter({ hasText: 'Мужской туалет' })).toBeVisible();
 	});
 
+	test('a link opens the plan on the place it names, and picks keep the address in step', async ({
+		page
+	}) => {
+		await page.goto('/map?floor=floor-2-3&place=7');
+
+		await expect(page.getByRole('radio', { name: '2 и 3 этажи' })).toBeChecked();
+		const photoZone = page.getByRole('button', { name: /Фотозона/ });
+		await expect(photoZone).toHaveAttribute('aria-pressed', 'true');
+
+		await photoZone.click();
+		await expect(page).toHaveURL('/map?floor=floor-2-3');
+
+		await page.getByRole('radio', { name: '1 этаж' }).click();
+		await expect(page).toHaveURL('/map');
+	});
+
 	test('a search with no match says so, and clearing it brings the list back', async ({ page }) => {
 		await page.goto('/map');
 		const search = page.getByRole('searchbox', { name: 'Поиск по карте' });
