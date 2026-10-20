@@ -14,7 +14,7 @@
 <main
 	id="main-content"
 	tabindex="-1"
-	class="relative flex min-h-dvh items-center justify-center bg-background px-4 py-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:py-10"
+	class="relative flex min-h-svh items-center justify-center bg-background px-4 py-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:py-10"
 >
 	<div class="flex w-full max-w-sm flex-col gap-3">
 		<!-- Same mark as the sidebar; see AppSidebar.svelte for why `dark:invert` is enough

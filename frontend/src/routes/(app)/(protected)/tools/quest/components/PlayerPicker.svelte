@@ -96,10 +96,15 @@
 		}
 		lookingUp = true;
 		try {
-			// Fresh, not cached: the form shows the player's current balance.
+			// Fresh, not cached: the form shows the player's current balance. One
+			// attempt that never pauses: a volunteer is waiting with the player in
+			// front of them, and a lost connection should fall back to the code at
+			// once, not wait out retries or a pause until reachability recovers.
 			const player = await queryClient.query({
 				...getQuestPlayerOptions({ path: { number: userNumber } }),
-				staleTime: 0
+				staleTime: 0,
+				retry: false,
+				networkMode: 'always'
 			});
 			onPick(player);
 		} catch (error) {
