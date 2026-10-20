@@ -307,7 +307,7 @@
 			style:transition-timing-function={chromeEasing}
 		>
 			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} {contentScrolled} />
+				<AppNavbar {user} {contentScrolled} lastSearches={tabMemory.lastSearches} />
 			</div>
 			<ConnectionBanner />
 		</div>

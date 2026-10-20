@@ -28,9 +28,10 @@ export function isNavItemActive(
 }
 
 /**
- * A tab's link: its root plus the query string it was last left at (the schedule's
- * filters, the map's picked place), so a fresh tap returns to the view the tab was
- * left in, as a native tab bar does. `lastSearches` is keyed by resolved root.
+ * A link to a tab root (the tab itself, or the navbar's back arrow going up to it): the
+ * root plus the query string it was last left at (the schedule's filters, the map's
+ * picked place), so it returns to the view the tab was left in, as a native tab bar
+ * does. `lastSearches` is keyed by resolved root; any other path comes back bare.
  */
 export function tabHref(href: Path, lastSearches: Readonly<Record<string, string>>): string {
 	const root = resolvePath(href);

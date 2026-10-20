@@ -5,6 +5,7 @@
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { tabHref } from '#lib/utils/nav.js';
 	import { resolvePath } from '#lib/utils/paths.js';
 
 	import NotificationBell from './NotificationBell.svelte';
@@ -18,9 +19,11 @@
 	interface Props {
 		user: CurrentUserDto | null;
 		contentScrolled: boolean;
+		/** Each tab's last query string, keyed by resolved root (see `tabHref`). */
+		lastSearches: Readonly<Record<string, string>>;
 	}
 
-	let { user, contentScrolled }: Props = $props();
+	let { user, contentScrolled, lastSearches }: Props = $props();
 </script>
 
 <!-- Full width so the bell pins to the right edge. Account actions (login, logout)
@@ -41,10 +44,11 @@
 	<div class="flex min-h-11 min-w-0 flex-1 items-center gap-1">
 		<!-- Leading back arrow, the top-app-bar convention: an installed iOS PWA has no
 			system back button, and unlike an in-content link this one returns with the
-			bar on any upward scroll. -ml-2 lines the arrow glyph up with the page edge. -->
+			bar on any upward scroll. Going up to a tab root reopens it as it was left, the
+			same as its tab link. -ml-2 lines the arrow glyph up with the page edge. -->
 		{#if back}
 			<Button
-				href={resolvePath(back.href)}
+				href={tabHref(back.href, lastSearches)}
 				variant="ghost"
 				size="icon"
 				class="-ml-2"

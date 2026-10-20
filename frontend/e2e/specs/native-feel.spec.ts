@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import type { GetScheduleOutput } from '../../src/lib/api/generated/types.gen';
 
-import { expect, json, loggedInAs, test } from '../fixtures';
+import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
 // The phone-only "native feel" layer: page transitions and the bottom-sheet dialog. Each check
 // also pins that the desktop project keeps the plain behaviour.
@@ -137,6 +137,50 @@ test.describe('native feel', () => {
 
 		await expect(search).toHaveValue('Выступление 5');
 		await expect(page.getByText('Выступление 4', { exact: true })).toBeHidden();
+	});
+
+	// Going up from a nested page is the same return as the tab tap, not a fresh visit.
+	test('the back arrow returns to the tab with its filters', async ({ page, api }) => {
+		api.use({
+			...organizer(),
+			'GET /schedule/': json({ schedule: longSchedule }),
+			'GET /schedule/changes/': json({ schedule_changes: [], next_cursor: null })
+		});
+		await page.goto('/schedule?q=Выступление+5');
+
+		await page.getByRole('link', { name: 'Изменения программы' }).click();
+		await expect(page).toHaveURL('/schedule/changes');
+		await page.getByRole('link', { name: 'Назад к программе' }).click();
+
+		await expect(page).toHaveURL((url) => url.searchParams.get('q') === 'Выступление 5');
+		await expect(page.getByRole('searchbox', { name: 'Поиск по программе' })).toHaveValue(
+			'Выступление 5'
+		);
+	});
+
+	// Logout lands on Home inside the same shell, so the tabs must forget what the last
+	// account searched for: the next person on a shared phone starts clean.
+	test('forgets the tabs’ filters on logout', async ({ page, api }) => {
+		api.use({
+			...loggedInAs(),
+			'GET /schedule/': json({ schedule: longSchedule }),
+			'POST /auth/logout': json({})
+		});
+		await page.goto('/schedule?q=Выступление+5');
+		const tabs = page.getByRole('navigation', { name: 'Разделы' });
+		await expect(tabs.getByRole('link', { name: 'Программа' })).toHaveAttribute('href', /q=/);
+
+		await tabs.getByRole('link', { name: 'Профиль' }).click();
+		await page.getByRole('main').getByRole('button', { name: 'Выйти' }).click();
+		await page
+			.getByRole('alertdialog', { name: 'Выйти из аккаунта?' })
+			.getByRole('button', { name: 'Выйти' })
+			.click();
+		await expect(page).toHaveURL('/');
+
+		await tabs.getByRole('link', { name: 'Программа' }).click();
+		await expect(page).toHaveURL('/schedule');
+		await expect(page.getByRole('searchbox', { name: 'Поиск по программе' })).toHaveValue('');
 	});
 
 	// WCAG 2.4.11: a control that keyboard focus scrolls into view must not land under
