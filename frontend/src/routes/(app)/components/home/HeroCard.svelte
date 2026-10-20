@@ -29,7 +29,7 @@
 	// by the page so the hero renders for guests and on a cold/offline load.
 	let startMs = $derived(new Date(festivalStart).getTime());
 	// When and where, as on a ticket. The doors time and the venue aren't in the
-	// config, so they are copy; the address and route sit in Home's «Дорога и вход».
+	// config, so they are copy; the address and route sit in Home's «Информация».
 	let facts = $derived([
 		formatFestivalDate(festivalStart),
 		m.guide_venue_name(),

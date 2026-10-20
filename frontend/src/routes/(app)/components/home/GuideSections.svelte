@@ -68,10 +68,8 @@
 </script>
 
 <!-- The festival guide, under Home's live part. The map isn't listed: its tab is
-     in view on every screen. Group names say what is inside, never a bare
-     «Важное», which could hold anything (NN/g, information scent:
-     https://www.nngroup.com/articles/information-scent/). Grouped rows that each lead
-     somewhere, the phone-settings shape for "drill in"
+     in view on every screen. Grouped rows that each lead somewhere, the
+     phone-settings shape for "drill in"
      (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables).
      Read as a magazine: each head sits over three times nearer its list than the
      block before it, so it reads as that list's title
@@ -79,9 +77,9 @@
      From lg the activities take a column of their own beside the two short groups,
      the same groups side by side rather than a second design. -->
 <div class="flex flex-col gap-10 lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-6">
-	<section aria-labelledby="guide-visit" class="flex flex-col gap-3">
-		<h2 id="guide-visit" class="text-section text-foreground">
-			{m.guide_visit_heading()}
+	<section aria-labelledby="guide-info" class="flex flex-col gap-3">
+		<h2 id="guide-info" class="text-section text-foreground">
+			{m.guide_info_heading()}
 		</h2>
 		<MenuGroup>
 			<MenuRow
