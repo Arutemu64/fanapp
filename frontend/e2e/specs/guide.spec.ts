@@ -10,6 +10,21 @@ test.describe('guide articles', () => {
 		await expect(page.getByText('Почти 500', { exact: false })).toBeVisible();
 	});
 
+	test('«Важное» leads with the entry rules, and the hero links the venue to maps', async ({
+		page
+	}) => {
+		await page.goto('/');
+
+		await expect(page.getByRole('link', { name: /ДК ГАЗ/ })).toHaveAttribute(
+			'href',
+			/yandex\.ru\/maps/
+		);
+		await page.getByRole('link', { name: /Вход и правила/ }).click();
+
+		await expect(page).toHaveURL('/guide/entry');
+		await expect(page.getByRole('heading', { name: 'Досмотр на входе' })).toBeVisible();
+	});
+
 	test('the back arrow leads Home even when the article is opened directly', async ({ page }) => {
 		await page.goto('/guide/fair');
 
