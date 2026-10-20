@@ -249,7 +249,7 @@ a partial double is fine, since only the methods it does define are checked.
 A double for a *concrete* collaborator (`WebPushClient`, `TCloudClient`) does
 the same and skips `super().__init__()`, since the overrides replace every use
 of what the real constructor builds. Where even that is impossible — aiogram's
-`Bot`, `FastMail` — the double stays structural and the call site carries a
+`Bot` — the double stays structural and the call site carries a
 `# ty: ignore[<rule>]` naming the reason. Mypy-syntax `# type: ignore[code]`
 does **not** work: ty ignores a bracketed code without a `ty:` prefix, so such a
 comment suppresses nothing ([ty suppression](https://docs.astral.sh/ty/suppression/)).
