@@ -232,5 +232,5 @@
 		</div>
 	{/if}
 
-	<GuideSections />
+	<GuideSections festivalStart={config.festival_start} />
 </div>

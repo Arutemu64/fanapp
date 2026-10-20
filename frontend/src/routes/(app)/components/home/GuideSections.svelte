@@ -13,6 +13,23 @@
 	import MenuRow from '#lib/components/MenuRow.svelte';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { formatFestivalDate, formatFestivalTime } from '#lib/utils/formatters.js';
+
+	interface Props {
+		/** The configured start, the same one the hero counts down to. */
+		festivalStart: string;
+	}
+
+	let { festivalStart }: Props = $props();
+
+	// Before the festival the hero shows only a countdown, so the date and start
+	// are spelled out here for anyone planning the trip. The doors time isn't in
+	// the config.
+	let facts = $derived([
+		formatFestivalDate(festivalStart),
+		m.guide_doors(),
+		m.guide_start({ time: formatFestivalTime(festivalStart) })
+	]);
 
 	// A text search, so there are no coordinates to keep in step with the venue.
 	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
@@ -70,21 +87,24 @@
 <!-- The festival guide under Home's live cards: grouped rows that each lead somewhere,
      the phone-settings shape for "drill in"
      (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables),
-     so every target is a full-width tap. The hero above already gives the date and
-     start, so only the doors time, which isn't in the config, rides on the venue row.
-     Each head sits over three times nearer its list than the block before it, so it
+     so every target is a full-width tap. Each head sits over three times nearer its list than the block before it, so it
      reads as that list's title (https://practicaltypography.com/space-above-and-below.html). -->
 <div class="flex flex-col gap-10">
 	<section aria-labelledby="guide-important" class="flex flex-col gap-3">
 		<h2 id="guide-important" class="px-1 text-section text-foreground">
 			{m.guide_important_heading()}
 		</h2>
+		<ul class="flex flex-wrap gap-2 px-1">
+			{#each facts as fact (fact)}
+				<li class="rounded-full bg-muted px-3 py-1 text-sm font-medium">{fact}</li>
+			{/each}
+		</ul>
 		<MenuGroup>
 			<MenuRow
 				externalHref={yandexMapsUrl}
 				newTab
 				label={`${m.guide_venue_name()}, ${m.guide_venue_address()}`}
-				description={`${m.guide_doors()}. ${m.guide_open_in_yandex_maps()}`}
+				description={m.guide_open_in_yandex_maps()}
 				icon={MapPin}
 			/>
 			<MenuRow
