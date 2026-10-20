@@ -1,6 +1,6 @@
 import json
 
-import httpx
+import httpx2
 from authlib.integrations.starlette_client import OAuth
 from authlib.oauth2.client import OAuth2Client
 from dishka import Provider, Scope, provide
@@ -16,7 +16,7 @@ def _vk_compliance_fix(session: OAuth2Client) -> None:
     before Authlib processes the response prevents a validation failure.
     """
 
-    def _strip_id_token(resp: httpx.Response) -> httpx.Response:
+    def _strip_id_token(resp: httpx2.Response) -> httpx2.Response:
         token = resp.json()
         token.pop("id_token", None)
         resp._content = json.dumps(token).encode("utf-8")  # noqa: SLF001
