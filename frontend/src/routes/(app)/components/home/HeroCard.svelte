@@ -4,7 +4,11 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
-	import { formatEventNumber, formatFestivalDateTime } from '#lib/utils/formatters.js';
+	import {
+		formatEventNumber,
+		formatFestivalDate,
+		formatFestivalTime
+	} from '#lib/utils/formatters.js';
 
 	import type { FestivalPhase } from './festivalPhase';
 	import type { FeaturedAct } from './stage';
@@ -24,7 +28,9 @@
 	// Program start, on the venue clock. Configurable via GET /config and passed in
 	// by the page so the hero renders for guests and on a cold/offline load.
 	let startMs = $derived(new Date(festivalStart).getTime());
-	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
+	let festivalDate = $derived(formatFestivalDate(festivalStart));
+	// The doors time isn't in the config, so it is written into the message.
+	let festivalTimes = $derived(m.home_festival_times({ time: formatFestivalTime(festivalStart) }));
 
 	let now = $state(Date.now());
 
@@ -89,13 +95,15 @@
 			 swapping the art busts every cache with no stale copy. LCP element:
 			 eager + fetchpriority="high", never lazy.
 			 `sizes` states the *cover* width, not the box width: `object-cover` scales
-			 the 16/9 art to fill the box, and on a phone the after-festival panel
-			 makes the box taller than 16/9, which upscales the art past 100vw. From
+			 the 16/9 art to fill the box. The box fits its content, which keeps the
+			 cover width within 100vw from a 360px phone up; only the after-festival
+			 panel on a 320px phone runs taller (about 110vw), a slight upscale the dark
+			 scrim hides, which isn't worth fetching a bigger file on every phone. From
 			 lg the card is capped by the page column (max-w-5xl). -->
 		<enhanced:img
 			src="./main.webp"
 			alt=""
-			sizes="(min-width: 1024px) 960px, 125vw"
+			sizes="(min-width: 1024px) 960px, 100vw"
 			loading="eager"
 			decoding="async"
 			fetchpriority="high"
@@ -104,20 +112,22 @@
 		/>
 	{/if}
 	<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
-		 layer under it to hold contrast wherever the crop lands. The phase label
-		 sits near the scrim's light top end, so it stays solid white: at
-		 `white/85` it measured 4.1:1 over the brightest pixel of the phone crop. -->
+		 layer under it to hold contrast wherever the crop lands. The card fits its
+		 content, so text runs right up to the top edge, and the scrim stays dark
+		 there too. Against the brightest pixel behind each line, from 360 to 1440px
+		 wide in all three phases, the 12px `white/85` labels measured at least
+		 4.79:1. The phase label sits nearest the top and stays solid white. -->
 	<div
 		aria-hidden="true"
-		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/60 to-black/35"
+		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/70 to-black/60"
 	></div>
 
-	<div class="flex flex-col gap-3 p-4 pt-16 sm:p-6 sm:pt-24">
+	<div class="flex flex-col gap-3 p-4 sm:p-6">
 		{#if phase === 'before'}
 			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
 				{m.home_before_festival()}
 			</h2>
-			<!-- Hide the live-ticking grid from screen readers; the static start date conveys it -->
+			<!-- Hide the live-ticking grid from screen readers; the date below conveys it -->
 			<div class="grid max-w-md grid-cols-4 gap-2" aria-hidden="true">
 				{#each units as unit, index (unit.id)}
 					<div
@@ -147,7 +157,12 @@
 					</div>
 				{/each}
 			</div>
-			<p class="sr-only">{m.home_festival_start({ date: festivalDate })}</p>
+			<!-- The answer to "when is it" for anyone planning the trip, so it sits in
+				 the hero rather than in a list further down. -->
+			<div>
+				<p class="text-base leading-snug font-semibold">{festivalDate}</p>
+				<p class="mt-0.5 text-sm text-white/85">{festivalTimes}</p>
+			</div>
 		{:else if phase === 'during' && featured}
 			<h2
 				id="hero-heading"

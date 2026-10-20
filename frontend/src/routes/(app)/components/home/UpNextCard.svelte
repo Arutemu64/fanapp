@@ -27,9 +27,11 @@
 	}
 </script>
 
-{#snippet eventRow(event: ScheduleEventWithSubscription)}
+<!-- The acts up next are consecutive, so their order already says how far off
+     each one is; only the subscribed act further down the programme gets a distance. -->
+{#snippet eventRow(event: ScheduleEventWithSubscription, showUntil: boolean)}
 	{const number = $derived(formatEventNumber(event.number))}
-	{const until = $derived(untilLabel(event))}
+	{const until = $derived(showUntil ? untilLabel(event) : null)}
 	<div class="flex min-w-0 items-center gap-3">
 		{#if number !== null}
 			<NumberBadge {number} />
@@ -79,7 +81,7 @@
 	{#if snapshot.upNext.length > 0}
 		<ol class="flex flex-col gap-3">
 			{#each snapshot.upNext as event (event.id)}
-				<li>{@render eventRow(event)}</li>
+				<li>{@render eventRow(event, false)}</li>
 			{/each}
 		</ol>
 	{/if}
@@ -87,7 +89,7 @@
 	{#if snapshot.nextSubscribed}
 		<div class="flex flex-col gap-2 border-t border-border pt-4">
 			<h3 class="text-sm font-medium text-muted-foreground">{m.home_from_subscriptions()}</h3>
-			{@render eventRow(snapshot.nextSubscribed)}
+			{@render eventRow(snapshot.nextSubscribed, true)}
 		</div>
 	{/if}
 </section>
