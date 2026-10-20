@@ -1,11 +1,10 @@
 import logging
 
 from dishka import Provider, Scope, provide
-from fastapi_mail import ConnectionConfig, FastMail
 
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.mail.config import MailConfig
-from fanfan.adapters.mail.email_sender import FastEmailSender, LogOnlyEmailSender
+from fanfan.adapters.mail.email_sender import LogOnlyEmailSender, SmtpEmailSender
 from fanfan.application.ports.email_sender import EmailSender
 
 logger = logging.getLogger(__name__)
@@ -29,15 +28,4 @@ class MailProvider(Provider):
             )
             return LogOnlyEmailSender()
 
-        connection_config = ConnectionConfig(
-            MAIL_USERNAME=config.username,
-            MAIL_PASSWORD=config.password,
-            MAIL_SERVER=config.host,
-            MAIL_PORT=config.port,
-            MAIL_STARTTLS=True,
-            MAIL_SSL_TLS=False,
-            MAIL_FROM=config.sender.email,
-            MAIL_FROM_NAME=config.sender.name,
-            TIMEOUT=config.timeout,
-        )
-        return FastEmailSender(FastMail(connection_config))
+        return SmtpEmailSender(config)

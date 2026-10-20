@@ -1,26 +1,35 @@
-import pytest
-from aiosmtplib.errors import SMTPServerDisconnected
-from fastapi_mail import MessageSchema, MessageType
-from fastapi_mail.errors import ConnectionErrors
-from pydantic import NameEmail
+from email import message_from_bytes, policy
+from email.headerregistry import AddressHeader
 
-from fanfan.adapters.mail.email_sender import FastEmailSender, _encode_display_name
+import pytest
+from pydantic import NameEmail, SecretStr
+
+from fanfan.adapters.mail.config import MailConfig
+from fanfan.adapters.mail.email_sender import SmtpEmailSender, build_mime_message
 from fanfan.application.ports.email_sender import EmailMessage, EmailRecipient
 from fanfan.core.exceptions.email import EmailDeliveryFailed
 
 pytestmark = pytest.mark.unit
 
 
-def _rendered_to_header(name: str) -> str:
-    """Reproduce how fastapi-mail flattens a recipient into the To header."""
-    recipient = NameEmail(name=_encode_display_name(name), email="user@example.com")
-    message = MessageSchema(
-        subject="x",
-        recipients=[recipient],
-        body="b",
-        subtype=MessageType.plain,
+def _config(port: int = 587) -> MailConfig:
+    return MailConfig(
+        username="robot",
+        password=SecretStr("secret"),
+        host="127.0.0.1",
+        port=port,
+        sender=NameEmail(name="ФАН-ФАН", email="noreply@fanfan.example"),
+        timeout=1,
     )
-    return ", ".join(str(r) for r in message.recipients)
+
+
+def _message(name: str = "Ivan", text_body: str | None = None) -> EmailMessage:
+    return EmailMessage(
+        subject="Код входа",
+        recipients=[EmailRecipient(name=name, email="user@example.com")],
+        html_body="<p>Привет</p>",
+        text_body=text_body,
+    )
 
 
 @pytest.mark.parametrize(
@@ -33,58 +42,57 @@ def _rendered_to_header(name: str) -> str:
         "",  # empty username
     ],
 )
-def test_display_name_keeps_to_header_ascii(display_name: str) -> None:
+def test_to_header_is_ascii_with_one_address(display_name: str) -> None:
     # Yandex Postbox rejects a non-ASCII To header with "email address parse
     # failed (To)"; the display name must be RFC 2047-encoded to pure ASCII.
-    header = _rendered_to_header(display_name)
-    assert header.isascii()
+    wire = bytes(build_mime_message(_message(display_name), _config()))
+    to_line = next(
+        line for line in wire.decode("ascii").splitlines() if line.startswith("To:")
+    )
+    assert to_line.isascii()
     # The real recipient address must survive intact and remain the only address.
-    assert header.endswith("<user@example.com>")
+    parsed = message_from_bytes(wire, policy=policy.default)["To"]
+    assert isinstance(parsed, AddressHeader)
+    assert [address.addr_spec for address in parsed.addresses] == ["user@example.com"]
+    assert parsed.addresses[0].display_name == display_name
+
+
+def test_whole_message_is_seven_bit() -> None:
+    # Relays without 8BITMIME may mangle raw UTF-8 bodies.
+    mime = build_mime_message(_message("Аня", text_body="Привет"), _config())
+    assert bytes(mime).isascii()
 
 
 def test_plain_ascii_name_is_left_readable() -> None:
     # A simple ASCII name needs no encoding and stays human-readable.
-    assert _encode_display_name("Ivan") == "Ivan"
+    wire = bytes(build_mime_message(_message("Ivan"), _config())).decode("ascii")
+    assert "To: Ivan <user@example.com>" in wire
 
 
-class _FailingFastMail:
-    """Stands in for FastMail, raising the relay error the test is exercising.
-
-    Structural rather than a `FastMail` subclass: its `send_message` takes a
-    `MessageSchema` plus a template name, and an override narrowing to `object`
-    cannot satisfy that. Hence the suppression at the call site.
-    """
-
-    def __init__(self, error: Exception) -> None:
-        self._error = error
-
-    async def send_message(self, message: object) -> None:
-        _ = message
-        raise self._error
+def test_text_alternative_comes_before_html() -> None:
+    # RFC 2046: clients render the LAST part they understand, so HTML goes last
+    # or Gmail/Apple Mail show the plain-text version.
+    mime = build_mime_message(_message(text_body="Привет"), _config())
+    assert mime.get_content_type() == "multipart/alternative"
+    parts = [part.get_content_type() for part in mime.iter_parts()]
+    assert parts == ["text/plain", "text/html"]
 
 
-def _message() -> EmailMessage:
-    return EmailMessage(
-        subject="x",
-        recipients=[EmailRecipient(name="Ivan", email="user@example.com")],
-        html_body="<p>hi</p>",
-    )
+def test_html_only_message_is_single_part() -> None:
+    mime = build_mime_message(_message(), _config())
+    assert mime.get_content_type() == "text/html"
 
 
-@pytest.mark.parametrize(
-    "error",
-    [
-        # fastapi-mail wraps connection setup failures in ConnectionErrors...
-        ConnectionErrors("connect failed"),
-        # ...and aiosmtplib errors bubble from the send itself (the production case).
-        SMTPServerDisconnected("Unexpected EOF received"),
-    ],
-)
-async def test_smtp_failure_becomes_domain_error(error: Exception) -> None:
+def test_message_id_uses_sender_domain() -> None:
+    mime = build_mime_message(_message(), _config())
+    assert mime["Message-ID"].endswith("@fanfan.example>")
+
+
+async def test_smtp_failure_becomes_domain_error() -> None:
     # A relay outage must surface as a domain error (mapped to 502) instead of an
     # unhandled exception, so the caller reports it and it stays out of Sentry.
-    sender = FastEmailSender(
-        _FailingFastMail(error)  # ty: ignore[invalid-argument-type]  # see _FailingFastMail
-    )
+    # Port 1 on loopback refuses the connection, which aiosmtplib raises as
+    # SMTPConnectError.
+    sender = SmtpEmailSender(_config(port=1))
     with pytest.raises(EmailDeliveryFailed):
         await sender.send(_message())
