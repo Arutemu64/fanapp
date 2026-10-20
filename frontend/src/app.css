@@ -205,6 +205,20 @@
 	}
 
 	/*
+	 * Controls never double-tap-zoom: on iOS, tapping a button twice in quick
+	 * succession (the subscribe counter's −/+) zooms the page instead of firing two
+	 * clicks. `manipulation` keeps pan and pinch-zoom, so the page stays zoomable.
+	 * https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action
+	 */
+	button,
+	a,
+	label,
+	summary,
+	[role='button'] {
+		touch-action: manipulation;
+	}
+
+	/*
 	 * The heading roles carry the display face. A `--text-*` theme key can't set a
 	 * family, so it lives here, in the base layer, where a `font-sans` class still wins
 	 * (data and repeated scan labels set in a heading size take it; DESIGN.md §3). It

@@ -82,8 +82,8 @@
 	// Fullscreen owns the viewport background; inline inherits the shell's surface.
 	let wrapperClass = $derived(
 		variant === 'fullscreen'
-			? 'flex min-h-dvh items-center justify-center bg-background px-4 py-6 sm:py-10'
-			: 'flex min-h-[60dvh] items-center justify-center px-4 py-6'
+			? 'flex min-h-svh items-center justify-center bg-background px-4 py-6 sm:py-10'
+			: 'flex min-h-[60svh] items-center justify-center px-4 py-6'
 	);
 
 	function handleGoBack() {
