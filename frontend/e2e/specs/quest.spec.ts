@@ -197,8 +197,13 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.getByRole('button', { name: 'Сканировать код игрока' })).toBeVisible();
 		await warmedUp;
 
+		// The lookup fails like the rest, not just the health check: under load WebKit
+		// can handle a warm-up response after the `offline` event, which marks the
+		// backend reachable again, so the scan may still try the network. Either way
+		// the picker must fall back to the bare number.
 		api.use({
 			'GET /debug/health': (route) => route.abort(),
+			'GET /quest/players/482913': (route) => route.abort(),
 			'POST /quest/awards': (route) => route.abort()
 		});
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
