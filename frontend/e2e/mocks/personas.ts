@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: UserSettingsDto = {
 function user(overrides: Partial<User> = {}): User {
 	return {
 		id: '01890000-0000-7000-8000-000000000001',
+		number: 482913,
 		username: 'ЛунныйЛис07',
 		role: 'visitor',
 		email: null,

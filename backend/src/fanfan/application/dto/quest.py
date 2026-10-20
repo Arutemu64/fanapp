@@ -3,11 +3,12 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from fanfan.core.vo.quest import QuestAwardId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import UserId, UserNumber
 
 
 class QuestPlayerDTO(BaseModel):
     id: UserId
+    number: UserNumber
     username: str
     avatar_seed: str
     points: int

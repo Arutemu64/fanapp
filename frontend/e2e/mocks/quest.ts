@@ -25,6 +25,7 @@ const NAMES = [
 export function questPlayer(index: number, points: number): QuestPlayerDto {
 	return {
 		id: `01890000-0000-7000-8000-0000000001${String(index).padStart(2, '0')}`,
+		number: 731400 + index,
 		username: NAMES[index] ?? `player_${index}`,
 		avatar_seed: `questSeed${index}`,
 		points
@@ -42,6 +43,7 @@ export const QUEST: GetQuestOutput = {
 		rank: 23,
 		player: {
 			id: '01890000-0000-7000-8000-000000000001',
+			number: 482913,
 			username: 'ЛунныйЛис07',
 			avatar_seed: 'e2eSeedVisitor',
 			points: 35

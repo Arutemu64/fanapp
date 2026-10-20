@@ -50,7 +50,7 @@
 		<ToolSection>
 			{#if player}
 				<!-- Keyed so a second player gets a fresh award ID and cleared errors. -->
-				{#key player.id}
+				{#key player.number}
 					<AwardForm {player} {maxAward} bind:amount bind:message onDone={handleDone} />
 				{/key}
 			{:else}

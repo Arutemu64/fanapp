@@ -19,7 +19,7 @@ class FindQuestPlayersOutput(BaseModel):
 
 
 class FindQuestPlayers:
-    """Volunteers look a player up by username when their QR will not scan.
+    """Volunteers look a player up by number or username when their QR will not scan.
 
     Gated on quest:award rather than users:read: it reveals only names and
     points, never the email or ticket the user directory shows.
@@ -45,7 +45,7 @@ class FindQuestPlayers:
         settings = await self.settings_gateway.get()
         settings.ensure_quest_enabled()
 
-        players = await self.quest_award_gateway.read_players_by_username(
+        players = await self.quest_award_gateway.read_players_by_search(
             data.search, _MAX_RESULTS
         )
         return FindQuestPlayersOutput(players=players)

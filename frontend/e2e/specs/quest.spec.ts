@@ -134,7 +134,7 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await page.getByRole('button', { name: 'Начислить' }).click();
 
 		await expect(page.getByText('@РыжийКот09: +15 баллов')).toBeVisible();
-		expect(awarded).toMatchObject({ user_id: player.id, amount: 15, message: 'Викторина' });
+		expect(awarded).toMatchObject({ user_number: player.number, amount: 15, message: 'Викторина' });
 
 		// Back at the picker with focus on the scan button, and the next player starts
 		// from the same award: a station hands out one task over and over.

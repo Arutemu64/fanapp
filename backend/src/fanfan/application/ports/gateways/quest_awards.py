@@ -8,7 +8,7 @@ from fanfan.application.dto.quest import (
 )
 from fanfan.core.models.quest_award import QuestAward
 from fanfan.core.vo.quest import QuestAwardId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import UserId, UserNumber
 
 
 class QuestAwardGateway(Protocol):
@@ -22,11 +22,13 @@ class QuestAwardGateway(Protocol):
 
     # Read projections (return DTOs, not aggregates)
 
-    async def read_player(self, user_id: UserId) -> QuestPlayerDTO | None: ...
+    async def read_player(self, number: UserNumber) -> QuestPlayerDTO | None: ...
 
-    async def read_players_by_username(
+    async def read_players_by_search(
         self, search: str, limit: int
-    ) -> list[QuestPlayerDTO]: ...
+    ) -> list[QuestPlayerDTO]:
+        """Players whose username starts with ``search`` or whose number it is."""
+        ...
 
     async def read_leaderboard(
         self, *, limit: int, user_id: UserId

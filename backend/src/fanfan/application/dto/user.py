@@ -7,7 +7,7 @@ from fanfan.core.vo.permission import (
 )
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.core.vo.ticket import TicketId
-from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.user import UserId, UserNumber, UserRole
 
 
 class UserBaseDTO(BaseModel):
@@ -83,6 +83,7 @@ class UserSocialIdentityDTO(BaseModel):
 
 
 class CurrentUserDTO(UserBaseDTO):
+    number: UserNumber
     email: EmailStr | None
     avatar_seed: str
     has_password: bool

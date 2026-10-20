@@ -21,7 +21,7 @@
 </script>
 
 <!-- Shaped like a festival lanyard badge: the name leads, since it is what a
-     volunteer reads first and the fallback when the camera won't read the code;
+     volunteer reads first and a fallback when the camera won't read the code;
      the code sits in the flat centre, and the stats close it off below a
      perforation. Badge guides put the name first and the code centred:
      https://www.zoho.com/backstage/event-badge-design-guide.html -->
@@ -48,10 +48,16 @@
 		<!-- Large and edge-to-edge on a phone: the volunteer's camera reads it from
 		     arm's length, often in poor hall lighting. -->
 		<QrCode
-			value={questCodeFor(user.id)}
+			value={questCodeFor(user.number)}
 			label={m.quest_code_label({ username: user.username })}
 			class="w-full max-w-64 rounded-lg"
 		/>
+		<!-- What the player reads out when the camera won't take the code: the
+		     volunteer's search finds a player by it as well as by name. -->
+		<p class="flex flex-col items-center">
+			<span class="text-sm text-muted-foreground">{m.user_number_label()}</span>
+			<span class="font-sans text-headline text-foreground tabular-nums">{user.number}</span>
+		</p>
 		<p class="text-sm text-muted-foreground">{m.quest_code_hint()}</p>
 	</div>
 

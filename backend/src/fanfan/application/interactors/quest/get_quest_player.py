@@ -5,7 +5,7 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import UserNumber
 
 
 class GetQuestPlayer:
@@ -21,7 +21,7 @@ class GetQuestPlayer:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
 
-    async def __call__(self, user_id: UserId) -> QuestPlayerDTO:
+    async def __call__(self, number: UserNumber) -> QuestPlayerDTO:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.QUEST_AWARD
@@ -29,7 +29,7 @@ class GetQuestPlayer:
         settings = await self.settings_gateway.get()
         settings.ensure_quest_enabled()
 
-        player = await self.quest_award_gateway.read_player(user_id)
+        player = await self.quest_award_gateway.read_player(number)
         if player is None:
             raise UserNotFound
         return player

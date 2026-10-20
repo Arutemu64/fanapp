@@ -582,7 +582,7 @@
 	"push_this_device_title": "На этом устройстве",
 	"push_types_title": "Типы уведомлений",
 	"quest_cached_notice": "Показаны сохранённые баллы и места.",
-	"quest_code_hint": "Покажи код волонтёру, когда выполнишь задание.",
+	"quest_code_hint": "Покажи код волонтёру, когда выполнишь задание. Не сканируется\u00a0— назови ID.",
 	"quest_code_label": "QR-код игрока @{username}",
 	"quest_history_cancelled": "Отменено",
 	"quest_history_empty": "Начислений пока нет. Выполни задание и покажи бейдж волонтёру.",
@@ -642,7 +642,7 @@
 	"quest_tool_scan": "Сканировать код игрока",
 	"quest_tool_scan_description": "Наведи камеру на QR-код в разделе «Квест» у игрока.",
 	"quest_tool_scan_title": "Код игрока",
-	"quest_tool_search_empty": "Никого не нашли. Проверь имя или отсканируй код.",
+	"quest_tool_search_empty": "Никого не нашли. Проверь имя или ID либо отсканируй код.",
 	"quest_tool_search_failed": "Не удалось найти игроков",
 	"quest_tool_search_found": [
 		{
@@ -656,11 +656,11 @@
 			}
 		}
 	],
-	"quest_tool_search_label": "Или найди по имени пользователя",
-	"quest_tool_search_placeholder": "Хватит первых букв",
+	"quest_tool_search_label": "Или найди по имени пользователя либо ID",
+	"quest_tool_search_placeholder": "Первые буквы имени или ID целиком",
 	"quest_tool_submit": "Начислить",
 	"quest_tool_unverified_hint": "Нет связи, поэтому имя и баланс не проверить. Баллы начислим, когда связь появится.",
-	"quest_tool_unverified_player": "Игрок по QR-коду",
+	"quest_tool_unverified_player": "Игрок с ID {number}",
 	"quest_tool_validation_amount": "Введи целое число от 1 до {max}",
 	"quest_tool_validation_message": "Напиши, за что баллы",
 	"queued_write_failed": "{action}. {detail}",
@@ -965,6 +965,7 @@
 	"user_load_failed": "Не удалось загрузить пользователя",
 	"user_no_linked_accounts": "Нет привязанных аккаунтов.",
 	"user_not_found": "Пользователь не найден",
+	"user_number_label": "ID в приложении",
 	"user_registered": "Дата регистрации",
 	"user_row_no_contacts": "Нет билета и почты",
 	"user_title": "Пользователь",
