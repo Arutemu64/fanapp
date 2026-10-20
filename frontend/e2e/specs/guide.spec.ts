@@ -18,7 +18,7 @@ test.describe('guide articles', () => {
 		await expect(page).toHaveURL('/');
 	});
 
-	test('Home spells out the date and start time from the saved festival settings', async ({
+	test('the Home hero spells out the date and start time from the saved festival settings', async ({
 		page,
 		api
 	}) => {
@@ -34,7 +34,24 @@ test.describe('guide articles', () => {
 		await page.goto('/');
 
 		await expect(page.getByText('1 апреля 2027, четверг', { exact: true })).toBeVisible();
-		await expect(page.getByText('Начало в 09:00', { exact: true })).toBeVisible();
+		await expect(page.getByText('Вход с 10:30 · начало в 09:00', { exact: true })).toBeVisible();
+	});
+
+	test('after the festival Home keeps only the ways to stay in touch', async ({ page, api }) => {
+		api.use({
+			'GET /config': json({
+				festival_start: '2020-04-01T09:00:00+03:00',
+				festival_end: '2020-04-01T19:00:00+03:00',
+				quest_enabled: false,
+				quest_max_award: 100
+			})
+		});
+
+		await page.goto('/');
+
+		await expect(page.getByRole('heading', { name: 'Фестиваль завершён' })).toBeVisible();
+		await expect(page.getByRole('link', { name: /Telegram/ })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Чем заняться' })).toHaveCount(0);
 	});
 
 	test('an unknown article shows the error page', async ({ page }) => {

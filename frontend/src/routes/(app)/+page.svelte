@@ -23,6 +23,7 @@
 	import { mergeSubscriptions, scheduleEvents } from '#lib/utils/scheduleData.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
+	import ContactLinks from './components/home/ContactLinks.svelte';
 	import { getFestivalPhase, nextBoundary } from './components/home/festivalPhase';
 	import GetReadySection from './components/home/GetReadySection.svelte';
 	import GuideSections from './components/home/GuideSections.svelte';
@@ -232,5 +233,11 @@
 		</div>
 	{/if}
 
-	<GuideSections festivalStart={config.festival_start} />
+	<!-- Once the festival is over the venue, rules and activities lead nowhere useful,
+	     so Home is down to the farewell and the ways to stay in touch. -->
+	{#if phase !== 'after'}
+		<GuideSections />
+	{/if}
+
+	<ContactLinks />
 </div>
