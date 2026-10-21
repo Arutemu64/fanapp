@@ -3,7 +3,7 @@
 The fan-out finishes a mailing in the transaction that stores its last
 notification, so a mailing goes straight from ``pending`` to ``finished`` and no
 per-notification ``sent_count`` is kept. A ``sending`` row is a fan-out that was
-running at deploy; the new build cannot finish it, so it becomes ``finished``,
+running when this ran; nothing finishes it any more, so it becomes ``finished``,
 the state its fan-out was about to reach. The status column is a VARCHAR guarded
 by a CHECK constraint (``native_enum=False``), so dropping a member is a
 hand-written constraint swap.
@@ -32,11 +32,6 @@ _DROPPED = "sending"
 
 
 def upgrade() -> None:
-    # The previous release still serves while this runs (env.py). Locking the
-    # table first keeps an old-build writer from moving a row to `sending`
-    # between the backfill and the new CHECK; the table is small and
-    # lock_timeout bounds the wait.
-    op.execute("LOCK TABLE mailings IN ACCESS EXCLUSIVE MODE")
     op.execute(
         sa.text(
             "UPDATE mailings SET status = 'finished' WHERE status = :dropped"

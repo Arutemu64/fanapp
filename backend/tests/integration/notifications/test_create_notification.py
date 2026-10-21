@@ -8,18 +8,14 @@ from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
 )
-from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationCreated
-from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.models.user import User
-from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import (
     NotificationType,
     generate_notification_id,
-    notification_id_for,
 )
 from fanfan.core.vo.user import UserId
 from tests.fakes.event_broker import FakeEventBroker
@@ -31,41 +27,29 @@ pytestmark = [
 ]
 
 
-def _broadcast_notification(mailing: Mailing, user: User) -> NewNotification:
-    return NewNotification(
-        id=notification_id_for(mailing.id, user.id),
-        user_id=user.id,
-        title="Рассылка от организаторов",
-        body="Текст рассылки",
-        path="/notifications",
-        mailing_id=mailing.id,
-        type=NotificationType.BROADCAST,
-    )
-
-
 async def test_create_notification_redelivery_is_a_single_row(
     dishka_request: AsyncContainer,
-    login: Callable[[User], None],
     visitor: User,
-    uow: UnitOfWork,
 ) -> None:
     """Plan 007: a redelivered CreateNotificationCommand must not duplicate.
 
-    Calling CreateNotification twice with the same (mailing-derived) id — as a
-    redelivery of the same NATS message would — must insert exactly one row,
-    instead of raising an IntegrityError (which would nack-and-redeliver
-    forever). It leaves the mailing to the fan-out that owns it.
+    Calling CreateNotification twice with the same id — as a redelivery of the
+    same NATS message would — must insert exactly one row, instead of raising an
+    IntegrityError (which would nack-and-redeliver forever).
     """
     interactor = await dishka_request.get(CreateNotification)
-    mailing_gateway = await dishka_request.get(MailingGateway)
     notification_gateway = await dishka_request.get(NotificationGateway)
-    login(visitor)
+    broker = await dishka_request.get(FakeEventBroker)
 
-    mailing = Mailing.create(by_user_id=visitor.id)
-    await mailing_gateway.add(mailing)
-    await uow.commit()
-
-    notification = _broadcast_notification(mailing, visitor)
+    notification = NewNotification(
+        id=generate_notification_id(),
+        user_id=visitor.id,
+        title="Заголовок",
+        body="Тело",
+        path=None,
+        mailing_id=None,
+        type=NotificationType.DEFAULT,
+    )
     data = CreateNotificationInput(notification=notification)
 
     await interactor(data)
@@ -74,10 +58,8 @@ async def test_create_notification_redelivery_is_a_single_row(
     stored = await notification_gateway.get(notification.id)
     assert stored is not None
     assert stored.body == notification.body
-
-    stored_mailing = await mailing_gateway.get(mailing.id, lock=False)
-    assert stored_mailing is not None
-    assert stored_mailing.status is MailingStatus.PENDING
+    # Both runs hand it over; JetStream's dedup id absorbs the repeat.
+    assert len(broker.published_events) == 2
 
 
 async def test_notification_gateway_add_many_counts_only_new_rows(

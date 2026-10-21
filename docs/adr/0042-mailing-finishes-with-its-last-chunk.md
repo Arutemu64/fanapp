@@ -33,10 +33,10 @@ drop the counter.
 
 - The lifecycle is `PENDING → FINISHED | FAILED`, and any status but
   `CANCELLED` can be cancelled. `SENDING` and `sent_count` are gone.
-- `NotificationFanOut(notifications, mailing_id=…)` calls `Mailing.finish(n)`
-  with the last chunk, or on its own for an empty list. Without `mailing_id` it
-  finishes nothing: `CreateNotification` stores single notifications, and a
-  command queued by an older build can carry one row of a larger mailing.
+- `NotificationFanOut(notifications, mailing_id=…)` takes every notification
+  of one mailing and calls `Mailing.finish(n)` with the last chunk, or on its
+  own for an empty list. `CreateNotification` handles mailing-less
+  notifications only.
 - A fan-out that will not run again fails its mailing: a stale schedule change,
   and a broadcast or schedule-change trigger on its last delivery
   (`is_last_delivery`, checked by the handler before re-raising). Synadia
@@ -64,9 +64,9 @@ drop the counter.
 
 ## Alternatives considered
 
-- **Keep a counter fallback for one release** for `CreateNotificationCommand`s
-  queued by the old build. Rejected: the migration moves every `sending` mailing
-  to `finished`, and the stream keeps a message 24 h at most.
+- **Keep a counter fallback for one release** for mailing-bound
+  `CreateNotificationCommand`s queued by an older build. Rejected: the app was
+  not live yet, so there was no such queue to drain.
 - **FINISHED for a stale mailing that had started.** Rejected: without
   `SENDING` there is no stored "started". Telling it apart would take a count of
   stored rows, and FAILED is the honest word for a fan-out that never finished.

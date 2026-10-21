@@ -120,7 +120,11 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     await changes_gateway.add(change)
     await uow.commit()
 
-    await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
+    await interactor(
+        SendScheduleChangeNotificationsInput(
+            schedule_change_id=change.id, occurred_at=datetime.now(UTC)
+        )
+    )
 
     delivered = await delivered_notifications(dishka_request)
     assert len(delivered) == 1
@@ -176,7 +180,9 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     await changes_gateway.add(change)
     await uow.commit()
 
-    data = SendScheduleChangeNotificationsInput(schedule_change_id=change.id)
+    data = SendScheduleChangeNotificationsInput(
+        schedule_change_id=change.id, occurred_at=datetime.now(UTC)
+    )
     await interactor(data)
     await interactor(data)
 
@@ -304,7 +310,11 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
     await changes_gateway.add(change)
     await uow.commit()
 
-    await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
+    await interactor(
+        SendScheduleChangeNotificationsInput(
+            schedule_change_id=change.id, occurred_at=datetime.now(UTC)
+        )
+    )
 
     titles = [n.title for n in await delivered_notifications(dishka_request)]
     expected_order = ["Уведомление о подписке", "На сцене", "Изменение программы"]
@@ -345,7 +355,9 @@ async def test_abandoned_schedule_change_fails_its_mailing(
     await uow.commit()
 
     await interactor.abandon(
-        SendScheduleChangeNotificationsInput(schedule_change_id=change.id)
+        SendScheduleChangeNotificationsInput(
+            schedule_change_id=change.id, occurred_at=datetime.now(UTC)
+        )
     )
 
     saved_mailing = await mailing_gateway.get(mailing.id, lock=False)

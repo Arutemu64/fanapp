@@ -140,33 +140,3 @@ async def test_fan_out_refuses_notifications_of_several_mailings(
 
     with pytest.raises(ValueError, match="one mailing"):
         await fan_out([*_broadcast(first, users), *_broadcast(second, users)])
-
-
-async def test_fan_out_without_the_mailing_stores_but_does_not_finish(
-    dishka_request: AsyncContainer,
-    login: Callable[[User], None],
-    visitor: User,
-    uow: UnitOfWork,
-) -> None:
-    """Only the caller that hands over the whole mailing may finish it.
-
-    A CreateNotificationCommand queued by a build before the batched fan-out
-    carries one notification of a larger mailing; finishing on it would record
-    a recipient count of one.
-    """
-    fan_out = await dishka_request.get(NotificationFanOut)
-    mailing_gateway = await dishka_request.get(MailingGateway)
-    login(visitor)
-
-    users = await _recipients(dishka_request, uow, count=1)
-    mailing = Mailing.create(by_user_id=visitor.id)
-    await mailing_gateway.add(mailing)
-    await uow.commit()
-
-    await fan_out(_broadcast(mailing, users))
-
-    assert len(await delivered_notifications(dishka_request)) == 1
-    stored = await mailing_gateway.get(mailing.id, lock=False)
-    assert stored is not None
-    assert stored.status is MailingStatus.PENDING
-    assert stored.total_count == 0

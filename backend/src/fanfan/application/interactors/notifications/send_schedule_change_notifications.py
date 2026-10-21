@@ -39,17 +39,14 @@ logger = logging.getLogger(__name__)
 # after it was made announces the wrong event. Past the lifetime it is dropped:
 # delivery is only this late after an outage (relay retries, NATS or consumer
 # down), and a stale "event started" push is worse than none.
-def _is_stale(occurred_at: datetime | None) -> bool:
-    if occurred_at is None:
-        return False
+def _is_stale(occurred_at: datetime) -> bool:
     return datetime.now(UTC) - occurred_at > SCHEDULE_NOTIFICATION_LIFETIME
 
 
 class SendScheduleChangeNotificationsInput(BaseModel):
     schedule_change_id: ScheduleChangeId
-    # When the change was committed. None when unknown (a message relayed before
-    # the timestamp was sent), which is treated as fresh.
-    occurred_at: datetime | None = None
+    # When the change was committed.
+    occurred_at: datetime
 
 
 class SendScheduleChangeNotifications:

@@ -58,35 +58,25 @@ class NotificationFanOut:
         *,
         mailing_id: MailingId | None = None,
     ) -> None:
-        """Deliver notifications that all belong to the same mailing (or none).
+        """Deliver every notification of ``mailing_id``, or mailing-less ones.
 
-        Passing ``mailing_id`` hands over the whole mailing: the transaction
-        that stores the last chunk finishes it, so it is FINISHED exactly when
-        every notification exists, and an empty list finishes it at once.
-        Without it nothing is finished, which is how CreateNotification stores
-        one notification (a command from a build before the batched fan-out
-        can still carry a mailing whose other notifications it never saw).
+        The transaction that stores the last chunk finishes the mailing, so it
+        is FINISHED exactly when every notification exists; an empty list
+        finishes it at once.
 
         Raises ``MailingAlreadyCancelled`` once the mailing is cancelled; the
         chunks stored before that are removed by the cancellation itself.
         """
-        mailing_ids = {notification.mailing_id for notification in notifications}
-        if mailing_id is not None:
-            mailing_ids.add(mailing_id)
-        if len(mailing_ids) > 1:
+        if any(n.mailing_id != mailing_id for n in notifications):
             msg = "A fan-out delivers the notifications of one mailing"
             raise ValueError(msg)
         chunks = list(itertools.batched(notifications, _CHUNK_SIZE, strict=False))
         if not chunks:
-            if mailing_id is not None:
-                await self._store((), mailing_id, finish_with=0)
+            await self._store((), mailing_id, finish_with=0)
             return
-        chunk_mailing_id = chunks[0][0].mailing_id
         for chunk in chunks:
-            finish_with = None
-            if mailing_id is not None and chunk is chunks[-1]:
-                finish_with = len(notifications)
-            await self._store(chunk, chunk_mailing_id, finish_with=finish_with)
+            finish_with = len(notifications) if chunk is chunks[-1] else None
+            await self._store(chunk, mailing_id, finish_with=finish_with)
             ids = [notification.id for notification in chunk]
             await self._publish_realtime(ids)
             await self.events_broker.publish_many(
