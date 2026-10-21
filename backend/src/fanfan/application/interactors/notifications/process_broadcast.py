@@ -2,11 +2,11 @@ import logging
 
 from pydantic import BaseModel
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
     MailingNotFound,
@@ -58,11 +58,11 @@ class ProcessBroadcast:
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
-        events = [
-            NotificationQueued(
+        commands = [
+            CreateNotificationCommand(
                 notification=NewNotification(
                     # Deterministic per (mailing, user): a redelivered
-                    # NotificationQueued reruns this with the same id, so the
+                    # CreateNotificationCommand reruns this with the same id, so the
                     # gateway upsert below no-ops instead of duplicating.
                     id=notification_id_for(data.mailing_id, user_id),
                     user_id=user_id,
@@ -75,4 +75,4 @@ class ProcessBroadcast:
             )
             for user_id in recipient_ids
         ]
-        await self.events_broker.publish_many(events)
+        await self.events_broker.publish_many(commands)

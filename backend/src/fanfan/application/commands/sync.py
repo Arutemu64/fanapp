@@ -1,11 +1,11 @@
 from typing import ClassVar
 
-from fanfan.core.events.base import AppEvent
+from fanfan.application.commands.base import Command
 from fanfan.core.vo.sync import SyncRunId, SyncSource
 
 
-class SyncRequested(AppEvent):
-    subject: ClassVar[str] = "sync.requested"
+class RunSyncCommand(Command):
+    subject: ClassVar[str] = "cmd.sync.run"
 
     sync_run_id: SyncRunId
     source: SyncSource

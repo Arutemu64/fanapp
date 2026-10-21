@@ -26,7 +26,7 @@ class DeleteMailingNotifications:
         self.uow = uow
 
     async def __call__(self, data: DeleteMailingNotificationsInput) -> None:
-        # Reaction to MailingCancelled (from a broadcast cancel or a schedule
+        # Handles CancelMailingCommand (from a broadcast cancel or a schedule
         # undo). Mark the mailing CANCELLED so ensure_active() rejects any
         # still-queued sends, then drop the undelivered notifications. Both are
         # idempotent, which matters under at-least-once redelivery. A delivered

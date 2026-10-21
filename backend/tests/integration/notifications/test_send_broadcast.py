@@ -4,6 +4,7 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.commands.notifications import ProcessBroadcastCommand
 from fanfan.application.interactors.notifications.send_broadcast import (
     SendBroadcast,
     SendBroadcastInput,
@@ -11,7 +12,6 @@ from fanfan.application.interactors.notifications.send_broadcast import (
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.notifications import BroadcastQueued
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import MailingAlreadyExists
 from fanfan.core.models.mailing import Mailing
@@ -56,7 +56,9 @@ async def test_send_broadcast_creates_mailing_and_enqueues_event(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(
-        BroadcastQueued(mailing_id=result.mailing_id, body="Всем привет!", roles=roles)
+        ProcessBroadcastCommand(
+            mailing_id=result.mailing_id, body="Всем привет!", roles=roles
+        )
     )
 
 
@@ -96,7 +98,7 @@ async def test_send_broadcast_replay_returns_the_mailing_without_resending(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(
-        BroadcastQueued(
+        ProcessBroadcastCommand(
             mailing_id=first.mailing_id, body="Всем привет!", roles=[UserRole.VISITOR]
         )
     )
@@ -141,7 +143,7 @@ async def test_overlapping_send_loses_the_insert_race_with_already_exists(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(
-        BroadcastQueued(
+        ProcessBroadcastCommand(
             mailing_id=first.mailing_id, body="Всем привет!", roles=[UserRole.VISITOR]
         )
     )

@@ -1,12 +1,12 @@
 import logging
 from dataclasses import dataclass
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
@@ -48,7 +48,7 @@ class SendPersonalNotification:
             raise UserNotFound
 
         await self.events_broker.publish(
-            NotificationQueued(
+            CreateNotificationCommand(
                 notification=NewNotification(
                     id=generate_notification_id(),
                     user_id=user.id,

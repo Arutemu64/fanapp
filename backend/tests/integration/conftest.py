@@ -27,7 +27,7 @@ from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.sources.cosplay import CosplaySource
 from fanfan.application.ports.sources.tickets import TicketsSource
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.base import AppEvent
+from fanfan.core.events.base import Message
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission, generate_user_permission_id
@@ -174,14 +174,15 @@ async def make_broadcaster(dishka_request: AsyncContainer, uow: UnitOfWork) -> U
     return broadcaster
 
 
-def as_outbox(*events: AppEvent) -> list[tuple[str, dict[str, Any]]]:
-    """Render typed domain events the way they land in the outbox table.
+def as_outbox(*messages: Message) -> list[tuple[str, dict[str, Any]]]:
+    """Render typed messages the way they land in the outbox table.
 
-    Aggregate events are no longer published on commit — the UnitOfWork writes
-    them to the outbox, and the relay delivers them later. Tests assert that the
-    right events were *enqueued* by comparing against this serialization.
+    Recorded events and enqueued commands are not published on commit — the
+    UnitOfWork writes them to the outbox, and the relay delivers them later.
+    Tests assert that the right messages were *enqueued* by comparing against
+    this serialization.
     """
-    return [(e.subject, e.model_dump(mode="json")) for e in events]
+    return [(m.subject, m.model_dump(mode="json")) for m in messages]
 
 
 @pytest_asyncio.fixture

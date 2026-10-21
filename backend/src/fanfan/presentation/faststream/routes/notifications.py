@@ -5,6 +5,11 @@ from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
+from fanfan.application.commands.notifications import (
+    CancelMailingCommand,
+    CreateNotificationCommand,
+    ProcessBroadcastCommand,
+)
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
@@ -21,12 +26,7 @@ from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
     SendNotificationInput,
 )
-from fanfan.core.events.notifications import (
-    BroadcastQueued,
-    MailingCancelled,
-    NotificationCreated,
-    NotificationQueued,
-)
+from fanfan.core.events.notifications import NotificationCreated
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
     NotificationChannelUnavailable,
@@ -99,7 +99,7 @@ async def _deliver_to_channel(
 
 
 @notifications_router.subscriber(
-    NotificationQueued.subject,
+    CreateNotificationCommand.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_notification",
@@ -112,7 +112,7 @@ async def _deliver_to_channel(
 )
 @inject
 async def create_new_notification(
-    data: NotificationQueued,
+    data: CreateNotificationCommand,
     interactor: FromDishka[CreateNotification],
     msg: NatsMessage,
 ) -> NotificationCreated:
@@ -200,7 +200,7 @@ async def send_push_notification(
 
 
 @notifications_router.subscriber(
-    BroadcastQueued.subject,
+    ProcessBroadcastCommand.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_broadcast",
@@ -213,7 +213,7 @@ async def send_push_notification(
 )
 @inject
 async def create_new_broadcast(
-    data: BroadcastQueued,
+    data: ProcessBroadcastCommand,
     interactor: FromDishka[ProcessBroadcast],
     msg: NatsMessage,
 ) -> None:
@@ -230,7 +230,7 @@ async def create_new_broadcast(
 
 
 @notifications_router.subscriber(
-    MailingCancelled.subject,
+    CancelMailingCommand.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="cancel_mailing",
@@ -241,7 +241,7 @@ async def create_new_broadcast(
 )
 @inject
 async def cancel_mailing(
-    data: MailingCancelled,
+    data: CancelMailingCommand,
     interactor: FromDishka[DeleteMailingNotifications],
 ) -> None:
     await interactor(DeleteMailingNotificationsInput(mailing_id=data.mailing_id))

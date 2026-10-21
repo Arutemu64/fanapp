@@ -49,7 +49,8 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """Plan 007: a redelivered NotificationQueued must not double-count or duplicate.
+    """Plan 007: a redelivered CreateNotificationCommand must not double-count
+    or duplicate.
 
     Calling CreateNotification twice with the same (mailing-derived) id — as a
     redelivery of the same NATS message would — must insert exactly one row and

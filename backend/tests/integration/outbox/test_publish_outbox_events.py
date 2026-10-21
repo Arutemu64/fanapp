@@ -20,7 +20,7 @@ from fanfan.application.interactors.outbox.publish_outbox_events import (
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.base import AppEvent
+from fanfan.core.events.base import DomainEvent
 from fanfan.core.models.base import AggregateRoot
 from tests.fakes.event_broker import FakeEventBroker
 
@@ -202,7 +202,7 @@ async def test_relay_reports_a_row_stuck_after_repeated_failures(
     assert record.__dict__["attempt"] == _STUCK_AFTER_ATTEMPTS
 
 
-class _TracedEvent(AppEvent):
+class _TracedEvent(DomainEvent):
     subject: ClassVar[str] = "test.traced"
 
 

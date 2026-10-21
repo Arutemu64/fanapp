@@ -26,9 +26,9 @@ class Notification(AggregateRoot):
 class NewNotification:
     """Data required to create a Notification.
 
-    Carried by the NotificationQueued service event and consumed by the
-    CreateNotification interactor. Lives in core so the domain event does not
-    depend on the application layer.
+    Carried by CreateNotificationCommand and consumed by the CreateNotification
+    interactor. Lives in core so an aggregate can build its own notification
+    (QuestAward.award_notification).
     """
 
     id: NotificationId

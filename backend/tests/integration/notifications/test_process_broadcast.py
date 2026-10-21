@@ -4,6 +4,7 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
     ProcessBroadcastInput,
@@ -11,7 +12,6 @@ from fanfan.application.interactors.notifications.process_broadcast import (
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.user import User
@@ -54,7 +54,7 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     """Characterization baseline for the broadcast fan-out (Plan 007 builds here).
 
     ProcessBroadcast reads every user matching the roles, records that count as
-    the mailing total, and publishes exactly one NotificationQueued per user via
+    the mailing total, and publishes exactly one CreateNotificationCommand per user via
     the EventBroker. The recipient set is compared against read_ids_by_roles so
     the assertion holds regardless of any seeded users of that role.
     """
@@ -80,7 +80,7 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     assert {u.id for u in created} <= expected_ids
 
     published = [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
+        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
     ]
     recipient_ids = [e.notification.user_id for e in published]
     # One event per matching user, each targeting a distinct recipient.
@@ -133,7 +133,7 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     assert stored.total_count == 0
     assert stored.status is MailingStatus.FINISHED
     assert [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
+        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
     ] == []
 
 
@@ -159,7 +159,7 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
         )
 
     assert [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
+        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
     ] == []
 
 
@@ -169,7 +169,7 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """Plan 007: a redelivered NotificationQueued must reuse the same id.
+    """Plan 007: a redelivered CreateNotificationCommand must reuse the same id.
 
     ProcessBroadcast derives each notification's id from (mailing_id, user_id),
     so rerunning it for the same mailing (as a redelivery of the broadcast
@@ -192,7 +192,7 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     first_ids = {
         e.notification.id
         for e in broker.published_events
-        if isinstance(e, NotificationQueued)
+        if isinstance(e, CreateNotificationCommand)
     }
 
     broker.published_events.clear()
@@ -200,7 +200,7 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     second_ids = {
         e.notification.id
         for e in broker.published_events
-        if isinstance(e, NotificationQueued)
+        if isinstance(e, CreateNotificationCommand)
     }
 
     assert first_ids

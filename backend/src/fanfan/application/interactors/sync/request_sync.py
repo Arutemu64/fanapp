@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
+from fanfan.application.commands.sync import RunSyncCommand
 from fanfan.application.dto.sync import SyncRunDTO
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -51,11 +52,11 @@ class RequestSync:
         # would report "already running" forever.
         await self.tracker.reap_stale(data.source)
 
-        # Record SyncRequested on the run so it lands in the outbox in the same
+        # Enqueued, not published: the command lands in the outbox in the same
         # transaction as the row — no dual write between commit and publish.
         run = SyncRun.create(source=data.source, by_user_id=current_user.id)
-        run.queue()
         await self.sync_run_gateway.add(run)
+        self.uow.enqueue(RunSyncCommand(sync_run_id=run.id, source=run.source))
         await self.uow.commit()
 
         logger.info(

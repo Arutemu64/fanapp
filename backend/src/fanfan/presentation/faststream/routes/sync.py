@@ -3,9 +3,9 @@ from dishka_faststream import inject
 from faststream import AckPolicy
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
+from fanfan.application.commands.sync import RunSyncCommand
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.interactors.sync.execute_tickets_sync import ExecuteTicketsSync
-from fanfan.core.events.sync import SyncRequested
 from fanfan.core.vo.sync import SyncSource
 from fanfan.presentation.faststream.jstream import stream
 from fanfan.presentation.faststream.redelivery import (
@@ -26,7 +26,7 @@ EXECUTORS = {
 
 
 @sync_router.subscriber(
-    SyncRequested.subject,
+    RunSyncCommand.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="run_requested_sync",
@@ -38,7 +38,7 @@ EXECUTORS = {
 )
 @inject
 async def run_requested_sync(
-    data: SyncRequested,
+    data: RunSyncCommand,
     container: FromDishka[AsyncContainer],
     msg: NatsMessage,
 ) -> None:
