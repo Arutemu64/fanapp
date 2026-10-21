@@ -311,11 +311,13 @@
 				{#each groupedSchedule as node (node.key)}
 					{#if node.kind === 'interlude'}
 						<!-- A row above the first block (the opening) sits outside the block sections
-				     as a lighter, dashed row so it reads as an interlude, not a block card.
+				     as a tinted row so it reads as an interlude, not a block card. Solid, not
+				     dashed: a dashed outline is the empty-slot / drop-zone convention (our own
+				     Empty component uses it), and the row is real content.
 				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
 						<div
 							data-event-id={node.event.id}
-							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
+							class="scroll-mt-28 overflow-clip rounded-xl border border-border bg-muted/40 **:scroll-mt-28"
 						>
 							<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
 						</div>
