@@ -20,8 +20,7 @@ class TicketImportService:
 
     A sale is keyed by (order id, ticket id): the source sells a refunded ticket
     id again under a new order, and that resale is a new ticket with its own
-    barcode. Rows imported before the order id was stored match by ticket id
-    alone until a sync fills their order id in.
+    barcode.
     """
 
     def __init__(self, ticket_gateway: TicketGateway) -> None:
@@ -36,19 +35,12 @@ class TicketImportService:
         if existing is not None:
             return False
 
-        legacy = await self.ticket_gateway.get_by_barcode(external.barcode)
-        if legacy is not None:
-            if (
-                legacy.ticketscloud_order_id is None
-                and legacy.ticketscloud_ticket_id == external.external_id
-            ):
-                legacy.ticketscloud_order_id = external.order_id
-                await self.ticket_gateway.save(legacy)
-            else:
-                logger.warning(
-                    "Imported barcode already belongs to another ticket",
-                    extra={"ticket_id": str(legacy.id)},
-                )
+        clashing = await self.ticket_gateway.get_by_barcode(external.barcode)
+        if clashing is not None:
+            logger.warning(
+                "Imported barcode already belongs to another ticket",
+                extra={"ticket_id": str(clashing.id)},
+            )
             return False
 
         ticket = Ticket(
@@ -70,14 +62,6 @@ class TicketImportService:
         ticket = await self.ticket_gateway.get_by_ticketscloud_sale(
             order_id=revoked.order_id, ticket_id=revoked.external_id
         )
-        if ticket is None:
-            # Safe for a row with no order id: before the order id was stored, a
-            # resale of the same ticket id was never imported, so that row is
-            # the only sale of this ticket id we hold, and any refund of the id
-            # implies that sale was refunded first.
-            ticket = await self.ticket_gateway.get_legacy_by_ticketscloud_ticket_id(
-                revoked.external_id
-            )
         if ticket is None or ticket.is_revoked:
             return False
 

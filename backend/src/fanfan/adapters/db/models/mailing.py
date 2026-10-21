@@ -24,8 +24,7 @@ class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # So the mailing outlives the per-user notifications it fans out (those are
     # deleted on cancel and purged by retention). `body` is the exact broadcast
     # text, or a change summary for a change announcement. `roles` is the targeted
-    # role values, NULL for a change announcement (not role-targeted). Nullable also
-    # because mailings created before these columns existed cannot be backfilled.
+    # role values, NULL for a change announcement (not role-targeted).
     body: Mapped[str | None] = mapped_column()
     roles: Mapped[list[str] | None] = mapped_column(JSONB)
 

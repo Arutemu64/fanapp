@@ -78,22 +78,6 @@ class SqlTicketGateway(TicketGateway):
         ticket_orm = await self.session.scalar(stmt)
         return _to_model(ticket_orm) if ticket_orm else None
 
-    async def get_legacy_by_ticketscloud_ticket_id(
-        self, ticket_id: str
-    ) -> Ticket | None:
-        # Rows imported before the order id was stored. The ticket id used to be
-        # unique, so at most one such row exists per ticket id.
-        stmt = (
-            select(TicketORM)
-            .where(
-                TicketORM.ticketscloud_ticket_id == ticket_id,
-                TicketORM.ticketscloud_order_id.is_(None),
-            )
-            .with_for_update()
-        )
-        ticket_orm = await self.session.scalar(stmt)
-        return _to_model(ticket_orm) if ticket_orm else None
-
     async def get_by_user_id(self, user_id: UserId) -> Ticket | None:
         stmt = (
             select(TicketORM)
