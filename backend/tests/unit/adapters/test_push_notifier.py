@@ -362,6 +362,31 @@ async def test_notifier_sends_schedule_pushes_urgent_and_short_lived(
     assert call["topic"] == expected_topic
 
 
+@pytest.mark.parametrize(
+    "notification_type", [NotificationType.BROADCAST, NotificationType.MESSAGE]
+)
+async def test_notifier_sends_organizer_messages_urgent_but_long_lived(
+    notification_type: NotificationType,
+) -> None:
+    """An organizer writing to people mid-festival is time-sensitive, but its
+    text stays true, so it keeps the default lifetime."""
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+
+    await notifier.send_notification(_notification(notification_type))
+
+    call = client.calls[0]
+    assert call["urgency"] == "high"
+    assert call["ttl_seconds"] == 3600
+
+
 async def test_notifier_sends_other_pushes_at_normal_urgency_without_topic() -> None:
     client = _RecordingClient()
     notifier = PushNotifier(

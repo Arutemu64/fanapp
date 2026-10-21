@@ -115,9 +115,12 @@ class PushNotifier(PushNotifierPort):
         message_data = self._build_message_data(notification)
         topic = _TOPIC_TAGS.get(notification.type)
         ttl = _DEFAULT_TTL
-        urgency: PushUrgency = "normal"
         if notification.type.is_schedule:
             ttl = SCHEDULE_NOTIFICATION_LIFETIME
+        # "high" is RFC 8030's level for a time-sensitive alert: the push
+        # service delivers it even to a phone saving battery.
+        urgency: PushUrgency = "normal"
+        if notification.type.is_time_sensitive:
             urgency = "high"
         # Every device's outcome is acted on (prune, retry) even when one send
         # failed outright, so failures come back as results, not raised.

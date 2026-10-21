@@ -47,9 +47,11 @@ We will store a fan-out's notifications in bulk and deliver them in parallel.
   20 requests/s for a community token).
 - Senders read without row locks where nothing is written back, and end their
   transaction before every external call.
-- Push sends `Urgency: high`, a `Topic` and a ten-minute TTL for schedule
-  notifications (RFC 8030 §5.2–5.4). A schedule notification older than ten
-  minutes is dropped by every channel instead of sent.
+- Push sends a `Topic` and a ten-minute TTL for schedule notifications
+  (RFC 8030 §5.2–5.4), and `Urgency: high` for every type
+  `NotificationType.is_time_sensitive` names (schedule changes, broadcasts,
+  personal messages). A schedule notification older than ten minutes is
+  dropped by every channel instead of sent.
 
 ## Consequences
 

@@ -68,6 +68,21 @@ class NotificationType(StrEnum):
     TEST = "test"
 
     @property
+    def is_time_sensitive(self) -> bool:
+        """Whether the reader needs it now, not whenever the phone next syncs.
+
+        The schedule moving, and organizers writing to people (everyone, or one
+        person) while the festival runs. Quest points and tests can wait for a
+        battery-saving phone to wake up.
+        """
+        return self in (
+            NotificationType.SCHEDULE_CHANGE,
+            NotificationType.SCHEDULE_SUBSCRIPTION,
+            NotificationType.BROADCAST,
+            NotificationType.MESSAGE,
+        )
+
+    @property
     def is_schedule(self) -> bool:
         return self in (
             NotificationType.SCHEDULE_CHANGE,
