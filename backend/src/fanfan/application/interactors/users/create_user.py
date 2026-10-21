@@ -49,10 +49,11 @@ class CreateUser:
         if self.profanity_filter.contains_profanity(data.username):
             raise UsernameProfanity
 
+        hashed_password = await self.password_hasher.hash(data.password)
         user = User.create(
             id=generate_user_id(),
             username=Username(data.username),
-            hashed_password=self.password_hasher.hash(data.password),
+            hashed_password=hashed_password,
             role=data.role,
         )
         # A taken username surfaces as UserAlreadyExists from the gateway's unique

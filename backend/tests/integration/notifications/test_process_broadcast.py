@@ -55,7 +55,7 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
 
     ProcessBroadcast reads every user matching the roles, records that count as
     the mailing total, and publishes exactly one NotificationQueued per user via
-    the EventBroker. The recipient set is compared against read_all_by_roles so
+    the EventBroker. The recipient set is compared against read_ids_by_roles so
     the assertion holds regardless of any seeded users of that role.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
@@ -76,9 +76,7 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
         )
     )
 
-    expected_ids = {
-        u.id for u in await user_gateway.read_all_by_roles(UserRole.VOLUNTEER)
-    }
+    expected_ids = set(await user_gateway.read_ids_by_roles(UserRole.VOLUNTEER))
     assert {u.id for u in created} <= expected_ids
 
     published = [

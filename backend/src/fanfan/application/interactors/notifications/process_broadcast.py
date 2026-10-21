@@ -39,7 +39,7 @@ class ProcessBroadcast:
         self.uow = uow
 
     async def __call__(self, data: ProcessBroadcastInput) -> None:
-        users = await self.user_gateway.read_all_by_roles(*data.roles)
+        recipient_ids = await self.user_gateway.read_ids_by_roles(*data.roles)
         mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
@@ -54,7 +54,7 @@ class ProcessBroadcast:
 
         # With no recipients the mailing finishes at once; otherwise it moves to
         # SENDING and CreateNotification flips it to FINISHED on the last insert.
-        mailing.begin_fan_out(len(users))
+        mailing.begin_fan_out(len(recipient_ids))
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
@@ -64,8 +64,8 @@ class ProcessBroadcast:
                     # Deterministic per (mailing, user): a redelivered
                     # NotificationQueued reruns this with the same id, so the
                     # gateway upsert below no-ops instead of duplicating.
-                    id=notification_id_for(data.mailing_id, u.id),
-                    user_id=u.id,
+                    id=notification_id_for(data.mailing_id, user_id),
+                    user_id=user_id,
                     title="Рассылка от организаторов",
                     body=data.body,
                     path="/notifications",
@@ -73,6 +73,6 @@ class ProcessBroadcast:
                     type=NotificationType.BROADCAST,
                 )
             )
-            for u in users
+            for user_id in recipient_ids
         ]
         await self.events_broker.publish_many(events)

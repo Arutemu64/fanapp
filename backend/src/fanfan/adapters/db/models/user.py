@@ -33,7 +33,7 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # The short number staff look a user up by; see generate_user_number.
     number: Mapped[int] = mapped_column(unique=True)
     # Notification preferences live in columns (not the settings JSON) so they
-    # can be filtered on directly — see read_all_by_receive_all_announcements.
+    # can be filtered on directly — see read_ids_receiving_all_announcements.
     # Deliberately NOT indexed: the column defaults to true, so the fan-out
     # query matches ~every row and the planner seq-scans regardless. A partial
     # index on the same column it filters by also stores no information — the
@@ -47,7 +47,7 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # extension point so new prefs need no schema migration.
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
-    # Indexed for the broadcast fan-out (read_all_by_roles): the organizer and
+    # Indexed for the broadcast fan-out (read_ids_by_roles): the organizer and
     # volunteer roles are a tiny slice of a table dominated by visitors, so
     # targeting them was a full scan. The planner still ignores the index when a
     # broadcast includes VISITOR, which is correct — that really is most of the

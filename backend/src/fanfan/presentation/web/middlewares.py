@@ -1,10 +1,19 @@
+"""HTTP middleware for the web app, written as pure ASGI classes.
+
+Pure ASGI rather than `app.middleware("http")` (BaseHTTPMiddleware): every
+request passes through the whole stack, SSE streams included, and
+BaseHTTPMiddleware wraps each layer in its own task and memory streams while
+also cutting contextvar propagation for whatever sits around it
+(https://starlette.dev/middleware/#limitations). Each class leaves non-HTTP
+scopes (lifespan) untouched.
+"""
+
 import uuid
-from collections.abc import Awaitable, Callable
 
 import structlog
-from starlette.middleware.base import RequestResponseEndpoint
-from starlette.requests import Request
+from starlette.datastructures import Headers, MutableHeaders
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.exceptions import (
@@ -13,11 +22,6 @@ from fanfan.presentation.web.exceptions import (
 )
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
-
-# An HTTP middleware as registered via `app.middleware("http")`.
-HttpMiddleware = Callable[
-    [Request, Callable[[Request], Awaitable[Response]]], Awaitable[Response]
-]
 
 # Standard header used by proxies/clients to carry a request id; we reuse it
 # when present so logs can be correlated across services, and generate one
@@ -30,28 +34,42 @@ _REQUEST_ID_HEADER = "X-Request-ID"
 _MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024
 
 
-def refresh_session_cookie(web_config: WebConfig) -> HttpMiddleware:
+class RefreshSessionCookieMiddleware:
     """Re-set the session cookie when a handler renewed the session id.
 
-    Built as a factory because the middleware needs the request-independent
-    `WebConfig` (cookie flags / TTL); everything else here is config-free.
+    Takes the request-independent `WebConfig` (cookie flags / TTL); everything
+    else here is config-free.
     """
 
-    async def middleware(
-        request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
-        response = await call_next(request)
-        session_id: str | None = getattr(request.state, "renew_session_id", None)
-        if session_id:
-            set_auth_cookie(response, session_id, web_config)
-        return response
+    def __init__(self, app: ASGIApp, web_config: WebConfig) -> None:
+        self.app = app
+        self.web_config = web_config
 
-    return middleware
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_cookie(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                # `request.state` is a view over scope["state"], so the flag a
+                # handler set (WebIdProvider) is visible here.
+                session_id = scope.get("state", {}).get("renew_session_id")
+                if session_id:
+                    # Render the cookie through set_auth_cookie on a scratch
+                    # Response so its flags stay defined in one place.
+                    carrier = Response()
+                    set_auth_cookie(carrier, session_id, self.web_config)
+                    headers = MutableHeaders(scope=message)
+                    for name, value in carrier.raw_headers:
+                        if name == b"set-cookie":
+                            headers.append("set-cookie", value.decode("latin-1"))
+            await send(message)
+
+        await self.app(scope, receive, send_with_cookie)
 
 
-async def catch_unexpected_errors(
-    request: Request, call_next: RequestResponseEndpoint
-) -> Response:
+class CatchUnexpectedErrorsMiddleware:
     """Turn an unanticipated route error into the generic 500 inside the stack.
 
     An `Exception` handler would do the same, but Starlette runs it in
@@ -63,15 +81,34 @@ async def catch_unexpected_errors(
     continue to raise the exception", starlette/middleware/errors.py), so the
     server logged the traceback a second time.
     """
-    try:
-        return await call_next(request)
-    except Exception as exc:  # noqa: BLE001 — the last line before a client-facing 500
-        return internal_error_response(exc)
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        response_started = False
+
+        async def tracking_send(message: Message) -> None:
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, tracking_send)
+        except Exception as exc:
+            # Once headers are on the wire (a stream that failed midway) a 500
+            # can no longer be sent; let the server close the connection.
+            if response_started:
+                raise
+            await internal_error_response(exc)(scope, receive, send)
 
 
-async def security_headers(
-    request: Request, call_next: RequestResponseEndpoint
-) -> Response:
+class SecurityHeadersMiddleware:
     """Stamp hardening headers on every response.
 
     Defence-in-depth that travels with the app: even deployed behind a proxy
@@ -91,17 +128,28 @@ async def security_headers(
     HSTS is deliberately absent: it must be emitted only over HTTPS by the
     TLS-terminating proxy, which the app cannot detect from behind it.
     """
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    return response
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers["X-Content-Type-Options"] = "nosniff"
+                headers["X-Frame-Options"] = "DENY"
+                headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
 
 
-async def no_store_cache_control(
-    request: Request, call_next: RequestResponseEndpoint
-) -> Response:
+class NoStoreCacheControlMiddleware:
     """Default-deny HTTP caching for the whole API.
 
     Responses are per-user and dynamic, and the browser must never persist
@@ -111,18 +159,28 @@ async def no_store_cache_control(
     route sets for itself, so a future public, identity-independent GET can opt
     into caching.
     """
-    response = await call_next(request)
-    response.headers.setdefault("Cache-Control", "no-store")
-    return response
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_cache_control(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                MutableHeaders(scope=message).setdefault("Cache-Control", "no-store")
+            await send(message)
+
+        await self.app(scope, receive, send_with_cache_control)
 
 
-async def limit_request_body_size(
-    request: Request, call_next: RequestResponseEndpoint
-) -> Response:
+class LimitRequestBodySizeMiddleware:
     """Reject a body that declares itself oversized, before anything reads it.
 
-    Defence-in-depth that travels with the app (see `security_headers`): the
-    normal hard backstop against a hostile multi-hundred-MB upload is the
+    Defence-in-depth that travels with the app (see `SecurityHeadersMiddleware`):
+    the normal hard backstop against a hostile multi-hundred-MB upload is the
     reverse proxy's own `request_body` cap (Caddyfile.example), documented as
     required for the schedule-import endpoint. A deployment that skips or
     misconfigures that proxy setting would otherwise let FastAPI spool the
@@ -131,26 +189,35 @@ async def limit_request_body_size(
     chunked body with no `Content-Length` still reaches the route unbounded;
     the proxy cap remains the only defence against that.
     """
-    content_length = request.headers.get("content-length")
-    if content_length is not None:
-        try:
-            declared_size = int(content_length)
-        except ValueError:
-            declared_size = None
-        if declared_size is not None and declared_size > _MAX_REQUEST_BODY_BYTES:
-            return JSONResponse(
-                status_code=413,
-                content=ErrorMessage(
-                    code=HTTP_ERROR_CODE, details={"status_code": 413}
-                ).model_dump(),
-            )
 
-    return await call_next(request)
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        content_length = Headers(scope=scope).get("content-length")
+        if content_length is not None:
+            try:
+                declared_size = int(content_length)
+            except ValueError:
+                declared_size = None
+            if declared_size is not None and declared_size > _MAX_REQUEST_BODY_BYTES:
+                response = JSONResponse(
+                    status_code=413,
+                    content=ErrorMessage(
+                        code=HTTP_ERROR_CODE, details={"status_code": 413}
+                    ).model_dump(),
+                )
+                await response(scope, receive, send)
+                return
+
+        await self.app(scope, receive, send)
 
 
-async def bind_request_context(
-    request: Request, call_next: RequestResponseEndpoint
-) -> Response:
+class BindRequestContextMiddleware:
     """Bind a per-request id into structlog contextvars.
 
     The logging setup includes ``merge_contextvars`` in its processor chain,
@@ -158,11 +225,22 @@ async def bind_request_context(
     ``request_id``. The id is echoed back in the response header so clients and
     proxies can reference it too.
     """
-    structlog.contextvars.clear_contextvars()
-    request_id = request.headers.get(_REQUEST_ID_HEADER) or uuid.uuid4().hex
-    structlog.contextvars.bind_contextvars(request_id=request_id)
 
-    response = await call_next(request)
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
 
-    response.headers[_REQUEST_ID_HEADER] = request_id
-    return response
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        structlog.contextvars.clear_contextvars()
+        request_id = Headers(scope=scope).get(_REQUEST_ID_HEADER) or uuid.uuid4().hex
+        structlog.contextvars.bind_contextvars(request_id=request_id)
+
+        async def send_with_request_id(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                MutableHeaders(scope=message)[_REQUEST_ID_HEADER] = request_id
+            await send(message)
+
+        await self.app(scope, receive, send_with_request_id)

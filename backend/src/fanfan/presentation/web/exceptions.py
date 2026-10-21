@@ -82,7 +82,7 @@ def internal_error_response(exc: Exception) -> JSONResponse:
 
     The code and details stay out of the body: they describe our bug, not
     anything the client can act on. The ERROR log is what reaches Sentry (its
-    logging integration), with the request id bound by `bind_request_context`.
+    logging integration), with the request id bound by `BindRequestContextMiddleware`.
     """
     # Not `.exception()`: a handler runs outside the `except` block, so it would
     # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
@@ -170,7 +170,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     Starlette runs an `Exception` handler in `ServerErrorMiddleware`, outside
     every other middleware, so its response carries no CORS, request-id or
     security headers. Route errors are therefore caught earlier, by the
-    `catch_unexpected_errors` middleware; only an error raised by a middleware
+    `CatchUnexpectedErrorsMiddleware`; only an error raised by a middleware
     outside that one still lands here.
     """
     _ = request
@@ -187,6 +187,6 @@ def add_exception_handlers(app: FastAPI) -> None:
     # https://fastapi.tiangolo.com/tutorial/handling-errors/
     app.add_exception_handler(HTTPException, http_exception_handler)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # ty: ignore[invalid-argument-type]
-    # Last resort for an error raised outside `catch_unexpected_errors` (in an
+    # Last resort for an error raised outside `CatchUnexpectedErrorsMiddleware` (in an
     # outer middleware), so even that response keeps the ErrorMessage shape.
     app.add_exception_handler(Exception, unhandled_exception_handler)

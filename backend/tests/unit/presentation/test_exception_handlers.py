@@ -14,9 +14,9 @@ from fanfan.presentation.web.exceptions import (
 )
 from fanfan.presentation.web.exceptions import logger as handlers_logger
 from fanfan.presentation.web.middlewares import (
-    bind_request_context,
-    catch_unexpected_errors,
-    no_store_cache_control,
+    BindRequestContextMiddleware,
+    CatchUnexpectedErrorsMiddleware,
+    NoStoreCacheControlMiddleware,
 )
 
 pytestmark = pytest.mark.unit
@@ -40,9 +40,9 @@ def _app() -> FastAPI:
 
     # The same relative order as create_app: the catch sits inside the
     # middleware whose headers every response must carry.
-    app.middleware("http")(catch_unexpected_errors)
-    app.middleware("http")(no_store_cache_control)
-    app.middleware("http")(bind_request_context)
+    app.add_middleware(CatchUnexpectedErrorsMiddleware)
+    app.add_middleware(NoStoreCacheControlMiddleware)
+    app.add_middleware(BindRequestContextMiddleware)
     add_exception_handlers(app)
     return app
 

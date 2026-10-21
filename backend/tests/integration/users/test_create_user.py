@@ -36,7 +36,7 @@ async def test_creates_a_user_with_a_hashed_password(
     # The password is stored hashed, never in the clear, and verifies.
     assert stored.hashed_password is not None
     assert stored.hashed_password != _PASSWORD
-    assert password_hasher.verify(_PASSWORD, stored.hashed_password)
+    assert await password_hasher.verify(_PASSWORD, stored.hashed_password)
 
 
 async def test_duplicate_username_is_rejected(

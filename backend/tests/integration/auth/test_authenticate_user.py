@@ -36,7 +36,7 @@ async def _user_with_password(
         id=generate_user_id(),
         username=Username("login_user"),
         email=Email(email),
-        hashed_password=(password_hasher.hash(password) if password else None),
+        hashed_password=(await password_hasher.hash(password) if password else None),
         role=UserRole.VISITOR,
     )
     await user_gateway.add(user)

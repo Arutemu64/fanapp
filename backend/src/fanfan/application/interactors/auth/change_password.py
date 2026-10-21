@@ -36,13 +36,14 @@ class ChangePassword:
         current_user = await self.current_user_provider.require_user()
         if current_user.hashed_password:
             if data.old_password:
-                if not self.password_hasher.verify(
+                if not await self.password_hasher.verify(
                     data.old_password, current_user.hashed_password
                 ):
                     raise IncorrectPassword
             else:
                 raise IncorrectPassword
-        current_user.set_password_hash(self.password_hasher.hash(data.new_password))
+        new_password_hash = await self.password_hasher.hash(data.new_password)
+        current_user.set_password_hash(new_password_hash)
         await self.user_gateway.save(current_user)
         await self.uow.commit()
 
