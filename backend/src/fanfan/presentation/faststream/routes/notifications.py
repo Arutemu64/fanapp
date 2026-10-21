@@ -40,6 +40,7 @@ from fanfan.presentation.faststream.jstream import stream
 from fanfan.presentation.faststream.redelivery import (
     consumer_config,
     in_progress_heartbeat,
+    is_last_delivery,
 )
 
 notifications_router = NatsRouter()
@@ -244,13 +245,20 @@ async def create_new_broadcast(
     # A large fan-out can outlast AckWait while NATS is slow to ack; the
     # heartbeat keeps a live run from being redelivered on top of itself.
     async with in_progress_heartbeat(msg):
-        await interactor(
-            ProcessBroadcastInput(
-                body=data.body,
-                roles=data.roles,
-                mailing_id=data.mailing_id,
+        try:
+            await interactor(
+                ProcessBroadcastInput(
+                    body=data.body,
+                    roles=data.roles,
+                    mailing_id=data.mailing_id,
+                )
             )
-        )
+        except Exception:
+            # Out of redeliveries: nothing retries the fan-out after this, so
+            # the mailing would otherwise stay PENDING for good.
+            if is_last_delivery(msg.raw_message):
+                await interactor.abandon(data.mailing_id)
+            raise
 
 
 @notifications_router.subscriber(

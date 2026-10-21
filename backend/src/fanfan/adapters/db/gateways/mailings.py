@@ -43,7 +43,6 @@ def _parse_dto(orm: MailingORM) -> MailingDTO:
         by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
         body=orm.body,
         roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
-        sent_count=orm.sent_count,
         total_count=orm.total_count,
         created_at=orm.created_at,
     )
@@ -88,26 +87,6 @@ class SqlMailingGateway(MailingGateway):
             )
         )
         await self.session.execute(stmt)
-
-    async def increment_sent(
-        self, mailing_id: MailingId, incr_by: int
-    ) -> tuple[int, int]:
-        # Atomic increment; RETURNING hands back the post-increment (sent, total)
-        # so the caller's aggregate decides completion — the rule does not live in
-        # this UPDATE.
-        stmt = (
-            update(MailingORM)
-            .where(MailingORM.id == mailing_id)
-            .values(sent_count=MailingORM.sent_count + incr_by)
-            .returning(MailingORM.sent_count, MailingORM.total_count)
-        )
-        row = (await self.session.execute(stmt)).one()
-        return int(row.sent_count), int(row.total_count)
-
-    async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:
-        stmt = select(MailingORM).where(MailingORM.id == mailing_id)
-        mailing_orm = await self.session.scalar(stmt)
-        return _parse_dto(mailing_orm) if mailing_orm else None
 
     async def read_broadcasts(self, pagination: CursorPagination) -> list[MailingDTO]:
         # Organizer broadcasts only: a change announcement has no roles, so it

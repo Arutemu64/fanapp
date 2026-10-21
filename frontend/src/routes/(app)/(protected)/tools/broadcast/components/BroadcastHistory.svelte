@@ -50,7 +50,6 @@
 
 	const STATUS_LABELS: Record<MailingStatus, string> = {
 		pending: m.status_queued(),
-		sending: m.mailing_status_sending(),
 		finished: m.mailing_status_finished(),
 		cancelled: m.mailing_status_cancelled(),
 		failed: m.status_error()
@@ -58,7 +57,6 @@
 
 	const STATUS_VARIANTS: Record<MailingStatus, BadgeVariant> = {
 		pending: 'outline',
-		sending: 'default',
 		finished: 'secondary',
 		cancelled: 'outline',
 		failed: 'destructive'
@@ -71,8 +69,10 @@
 		organizer: m.audience_organizers()
 	};
 
+	// FINISHED means stored, not delivered: Telegram and VK can still be sending,
+	// so a finished or failed broadcast can be recalled too (ADR-0042).
 	function isCancellable(status: MailingStatus): boolean {
-		return status === 'pending' || status === 'sending';
+		return status !== 'cancelled';
 	}
 
 	function rolesLabel(roles: UserRole[] | null): string {
@@ -130,10 +130,7 @@
 							<span>
 								{rolesLabel(mailing.roles)}
 								{#if mailing.total_count > 0}
-									{m.broadcast_progress_suffix({
-										sent_count: mailing.sent_count,
-										total_count: mailing.total_count
-									})}
+									{m.broadcast_recipients({ count: mailing.total_count })}
 								{/if}
 							</span>
 							{#if isCancellable(mailing.status)}
@@ -147,7 +144,7 @@
 									{#if cancellingId === mailing.id}
 										<Spinner data-icon="inline-start" />
 									{/if}
-									{m.common_revert()}
+									{m.broadcast_recall()}
 								</Button>
 							{/if}
 						</div>

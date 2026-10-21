@@ -39,8 +39,7 @@ class CancelMailing:
 
         # get() locks the row, so the status flip and the enqueued
         # CancelMailingCommand land in one transaction via the outbox. cancel()
-        # raises if the mailing is already cancelled or has reached a terminal
-        # state.
+        # raises only if the mailing is already cancelled.
         mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound

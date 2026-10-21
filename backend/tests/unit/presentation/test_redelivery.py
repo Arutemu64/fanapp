@@ -14,6 +14,7 @@ from fanfan.presentation.faststream.redelivery import (
     changed_consumer_fields,
     consumer_config,
     in_progress_heartbeat,
+    is_last_delivery,
 )
 from fanfan.presentation.faststream.routes import setup_router
 
@@ -64,6 +65,24 @@ async def test_failure_on_the_last_delivery_is_terminated() -> None:
     await _fail(msg, RuntimeError("boom"))
 
     assert client.sent == [b"+TERM"]
+
+
+@pytest.mark.parametrize(
+    ("deliveries", "expected"), [(MAX_DELIVER - 1, False), (MAX_DELIVER, True)]
+)
+def test_is_last_delivery_matches_when_the_middleware_terms(
+    *, deliveries: int, expected: bool
+) -> None:
+    msg, _ = _delivery(deliveries=deliveries)
+
+    assert is_last_delivery(msg) is expected
+
+
+def test_core_nats_message_is_never_a_last_delivery() -> None:
+    # Only a JetStream delivery is redelivered, so only it can run out.
+    msg = Msg(_client=cast("Any", _FakeClient()), subject="probe", reply="inbox")
+
+    assert not is_last_delivery(msg)
 
 
 @pytest.mark.asyncio

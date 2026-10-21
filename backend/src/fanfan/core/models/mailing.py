@@ -1,9 +1,6 @@
 from dataclasses import dataclass
 
-from fanfan.core.exceptions.notifications import (
-    MailingAlreadyCancelled,
-    MailingNotCancellable,
-)
+from fanfan.core.exceptions.notifications import MailingAlreadyCancelled
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId, MailingStatus, generate_mailing_id
 from fanfan.core.vo.user import UserId, UserRole
@@ -16,16 +13,14 @@ class Mailing(AggregateRoot):
     by_user_id: UserId | None
     # Kept so a mailing survives its own fan-out: the per-user notifications get
     # deleted on cancel and purged by retention, so the mailing row is the only
-    # durable record of what was sent. `body` is the exact broadcast text, or a
-    # short change summary for a change announcement (whose per-recipient texts are
-    # templated variants of it). `roles` is None for a change announcement — that is
-    # not a role-targeted broadcast (recipients are derived: editors, announcement
-    # opt-ins, event subscribers) — so it distinguishes the two mailing kinds.
+    # durable record of what was sent. `body` is the exact broadcast text, None
+    # for a change announcement (/schedule/changes records the change itself).
+    # `roles` is None for a change announcement — that is not a role-targeted
+    # broadcast (recipients are derived: editors, announcement opt-ins, event
+    # subscribers) — so it distinguishes the two mailing kinds.
     body: str | None
     roles: list[UserRole] | None
-    # Recipients the fan-out will create notifications for. Recalculated by
-    # begin_fan_out on each start or retry; `sent_count` is deliberately not
-    # aggregate state (see register_delivery).
+    # Recipients the fan-out stored notifications for; set when it finishes.
     total_count: int
 
     @classmethod
@@ -61,70 +56,33 @@ class Mailing(AggregateRoot):
             return False
         return set(self.roles) == set(roles)
 
-    def record_summary(self, body: str) -> None:
-        self.body = body
+    def finish(self, total_count: int) -> None:
+        """Close the fan-out once it has stored every recipient's notification.
 
-    def begin_fan_out(self, total_count: int) -> None:
-        """Fix the recipient count and open the fan-out.
-
-        No recipients means there is nothing to wait for, so the mailing is
-        finished at once; otherwise it moves to SENDING and the last delivery
-        finishes it (see register_delivery).
+        Called in the transaction that stores the last batch, so FINISHED means
+        every notification exists; the channel sends may still be going out.
+        Idempotent: a redelivered fan-out stores nothing new and finishes again.
         """
         self.ensure_active()
         self.total_count = total_count
-        if total_count > 0:
-            self.start_sending()
-        else:
-            self.mark_finished()
-
-    def start_sending(self) -> None:
-        # Guard first: a mailing cancelled between creation and fan-out must not
-        # flip back to an active state.
-        self.ensure_active()
-        # A redelivered fan-out trigger can arrive after the mailing already
-        # finished; never resurrect a terminal mailing to SENDING (its duplicate
-        # notifications no-op, so nothing would move it back to FINISHED). Also
-        # makes the transition re-entrant from SENDING itself.
-        if self.status in (MailingStatus.FINISHED, MailingStatus.FAILED):
-            return
-        self.status = MailingStatus.SENDING
-
-    def mark_finished(self) -> None:
         self.status = MailingStatus.FINISHED
 
     def mark_failed(self) -> None:
-        # Only a mailing whose fan-out never started can fail as a whole. Once
-        # SENDING, some notifications may already be out and the fan-out owns
-        # finishing it; a cancelled or terminal mailing is already settled.
+        # Only a fan-out that never finished can fail. A partly stored mailing is
+        # still PENDING, so it fails too: its delivery did not complete. A
+        # finished or cancelled mailing is already settled.
         if self.status is not MailingStatus.PENDING:
             return
         self.status = MailingStatus.FAILED
 
-    def register_delivery(self, *, sent_count: int, total_count: int) -> bool:
-        """Apply one unit of fan-out progress; return True iff it just finished.
-
-        The completion rule ("finished once every queued notification exists")
-        lives here, not in the persistence layer. The counts are not aggregate
-        state — they are a high-write running total maintained by atomic,
-        idempotent per-notification increments — so they are passed in. The
-        caller holds the mailing row lock, which serializes this decision.
-        """
-        if self.status is not MailingStatus.SENDING:
-            return False
-        if total_count > 0 and sent_count >= total_count:
-            self.mark_finished()
-            return True
-        return False
-
     def cancel(self) -> None:
+        # Any status but CANCELLED can be cancelled, a finished mailing included:
+        # FINISHED means stored, not delivered, so the channel sends may still be
+        # draining. Cancelling stops those (senders check ensure_active) and
+        # removes the notifications from the feeds; a message a channel already
+        # delivered cannot be recalled.
         if self.status is MailingStatus.CANCELLED:
             raise MailingAlreadyCancelled
-        # A mailing whose fan-out already completed (or failed) has nothing left
-        # to stop — undelivered notifications are what cancellation removes, and
-        # a delivered push/Telegram/VK message cannot be recalled anyway.
-        if self.status in (MailingStatus.FINISHED, MailingStatus.FAILED):
-            raise MailingNotCancellable
         self.status = MailingStatus.CANCELLED
 
     def confirm_cancelled(self) -> None:

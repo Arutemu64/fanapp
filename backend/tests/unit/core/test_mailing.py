@@ -10,7 +10,8 @@ from fanfan.core.vo.user import UserId, UserRole
 pytestmark = pytest.mark.unit
 
 
-def test_mark_failed_fails_a_mailing_that_never_started() -> None:
+def test_mark_failed_fails_a_mailing_whose_fan_out_never_finished() -> None:
+    # PENDING covers a fan-out that stored some notifications and then gave up.
     mailing = Mailing.create(by_user_id=UserId(uuid7()))
 
     mailing.mark_failed()
@@ -18,15 +19,8 @@ def test_mark_failed_fails_a_mailing_that_never_started() -> None:
     assert mailing.status is MailingStatus.FAILED
 
 
-@pytest.mark.parametrize(
-    "status",
-    [MailingStatus.SENDING, MailingStatus.FINISHED, MailingStatus.CANCELLED],
-)
-def test_mark_failed_leaves_a_started_or_settled_mailing_alone(
-    status: MailingStatus,
-) -> None:
-    # Once SENDING, notifications may already be out and the fan-out owns the
-    # mailing; a settled one must not be relabelled.
+@pytest.mark.parametrize("status", [MailingStatus.FINISHED, MailingStatus.CANCELLED])
+def test_mark_failed_leaves_a_settled_mailing_alone(status: MailingStatus) -> None:
     mailing = Mailing.create(by_user_id=UserId(uuid7()))
     mailing.status = status
 
@@ -35,30 +29,45 @@ def test_mark_failed_leaves_a_started_or_settled_mailing_alone(
     assert mailing.status is status
 
 
-def test_begin_fan_out_with_recipients_starts_sending() -> None:
+def test_finish_records_the_recipient_count() -> None:
     mailing = Mailing.create(by_user_id=UserId(uuid7()))
 
-    mailing.begin_fan_out(3)
+    mailing.finish(3)
 
     assert mailing.total_count == 3
-    assert mailing.status is MailingStatus.SENDING
-
-
-def test_begin_fan_out_without_recipients_finishes_at_once() -> None:
-    mailing = Mailing.create(by_user_id=UserId(uuid7()))
-
-    mailing.begin_fan_out(0)
-
-    assert mailing.total_count == 0
     assert mailing.status is MailingStatus.FINISHED
 
 
-def test_begin_fan_out_refuses_a_cancelled_mailing() -> None:
+def test_finish_refuses_a_cancelled_mailing() -> None:
     mailing = Mailing.create(by_user_id=UserId(uuid7()))
     mailing.cancel()
 
     with pytest.raises(MailingAlreadyCancelled):
-        mailing.begin_fan_out(3)
+        mailing.finish(3)
+
+
+@pytest.mark.parametrize(
+    "status", [MailingStatus.PENDING, MailingStatus.FINISHED, MailingStatus.FAILED]
+)
+def test_cancel_recalls_a_mailing_in_any_uncancelled_status(
+    status: MailingStatus,
+) -> None:
+    # FINISHED means stored, not delivered: its channel sends can still be
+    # stopped, so a finished mailing is cancellable too.
+    mailing = Mailing.create(by_user_id=UserId(uuid7()))
+    mailing.status = status
+
+    mailing.cancel()
+
+    assert mailing.status is MailingStatus.CANCELLED
+
+
+def test_cancel_refuses_a_cancelled_mailing() -> None:
+    mailing = Mailing.create(by_user_id=UserId(uuid7()))
+    mailing.cancel()
+
+    with pytest.raises(MailingAlreadyCancelled):
+        mailing.cancel()
 
 
 def test_confirm_cancelled_is_idempotent() -> None:
@@ -104,7 +113,7 @@ def test_is_broadcast_rejects_a_different_broadcast(
 def test_is_broadcast_rejects_a_change_announcement() -> None:
     author = UserId(uuid7())
     mailing = Mailing.create(by_user_id=author)
-    mailing.record_summary("Сдвиг расписания")
+    mailing.body = "Сдвиг расписания"
 
     assert not mailing.is_broadcast(
         by_user_id=author, body="Сдвиг расписания", roles=[]

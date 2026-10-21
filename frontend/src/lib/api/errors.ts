@@ -251,7 +251,6 @@ const ERROR_MESSAGES = {
 	LINK_INITIATOR_MISMATCH: m.error_link_initiator_mismatch,
 	MAILING_ALREADY_EXISTS: m.error_mailing_already_exists,
 	MAILING_CANCELLED: m.error_mailing_cancelled,
-	MAILING_NOT_CANCELLABLE: m.error_mailing_not_cancellable,
 	MAILING_NOT_FOUND: m.error_mailing_not_found,
 	OUTDATED_SCHEDULE_CHANGE: m.error_outdated_schedule_change,
 	PERMISSION_NOT_ASSIGNABLE: m.error_permission_not_assignable,

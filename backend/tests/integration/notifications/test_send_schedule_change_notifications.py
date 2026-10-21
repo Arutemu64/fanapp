@@ -197,7 +197,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
 
     The notifications are built from the schedule as it is now, so a change
     delivered late (after an outage) would announce the wrong event. Its mailing
-    is settled as failed so it does not sit in the queue forever.
+    is settled as failed so it does not stay PENDING forever.
     """
     interactor = await dishka_request.get(SendScheduleChangeNotifications)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
@@ -314,3 +314,40 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
         if not kinds or kinds[-1] != title:
             kinds.append(title)
     assert kinds == expected_order
+
+
+async def test_abandoned_schedule_change_fails_its_mailing(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """Out of redeliveries, the handler abandons the change's fan-out so its
+    mailing does not stay PENDING forever."""
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    login(visitor)
+
+    event = _schedule_event(1, "Событие", 1)
+    await schedule_gateway.add(event)
+    mailing = Mailing.create(by_user_id=visitor.id)
+    await mailing_gateway.add(mailing)
+    change = ScheduleChange.moved(
+        event_id=event.id,
+        previous_entry_id=None,
+        mailing_id=mailing.id,
+        user_id=None,
+        next_event_changed=False,
+    )
+    await changes_gateway.add(change)
+    await uow.commit()
+
+    await interactor.abandon(
+        SendScheduleChangeNotificationsInput(schedule_change_id=change.id)
+    )
+
+    saved_mailing = await mailing_gateway.get(mailing.id, lock=False)
+    assert saved_mailing is not None
+    assert saved_mailing.status is MailingStatus.FAILED

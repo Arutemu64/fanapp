@@ -39,12 +39,12 @@ def schedule_notification_id_for(
 
     The schedule-change trigger is redelivered at-least-once; a rerun that
     minted fresh random ids would slip past the notifications insert's
-    on-conflict-do-nothing dedup and duplicate every recipient's notification
-    (and drift the mailing's sent_count past total_count). The schedule change
-    id is the stable anchor across redeliveries; the discriminator separates the
-    distinct notifications one user can receive from a single change — an editor
-    notice, a global announcement, a per-subscription notice — so they keep
-    distinct ids instead of collapsing into one.
+    on-conflict-do-nothing dedup and duplicate every recipient's notification.
+    The schedule change id is the stable anchor across redeliveries; the
+    discriminator separates the distinct notifications one user can receive
+    from a single change — an editor notice, a global announcement, a
+    per-subscription notice — so they keep distinct ids instead of collapsing
+    into one.
     """
     return NotificationId(
         uuid5(

@@ -74,6 +74,17 @@ async def in_progress_heartbeat(
             await task
 
 
+def is_last_delivery(msg: Msg) -> bool:
+    """Whether a failure now ends this message: RedeliveryMiddleware terms it.
+
+    A handler whose message carries work nothing else retries checks this to
+    settle that work as failed before it is dropped.
+    """
+    if not msg.reply.startswith("$JS.ACK."):
+        return False
+    return msg.metadata.num_delivered >= MAX_DELIVER
+
+
 def _redelivery_delay(deliveries: int) -> int:
     index = min(deliveries, len(_REDELIVERY_DELAYS_SECONDS)) - 1
     return _REDELIVERY_DELAYS_SECONDS[index]
@@ -110,7 +121,7 @@ class RedeliveryMiddleware(BaseMiddleware):
             return
         deliveries = msg.metadata.num_delivered
         try:
-            if deliveries >= MAX_DELIVER:
+            if is_last_delivery(msg):
                 logger.error(
                     "Message dropped after max deliveries",
                     extra={"subject": msg.subject, "deliveries": deliveries},

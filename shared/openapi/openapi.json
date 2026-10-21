@@ -5680,7 +5680,6 @@
               "LINK_INITIATOR_MISMATCH",
               "MAILING_ALREADY_EXISTS",
               "MAILING_CANCELLED",
-              "MAILING_NOT_CANCELLABLE",
               "MAILING_NOT_FOUND",
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",
@@ -6402,10 +6401,6 @@
             ],
             "title": "Roles"
           },
-          "sent_count": {
-            "type": "integer",
-            "title": "Sent Count"
-          },
           "total_count": {
             "type": "integer",
             "title": "Total Count"
@@ -6423,7 +6418,6 @@
           "by_user_id",
           "body",
           "roles",
-          "sent_count",
           "total_count",
           "created_at"
         ],
@@ -6433,7 +6427,6 @@
         "type": "string",
         "enum": [
           "pending",
-          "sending",
           "finished",
           "cancelled",
           "failed"

@@ -21,6 +21,7 @@ from fanfan.presentation.faststream.jstream import stream
 from fanfan.presentation.faststream.redelivery import (
     consumer_config,
     in_progress_heartbeat,
+    is_last_delivery,
 )
 
 schedule_router = NatsRouter()
@@ -54,12 +55,18 @@ async def process_schedule_change(
         # which is harmless — clients revalidate and get a 304 for a schedule
         # they already hold.
         await publish_schedule_updated()
-        await interactor(
-            SendScheduleChangeNotificationsInput(
-                schedule_change_id=data.schedule_change_id,
-                occurred_at=read_occurred_at(msg),
-            )
+        notifications_input = SendScheduleChangeNotificationsInput(
+            schedule_change_id=data.schedule_change_id,
+            occurred_at=read_occurred_at(msg),
         )
+        try:
+            await interactor(notifications_input)
+        except Exception:
+            # Out of redeliveries: nothing retries the fan-out after this, so
+            # the change's mailing would otherwise stay PENDING for good.
+            if is_last_delivery(msg.raw_message):
+                await interactor.abandon(notifications_input)
+            raise
 
 
 @schedule_router.subscriber(

@@ -203,22 +203,29 @@ class SendScheduleChangeNotifications:
                 )
         return notifications
 
-    async def _drop_stale(self, schedule_change: ScheduleChangeFullDTO) -> None:
-        logger.warning(
-            "Stale schedule change dropped without notifications",
-            extra={"schedule_change_id": str(schedule_change.id)},
-        )
+    async def _fail_mailing(self, schedule_change: ScheduleChangeFullDTO) -> None:
         if schedule_change.mailing_id is None:
             return
         mailing = await self.mailing_gateway.get(schedule_change.mailing_id)
         if mailing is None:
             return
-        # Settle the mailing so it does not sit "in the queue" forever in the
-        # broadcast history; a redelivery that finds it already started is left
-        # to its fan-out (mark_failed only fails a mailing still PENDING).
+        # Settle the mailing so it does not stay PENDING forever. A first
+        # attempt may have stored some notifications before failing; the
+        # mailing still fails, since its fan-out never finished.
         mailing.mark_failed()
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
+
+    async def abandon(self, data: SendScheduleChangeNotificationsInput) -> None:
+        """Fail the change's mailing when its fan-out will not be retried again."""
+        # The failed run can leave the transaction aborted.
+        await self.uow.rollback()
+        schedule_change = await self.changes_gateway.read_schedule_change(
+            data.schedule_change_id
+        )
+        if schedule_change is None:
+            return
+        await self._fail_mailing(schedule_change)
 
     async def __call__(self, data: SendScheduleChangeNotificationsInput) -> None:
         schedule_change = await self.changes_gateway.read_schedule_change(
@@ -227,7 +234,11 @@ class SendScheduleChangeNotifications:
         if schedule_change is None:
             raise ScheduleChangeNotFound
         if _is_stale(data.occurred_at):
-            await self._drop_stale(schedule_change)
+            logger.warning(
+                "Stale schedule change dropped without notifications",
+                extra={"schedule_change_id": str(schedule_change.id)},
+            )
+            await self._fail_mailing(schedule_change)
             return
         current_event = await self.schedule_gateway.read_current_event()
         next_event = await self.schedule_gateway.read_next_event()
@@ -261,39 +272,12 @@ class SendScheduleChangeNotifications:
             await self._build_editor_notifications(schedule_change, reason_msg)
         )
 
-        if schedule_change.mailing_id:
-            mailing = await self.mailing_gateway.get(schedule_change.mailing_id)
-            if mailing is None:
-                return
-            try:
-                # An overlapping schedule undo cancels this mailing via
-                # CancelMailingCommand. get() locked the row, so that cancel is
-                # serialized against us; ensure_active then stops us resurrecting a
-                # cancelled mailing (and sending notifications for an undone change).
-                mailing.ensure_active()
-            except MailingAlreadyCancelled:
-                await self.uow.commit()
-                return
-
-            # Record a human-readable summary of the change on the mailing itself.
-            # The per-recipient notification texts are templated variants; this
-            # reason is their common thread and the only thing an organizer sees
-            # in a mailing history. None for change types without a reason.
-            if reason_msg is not None:
-                mailing.record_summary(reason_msg)
-            # Mirror the broadcast lifecycle: SENDING while the fan-out runs (it
-            # flips to FINISHED on the last insert), or straight to FINISHED
-            # when the change reached nobody. start_sending() no-ops on a
-            # redelivery that finds the mailing already terminal.
-            mailing.begin_fan_out(len(notifications))
-            await self.mailing_gateway.save(mailing)
-            await self.uow.commit()
-
         try:
-            await self.fan_out(notifications)
+            await self.fan_out(notifications, mailing_id=schedule_change.mailing_id)
         except MailingAlreadyCancelled:
-            # Undone mid-fan-out; the cancellation removes what was stored.
+            # Undone before or during the fan-out; the cancellation removes
+            # what was stored.
             logger.info(
-                "Schedule change undone during fan-out",
+                "Schedule change undone before its fan-out finished",
                 extra={"schedule_change_id": str(schedule_change.id)},
             )

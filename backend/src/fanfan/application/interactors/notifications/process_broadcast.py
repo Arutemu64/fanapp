@@ -6,10 +6,7 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.notification_fan_out import NotificationFanOut
-from fanfan.core.exceptions.notifications import (
-    MailingAlreadyCancelled,
-    MailingNotFound,
-)
+from fanfan.core.exceptions.notifications import MailingAlreadyCancelled
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationType, notification_id_for
@@ -39,24 +36,6 @@ class ProcessBroadcast:
 
     async def __call__(self, data: ProcessBroadcastInput) -> None:
         recipient_ids = await self.user_gateway.read_ids_by_roles(*data.roles)
-        mailing = await self.mailing_gateway.get(data.mailing_id)
-        if mailing is None:
-            raise MailingNotFound
-
-        try:
-            # Cancelled between creation and this (at-least-once) fan-out trigger:
-            # stop here rather than queue notifications that would be rejected.
-            mailing.ensure_active()
-        except MailingAlreadyCancelled:
-            logger.info("Broadcast %s was cancelled before fan-out", mailing.id)
-            return
-
-        # With no recipients the mailing finishes at once; otherwise it moves to
-        # SENDING and the fan-out flips it to FINISHED on the last insert.
-        mailing.begin_fan_out(len(recipient_ids))
-        await self.mailing_gateway.save(mailing)
-        await self.uow.commit()
-
         notifications = [
             NewNotification(
                 # Deterministic per (mailing, user): a redelivered trigger reruns
@@ -73,6 +52,19 @@ class ProcessBroadcast:
             for user_id in recipient_ids
         ]
         try:
-            await self.fan_out(notifications)
+            # The fan-out finishes the mailing with its last chunk, or at once
+            # when the broadcast reaches nobody.
+            await self.fan_out(notifications, mailing_id=data.mailing_id)
         except MailingAlreadyCancelled:
-            logger.info("Broadcast %s was cancelled during fan-out", mailing.id)
+            logger.info("Broadcast %s was cancelled", data.mailing_id)
+
+    async def abandon(self, mailing_id: MailingId) -> None:
+        """Fail the mailing of a fan-out that will not be retried again."""
+        # The failed run can leave the transaction aborted.
+        await self.uow.rollback()
+        mailing = await self.mailing_gateway.get(mailing_id)
+        if mailing is None:
+            return
+        mailing.mark_failed()
+        await self.mailing_gateway.save(mailing)
+        await self.uow.commit()
