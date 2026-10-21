@@ -204,7 +204,7 @@ class JobWorker:
                 sentry_sdk.capture_exception(e)
                 error = e
 
-        job = self._stop_tracking(job)
+        job = self._as_current_attempt(job)
         try:
             async with self._container() as scope:
                 queue = await scope.get(JobQueue)
@@ -243,10 +243,9 @@ class JobWorker:
             },
         )
 
-    def _stop_tracking(self, job: Job) -> Job:
-        # Untracked before it is settled, so a heartbeat cannot renew the lease
-        # of a job just rescheduled and push its retry back by a whole lease.
-        running = self._running.pop(job.id, None)
+    def _as_current_attempt(self, job: Job) -> Job:
+        # Still tracked while it settles, so shutdown waits for the write.
+        running = self._running.get(job.id)
         if running is None or running.attempt == job.attempts:
             return job
         return job.model_copy(update={"attempts": running.attempt})

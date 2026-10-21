@@ -63,8 +63,27 @@ class SqlJobGateway(JobGateway):
         await self.session.execute(
             update(JobORM)
             .where(current_attempt, JobORM.status == JobStatus.PENDING)
-            .values(run_at=func.now() + lease)
+            # Never earlier: a renewal read before the job was rescheduled can
+            # land after it, and must not cut a long retry delay to a lease.
+            .values(run_at=func.greatest(JobORM.run_at, func.now() + lease))
         )
+
+    async def fail_exhausted(self, max_attempts: int, error: str) -> int:
+        result = await self.session.execute(
+            update(JobORM)
+            .where(
+                JobORM.status == JobStatus.PENDING,
+                JobORM.run_at <= func.now(),
+                JobORM.attempts >= max_attempts,
+            )
+            .values(
+                status=JobStatus.FAILED,
+                finished_at=func.now(),
+                last_error=_truncate(error),
+            )
+        )
+        # execute() is typed as Result, but an UPDATE yields a CursorResult.
+        return cast("CursorResult[Any]", result).rowcount
 
     async def finish(
         self, job_id: UUID, attempt: int, status: JobStatus, error: str | None

@@ -257,6 +257,44 @@ async def test_renew_pushes_the_lease_of_running_jobs(
     assert await queue.claim(1) == []
 
 
+async def test_a_stale_renewal_does_not_cut_a_retry_delay_short(
+    dishka_request: AsyncContainer,
+) -> None:
+    # The heartbeat reads the running jobs, then writes: a job rescheduled in
+    # between must keep its retry time rather than take a fresh lease.
+    queue = await make_queue(dishka_request)
+    await enqueue(dishka_request, cancelled())
+    [job] = await queue.claim(1)
+    await queue.retry_after(job, timedelta(minutes=10), "flood control")
+
+    await queue.renew({job.id: job.attempts})
+
+    next_due = await queue.seconds_until_next_due()
+    assert next_due is not None
+    assert next_due > 590
+
+
+async def test_a_job_whose_worker_died_on_the_last_attempt_fails(
+    dishka_request: AsyncContainer,
+) -> None:
+    # A job that kills its worker never reaches the handler's error path; once
+    # its last attempt's lease lapses it must fail rather than be reclaimed.
+    session = await dishka_request.get(AsyncSession)
+    queue = await make_queue(
+        dishka_request, JobsConfig(lease_seconds=0, max_attempts=1)
+    )
+    await enqueue(dishka_request, cancelled())
+    [job] = await queue.claim(1)
+
+    assert await queue.claim(1) == []
+
+    row = await session.get(JobORM, job.id)
+    assert row is not None
+    await session.refresh(row)
+    assert row.status is JobStatus.FAILED
+    assert row.last_error == "Worker stopped during the last attempt"
+
+
 async def test_purge_drops_only_old_finished_jobs(
     dishka_request: AsyncContainer,
 ) -> None:

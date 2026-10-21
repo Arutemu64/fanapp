@@ -26,6 +26,14 @@ class JobGateway(Protocol):
         """Push the lease of each running job (id → its attempt) ``lease`` ahead."""
         ...
 
+    async def fail_exhausted(self, max_attempts: int, error: str) -> int:
+        """Fail every due job that has used ``max_attempts`` already.
+
+        Such a job is due only because its lease lapsed on its last attempt:
+        the worker running it died. Return how many were failed.
+        """
+        ...
+
     async def finish(
         self, job_id: UUID, attempt: int, status: JobStatus, error: str | None
     ) -> None:

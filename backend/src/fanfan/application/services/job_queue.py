@@ -50,6 +50,18 @@ class JobQueue:
         return timedelta(seconds=self.config.lease_seconds)
 
     async def claim(self, limit: int) -> list[Job]:
+        # A job that kills its worker (an out-of-memory fan-out) never reaches
+        # a handler's error path, so its last attempt is counted out here;
+        # otherwise it would be reclaimed, and kill the worker, forever.
+        exhausted = await self.job_gateway.fail_exhausted(
+            self.config.max_attempts, "Worker stopped during the last attempt"
+        )
+        if exhausted:
+            # ERROR, which Sentry captures: the jobs' work is lost for good.
+            logger.error(
+                "Jobs failed for good after their worker stopped",
+                extra={"job_event": "gave_up", "job_count": exhausted},
+            )
         jobs = await self.job_gateway.claim(limit, self._lease)
         await self.uow.commit()
         return jobs
