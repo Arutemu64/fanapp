@@ -62,10 +62,11 @@ class SendNotification:
             raise NotificationNotFound
         if notification.is_stale(datetime.now(UTC)):
             raise NotificationExpired
-        # The senders run in parallel, so an older schedule notification can
-        # reach a channel after a newer one; sent then, it would be the one left
-        # on screen (push replaces by tag). Only schedule news ages this way.
-        if notification.type.is_schedule and (
+        # The senders run in parallel, so an older stage announcement can reach
+        # a channel after a newer one; sent then, it would be the one left on
+        # screen (push replaces by tag). Only types whose latest notification
+        # says it all are dropped this way.
+        if notification.type.is_replaced_by_later and (
             await self.notification_gateway.is_superseded(notification)
         ):
             raise NotificationSuperseded

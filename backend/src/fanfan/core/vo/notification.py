@@ -83,6 +83,17 @@ class NotificationType(StrEnum):
         )
 
     @property
+    def is_replaced_by_later(self) -> bool:
+        """Whether a later notification of this type makes an earlier one moot.
+
+        The stage announcement and the editors' notice describe the programme
+        as a whole, so the latest one is all a reader needs. A subscription
+        notice is about one act: a later one may be about another act and
+        leaves the earlier one standing.
+        """
+        return self is NotificationType.SCHEDULE_CHANGE
+
+    @property
     def is_schedule(self) -> bool:
         return self in (
             NotificationType.SCHEDULE_CHANGE,

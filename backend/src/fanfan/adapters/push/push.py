@@ -1,7 +1,7 @@
 import asyncio
 import html
 import logging
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import httpx2
@@ -19,10 +19,7 @@ from fanfan.core.exceptions.notifications import (
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.push_subscription import PushSubscription
-from fanfan.core.vo.notification import (
-    SCHEDULE_NOTIFICATION_LIFETIME,
-    NotificationType,
-)
+from fanfan.core.vo.notification import NotificationType
 from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
@@ -42,7 +39,7 @@ _RETRY_AFTER_DEFAULT_SECONDS = 5
 # How long a push service holds an undelivered message before discarding it
 # (RFC 8030 §5.2). One hour for most: a convention notification is stale well
 # before then, and the service worker collapses a late duplicate by its `tag`
-# anyway. A schedule notification expires with its text.
+# anyway. A schedule notification gets only what is left of its lifetime.
 _DEFAULT_TTL = timedelta(hours=1)
 
 # Notification types that share a device-level topic, so a burst collapses to the
@@ -114,9 +111,13 @@ class PushNotifier(PushNotifierPort):
     ) -> list[httpx2.Response | BaseException]:
         message_data = self._build_message_data(notification)
         topic = _TOPIC_TAGS.get(notification.type)
+        # A schedule notification lives only as long as its text is true, so
+        # the push service may hold it for what is left of that, not a fresh
+        # lifetime. TTL 0 still delivers to a device reachable right now.
         ttl = _DEFAULT_TTL
-        if notification.type.is_schedule:
-            ttl = SCHEDULE_NOTIFICATION_LIFETIME
+        remaining = notification.remaining_lifetime(datetime.now(UTC))
+        if remaining is not None:
+            ttl = max(remaining, timedelta(0))
         # "high" is RFC 8030's level for a time-sensitive alert: the push
         # service delivers it even to a phone saving battery.
         urgency: PushUrgency = "normal"

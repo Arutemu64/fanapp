@@ -47,8 +47,8 @@ We will store a fan-out's notifications in bulk and deliver them in parallel.
   20 requests/s for a community token).
 - Senders read without row locks where nothing is written back, and end their
   transaction before every external call.
-- Push sends a `Topic` and a ten-minute TTL for schedule notifications
-  (RFC 8030 §5.2–5.4), and `Urgency: high` for every type
+- Push sends a `Topic` and what is left of a ten-minute lifetime as TTL for
+  schedule notifications (RFC 8030 §5.2–5.4), and `Urgency: high` for every type
   `NotificationType.is_time_sensitive` names (schedule changes, broadcasts,
   personal messages). A schedule notification older than ten minutes is
   dropped by every channel instead of sent.
@@ -65,8 +65,9 @@ We will store a fan-out's notifications in bulk and deliver them in parallel.
   already stored are deleted by the cancellation itself, as before.
 - Parallel senders do not keep order. Build order still decides which chunk
   goes first (subscription notices, then the stage announcement, then
-  editors), and a schedule notification a later mailing of the same type has
-  overtaken is dropped at send time, so the newest stays on top. Subscription
+  editors), and a stage notice a later mailing has overtaken is dropped at
+  send time, so the newest stays on top. A subscription notice is never
+  dropped this way: a later one may be about another act. Subscription
   notices take their own push lane, so a change's stage announcement cannot
   replace a reader's own act on the shade.
 - More handlers are in flight at a deploy, so the faststream service's

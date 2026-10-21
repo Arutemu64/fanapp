@@ -1,5 +1,6 @@
 import json
 from base64 import urlsafe_b64encode
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import uuid7
@@ -224,6 +225,8 @@ class _StubUow(UnitOfWork):
 
 def _notification(
     notification_type: NotificationType = NotificationType.DEFAULT,
+    *,
+    created_at: datetime | None = None,
 ) -> Notification:
     return Notification(
         id=generate_notification_id(),
@@ -234,6 +237,7 @@ def _notification(
         path="/schedule",
         mailing_id=None,
         seen_at=None,
+        created_at=created_at,
     )
 
 
@@ -360,6 +364,30 @@ async def test_notifier_sends_schedule_pushes_urgent_and_short_lived(
     assert call["urgency"] == "high"
     assert call["ttl_seconds"] == 600
     assert call["topic"] == expected_topic
+
+
+async def test_notifier_gives_a_late_schedule_push_only_its_remaining_lifetime() -> (
+    None
+):
+    """A push held by the push service must not outlive its text: four minutes
+    into a ten-minute lifetime leaves six."""
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+    created_at = datetime.now(UTC) - timedelta(minutes=4)
+
+    await notifier.send_notification(
+        _notification(NotificationType.SCHEDULE_CHANGE, created_at=created_at)
+    )
+
+    # Seconds tick between building the notification and sending it.
+    assert 355 <= client.calls[0]["ttl_seconds"] <= 360
 
 
 @pytest.mark.parametrize(

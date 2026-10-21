@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
@@ -27,15 +27,24 @@ class Notification(AggregateRoot):
     # Set once stored; None on a notification not yet inserted.
     created_at: datetime | None = None
 
-    def is_stale(self, now: datetime) -> bool:
-        """Whether delivering this notification now would mislead its reader.
+    def remaining_lifetime(self, now: datetime) -> timedelta | None:
+        """How much longer this notification stays true; None if it never ages.
 
-        Only schedule notifications go stale: they describe the programme at the
+        Only schedule notifications age: they describe the programme at the
         moment they were built. Everything else is as true late as on time.
         """
-        if self.created_at is None or not self.type.is_schedule:
+        if not self.type.is_schedule:
+            return None
+        if self.created_at is None:
+            return SCHEDULE_NOTIFICATION_LIFETIME
+        return SCHEDULE_NOTIFICATION_LIFETIME - (now - self.created_at)
+
+    def is_stale(self, now: datetime) -> bool:
+        """Whether delivering this notification now would mislead its reader."""
+        remaining = self.remaining_lifetime(now)
+        if remaining is None:
             return False
-        return now - self.created_at > SCHEDULE_NOTIFICATION_LIFETIME
+        return remaining < timedelta(0)
 
 
 @dataclass(slots=True, kw_only=True)

@@ -285,15 +285,22 @@ async def test_superseded_schedule_notification_is_not_sent(
     assert vk.sent_notifications == []
 
 
-async def test_only_schedule_notifications_can_be_superseded() -> None:
-    # Two broadcasts are two messages, not two versions of one.
+@pytest.mark.parametrize(
+    "notification_type",
+    [NotificationType.SCHEDULE_SUBSCRIPTION, NotificationType.BROADCAST],
+)
+async def test_only_stage_notices_can_be_superseded(
+    notification_type: NotificationType,
+) -> None:
+    # A later subscription notice may be about another act, and two broadcasts
+    # are two messages: neither is a newer version of the one being sent.
     push = FakePushNotifier()
     interactor = _interactor(
         user=_make_user(),
         tg=FakeTelegramNotifier(),
         push=push,
         vk=FakeVkNotifier(),
-        notification=_make_notification(notification_type=NotificationType.BROADCAST),
+        notification=_make_notification(notification_type=notification_type),
         superseded=True,
     )
 

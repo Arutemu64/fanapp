@@ -34,8 +34,9 @@ class NotificationGateway(Protocol):
 
         True when the user has a notification of the same type, stored after
         this one, that belongs to a different mailing. Notifications of one
-        mailing never supersede each other: they are parts of one message (a
-        subscriber's several acts moving), not successive versions of it.
+        mailing never supersede each other: they are parts of one message, not
+        successive versions of it. Which types may be superseded at all is the
+        caller's call (NotificationType.is_replaced_by_later).
         """
         ...
 
