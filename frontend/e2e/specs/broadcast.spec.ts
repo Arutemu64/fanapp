@@ -40,14 +40,19 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 				mailings: [{ ...FINISHED, status: 'cancelled' }]
 			})
 		});
-		await page.getByRole('button', { name: 'Отозвать' }).click();
+		await page.getByRole('button', { name: 'Отозвать', exact: true }).click();
+		// The recall is confirmed first: what a channel delivered stays delivered.
+		const dialog = page.getByRole('alertdialog', { name: 'Отозвать рассылку?' });
+		await expect(dialog.getByText('отозвать не получится', { exact: false })).toBeVisible();
+		await dialog.getByRole('button', { name: 'Отозвать рассылку' }).click();
+		await expect(dialog).toBeHidden();
 
 		// Match the status badge exactly: the success toast that fires on recall reads
 		// "Рассылка отозвана", which a substring match also catches — two hits trip
 		// strict mode once the toast and the reloaded badge briefly coexist.
 		await expect(page.getByText('Отозвана', { exact: true })).toBeVisible();
 		// The recall action is gone for a cancelled mailing.
-		await expect(page.getByRole('button', { name: 'Отозвать' })).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Отозвать', exact: true })).toHaveCount(0);
 	});
 
 	test('shows the empty state when nothing has been sent', async ({ page, api }) => {

@@ -31,6 +31,10 @@
 	"broadcast_history_load_failed_toast": "Не удалось загрузить рассылки",
 	"broadcast_history_title": "История рассылок",
 	"broadcast_recall": "Отозвать",
+	"broadcast_recall_confirm": "Отозвать рассылку",
+	"broadcast_recall_description": "Недоставленные сообщения не отправим, а уведомление пропадёт из ленты у всех получателей. То, что уже пришло в Telegram, ВКонтакте или пуш, отозвать не получится.",
+	"broadcast_recall_keep": "Оставить",
+	"broadcast_recall_title": "Отозвать рассылку?",
 	"broadcast_recipients": [
 		{
 			"declarations": ["input count", "local countPlural = count: plural"],
