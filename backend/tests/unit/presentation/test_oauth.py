@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Any, cast
 
-import httpx
+import httpx2
 import pytest
 from authlib.integrations.starlette_client import OAuthError
 from authlib.oauth2.base import OAuth2Error
@@ -159,12 +159,12 @@ async def test_declining_on_telegram_survives_as_cancelled() -> None:
 @pytest.mark.parametrize(
     "error",
     [
-        pytest.param(httpx.ConnectError("dns failure"), id="telegram_unreachable"),
+        pytest.param(httpx2.ConnectError("dns failure"), id="telegram_unreachable"),
         pytest.param(
-            httpx.HTTPStatusError(
+            httpx2.HTTPStatusError(
                 "server error",
-                request=httpx.Request("POST", "https://oauth.telegram.org/token"),
-                response=httpx.Response(500),
+                request=httpx2.Request("POST", "https://oauth.telegram.org/token"),
+                response=httpx2.Response(500),
             ),
             id="token_endpoint_5xx",
         ),

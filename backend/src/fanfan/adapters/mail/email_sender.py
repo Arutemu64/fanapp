@@ -1,76 +1,69 @@
 import logging
-from email.utils import formataddr
+from email.headerregistry import Address
+from email.message import EmailMessage as MimeMessage
+from email.utils import formatdate, make_msgid
 
+import aiosmtplib
 import sentry_sdk
-from aiosmtplib.errors import SMTPException
-from fastapi_mail import FastMail, MessageSchema, MessageType
-from fastapi_mail.errors import ConnectionErrors
-from fastapi_mail.schemas import MultipartSubtypeEnum
-from pydantic import NameEmail
 
+from fanfan.adapters.mail.config import MailConfig
 from fanfan.application.ports.email_sender import EmailMessage, EmailSender
 from fanfan.core.exceptions.email import EmailDeliveryFailed
 
 logger = logging.getLogger(__name__)
 
 
-def _encode_display_name(name: str) -> str:
-    """RFC 2047-encode a recipient display name so the To header is pure ASCII.
+def build_mime_message(message: EmailMessage, config: MailConfig) -> MimeMessage:
+    # The default (non-compat32) policy RFC 2047-encodes non-ASCII display names
+    # in address headers. Yandex Postbox rejects a raw-UTF-8 To header with
+    # "email address parse failed (To)", and every username here is Cyrillic.
+    mime = MimeMessage()
+    mime["Subject"] = message.subject
+    mime["From"] = Address(
+        display_name=config.sender.name, addr_spec=config.sender.email
+    )
+    mime["To"] = [
+        Address(display_name=recipient.name, addr_spec=recipient.email)
+        for recipient in message.recipients
+    ]
+    mime["Date"] = formatdate(localtime=True)
+    # A Message-ID on the sender's own domain, not the container hostname that
+    # make_msgid() defaults to — spam filters score a mismatched or missing one.
+    mime["Message-ID"] = make_msgid(domain=config.sender.email.rsplit("@", 1)[-1])
+    # set_content picks 8bit for short UTF-8 bodies, which a relay without the
+    # 8BITMIME extension may mangle; quoted-printable keeps the wire 7-bit.
+    transfer_encoding = "quoted-printable"
+    if message.text_body is None:
+        mime.set_content(message.html_body, subtype="html", cte=transfer_encoding)
+    else:
+        # multipart/alternative: RFC 2046 says clients render the LAST part they
+        # understand, so plain text goes first and HTML last.
+        mime.set_content(message.text_body, cte=transfer_encoding)
+        mime.add_alternative(message.html_body, subtype="html", cte=transfer_encoding)
+    return mime
 
-    fastapi-mail assigns the recipient to a legacy (compat32) MIMEMultipart
-    header via ``str(NameEmail(...))``, which does NOT encode non-ASCII display
-    names. A Cyrillic username then reaches the SMTP server as raw bytes and
-    Yandex Postbox rejects the message with "email address parse failed (To)".
-    ``formataddr`` encodes non-ASCII names and quotes ASCII specials (comma,
-    quotes) — format against an empty address and drop it, keeping only the
-    encoded/quoted display-name token to hand back to NameEmail.
-    """
-    if not name:
-        return ""
-    return formataddr((name, ""), charset="utf-8").removesuffix(" <>")
 
-
-class FastEmailSender(EmailSender):
-    def __init__(self, mail: FastMail) -> None:
-        self.mail = mail
+class SmtpEmailSender(EmailSender):
+    def __init__(self, config: MailConfig) -> None:
+        self.config = config
 
     async def send(self, message: EmailMessage) -> None:
-        recipients = [
-            NameEmail(name=_encode_display_name(recipient.name), email=recipient.email)
-            for recipient in message.recipients
-        ]
-        logger.info("Sending email", extra={"recipient_count": len(recipients)})
-        if message.text_body is not None:
-            # Multipart/alternative. Order matters: RFC 2046 says clients render the
-            # LAST part they understand, so the plain-text part must come first and
-            # HTML last, or Gmail/Apple Mail show the plain-text version. FastMail
-            # attaches `body` first and `alternative_body` last, so we send the PLAIN
-            # text as the primary body (subtype=plain) and the HTML as the alternative
-            # (FastMail flips it to html). This yields [text/plain, text/html].
-            # See https://github.com/sabuhish/fastapi-mail/issues/115
-            fast_mail_message = MessageSchema(
-                subject=message.subject,
-                recipients=recipients,
-                body=message.text_body,
-                subtype=MessageType.plain,
-                alternative_body=message.html_body,
-                multipart_subtype=MultipartSubtypeEnum.alternative,
-            )
-        else:
-            fast_mail_message = MessageSchema(
-                subject=message.subject,
-                recipients=recipients,
-                body=message.html_body,
-                subtype=MessageType.html,
-            )
-        # fastapi-mail wraps connection setup failures in ConnectionErrors and lets
-        # aiosmtplib's SMTPException (disconnect, timeout, auth/recipient refusal)
-        # bubble from the send itself. Both mean the relay could not take the
-        # message — translate them into a domain error so the caller reports a
-        # transient outage (502) instead of an unhandled 500.
+        logger.info("Sending email", extra={"recipient_count": len(message.recipients)})
+        # Every aiosmtplib failure — refused or timed-out connection, disconnect,
+        # auth or recipient refusal — subclasses SMTPException, and all mean the
+        # relay could not take the message. Translate them into a domain error so
+        # the caller reports a transient outage (502) instead of an unhandled 500.
         try:
-            await self.mail.send_message(fast_mail_message)
-        except (ConnectionErrors, SMTPException) as e:
+            await aiosmtplib.send(
+                build_mime_message(message, self.config),
+                hostname=self.config.host,
+                port=self.config.port,
+                username=self.config.username,
+                password=self.config.password.get_secret_value(),
+                start_tls=True,
+                timeout=self.config.timeout,
+            )
+        except aiosmtplib.SMTPException as e:
             logger.warning("Email delivery failed: %s", e)
             # Report the raw transport error, not the EmailDeliveryFailed we raise:
             # domain exceptions are scrubbed from Sentry on purpose (telemetry.py),
