@@ -94,8 +94,9 @@ backend-dev:
 # published domain events are never handled — email codes, broadcasts and
 # notifications silently do nothing. --reload restarts the app on file changes
 # (watchfiles ships via faststream[cli]), mirroring the api's UVICORN_RELOAD.
+# --port moves its health route off 8000, where `just backend-dev` listens.
 backend-stream:
-    cd backend && uv run faststream run --factory --reload fanfan.main.faststream:create_app
+    cd backend && uv run faststream run --factory --reload --port 8001 fanfan.main.faststream:create_app
 
 # Scheduler on the host (pair with `just run-infra`). Runs the periodic syncs AND
 # the outbox relay — without it, aggregate events written on commit never leave

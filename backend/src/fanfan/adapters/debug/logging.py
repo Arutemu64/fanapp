@@ -3,15 +3,16 @@ import sys
 
 import structlog
 
-# Path of the container/Dockerfile HEALTHCHECK probe; its access logs are noise.
-_HEALTH_CHECK_PATH = "/debug/health"
+# Path of the container/Dockerfile HEALTHCHECK probe (the api and the stream
+# worker both serve it); its access logs are noise.
+HEALTH_CHECK_PATH = "/debug/health"
 
 
 class _HealthCheckFilter(logging.Filter):
     """Drop uvicorn access logs for the health check endpoint."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        return _HEALTH_CHECK_PATH not in record.getMessage()
+        return HEALTH_CHECK_PATH not in record.getMessage()
 
 
 def setup_logging(level: int, *, json_logs: bool) -> None:

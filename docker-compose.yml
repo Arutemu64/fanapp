@@ -164,8 +164,10 @@ services:
           # data and spike well above idle, so leave headroom over the ~130M
           # shared-image baseline. Matches the scheduler/api ceiling.
           memory: 256M
-    healthcheck:
-      disable: true
+    # Inherits the image's HEALTHCHECK: the worker serves the api's health path
+    # and answers 500 while its broker is disconnected (main/faststream.py).
+    # Compose only reports the state; it does not restart an unhealthy
+    # container. Reconnecting is the clients' job (adapters/nats/config.py).
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -329,6 +331,12 @@ services:
         limits:
           cpus: '0.5'
           memory: 96M
+    environment:
+      # Go's soft memory limit; the runtime does not derive one from the cgroup
+      # limit, so without it the heap can grow past 96M and the container is
+      # OOM-killed rather than collecting harder near the cap. ~90% of the limit.
+      # https://pkg.go.dev/runtime#hdr-Environment_Variables
+      GOMEMLIMIT: "86MiB"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
@@ -449,9 +457,19 @@ configs:
         # redelivers it (see presentation/faststream/jstream.py), so an event lost in
         # the fsync window is lost on both sides. 10s shrinks that window 12x from the
         # 120s default at negligible I/O cost for this traffic. Not "always" (fsync
-        # before every ack): this stream also carries ephemeral SSE subjects, and a
-        # per-message fsync would add disk latency to real-time delivery for no gain.
+        # before every ack): that adds disk latency to every publish, and the outbox
+        # relay publishes serially.
         sync_interval: "10s"
+
+        # Ceilings on JetStream storage. The defaults are 75% of the host's RAM (not
+        # this container's limit) and 75% of the disk under store_dir, which on this
+        # host is shared with Postgres and its backups, so JetStream could fill it.
+        # Nothing uses memory storage, so that cap stays small. The stream's own
+        # max_bytes (presentation/faststream/jstream.py) must stay below
+        # max_file_store.
+        # https://docs.nats.io/learn/deployment/sizing-and-resources
+        max_memory_store: 16MB
+        max_file_store: 1GB
       }
   valkey-conf:
     content: |

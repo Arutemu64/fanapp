@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+
 from dishka import Provider, Scope, provide
 from faststream.nats import NatsBroker
 from nats.js import JetStreamContext
@@ -20,17 +22,22 @@ class StreamProvider(Provider):
         return config.nats
 
     @provide
-    async def get_broker(self, config: NatsConfig) -> NatsBroker:
-        broker = create_broker(config=config)
+    async def get_broker(self, config: NatsConfig) -> AsyncIterator[NatsBroker]:
+        broker = create_broker(config=config, name="fanfan-publisher")
         await broker.connect()
-        return broker
+        yield broker
+        # Drains the connection, so whatever is still buffered reaches the
+        # server before it closes.
+        await broker.stop()
 
     events_broker = provide(NatsEventBroker, provides=EventBroker)
     realtime_gateway = provide(NatsRealtimeGateway, provides=RealtimeGateway)
 
     @provide
-    async def get_nats_client(self, config: NatsConfig) -> NATSClient:
-        return await create_nats_client(config)
+    async def get_nats_client(self, config: NatsConfig) -> AsyncIterator[NATSClient]:
+        nc = await create_nats_client(config, name="fanfan-realtime")
+        yield nc
+        await nc.drain()
 
     @provide
     async def get_jetstream(self, nc: NATSClient) -> JetStreamContext:
