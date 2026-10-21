@@ -90,12 +90,11 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
         assert notification.body == body
         assert notification.mailing_id == mailing.id
 
-    stored = await mailing_gateway.read_mailing(mailing.id)
+    stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
-    assert stored.total_count == len(expected_ids)
     # Every notification is stored by the time the fan-out returns, so the
-    # mailing has already gone from SENDING to FINISHED.
-    assert stored.sent_count == len(expected_ids)
+    # mailing is already FINISHED.
+    assert stored.total_count == len(expected_ids)
     assert stored.status is MailingStatus.FINISHED
 
 
@@ -105,10 +104,10 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """A broadcast that reaches nobody is done at once, not stuck SENDING forever.
+    """A broadcast that reaches nobody is done at once, not stuck PENDING forever.
 
-    With no matching users no insert will ever flip the status, so
-    ProcessBroadcast must move it straight to FINISHED.
+    With no matching users no chunk is stored to finish it, so the fan-out
+    finishes it on its own.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
@@ -126,7 +125,7 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
         )
     )
 
-    stored = await mailing_gateway.read_mailing(mailing.id)
+    stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
     assert stored.total_count == 0
     assert stored.status is MailingStatus.FINISHED
@@ -168,7 +167,7 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     ProcessBroadcast derives each notification's id from (mailing_id, user_id),
     so rerunning it for the same mailing (as a redelivery of the broadcast
     message would) produces the exact same set of ids rather than duplicates,
-    and counts none of them twice.
+    and finishes the mailing with the same recipient count.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
@@ -192,6 +191,41 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
 
     assert first_ids
     assert first_ids == second_ids
-    stored = await mailing_gateway.read_mailing(mailing.id)
+    stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
-    assert stored.sent_count == len(first_ids)
+    assert stored.total_count == len(first_ids)
+    assert stored.status is MailingStatus.FINISHED
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        (MailingStatus.PENDING, MailingStatus.FAILED),
+        (MailingStatus.FINISHED, MailingStatus.FINISHED),
+    ],
+)
+async def test_process_broadcast_abandon_fails_an_unfinished_mailing(
+    *,
+    dishka_request: AsyncContainer,
+    login: Callable[[User], None],
+    visitor: User,
+    uow: UnitOfWork,
+    status: MailingStatus,
+    expected: MailingStatus,
+) -> None:
+    """Out of redeliveries, the handler abandons the broadcast so it does not
+    stay PENDING forever; a finished one is already settled."""
+    interactor = await dishka_request.get(ProcessBroadcast)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    login(visitor)
+
+    mailing = Mailing.create(by_user_id=visitor.id)
+    mailing.status = status
+    await mailing_gateway.add(mailing)
+    await uow.commit()
+
+    await interactor.abandon(mailing.id)
+
+    stored = await mailing_gateway.get(mailing.id, lock=False)
+    assert stored is not None
+    assert stored.status is expected

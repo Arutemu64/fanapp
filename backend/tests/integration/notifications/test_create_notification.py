@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from uuid import uuid7
 
 import pytest
 from dishka import AsyncContainer
@@ -9,21 +8,16 @@ from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
 )
-from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
-from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationCreated
-from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.models.user import User
-from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import (
     NotificationType,
     generate_notification_id,
-    notification_id_for,
 )
-from fanfan.core.vo.user import UserId, Username
+from fanfan.core.vo.user import UserId
 from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 
@@ -33,43 +27,29 @@ pytestmark = [
 ]
 
 
-def _broadcast_notification(mailing: Mailing, user: User) -> NewNotification:
-    return NewNotification(
-        id=notification_id_for(mailing.id, user.id),
-        user_id=user.id,
-        title="Рассылка от организаторов",
-        body="Текст рассылки",
-        path="/notifications",
-        mailing_id=mailing.id,
-        type=NotificationType.BROADCAST,
-    )
-
-
-async def test_create_notification_redelivery_is_a_single_row_single_increment(
+async def test_create_notification_redelivery_is_a_single_row(
     dishka_request: AsyncContainer,
-    login: Callable[[User], None],
     visitor: User,
-    uow: UnitOfWork,
 ) -> None:
-    """Plan 007: a redelivered CreateNotificationCommand must not double-count
-    or duplicate.
+    """Plan 007: a redelivered CreateNotificationCommand must not duplicate.
 
-    Calling CreateNotification twice with the same (mailing-derived) id — as a
-    redelivery of the same NATS message would — must insert exactly one row and
-    increment the mailing's sent_count exactly once, instead of raising an
-    IntegrityError (which would nack-and-redeliver forever) or drifting the count.
+    Calling CreateNotification twice with the same id — as a redelivery of the
+    same NATS message would — must insert exactly one row, instead of raising an
+    IntegrityError (which would nack-and-redeliver forever).
     """
     interactor = await dishka_request.get(CreateNotification)
-    mailing_gateway = await dishka_request.get(MailingGateway)
     notification_gateway = await dishka_request.get(NotificationGateway)
-    login(visitor)
+    broker = await dishka_request.get(FakeEventBroker)
 
-    mailing = Mailing.create(by_user_id=visitor.id)
-    mailing.begin_fan_out(1)
-    await mailing_gateway.add(mailing)
-    await uow.commit()
-
-    notification = _broadcast_notification(mailing, visitor)
+    notification = NewNotification(
+        id=generate_notification_id(),
+        user_id=visitor.id,
+        title="Заголовок",
+        body="Тело",
+        path=None,
+        mailing_id=None,
+        type=NotificationType.DEFAULT,
+    )
     data = CreateNotificationInput(notification=notification)
 
     await interactor(data)
@@ -78,75 +58,8 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     stored = await notification_gateway.get(notification.id)
     assert stored is not None
     assert stored.body == notification.body
-
-    stored_mailing = await mailing_gateway.read_mailing(mailing.id)
-    assert stored_mailing is not None
-    assert stored_mailing.sent_count == 1
-
-
-async def test_create_notification_flips_mailing_to_finished_on_last_delivery(
-    dishka_request: AsyncContainer,
-    login: Callable[[User], None],
-    visitor: User,
-    uow: UnitOfWork,
-) -> None:
-    """The completion rule lives on the aggregate: a SENDING mailing becomes
-    FINISHED only once sent_count reaches total_count, and not before."""
-    interactor = await dishka_request.get(CreateNotification)
-    mailing_gateway = await dishka_request.get(MailingGateway)
-    login(visitor)
-
-    mailing = Mailing.create(by_user_id=visitor.id)
-    mailing.begin_fan_out(2)
-    await mailing_gateway.add(mailing)
-    await uow.commit()
-
-    await interactor(
-        CreateNotificationInput(
-            notification=NewNotification(
-                id=notification_id_for(mailing.id, visitor.id),
-                user_id=visitor.id,
-                title="Рассылка от организаторов",
-                body="Первое",
-                path="/notifications",
-                mailing_id=mailing.id,
-                type=NotificationType.BROADCAST,
-            )
-        )
-    )
-    midway = await mailing_gateway.read_mailing(mailing.id)
-    assert midway is not None
-    # One of two delivered — still sending.
-    assert midway.sent_count == 1
-    assert midway.status is MailingStatus.SENDING
-
-    other_user = User(
-        id=UserId(uuid7()),
-        username=Username("second_recipient"),
-        hashed_password=None,
-        role=visitor.role,
-    )
-    user_gateway = await dishka_request.get(UserGateway)
-    await user_gateway.add(other_user)
-    await uow.commit()
-
-    await interactor(
-        CreateNotificationInput(
-            notification=NewNotification(
-                id=notification_id_for(mailing.id, other_user.id),
-                user_id=other_user.id,
-                title="Рассылка от организаторов",
-                body="Второе",
-                path="/notifications",
-                mailing_id=mailing.id,
-                type=NotificationType.BROADCAST,
-            )
-        )
-    )
-    finished = await mailing_gateway.read_mailing(mailing.id)
-    assert finished is not None
-    assert finished.sent_count == 2
-    assert finished.status is MailingStatus.FINISHED
+    # Both runs hand it over; JetStream's dedup id absorbs the repeat.
+    assert len(broker.published_events) == 2
 
 
 async def test_notification_gateway_add_many_counts_only_new_rows(
@@ -155,7 +68,7 @@ async def test_notification_gateway_add_many_counts_only_new_rows(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """The gateway upsert is the primitive the fan-out's counting relies on."""
+    """The gateway upsert is what makes a rerun fan-out insert nothing twice."""
     notification_gateway = await dishka_request.get(NotificationGateway)
     login(visitor)
 

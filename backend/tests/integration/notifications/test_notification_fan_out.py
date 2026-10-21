@@ -67,7 +67,7 @@ async def test_fan_out_stores_every_chunk_and_finishes_the_mailing(
     uow: UnitOfWork,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Three recipients in chunks of two: two transactions, one count."""
+    """Three recipients in chunks of two: the second chunk finishes it."""
     monkeypatch.setattr(notification_fan_out, "_CHUNK_SIZE", 2)
     fan_out = await dishka_request.get(NotificationFanOut)
     mailing_gateway = await dishka_request.get(MailingGateway)
@@ -76,11 +76,10 @@ async def test_fan_out_stores_every_chunk_and_finishes_the_mailing(
 
     users = await _recipients(dishka_request, uow, count=3)
     mailing = Mailing.create(by_user_id=visitor.id)
-    mailing.begin_fan_out(len(users))
     await mailing_gateway.add(mailing)
     await uow.commit()
 
-    await fan_out(_broadcast(mailing, users))
+    await fan_out(_broadcast(mailing, users), mailing_id=mailing.id)
 
     delivered = await delivered_notifications(dishka_request)
     assert {n.user_id for n in delivered} == {u.id for u in users}
@@ -88,9 +87,9 @@ async def test_fan_out_stores_every_chunk_and_finishes_the_mailing(
     assert all("<script>" not in n.body for n in delivered)
     # Every recipient gets the live toast.
     assert {user_id for user_id, _ in realtime.published} == {u.id for u in users}
-    stored = await mailing_gateway.read_mailing(mailing.id)
+    stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
-    assert stored.sent_count == 3
+    assert stored.total_count == 3
     assert stored.status is MailingStatus.FINISHED
 
 
@@ -107,18 +106,18 @@ async def test_fan_out_of_a_cancelled_mailing_stores_nothing(
 
     users = await _recipients(dishka_request, uow, count=2)
     mailing = Mailing.create(by_user_id=visitor.id)
-    mailing.begin_fan_out(len(users))
     mailing.cancel()
     await mailing_gateway.add(mailing)
     await uow.commit()
 
     with pytest.raises(MailingAlreadyCancelled):
-        await fan_out(_broadcast(mailing, users))
+        await fan_out(_broadcast(mailing, users), mailing_id=mailing.id)
 
     assert broker.published_events == []
-    stored = await mailing_gateway.read_mailing(mailing.id)
+    assert await delivered_notifications(dishka_request) == []
+    stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
-    assert stored.sent_count == 0
+    assert stored.status is MailingStatus.CANCELLED
 
 
 async def test_fan_out_refuses_notifications_of_several_mailings(

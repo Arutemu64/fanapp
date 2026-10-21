@@ -73,7 +73,6 @@ async def test_list_broadcasts_excludes_schedule_fan_outs(
     # from a role-targeted broadcast.
     mailing_gateway = await dishka_request.get(MailingGateway)
     fan_out = Mailing.create(by_user_id=broadcaster.id)
-    fan_out.record_summary("Изменения в программе")
     await mailing_gateway.add(fan_out)
     await uow.commit()
     interactor = await dishka_request.get(ListBroadcasts)

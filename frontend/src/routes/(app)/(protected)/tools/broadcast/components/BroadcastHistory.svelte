@@ -11,6 +11,7 @@
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Badge, type BadgeVariant } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -50,7 +51,6 @@
 
 	const STATUS_LABELS: Record<MailingStatus, string> = {
 		pending: m.status_queued(),
-		sending: m.mailing_status_sending(),
 		finished: m.mailing_status_finished(),
 		cancelled: m.mailing_status_cancelled(),
 		failed: m.status_error()
@@ -58,7 +58,6 @@
 
 	const STATUS_VARIANTS: Record<MailingStatus, BadgeVariant> = {
 		pending: 'outline',
-		sending: 'default',
 		finished: 'secondary',
 		cancelled: 'outline',
 		failed: 'destructive'
@@ -71,8 +70,10 @@
 		organizer: m.audience_organizers()
 	};
 
+	// FINISHED means stored, not delivered: Telegram and VK can still be sending,
+	// so a finished or failed broadcast can be recalled too (ADR-0042).
 	function isCancellable(status: MailingStatus): boolean {
-		return status === 'pending' || status === 'sending';
+		return status !== 'cancelled';
 	}
 
 	function rolesLabel(roles: UserRole[] | null): string {
@@ -80,8 +81,23 @@
 		return roles.map((role) => ROLE_LABELS[role]).join(', ');
 	}
 
-	function cancel(mailing: MailingDto) {
-		cancelMutation.mutate({ path: { mailing_id: mailing.id } });
+	// Confirmed first: a recall cannot take back what Telegram, VK or push
+	// already delivered, and the button sits on every row.
+	let recallOpen = $state(false);
+	let mailingToRecall = $state.raw<MailingDto | null>(null);
+
+	function askToRecall(mailing: MailingDto) {
+		mailingToRecall = mailing;
+		recallOpen = true;
+	}
+
+	function handleConfirmRecall() {
+		if (!mailingToRecall) {
+			return;
+		}
+		cancelMutation.mutate({ path: { mailing_id: mailingToRecall.id } });
+		// bits-ui's AlertDialog.Action does not close the dialog by itself.
+		recallOpen = false;
 	}
 
 	let listElement = $state<HTMLElement | null>(null);
@@ -130,10 +146,7 @@
 							<span>
 								{rolesLabel(mailing.roles)}
 								{#if mailing.total_count > 0}
-									{m.broadcast_progress_suffix({
-										sent_count: mailing.sent_count,
-										total_count: mailing.total_count
-									})}
+									{m.broadcast_recipients({ count: mailing.total_count })}
 								{/if}
 							</span>
 							{#if isCancellable(mailing.status)}
@@ -142,12 +155,12 @@
 									size="sm"
 									class="min-h-9"
 									disabled={cancellingId === mailing.id}
-									onclick={() => cancel(mailing)}
+									onclick={() => askToRecall(mailing)}
 								>
 									{#if cancellingId === mailing.id}
 										<Spinner data-icon="inline-start" />
 									{/if}
-									{m.common_revert()}
+									{m.broadcast_recall()}
 								</Button>
 							{/if}
 						</div>
@@ -163,3 +176,18 @@
 		/>
 	{/if}
 </section>
+
+<AlertDialog.Root bind:open={recallOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>{m.broadcast_recall_title()}</AlertDialog.Title>
+			<AlertDialog.Description>{m.broadcast_recall_description()}</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>{m.broadcast_recall_keep()}</AlertDialog.Cancel>
+			<AlertDialog.Action variant="destructive" onclick={handleConfirmRecall}>
+				{m.broadcast_recall_confirm()}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

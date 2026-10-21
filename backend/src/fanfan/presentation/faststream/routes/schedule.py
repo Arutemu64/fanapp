@@ -21,6 +21,7 @@ from fanfan.presentation.faststream.jstream import stream
 from fanfan.presentation.faststream.redelivery import (
     consumer_config,
     in_progress_heartbeat,
+    is_last_delivery,
 )
 
 schedule_router = NatsRouter()
@@ -48,18 +49,27 @@ async def process_schedule_change(
     # heartbeat keeps a live run from being redelivered on top of itself. It
     # covers the live update too, whose cache warm-up waits on the edit lock.
     async with in_progress_heartbeat(msg):
-        # Live update before the notification fan-out: the screen should not wait
-        # on building a notification per subscriber, nor on a fan-out failure
-        # that redelivers this message. A redelivery repeats the live update,
-        # which is harmless — clients revalidate and get a 304 for a schedule
-        # they already hold.
-        await publish_schedule_updated()
-        await interactor(
-            SendScheduleChangeNotificationsInput(
-                schedule_change_id=data.schedule_change_id,
-                occurred_at=read_occurred_at(msg),
+        try:
+            # Live update before the notification fan-out: the screen should not
+            # wait on building a notification per subscriber, nor on a fan-out
+            # failure that redelivers this message. A redelivery repeats the
+            # live update, which is harmless — clients revalidate and get a 304
+            # for a schedule they already hold.
+            await publish_schedule_updated()
+            await interactor(
+                SendScheduleChangeNotificationsInput(
+                    schedule_change_id=data.schedule_change_id,
+                    occurred_at=read_occurred_at(msg),
+                )
             )
-        )
+        except Exception:
+            # Out of redeliveries: nothing retries the fan-out after this, so
+            # the change's mailing would otherwise stay PENDING for good. The
+            # whole body is guarded, since a failed live update ends the
+            # message too.
+            if is_last_delivery(msg.raw_message):
+                await interactor.abandon(data.schedule_change_id)
+            raise
 
 
 @schedule_router.subscriber(

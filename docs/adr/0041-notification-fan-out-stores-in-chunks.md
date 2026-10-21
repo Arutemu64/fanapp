@@ -1,6 +1,6 @@
 # ADR-0041: A notification fan-out stores in chunks and sends in parallel
 
-- **Status:** Accepted
+- **Status:** Accepted; the mailing progress counter superseded by [ADR-0042](0042-mailing-finishes-with-its-last-chunk.md)
 - **Date:** 2026-10-21
 - **Deciders:** maintainer
 

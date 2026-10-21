@@ -9,7 +9,11 @@ class CreateNotificationInput(BaseModel):
 
 
 class CreateNotification:
-    """Handles one CreateNotificationCommand: a fan-out of a single recipient."""
+    """Handles one CreateNotificationCommand: a fan-out of a single recipient.
+
+    Mailing-less only: a mailing's notifications go through its own fan-out,
+    which is what finishes it.
+    """
 
     def __init__(self, fan_out: NotificationFanOut) -> None:
         self.fan_out = fan_out

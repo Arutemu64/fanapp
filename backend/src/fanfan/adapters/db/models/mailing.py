@@ -29,5 +29,4 @@ class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     body: Mapped[str | None] = mapped_column()
     roles: Mapped[list[str] | None] = mapped_column(JSONB)
 
-    sent_count: Mapped[int] = mapped_column(server_default=text("0"))
     total_count: Mapped[int] = mapped_column(server_default=text("0"))

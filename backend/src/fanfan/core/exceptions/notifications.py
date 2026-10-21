@@ -26,12 +26,6 @@ class MailingAlreadyExists(Conflict, NotificationException):
     code = "MAILING_ALREADY_EXISTS"
 
 
-class MailingNotCancellable(Conflict, NotificationException):
-    # The mailing already reached a terminal non-cancelled state (finished or
-    # failed), so there is nothing left to cancel.
-    code = "MAILING_NOT_CANCELLABLE"
-
-
 class TestNotificationTooFast(RateLimited, NotificationException):
     code = "TEST_NOTIFICATION_TOO_FAST"
 

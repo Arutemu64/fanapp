@@ -12,15 +12,16 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationCreated
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification, Notification
+from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
 
 logger = logging.getLogger(__name__)
 
-# Notifications stored per transaction. Each chunk is one INSERT plus one
-# mailing update under the mailing's row lock, and its channel sends start as
-# soon as it commits, so a large mailing starts delivering after the first
-# chunk rather than after the last. Small enough to keep the lock short and the
-# statement well under Postgres' 65535 bind-parameter cap (8 columns per row).
+# Notifications stored per transaction. Each chunk is one INSERT under the
+# mailing's row lock, and its channel sends start as soon as it commits, so a
+# large mailing starts delivering after the first chunk rather than after the
+# last. Small enough to keep the lock short and the statement well under
+# Postgres' 65535 bind-parameter cap (8 columns per row).
 _CHUNK_SIZE = 500
 
 
@@ -30,8 +31,8 @@ class NotificationFanOut:
     The one path every notification takes, so its body is sanitized in one
     place before it is stored and then sent to the web UI, Telegram, VK and
     push. Rerunnable: notification ids are deterministic per recipient, so a
-    redelivered caller inserts nothing twice and counts nothing twice; it does
-    publish again, which the channels absorb (``NotificationCreated`` is
+    redelivered caller inserts nothing twice and finishes the mailing again; it
+    does publish again, which the channels absorb (``NotificationCreated`` is
     deduplicated by JetStream, and a repeated toast beats a lost one).
     """
 
@@ -51,18 +52,31 @@ class NotificationFanOut:
         self.events_broker = events_broker
         self.uow = uow
 
-    async def __call__(self, notifications: Sequence[NewNotification]) -> None:
-        """Deliver notifications that all belong to the same mailing (or none).
+    async def __call__(
+        self,
+        notifications: Sequence[NewNotification],
+        *,
+        mailing_id: MailingId | None = None,
+    ) -> None:
+        """Deliver every notification of ``mailing_id``, or mailing-less ones.
+
+        The transaction that stores the last chunk finishes the mailing, so it
+        is FINISHED exactly when every notification exists; an empty list
+        finishes it at once.
 
         Raises ``MailingAlreadyCancelled`` once the mailing is cancelled; the
         chunks stored before that are removed by the cancellation itself.
         """
-        mailing_ids = {notification.mailing_id for notification in notifications}
-        if len(mailing_ids) > 1:
+        if any(n.mailing_id != mailing_id for n in notifications):
             msg = "A fan-out delivers the notifications of one mailing"
             raise ValueError(msg)
-        for chunk in itertools.batched(notifications, _CHUNK_SIZE, strict=False):
-            await self._store(chunk)
+        chunks = list(itertools.batched(notifications, _CHUNK_SIZE, strict=False))
+        if not chunks:
+            await self._store((), mailing_id, finish_with=0)
+            return
+        for chunk in chunks:
+            finish_with = len(notifications) if chunk is chunks[-1] else None
+            await self._store(chunk, mailing_id, finish_with=finish_with)
             ids = [notification.id for notification in chunk]
             await self._publish_realtime(ids)
             await self.events_broker.publish_many(
@@ -81,8 +95,13 @@ class NotificationFanOut:
             seen_at=None,
         )
 
-    async def _store(self, chunk: Sequence[NewNotification]) -> None:
-        mailing_id = chunk[0].mailing_id
+    async def _store(
+        self,
+        chunk: Sequence[NewNotification],
+        mailing_id: MailingId | None,
+        *,
+        finish_with: int | None,
+    ) -> None:
         # Lock the mailing row (SELECT ... FOR UPDATE) before inserting, not
         # after. The INSERT takes a FOR KEY SHARE lock on the referenced mailing
         # row via its foreign key; two fan-outs of one mailing (a redelivery
@@ -97,21 +116,12 @@ class NotificationFanOut:
             if mailing is None:
                 raise MailingNotFound
             mailing.ensure_active()
-        inserted = await self.notification_gateway.add_many(
+        await self.notification_gateway.add_many(
             [self._to_model(notification) for notification in chunk]
         )
-        # Only genuinely new rows count: a rerun inserts none, and counting
-        # them again would drift sent_count above the true delivered count.
-        if inserted and mailing is not None:
-            sent_count, total_count = await self.mailing_gateway.increment_sent(
-                mailing_id=mailing.id, incr_by=inserted
-            )
-            # The completion rule lives on the aggregate; persist only when
-            # this chunk is the one that finished it.
-            if mailing.register_delivery(
-                sent_count=sent_count, total_count=total_count
-            ):
-                await self.mailing_gateway.save(mailing)
+        if mailing is not None and finish_with is not None:
+            mailing.finish(finish_with)
+            await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
     async def _publish_realtime(self, ids: Sequence[NotificationId]) -> None:

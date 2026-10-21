@@ -11,7 +11,6 @@ def generate_mailing_id() -> MailingId:
 
 class MailingStatus(enum.StrEnum):
     PENDING = "pending"
-    SENDING = "sending"
     FINISHED = "finished"
     CANCELLED = "cancelled"
     FAILED = "failed"

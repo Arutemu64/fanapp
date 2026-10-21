@@ -330,7 +330,6 @@ export type ErrorMessage = {
 		| 'LINK_INITIATOR_MISMATCH'
 		| 'MAILING_ALREADY_EXISTS'
 		| 'MAILING_CANCELLED'
-		| 'MAILING_NOT_CANCELLABLE'
 		| 'MAILING_NOT_FOUND'
 		| 'NOMINATION_NOT_FOUND'
 		| 'OUTDATED_SCHEDULE_CHANGE'
@@ -744,10 +743,6 @@ export type MailingDto = {
 	 */
 	roles: Array<UserRole> | null;
 	/**
-	 * Sent Count
-	 */
-	sent_count: number;
-	/**
 	 * Total Count
 	 */
 	total_count: number;
@@ -760,7 +755,7 @@ export type MailingDto = {
 /**
  * MailingStatus
  */
-export type MailingStatus = 'pending' | 'sending' | 'finished' | 'cancelled' | 'failed';
+export type MailingStatus = 'pending' | 'finished' | 'cancelled' | 'failed';
 
 /**
  * MarkNotificationsReadInput

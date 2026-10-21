@@ -15,7 +15,6 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
-    MailingNotCancellable,
     MailingNotFound,
 )
 from fanfan.core.models.mailing import Mailing
@@ -46,7 +45,7 @@ async def test_cancel_mailing_marks_cancelled_and_enqueues_command(
 
     await interactor(CancelMailingInput(mailing_id=mailing.id))
 
-    stored = await mailing_gateway.read_mailing(mailing.id)
+    stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
     # Flipped synchronously so ensure_active() rejects in-flight sends at once.
     assert stored.status is MailingStatus.CANCELLED
@@ -76,24 +75,32 @@ async def test_cancel_mailing_twice_raises_already_cancelled(
     await uow.rollback()
 
 
-async def test_cancel_finished_mailing_raises_not_cancellable(
+async def test_cancel_finished_mailing_recalls_it(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ) -> None:
+    """FINISHED means stored, not delivered, so a finished mailing can still be
+    cancelled: that stops its remaining channel sends and clears the feeds."""
     interactor = await dishka_request.get(CancelMailing)
     mailing_gateway = await dishka_request.get(MailingGateway)
     broadcaster = await make_broadcaster(dishka_request, uow)
     login(broadcaster)
 
     mailing = Mailing.create(by_user_id=broadcaster.id)
-    mailing.status = MailingStatus.FINISHED
+    mailing.finish(3)
     await mailing_gateway.add(mailing)
     await uow.commit()
 
-    with pytest.raises(MailingNotCancellable):
-        await interactor(CancelMailingInput(mailing_id=mailing.id))
-    await uow.rollback()
+    await interactor(CancelMailingInput(mailing_id=mailing.id))
+
+    stored = await mailing_gateway.get(mailing.id, lock=False)
+    assert stored is not None
+    assert stored.status is MailingStatus.CANCELLED
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(CancelMailingCommand(mailing_id=mailing.id))
 
 
 async def test_cancel_missing_mailing_raises_not_found(
