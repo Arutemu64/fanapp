@@ -37,11 +37,12 @@ correct test.
    permission failure, rate limit, rollback on error).
 4. **Real vs fake**: everything behind PostgreSQL/Redis is real (gateways,
    `UnitOfWork`, rate limiter, sessions), and so are deterministic ports
-   (hasher, Jinja). Ports that reach *other* external systems (NATS, SMTP,
-   Telegram, WebPush, realtime) are faked. New side-effecting port? Add a
+   (hasher, Jinja), and the job queue: `uow.commit()` writes real
+   `procrastinate_jobs` rows in the test's transaction. Ports that reach *other*
+   external systems (SMTP, Telegram, WebPush, realtime) are faked. New side-effecting port? Add a
    recording fake in `tests/fakes/` and register it in
    `tests/integration/conftest.py` via `AnyOf[ThePort, TheFake]`.
-5. **Fixtures are for plumbing only** (`login`, `outbox`, `uow`, user
+5. **Fixtures are for plumbing only** (`login`, `jobs`, `queued`, `uow`, user
    personas like `visitor` / `schedule_editor`). The interactor
    under test and the gateways you assert on are resolved explicitly with
    `dishka_request.get(...)` in the test body — never hidden in a fixture.
@@ -173,8 +174,8 @@ instead of verifying behavior.
 
 A test resolves what it needs from `dishka_request`, sets up state through
 gateways, runs the interactor, and asserts on persisted state and
-enqueued events and commands. The shared plumbing (acting user, outbox, unit of
-work) comes in as fixtures; the interactor under test and the
+queued events and commands. The shared plumbing (acting user, job reader, unit
+of work) comes in as fixtures; the interactor under test and the
 gateways it asserts on stay explicit so a reader sees the test's
 surface at a glance:
 
@@ -185,15 +186,13 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ):
     login(schedule_editor)                  # set the acting user
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     ...
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(...))
+    assert await jobs() == as_jobs(ScheduleChangeCreated(...))
 ```
 
 `tests/integration/schedule_mgmt/test_set_current_event.py` is the reference
@@ -209,7 +208,8 @@ repeat:
 | Fixture | Type | Use |
 |---------|------|-----|
 | `login` | `Callable[[User], None]` | `login(user)` sets the acting user (wraps `FakeIdProvider`) |
-| `outbox` | `OutboxGateway` | assert on enqueued aggregate events: compare `fetch_unpublished(...)` against the `as_outbox(...)` helper |
+| `jobs` | `JobsReader` | assert on queued events and commands: `await jobs()` returns `(task name, message)` per job in queue order; compare it against the `as_jobs(...)` helper, which expands each message into one job per subscribed task |
+| `queued` | `QueuedReader` | `await queued(CreateNotificationCommand)` returns the queued messages of one type, typed — for fan-outs where a test inspects the messages rather than comparing the whole queue |
 | `uow` | `UnitOfWork` | commit setup state; `uow.rollback()` after an expected error |
 
 Rule of thumb: take the plumbing you need from fixtures, but resolve the
@@ -223,12 +223,11 @@ adapters for real; fake the ports that reach other external systems.**
 
 | Dependency | In tests | Why |
 |------------|----------|-----|
-| Gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
+| Gateways, `UnitOfWork`, job queue | **real** (PostgreSQL) | behavior is in the SQL; jobs are written in the test's transaction like any row |
 | `TokenRegistry`, `SessionStore`, `RateLimiter`, `Cooldown` | **real** (Redis) | behavior is in Redis semantics |
 | `PasswordHasher`, Jinja `TemplateRenderer` | **real** | deterministic, no external I/O |
-| `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
-| `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / NATS) |
+| `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / Redis pub/sub) |
 | `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see and the refunded sales it should revoke |
 | `CosplaySource` (Cosplay2) | **fake** (`FakeCosplaySource`) | external HTTP; test supplies nominations/participants, or sets `raises` to exercise the failure path |
 
@@ -236,6 +235,17 @@ Fakes live in `tests/fakes/` and record what they received so tests can assert
 on it. When you make a new side-effecting port testable, add a fake there and
 register it in the test container (`tests/integration/conftest.py`) via
 `AnyOf[ThePort, TheFake]` so a test can resolve either the port or the fake.
+
+The fakes provider is registered **last** in that container, so a fake wins over
+a real provider of the same port (`RedisProvider` also provides
+`RealtimeGateway`).
+
+Worker tasks run in the unit tier against Procrastinate's `InMemoryConnector`
+(`app.replace_connector(...)`, `tests/unit/presentation/test_worker_tasks.py`):
+queue a message through `ProcrastinateJobQueue`, run the worker with
+`wait=False` and a fake container, and assert on what the subscriber did or on
+the job's status. The real Redis fan-out of SSE is covered by
+`tests/integration/adapters/test_redis_realtime_gateway.py`.
 
 ### Test doubles subclass what they stand in for
 
@@ -287,8 +297,8 @@ providers plus test overrides:
   (fixed test `WebConfig` for the session store and token registry — the full
   `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),
   and the fakes above.
-* `skip_validation=True` is intentional: external integrations (NATS broker,
-  Telegram Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
+* `skip_validation=True` is intentional: external integrations (Telegram
+  Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
   yet resolvable. Everything else resolves. Both vendor syncs sit behind
   ports with fakes (`FakeTicketsSource`, `FakeCosplaySource`), so the sync
   interactors are testable. When the remaining integrations gain a port + fake,
@@ -304,8 +314,8 @@ Reusable user fixtures (`visitor`, `visitor_with_ticket`, `superuser`, and one
 per permission: `sync_operator`, `demo_seeder`, `settings_editor`,
 `voting_manager`, `schedule_editor`, `feedback_reader`, `users_reader`,
 `users_manager`) live in `tests/fixtures/users.py` and are registered as a plugin in
-`tests/conftest.py`. The shared plumbing fixtures (`login`, `outbox`,
-`uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
+`tests/conftest.py`. The shared plumbing fixtures (`login`, `jobs`,
+`queued`, `uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
 fixtures* above. Add shared setup in these places rather than copying it
 between tests.
 

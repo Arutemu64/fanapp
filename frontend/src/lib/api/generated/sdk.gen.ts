@@ -1529,7 +1529,7 @@ export const getSyncSources = <ThrowOnError extends boolean = false>(
 /**
  * Request a sync
  *
- * Queues a sync of the given source and returns immediately with the created run. The work runs in the stream service, so progress arrives over SSE ('sync_run_updated') and the run's final state is readable from GET /sync/sources. Requires the 'sync:run' permission.
+ * Queues a sync of the given source and returns immediately with the created run. The work runs in a background worker, so progress arrives over SSE ('sync_run_updated') and the run's final state is readable from GET /sync/sources. Requires the 'sync:run' permission.
  */
 export const requestSync = <ThrowOnError extends boolean = false>(
 	options: Options<RequestSyncData, ThrowOnError>

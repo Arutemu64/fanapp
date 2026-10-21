@@ -1,6 +1,6 @@
 # ADR-0004: Transactional outbox for domain-event delivery
 
-- **Status:** Accepted; service events superseded by [ADR-0040](0040-commands-separate-from-domain-events.md)
+- **Status:** Superseded by [ADR-0041](0041-procrastinate-replaces-nats-and-the-outbox.md); service events earlier by [ADR-0040](0040-commands-separate-from-domain-events.md)
 - **Date:** 2026-07-09
 - **Deciders:** Project maintainers
 

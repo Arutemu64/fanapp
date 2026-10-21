@@ -10,15 +10,16 @@ class UnitOfWork(Protocol):
     Repositories call ``register`` for every aggregate they add or load, so the
     interactor never has to pull and publish events by hand. On ``commit`` the
     domain events recorded on those aggregates, and the commands passed to
-    ``enqueue``, are written to the transactional outbox in the same
-    transaction; the relay delivers them to NATS afterwards.
+    ``enqueue``, are written as background jobs in the same transaction, so a
+    worker runs them once the change is durable and never if it rolls back
+    (ADR-0041).
     """
 
     def register(self, entity: AggregateRoot) -> None: ...
     def enqueue(self, command: Command) -> None:
-        """Send ``command`` once this transaction commits, and never if it
-        rolls back — the outbox guarantee, without recording an instruction on
-        an aggregate as if it were a fact (ADR-0040)."""
+        """Queue ``command`` with this transaction: it runs once the transaction
+        commits, and never if it rolls back — without recording an instruction
+        on an aggregate as if it were a fact (ADR-0040)."""
         ...
 
     async def commit(self) -> None: ...

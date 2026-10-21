@@ -11,7 +11,6 @@ from fanfan.application.interactors.voting.cancel_vote import (
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
@@ -26,6 +25,7 @@ from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from fanfan.core.vo.vote import VoteId, generate_vote_id
+from tests.integration.conftest import JobsReader
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -50,7 +50,7 @@ async def test_cancel_vote_deletes_vote(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(CancelVote)
@@ -89,14 +89,14 @@ async def test_cancel_vote_deletes_vote(
         )
         is None
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []
 
 
 async def test_cancel_vote_for_missing_vote_raises_not_found(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(CancelVote)
@@ -106,14 +106,14 @@ async def test_cancel_vote_for_missing_vote_raises_not_found(
     with pytest.raises(VoteNotFound):
         await interactor(CancelVoteInput(vote_id=VoteId(uuid7())))
 
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []
 
 
 async def test_cancel_vote_owned_by_another_user_raises_not_found(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(CancelVote)
@@ -161,14 +161,14 @@ async def test_cancel_vote_owned_by_another_user_raises_not_found(
         await interactor(CancelVoteInput(vote_id=other_vote.id))
 
     assert await vote_gateway.get(other_vote.id) is not None
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []
 
 
 async def test_cancel_vote_when_voting_closed_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(CancelVote)
@@ -204,4 +204,4 @@ async def test_cancel_vote_when_voting_closed_raises_access_denied(
     # A closed ballot is final: the vote still counts.
     assert exc_info.value.details == {"reason": "VOTING_DISABLED"}
     assert await vote_gateway.get(vote.id) is not None
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []

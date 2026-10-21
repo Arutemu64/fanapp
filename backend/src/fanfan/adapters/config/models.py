@@ -11,15 +11,14 @@ from fanfan.adapters.captcha.config import AltchaConfig
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
-from fanfan.adapters.nats.config import NatsConfig
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.redis.config import RedisConfig
 from fanfan.adapters.tgbot.config import TelegramConfig
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.application.interactors.notifications.config import NotificationConfig
-from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.presentation.scheduler.config import SchedulerConfig
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.worker.config import WorkerConfig
 
 
 class Environment(StrEnum):
@@ -50,7 +49,6 @@ class EnvConfig(BaseSettings):
     # Environment
     db: DatabaseConfig
     redis: RedisConfig
-    nats: NatsConfig
     # Optional — when unset, outgoing emails are logged instead of sent.
     mail: MailConfig | None = None
 
@@ -79,8 +77,8 @@ class EnvConfig(BaseSettings):
     # Scheduler
     scheduler: SchedulerConfig = SchedulerConfig()
 
-    # Outbox relay (poll interval, batch size, retention)
-    outbox: OutboxConfig = OutboxConfig()
+    # Background job worker (concurrency, finished-job retention)
+    worker: WorkerConfig = WorkerConfig()
 
     # Notification retention (age before old notifications are purged)
     notification: NotificationConfig = NotificationConfig()

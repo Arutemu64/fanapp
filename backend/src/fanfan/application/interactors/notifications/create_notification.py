@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 
 from pydantic import BaseModel
 
@@ -38,15 +39,8 @@ class CreateNotification:
         # Sanitize the body to the canonical safe HTML subset here, the single
         # point every notification passes through before it is stored and then
         # fanned out to the web UI, Telegram and push.
-        return Notification(
-            id=notification.id,
-            user_id=notification.user_id,
-            title=notification.title,
-            body=self.html_sanitizer.sanitize(notification.body),
-            type=notification.type,
-            path=notification.path,
-            mailing_id=notification.mailing_id,
-            seen_at=None,
+        return Notification.create(
+            replace(notification, body=self.html_sanitizer.sanitize(notification.body))
         )
 
     async def __call__(self, data: CreateNotificationInput) -> NotificationId:
@@ -66,10 +60,12 @@ class CreateNotification:
                 raise MailingNotFound
             mailing.ensure_active()
         inserted = await self.notification_gateway.add(notification)
-        # Only count a genuinely new notification: a redelivered
-        # CreateNotificationCommand re-runs this with the same id, and the gateway
+        # Only count a genuinely new notification: a rerun
+        # CreateNotificationCommand repeats this with the same id, and the gateway
         # upsert above no-ops it, so incrementing here as well would drift
-        # sent_count above the true delivered count.
+        # sent_count above the true delivered count. The same check keeps the
+        # rerun from queuing the channel sends again (NotificationCreated is
+        # queued only for a new row).
         if inserted and mailing is not None:
             sent_count, total_count = await self.mailing_gateway.increment_sent(
                 mailing_id=mailing.id
@@ -90,8 +86,8 @@ class CreateNotification:
         # After commit, so a toast never shows a notification that rolled back.
         # Best-effort: the notification is stored and the feed shows it on the
         # next load, so a failure here is logged, not raised — raising would
-        # stop the caller from queuing the channel sends. A redelivery publishes
-        # again, like those sends: a repeated toast beats a lost one.
+        # fail the job and rerun a notification that is already stored. A rerun
+        # publishes again: a repeated toast beats a lost one.
         try:
             dto = await self.notification_gateway.read_realtime_notification(
                 notification.id

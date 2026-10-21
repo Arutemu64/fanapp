@@ -49,13 +49,13 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """Plan 007: a redelivered CreateNotificationCommand must not double-count
+    """Plan 007: a rerun CreateNotificationCommand must not double-count
     or duplicate.
 
     Calling CreateNotification twice with the same (mailing-derived) id — as a
-    redelivery of the same NATS message would — must insert exactly one row and
-    increment the mailing's sent_count exactly once, instead of raising an
-    IntegrityError (which would nack-and-redeliver forever) or drifting the count.
+    retry of the same job would — must insert exactly one row and increment the
+    mailing's sent_count exactly once, instead of raising an IntegrityError
+    (which would fail the job on every retry) or drifting the count.
     """
     interactor = await dishka_request.get(CreateNotification)
     mailing_gateway = await dishka_request.get(MailingGateway)

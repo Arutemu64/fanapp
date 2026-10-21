@@ -66,7 +66,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         with translate_integrity_error({"uq_sync_runs_active": SyncAlreadyRunning}):
             self.session.add(run_orm)
             await self.session.flush()
-        # Register so any event recorded on the run lands in the outbox on commit.
+        # Register so any event recorded on the run is queued on commit.
         self.uow.register(run)
 
     async def get(self, run_id: SyncRunId) -> SyncRun | None:

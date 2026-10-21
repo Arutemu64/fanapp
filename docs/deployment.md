@@ -63,7 +63,7 @@ read at runtime:
 
 | Path | Why |
 | --- | --- |
-| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The NATS and Valkey server configs are inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
+| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The Valkey server config is inlined here as a top-level `configs:` entry, and the `migration` service reads the `alembic.ini` baked into the backend image. |
 | `.env` | All runtime config. Start from `.env.example`. |
 | `secrets/` | VAPID PEM keys, mounted read-only. Ships empty — the keys are yours. |
 
@@ -149,60 +149,48 @@ services gate on it with `service_completed_successfully`. `just deploy` caps th
 wait at 300s, which covers `pgbackup`'s on-start dump. `--remove-orphans` stops
 containers of services the Compose files no longer define.
 
-### Changing a JetStream consumer's config
+### Upgrading from the NATS stack (one-time)
 
-nats-py sends a `ConsumerConfig` only when it creates a durable; an existing
-durable keeps its first config, and the NATS data volume outlives deploys. The
-stream worker closes that gap on startup: `sync_consumer_configs`
-(`presentation/faststream/redelivery.py`) re-sends every durable subscriber's
-declared config, and NATS updates the
-[editable fields](https://docs.nats.io/nats-concepts/jetstream/consumers) —
-`ack_wait`, `max_deliver`, `max_ack_pending`, the filter subject — in place. So a
-change to one of those takes effect on the next deploy with no manual step; the
-worker logs `Consumer config updated` with the changed fields.
+The release that replaced NATS and FastStream with Procrastinate
+([ADR-0041](adr/0041-procrastinate-replaces-nats-and-the-outbox.md)) deploys with
+`just deploy` as usual: the migration creates Procrastinate's tables, turns every
+undelivered `outbox_events` row into its jobs, and drops the outbox;
+`--remove-orphans` stops the old `faststream` and `nats` containers. Two things
+the migration cannot see:
 
-A change to a **non-editable** field (`ack_policy`, `deliver_policy`) is rejected
-by the server. The worker logs `Could not update consumer config` and keeps
-running on the old config, so the deploy succeeds but the change does not apply
-until the durable is recreated.
+* **Messages already in JetStream but not yet consumed** are lost with NATS. At
+  this volume consumers drain in milliseconds, so deploy when nothing is in flight
+  — not mid-broadcast or mid-sync. A sync interrupted by the deploy is settled as
+  failed by `reap_stale` and can be started again.
+* **The `nats-data` volume** stays behind. Once the deploy is healthy, remove it:
+  `docker volume rm <project>_nats-data`. Drop the `NATS__*` and `OUTBOX__*` keys
+  and `SCHEDULER__OUTBOX_RETENTION_CRON` from `.env`; nothing reads them any more.
 
-Renaming a durable is not an update and logs nothing: startup finds no consumer
-under the new name and creates one, which starts from the default `DeliverAll`
-and so replays every message the stream still holds (up to its 24 h `max_age`,
-`presentation/faststream/jstream.py`). The old durable stays on the server,
-orphaned. Delete it with the command below.
+### Inspecting background jobs
 
-To apply a non-editable change in production, delete the affected durables once so
-FastStream recreates them with the new config on the next boot. Deleting a
-*consumer* is safe: it is routing/cursor state, not the stream or its messages,
-and any un-acked in-flight message is redelivered after recreation (the
-notification consumers are idempotent, which is why this stream tolerates
-redelivery — see [backend.md](backend.md)). The `nats:2.14-alpine` image is the
-server only and carries no `nats` CLI, so run one from `nats-box` on the backend
-network. The server's creds live in `.env` (Compose's `env_file`), not your
-shell, so pass that file into the container with `--env-file` and let the
-container's shell expand them — hence `sh -c '…'` in single quotes, so the host
-shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
-(where `.env` is):
+Jobs live in Postgres (`procrastinate_jobs`, with their status history in
+`procrastinate_events`), so `psql` through the SSH tunnel is the tool. A job that
+keeps failing retries with a growing delay and gives up after 20 runs
+(`presentation/worker/retry.py`), logging its last error at ERROR (Sentry).
+Finished jobs, failed ones included, are kept for `WORKER__JOB_RETENTION_DAYS`
+(7):
 
-```sh
-# Look up the app's backend network, then substitute it below. It is named
-# <project>_backend-network, where the Compose project name defaults to the
-# deploy directory (usually fanapp) but can differ (a renamed dir, or -p /
-# COMPOSE_PROJECT_NAME). Look it up rather than auto-derive: a host running more
-# than one stack has several *_backend-network networks, and picking the wrong
-# one — or matching several — silently leaves the durables on their old config.
-docker network ls | grep backend-network
+```sql
+-- What is queued or stuck, by task.
+SELECT task_name, status, count(*) FROM procrastinate_jobs
+WHERE status IN ('todo', 'doing') GROUP BY 1, 2;
 
-docker run --rm -it --network <project>_backend-network --env-file .env natsio/nats-box \
-  sh -c 'nats --server "nats://$NATS__USER:$NATS__PASSWORD@nats:4222" \
-    consumer rm stream send_notification_to_telegram'
-# repeat for send_notification_to_vk and send_push_notification
+-- Recent failures with their arguments.
+SELECT id, task_name, attempts, args FROM procrastinate_jobs
+WHERE status = 'failed' ORDER BY id DESC LIMIT 20;
 ```
 
-This applies to server-side config only. FastStream's `ack_policy`
-(`NACK_ON_ERROR` vs the default) is client-side handler behaviour, not consumer
-config, so a change to it takes effect on redeploy with no consumer recreation.
+To run a failed job again, use Procrastinate's own procedure rather than an
+`UPDATE`, so its events and notifications stay consistent:
+`SELECT procrastinate_retry_job_v2(<id>, now(), NULL, NULL, NULL);`. It counts as
+another attempt, so a job that already used all 20 gets one more run. A job left
+`doing` by a worker that died is retried automatically within five minutes
+(`retry_stalled_jobs`).
 
 ### Creating a user
 
@@ -433,13 +421,13 @@ Only into a database you intend to overwrite. Stop the app services first so
 nothing writes mid-restore, recreate the database empty, then load the dump:
 
 ```sh
-docker compose stop api frontend migration scheduler stream pgbackup
+docker compose stop api frontend migration scheduler worker pgbackup
 docker compose exec db sh -c \
   'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
 docker compose exec -T db sh -c \
   'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --single-transaction --exit-on-error' \
   < backups/daily/<file>.dump
-docker compose start api frontend migration scheduler stream pgbackup
+docker compose start api frontend migration scheduler worker pgbackup
 ```
 
 `--single-transaction` makes the load all-or-nothing, so a failed restore leaves
@@ -457,8 +445,8 @@ The shape of it:
 
 - **Resource limits** (`deploy.resources.limits` in
   [`docker-compose.yml`](../docker-compose.yml)) are sized so the steady-state
-  memory total of the long-running services (`core` + `ops` profiles) is 1792 MiB,
-  leaving ~12% of the 2 GB for the kernel, Docker and sshd. The one-shot
+  memory total of the long-running services (`core` + `ops` profiles) is 1696 MiB,
+  leaving ~17% of the 2 GB for the kernel, Docker and sshd. The one-shot
   `migration` limit applies only while it runs at deploy.
   A `cpus` limit may never exceed the host's core count or the container fails to
   create. Plain `docker compose up` (non-swarm) enforces `limits` only —
@@ -610,7 +598,7 @@ network Docker DNS also resolves the bare `api` / `frontend`, and if another
 stack on `proxy` defines a service by the same name, DNS returns both containers
 and round-robins between them silently. The prefixed alias stays unambiguous no
 matter what else joins the network. The internal service-to-service names
-(`db`, `redis`, `nats`, and `api` for same-stack callers) are unaffected — they
+(`db`, `redis`, and `api` for same-stack callers) are unaffected — they
 resolve on the private `backend-network` / `frontend-network` as before.
 
 The base file's loopback host bindings (`127.0.0.1:3000` / `:8000`) are kept, so

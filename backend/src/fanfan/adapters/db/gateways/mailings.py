@@ -62,8 +62,8 @@ class SqlMailingGateway(MailingGateway):
         with translate_integrity_error({"pk_mailings": MailingAlreadyExists}):
             self.session.add(mailing_orm)
             await self.session.flush()
-        # Register so any event recorded on the mailing is written to the
-        # outbox when the unit of work commits.
+        # Register so any event recorded on the mailing is queued as a job
+        # when the unit of work commits.
         self.uow.register(mailing)
 
     async def get(self, mailing_id: MailingId) -> Mailing | None:

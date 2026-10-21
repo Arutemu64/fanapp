@@ -6,7 +6,7 @@ from fanfan.core.vo.user import UserId
 
 
 class FakeRealtimeGateway(RealtimeGateway):
-    """Records published SSE messages instead of going through NATS.
+    """Records published SSE messages instead of going through Redis.
 
     ``subscribe`` returns an empty stream — real-time fan-out is not
     exercised in interactor tests, we only assert on what was published.

@@ -1,6 +1,6 @@
 # ADR-0040: Commands are a separate message type from domain events
 
-- **Status:** Accepted
+- **Status:** Accepted; transport (NATS, `EventBroker`) superseded by [ADR-0041](0041-procrastinate-replaces-nats-and-the-outbox.md)
 - **Date:** 2026-10-21
 - **Deciders:** maintainer
 

@@ -41,7 +41,7 @@ on testing against production will be handled as incidents rather than as
 research.
 
 Reproduce locally instead. `just bootstrap && just run-dev` brings up the whole
-stack — API, frontend, bot, Postgres, Redis, NATS — with generated local
+stack — API, worker, frontend, bot, Postgres, Redis — with generated local
 secrets and no real third-party credentials, so you can test freely against
 your own instance. See the README for setup.
 

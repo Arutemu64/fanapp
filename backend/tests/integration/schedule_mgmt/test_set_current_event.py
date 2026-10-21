@@ -14,7 +14,6 @@ from fanfan.application.ports.gateways import (
     ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
@@ -26,7 +25,7 @@ from fanfan.core.vo.schedule_entry import (
     ScheduleEntryId,
     generate_schedule_entry_id,
 )
-from tests.integration.conftest import as_outbox
+from tests.integration.conftest import JobsReader, as_jobs
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -59,7 +58,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -112,16 +111,14 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert mailing is not None
     assert mailing.by_user_id == schedule_editor.id
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await jobs() == as_jobs(ScheduleChangeCreated(schedule_change_id=change.id))
 
 
 async def test_set_current_event_sets_current_when_none_was_current(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -153,16 +150,14 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert change.user is not None
     assert change.user.id == schedule_editor.id
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await jobs() == as_jobs(ScheduleChangeCreated(schedule_change_id=change.id))
 
 
 async def test_set_current_event_can_unset_current_event(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -194,16 +189,14 @@ async def test_set_current_event_can_unset_current_event(
     assert change.next_event_changed is True
     assert change.mailing_id is not None
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await jobs() == as_jobs(ScheduleChangeCreated(schedule_change_id=change.id))
 
 
 async def test_set_current_event_raises_when_event_not_found(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -233,14 +226,14 @@ async def test_set_current_event_raises_when_event_not_found(
         )
         == []
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []
 
 
 async def test_set_current_event_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -265,14 +258,14 @@ async def test_set_current_event_without_permission_raises_access_denied(
         )
         == []
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []
 
 
 async def test_set_current_event_twice_in_a_row_raises_too_fast(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -306,16 +299,16 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
         pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+    assert await jobs() == as_jobs(
+        ScheduleChangeCreated(schedule_change_id=changes[0].id)
+    )
 
 
 async def test_set_current_event_repeat_is_a_no_op_inside_the_cooldown(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -336,16 +329,16 @@ async def test_set_current_event_repeat_is_a_no_op_inside_the_cooldown(
         pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+    assert await jobs() == as_jobs(
+        ScheduleChangeCreated(schedule_change_id=changes[0].id)
+    )
 
 
 async def test_unset_current_event_with_nothing_current_is_a_no_op(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
 ) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -359,4 +352,4 @@ async def test_unset_current_event_with_nothing_current_is_a_no_op(
         )
         == []
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []

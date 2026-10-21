@@ -49,7 +49,7 @@ async def _stream_with_heartbeat(
 
     The queue indirection exists because timing out on the source directly
     (asyncio.wait_for around anext()) would cancel *inside* its generator and
-    kill the NATS subscription; cancelling queue.get() is safe.
+    kill its Redis subscription; cancelling queue.get() is safe.
     """
     queue: asyncio.Queue[SSEMessage | None] = asyncio.Queue()
 
@@ -79,7 +79,7 @@ async def _stream_with_heartbeat(
             yield _to_sse(message)
     finally:
         pump_task.cancel()
-        # Let the source's async-generator cleanup (NATS unsubscribe) run.
+        # Let the source's async-generator cleanup (unsubscribe) run.
         with contextlib.suppress(asyncio.CancelledError):
             await pump_task
 

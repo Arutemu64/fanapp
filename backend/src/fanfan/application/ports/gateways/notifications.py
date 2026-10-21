@@ -14,7 +14,8 @@ class NotificationGateway(Protocol):
         """Insert the notification; return True if a new row was created.
 
         False means a row with this id already existed and the insert was a
-        no-op, which callers use to detect a redelivered fan-out.
+        no-op, which callers use to detect a rerun fan-out. Only a new row's
+        recorded events are queued, so a rerun never sends a notification twice.
         """
         ...
 

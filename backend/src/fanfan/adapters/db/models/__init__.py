@@ -4,7 +4,6 @@ from .feedback import FeedbackORM
 from .mailing import MailingORM
 from .nomination import NominationORM
 from .notification import NotificationORM
-from .outbox import OutboxEventORM
 from .participant import ParticipantORM
 from .permission import UserPermissionORM
 from .push_subscription import PushSubscriptionORM
@@ -26,7 +25,6 @@ __all__ = [
     "MailingORM",
     "NominationORM",
     "NotificationORM",
-    "OutboxEventORM",
     "ParticipantORM",
     "PushSubscriptionORM",
     "QuestAwardORM",

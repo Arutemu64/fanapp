@@ -11,7 +11,6 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ScheduleEventRow,
 )
 from fanfan.application.ports.gateways import ScheduleEntryGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.schedule_entry import ScheduleBlockStart, ScheduleEvent
@@ -20,6 +19,7 @@ from fanfan.core.vo.schedule_entry import (
     generate_schedule_entry_id,
 )
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
+from tests.integration.conftest import JobsReader
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -58,7 +58,7 @@ async def test_import_creates_events_on_empty_schedule(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(ImportSchedule)
@@ -89,9 +89,9 @@ async def test_import_creates_events_on_empty_schedule(
     assert by_number[1].order < by_number[2].order < by_number[3].order
 
     # Import records no schedule change and enqueues no events.
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await jobs() == []
 
-    # Because there is no outbox event, the SSE broadcast telling every other
+    # Because there is no queued event, the SSE broadcast telling every other
     # client to refetch has to come from the interactor itself. Broadcast, not
     # targeted at the importing user — the schedule is shared state.
     assert realtime.published == [(None, SSEMessage(SSEEventName.SCHEDULE_UPDATED))]

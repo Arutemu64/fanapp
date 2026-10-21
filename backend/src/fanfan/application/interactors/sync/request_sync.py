@@ -23,7 +23,7 @@ class RequestSyncInput(BaseModel):
 class RequestSync:
     """Queue a sync for an organizer and hand back immediately.
 
-    The actual work happens in the stream service (see ExecuteCosplaySync /
+    The actual work happens in a worker job (see ExecuteCosplaySync /
     ExecuteTicketsSync) — a full TicketsCloud sweep is unbounded and would
     outlive the HTTP request, and the API container is replaced on every deploy.
     """
@@ -52,8 +52,8 @@ class RequestSync:
         # would report "already running" forever.
         await self.tracker.reap_stale(data.source)
 
-        # Enqueued, not published: the command lands in the outbox in the same
-        # transaction as the row — no dual write between commit and publish.
+        # Enqueued with the row: the job is queued in the same transaction — no
+        # dual write between commit and publish.
         run = SyncRun.create(source=data.source, by_user_id=current_user.id)
         await self.sync_run_gateway.add(run)
         self.uow.enqueue(RunSyncCommand(sync_run_id=run.id, source=run.source))

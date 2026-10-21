@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Self
 
+from fanfan.core.events.notifications import NotificationCreated
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId, NotificationType
@@ -20,6 +22,21 @@ class Notification(AggregateRoot):
     path: str | None
     mailing_id: MailingId | None
     seen_at: datetime | None
+
+    @classmethod
+    def create(cls, new: NewNotification) -> Self:
+        instance = cls(
+            id=new.id,
+            user_id=new.user_id,
+            title=new.title,
+            body=new.body,
+            type=new.type,
+            path=new.path,
+            mailing_id=new.mailing_id,
+            seen_at=None,
+        )
+        instance.record_event(NotificationCreated(notification_id=instance.id))
+        return instance
 
 
 @dataclass(slots=True, kw_only=True)

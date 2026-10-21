@@ -26,7 +26,7 @@ from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
-from tests.fakes.event_broker import FakeEventBroker
+from tests.integration.conftest import QueuedReader
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -54,6 +54,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
+    queued: QueuedReader,
 ) -> None:
     """Subscription fan-out honours the window and carries the queue difference.
 
@@ -71,7 +72,6 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     user_gateway = await dishka_request.get(UserGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -120,9 +120,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 
     await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
+    published = await queued(CreateNotificationCommand)
     assert len(published) == 1
     event = published[0]
     assert event.notification.user_id == visitor.id
@@ -137,10 +135,11 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
+    queued: QueuedReader,
 ) -> None:
-    """A redelivered schedule-change trigger mints the same notification ids.
+    """A retried schedule-change trigger mints the same notification ids.
 
-    The trigger is delivered at-least-once, so the interactor can run twice for
+    The trigger runs at-least-once, so the interactor can run twice for
     one change. The notifications insert dedups on id (on-conflict-do-nothing),
     so a rerun that produced fresh random ids would duplicate every recipient's
     notification. Running the interactor twice must yield the same id for the
@@ -150,7 +149,6 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -181,9 +179,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     await interactor(data)
     await interactor(data)
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
+    published = await queued(CreateNotificationCommand)
     # Both runs target the one in-window subscriber; the id is identical, so the
     # gateway upsert would no-op the second insert instead of duplicating it.
     assert len(published) == 2
@@ -195,6 +191,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
+    queued: QueuedReader,
 ) -> None:
     """A change processed long after it was made sends nothing.
 
@@ -207,7 +204,6 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     mailing_gateway = await dishka_request.get(MailingGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -244,7 +240,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
         )
     )
 
-    assert broker.published_events == []
+    assert await queued(CreateNotificationCommand) == []
     saved_mailing = await mailing_gateway.get(mailing.id)
     assert saved_mailing is not None
     assert saved_mailing.status is MailingStatus.FAILED

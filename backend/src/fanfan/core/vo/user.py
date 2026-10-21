@@ -41,7 +41,7 @@ class UserRole(enum.StrEnum):
     ORGANIZER = "organizer"
 
     # TODO: drop the legacy values once a deploy has run for a while — they
-    # cover outbox rows and NATS messages queued before the rename, clients
+    # cover background jobs queued before the rename, clients
     # still on the old bundle and a TCLOUD__EVENT_IDS_MAP not yet updated.
     # Renaming an enum value is a breaking change (https://google.aip.dev/180),
     # so the old spellings keep resolving; the API schema lists only the new.

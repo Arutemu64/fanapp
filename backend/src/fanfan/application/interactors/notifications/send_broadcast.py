@@ -72,8 +72,8 @@ class SendBroadcast:
             )
             return SendBroadcastOutput(mailing_id=existing.id)
 
-        # Enqueued, not published: the fan-out command lands in the outbox in the
-        # same transaction as the row — no dual write between commit and publish.
+        # Enqueued with the row: the fan-out job is queued in the same
+        # transaction — no dual write between commit and publish.
         mailing = Mailing.create(by_user_id=current_user.id, mailing_id=data.mailing_id)
         mailing.queue_broadcast(body=data.body, roles=data.roles)
         await self.mailing_gateway.add(mailing)

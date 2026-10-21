@@ -9,9 +9,6 @@ from dishka import AsyncContainer
 from fanfan.application.interactors.notifications.purge_notifications import (
     PurgeNotifications,
 )
-from fanfan.application.interactors.outbox.purge_outbox_events import (
-    PurgeOutboxEvents,
-)
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.interactors.sync.execute_tickets_sync import ExecuteTicketsSync
 from fanfan.presentation.scheduler.config import SchedulerConfig
@@ -40,11 +37,6 @@ def get_job_definitions(config: SchedulerConfig) -> list[JobDefinition]:
             id="sync_cosplay2",
             cron=config.sync_cosplay2_cron,
             interactor=ExecuteCosplaySync,
-        ),
-        JobDefinition(
-            id="outbox_retention",
-            cron=config.outbox_retention_cron,
-            interactor=PurgeOutboxEvents,
         ),
         JobDefinition(
             id="notification_retention",

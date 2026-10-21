@@ -1,6 +1,6 @@
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 from uuid import uuid7
 
 import pytest
@@ -9,13 +9,13 @@ from alembic.command import upgrade
 from alembic.config import Config as AlembicConfig
 from dishka import AnyOf, AsyncContainer, Provider, Scope, make_async_container
 from redis.asyncio import Redis
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.email_sender import EmailSender
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways import UserPermissionGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.notifier import (
@@ -37,15 +37,16 @@ from fanfan.main.ioc.html import HtmlProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
+from fanfan.main.ioc.queue import QueueProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.sync import SyncProvider
+from fanfan.presentation.worker.app import routes
 from tests.fakes.captcha import FakeCaptchaVerifier
 from tests.fakes.cosplay_source import FakeCosplaySource
 from tests.fakes.email_sender import FakeEmailSender
-from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
 from tests.fakes.notifier import (
     FakePushNotifier,
@@ -64,12 +65,10 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 @pytest_asyncio.fixture(scope="session")
 async def dishka() -> AsyncGenerator[AsyncContainer]:
     # Fakes for ports that would otherwise reach external systems
-    # (NATS, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so each test
-    # gets a fresh instance and the interactor under test shares it with the test.
+    # (Redis pub/sub, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so
+    # each test gets a fresh instance and the interactor under test shares it
+    # with the test.
     fakes_provider = Provider(scope=Scope.REQUEST)
-    fakes_provider.provide(
-        FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker]
-    )
     fakes_provider.provide(FakeIdProvider, provides=AnyOf[IdProvider, FakeIdProvider])
     fakes_provider.provide(
         FakeEmailSender, provides=AnyOf[EmailSender, FakeEmailSender]
@@ -98,7 +97,6 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
     )
     container = make_async_container(
         # Test providers
-        fakes_provider,
         TestDbProvider(),
         TestConfigProvider(),
         # Real providers
@@ -108,6 +106,9 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         ServicesProvider(),
         SqlGatewaysProvider(),
         SyncProvider(),
+        # Real job queue: messages are written to procrastinate_jobs in the
+        # test's own transaction, so a test reads what it queued (`jobs`).
+        QueueProvider(),
         SecurityProvider(),
         SerializationProvider(),
         JinjaProvider(),
@@ -121,7 +122,10 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         # Same trick: must come after SyncProvider to win AvailableSyncSources,
         # whose real factory reads the EnvConfig tests never build.
         TestSyncProvider(),
-        # External integrations (NATS broker, Telegram bot, SMTP, OAuth,
+        # Last, so each fake wins over a real provider of the same port
+        # (RedisProvider's RealtimeGateway).
+        fakes_provider,
+        # External integrations (Telegram bot, SMTP, OAuth,
         # Cosplay2 HTTP client) are intentionally NOT wired. Interactors that
         # need them are not yet testable here; everything else resolves, so we
         # skip eager dependency validation. (TicketsCloud now has a port + fake,
@@ -140,8 +144,8 @@ async def dishka_request(dishka: AsyncContainer) -> AsyncGenerator[AsyncContaine
 
 # --- Shared plumbing fixtures ---------------------------------------------
 # Almost every integration test resolves the same request-scoped plumbing:
-# the outbox it asserts enqueued events on, the UnitOfWork it commits setup
-# with, and the acting user. Expose them as fixtures so each test body only
+# the job queue it asserts enqueued messages on, the UnitOfWork it commits
+# setup with, and the acting user. Expose them as fixtures so each test body only
 # spells out the interactor under test and the repositories/queries it checks.
 # The feature-specific dependencies stay explicit via `dishka_request.get()`
 # so a reader can see at a glance what each test exercises.
@@ -174,22 +178,64 @@ async def make_broadcaster(dishka_request: AsyncContainer, uow: UnitOfWork) -> U
     return broadcaster
 
 
-def as_outbox(*messages: Message) -> list[tuple[str, dict[str, Any]]]:
-    """Render typed messages the way they land in the outbox table.
+type QueuedJobs = list[tuple[str, dict[str, Any]]]
 
-    Recorded events and enqueued commands are not published on commit — the
-    UnitOfWork writes them to the outbox, and the relay delivers them later.
-    Tests assert that the right messages were *enqueued* by comparing against
-    this serialization.
+
+def as_jobs(*messages: Message) -> QueuedJobs:
+    """Render typed messages the way the UnitOfWork queues them.
+
+    Recorded events and enqueued commands are not run on commit — the
+    UnitOfWork writes one job per subscribed task, and a worker runs them
+    later. Tests assert that the right messages were *queued* by comparing
+    against this rendering: (task name, message payload) in queue order.
     """
-    return [(m.subject, m.model_dump(mode="json")) for m in messages]
+    return [
+        (task.name, message.model_dump(mode="json"))
+        for message in messages
+        for task in routes[message.subject]
+    ]
+
+
+type JobsReader = Callable[[], Awaitable[QueuedJobs]]
+
+
+class QueuedReader(Protocol):
+    async def __call__[M: Message](self, message_type: type[M]) -> list[M]: ...
 
 
 @pytest_asyncio.fixture
-async def outbox(dishka_request: AsyncContainer) -> OutboxGateway:
-    # Read post-run like events_broker: the UnitOfWork writes events to the same
-    # session the test rolls back, so fetch_unpublished returns what was enqueued.
-    return await dishka_request.get(OutboxGateway)
+async def jobs(dishka_request: AsyncContainer) -> JobsReader:
+    """Return a reader of the jobs queued so far in this test's transaction."""
+    # The UnitOfWork writes jobs on this same session's connection, inside the
+    # transaction the test rolls back, so they are visible here and gone after.
+    session = await dishka_request.get(AsyncSession)
+
+    async def read() -> QueuedJobs:
+        rows = await session.execute(
+            text("SELECT task_name, args FROM procrastinate_jobs ORDER BY id")
+        )
+        return [(task_name, args["message"]) for task_name, args in rows]
+
+    return read
+
+
+@pytest_asyncio.fixture
+async def queued(jobs: JobsReader) -> QueuedReader:
+    """Return a reader of the messages of one type queued so far, typed.
+
+    A message queues one job per subscribed task; this reads one task's jobs,
+    so each queued message appears once.
+    """
+
+    async def read[M: Message](message_type: type[M]) -> list[M]:
+        task_name = routes[message_type.subject][0].name
+        return [
+            message_type.model_validate(payload)
+            for name, payload in await jobs()
+            if name == task_name
+        ]
+
+    return read
 
 
 @pytest_asyncio.fixture

@@ -78,13 +78,6 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
-from fanfan.application.interactors.outbox.config import OutboxConfig
-from fanfan.application.interactors.outbox.publish_outbox_events import (
-    PublishOutboxEvents,
-)
-from fanfan.application.interactors.outbox.purge_outbox_events import (
-    PurgeOutboxEvents,
-)
 from fanfan.application.interactors.permissions.grant_permission import (
     GrantPermission,
 )
@@ -186,12 +179,8 @@ from fanfan.application.interactors.voting.set_voting_time_range import (
 class InteractorsProvider(Provider):
     scope = Scope.REQUEST
 
-    # Tuning slices consumed only by the interactors below (outbox relay/purge,
-    # notification purge), unpacked here so they live with their consumers.
-    @provide(scope=Scope.APP)
-    def get_outbox_config(self, config: EnvConfig) -> OutboxConfig:
-        return config.outbox
-
+    # Tuning slice consumed only by the interactors below (notification purge),
+    # unpacked here so it lives with its consumer.
     @provide(scope=Scope.APP)
     def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
         return config.notification
@@ -276,8 +265,6 @@ class InteractorsProvider(Provider):
         CreatePushSubscription,
         CheckPushSubscription,
         DeletePushSubscription,
-        PublishOutboxEvents,
-        PurgeOutboxEvents,
         PurgeNotifications,
         CreateNotification,
         ListUserNotifications,

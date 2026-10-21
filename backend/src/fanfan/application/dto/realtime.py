@@ -12,11 +12,7 @@ class SSEEventName(StrEnum):
     OpenAPI spec, so there is no code generation between them.
 
     Naming standard (see docs/backend.md "Realtime (SSE)"):
-      * snake_case, single token — NO dots. The NATS subject is built as
-        `sse.broadcast.{event_name}` / `sse.user.{user_id}.{event_name}` and
-        consumers subscribe with a single-token wildcard (`sse.broadcast.*`).
-        A dot in the name would split into extra subject tokens and silently
-        stop matching that wildcard.
+      * snake_case, single token.
       * Prefer `<entity>_<event>` for new names.
       * Every value here must have a matching key in the frontend `SSEEventMap`.
     """

@@ -1,6 +1,6 @@
 # ADR-0010: HTTP-triggered background jobs use a status row, outbox and durable consumer
 
-- **Status:** Accepted; `SyncRequested` as an event superseded by [ADR-0040](0040-commands-separate-from-domain-events.md)
+- **Status:** Accepted; `SyncRequested` as an event superseded by [ADR-0040](0040-commands-separate-from-domain-events.md); outbox and NATS consumer by [ADR-0041](0041-procrastinate-replaces-nats-and-the-outbox.md)
 - **Date:** 2026-07-25
 - **Deciders:** maintainer
 

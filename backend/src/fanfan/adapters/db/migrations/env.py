@@ -2,6 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
+from alembic.runtime.environment import NameFilterParentNames, NameFilterType
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -37,6 +38,22 @@ AUTOGENERATE_PLUGINS = ["alembic.autogenerate.*", "alembic.ext.checkconstraint_b
 MIGRATION_LOCK_TIMEOUT = "5s"
 
 
+# Procrastinate's tables live in the app database but outside the ORM: its own
+# schema SQL creates them (the add_procrastinate_schema revision), so
+# autogenerate must neither diff them nor offer to drop them.
+FOREIGN_TABLE_PREFIX = "procrastinate_"
+
+
+def include_name(
+    name: str | None,
+    type_: NameFilterType,
+    parent_names: NameFilterParentNames,  # Alembic hook signature
+) -> bool:
+    if type_ == "table" and name is not None:
+        return not name.startswith(FOREIGN_TABLE_PREFIX)
+    return True
+
+
 def get_database_url() -> str:
     alembic_url = config.get_main_option("sqlalchemy.url")
     if alembic_url and alembic_url != DEFAULT_ALEMBIC_DATABASE_URL:
@@ -66,6 +83,7 @@ def run_migrations_offline() -> None:
         compare_type=True,
         compare_server_default=True,
         autogenerate_plugins=AUTOGENERATE_PLUGINS,
+        include_name=include_name,
     )
 
     with context.begin_transaction():
@@ -79,6 +97,7 @@ def do_run_migrations(connection: Connection) -> None:
         compare_type=True,
         compare_server_default=True,
         autogenerate_plugins=AUTOGENERATE_PLUGINS,
+        include_name=include_name,
     )
 
     with context.begin_transaction():

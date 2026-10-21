@@ -72,11 +72,11 @@
 
 	// Read-your-writes: after our own successful mutation, refetch straight off the
 	// response instead of waiting for the schedule_updated SSE echo. That echo
-	// travels DB → outbox relay → NATS → SSE fan-out before it reaches us, and on a
+	// travels DB → background job → Redis → SSE fan-out before it reaches us, and on a
 	// flaky operator connection it can arrive late or be dropped — which would leave
 	// the operator who made the change on a stale schedule while everyone else
 	// already sees it. The refetch reads committed state (the write closed before
-	// the 200), so it is correct even before the relay has ticked; the SSE echo
+	// the 200), so it is correct even before the job has run; the SSE echo
 	// still drives every other client.
 	function reloadSchedule() {
 		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });

@@ -10,6 +10,7 @@ from fanfan.adapters.db.pagination import rows_after
 from fanfan.application.dto.notification import NotificationDTO
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.notifications import NotificationGateway
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId, NotificationType
@@ -44,8 +45,9 @@ def _parse_dto(orm: NotificationORM) -> NotificationDTO:
 
 
 class SqlNotificationGateway(NotificationGateway):
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
+        self.uow = uow
 
     async def add(self, notification: Notification) -> bool:
         values = {
@@ -58,9 +60,9 @@ class SqlNotificationGateway(NotificationGateway):
             "mailing_id": notification.mailing_id,
             "seen_at": notification.seen_at,
         }
-        # A redelivered CreateNotificationCommand carries the same (deterministic)
-        # id, so the conflicting insert is a clean no-op rather than an
-        # IntegrityError that would nack-and-redeliver forever.
+        # A rerun CreateNotificationCommand carries the same (deterministic) id,
+        # so the conflicting insert is a clean no-op rather than an
+        # IntegrityError that would fail the job on every retry.
         stmt = (
             pg_insert(NotificationORM)
             .values(**values)
@@ -68,7 +70,12 @@ class SqlNotificationGateway(NotificationGateway):
             .returning(NotificationORM.id)
         )
         result = await self.session.scalar(stmt)
-        return result is not None
+        inserted = result is not None
+        if inserted:
+            # Registered only when new: a rerun's no-op insert must not queue the
+            # channel sends a second time.
+            self.uow.register(notification)
+        return inserted
 
     async def get(self, notification_id: NotificationId) -> Notification | None:
         stmt = (

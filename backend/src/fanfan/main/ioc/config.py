@@ -11,7 +11,7 @@ class ConfigProvider(Provider):
     """Root config plus the cross-cutting slices consumed app-wide.
 
     Domain-specific slices are unpacked by the provider that owns the domain
-    (mail -> MailProvider, push -> PushProvider, nats -> StreamProvider, ...),
+    (mail -> MailProvider, push -> PushProvider, worker -> QueueProvider, ...),
     so a factory never depends on the whole EnvConfig aggregate. Only genuinely
     cross-cutting leaves (web, debug, timezone) stay here alongside the root.
     """

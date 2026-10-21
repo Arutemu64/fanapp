@@ -36,7 +36,7 @@ class ExecuteTicketsSync:
         self.sync_tickets = sync_tickets
 
     async def __call__(self, run_id: SyncRunId | None = None) -> None:
-        # Under cron/CLI/NATS this resolves to the seeded system user, which is
+        # Under cron/CLI/a worker this resolves to the seeded system user, which is
         # granted sync:run by migration — the check is real, not decorative.
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(

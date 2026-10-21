@@ -8,12 +8,12 @@ from fanfan.presentation.web.error_codes import (
 pytestmark = pytest.mark.unit
 
 # Concrete exceptions that intentionally resolve to HTTP 500 (no 4xx marker):
-# they are raised in non-HTTP contexts (Telegram/NATS/scheduler), caught and
+# they are raised in non-HTTP contexts (Telegram/worker/scheduler), caught and
 # re-raised as a flow-specific error, or signal a server misconfiguration. If
 # one of these ever needs to surface to an HTTP client, give it a semantic
 # marker instead of adding it here.
 INTERNAL_ONLY: set[str] = {
-    # Notification delivery — handled inside the NATS consumer, never HTTP.
+    # Notification delivery — handled inside the worker task, never HTTP.
     # MAILING_NOT_FOUND / MAILING_CANCELLED are NOT here: they also surface from
     # the CancelMailing HTTP command, so they carry 404/409 markers.
     "NOTIFICATION_NOT_FOUND",

@@ -4,18 +4,13 @@ from pydantic import BaseModel
 
 
 class Message(BaseModel):
-    """Anything published to NATS: a domain event or a command (ADR-0040)."""
+    """Anything queued as background work: a domain event or a command (ADR-0040).
+
+    ``subject`` is the routing key: every task subscribed to it gets one job per
+    message (ADR-0041).
+    """
 
     subject: ClassVar[str]
-
-    def dedup_id(self) -> str | None:
-        """A stable id for this message, if it has one.
-
-        A message republished with the same id — a redelivered trigger rerunning
-        its fan-out — is dropped by the broker inside its dedup window. Messages
-        without a natural identity return None and are never deduplicated.
-        """
-        return None
 
 
 class DomainEvent(Message):

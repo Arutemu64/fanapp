@@ -78,7 +78,7 @@ class WebPushClient:
         # Build WebPush lazily (and cache it) so missing or invalid VAPID keys
         # surface here, at send time inside the consumer's try/except, rather
         # than at DI-resolution time where the error can't be caught and the
-        # NATS message would be redelivered forever.
+        # job would be retried until it gives up.
         if self._wp is None:
             try:
                 self._wp = WebPush(

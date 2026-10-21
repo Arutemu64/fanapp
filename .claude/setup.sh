@@ -190,8 +190,8 @@ fi
 #                                to match mise.toml and the .pre-commit-config.yaml
 #                                rev (docs/dependencies.md).
 #
-# Image builds (docker-publish.yml) and the rest of the compose stack (nats,
-# db-backup) are still left to CI - not needed for either autogenerate or the
+# Image builds (docker-publish.yml) and the rest of the compose stack
+# (db-backup) are still left to CI - not needed for either autogenerate or the
 # test suite.
 #
 # Best-effort: a rate-limited or unreachable image must not fail environment

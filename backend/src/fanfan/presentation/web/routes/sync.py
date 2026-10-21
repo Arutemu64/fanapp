@@ -47,7 +47,7 @@ async def get_sync_sources(
     summary="Request a sync",
     description=(
         "Queues a sync of the given source and returns immediately with the "
-        "created run. The work runs in the stream service, so progress arrives "
+        "created run. The work runs in a background worker, so progress arrives "
         "over SSE ('sync_run_updated') and the run's final state is readable "
         "from GET /sync/sources. Requires the 'sync:run' permission."
     ),

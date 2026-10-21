@@ -116,14 +116,14 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
             # list and the SDK's auto-detection.
             integrations=[
                 # Captures unhandled exceptions in detached asyncio tasks
-                # (e.g. SSE fan-out, scheduler/stream background work) that
+                # (e.g. SSE fan-out, scheduler/worker background work) that
                 # would otherwise escape the framework integrations. Unlike the
                 # others here, this one is not auto-enabled, so it must be listed.
                 AsyncioIntegration(),
                 FastApiIntegration(failed_request_status_codes={*range(500, 600)}),
                 # Spans every pooled query. Sentry has no psycopg 3 integration
-                # (getsentry/sentry-python#2427), so the raw outbox LISTEN
-                # connection goes untraced.
+                # (getsentry/sentry-python#2427), so the worker's raw
+                # Procrastinate connections go untraced.
                 SqlalchemyIntegration(),
                 # Outbound-request spans for the httpx2 clients (OAuth, mail).
                 Httpx2Integration(),

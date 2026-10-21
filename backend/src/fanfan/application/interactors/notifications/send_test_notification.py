@@ -1,6 +1,6 @@
 from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.ports.cooldown import Cooldown
-from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.notifications import TestNotificationTooFast
 from fanfan.core.exceptions.rate_limit import CooldownActive
@@ -16,11 +16,11 @@ class SendTestNotification:
     def __init__(
         self,
         current_user_provider: CurrentUserProvider,
-        events_broker: EventBroker,
+        uow: UnitOfWork,
         cooldown: Cooldown,
     ) -> None:
         self.current_user_provider = current_user_provider
-        self.events_broker = events_broker
+        self.uow = uow
         self.cooldown = cooldown
 
     async def __call__(self) -> None:
@@ -33,7 +33,7 @@ class SendTestNotification:
             async with claim:
                 # Tests all user notification channels with a single shared
                 # notification.
-                await self.events_broker.publish(
+                self.uow.enqueue(
                     CreateNotificationCommand(
                         notification=NewNotification(
                             id=generate_notification_id(),
@@ -51,5 +51,6 @@ class SendTestNotification:
                         )
                     )
                 )
+                await self.uow.commit()
         except CooldownActive as e:
             raise TestNotificationTooFast(retry_after=e.details["retry_after"]) from e

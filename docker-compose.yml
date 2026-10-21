@@ -53,8 +53,8 @@ services:
     # set limits only. A `cpus` limit may not exceed the host core count, or the
     # container fails to create. Memory limits are hard caps — breach one and the
     # container is OOM-killed — so each is sized above the service's real peak,
-    # not at it; the long-running services (core + ops profiles) sum to 1792 MiB,
-    # leaving ~12% of the 2 GB for the kernel, Docker and sshd (the one-shot
+    # not at it; the long-running services (core + ops profiles) sum to 1696 MiB,
+    # leaving ~17% of the 2 GB for the kernel, Docker and sshd (the one-shot
     # migration's limit applies only while it runs at deploy). Keep docs/deployment.md
     # "Sizing and tuning" in step. Raise everything to match a bigger host.
     # A hit limit shows up as CPU throttling or an OOM kill.
@@ -74,8 +74,6 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-      nats:
-        condition: service_healthy
     volumes:
       - ./secrets:/app/secrets:ro
     env_file:
@@ -91,7 +89,6 @@ services:
       DB__POOL_SIZE: "10"
       DB__MAX_OVERFLOW: "10"
       REDIS__HOST: "redis"
-      NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
@@ -126,13 +123,11 @@ services:
       - frontend-network
       - backend-network
 
-  faststream:
+  worker:
     build: ./backend
     depends_on:
       migration:
         condition: service_completed_successfully
-      nats:
-        condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
@@ -141,15 +136,19 @@ services:
       - .env
     environment:
       DB__HOST: "db"
-      DB__APPLICATION_NAME: "fanfan-faststream"
-      # Trimmed pool: a NATS consumer with modest DB write concurrency. See api.
+      DB__APPLICATION_NAME: "fanfan-worker"
+      # Holds WORKER__CONCURRENCY (8) sessions at once, plus a sync's WorkerLock.
+      # Procrastinate's own queries use a separate 3-connection pool and one
+      # LISTEN connection (main/worker.py). See api.
       DB__POOL_SIZE: "5"
       DB__MAX_OVERFLOW: "5"
       REDIS__HOST: "redis"
-      NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
-    command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
+    command: [ "worker" ]
+    # On SIGTERM the worker waits up to 7 s for running jobs, then aborts and
+    # requeues the rest (SHUTDOWN_GRACEFUL_TIMEOUT_SECONDS in main/worker.py),
+    # inside the 10 s default stop_grace_period before Docker's SIGKILL.
     restart: unless-stopped
     init: true
     read_only: true
@@ -175,8 +174,6 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
-      nats:
-        condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
@@ -188,11 +185,10 @@ services:
       DB__APPLICATION_NAME: "fanfan-scheduler"
       # Smallest pool: cron jobs run a few sequential queries, never a burst.
       # A running sync pins two connections (its session plus its WorkerLock), so the
-      # ceiling covers both syncs, the outbox relay and both retention jobs at once.
+      # ceiling covers both syncs and the retention job at once.
       DB__POOL_SIZE: "2"
       DB__MAX_OVERFLOW: "5"
       REDIS__HOST: "redis"
-      NATS__HOST: "nats"
     command: [ "scheduler" ]
     restart: unless-stopped
     init: true
@@ -203,11 +199,10 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          # Runs the same broker + Dishka DI + sync-executor stack as faststream,
-          # so it needs the same class of memory. At 128M the process thrashed on
-          # page faults (near-zero progress, restart loop) and the outbox relay
-          # never published — it wedged before or during its first NATS publish.
-          # Matches the api ceiling; keep in step with faststream's limit.
+          # Runs the same Dishka DI + sync-executor stack as the worker, so it
+          # needs the same class of memory: at 128M the process thrashed on page
+          # faults (near-zero progress, restart loop). Matches the api ceiling;
+          # keep in step with the worker's limit.
           memory: 256M
     healthcheck:
       disable: true
@@ -220,13 +215,12 @@ services:
     env_file:
       - .env
     # Alembic only opens the DB, but loading the config validates every section,
-    # so pin all three hosts like the other services — the .env values are
-    # host-side (localhost) and would be wrong the moment a migration step grows
-    # a Redis or NATS dependency.
+    # so pin both hosts like the other services — the .env values are host-side
+    # (localhost) and would be wrong the moment a migration step grows a Redis
+    # dependency.
     environment:
       DB__HOST: "db"
       REDIS__HOST: "redis"
-      NATS__HOST: "nats"
     depends_on:
       db:
         condition: service_healthy
@@ -234,7 +228,7 @@ services:
     restart: on-failure
     init: true
     # One-shot: runs to completion before api/workers start (they depend on it),
-    # so this ceiling overlaps only with db/redis/nats, never the app processes.
+    # so this ceiling overlaps only with db/redis, never the app processes.
     deploy:
       resources:
         limits:
@@ -270,7 +264,7 @@ services:
     # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
     # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
     # single core from spending it JIT-compiling OLTP queries. max_connections
-    # tracks the per-service pool ceilings (see api/faststream/scheduler).
+    # tracks the per-service pool ceilings (see api/worker/scheduler).
     # shared_buffers stays at the image default (128M, ~28% of this container's
     # cap and matched to shm_size above); raising it would starve work_mem.
     command:
@@ -307,34 +301,6 @@ services:
       timeout: 60s
       retries: 10
       start_period: 5s
-    profiles: [ "core" ]
-    networks:
-      - backend-network
-
-  nats:
-    image: nats:2.14-alpine
-    volumes:
-      - nats-data:/data
-    configs:
-      - source: nats-conf
-        target: /etc/nats/nats.conf
-    # JetStream (enable + store_dir + fsync tuning) lives in the nats-conf config;
-    # auth stays on the CLI so the password never lands in the committed file
-    # (compose interpolates it from .env), same split as redis --requirepass.
-    command: "-c /etc/nats/nats.conf -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
-    ports:
-      - "127.0.0.1:4222:4222"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 96M
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -421,38 +387,12 @@ services:
     networks:
       - backend-network
 
-# Server config for nats and redis, inlined so a deploy needs no config files
-# beside the Compose files. Compose interpolates `content`, so a literal `$`
-# here must be written `$$`. Inline configs cannot target a `read_only` service
-# (Compose refuses: "`file` is the sole supported option"); nats and redis are
-# not read-only, so keep it that way or move the config back to a `file:`.
+# Server config for redis, inlined so a deploy needs no config files beside the
+# Compose files. Compose interpolates `content`, so a literal `$` here must be
+# written `$$`. Inline configs cannot target a `read_only` service (Compose
+# refuses: "`file` is the sole supported option"); redis is not read-only, so
+# keep it that way or move the config back to a `file:`.
 configs:
-  nats-conf:
-    content: |
-      # NATS JetStream config for the FAN FAN companion app.
-      #
-      # Defining this jetstream block is what ENABLES JetStream (store_dir set here),
-      # so the CLI carries no --js/--sd — only auth (--user/--pass, kept off this
-      # committed file) and monitoring (-m 8222). A --js flag on the command line
-      # would override this block and silently reset sync_interval to its default.
-      jetstream {
-        # Matches the nats-data volume mount in docker-compose.yml.
-        store_dir: "/data"
-
-        # How often the filestore is fsync'd to disk. The default is 2 minutes:
-        # JetStream acks a publish immediately but only flushes every sync_interval,
-        # so a host crash (power loss, kernel panic) in that window drops writes that
-        # were already acknowledged (nats-server#7564; Jepsen NATS 2.12.1, 2025-12).
-        # We run single-node with no replication, so there is no second replica to
-        # recover from — the fsync window IS the durability guarantee. This matters
-        # because the outbox marks a row published once NATS acks it and never
-        # redelivers it (see presentation/faststream/jstream.py), so an event lost in
-        # the fsync window is lost on both sides. 10s shrinks that window 12x from the
-        # 120s default at negligible I/O cost for this traffic. Not "always" (fsync
-        # before every ack): this stream also carries ephemeral SSE subjects, and a
-        # per-message fsync would add disk latency to real-time delivery for no gain.
-        sync_interval: "10s"
-      }
   valkey-conf:
     content: |
       # Valkey config for the FAN FAN companion app.
@@ -500,7 +440,6 @@ secrets:
 volumes:
   db-data: {}
   redis-data: {}
-  nats-data: {}
 
 networks:
   frontend-network:

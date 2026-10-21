@@ -26,12 +26,13 @@ from fanfan.application.interactors.quest.list_quest_history import (
     ListQuestHistoryInput,
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.quest import QuestAwardAlreadyExists, QuestDisabled
 from fanfan.core.models.user import User
 from fanfan.core.vo.quest import QuestAwardId
+from fanfan.presentation.worker.app import routes
+from tests.integration.conftest import JobsReader
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -141,7 +142,7 @@ async def test_award_and_cancel_each_enqueue_one_notification_for_the_player(
     quest_volunteer: User,
     visitor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    jobs: JobsReader,
 ) -> None:
     login(quest_volunteer)
     award_id = await _award(dishka_request, visitor, 10)
@@ -149,11 +150,13 @@ async def test_award_and_cancel_each_enqueue_one_notification_for_the_player(
     await _award(dishka_request, visitor, 10, award_id)
     await (await dishka_request.get(CancelQuestAward))(award_id)
 
-    messages = await outbox.fetch_unpublished(1000)
-    assert {m.subject for m in messages} == {CreateNotificationCommand.subject}
-    titles = [m.payload["notification"]["title"] for m in messages]
+    queued_jobs = await jobs()
+    assert {name for name, _ in queued_jobs} == {
+        task.name for task in routes[CreateNotificationCommand.subject]
+    }
+    titles = [message["notification"]["title"] for _, message in queued_jobs]
     assert titles == ["+10 баллов в квесте", "Начисление отменено"]
-    recipients = {m.payload["notification"]["user_id"] for m in messages}
+    recipients = {message["notification"]["user_id"] for _, message in queued_jobs}
     assert recipients == {str(visitor.id)}
 
 

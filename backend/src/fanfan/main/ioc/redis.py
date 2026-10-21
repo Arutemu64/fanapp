@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterable
 
+from adaptix import Retort
 from dishka import Provider, Scope, provide
 from redis.asyncio import Redis
 
@@ -10,10 +11,12 @@ from fanfan.adapters.redis.cooldown import RedisCooldown
 from fanfan.adapters.redis.factory import create_redis
 from fanfan.adapters.redis.presence import RedisPresenceGateway
 from fanfan.adapters.redis.rate_limiter import RedisRateLimiter
+from fanfan.adapters.redis.realtime_gateway import RedisRealtimeGateway
 from fanfan.adapters.redis.schedule_cache import RedisScheduleCache
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.presence import PresenceGateway
 from fanfan.application.ports.rate_limiter import RateLimiter
+from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
@@ -27,6 +30,15 @@ class RedisProvider(Provider):
     async def get_redis(self, config: RedisConfig) -> AsyncIterable[Redis]:
         async with create_redis(config) as redis:
             yield redis
+
+    @provide
+    async def get_realtime_gateway(
+        self, redis: Redis, retort: Retort
+    ) -> AsyncIterable[RealtimeGateway]:
+        gateway = RedisRealtimeGateway(redis, retort)
+        yield gateway
+        # Stop the subscription listener before the Redis client closes.
+        await gateway.close()
 
     @provide(scope=Scope.APP)
     def get_session_manager(self, redis: Redis, config: WebConfig) -> SessionStore:

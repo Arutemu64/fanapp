@@ -1,6 +1,6 @@
 # ADR-0015: LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0041](0041-procrastinate-replaces-nats-and-the-outbox.md)
 - **Date:** 2026-08-26
 - **Deciders:** Backend
 
