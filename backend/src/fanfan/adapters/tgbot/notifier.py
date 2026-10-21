@@ -10,8 +10,10 @@ from aiogram.exceptions import (
 )
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from fanfan.adapters.rate_limiter import RateLimiter
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.notifier import TelegramNotifierPort
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -23,16 +25,35 @@ from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
+# Telegram lets a bot send about 30 messages per second in bulk and answers 429
+# past that (https://core.telegram.org/bots/faq). Kept under it: the figure is
+# approximate, and a 429 costs a redelivery plus the retry_after wait.
+_MESSAGES_PER_SECOND = 25
+
+
+class TelegramRateLimiter(RateLimiter):
+    """The bot's send quota, shared by every concurrent send (APP scope).
+
+    Its own type so the container can tell it from VK's limiter.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(per_second=_MESSAGES_PER_SECOND)
+
 
 class TelegramNotifier(TelegramNotifierPort):
     def __init__(
         self,
         bot: Bot,
         social_identity_gateway: SocialIdentityGateway,
+        uow: UnitOfWork,
+        rate_limiter: TelegramRateLimiter,
         web_config: WebConfig,
     ) -> None:
         self.social_identity_gateway = social_identity_gateway
         self.bot = bot
+        self.uow = uow
+        self.rate_limiter = rate_limiter
         self.web_config = web_config
 
     @staticmethod
@@ -65,6 +86,10 @@ class TelegramNotifier(TelegramNotifierPort):
         # NOT NULL and both providers always supply the id (see SocialIdentity).
         if social_identity is None:
             raise UserNotReachable
+        # End the lookup's transaction (and its row lock) before the send, which
+        # can take up to ~60s; the pooled connection is not held through it.
+        await self.uow.commit()
+        await self.rate_limiter.wait()
         try:
             await self.bot.send_message(
                 chat_id=social_identity.provider_user_id,

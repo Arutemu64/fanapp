@@ -13,10 +13,10 @@ from fanfan.core.models.push_subscription import PushSubscription
 
 logger = logging.getLogger(__name__)
 
-# How long a push service holds an undelivered message before discarding it. One
-# hour: a convention notification is stale well before then, and the service
-# worker collapses a late duplicate by its `tag` anyway.
-_PUSH_TTL_SECONDS = 3600
+# RFC 8030 §5.3 urgency levels. A push service may hold back a lower-urgency
+# message while the device saves battery; "high" is the level meant for a
+# time-sensitive alert. https://www.rfc-editor.org/rfc/rfc8030#section-5.3
+PushUrgency = Literal["very-low", "low", "normal", "high"]
 
 
 class NotificationData(TypedDict):
@@ -99,7 +99,13 @@ class WebPushClient:
         self._get_web_push()
 
     async def send(
-        self, *, subscription: PushSubscription, message_data: MessageData
+        self,
+        *,
+        subscription: PushSubscription,
+        message_data: MessageData,
+        ttl_seconds: int,
+        urgency: PushUrgency,
+        topic: str | None,
     ) -> httpx2.Response:
         # Encrypt per subscription (each has its own keys) and POST to that
         # endpoint. Returns the raw response so the notifier can act on the push
@@ -118,12 +124,17 @@ class WebPushClient:
             # (json.dumps), never mutating, so the cast is sound.
             message=cast("dict[Any, Any]", message_data),
             subscription=push_subscription,
-            ttl=_PUSH_TTL_SECONDS,
+            # Stored on the shared WebPush and read back into the header by the
+            # same synchronous call, so concurrent sends cannot mix them up.
+            ttl=ttl_seconds,
         )
+        # The library sets only TTL, encoding and authorization; Urgency and
+        # Topic (RFC 8030 §5.3, §5.4) are added here.
+        headers: dict[str, str] = {**message.headers, "urgency": urgency}
+        if topic is not None:
+            headers["topic"] = topic
         return await self._client.post(
             url=str(push_subscription.endpoint),
             content=message.encrypted,
-            # message.headers is a TypedDict (all-str values); httpx wants a plain
-            # Mapping[str, str], which a TypedDict is not assignable to.
-            headers=cast("dict[str, str]", message.headers),
+            headers=headers,
         )

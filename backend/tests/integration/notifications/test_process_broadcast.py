@@ -4,7 +4,6 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
     ProcessBroadcastInput,
@@ -19,6 +18,7 @@ from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
+from tests.integration.notifications.delivered import delivered_notifications
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -54,14 +54,13 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     """Characterization baseline for the broadcast fan-out (Plan 007 builds here).
 
     ProcessBroadcast reads every user matching the roles, records that count as
-    the mailing total, and publishes exactly one CreateNotificationCommand per user via
-    the EventBroker. The recipient set is compared against read_ids_by_roles so
+    the mailing total, and stores and hands over exactly one notification per
+    user. The recipient set is compared against read_ids_by_roles so
     the assertion holds regardless of any seeded users of that role.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
     user_gateway = await dishka_request.get(UserGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     created = await _add_users(dishka_request, uow, count=3, role=UserRole.VOLUNTEER)
@@ -79,26 +78,25 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     expected_ids = set(await user_gateway.read_ids_by_roles(UserRole.VOLUNTEER))
     assert {u.id for u in created} <= expected_ids
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
-    recipient_ids = [e.notification.user_id for e in published]
-    # One event per matching user, each targeting a distinct recipient.
-    assert len(published) == len(expected_ids)
+    delivered = await delivered_notifications(dishka_request)
+    recipient_ids = [n.user_id for n in delivered]
+    # One notification per matching user, each targeting a distinct recipient.
+    assert len(delivered) == len(expected_ids)
     assert set(recipient_ids) == expected_ids
     assert len(recipient_ids) == len(set(recipient_ids))
 
-    for event in published:
-        assert event.notification.type is NotificationType.BROADCAST
-        assert event.notification.body == body
-        assert event.notification.mailing_id == mailing.id
+    for notification in delivered:
+        assert notification.type is NotificationType.BROADCAST
+        assert notification.body == body
+        assert notification.mailing_id == mailing.id
 
     stored = await mailing_gateway.read_mailing(mailing.id)
     assert stored is not None
     assert stored.total_count == len(expected_ids)
-    # Fan-out started: the mailing is SENDING until CreateNotification records the
-    # last delivery and flips it to FINISHED.
-    assert stored.status is MailingStatus.SENDING
+    # Every notification is stored by the time the fan-out returns, so the
+    # mailing has already gone from SENDING to FINISHED.
+    assert stored.sent_count == len(expected_ids)
+    assert stored.status is MailingStatus.FINISHED
 
 
 async def test_process_broadcast_with_no_recipients_finishes_immediately(
@@ -109,8 +107,8 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
 ) -> None:
     """A broadcast that reaches nobody is done at once, not stuck SENDING forever.
 
-    With no matching users there is no CreateNotification to later flip the
-    status, so ProcessBroadcast must move it straight to FINISHED.
+    With no matching users no insert will ever flip the status, so
+    ProcessBroadcast must move it straight to FINISHED.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
@@ -132,9 +130,7 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     assert stored is not None
     assert stored.total_count == 0
     assert stored.status is MailingStatus.FINISHED
-    assert [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ] == []
+    assert broker.published_events == []
 
 
 async def test_process_broadcast_missing_mailing_raises_not_found(
@@ -158,9 +154,7 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
             )
         )
 
-    assert [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ] == []
+    assert broker.published_events == []
 
 
 async def test_process_broadcast_rerun_yields_identical_notification_ids(
@@ -169,11 +163,12 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """Plan 007: a redelivered CreateNotificationCommand must reuse the same id.
+    """A redelivered broadcast trigger reuses the same notification ids.
 
     ProcessBroadcast derives each notification's id from (mailing_id, user_id),
     so rerunning it for the same mailing (as a redelivery of the broadcast
-    message would) produces the exact same set of ids rather than duplicates.
+    message would) produces the exact same set of ids rather than duplicates,
+    and counts none of them twice.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
@@ -189,19 +184,14 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
         mailing_id=mailing.id, body="Повторная рассылка", roles=[UserRole.VOLUNTEER]
     )
     await interactor(run_input)
-    first_ids = {
-        e.notification.id
-        for e in broker.published_events
-        if isinstance(e, CreateNotificationCommand)
-    }
+    first_ids = {n.id for n in await delivered_notifications(dishka_request)}
 
     broker.published_events.clear()
     await interactor(run_input)
-    second_ids = {
-        e.notification.id
-        for e in broker.published_events
-        if isinstance(e, CreateNotificationCommand)
-    }
+    second_ids = {n.id for n in await delivered_notifications(dishka_request)}
 
     assert first_ids
     assert first_ids == second_ids
+    stored = await mailing_gateway.read_mailing(mailing.id)
+    assert stored is not None
+    assert stored.sent_count == len(first_ids)

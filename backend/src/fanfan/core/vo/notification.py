@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import StrEnum
 from typing import NewType
 from uuid import NAMESPACE_URL, UUID, uuid5, uuid7
@@ -7,6 +8,13 @@ from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.core.vo.user import UserId
 
 NotificationId = NewType("NotificationId", UUID)
+
+# How long a schedule notification stays worth delivering. Its text describes
+# the programme as it was when it was built ("on stage now"), so past this age
+# it is wrong rather than late: the fan-out drops a change this old, the
+# channels drop a notification this old, and a push asks the push service to
+# discard it by then.
+SCHEDULE_NOTIFICATION_LIFETIME = timedelta(minutes=10)
 
 
 def generate_notification_id() -> NotificationId:
@@ -58,3 +66,10 @@ class NotificationType(StrEnum):
     # the OS-level push for this type, even when the app is visible, so the user
     # can verify push delivery without backgrounding the app.
     TEST = "test"
+
+    @property
+    def is_schedule(self) -> bool:
+        return self in (
+            NotificationType.SCHEDULE_CHANGE,
+            NotificationType.SCHEDULE_SUBSCRIPTION,
+        )

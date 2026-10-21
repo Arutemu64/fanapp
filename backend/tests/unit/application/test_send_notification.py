@@ -1,4 +1,5 @@
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime, timedelta
 from uuid import uuid7
 
 import pytest
@@ -16,7 +17,10 @@ from fanfan.application.ports.notifier import (
     VkNotifierPort,
 )
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.notifications import UserNotReachable
+from fanfan.core.exceptions.notifications import (
+    NotificationExpired,
+    UserNotReachable,
+)
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.mailing import MailingId
@@ -47,27 +51,37 @@ def _make_user(*, telegram: bool = True, vk: bool = True) -> User:
     )
 
 
-def _make_notification() -> Notification:
+def _make_notification(
+    *,
+    notification_type: NotificationType = NotificationType.DEFAULT,
+    age: timedelta = timedelta(0),
+) -> Notification:
     return Notification(
         id=NOTIFICATION_ID,
         user_id=USER_ID,
         title="Внимание",
         body="Тело",
-        type=NotificationType.DEFAULT,
+        type=notification_type,
         path=None,
         mailing_id=None,
         seen_at=None,
+        created_at=datetime.now(UTC) - age,
     )
 
 
 class _FakeNotificationGateway(NotificationGateway):
     def __init__(self, notification: Notification | None) -> None:
         self._notification = notification
+        self.locked_reads = 0
 
     async def get(
         self,
         notification_id: object,  # noqa: ARG002  # part of the port contract
+        *,
+        lock: bool = True,
     ) -> Notification | None:
+        if lock:
+            self.locked_reads += 1
         return self._notification
 
 
@@ -86,6 +100,8 @@ class _StubMailingGateway(MailingGateway):
     async def get(
         self,
         mailing_id: MailingId,  # noqa: ARG002  # part of the port contract
+        *,
+        lock: bool = True,  # noqa: ARG002  # part of the port contract
     ) -> None:
         # Never called: these notifications carry no mailing_id.
         msg = "mailing gateway should not be queried"
@@ -120,10 +136,13 @@ def _interactor(
     tg: FakeTelegramNotifier,
     push: FakePushNotifier,
     vk: FakeVkNotifier,
+    notification: Notification | None = None,
 ) -> SendNotification:
     return SendNotification(
         mailing_gateway=_StubMailingGateway(),
-        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        notification_gateway=_FakeNotificationGateway(
+            notification or _make_notification()
+        ),
         user_gateway=_FakeUserGateway(user),
         tg_notifier=tg,
         push_notifier=push,
@@ -160,13 +179,14 @@ async def test_telegram_delivered_when_enabled() -> None:
 async def test_read_transaction_ends_before_the_external_send(
     send: Callable[[SendNotification, SendNotificationInput], Awaitable[None]],
 ) -> None:
-    # The loads take row locks; a send holding them would stall the mailing's
-    # fan-out and every other channel of it for the length of the external call.
+    # An open transaction holds a pooled connection, and the user row's lock,
+    # for the length of the external call, while the senders run in parallel.
     uow = _FakeUow()
     notifier = _CommitCheckingNotifier(uow)
+    notification_gateway = _FakeNotificationGateway(_make_notification())
     interactor = SendNotification(
         mailing_gateway=_StubMailingGateway(),
-        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        notification_gateway=notification_gateway,
         user_gateway=_FakeUserGateway(_make_user()),
         tg_notifier=notifier,
         push_notifier=notifier,
@@ -177,6 +197,68 @@ async def test_read_transaction_ends_before_the_external_send(
     await send(interactor, _INPUT)
 
     assert notifier.commits_at_send == 1
+    # Nothing is written back, so the notification is read without a row lock.
+    assert notification_gateway.locked_reads == 0
+
+
+@pytest.mark.parametrize(
+    "notification_type",
+    [NotificationType.SCHEDULE_CHANGE, NotificationType.SCHEDULE_SUBSCRIPTION],
+)
+async def test_stale_schedule_notification_is_expired_not_sent(
+    notification_type: NotificationType,
+) -> None:
+    # "On stage now" sent eleven minutes late names the wrong act.
+    push = FakePushNotifier()
+    interactor = _interactor(
+        user=_make_user(),
+        tg=FakeTelegramNotifier(),
+        push=push,
+        vk=FakeVkNotifier(),
+        notification=_make_notification(
+            notification_type=notification_type, age=timedelta(minutes=11)
+        ),
+    )
+
+    with pytest.raises(NotificationExpired):
+        await interactor.send_notification_to_push(_INPUT)
+    assert push.sent_notifications == []
+
+
+async def test_fresh_schedule_notification_is_sent() -> None:
+    push = FakePushNotifier()
+    interactor = _interactor(
+        user=_make_user(),
+        tg=FakeTelegramNotifier(),
+        push=push,
+        vk=FakeVkNotifier(),
+        notification=_make_notification(
+            notification_type=NotificationType.SCHEDULE_CHANGE,
+            age=timedelta(minutes=9),
+        ),
+    )
+
+    await interactor.send_notification_to_push(_INPUT)
+
+    assert [n.id for n in push.sent_notifications] == [NOTIFICATION_ID]
+
+
+async def test_late_broadcast_is_still_sent() -> None:
+    # Only schedule notifications describe a moment; a broadcast stays true.
+    push = FakePushNotifier()
+    interactor = _interactor(
+        user=_make_user(),
+        tg=FakeTelegramNotifier(),
+        push=push,
+        vk=FakeVkNotifier(),
+        notification=_make_notification(
+            notification_type=NotificationType.BROADCAST, age=timedelta(hours=1)
+        ),
+    )
+
+    await interactor.send_notification_to_push(_INPUT)
+
+    assert [n.id for n in push.sent_notifications] == [NOTIFICATION_ID]
 
 
 async def test_telegram_opt_out_is_unreachable() -> None:

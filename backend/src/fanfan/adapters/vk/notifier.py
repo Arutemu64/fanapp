@@ -6,6 +6,7 @@ import nh3
 from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.notifier import VkNotifierPort
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -37,10 +38,12 @@ class VkNotifier(VkNotifierPort):
         self,
         client: VkApiClient,
         social_identity_gateway: SocialIdentityGateway,
+        uow: UnitOfWork,
         web_config: WebConfig,
     ) -> None:
         self.client = client
         self.social_identity_gateway = social_identity_gateway
+        self.uow = uow
         self.web_config = web_config
 
     def _render_message_text(self, notification: Notification) -> str:
@@ -69,6 +72,10 @@ class VkNotifier(VkNotifierPort):
         # has no identity at all, which is the real unreachable case here.
         if social_identity is None:
             raise UserNotReachable
+        # End the lookup's transaction (and its row lock) before the send and
+        # delete, up to ~60s together; the pooled connection is not held
+        # through them.
+        await self.uow.commit()
 
         message_id: int
         try:

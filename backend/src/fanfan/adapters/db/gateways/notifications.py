@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Any, cast
 
@@ -26,6 +27,7 @@ def _to_model(orm: NotificationORM) -> Notification:
         path=orm.path,
         mailing_id=MailingId(orm.mailing_id) if orm.mailing_id is not None else None,
         seen_at=orm.seen_at,
+        created_at=orm.created_at,
     )
 
 
@@ -47,35 +49,41 @@ class SqlNotificationGateway(NotificationGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def add(self, notification: Notification) -> bool:
-        values = {
-            "id": notification.id,
-            "user_id": notification.user_id,
-            "title": notification.title,
-            "body": notification.body,
-            "type": notification.type,
-            "path": notification.path,
-            "mailing_id": notification.mailing_id,
-            "seen_at": notification.seen_at,
-        }
-        # A redelivered CreateNotificationCommand carries the same (deterministic)
-        # id, so the conflicting insert is a clean no-op rather than an
-        # IntegrityError that would nack-and-redeliver forever.
+    async def add_many(self, notifications: Sequence[Notification]) -> int:
+        if not notifications:
+            return 0
+        rows = [
+            {
+                "id": notification.id,
+                "user_id": notification.user_id,
+                "title": notification.title,
+                "body": notification.body,
+                "type": notification.type,
+                "path": notification.path,
+                "mailing_id": notification.mailing_id,
+                "seen_at": notification.seen_at,
+            }
+            for notification in notifications
+        ]
+        # A rerun fan-out carries the same (deterministic) ids, so the
+        # conflicting rows are a clean no-op rather than an IntegrityError that
+        # would nack-and-redeliver forever. RETURNING lists only the rows this
+        # statement inserted, which is what the caller counts.
         stmt = (
             pg_insert(NotificationORM)
-            .values(**values)
+            .values(rows)
             .on_conflict_do_nothing(index_elements=["id"])
             .returning(NotificationORM.id)
         )
-        result = await self.session.scalar(stmt)
-        return result is not None
+        inserted = await self.session.scalars(stmt)
+        return len(inserted.all())
 
-    async def get(self, notification_id: NotificationId) -> Notification | None:
-        stmt = (
-            select(NotificationORM)
-            .where(NotificationORM.id == notification_id)
-            .with_for_update()
-        )
+    async def get(
+        self, notification_id: NotificationId, *, lock: bool = True
+    ) -> Notification | None:
+        stmt = select(NotificationORM).where(NotificationORM.id == notification_id)
+        if lock:
+            stmt = stmt.with_for_update()
         notification_orm = await self.session.scalar(stmt)
         return _to_model(notification_orm) if notification_orm else None
 
@@ -134,12 +142,12 @@ class SqlNotificationGateway(NotificationGateway):
         # execute() is typed as Result, but a DELETE yields a CursorResult.
         return cast("CursorResult[Any]", result).rowcount
 
-    async def read_realtime_notification(
-        self, notification_id: NotificationId
-    ) -> NotificationDTO | None:
-        stmt = select(NotificationORM).where(NotificationORM.id == notification_id)
-        notification_orm = await self.session.scalar(stmt)
-        return _parse_dto(notification_orm) if notification_orm else None
+    async def read_realtime_notifications(
+        self, notification_ids: Sequence[NotificationId]
+    ) -> list[NotificationDTO]:
+        stmt = select(NotificationORM).where(NotificationORM.id.in_(notification_ids))
+        notifications_orm = await self.session.scalars(stmt)
+        return [_parse_dto(orm) for orm in notifications_orm]
 
     async def read_list_user_notifications(
         self, user_id: UserId, pagination: CursorPagination

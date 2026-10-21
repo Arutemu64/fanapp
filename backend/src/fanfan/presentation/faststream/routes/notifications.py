@@ -30,6 +30,7 @@ from fanfan.core.events.notifications import NotificationCreated
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
     NotificationChannelUnavailable,
+    NotificationExpired,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -46,14 +47,30 @@ notifications_router = NatsRouter()
 # for an ack before it redelivers. It must clear a send's own client-timeout
 # ceiling so a slow-but-live send is not redelivered mid-flight (the default 30s
 # would be) — Telegram ~60s (aiogram default session), VK up to ~60s (send +
-# delete, 30s each), and push 10s per device, which for the one or two devices a
-# real user has is ~10-20s. Only a user with ~9+ simultaneously-slow push
-# subscriptions could outlast this window; that redelivers, but the consumers are
-# idempotent and push collapses the duplicate by its `tag`, so the extra send is
-# harmless — not worth a heartbeat to prevent. No head-of-line blocking either:
-# NATS processes one message per durable at a time (no max_workers), so a slow
-# send only delays its own channel's queue, bounded by the client timeout.
+# delete, 30s each), and push 10s per device, sent to a user's devices at once.
+# The channel rate limiters (adapters/rate_limiter.py) wait before a send, so a
+# burst queued behind one adds to this; at the worker counts below that wait
+# stays under a second.
 _SEND_ACK_WAIT_SECONDS = 90.0
+
+# Sends in flight per channel. One at a time, a channel delivers a mailing at
+# the speed of one round trip to its provider (a push service answers in ~0.1-
+# 0.3s), so a schedule change reaching a thousand people would take minutes.
+# FastStream runs this many handlers of one durable concurrently
+# (ConcurrentPullStreamSubscriber, picked when max_workers > 1 with pull_sub).
+# Push has no published rate limit, so it gets the most; Telegram (~30
+# messages/s, https://core.telegram.org/bots/faq) and VK (20 requests/s for a
+# community token, https://dev.vk.ru/ru/api/api-requests) are paced by their
+# rate limiters, and a few workers are enough to keep those busy. Every worker
+# holds a pooled DB connection only for its reads, never across the send, so
+# these can exceed the faststream DB pool.
+_PUSH_WORKERS = 32
+_TELEGRAM_WORKERS = 8
+_VK_WORKERS = 8
+
+# Messages per pull request. With the default of one, every message costs its
+# own request to NATS; a batch keeps the workers fed in fewer round trips.
+_SEND_PULL_BATCH = 16
 
 
 async def _deliver_to_channel(
@@ -84,6 +101,11 @@ async def _deliver_to_channel(
     except MailingAlreadyCancelled:
         logger.info("Mailing for notification %s was cancelled", notification_id)
         await msg.reject()
+    except NotificationExpired:
+        logger.info(
+            "Notification %s expired before reaching %s", notification_id, channel
+        )
+        await msg.reject()
     except NotificationChannelUnavailable:
         # The whole channel is misconfigured (bad token, missing VAPID keys).
         # Retrying can't fix it, so drop the message instead of redelivering.
@@ -106,31 +128,25 @@ async def _deliver_to_channel(
     ack_policy=AckPolicy.MANUAL,
     config=consumer_config(),
 )
-@notifications_router.publisher(
-    subject=NotificationCreated.subject,
-    stream=stream,
-)
 @inject
 async def create_new_notification(
     data: CreateNotificationCommand,
     interactor: FromDishka[CreateNotification],
     msg: NatsMessage,
-) -> NotificationCreated:
+) -> None:
     try:
-        notification_id = await interactor(
-            CreateNotificationInput(notification=data.notification)
-        )
+        await interactor(CreateNotificationInput(notification=data.notification))
     except MailingAlreadyCancelled:
         await msg.reject()
         raise
     await msg.ack()
-    return NotificationCreated(notification_id=notification_id)
 
 
 @notifications_router.subscriber(
     NotificationCreated.subject,
     stream=stream,
-    pull_sub=PullSub(),
+    pull_sub=PullSub(batch_size=_SEND_PULL_BATCH),
+    max_workers=_TELEGRAM_WORKERS,
     durable="send_notification_to_telegram",
     ack_policy=AckPolicy.MANUAL,
     config=consumer_config(ack_wait=_SEND_ACK_WAIT_SECONDS),
@@ -154,7 +170,8 @@ async def send_notification_to_telegram(
 @notifications_router.subscriber(
     NotificationCreated.subject,
     stream=stream,
-    pull_sub=PullSub(),
+    pull_sub=PullSub(batch_size=_SEND_PULL_BATCH),
+    max_workers=_VK_WORKERS,
     durable="send_notification_to_vk",
     ack_policy=AckPolicy.MANUAL,
     config=consumer_config(ack_wait=_SEND_ACK_WAIT_SECONDS),
@@ -178,7 +195,8 @@ async def send_notification_to_vk(
 @notifications_router.subscriber(
     NotificationCreated.subject,
     stream=stream,
-    pull_sub=PullSub(),
+    pull_sub=PullSub(batch_size=_SEND_PULL_BATCH),
+    max_workers=_PUSH_WORKERS,
     durable="send_push_notification",
     ack_policy=AckPolicy.MANUAL,
     config=consumer_config(ack_wait=_SEND_ACK_WAIT_SECONDS),

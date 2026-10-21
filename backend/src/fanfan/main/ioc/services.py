@@ -1,6 +1,7 @@
 from dishka import Provider, Scope, provide_all
 
 from fanfan.application.services.current_user import CurrentUserProvider
+from fanfan.application.services.notification_fan_out import NotificationFanOut
 from fanfan.application.services.permissions import PermissionService
 from fanfan.application.services.schedule_edit import ScheduleEditService
 from fanfan.application.services.sync_run_tracker import SyncRunTracker
@@ -22,4 +23,5 @@ class ServicesProvider(Provider):
         TicketImportService,
         SyncRunTracker,
         ScheduleEditService,
+        NotificationFanOut,
     )

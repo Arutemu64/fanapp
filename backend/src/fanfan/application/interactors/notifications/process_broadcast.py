@@ -2,11 +2,10 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.commands.notifications import CreateNotificationCommand
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.application.services.notification_fan_out import NotificationFanOut
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
     MailingNotFound,
@@ -29,14 +28,14 @@ class ProcessBroadcast:
     def __init__(
         self,
         user_gateway: UserGateway,
-        events_broker: EventBroker,
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
+        fan_out: NotificationFanOut,
     ) -> None:
         self.user_gateway = user_gateway
-        self.events_broker = events_broker
         self.mailing_gateway = mailing_gateway
         self.uow = uow
+        self.fan_out = fan_out
 
     async def __call__(self, data: ProcessBroadcastInput) -> None:
         recipient_ids = await self.user_gateway.read_ids_by_roles(*data.roles)
@@ -53,26 +52,27 @@ class ProcessBroadcast:
             return
 
         # With no recipients the mailing finishes at once; otherwise it moves to
-        # SENDING and CreateNotification flips it to FINISHED on the last insert.
+        # SENDING and the fan-out flips it to FINISHED on the last insert.
         mailing.begin_fan_out(len(recipient_ids))
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
-        commands = [
-            CreateNotificationCommand(
-                notification=NewNotification(
-                    # Deterministic per (mailing, user): a redelivered
-                    # CreateNotificationCommand reruns this with the same id, so the
-                    # gateway upsert below no-ops instead of duplicating.
-                    id=notification_id_for(data.mailing_id, user_id),
-                    user_id=user_id,
-                    title="Рассылка от организаторов",
-                    body=data.body,
-                    path="/notifications",
-                    mailing_id=data.mailing_id,
-                    type=NotificationType.BROADCAST,
-                )
+        notifications = [
+            NewNotification(
+                # Deterministic per (mailing, user): a redelivered trigger reruns
+                # this with the same ids, so the insert no-ops instead of
+                # duplicating.
+                id=notification_id_for(data.mailing_id, user_id),
+                user_id=user_id,
+                title="Рассылка от организаторов",
+                body=data.body,
+                path="/notifications",
+                mailing_id=data.mailing_id,
+                type=NotificationType.BROADCAST,
             )
             for user_id in recipient_ids
         ]
-        await self.events_broker.publish_many(commands)
+        try:
+            await self.fan_out(notifications)
+        except MailingAlreadyCancelled:
+            logger.info("Broadcast %s was cancelled during fan-out", mailing.id)

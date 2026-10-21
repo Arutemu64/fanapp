@@ -5,7 +5,6 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
@@ -27,6 +26,7 @@ from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
+from tests.integration.notifications.delivered import delivered_notifications
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -71,7 +71,6 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     user_gateway = await dishka_request.get(UserGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -120,16 +119,14 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 
     await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
-    assert len(published) == 1
-    event = published[0]
-    assert event.notification.user_id == visitor.id
-    assert event.notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
+    delivered = await delivered_notifications(dishka_request)
+    assert len(delivered) == 1
+    notification = delivered[0]
+    assert notification.user_id == visitor.id
+    assert notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
     # position_difference = 3 - 1 = 2 is rendered into the body.
-    assert "2 выступления" in event.notification.body
-    assert "Событие C" in event.notification.body
+    assert "2 выступления" in notification.body
+    assert "Событие C" in notification.body
 
 
 async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
@@ -150,7 +147,6 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -181,13 +177,11 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     await interactor(data)
     await interactor(data)
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
+    delivered = await delivered_notifications(dishka_request)
     # Both runs target the one in-window subscriber; the id is identical, so the
-    # gateway upsert would no-op the second insert instead of duplicating it.
-    assert len(published) == 2
-    assert published[0].notification.id == published[1].notification.id
+    # second insert no-ops instead of duplicating it.
+    assert len(delivered) == 2
+    assert delivered[0].id == delivered[1].id
 
 
 async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(

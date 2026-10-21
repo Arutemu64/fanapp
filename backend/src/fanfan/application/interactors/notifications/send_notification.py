@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -13,6 +14,7 @@ from fanfan.application.ports.notifier import (
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     MailingNotFound,
+    NotificationExpired,
     NotificationNotFound,
     UserNotReachable,
 )
@@ -48,11 +50,21 @@ class SendNotification:
         self.uow = uow
 
     async def _get_notification(self, data: SendNotificationInput) -> Notification:
-        notification = await self.notification_gateway.get(data.notification_id)
+        # Unlocked: nothing here is written back, and the cancellation check
+        # cannot hold past the commit before the send anyway. Locking the
+        # mailing row would queue every channel's send of a mailing behind the
+        # fan-out storing it, and behind each other.
+        notification = await self.notification_gateway.get(
+            data.notification_id, lock=False
+        )
         if notification is None:
             raise NotificationNotFound
+        if notification.is_stale(datetime.now(UTC)):
+            raise NotificationExpired
         if notification.mailing_id:
-            mailing = await self.mailing_gateway.get(notification.mailing_id)
+            mailing = await self.mailing_gateway.get(
+                notification.mailing_id, lock=False
+            )
             if mailing is None:
                 raise MailingNotFound
             mailing.ensure_active()
@@ -69,12 +81,11 @@ class SendNotification:
         return user.settings
 
     async def _end_read_transaction(self) -> None:
-        # The gateways load with SELECT ... FOR UPDATE and nothing here writes, so
-        # end the transaction before the external send. A Telegram or VK call can
-        # take up to ~60s; holding the mailing row that long stalls the fan-out's
-        # CreateNotification past lock_timeout and serializes every channel of
-        # the mailing, and the notification and user rows would block mark-read
-        # and settings edits the same way.
+        # Nothing here writes, so end the transaction before the external send.
+        # A Telegram or VK call can take up to ~60s; an open transaction holds
+        # its pooled connection that long, and the consumers send in parallel
+        # from a small pool. The user row is read FOR UPDATE and would block
+        # settings edits the same way.
         await self.uow.commit()
 
     async def send_notification_to_telegram(self, data: SendNotificationInput) -> None:

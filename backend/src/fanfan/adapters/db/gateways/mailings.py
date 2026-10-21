@@ -66,8 +66,10 @@ class SqlMailingGateway(MailingGateway):
         # outbox when the unit of work commits.
         self.uow.register(mailing)
 
-    async def get(self, mailing_id: MailingId) -> Mailing | None:
-        stmt = select(MailingORM).where(MailingORM.id == mailing_id).with_for_update()
+    async def get(self, mailing_id: MailingId, *, lock: bool = True) -> Mailing | None:
+        stmt = select(MailingORM).where(MailingORM.id == mailing_id)
+        if lock:
+            stmt = stmt.with_for_update()
         mailing_orm = await self.session.scalar(stmt)
         if mailing_orm is None:
             return None
@@ -88,7 +90,7 @@ class SqlMailingGateway(MailingGateway):
         await self.session.execute(stmt)
 
     async def increment_sent(
-        self, mailing_id: MailingId, incr_by: int = 1
+        self, mailing_id: MailingId, incr_by: int
     ) -> tuple[int, int]:
         # Atomic increment; RETURNING hands back the post-increment (sent, total)
         # so the caller's aggregate decides completion — the rule does not live in

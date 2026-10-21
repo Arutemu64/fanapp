@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
@@ -10,15 +11,24 @@ from fanfan.core.vo.user import UserId
 
 
 class NotificationGateway(Protocol):
-    async def add(self, notification: Notification) -> bool:
-        """Insert the notification; return True if a new row was created.
+    async def add_many(self, notifications: Sequence[Notification]) -> int:
+        """Insert the notifications in one statement; return how many were new.
 
-        False means a row with this id already existed and the insert was a
-        no-op, which callers use to detect a redelivered fan-out.
+        A notification whose id already exists is skipped, so a rerun fan-out
+        inserts nothing twice and the count tells it how much was new.
         """
         ...
 
-    async def get(self, notification_id: NotificationId) -> Notification | None: ...
+    async def get(
+        self, notification_id: NotificationId, *, lock: bool = True
+    ) -> Notification | None:
+        """Load the notification, row-locked unless ``lock`` is False.
+
+        Read without the lock where nothing is written back, so a slow reader
+        cannot hold up the writers.
+        """
+        ...
+
     async def mark_all_read_for_user(
         self, user_id: UserId, timestamp: datetime
     ) -> None: ...
@@ -35,9 +45,9 @@ class NotificationGateway(Protocol):
         """Delete notifications older than ``days``; return the row count."""
         ...
 
-    async def read_realtime_notification(
-        self, notification_id: NotificationId
-    ) -> NotificationDTO | None: ...
+    async def read_realtime_notifications(
+        self, notification_ids: Sequence[NotificationId]
+    ) -> list[NotificationDTO]: ...
 
     async def read_list_user_notifications(
         self, user_id: UserId, pagination: CursorPagination

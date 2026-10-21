@@ -46,7 +46,7 @@ async def _add_notification(
         mailing_id=None,
         seen_at=None,
     )
-    await notification_gateway.add(notification)
+    await notification_gateway.add_many([notification])
     await uow.commit()
     return notification.id
 
