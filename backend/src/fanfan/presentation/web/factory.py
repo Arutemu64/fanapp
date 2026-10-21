@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -25,14 +28,25 @@ def create_app() -> FastAPI:
     init(service_name="web")
 
     config = get_config()
+    container = create_web_container()
+
+    # The FastAPI integration never closes the container itself, so without
+    # this its finalizers (draining the NATS connections) never run.
+    # https://dishka.readthedocs.io/en/stable/integrations/fastapi.html
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        yield
+        await container.close()
+
     app = FastAPI(
+        lifespan=lifespan,
         debug=config.debug.enabled,
         title=API_TITLE,
         version=APP_VERSION,
         generate_unique_id_function=generate_operation_id,
     )
 
-    setup_dishka(container=create_web_container(), app=app)
+    setup_dishka(container=container, app=app)
 
     app.add_middleware(RefreshSessionCookieMiddleware, web_config=config.web)
 

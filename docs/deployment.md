@@ -204,6 +204,16 @@ This applies to server-side config only. FastStream's `ack_policy`
 (`NACK_ON_ERROR` vs the default) is client-side handler behaviour, not consumer
 config, so a change to it takes effect on redeploy with no consumer recreation.
 
+### Changing the JetStream stream's config
+
+FastStream declares the stream on boot (`presentation/faststream/jstream.py`). If
+the server's stream differs, FastStream updates it in place, so a change to
+`max_age`, `max_bytes` or `discard` reaches production on the next deploy. It
+keeps every subject the server's stream already captures, though, so dropping a
+subject from the code does not remove it from the server. To remove one, add it
+to `_RETIRED_SUBJECTS` in the same file; the worker removes it on startup and
+logs `Retired stream subjects`.
+
 ### Creating a user
 
 Most accounts self-register (email code or a linked social account). To seed the
@@ -471,6 +481,12 @@ The shape of it:
   single core JIT-compiling OLTP queries), and `max_connections` (tracks the pools
   below). `shared_buffers` stays at the 128 MB default — ~28% of the container cap,
   matched to `shm_size`.
+- **NATS** caps JetStream at `max_memory_store: 16MB` / `max_file_store: 1GB`
+  (the `nats-conf` config) and the one stream at 256 MiB `max_bytes`. Without
+  the caps the server would size them from 75% of the host's RAM and disk
+  ([NATS: Sizing](https://docs.nats.io/learn/deployment/sizing-and-resources)).
+  `GOMEMLIMIT` sits at ~90% of the container's 96M so Go collects harder before
+  the container is OOM-killed.
 - **Connection pools** are trimmed per service: only the api carries real request
   concurrency, so the workers use small pools. The combined backend count stays
   under `max_connections`, and fewer idle backends means less RAM (each is a
