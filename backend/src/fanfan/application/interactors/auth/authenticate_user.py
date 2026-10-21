@@ -47,9 +47,15 @@ class AuthenticateUser:
         self.password_hasher = password_hasher
         self.session_store = session_store
         self.rate_limiter = rate_limiter
+
+    async def _get_dummy_hash(self) -> str:
+        # Two concurrent first logins may both compute it; either result is a
+        # valid dummy hash, so the race is harmless and needs no lock.
         if AuthenticateUser._dummy_hash is None:
-            AuthenticateUser._dummy_hash = self.password_hasher.hash("dummy_password")
-        self.dummy_hash = AuthenticateUser._dummy_hash
+            AuthenticateUser._dummy_hash = await self.password_hasher.hash(
+                "dummy_password"
+            )
+        return AuthenticateUser._dummy_hash
 
     async def __call__(self, data: AuthenticateUserInput) -> str:
         normalized_email = normalize_email(data.email)
@@ -63,7 +69,9 @@ class AuthenticateUser:
             # Hash against a dummy value so a nonexistent user takes the same
             # time as a wrong password, and the response can't be timed to
             # enumerate accounts.
-            self.password_hasher.verify(data.password, self.dummy_hash)
+            await self.password_hasher.verify(
+                data.password, await self._get_dummy_hash()
+            )
             # Email is omitted from the log on purpose to avoid storing PII;
             # client_ip is kept so repeated failures can be correlated.
             logger.warning(
@@ -83,7 +91,7 @@ class AuthenticateUser:
                 },
             )
             raise InvalidCredentials
-        if not self.password_hasher.verify(data.password, user.hashed_password):
+        if not await self.password_hasher.verify(data.password, user.hashed_password):
             logger.warning(
                 "Password login failed",
                 extra={

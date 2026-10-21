@@ -150,9 +150,9 @@ class SendScheduleChangeNotifications:
             NotificationQueued(
                 notification=NewNotification(
                     id=schedule_notification_id_for(
-                        schedule_change.id, u.id, "announcement"
+                        schedule_change.id, user_id, "announcement"
                     ),
-                    user_id=u.id,
+                    user_id=user_id,
                     title="На сцене",
                     body=body,
                     type=NotificationType.SCHEDULE_CHANGE,
@@ -160,7 +160,9 @@ class SendScheduleChangeNotifications:
                     mailing_id=schedule_change.mailing_id,
                 ),
             )
-            for u in await self.user_gateway.read_all_by_receive_all_announcements()
+            for user_id in (
+                await self.user_gateway.read_ids_receiving_all_announcements()
+            )
         )
         return events
 

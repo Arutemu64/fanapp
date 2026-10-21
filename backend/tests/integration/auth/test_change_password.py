@@ -35,7 +35,7 @@ async def _user(
         id=generate_user_id(),
         username=Username("pwd_user"),
         email=Email("pwd.user@example.com"),
-        hashed_password=(password_hasher.hash(password) if password else None),
+        hashed_password=(await password_hasher.hash(password) if password else None),
         role=UserRole.VISITOR,
     )
     await user_gateway.add(user)
@@ -63,8 +63,8 @@ async def test_change_password_with_correct_old_password_updates_hash(
     saved_user = await user_gateway.get_by_id(user.id)
     assert saved_user is not None
     assert saved_user.hashed_password is not None
-    assert password_hasher.verify(NEW_PASSWORD, saved_user.hashed_password)
-    assert not password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)
+    assert await password_hasher.verify(NEW_PASSWORD, saved_user.hashed_password)
+    assert not await password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)
 
     # The interactor returns a fresh, valid session.
     resolution = await session_store.resolve_session(session_id)
@@ -95,7 +95,7 @@ async def test_change_password_with_wrong_old_password_raises(
     saved_user = await user_gateway.get_by_id(user.id)
     assert saved_user is not None
     assert saved_user.hashed_password is not None
-    assert password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)
+    assert await password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)
 
 
 async def test_change_password_without_old_password_when_one_is_set_raises(
@@ -137,7 +137,7 @@ async def test_change_password_for_account_without_password_sets_one(
     saved_user = await user_gateway.get_by_id(user.id)
     assert saved_user is not None
     assert saved_user.hashed_password is not None
-    assert password_hasher.verify(NEW_PASSWORD, saved_user.hashed_password)
+    assert await password_hasher.verify(NEW_PASSWORD, saved_user.hashed_password)
 
 
 async def test_change_password_revokes_existing_sessions(

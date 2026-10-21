@@ -246,16 +246,15 @@ class SqlUserGateway(UserGateway):
                 joinedload(UserORM.ticket),
                 selectinload(UserORM.permissions),
                 selectinload(UserORM.social_identities),
-                selectinload(UserORM.permissions),
             )
         )
         user_orm = await self.session.scalar(stmt)
         return _parse_current_user_dto(user_orm) if user_orm else None
 
-    async def read_all_by_roles(self, *roles: UserRole) -> list[UserBaseDTO]:
-        stmt = select(UserORM).where(UserORM.role.in_(roles))
-        users_orm = await self.session.scalars(stmt)
-        return [_parse_base_dto(u) for u in users_orm]
+    async def read_ids_by_roles(self, *roles: UserRole) -> list[UserId]:
+        stmt = select(UserORM.id).where(UserORM.role.in_(roles))
+        user_ids = await self.session.scalars(stmt)
+        return [UserId(user_id) for user_id in user_ids]
 
     def _voting_contest_pool(self) -> Subquery:
         # Count only votes that land in a currently-votable nomination and match the
@@ -306,12 +305,10 @@ class SqlUserGateway(UserGateway):
         user_orm, pool_size = row
         return _parse_base_dto(user_orm), pool_size
 
-    async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]:
-        # Bare boolean predicate (not .is_(True)) so it matches the partial
-        # index ix_users_receive_all_announcements WHERE clause and can use it.
-        stmt = select(UserORM).where(UserORM.receive_all_announcements)
-        users_orm = await self.session.scalars(stmt)
-        return [_parse_base_dto(u) for u in users_orm]
+    async def read_ids_receiving_all_announcements(self) -> list[UserId]:
+        stmt = select(UserORM.id).where(UserORM.receive_all_announcements)
+        user_ids = await self.session.scalars(stmt)
+        return [UserId(user_id) for user_id in user_ids]
 
     async def read_schedule_editors(self) -> list[UserBaseDTO]:
         stmt = (

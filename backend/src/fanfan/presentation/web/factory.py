@@ -9,12 +9,12 @@ from fanfan.main.common import init
 from fanfan.main.di import create_web_container
 from fanfan.presentation.web.exceptions import add_exception_handlers
 from fanfan.presentation.web.middlewares import (
-    bind_request_context,
-    catch_unexpected_errors,
-    limit_request_body_size,
-    no_store_cache_control,
-    refresh_session_cookie,
-    security_headers,
+    BindRequestContextMiddleware,
+    CatchUnexpectedErrorsMiddleware,
+    LimitRequestBodySizeMiddleware,
+    NoStoreCacheControlMiddleware,
+    RefreshSessionCookieMiddleware,
+    SecurityHeadersMiddleware,
 )
 from fanfan.presentation.web.oauth import OAUTH_STATE_TTL_SECONDS
 from fanfan.presentation.web.openapi import API_TITLE, generate_operation_id
@@ -34,12 +34,12 @@ def create_app() -> FastAPI:
 
     setup_dishka(container=create_web_container(), app=app)
 
-    app.middleware("http")(refresh_session_cookie(config.web))
+    app.add_middleware(RefreshSessionCookieMiddleware, web_config=config.web)
 
     # Registered early so it sits inside every middleware below (the last one
     # registered runs outermost): an unanticipated route error becomes a 500 that
     # still passes through CORS, caching, security and request-id middleware.
-    app.middleware("http")(catch_unexpected_errors)
+    app.add_middleware(CatchUnexpectedErrorsMiddleware)
 
     app.include_router(setup_api_router())
 
@@ -71,19 +71,19 @@ def create_app() -> FastAPI:
     )
 
     # Default-deny caching on every response, including CORS/error responses.
-    app.middleware("http")(no_store_cache_control)
+    app.add_middleware(NoStoreCacheControlMiddleware)
 
     # Hardening headers (nosniff, anti-framing, referrer policy) on every
     # response, so the API stays secure-by-default behind any proxy.
-    app.middleware("http")(security_headers)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     # Reject an oversized body by Content-Length before anything reads it, so
     # the app is not solely dependent on the reverse proxy's own cap.
-    app.middleware("http")(limit_request_body_size)
+    app.add_middleware(LimitRequestBodySizeMiddleware)
 
     # Registered last so it runs first (outermost): the request id is bound
     # before any other middleware or route handler, so all of their logs
     # carry it.
-    app.middleware("http")(bind_request_context)
+    app.add_middleware(BindRequestContextMiddleware)
 
     return app

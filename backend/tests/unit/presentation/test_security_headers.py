@@ -1,22 +1,22 @@
 import pytest
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse, Response
+from starlette.applications import Starlette
+from starlette.responses import PlainTextResponse
+from starlette.routing import Route
+from starlette.testclient import TestClient
 
-from fanfan.presentation.web.middlewares import security_headers
+from fanfan.presentation.web.middlewares import SecurityHeadersMiddleware
 
 pytestmark = pytest.mark.unit
 
 
-def _request() -> Request:
-    return Request({"type": "http", "method": "GET", "headers": []})
+def _client() -> TestClient:
+    app = Starlette(routes=[Route("/", lambda _: PlainTextResponse("ok"))])
+    app.add_middleware(SecurityHeadersMiddleware)
+    return TestClient(app)
 
 
-async def _call_next(_: Request) -> Response:
-    return PlainTextResponse("ok")
-
-
-async def test_security_headers_are_set() -> None:
-    response = await security_headers(_request(), _call_next)
+def test_security_headers_are_set() -> None:
+    response = _client().get("/")
 
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
@@ -24,9 +24,9 @@ async def test_security_headers_are_set() -> None:
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
 
-async def test_hsts_is_left_to_the_tls_terminator() -> None:
+def test_hsts_is_left_to_the_tls_terminator() -> None:
     # The app is behind a TLS-terminating proxy and cannot tell HTTPS from HTTP,
     # so it must never emit HSTS itself.
-    response = await security_headers(_request(), _call_next)
+    response = _client().get("/")
 
     assert "Strict-Transport-Security" not in response.headers

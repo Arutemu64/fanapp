@@ -1,49 +1,52 @@
 import pytest
-from starlette.requests import Request
-from starlette.responses import PlainTextResponse, Response
+from starlette.applications import Starlette
+from starlette.responses import PlainTextResponse
+from starlette.routing import Route
+from starlette.testclient import TestClient
 
 from fanfan.presentation.web.middlewares import (
     _MAX_REQUEST_BODY_BYTES,
-    limit_request_body_size,
+    LimitRequestBodySizeMiddleware,
 )
 
 pytestmark = pytest.mark.unit
 
 
-def _request(content_length: str | None) -> Request:
-    headers = [(b"content-length", content_length.encode())] if content_length else []
-    return Request({"type": "http", "method": "POST", "headers": headers})
+def _client() -> TestClient:
+    # The route never reads the body, so a declared Content-Length is all the
+    # middleware sees — no need to send that many bytes.
+    app = Starlette(
+        routes=[Route("/", lambda _: PlainTextResponse("ok"), methods=["POST"])]
+    )
+    app.add_middleware(LimitRequestBodySizeMiddleware)
+    return TestClient(app)
 
 
-async def _call_next(_: Request) -> Response:
-    return PlainTextResponse("ok")
-
-
-async def test_passes_through_a_body_within_the_limit() -> None:
-    response = await limit_request_body_size(
-        _request(str(_MAX_REQUEST_BODY_BYTES)), _call_next
+def test_passes_through_a_body_within_the_limit() -> None:
+    response = _client().post(
+        "/", headers={"content-length": str(_MAX_REQUEST_BODY_BYTES)}
     )
 
-    assert response.body == b"ok"
+    assert response.text == "ok"
 
 
-async def test_passes_through_when_content_length_is_absent() -> None:
+def test_passes_through_when_content_length_is_absent() -> None:
     # A chunked body with no Content-Length reaches the route unbounded; the
     # reverse proxy's own cap is the only defence against that case.
-    response = await limit_request_body_size(_request(None), _call_next)
+    response = _client().post("/")
 
-    assert response.body == b"ok"
+    assert response.text == "ok"
 
 
-async def test_rejects_a_body_over_the_limit() -> None:
-    response = await limit_request_body_size(
-        _request(str(_MAX_REQUEST_BODY_BYTES + 1)), _call_next
+def test_rejects_a_body_over_the_limit() -> None:
+    response = _client().post(
+        "/", headers={"content-length": str(_MAX_REQUEST_BODY_BYTES + 1)}
     )
 
     assert response.status_code == 413
 
 
-async def test_passes_through_a_malformed_content_length() -> None:
-    response = await limit_request_body_size(_request("not-a-number"), _call_next)
+def test_passes_through_a_malformed_content_length() -> None:
+    response = _client().post("/", headers={"content-length": "not-a-number"})
 
-    assert response.body == b"ok"
+    assert response.text == "ok"
