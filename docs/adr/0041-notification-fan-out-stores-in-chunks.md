@@ -61,6 +61,14 @@ We will store a fan-out's notifications in bulk and deliver them in parallel.
   two-minute window.
 - A cancellation now lands between chunks rather than between rows. The chunks
   already stored are deleted by the cancellation itself, as before.
+- Parallel senders do not keep order. Build order still decides which chunk
+  goes first (subscription notices, then the stage announcement, then
+  editors), and a schedule notification a later mailing of the same type has
+  overtaken is dropped at send time, so the newest stays on top. Subscription
+  notices take their own push lane, so a change's stage announcement cannot
+  replace a reader's own act on the shade.
+- More handlers are in flight at a deploy, so the faststream service's
+  `stop_grace_period` (20 s) is kept above the broker's 15 s graceful timeout.
 - The rate limiters are per process. Running a second faststream container
   would double the rate sent to Telegram and VK; scaling out needs a shared
   limiter first.

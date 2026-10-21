@@ -16,6 +16,7 @@ from fanfan.core.exceptions.notifications import (
     MailingNotFound,
     NotificationExpired,
     NotificationNotFound,
+    NotificationSuperseded,
     UserNotReachable,
 )
 from fanfan.core.models.notification import Notification
@@ -61,6 +62,13 @@ class SendNotification:
             raise NotificationNotFound
         if notification.is_stale(datetime.now(UTC)):
             raise NotificationExpired
+        # The senders run in parallel, so an older schedule notification can
+        # reach a channel after a newer one; sent then, it would be the one left
+        # on screen (push replaces by tag). Only schedule news ages this way.
+        if notification.type.is_schedule and (
+            await self.notification_gateway.is_superseded(notification)
+        ):
+            raise NotificationSuperseded
         if notification.mailing_id:
             mailing = await self.mailing_gateway.get(
                 notification.mailing_id, lock=False

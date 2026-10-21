@@ -137,9 +137,9 @@ interface DeclarativePushMessage {
 		body: string;
 		// Absolute deep link, opened on click.
 		navigate: string;
-		// Grouping key set by the backend: a topic ("schedule", "broadcast") so a
-		// burst collapses to the latest, or `notification.id` for ungrouped types
-		// (which only collapses re-pushes of the same notification).
+		// Grouping key set by the backend: a topic ("schedule", "subscription",
+		// "broadcast") so a burst collapses to the latest, or `notification.id` for
+		// ungrouped types (which only collapses re-pushes of the same notification).
 		tag?: string;
 		// Set by the backend when `tag` is a topic: a replacement of the displayed
 		// notification should still re-alert (sound/vibration) rather than update

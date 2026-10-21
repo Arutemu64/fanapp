@@ -234,18 +234,12 @@ class SendScheduleChangeNotifications:
         changed_event = schedule_change.changed_event
         reason_msg = await self._render_reason_msg(schedule_change)
 
+        # Built in delivery order: the fan-out stores and sends in chunks, so
+        # whoever comes first is notified first. A subscriber's own act moving
+        # is the most time-critical news; the stage announcement goes to every
+        # opt-in and can be large; the handful of editors made the change and
+        # watch it live.
         notifications: list[NewNotification] = []
-        notifications.extend(
-            await self._build_editor_notifications(schedule_change, reason_msg)
-        )
-        if schedule_change.next_event_changed and current_event:
-            notifications.extend(
-                await self._build_global_announcement_notifications(
-                    schedule_change=schedule_change,
-                    current_event=current_event,
-                    next_event=next_event,
-                )
-            )
         if current_event and changed_event:
             notifications.extend(
                 await self._build_subscription_notifications(
@@ -255,6 +249,17 @@ class SendScheduleChangeNotifications:
                     reason_msg=reason_msg,
                 )
             )
+        if schedule_change.next_event_changed and current_event:
+            notifications.extend(
+                await self._build_global_announcement_notifications(
+                    schedule_change=schedule_change,
+                    current_event=current_event,
+                    next_event=next_event,
+                )
+            )
+        notifications.extend(
+            await self._build_editor_notifications(schedule_change, reason_msg)
+        )
 
         if schedule_change.mailing_id:
             mailing = await self.mailing_gateway.get(schedule_change.mailing_id)

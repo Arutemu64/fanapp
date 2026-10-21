@@ -150,6 +150,11 @@ services:
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
     command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
+    # On SIGTERM the broker waits up to its graceful timeout (15s,
+    # presentation/faststream/broker.py) for the dozens of sends in flight
+    # before it closes. The 10s default would SIGKILL it first, leaving every
+    # interrupted send to wait out its 90s AckWait before redelivery.
+    stop_grace_period: 20s
     restart: unless-stopped
     init: true
     read_only: true

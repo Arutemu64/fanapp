@@ -50,13 +50,15 @@ _DEFAULT_TTL = timedelta(hours=1)
 # service through the Topic header (RFC 8030 §5.4), which replaces a message still
 # waiting for an offline device, so it wakes up to the current state only.
 # Schedule updates flip rapidly during a live event (the reader only cares about
-# the current state); organizer broadcasts share one "broadcast" lane. A type
-# absent here keeps a unique tag (its notification id) and sends no Topic, so
-# distinct notifications never replace one another. Topic values must stay
-# within 32 base64url characters.
+# the current state); a subscription notice keeps a lane of its own, so the stage
+# announcement the same change sends never replaces the reader's own act moving;
+# organizer broadcasts share one "broadcast" lane. A type absent here keeps a
+# unique tag (its notification id) and sends no Topic, so distinct notifications
+# never replace one another. Topic values must stay within 32 base64url
+# characters.
 _TOPIC_TAGS: dict[NotificationType, str] = {
     NotificationType.SCHEDULE_CHANGE: "schedule",
-    NotificationType.SCHEDULE_SUBSCRIPTION: "schedule",
+    NotificationType.SCHEDULE_SUBSCRIPTION: "subscription",
     NotificationType.BROADCAST: "broadcast",
 }
 

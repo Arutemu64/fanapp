@@ -262,7 +262,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     assert data["navigate"] == "https://fanfan.example/schedule"
     assert data["data"] == {"test": False}
     # An ungrouped type keeps a unique per-notification tag and does not re-alert.
-    assert data["tag"] not in {"schedule", "broadcast"}
+    assert data["tag"] not in {"schedule", "subscription", "broadcast"}
     assert data["renotify"] is False
 
 
@@ -270,7 +270,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     ("notification_type", "expected_tag"),
     [
         (NotificationType.SCHEDULE_CHANGE, "schedule"),
-        (NotificationType.SCHEDULE_SUBSCRIPTION, "schedule"),
+        (NotificationType.SCHEDULE_SUBSCRIPTION, "subscription"),
         (NotificationType.BROADCAST, "broadcast"),
     ],
 )
@@ -333,11 +333,14 @@ async def test_notifier_ends_read_transaction_before_sending() -> None:
 
 
 @pytest.mark.parametrize(
-    "notification_type",
-    [NotificationType.SCHEDULE_CHANGE, NotificationType.SCHEDULE_SUBSCRIPTION],
+    ("notification_type", "expected_topic"),
+    [
+        (NotificationType.SCHEDULE_CHANGE, "schedule"),
+        (NotificationType.SCHEDULE_SUBSCRIPTION, "subscription"),
+    ],
 )
 async def test_notifier_sends_schedule_pushes_urgent_and_short_lived(
-    notification_type: NotificationType,
+    notification_type: NotificationType, expected_topic: str
 ) -> None:
     """A schedule push is a time-sensitive alert (RFC 8030 §5.3 "high"), lives
     only as long as its text is true, and replaces a still-queued one."""
@@ -356,7 +359,7 @@ async def test_notifier_sends_schedule_pushes_urgent_and_short_lived(
     call = client.calls[0]
     assert call["urgency"] == "high"
     assert call["ttl_seconds"] == 600
-    assert call["topic"] == "schedule"
+    assert call["topic"] == expected_topic
 
 
 async def test_notifier_sends_other_pushes_at_normal_urgency_without_topic() -> None:

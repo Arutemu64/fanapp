@@ -19,6 +19,7 @@ from fanfan.application.ports.notifier import (
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationExpired,
+    NotificationSuperseded,
     UserNotReachable,
 )
 from fanfan.core.models.notification import Notification
@@ -70,9 +71,18 @@ def _make_notification(
 
 
 class _FakeNotificationGateway(NotificationGateway):
-    def __init__(self, notification: Notification | None) -> None:
+    def __init__(
+        self, notification: Notification | None, *, superseded: bool = False
+    ) -> None:
         self._notification = notification
+        self._superseded = superseded
         self.locked_reads = 0
+
+    async def is_superseded(
+        self,
+        notification: Notification,  # noqa: ARG002  # part of the port contract
+    ) -> bool:
+        return self._superseded
 
     async def get(
         self,
@@ -137,11 +147,12 @@ def _interactor(
     push: FakePushNotifier,
     vk: FakeVkNotifier,
     notification: Notification | None = None,
+    superseded: bool = False,
 ) -> SendNotification:
     return SendNotification(
         mailing_gateway=_StubMailingGateway(),
         notification_gateway=_FakeNotificationGateway(
-            notification or _make_notification()
+            notification or _make_notification(), superseded=superseded
         ),
         user_gateway=_FakeUserGateway(user),
         tg_notifier=tg,
@@ -236,6 +247,54 @@ async def test_fresh_schedule_notification_is_sent() -> None:
             notification_type=NotificationType.SCHEDULE_CHANGE,
             age=timedelta(minutes=9),
         ),
+    )
+
+    await interactor.send_notification_to_push(_INPUT)
+
+    assert [n.id for n in push.sent_notifications] == [NOTIFICATION_ID]
+
+
+@pytest.mark.parametrize(
+    "send",
+    [
+        SendNotification.send_notification_to_telegram,
+        SendNotification.send_notification_to_push,
+        SendNotification.send_notification_to_vk,
+    ],
+)
+async def test_superseded_schedule_notification_is_not_sent(
+    send: Callable[[SendNotification, SendNotificationInput], Awaitable[None]],
+) -> None:
+    # Parallel senders can reach an older change after a newer one; sending it
+    # then would leave the stale text on top.
+    tg, push, vk = FakeTelegramNotifier(), FakePushNotifier(), FakeVkNotifier()
+    interactor = _interactor(
+        user=_make_user(),
+        tg=tg,
+        push=push,
+        vk=vk,
+        notification=_make_notification(
+            notification_type=NotificationType.SCHEDULE_CHANGE
+        ),
+        superseded=True,
+    )
+
+    with pytest.raises(NotificationSuperseded):
+        await send(interactor, _INPUT)
+    assert tg.sent_notifications == push.sent_notifications == []
+    assert vk.sent_notifications == []
+
+
+async def test_only_schedule_notifications_can_be_superseded() -> None:
+    # Two broadcasts are two messages, not two versions of one.
+    push = FakePushNotifier()
+    interactor = _interactor(
+        user=_make_user(),
+        tg=FakeTelegramNotifier(),
+        push=push,
+        vk=FakeVkNotifier(),
+        notification=_make_notification(notification_type=NotificationType.BROADCAST),
+        superseded=True,
     )
 
     await interactor.send_notification_to_push(_INPUT)

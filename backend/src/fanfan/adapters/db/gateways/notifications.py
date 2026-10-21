@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Any, cast
 
-from sqlalchemy import CursorResult, and_, delete, func, select, update
+from sqlalchemy import CursorResult, and_, delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,6 +86,20 @@ class SqlNotificationGateway(NotificationGateway):
             stmt = stmt.with_for_update()
         notification_orm = await self.session.scalar(stmt)
         return _to_model(notification_orm) if notification_orm else None
+
+    async def is_superseded(self, notification: Notification) -> bool:
+        if notification.created_at is None:
+            return False
+        # Served by ix_notifications_user_id_created_at.
+        stmt = select(
+            exists().where(
+                NotificationORM.user_id == notification.user_id,
+                NotificationORM.type == notification.type,
+                NotificationORM.created_at > notification.created_at,
+                NotificationORM.mailing_id.is_distinct_from(notification.mailing_id),
+            )
+        )
+        return bool(await self.session.scalar(stmt))
 
     async def mark_all_read_for_user(
         self, user_id: UserId, timestamp: datetime

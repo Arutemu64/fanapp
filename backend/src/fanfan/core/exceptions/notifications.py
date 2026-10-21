@@ -56,6 +56,13 @@ class NotificationExpired(NotificationException):
     code = "NOTIFICATION_EXPIRED"
 
 
+class NotificationSuperseded(NotificationException):
+    # A newer schedule notification of the same kind already reached this user's
+    # channels. Sending the older one after it (parallel senders do not keep
+    # order) would leave the stale text on top, so it is dropped.
+    code = "NOTIFICATION_SUPERSEDED"
+
+
 class NotificationRetryAfter(NotificationException):
     code = "NOTIFICATION_RETRY_AFTER"
 

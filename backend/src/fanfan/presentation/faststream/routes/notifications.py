@@ -32,6 +32,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationExpired,
     NotificationRetryAfter,
+    NotificationSuperseded,
     UserNotReachable,
 )
 from fanfan.core.vo.notification import NotificationId
@@ -69,8 +70,11 @@ _TELEGRAM_WORKERS = 8
 _VK_WORKERS = 8
 
 # Messages per pull request. With the default of one, every message costs its
-# own request to NATS; a batch keeps the workers fed in fewer round trips.
-_SEND_PULL_BATCH = 16
+# own request to NATS; a batch keeps the workers fed in fewer round trips. Kept
+# small because a message fetched but not yet started when the process stops is
+# never acked, so it waits out the full AckWait before redelivery
+# (https://docs.nats.io/learn/jetstream/pull-consumers).
+_SEND_PULL_BATCH = 8
 
 
 async def _deliver_to_channel(
@@ -101,9 +105,11 @@ async def _deliver_to_channel(
     except MailingAlreadyCancelled:
         logger.info("Mailing for notification %s was cancelled", notification_id)
         await msg.reject()
-    except NotificationExpired:
+    except NotificationExpired, NotificationSuperseded:
         logger.info(
-            "Notification %s expired before reaching %s", notification_id, channel
+            "Notification %s no longer current; not sent to %s",
+            notification_id,
+            channel,
         )
         await msg.reject()
     except NotificationChannelUnavailable:

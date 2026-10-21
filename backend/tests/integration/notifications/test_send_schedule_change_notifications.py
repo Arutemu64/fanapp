@@ -13,15 +13,18 @@ from fanfan.application.ports.gateways import ScheduleChangeGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
+from fanfan.application.ports.gateways.user_permissions import UserPermissionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
+from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
+from fanfan.core.vo.permission import Permission, generate_user_permission_id
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
@@ -242,3 +245,72 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     saved_mailing = await mailing_gateway.get(mailing.id)
     assert saved_mailing is not None
     assert saved_mailing.status is MailingStatus.FAILED
+
+
+async def test_schedule_change_notifies_subscribers_first_and_editors_last(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """The fan-out stores and sends in chunks, so build order is delivery order.
+
+    A subscriber's own act moving is the most time-critical; the stage
+    announcement goes to every opt-in (on by default, so nearly everyone); the
+    editors made the change themselves.
+    """
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    subscription_gateway = await dishka_request.get(SubscriptionGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    user_gateway = await dishka_request.get(UserGateway)
+    permission_gateway = await dishka_request.get(UserPermissionGateway)
+    login(visitor)
+
+    current_event = _schedule_event(1, "Текущее", 1, is_current=True)
+    event_c = _schedule_event(3, "Событие C", 3)
+    await schedule_gateway.add(current_event)
+    await schedule_gateway.add(event_c)
+    editor = User(
+        id=UserId(uuid7()),
+        username=Username("schedule_editor"),
+        hashed_password=None,
+        role=UserRole.ORGANIZER,
+    )
+    await user_gateway.add(editor)
+    await permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.SCHEDULE_MANAGE,
+            user_id=editor.id,
+        )
+    )
+    await uow.commit()
+    await subscription_gateway.add(
+        Subscription(
+            id=generate_subscription_id(),
+            user_id=visitor.id,
+            event_id=event_c.id,
+            counter=5,
+        )
+    )
+    change = ScheduleChange.moved(
+        event_id=event_c.id,
+        previous_entry_id=None,
+        mailing_id=None,
+        user_id=editor.id,
+        next_event_changed=True,
+    )
+    await changes_gateway.add(change)
+    await uow.commit()
+
+    await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
+
+    titles = [n.title for n in await delivered_notifications(dishka_request)]
+    expected_order = ["Уведомление о подписке", "На сцене", "Изменение программы"]
+    # Collapse runs of one kind: what is left is the order the kinds went out.
+    kinds: list[str] = []
+    for title in titles:
+        if not kinds or kinds[-1] != title:
+            kinds.append(title)
+    assert kinds == expected_order

@@ -29,6 +29,16 @@ class NotificationGateway(Protocol):
         """
         ...
 
+    async def is_superseded(self, notification: Notification) -> bool:
+        """Whether a later mailing already told this user the same kind of news.
+
+        True when the user has a notification of the same type, stored after
+        this one, that belongs to a different mailing. Notifications of one
+        mailing never supersede each other: they are parts of one message (a
+        subscriber's several acts moving), not successive versions of it.
+        """
+        ...
+
     async def mark_all_read_for_user(
         self, user_id: UserId, timestamp: datetime
     ) -> None: ...
