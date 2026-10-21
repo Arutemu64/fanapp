@@ -213,12 +213,12 @@ class SendScheduleChangeNotifications:
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
-    async def abandon(self, data: SendScheduleChangeNotificationsInput) -> None:
+    async def abandon(self, schedule_change_id: ScheduleChangeId) -> None:
         """Fail the change's mailing when its fan-out will not be retried again."""
         # The failed run can leave the transaction aborted.
         await self.uow.rollback()
         schedule_change = await self.changes_gateway.read_schedule_change(
-            data.schedule_change_id
+            schedule_change_id
         )
         if schedule_change is None:
             return

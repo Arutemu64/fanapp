@@ -354,11 +354,7 @@ async def test_abandoned_schedule_change_fails_its_mailing(
     await changes_gateway.add(change)
     await uow.commit()
 
-    await interactor.abandon(
-        SendScheduleChangeNotificationsInput(
-            schedule_change_id=change.id, occurred_at=datetime.now(UTC)
-        )
-    )
+    await interactor.abandon(change.id)
 
     saved_mailing = await mailing_gateway.get(mailing.id, lock=False)
     assert saved_mailing is not None
