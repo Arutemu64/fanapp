@@ -9,6 +9,7 @@ from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.adapters.vk.notifier import VkNotifier
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -210,16 +211,40 @@ class _StubVkClient(VkApiClient):
             raise self._delete_error
 
 
+class _StubUow(UnitOfWork):
+    def __init__(self) -> None:
+        self.commits = 0
+
+    async def commit(self) -> None:
+        self.commits += 1
+
+
 def _notifier(
     *,
     identity: SocialIdentity | None,
     client: _StubVkClient,
+    uow: _StubUow | None = None,
 ) -> VkNotifier:
     return VkNotifier(
         client=client,
         social_identity_gateway=_StubSocialIdentityGateway(identity),
+        uow=uow or _StubUow(),
         web_config=_web_config(),
     )
+
+
+async def test_ends_lookup_transaction_before_sending() -> None:
+    user = _make_user()
+    uow = _StubUow()
+    client = _StubVkClient()
+    notifier = _notifier(identity=_identity_for(user), client=client, uow=uow)
+
+    await notifier.send_notification(_make_notification(user.id))
+
+    # Send and delete can take up to a minute together; the pooled connection
+    # (and the identity's row lock) must not be held through them.
+    assert uow.commits == 1
+    assert len(client.calls) == 1
 
 
 async def test_sends_plain_text_to_linked_user() -> None:

@@ -50,6 +50,19 @@ class NotificationChannelUnavailable(NotificationException):
     code = "NOTIFICATION_CHANNEL_UNAVAILABLE"
 
 
+class NotificationExpired(NotificationException):
+    # A schedule notification outlived SCHEDULE_NOTIFICATION_LIFETIME before a
+    # channel got to it; its text no longer matches the stage, so it is dropped.
+    code = "NOTIFICATION_EXPIRED"
+
+
+class NotificationSuperseded(NotificationException):
+    # A newer schedule notification of the same kind already reached this user's
+    # channels. Sending the older one after it (parallel senders do not keep
+    # order) would leave the stale text on top, so it is dropped.
+    code = "NOTIFICATION_SUPERSEDED"
+
+
 class NotificationRetryAfter(NotificationException):
     code = "NOTIFICATION_RETRY_AFTER"
 

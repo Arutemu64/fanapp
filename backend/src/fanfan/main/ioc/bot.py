@@ -5,7 +5,7 @@ from dishka import Provider, Scope, provide
 
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.tgbot.config import TelegramConfig
-from fanfan.adapters.tgbot.notifier import TelegramNotifier
+from fanfan.adapters.tgbot.notifier import TelegramNotifier, TelegramRateLimiter
 from fanfan.application.ports.notifier import TelegramNotifierPort
 
 
@@ -22,6 +22,9 @@ class BotProvider(Provider):
             token=config.token.get_secret_value(),
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
+
+    # APP scope: one quota for every concurrent send in the process.
+    rate_limiter = provide(TelegramRateLimiter)
 
     telegram_notifier = provide(
         TelegramNotifier, scope=Scope.REQUEST, provides=TelegramNotifierPort

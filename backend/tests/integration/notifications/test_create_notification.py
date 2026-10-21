@@ -13,6 +13,7 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.events.notifications import NotificationCreated
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.models.user import User
@@ -23,6 +24,7 @@ from fanfan.core.vo.notification import (
     notification_id_for,
 )
 from fanfan.core.vo.user import UserId, Username
+from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 
 pytestmark = [
@@ -70,10 +72,8 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     notification = _broadcast_notification(mailing, visitor)
     data = CreateNotificationInput(notification=notification)
 
-    first_id = await interactor(data)
-    second_id = await interactor(data)
-
-    assert first_id == second_id == notification.id
+    await interactor(data)
+    await interactor(data)
 
     stored = await notification_gateway.get(notification.id)
     assert stored is not None
@@ -149,13 +149,13 @@ async def test_create_notification_flips_mailing_to_finished_on_last_delivery(
     assert finished.status is MailingStatus.FINISHED
 
 
-async def test_create_notification_gateway_add_reports_whether_it_inserted(
+async def test_notification_gateway_add_many_counts_only_new_rows(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """The gateway upsert is the primitive CreateNotification relies on."""
+    """The gateway upsert is the primitive the fan-out's counting relies on."""
     notification_gateway = await dishka_request.get(NotificationGateway)
     login(visitor)
 
@@ -170,13 +170,13 @@ async def test_create_notification_gateway_add_reports_whether_it_inserted(
         seen_at=None,
     )
 
-    inserted_first = await notification_gateway.add(notification)
+    inserted_first = await notification_gateway.add_many([notification])
     await uow.commit()
-    inserted_second = await notification_gateway.add(notification)
+    inserted_second = await notification_gateway.add_many([notification])
     await uow.commit()
 
-    assert inserted_first is True
-    assert inserted_second is False
+    assert inserted_first == 1
+    assert inserted_second == 0
 
 
 async def test_create_notification_pushes_it_to_its_user_in_realtime(
@@ -186,10 +186,11 @@ async def test_create_notification_pushes_it_to_its_user_in_realtime(
     interactor = await dishka_request.get(CreateNotification)
     realtime = await dishka_request.get(FakeRealtimeGateway)
 
-    notification_id = await interactor(
+    notification_id = generate_notification_id()
+    await interactor(
         CreateNotificationInput(
             notification=NewNotification(
-                id=generate_notification_id(),
+                id=notification_id,
                 user_id=visitor.id,
                 title="Заголовок",
                 body="Тело",
@@ -207,3 +208,30 @@ async def test_create_notification_pushes_it_to_its_user_in_realtime(
     # The payload is the stored row, so it carries what only the DB fills in.
     assert message.data["id"] == str(notification_id)
     assert message.data["created_at"] is not None
+
+
+async def test_create_notification_hands_it_to_the_delivery_channels(
+    dishka_request: AsyncContainer,
+    visitor: User,
+) -> None:
+    interactor = await dishka_request.get(CreateNotification)
+    broker = await dishka_request.get(FakeEventBroker)
+    notification_id = generate_notification_id()
+
+    await interactor(
+        CreateNotificationInput(
+            notification=NewNotification(
+                id=notification_id,
+                user_id=visitor.id,
+                title="Заголовок",
+                body="Тело",
+                path=None,
+                mailing_id=None,
+                type=NotificationType.DEFAULT,
+            )
+        )
+    )
+
+    assert broker.published_events == [
+        NotificationCreated(notification_id=notification_id)
+    ]

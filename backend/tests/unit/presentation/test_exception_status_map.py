@@ -20,6 +20,8 @@ INTERNAL_ONLY: set[str] = {
     "USER_NOT_REACHABLE",
     "NOTIFICATION_CHANNEL_UNAVAILABLE",
     "NOTIFICATION_RETRY_AFTER",
+    "NOTIFICATION_EXPIRED",
+    "NOTIFICATION_SUPERSEDED",
     # Rate-limit guards — caught and re-raised as a flow-specific RateLimited.
     "COOLDOWN_ACTIVE",
     # Missing vendor integration config — a server misconfiguration (500).

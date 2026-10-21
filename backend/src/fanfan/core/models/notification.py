@@ -1,9 +1,13 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.notification import NotificationId, NotificationType
+from fanfan.core.vo.notification import (
+    SCHEDULE_NOTIFICATION_LIFETIME,
+    NotificationId,
+    NotificationType,
+)
 from fanfan.core.vo.user import UserId
 
 
@@ -20,15 +24,36 @@ class Notification(AggregateRoot):
     path: str | None
     mailing_id: MailingId | None
     seen_at: datetime | None
+    # Set once stored; None on a notification not yet inserted.
+    created_at: datetime | None = None
+
+    def remaining_lifetime(self, now: datetime) -> timedelta | None:
+        """How much longer this notification stays true; None if it never ages.
+
+        Only schedule notifications age: they describe the programme at the
+        moment they were built. Everything else is as true late as on time.
+        """
+        if not self.type.is_schedule:
+            return None
+        if self.created_at is None:
+            return SCHEDULE_NOTIFICATION_LIFETIME
+        return SCHEDULE_NOTIFICATION_LIFETIME - (now - self.created_at)
+
+    def is_stale(self, now: datetime) -> bool:
+        """Whether delivering this notification now would mislead its reader."""
+        remaining = self.remaining_lifetime(now)
+        if remaining is None:
+            return False
+        return remaining < timedelta(0)
 
 
 @dataclass(slots=True, kw_only=True)
 class NewNotification:
     """Data required to create a Notification.
 
-    Carried by CreateNotificationCommand and consumed by the CreateNotification
-    interactor. Lives in core so an aggregate can build its own notification
-    (QuestAward.award_notification).
+    Carried by CreateNotificationCommand, built in bulk by the fan-outs, and
+    stored by NotificationFanOut. Lives in core so an aggregate can build its
+    own notification (QuestAward.award_notification).
     """
 
     id: NotificationId

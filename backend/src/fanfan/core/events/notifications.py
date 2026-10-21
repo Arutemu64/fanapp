@@ -8,3 +8,8 @@ class NotificationCreated(DomainEvent):
     subject: ClassVar[str] = "notifications.created"
 
     notification_id: NotificationId
+
+    def dedup_id(self) -> str:
+        # Prefixed: CreateNotificationCommand already uses the bare notification
+        # id on the same stream, and JetStream dedups ids stream-wide.
+        return f"{self.subject}:{self.notification_id}"

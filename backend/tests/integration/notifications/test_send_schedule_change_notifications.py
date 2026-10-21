@@ -5,7 +5,6 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
@@ -14,19 +13,23 @@ from fanfan.application.ports.gateways import ScheduleChangeGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
+from fanfan.application.ports.gateways.user_permissions import UserPermissionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
+from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
+from fanfan.core.vo.permission import Permission, generate_user_permission_id
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
+from tests.integration.notifications.delivered import delivered_notifications
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -71,7 +74,6 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     user_gateway = await dishka_request.get(UserGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -120,16 +122,14 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
 
     await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
-    assert len(published) == 1
-    event = published[0]
-    assert event.notification.user_id == visitor.id
-    assert event.notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
+    delivered = await delivered_notifications(dishka_request)
+    assert len(delivered) == 1
+    notification = delivered[0]
+    assert notification.user_id == visitor.id
+    assert notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
     # position_difference = 3 - 1 = 2 is rendered into the body.
-    assert "2 выступления" in event.notification.body
-    assert "Событие C" in event.notification.body
+    assert "2 выступления" in notification.body
+    assert "Событие C" in notification.body
 
 
 async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
@@ -150,7 +150,6 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
 
     current_event = _schedule_event(1, "Текущее", 1, is_current=True)
@@ -181,13 +180,11 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     await interactor(data)
     await interactor(data)
 
-    published = [
-        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
-    ]
+    delivered = await delivered_notifications(dishka_request)
     # Both runs target the one in-window subscriber; the id is identical, so the
-    # gateway upsert would no-op the second insert instead of duplicating it.
-    assert len(published) == 2
-    assert published[0].notification.id == published[1].notification.id
+    # second insert no-ops instead of duplicating it.
+    assert len(delivered) == 2
+    assert delivered[0].id == delivered[1].id
 
 
 async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
@@ -248,3 +245,72 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     saved_mailing = await mailing_gateway.get(mailing.id)
     assert saved_mailing is not None
     assert saved_mailing.status is MailingStatus.FAILED
+
+
+async def test_schedule_change_notifies_subscribers_first_and_editors_last(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """The fan-out stores and sends in chunks, so build order is delivery order.
+
+    A subscriber's own act moving is the most time-critical; the stage
+    announcement goes to every opt-in (on by default, so nearly everyone); the
+    editors made the change themselves.
+    """
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    subscription_gateway = await dishka_request.get(SubscriptionGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    user_gateway = await dishka_request.get(UserGateway)
+    permission_gateway = await dishka_request.get(UserPermissionGateway)
+    login(visitor)
+
+    current_event = _schedule_event(1, "Текущее", 1, is_current=True)
+    event_c = _schedule_event(3, "Событие C", 3)
+    await schedule_gateway.add(current_event)
+    await schedule_gateway.add(event_c)
+    editor = User(
+        id=UserId(uuid7()),
+        username=Username("schedule_editor"),
+        hashed_password=None,
+        role=UserRole.ORGANIZER,
+    )
+    await user_gateway.add(editor)
+    await permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.SCHEDULE_MANAGE,
+            user_id=editor.id,
+        )
+    )
+    await uow.commit()
+    await subscription_gateway.add(
+        Subscription(
+            id=generate_subscription_id(),
+            user_id=visitor.id,
+            event_id=event_c.id,
+            counter=5,
+        )
+    )
+    change = ScheduleChange.moved(
+        event_id=event_c.id,
+        previous_entry_id=None,
+        mailing_id=None,
+        user_id=editor.id,
+        next_event_changed=True,
+    )
+    await changes_gateway.add(change)
+    await uow.commit()
+
+    await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
+
+    titles = [n.title for n in await delivered_notifications(dishka_request)]
+    expected_order = ["Уведомление о подписке", "На сцене", "Изменение программы"]
+    # Collapse runs of one kind: what is left is the order the kinds went out.
+    kinds: list[str] = []
+    for title in titles:
+        if not kinds or kinds[-1] != title:
+            kinds.append(title)
+    assert kinds == expected_order

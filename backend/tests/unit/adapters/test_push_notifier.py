@@ -1,5 +1,6 @@
 import json
 from base64 import urlsafe_b64encode
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import uuid7
@@ -10,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from pydantic import HttpUrl, SecretStr
 
-from fanfan.adapters.push.client import MessageData, WebPushClient
+from fanfan.adapters.push.client import MessageData, PushUrgency, WebPushClient
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.push.push import PushNotifier
 from fanfan.application.ports.gateways.push_subscriptions import (
@@ -106,6 +107,9 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     response = await client.send(
         subscription=_browser_subscription(endpoint=endpoint),
         message_data=_message_data(),
+        ttl_seconds=600,
+        urgency="high",
+        topic="schedule",
     )
 
     # A malformed subscription (a flat dict instead of the nested shape) would
@@ -117,6 +121,10 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     assert str(sent.url) == endpoint
     assert sent.headers["content-encoding"] == "aes128gcm"
     assert sent.headers["authorization"].startswith("vapid ")
+    # RFC 8030 §5.2-5.4: the library sets only TTL; Urgency and Topic are ours.
+    assert sent.headers["ttl"] == "600"
+    assert sent.headers["urgency"] == "high"
+    assert sent.headers["topic"] == "schedule"
     # The payload is encrypted, so it must not carry the plaintext body. Match
     # the whole encoded body: a short byte sequence also turns up in random
     # ciphertext by chance (a 2-byte one failed ~0.5% of runs).
@@ -129,11 +137,16 @@ async def test_send_returns_response_with_status(tmp_path: Path) -> None:
     response = await client.send(
         subscription=_browser_subscription(endpoint="https://push.example/x"),
         message_data=_message_data(),
+        ttl_seconds=3600,
+        urgency="normal",
+        topic=None,
     )
 
     # The notifier reads the whole response (status + headers), so send returns
     # it rather than the bare status code.
     assert response.status_code == 410
+    # Without a topic nothing may replace this message at the push service.
+    assert "topic" not in response.request.headers
 
 
 # --- PushNotifier: message shaping and pruning of dead subscriptions -----------
@@ -149,19 +162,41 @@ class _RecordingClient(WebPushClient):
     """
 
     def __init__(
-        self, *, status: int = 201, headers: dict[str, str] | None = None
+        self,
+        *,
+        status: int = 201,
+        headers: dict[str, str] | None = None,
+        fail_endpoints: frozenset[str] = frozenset(),
     ) -> None:
         self._status = status
         self._headers = headers or {}
+        self._fail_endpoints = fail_endpoints
         self.calls: list[dict[str, Any]] = []
 
     def ensure_available(self) -> None:
         pass
 
     async def send(
-        self, *, subscription: PushSubscription, message_data: MessageData
+        self,
+        *,
+        subscription: PushSubscription,
+        message_data: MessageData,
+        ttl_seconds: int,
+        urgency: PushUrgency,
+        topic: str | None,
     ) -> httpx2.Response:
-        self.calls.append({"subscription": subscription, "message_data": message_data})
+        self.calls.append(
+            {
+                "subscription": subscription,
+                "message_data": message_data,
+                "ttl_seconds": ttl_seconds,
+                "urgency": urgency,
+                "topic": topic,
+            }
+        )
+        if subscription.endpoint in self._fail_endpoints:
+            msg = "push service unreachable"
+            raise httpx2.ConnectError(msg)
         return httpx2.Response(self._status, headers=self._headers)
 
 
@@ -190,6 +225,8 @@ class _StubUow(UnitOfWork):
 
 def _notification(
     notification_type: NotificationType = NotificationType.DEFAULT,
+    *,
+    created_at: datetime | None = None,
 ) -> Notification:
     return Notification(
         id=generate_notification_id(),
@@ -200,6 +237,7 @@ def _notification(
         path="/schedule",
         mailing_id=None,
         seen_at=None,
+        created_at=created_at,
     )
 
 
@@ -228,7 +266,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     assert data["navigate"] == "https://fanfan.example/schedule"
     assert data["data"] == {"test": False}
     # An ungrouped type keeps a unique per-notification tag and does not re-alert.
-    assert data["tag"] not in {"schedule", "broadcast"}
+    assert data["tag"] not in {"schedule", "subscription", "broadcast"}
     assert data["renotify"] is False
 
 
@@ -236,7 +274,7 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     ("notification_type", "expected_tag"),
     [
         (NotificationType.SCHEDULE_CHANGE, "schedule"),
-        (NotificationType.SCHEDULE_SUBSCRIPTION, "schedule"),
+        (NotificationType.SCHEDULE_SUBSCRIPTION, "subscription"),
         (NotificationType.BROADCAST, "broadcast"),
     ],
 )
@@ -277,7 +315,143 @@ async def test_notifier_prunes_gone_subscription() -> None:
     await notifier.send_notification(_notification())
 
     assert gateway.deleted == [live, dead]
-    assert uow.commits == 2
+    # One to end the read before the sends, one per pruned subscription.
+    assert uow.commits == 3
+
+
+async def test_notifier_ends_read_transaction_before_sending() -> None:
+    uow = _StubUow()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=uow,
+        client=_RecordingClient(),
+        web_config=WEB_CONFIG,
+    )
+
+    await notifier.send_notification(_notification())
+
+    # A send can take seconds; the pooled connection must not be held for it.
+    assert uow.commits == 1
+
+
+@pytest.mark.parametrize(
+    ("notification_type", "expected_topic"),
+    [
+        (NotificationType.SCHEDULE_CHANGE, "schedule"),
+        (NotificationType.SCHEDULE_SUBSCRIPTION, "subscription"),
+    ],
+)
+async def test_notifier_sends_schedule_pushes_urgent_and_short_lived(
+    notification_type: NotificationType, expected_topic: str
+) -> None:
+    """A schedule push is a time-sensitive alert (RFC 8030 §5.3 "high"), lives
+    only as long as its text is true, and replaces a still-queued one."""
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+
+    await notifier.send_notification(_notification(notification_type))
+
+    call = client.calls[0]
+    assert call["urgency"] == "high"
+    assert call["ttl_seconds"] == 600
+    assert call["topic"] == expected_topic
+
+
+async def test_notifier_gives_a_late_schedule_push_only_its_remaining_lifetime() -> (
+    None
+):
+    """A push held by the push service must not outlive its text: four minutes
+    into a ten-minute lifetime leaves six."""
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+    created_at = datetime.now(UTC) - timedelta(minutes=4)
+
+    await notifier.send_notification(
+        _notification(NotificationType.SCHEDULE_CHANGE, created_at=created_at)
+    )
+
+    # Seconds tick between building the notification and sending it.
+    assert 355 <= client.calls[0]["ttl_seconds"] <= 360
+
+
+@pytest.mark.parametrize(
+    "notification_type", [NotificationType.BROADCAST, NotificationType.MESSAGE]
+)
+async def test_notifier_sends_organizer_messages_urgent_but_long_lived(
+    notification_type: NotificationType,
+) -> None:
+    """An organizer writing to people mid-festival is time-sensitive, but its
+    text stays true, so it keeps the default lifetime."""
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+
+    await notifier.send_notification(_notification(notification_type))
+
+    call = client.calls[0]
+    assert call["urgency"] == "high"
+    assert call["ttl_seconds"] == 3600
+
+
+async def test_notifier_sends_other_pushes_at_normal_urgency_without_topic() -> None:
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+
+    await notifier.send_notification(_notification())
+
+    call = client.calls[0]
+    assert call["urgency"] == "normal"
+    assert call["ttl_seconds"] == 3600
+    assert call["topic"] is None
+
+
+async def test_notifier_sends_to_every_device_before_raising_a_send_error() -> None:
+    broken = _browser_subscription(endpoint="https://push.example/broken")
+    dead = _browser_subscription(endpoint="https://push.example/dead")
+    gateway = _StubGateway([broken, dead])
+    client = _RecordingClient(status=410, fail_endpoints=frozenset({broken.endpoint}))
+    notifier = PushNotifier(
+        push_sub_gateway=gateway,
+        uow=_StubUow(),
+        client=client,
+        web_config=WEB_CONFIG,
+    )
+
+    # The unreachable device is retried through redelivery; the other device's
+    # outcome is still acted on in this pass.
+    with pytest.raises(httpx2.ConnectError):
+        await notifier.send_notification(_notification())
+    assert len(client.calls) == 2
+    assert gateway.deleted == [dead]
 
 
 async def test_notifier_decodes_html_entities_to_plain_text() -> None:

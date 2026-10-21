@@ -11,8 +11,9 @@ from aiogram.exceptions import (
 )
 from aiogram.methods import SendMessage
 
-from fanfan.adapters.tgbot.notifier import TelegramNotifier
+from fanfan.adapters.tgbot.notifier import TelegramNotifier, TelegramRateLimiter
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -95,14 +96,40 @@ class _StubSocialIdentityGateway(SocialIdentityGateway):
         return self._identity
 
 
+class _StubUow(UnitOfWork):
+    def __init__(self) -> None:
+        self.commits = 0
+
+    async def commit(self) -> None:
+        self.commits += 1
+
+
 def _notifier(
-    *, identity: SocialIdentity | None, bot: _RecordingBot
+    *,
+    identity: SocialIdentity | None,
+    bot: _RecordingBot,
+    uow: _StubUow | None = None,
 ) -> TelegramNotifier:
     return TelegramNotifier(
         bot=bot,  # ty: ignore[invalid-argument-type]  # see _RecordingBot
         social_identity_gateway=_StubSocialIdentityGateway(identity),
+        uow=uow or _StubUow(),
+        rate_limiter=TelegramRateLimiter(),
         web_config=_web_config(),
     )
+
+
+async def test_ends_lookup_transaction_before_sending() -> None:
+    uow = _StubUow()
+    bot = _RecordingBot()
+    notifier = _notifier(identity=_identity(), bot=bot, uow=uow)
+
+    await notifier.send_notification(_notification())
+
+    # The send can take up to a minute; the pooled connection (and the
+    # identity's row lock) must not be held through it.
+    assert uow.commits == 1
+    assert len(bot.calls) == 1
 
 
 async def test_sends_html_with_escaped_title_and_deep_link_button() -> None:

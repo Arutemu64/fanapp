@@ -1,11 +1,13 @@
+import asyncio
 import html
 import logging
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import httpx2
 import nh3
 
-from fanfan.adapters.push.client import MessageData, WebPushClient
+from fanfan.adapters.push.client import MessageData, PushUrgency, WebPushClient
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
@@ -16,6 +18,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
 )
 from fanfan.core.models.notification import Notification
+from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.notification import NotificationType
 from fanfan.presentation.web.config import WebConfig
 
@@ -33,14 +36,26 @@ _CHANNEL_UNAVAILABLE_STATUS_CODES = frozenset({400, 401, 403})
 # before the consumer redelivers.
 _RETRY_AFTER_DEFAULT_SECONDS = 5
 
+# How long a push service holds an undelivered message before discarding it
+# (RFC 8030 §5.2). One hour for most: a convention notification is stale well
+# before then, and the service worker collapses a late duplicate by its `tag`
+# anyway. A schedule notification gets only what is left of its lifetime.
+_DEFAULT_TTL = timedelta(hours=1)
+
 # Notification types that share a device-level topic, so a burst collapses to the
-# latest on the OS shade instead of stacking. Schedule updates flip rapidly during
-# a live event (the reader only cares about the current state); organizer
-# broadcasts share one "broadcast" lane. A type absent here keeps a unique tag (its
-# notification id) so distinct notifications never replace one another.
+# latest instead of stacking: on the OS shade through the `tag`, and at the push
+# service through the Topic header (RFC 8030 §5.4), which replaces a message still
+# waiting for an offline device, so it wakes up to the current state only.
+# Schedule updates flip rapidly during a live event (the reader only cares about
+# the current state); a subscription notice keeps a lane of its own, so the stage
+# announcement the same change sends never replaces the reader's own act moving;
+# organizer broadcasts share one "broadcast" lane. A type absent here keeps a
+# unique tag (its notification id) and sends no Topic, so distinct notifications
+# never replace one another. Topic values must stay within 32 base64url
+# characters.
 _TOPIC_TAGS: dict[NotificationType, str] = {
     NotificationType.SCHEDULE_CHANGE: "schedule",
-    NotificationType.SCHEDULE_SUBSCRIPTION: "schedule",
+    NotificationType.SCHEDULE_SUBSCRIPTION: "subscription",
     NotificationType.BROADCAST: "broadcast",
 }
 
@@ -91,22 +106,59 @@ class PushNotifier(PushNotifierPort):
             },
         }
 
+    async def _send_to_devices(
+        self, notification: Notification, push_subs: list[PushSubscription]
+    ) -> list[httpx2.Response | BaseException]:
+        message_data = self._build_message_data(notification)
+        topic = _TOPIC_TAGS.get(notification.type)
+        # A schedule notification lives only as long as its text is true, so
+        # the push service may hold it for what is left of that, not a fresh
+        # lifetime. TTL 0 still delivers to a device reachable right now.
+        ttl = _DEFAULT_TTL
+        remaining = notification.remaining_lifetime(datetime.now(UTC))
+        if remaining is not None:
+            ttl = max(remaining, timedelta(0))
+        # "high" is RFC 8030's level for a time-sensitive alert: the push
+        # service delivers it even to a phone saving battery.
+        urgency: PushUrgency = "normal"
+        if notification.type.is_time_sensitive:
+            urgency = "high"
+        # Every device's outcome is acted on (prune, retry) even when one send
+        # failed outright, so failures come back as results, not raised.
+        return await asyncio.gather(
+            *(
+                self.client.send(
+                    subscription=sub,
+                    message_data=message_data,
+                    ttl_seconds=int(ttl.total_seconds()),
+                    urgency=urgency,
+                    topic=topic,
+                )
+                for sub in push_subs
+            ),
+            return_exceptions=True,
+        )
+
     async def send_notification(self, notification: Notification) -> None:
         # Resolve WebPush up front so a misconfigured channel fails fast (and is
         # caught by the consumer) before we hit the gateway.
         self.client.ensure_available()
         push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
-        message_data = self._build_message_data(notification)
-        # A user may have several subscriptions (one per device/browser). Deliver
-        # to every reachable one this pass, then retry the whole notification only
-        # if some endpoint was transiently unavailable — the shared `tag` lets the
-        # OS collapse the redelivered copy on endpoints that already succeeded.
+        # End the read before the sends, so the pooled connection is not held
+        # while the push services answer.
+        await self.uow.commit()
+        # A user may have several subscriptions (one per device/browser), sent to
+        # at once. Deliver to every reachable one this pass, then retry the whole
+        # notification only if some endpoint was transiently unavailable — the
+        # shared `tag` lets the OS collapse the redelivered copy on endpoints that
+        # already succeeded.
+        responses = await self._send_to_devices(notification, push_subs)
         retry_after: int | None = None
-        for sub in push_subs:
-            response = await self.client.send(
-                subscription=sub,
-                message_data=message_data,
-            )
+        send_error: BaseException | None = None
+        for sub, response in zip(push_subs, responses, strict=True):
+            if isinstance(response, BaseException):
+                send_error = send_error or response
+                continue
             status_code = response.status_code
             if status_code in _GONE_STATUS_CODES:
                 await self.push_sub_gateway.delete(sub)
@@ -150,6 +202,10 @@ class PushNotifier(PushNotifierPort):
                         "status_code": status_code,
                     },
                 )
+        if send_error is not None:
+            # A timeout or connection error: the consumer redelivers, and the
+            # devices that did get it collapse the repeat by its `tag`.
+            raise send_error
         if retry_after is not None:
             raise NotificationRetryAfter(retry_after=retry_after)
 

@@ -2,6 +2,7 @@ from typing import Any
 
 import httpx2
 
+from fanfan.adapters.rate_limiter import RateLimiter
 from fanfan.adapters.vk.config import VkConfig
 
 # Pin the API version so VK never falls back to an account-default that could
@@ -12,6 +13,15 @@ _VK_API_VERSION = "5.199"
 # Every VK method hangs off this host. The vk.ru host is VK's post-rebrand
 # domain; api.vk.com still resolves to the same API. https://dev.vk.ru/
 _METHOD_BASE_URL = "https://api.vk.ru/method/"
+
+# VK allows a community token 20 requests per second and answers error 6 past
+# that (https://dev.vk.ru/ru/api/api-requests). Kept a little under, since the
+# limit is counted on VK's clock, not ours.
+# TODO: send identical texts (a change announcement) with `peer_ids`, up to 100
+# recipients a call — deferred because the consumer acks one notification per
+# message, and a multi-recipient call's per-recipient errors would each need
+# their own ack decision (ADR-0041).
+_REQUESTS_PER_SECOND = 18
 
 
 class VkApiError(Exception):
@@ -36,14 +46,18 @@ class VkApiClient:
     # (https://www.python-httpx.org/advanced/clients/). Provided at APP scope so
     # the pool outlives the per-message request scope; the group token is a
     # private detail here rather than a container-wide dependency.
+    # The rate limiter lives here, not in the notifier, because the quota is
+    # the group token's: every method call spends it, the cleanup delete too.
     def __init__(self, client: httpx2.AsyncClient, config: VkConfig) -> None:
         self._client = client
         self._config = config
+        self._rate_limiter = RateLimiter(per_second=_REQUESTS_PER_SECOND)
 
     async def _call_method(self, method: str, params: dict[str, Any]) -> Any:  # noqa: ANN401  # raw VK JSON; the public methods narrow it
         # Token and version travel in the POST body, not the query string, so the
         # group token never lands in access logs or the URL. VK still returns
         # HTTP 200 on a logical failure, carrying it in the body's `error` object.
+        await self._rate_limiter.wait()
         response = await self._client.post(
             f"{_METHOD_BASE_URL}{method}",
             data={
