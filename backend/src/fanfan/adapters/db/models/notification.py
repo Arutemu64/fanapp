@@ -21,7 +21,7 @@ class NotificationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         name="notificationtype",
     )
     # In-app deep-link path the notification points to (e.g. "/schedule").
-    # Nullable: legacy rows and notifications without a target fall back to root.
+    # Nullable: notifications without a target fall back to root.
     path: Mapped[str | None] = mapped_column()
     # SET NULL, not CASCADE: cancelling a mailing already deletes its
     # undelivered notifications explicitly (DeleteMailingNotifications), so a

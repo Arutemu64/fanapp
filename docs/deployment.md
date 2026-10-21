@@ -149,23 +149,6 @@ services gate on it with `service_completed_successfully`. `just deploy` caps th
 wait at 300s, which covers `pgbackup`'s on-start dump. `--remove-orphans` stops
 containers of services the Compose files no longer define.
 
-### Upgrading from the NATS stack (one-time)
-
-The release that replaced NATS and FastStream with Procrastinate
-([ADR-0041](adr/0041-procrastinate-replaces-nats-and-the-outbox.md)) deploys with
-`just deploy` as usual: the migration creates Procrastinate's tables, turns every
-undelivered `outbox_events` row into its jobs, and drops the outbox;
-`--remove-orphans` stops the old `faststream` and `nats` containers. Two things
-the migration cannot see:
-
-* **Messages already in JetStream but not yet consumed** are lost with NATS. At
-  this volume consumers drain in milliseconds, so deploy when nothing is in flight
-  — not mid-broadcast or mid-sync. A sync interrupted by the deploy is settled as
-  failed by `reap_stale` and can be started again.
-* **The `nats-data` volume** stays behind. Once the deploy is healthy, remove it:
-  `docker volume rm <project>_nats-data`. Drop the `NATS__*` and `OUTBOX__*` keys
-  and `SCHEDULER__OUTBOX_RETENTION_CRON` from `.env`; nothing reads them any more.
-
 ### Inspecting background jobs
 
 Jobs live in Postgres (`procrastinate_jobs`, with their status history in

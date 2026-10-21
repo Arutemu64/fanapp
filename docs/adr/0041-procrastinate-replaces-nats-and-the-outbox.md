@@ -75,9 +75,9 @@ outbox.
 - **Schema.** Procrastinate's schema SQL for 3.10.0 is vendored and applied by
   an Alembic revision. Alembic's `include_name` keeps autogenerate off the
   `procrastinate_*` tables.
-- **Cutover.** A data migration turns every undelivered outbox row into its
-  jobs, then drops `outbox_events` and its trigger. It refuses to run if an
-  undelivered row has no subscriber, rather than drop that row unseen.
+- **No cutover.** The app is not live, so a migration drops `outbox_events`
+  and its trigger outright: no outbox rows are carried over, and nothing keeps
+  NATS-era clients or queued messages working.
 - **SSE.** SSE fan-out moves from core NATS to Redis pub/sub
   (`adapters/redis/realtime_gateway.py`). Both are fire-and-forget, and SSE
   carries no committed state. Each api process holds one pattern subscription
@@ -112,9 +112,6 @@ outbox.
   SQLAlchemy's adapter mutex; one session never runs two statements at once, so
   this is safe. An integration test asserts that rolled-back jobs vanish with
   their transaction.
-- **Deploy caveat.** Messages already in JetStream but unconsumed at the deploy
-  that removes NATS are lost; the deploy guide says to cut over when nothing is
-  in flight.
 - **Upstream maturity.** Procrastinate's authors still want "real monitoring
   tools before we call this really ready for production"
   ([discussions](https://procrastinate.readthedocs.io/en/stable/discussions.html)).

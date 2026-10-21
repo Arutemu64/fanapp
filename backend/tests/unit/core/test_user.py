@@ -60,14 +60,6 @@ def test_users_are_equal_by_id() -> None:
     assert len({one, two}) == 1
 
 
-@pytest.mark.parametrize(
-    ("legacy", "role"),
-    [("helper", UserRole.VOLUNTEER), ("org", UserRole.ORGANIZER)],
-)
-def test_role_accepts_legacy_values(legacy: str, role: UserRole) -> None:
-    assert UserRole(legacy) is role
-
-
 def test_role_rejects_unknown_value() -> None:
     with pytest.raises(ValueError, match="admin"):
         UserRole("admin")

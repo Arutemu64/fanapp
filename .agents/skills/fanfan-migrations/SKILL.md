@@ -59,9 +59,14 @@ system user (`00000000-…-0000`). See `sync:run` and
 `server_default`s are not reliably detected and are sometimes emitted wrong —
 check them by hand.
 
-## 4. The app is in production — assume the table has rows
+## 4. Existing rows — not yet, but know the procedure
 
-**The app is deployed with real user data.** Autogenerate writes migrations
+**The app is not live yet** (AGENTS.md, "Pre-launch: no backward
+compatibility"): a one-step `add_column(..., nullable=False)` or a tightened
+constraint is fine, and no data migration is needed to carry old rows along.
+Once it launches with real user data, everything below applies.
+
+Autogenerate writes migrations
 against an empty throwaway Postgres (`just backend-generate-auto`), so it will
 happily emit a one-step `add_column(..., nullable=False)` or a constraint that
 only holds on a clean table — that migration then fails, or silently corrupts
