@@ -1,12 +1,12 @@
 import pytest
 
-from fanfan.core.events.base import AppEvent
+from fanfan.core.events.base import DomainEvent
 from fanfan.core.models.base import AggregateRoot
 
 pytestmark = pytest.mark.unit
 
 
-class _DummyEvent(AppEvent):
+class _DummyEvent(DomainEvent):
     subject = "tests.dummy"
 
     value: int

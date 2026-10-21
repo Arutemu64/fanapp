@@ -97,7 +97,7 @@ async def test_redelivered_trigger_does_not_rerun_a_finished_run(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # The SyncRequested consumer redelivers its trigger after an error, or when a
+    # The RunSyncCommand consumer redelivers its trigger after an error, or when a
     # long sync outlasts AckWait. A run that already moved past PENDING must not
     # start again, or one request would hit the vendor twice.
     login(sync_operator)

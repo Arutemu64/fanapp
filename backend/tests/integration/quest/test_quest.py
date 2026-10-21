@@ -5,6 +5,7 @@ import pytest
 import pytest_asyncio
 from dishka import AsyncContainer
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.quest.award_quest_points import (
     AwardQuestPoints,
@@ -25,6 +26,7 @@ from fanfan.application.interactors.quest.list_quest_history import (
     ListQuestHistoryInput,
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.quest import QuestAwardAlreadyExists, QuestDisabled
@@ -131,6 +133,28 @@ async def test_cancelled_award_leaves_the_balance(
     assert quest.points == 0
     assert quest.rank is None
     assert [award.can_cancel for award in page.awards] == [False]
+
+
+@pytest.mark.usefixtures("quest_enabled")
+async def test_award_and_cancel_each_enqueue_one_notification_for_the_player(
+    dishka_request: AsyncContainer,
+    quest_volunteer: User,
+    visitor: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+) -> None:
+    login(quest_volunteer)
+    award_id = await _award(dishka_request, visitor, 10)
+    # A replay is answered from the ledger and must not notify again.
+    await _award(dishka_request, visitor, 10, award_id)
+    await (await dishka_request.get(CancelQuestAward))(award_id)
+
+    messages = await outbox.fetch_unpublished(1000)
+    assert {m.subject for m in messages} == {CreateNotificationCommand.subject}
+    titles = [m.payload["notification"]["title"] for m in messages]
+    assert titles == ["+10 баллов в квесте", "Начисление отменено"]
+    recipients = {m.payload["notification"]["user_id"] for m in messages}
+    assert recipients == {str(visitor.id)}
 
 
 @pytest.mark.usefixtures("quest_enabled")

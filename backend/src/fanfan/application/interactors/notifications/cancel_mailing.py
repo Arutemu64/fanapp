@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
+from fanfan.application.commands.notifications import CancelMailingCommand
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -36,10 +37,10 @@ class CancelMailing:
             user=current_user, permission=Permission.NOTIFICATIONS_SEND
         )
 
-        # get() locks the row and registers the aggregate with the UoW, so the
-        # MailingCancelled event recorded by cancel() lands in the outbox in the
-        # same transaction as the status flip. cancel() raises if the mailing is
-        # already cancelled or has reached a terminal state.
+        # get() locks the row, so the status flip and the enqueued
+        # CancelMailingCommand land in one transaction via the outbox. cancel()
+        # raises if the mailing is already cancelled or has reached a terminal
+        # state.
         mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
@@ -48,6 +49,7 @@ class CancelMailing:
         # so the transition is not otherwise persisted): this stops in-flight
         # sends via ensure_active() without waiting for the async event consumer.
         await self.mailing_gateway.save(mailing)
+        self.uow.enqueue(CancelMailingCommand(mailing_id=mailing.id))
         await self.uow.commit()
 
         logger.info(

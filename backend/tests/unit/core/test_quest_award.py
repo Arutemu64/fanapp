@@ -3,7 +3,6 @@ from uuid import uuid7
 
 import pytest
 
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.quest import (
     CannotAwardSelf,
@@ -26,7 +25,7 @@ OTHER_VOLUNTEER = UserId(uuid7())
 
 
 def _award(amount: int = 10) -> QuestAward:
-    award = QuestAward.create(
+    return QuestAward.create(
         award_id=QuestAwardId(uuid7()),
         user_id=PLAYER,
         amount=amount,
@@ -35,27 +34,14 @@ def _award(amount: int = 10) -> QuestAward:
         max_amount=100,
         now=NOW,
     )
-    award.pull_events()
-    return award
 
 
-def test_create_notifies_the_player() -> None:
-    award = QuestAward.create(
-        award_id=QuestAwardId(uuid7()),
-        user_id=PLAYER,
-        amount=21,
-        message="Нашёл Тоторо",
-        awarded_by=VOLUNTEER,
-        max_amount=100,
-        now=NOW,
-    )
+def test_award_notification_tells_the_player_the_points() -> None:
+    notification = _award(21).award_notification()
 
-    [event] = award.pull_events()
-
-    assert isinstance(event, NotificationQueued)
-    assert event.notification.user_id == PLAYER
-    assert event.notification.title == "+21 балл в квесте"
-    assert event.notification.type is NotificationType.QUEST
+    assert notification.user_id == PLAYER
+    assert notification.title == "+21 балл в квесте"
+    assert notification.type is NotificationType.QUEST
 
 
 def test_create_refuses_awarding_yourself() -> None:
@@ -87,9 +73,7 @@ def test_volunteer_cancels_own_award_within_the_window() -> None:
 
     assert award.cancelled_at == later
     assert award.cancelled_by == VOLUNTEER
-    [event] = award.pull_events()
-    assert isinstance(event, NotificationQueued)
-    assert event.notification.title == "Начисление отменено"
+    assert award.cancellation_notification().title == "Начисление отменено"
 
 
 def test_volunteer_cannot_cancel_after_the_window() -> None:

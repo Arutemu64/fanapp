@@ -30,7 +30,7 @@ correct test.
 2. **An interactor** (`application/interactors/`) → `@pytest.mark.integration`
    test in `tests/integration/<feature>/`. Runs against real PostgreSQL and
    Redis. Resolve the interactor from `dishka_request`, assert on persisted
-   state and enqueued/published events. **Never unit-test an interactor with
+   state and enqueued/published events and commands. **Never unit-test an interactor with
    mocked gateways** — its behavior lives in SQL.
 3. **Copy the reference example**:
    `tests/integration/schedule_mgmt/test_set_current_event.py` (happy path,
@@ -173,7 +173,7 @@ instead of verifying behavior.
 
 A test resolves what it needs from `dishka_request`, sets up state through
 gateways, runs the interactor, and asserts on persisted state and
-enqueued events. The shared plumbing (acting user, outbox, unit of
+enqueued events and commands. The shared plumbing (acting user, outbox, unit of
 work) comes in as fixtures; the interactor under test and the
 gateways it asserts on stay explicit so a reader sees the test's
 surface at a glance:

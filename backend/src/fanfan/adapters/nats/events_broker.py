@@ -6,7 +6,7 @@ from typing import Any
 from faststream.nats import NatsBroker
 
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.core.events.base import AppEvent
+from fanfan.core.events.base import Message
 
 # Name of the JetStream stream that captures domain-event subjects.
 # Mirrors fanfan.presentation.faststream.jstream.stream — kept as a local
@@ -38,7 +38,7 @@ class NatsEventBroker(EventBroker):
     def __init__(self, broker: NatsBroker) -> None:
         self.broker = broker
 
-    async def publish(self, event: AppEvent) -> None:
+    async def publish(self, event: Message) -> None:
         # Through JetStream, like publish_raw: a core publish gets no reply, so
         # an event the stream did not store (subject not captured, connection
         # lost mid-send) would vanish without an error. The PubAck turns that
@@ -56,10 +56,10 @@ class NatsEventBroker(EventBroker):
             timeout=_PUBLISH_TIMEOUT_SECONDS,
         )
 
-    async def publish_many(self, events: Sequence[AppEvent]) -> None:
+    async def publish_many(self, events: Sequence[Message]) -> None:
         in_flight = asyncio.Semaphore(_MAX_IN_FLIGHT_PUBLISHES)
 
-        async def publish_bounded(event: AppEvent) -> None:
+        async def publish_bounded(event: Message) -> None:
             async with in_flight:
                 await self.publish(event)
 

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.base import AccessDenied, AppException
 from fanfan.core.exceptions.quest import (
     CannotAwardSelf,
@@ -59,7 +58,7 @@ class QuestAward(AggregateRoot):
             raise CannotAwardSelf
         if not 1 <= amount <= max_amount:
             raise QuestAwardAmountOutOfRange
-        award = cls(
+        return cls(
             id=award_id,
             user_id=user_id,
             amount=amount,
@@ -67,20 +66,28 @@ class QuestAward(AggregateRoot):
             awarded_by=awarded_by,
             created_at=now,
         )
-        award.record_event(
-            NotificationQueued(
-                notification=NewNotification(
-                    id=generate_notification_id(),
-                    user_id=user_id,
-                    title=f"+{format_points(amount)} в квесте",
-                    body=message,
-                    type=NotificationType.QUEST,
-                    path=QUEST_PATH,
-                    mailing_id=None,
-                )
-            )
+
+    def award_notification(self) -> NewNotification:
+        return NewNotification(
+            id=generate_notification_id(),
+            user_id=self.user_id,
+            title=f"+{format_points(self.amount)} в квесте",
+            body=self.message,
+            type=NotificationType.QUEST,
+            path=QUEST_PATH,
+            mailing_id=None,
         )
-        return award
+
+    def cancellation_notification(self) -> NewNotification:
+        return NewNotification(
+            id=generate_notification_id(),
+            user_id=self.user_id,
+            title="Начисление отменено",
+            body=f"−{format_points(self.amount)}: {self.message}",
+            type=NotificationType.QUEST,
+            path=QUEST_PATH,
+            mailing_id=None,
+        )
 
     def is_same_award(
         self, *, user_id: UserId, amount: int, message: str, awarded_by: UserId
@@ -117,19 +124,6 @@ class QuestAward(AggregateRoot):
             raise refusal
         self.cancelled_at = now
         self.cancelled_by = by_user_id
-        self.record_event(
-            NotificationQueued(
-                notification=NewNotification(
-                    id=generate_notification_id(),
-                    user_id=self.user_id,
-                    title="Начисление отменено",
-                    body=f"−{format_points(self.amount)}: {self.message}",
-                    type=NotificationType.QUEST,
-                    path=QUEST_PATH,
-                    mailing_id=None,
-                )
-            )
-        )
 
 
 def cancel_refusal(  # noqa: PLR0913

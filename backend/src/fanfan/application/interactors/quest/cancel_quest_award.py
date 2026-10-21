@@ -1,6 +1,7 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.quest_awards import QuestAwardGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -49,6 +50,9 @@ class CancelQuestAward:
             now=datetime.now(UTC),
         )
         await self.quest_award_gateway.save(award)
+        self.uow.enqueue(
+            CreateNotificationCommand(notification=award.cancellation_notification())
+        )
         await self.uow.commit()
 
         logger.info(

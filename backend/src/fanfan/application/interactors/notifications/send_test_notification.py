@@ -1,7 +1,7 @@
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import TestNotificationTooFast
 from fanfan.core.exceptions.rate_limit import CooldownActive
 from fanfan.core.models.notification import NewNotification
@@ -34,7 +34,7 @@ class SendTestNotification:
                 # Tests all user notification channels with a single shared
                 # notification.
                 await self.events_broker.publish(
-                    NotificationQueued(
+                    CreateNotificationCommand(
                         notification=NewNotification(
                             id=generate_notification_id(),
                             user_id=current_user_id,

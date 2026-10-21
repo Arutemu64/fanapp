@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from fanfan.core.events.notifications import BroadcastQueued, MailingCancelled
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
     MailingNotCancellable,
@@ -43,14 +42,10 @@ class Mailing(AggregateRoot):
         )
 
     def queue_broadcast(self, body: str, roles: list[UserRole]) -> None:
-        # Persist what was sent on the mailing itself, then record the broadcast
-        # as a domain event instead of publishing it directly. The UnitOfWork
-        # writes the event to the outbox in the same transaction as this mailing,
-        # so the row and its event are durable together (see docs/backend.md ->
-        # Transactional outbox).
+        # Persist what was sent on the mailing itself; the interactor enqueues
+        # the fan-out command in the same transaction.
         self.body = body
         self.roles = roles
-        self.record_event(BroadcastQueued(mailing_id=self.id, body=body, roles=roles))
 
     def is_broadcast(
         self, by_user_id: UserId, body: str, roles: list[UserRole]
@@ -131,15 +126,11 @@ class Mailing(AggregateRoot):
         if self.status in (MailingStatus.FINISHED, MailingStatus.FAILED):
             raise MailingNotCancellable
         self.status = MailingStatus.CANCELLED
-        # The consumer of this event deletes the undelivered notifications and
-        # confirms the CANCELLED status; recording it here (vs publishing) keeps
-        # the status flip and the event in one transaction via the outbox.
-        self.record_event(MailingCancelled(mailing_id=self.id))
 
     def confirm_cancelled(self) -> None:
         """Settle a cancellation the consumer is reacting to; idempotent.
 
-        Unlike cancel(), this never raises: MailingCancelled is delivered
+        Unlike cancel(), this never raises: CancelMailingCommand is delivered
         at-least-once, so a redelivery finds the mailing already CANCELLED.
         """
         self.status = MailingStatus.CANCELLED

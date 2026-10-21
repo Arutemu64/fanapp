@@ -4,6 +4,7 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.commands.notifications import CancelMailingCommand
 from fanfan.application.interactors.notifications.cancel_mailing import (
     CancelMailing,
     CancelMailingInput,
@@ -11,7 +12,6 @@ from fanfan.application.interactors.notifications.cancel_mailing import (
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
@@ -29,7 +29,7 @@ pytestmark = [
 ]
 
 
-async def test_cancel_mailing_marks_cancelled_and_enqueues_event(
+async def test_cancel_mailing_marks_cancelled_and_enqueues_command(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     outbox: OutboxGateway,
@@ -50,10 +50,10 @@ async def test_cancel_mailing_marks_cancelled_and_enqueues_event(
     assert stored is not None
     # Flipped synchronously so ensure_active() rejects in-flight sends at once.
     assert stored.status is MailingStatus.CANCELLED
-    # The event drives the consumer that deletes the undelivered notifications.
+    # The command drives the consumer that deletes the undelivered notifications.
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(MailingCancelled(mailing_id=mailing.id))
+    ] == as_outbox(CancelMailingCommand(mailing_id=mailing.id))
 
 
 async def test_cancel_mailing_twice_raises_already_cancelled(

@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 from pydantic.types import UuidVersion
 
+from fanfan.application.commands.notifications import ProcessBroadcastCommand
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -71,11 +72,16 @@ class SendBroadcast:
             )
             return SendBroadcastOutput(mailing_id=existing.id)
 
-        # Record BroadcastQueued on the mailing so it lands in the outbox in the
+        # Enqueued, not published: the fan-out command lands in the outbox in the
         # same transaction as the row — no dual write between commit and publish.
         mailing = Mailing.create(by_user_id=current_user.id, mailing_id=data.mailing_id)
         mailing.queue_broadcast(body=data.body, roles=data.roles)
         await self.mailing_gateway.add(mailing)
+        self.uow.enqueue(
+            ProcessBroadcastCommand(
+                mailing_id=mailing.id, body=data.body, roles=data.roles
+            )
+        )
         await self.uow.commit()
 
         logger.info(

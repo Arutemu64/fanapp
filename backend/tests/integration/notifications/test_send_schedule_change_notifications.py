@@ -5,6 +5,7 @@ from uuid import uuid7
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
@@ -15,7 +16,6 @@ from fanfan.application.ports.gateways.schedule_entries import ScheduleEntryGate
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.schedule_entry import ScheduleEvent
@@ -121,7 +121,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     await interactor(SendScheduleChangeNotificationsInput(schedule_change_id=change.id))
 
     published = [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
+        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
     ]
     assert len(published) == 1
     event = published[0]
@@ -182,7 +182,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     await interactor(data)
 
     published = [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
+        e for e in broker.published_events if isinstance(e, CreateNotificationCommand)
     ]
     # Both runs target the one in-window subscriber; the id is identical, so the
     # gateway upsert would no-op the second insert instead of duplicating it.

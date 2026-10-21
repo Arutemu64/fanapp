@@ -58,7 +58,7 @@ class SqlNotificationGateway(NotificationGateway):
             "mailing_id": notification.mailing_id,
             "seen_at": notification.seen_at,
         }
-        # A redelivered NotificationQueued carries the same (deterministic)
+        # A redelivered CreateNotificationCommand carries the same (deterministic)
         # id, so the conflicting insert is a clean no-op rather than an
         # IntegrityError that would nack-and-redeliver forever.
         stmt = (

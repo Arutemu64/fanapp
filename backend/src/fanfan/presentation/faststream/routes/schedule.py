@@ -3,6 +3,7 @@ from dishka_faststream import inject
 from faststream import AckPolicy
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
+from fanfan.application.commands.notifications import CancelMailingCommand
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
@@ -11,7 +12,6 @@ from fanfan.application.interactors.schedule.publish_schedule_updated import (
     PublishScheduleUpdated,
 )
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.events.schedule import (
     ScheduleChangeCreated,
     ScheduleChangeUndone,
@@ -83,5 +83,5 @@ async def undo_schedule_change(
     # can still go out, so it must not wait on the cache warm-up or fail with
     # the live update.
     if data.mailing_id:
-        await events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
+        await events_broker.publish(CancelMailingCommand(mailing_id=data.mailing_id))
     await publish_schedule_updated()

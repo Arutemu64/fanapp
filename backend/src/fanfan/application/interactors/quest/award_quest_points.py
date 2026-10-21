@@ -5,6 +5,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 from pydantic.types import UuidVersion
 
+from fanfan.application.commands.notifications import CreateNotificationCommand
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.quest_awards import QuestAwardGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -100,6 +101,9 @@ class AwardQuestPoints:
             now=datetime.now(UTC),
         )
         await self.quest_award_gateway.add(award)
+        self.uow.enqueue(
+            CreateNotificationCommand(notification=award.award_notification())
+        )
         await self.uow.commit()
 
         logger.info(

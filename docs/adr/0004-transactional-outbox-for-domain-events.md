@@ -1,6 +1,6 @@
 # ADR-0004: Transactional outbox for domain-event delivery
 
-- **Status:** Accepted
+- **Status:** Accepted; service events superseded by [ADR-0040](0040-commands-separate-from-domain-events.md)
 - **Date:** 2026-07-09
 - **Deciders:** Project maintainers
 

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from fanfan.core.events.sync import SyncRequested
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.sync import (
     SyncRunId,
@@ -43,13 +42,6 @@ class SyncRun(AggregateRoot):
             result=None,
             error=None,
         )
-
-    def queue(self) -> None:
-        # Record the request as a domain event instead of publishing it
-        # directly. The UnitOfWork writes it to the outbox in the same
-        # transaction as this row, so the run and its event are durable
-        # together (see docs/backend.md -> Transactional outbox).
-        self.record_event(SyncRequested(sync_run_id=self.id, source=self.source))
 
     def mark_running(self, now: datetime) -> None:
         self.status = SyncRunStatus.RUNNING

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.models import SyncRunORM
 from fanfan.adapters.db.worker_lock import PostgresWorkerLock
+from fanfan.application.commands.sync import RunSyncCommand
 from fanfan.application.interactors.sync.request_sync import (
     RequestSync,
     RequestSyncInput,
@@ -20,7 +21,6 @@ from fanfan.application.services.sync_run_tracker import (
     STALE_RUN_TIMEOUT,
     sync_lock_key,
 )
-from fanfan.core.events.sync import SyncRequested
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.sync_run import SyncRun
@@ -50,7 +50,7 @@ async def test_request_sync_creates_pending_run_and_enqueues_event(
     assert run.finished_at is None
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(SyncRequested(sync_run_id=run.id, source=SyncSource.COSPLAY2))
+    ] == as_outbox(RunSyncCommand(sync_run_id=run.id, source=SyncSource.COSPLAY2))
 
 
 async def test_request_sync_records_the_requesting_organizer(
