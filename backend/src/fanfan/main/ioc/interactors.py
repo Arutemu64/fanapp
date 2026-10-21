@@ -38,6 +38,8 @@ from fanfan.application.interactors.current_user.update_user_settings import (
 from fanfan.application.interactors.demo.seed_demo_data import SeedDemoData
 from fanfan.application.interactors.feedback.list_feedback import ListFeedback
 from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedback
+from fanfan.application.interactors.jobs.config import JobsConfig
+from fanfan.application.interactors.jobs.purge_jobs import PurgeJobs
 from fanfan.application.interactors.notifications.cancel_mailing import CancelMailing
 from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.notifications.create_notification import (
@@ -77,13 +79,6 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 )
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
-)
-from fanfan.application.interactors.outbox.config import OutboxConfig
-from fanfan.application.interactors.outbox.publish_outbox_events import (
-    PublishOutboxEvents,
-)
-from fanfan.application.interactors.outbox.purge_outbox_events import (
-    PurgeOutboxEvents,
 )
 from fanfan.application.interactors.permissions.grant_permission import (
     GrantPermission,
@@ -186,11 +181,11 @@ from fanfan.application.interactors.voting.set_voting_time_range import (
 class InteractorsProvider(Provider):
     scope = Scope.REQUEST
 
-    # Tuning slices consumed only by the interactors below (outbox relay/purge,
-    # notification purge), unpacked here so they live with their consumers.
+    # Tuning slices consumed only by the job queue, the interactors below (job
+    # and notification purge), unpacked here so they live with their consumers.
     @provide(scope=Scope.APP)
-    def get_outbox_config(self, config: EnvConfig) -> OutboxConfig:
-        return config.outbox
+    def get_jobs_config(self, config: EnvConfig) -> JobsConfig:
+        return config.jobs
 
     @provide(scope=Scope.APP)
     def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
@@ -276,8 +271,7 @@ class InteractorsProvider(Provider):
         CreatePushSubscription,
         CheckPushSubscription,
         DeletePushSubscription,
-        PublishOutboxEvents,
-        PurgeOutboxEvents,
+        PurgeJobs,
         PurgeNotifications,
         CreateNotification,
         ListUserNotifications,

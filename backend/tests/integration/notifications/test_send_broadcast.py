@@ -9,7 +9,6 @@ from fanfan.application.interactors.notifications.send_broadcast import (
     SendBroadcastInput,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import BroadcastQueued
 from fanfan.core.exceptions.base import AccessDenied
@@ -18,6 +17,7 @@ from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.user import UserRole
+from tests.fixtures.outbox import Outbox
 from tests.integration.conftest import as_outbox, make_broadcaster
 
 
@@ -34,7 +34,7 @@ pytestmark = [
 async def test_send_broadcast_creates_mailing_and_enqueues_event(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SendBroadcast)
@@ -53,9 +53,7 @@ async def test_send_broadcast_creates_mailing_and_enqueues_event(
     assert mailing.body == "Всем привет!"
     assert mailing.roles == roles
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         BroadcastQueued(mailing_id=result.mailing_id, body="Всем привет!", roles=roles)
     )
 
@@ -64,7 +62,7 @@ async def test_send_broadcast_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SendBroadcast)
@@ -74,13 +72,13 @@ async def test_send_broadcast_without_permission_raises_access_denied(
         await interactor(_broadcast("Нельзя", [UserRole.VISITOR]))
 
     await uow.rollback()
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await outbox.events() == []
 
 
 async def test_send_broadcast_replay_returns_the_mailing_without_resending(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SendBroadcast)
@@ -93,9 +91,7 @@ async def test_send_broadcast_replay_returns_the_mailing_without_resending(
     second = await interactor(data)
 
     assert second.mailing_id == first.mailing_id == data.mailing_id
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         BroadcastQueued(
             mailing_id=first.mailing_id, body="Всем привет!", roles=[UserRole.VISITOR]
         )
@@ -120,7 +116,7 @@ async def test_send_broadcast_with_a_taken_id_raises_already_exists(
 async def test_overlapping_send_loses_the_insert_race_with_already_exists(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SendBroadcast)
@@ -138,9 +134,7 @@ async def test_overlapping_send_loses_the_insert_race_with_already_exists(
         await mailing_gateway.add(racer)
 
     await uow.rollback()
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         BroadcastQueued(
             mailing_id=first.mailing_id, body="Всем привет!", roles=[UserRole.VISITOR]
         )

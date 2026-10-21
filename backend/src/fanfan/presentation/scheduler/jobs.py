@@ -6,11 +6,9 @@ from typing import Any
 import sentry_sdk
 from dishka import AsyncContainer
 
+from fanfan.application.interactors.jobs.purge_jobs import PurgeJobs
 from fanfan.application.interactors.notifications.purge_notifications import (
     PurgeNotifications,
-)
-from fanfan.application.interactors.outbox.purge_outbox_events import (
-    PurgeOutboxEvents,
 )
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.interactors.sync.execute_tickets_sync import ExecuteTicketsSync
@@ -42,9 +40,9 @@ def get_job_definitions(config: SchedulerConfig) -> list[JobDefinition]:
             interactor=ExecuteCosplaySync,
         ),
         JobDefinition(
-            id="outbox_retention",
-            cron=config.outbox_retention_cron,
-            interactor=PurgeOutboxEvents,
+            id="jobs_retention",
+            cron=config.jobs_retention_cron,
+            interactor=PurgeJobs,
         ),
         JobDefinition(
             id="notification_retention",

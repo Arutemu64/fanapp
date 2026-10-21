@@ -18,7 +18,7 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserId, Username, UserRole
-from tests.fakes.event_broker import FakeEventBroker
+from tests.fixtures.outbox import Outbox
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -55,13 +55,13 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
 
     ProcessBroadcast reads every user matching the roles, records that count as
     the mailing total, and publishes exactly one NotificationQueued per user via
-    the EventBroker. The recipient set is compared against read_ids_by_roles so
+    the jobs table. The recipient set is compared against read_ids_by_roles so
     the assertion holds regardless of any seeded users of that role.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
     user_gateway = await dishka_request.get(UserGateway)
-    broker = await dishka_request.get(FakeEventBroker)
+    outbox = await Outbox.resolve(dishka_request)
     login(visitor)
 
     created = await _add_users(dishka_request, uow, count=3, role=UserRole.VOLUNTEER)
@@ -79,9 +79,7 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     expected_ids = set(await user_gateway.read_ids_by_roles(UserRole.VOLUNTEER))
     assert {u.id for u in created} <= expected_ids
 
-    published = [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
-    ]
+    published = await outbox.events_of(NotificationQueued)
     recipient_ids = [e.notification.user_id for e in published]
     # One event per matching user, each targeting a distinct recipient.
     assert len(published) == len(expected_ids)
@@ -114,7 +112,7 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
-    broker = await dishka_request.get(FakeEventBroker)
+    outbox = await Outbox.resolve(dishka_request)
     login(visitor)
 
     mailing = Mailing.create(by_user_id=visitor.id)
@@ -132,9 +130,7 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     assert stored is not None
     assert stored.total_count == 0
     assert stored.status is MailingStatus.FINISHED
-    assert [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
-    ] == []
+    assert await outbox.events_of(NotificationQueued) == []
 
 
 async def test_process_broadcast_missing_mailing_raises_not_found(
@@ -144,7 +140,7 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(ProcessBroadcast)
-    broker = await dishka_request.get(FakeEventBroker)
+    outbox = await Outbox.resolve(dishka_request)
     login(visitor)
 
     await _add_users(dishka_request, uow, count=1, role=UserRole.VOLUNTEER)
@@ -158,9 +154,7 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
             )
         )
 
-    assert [
-        e for e in broker.published_events if isinstance(e, NotificationQueued)
-    ] == []
+    assert await outbox.events_of(NotificationQueued) == []
 
 
 async def test_process_broadcast_rerun_yields_identical_notification_ids(
@@ -169,15 +163,15 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    """Plan 007: a redelivered NotificationQueued must reuse the same id.
+    """Plan 007: a rerun broadcast job must reuse the same ids.
 
     ProcessBroadcast derives each notification's id from (mailing_id, user_id),
-    so rerunning it for the same mailing (as a redelivery of the broadcast
-    message would) produces the exact same set of ids rather than duplicates.
+    so rerunning it for the same mailing (as a retry of the broadcast job
+    would) produces the exact same set of ids rather than duplicates.
     """
     interactor = await dishka_request.get(ProcessBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
-    broker = await dishka_request.get(FakeEventBroker)
+    outbox = await Outbox.resolve(dishka_request)
     login(visitor)
 
     await _add_users(dishka_request, uow, count=3, role=UserRole.VOLUNTEER)
@@ -189,19 +183,12 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
         mailing_id=mailing.id, body="Повторная рассылка", roles=[UserRole.VOLUNTEER]
     )
     await interactor(run_input)
-    first_ids = {
-        e.notification.id
-        for e in broker.published_events
-        if isinstance(e, NotificationQueued)
-    }
+    first_ids = [e.notification.id for e in await outbox.events_of(NotificationQueued)]
 
-    broker.published_events.clear()
     await interactor(run_input)
-    second_ids = {
-        e.notification.id
-        for e in broker.published_events
-        if isinstance(e, NotificationQueued)
-    }
+    all_ids = [e.notification.id for e in await outbox.events_of(NotificationQueued)]
 
     assert first_ids
-    assert first_ids == second_ids
+    # The rerun queued the same ids again rather than new ones.
+    assert len(all_ids) == 2 * len(first_ids)
+    assert set(all_ids) == set(first_ids)

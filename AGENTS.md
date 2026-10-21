@@ -57,17 +57,17 @@ codebase guide.
 ## Stack & commands
 
 - **Frontend**: SvelteKit (Svelte 5 runes) + shadcn-svelte + Tailwind v4 | `pnpm`
-- **Backend**: FastAPI + PostgreSQL (SQLAlchemy + Alembic) + Redis + NATS (FastStream) | `uv`
+- **Backend**: FastAPI + PostgreSQL (SQLAlchemy + Alembic, plus a Postgres job queue) + Redis (Valkey, incl. SSE pub/sub) | `uv`
 - **Runner**: `just`, from the repo root.
 
 | Command                                               | Does                                                                                                                                                                                   |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `just bootstrap`                                      | Local setup: `.env` + generated secrets + VAPID keys. Idempotent.                                                                                                                      |
 | `just run-dev` / `just run-prod`                      | Full env via Docker Compose (dev / local prod build)                                                                                                                                   |
-| `just run-infra` / `just stop-infra`                  | Backing services only (Postgres, Redis, NATS), for running the app on the host                                                                                                         |
+| `just run-infra` / `just stop-infra`                  | Backing services only (Postgres, Redis), for running the app on the host                                                                                                               |
 | `just deploy`                                         | Server deploy: pull prebuilt GHCR images, restart                                                                                                                                      |
 | `just backend-dev` / `just frontend-dev`              | Run one side on the host (pair with `just run-infra`)                                                                                                                                  |
-| `just backend-stream` / `just backend-scheduler`      | Run the FastStream consumer / scheduler (outbox relay + syncs) on the host (pair with `just run-infra`)                                                                                |
+| `just backend-worker` / `just backend-scheduler`      | Run the job worker / scheduler (syncs + retention) on the host (pair with `just run-infra`)                                                                                            |
 | `just backend-seed-demo`                              | Fill an empty environment with a demo programme and voting (idempotent)                                                                                                                |
 | `just backend-lint` / `just backend-typecheck`        | Sort deps + format + ruff + `ty` + import-linter / `ty` alone                                                                                                                          |
 | `just frontend-lint` / `just frontend-check`          | Prettier + ESLint / `svelte-check`                                                                                                                                                     |
@@ -94,9 +94,9 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
-│   ├── presentation/    # HTTP (web/), NATS (faststream/), CLI (cli/), APScheduler cron jobs (scheduler/)
-│   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
-│   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
+│   ├── presentation/    # HTTP (web/), job handlers + worker loop (worker/), CLI (cli/), APScheduler cron jobs (scheduler/)
+│   ├── adapters/        # Infrastructure: DB (incl. the jobs table), Redis/Valkey, Telegram, external clients
+│   ├── main/            # Entrypoints (web, cli, worker, scheduler) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
 ├── frontend/
 │   ├── messages/        # ru.json: all user-facing copy (Paraglide JS)

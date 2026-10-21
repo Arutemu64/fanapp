@@ -1,9 +1,9 @@
 import logging
 from dataclasses import dataclass
 
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.notifications import NotificationQueued
@@ -29,13 +29,13 @@ class SendPersonalNotification:
         mailing_gateway: MailingGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
-        events_broker: EventBroker,
+        uow: UnitOfWork,
     ) -> None:
         self.user_gateway = user_gateway
         self.mailing_gateway = mailing_gateway
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
-        self.events_broker = events_broker
+        self.uow = uow
 
     async def __call__(self, data: SendPersonalNotificationInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -47,19 +47,22 @@ class SendPersonalNotification:
         if user is None:
             raise UserNotFound
 
-        await self.events_broker.publish(
-            NotificationQueued(
-                notification=NewNotification(
-                    id=generate_notification_id(),
-                    user_id=user.id,
-                    title="Личное сообщение",
-                    body=data.message_text,
-                    type=NotificationType.MESSAGE,
-                    path="/notifications",
-                    mailing_id=None,
-                ),
-            )
+        self.uow.record_events(
+            [
+                NotificationQueued(
+                    notification=NewNotification(
+                        id=generate_notification_id(),
+                        user_id=user.id,
+                        title="Личное сообщение",
+                        body=data.message_text,
+                        type=NotificationType.MESSAGE,
+                        path="/notifications",
+                        mailing_id=None,
+                    ),
+                )
+            ]
         )
+        await self.uow.commit()
 
         logger.info(
             "Personal notification sent",

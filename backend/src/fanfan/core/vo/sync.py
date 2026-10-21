@@ -21,7 +21,7 @@ class SyncSource(enum.StrEnum):
 
 
 class SyncRunStatus(enum.StrEnum):
-    # Requested over HTTP, waiting for the NATS consumer to pick it up. Runs
+    # Requested over HTTP, waiting for the worker to pick its job up. Runs
     # started by cron or the CLI skip this state — they begin as RUNNING.
     PENDING = "pending"
     RUNNING = "running"

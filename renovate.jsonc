@@ -169,7 +169,6 @@
         "sqlalchemy",
         "alembic",
         "aiogram",
-        "faststream",
         "svelte",
         "@sveltejs/kit",
         "vite",
@@ -181,7 +180,6 @@
         "node",
         "python",
         "valkey/valkey",
-        "nats",
         "nginx",
         "debian"
       ],

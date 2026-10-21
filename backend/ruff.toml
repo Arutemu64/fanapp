@@ -89,8 +89,8 @@ ignore = [
 allow-star-arg-any = true
 
 [lint.flake8-bugbear]
-# Safe list of immutables to prevent false positives when using FastAPI/FastStream DI
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "faststream.Depends", "pydantic.Field"]
+# Safe list of immutables to prevent false positives when using FastAPI DI
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "pydantic.Field"]
 
 [lint.per-file-ignores]
 "src/fanfan/core/utils/pluralize.py" = [

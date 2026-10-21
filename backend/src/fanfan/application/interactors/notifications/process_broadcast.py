@@ -2,7 +2,6 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -29,12 +28,10 @@ class ProcessBroadcast:
     def __init__(
         self,
         user_gateway: UserGateway,
-        events_broker: EventBroker,
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
     ) -> None:
         self.user_gateway = user_gateway
-        self.events_broker = events_broker
         self.mailing_gateway = mailing_gateway
         self.uow = uow
 
@@ -56,14 +53,13 @@ class ProcessBroadcast:
         # SENDING and CreateNotification flips it to FINISHED on the last insert.
         mailing.begin_fan_out(len(recipient_ids))
         await self.mailing_gateway.save(mailing)
-        await self.uow.commit()
 
         events = [
             NotificationQueued(
                 notification=NewNotification(
-                    # Deterministic per (mailing, user): a redelivered
-                    # NotificationQueued reruns this with the same id, so the
-                    # gateway upsert below no-ops instead of duplicating.
+                    # Deterministic per (mailing, user): a rerun of this job
+                    # queues the same ids, so CreateNotification's upsert
+                    # no-ops instead of duplicating.
                     id=notification_id_for(data.mailing_id, user_id),
                     user_id=user_id,
                     title="Рассылка от организаторов",
@@ -75,4 +71,7 @@ class ProcessBroadcast:
             )
             for user_id in recipient_ids
         ]
-        await self.events_broker.publish_many(events)
+        # Queued in the mailing's transaction: the fan-out is recorded together
+        # with the SENDING status or not at all.
+        self.uow.record_events(events)
+        await self.uow.commit()

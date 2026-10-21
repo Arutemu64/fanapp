@@ -1,6 +1,6 @@
 # ADR-0010: HTTP-triggered background jobs use a status row, outbox and durable consumer
 
-- **Status:** Accepted
+- **Status:** Accepted; durable consumer superseded by [ADR-0040](0040-postgres-job-queue-replaces-nats.md)
 - **Date:** 2026-07-25
 - **Deciders:** maintainer
 

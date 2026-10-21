@@ -59,8 +59,8 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 |---|---|
 | Frontend | SvelteKit (Svelte 5 runes), TanStack Query (server state, offline cache in IndexedDB), shadcn-svelte, Tailwind CSS v4, `pnpm` |
 | Backend | FastAPI, aiogram (Telegram Bot API), SQLAlchemy + Alembic, Dishka (DI), `uv` |
-| Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
-| Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
+| Data / infra | PostgreSQL, Redis (Valkey) |
+| Jobs | APScheduler (periodic syncs), a Postgres job queue (domain events) |
 | Tooling | Docker Compose, `just` task runner |
 
 The backend follows clean / hexagonal architecture: pure `core` and `application` layers, with infrastructure behind ports in `adapters`. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) for the full guidelines.
@@ -88,8 +88,8 @@ The backend follows clean / hexagonal architecture: pure `core` and `application
 just bootstrap
 ```
 
-This creates `.env` from the template, fills the generated secrets (DB / Redis /
-NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
+This creates `.env` from the template, fills the generated secrets (DB / Redis
+passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
 (`secrets/private_key.pem`, `secrets/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
 idempotent: re-run anytime, and it never overwrites values you've already set.
 
@@ -118,7 +118,7 @@ just run-dev      # dev: hot-reload via Compose --watch
 just run-prod     # prod: includes ops profile (pgbackup)
 ```
 
-This brings up the frontend, API, FastStream consumer, scheduler, Postgres, Redis, and NATS. Migrations run automatically via the `migration` service.
+This brings up the frontend, API, job worker, scheduler, Postgres and Redis. Migrations run automatically via the `migration` service.
 
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
@@ -130,7 +130,7 @@ Compose network, the reverse-proxy layout. For iterating on code, §3 is faster.
 
 ### 3. Run the app on the host, infra in Docker (recommended for day-to-day work)
 
-Postgres, Redis and NATS stay containerised; the API and the frontend run
+Postgres and Redis stay containerised; the API and the frontend run
 natively. Reload is faster than any file sync, and breakpoints, profilers and
 your editor's language server all attach to a real local process instead of one
 inside a container.
@@ -145,31 +145,31 @@ just frontend-install
 Then, per session:
 
 ```sh
-just run-infra           # Postgres, Redis and NATS on 127.0.0.1 (detached)
+just run-infra           # Postgres and Redis on 127.0.0.1 (detached)
 just backend-migrate     # apply DB migrations
 just backend-dev         # FastAPI on :8000 (WEB__PORT)
-just backend-stream      # FastStream consumer — handles domain events
-just backend-scheduler   # periodic syncs + the outbox relay
+just backend-worker      # job worker — handles domain events
+just backend-scheduler   # periodic syncs + retention
 just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 ```
 
 > [!IMPORTANT]
-> `backend-stream` and `backend-scheduler` are not optional. The scheduler runs
-> the **outbox relay**, so without it aggregate domain events written on commit
-> never leave the database; the FastStream consumer is what handles them once
-> they do. Skip either and event-driven features (email login codes, Web Push
-> broadcasts, notifications) silently do nothing while the API still returns
-> success. `just run-dev` (§2) starts all of these for you.
+> `backend-worker` is not optional. Domain events are written on commit as
+> **jobs**, and the worker is what runs them; skip it and event-driven features
+> (Web Push broadcasts, notifications, requested syncs) silently do nothing
+> while the API still returns success. The scheduler only runs cron jobs, so it
+> can stay off unless you need those. `just run-dev` (§2) starts all of these
+> for you.
 
 Each host process holds a terminal, so run them in separate ones (`just dev`
-prints the list). All four reload on save: `backend-dev` and `backend-stream` in
-place, `backend-scheduler` via a watchfiles restart. `just stop-infra` stops the
+prints the list). All of them reload on save: `backend-dev` in place,
+`backend-worker` and `backend-scheduler` via a watchfiles restart. `just stop-infra` stops the
 containers and keeps the volumes, so your data survives.
 
-This works because `DB__HOST` / `REDIS__HOST` / `NATS__HOST` in `.env` are
-`localhost`, not the Compose service names: `docker-compose.yml` overrides all
-three per service via `environment:`, which outranks `env_file:`, so containers
-always reach `db` / `redis` / `nats` regardless. One `.env`, with no second copy
+This works because `DB__HOST` / `REDIS__HOST` in `.env` are `localhost`, not
+the Compose service names: `docker-compose.yml` overrides both per service via
+`environment:`, which outranks `env_file:`, so containers always reach `db` /
+`redis` regardless. One `.env`, with no second copy
 to keep in sync. See the SERVICE HOSTNAMES note in `.env.example`.
 
 ## External integrations
@@ -188,9 +188,9 @@ All commands run from the repo root via `just`.
 
 | Command | What it does |
 |---|---|
-| `just run-infra` / `just stop-infra` | Start / stop the backing services (Postgres, Redis, NATS) alone |
+| `just run-infra` / `just stop-infra` | Start / stop the backing services (Postgres, Redis) alone |
 | `just backend-dev` / `just frontend-dev` | Start backend / frontend on the host |
-| `just backend-stream` / `just backend-scheduler` | Start the FastStream consumer / scheduler (outbox relay + syncs) on the host |
+| `just backend-worker` / `just backend-scheduler` | Start the job worker / scheduler (syncs + retention) on the host |
 | `just backend-migrate` | Apply Alembic migrations |
 | `just backend-seed-demo` | Fill an empty environment with a demo programme and voting (idempotent) |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |

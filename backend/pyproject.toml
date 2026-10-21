@@ -30,10 +30,8 @@ dependencies = [
     "apscheduler>=3.11.3,<4",
     "authlib>=1.8.0",
     "click>=8.5.0",
-    "dishka-faststream>=0.7.0",
     "dishka>=1.10.1",
     "fastapi>=0.143.0",
-    "faststream[cli,nats]>=0.7.7",
     "httptools>=0.9.0",
     "httpx2>=2.13.1",
     "itsdangerous>=2.2.0",
@@ -78,6 +76,9 @@ dev = [
     # Dead-code sweep (`just backend-deadcode`), never a CI gate — see
     # [tool.vulture] below and docs/backend.md "Dead-code sweep".
     "vulture>=2.16",
+    # Restarts the worker and the scheduler on source changes in the host dev
+    # loop (`just backend-worker` / `backend-scheduler`); neither reloads itself.
+    "watchfiles>=1.3.0",
     # Writing .xlsx, needed only by the schedule-template generator script and
     # the parser tests. The app itself only ever reads spreadsheets
     # (python-calamine), so this stays out of the runtime dependencies.
@@ -193,9 +194,9 @@ exclude = [
     "src/fanfan/adapters/db/migrations/",
 ]
 ignore_decorators = [
-    # FastAPI/FastStream routers — handlers are dispatched by the framework.
-    # Every router in this app is named `*_router` (see presentation/web,
-    # presentation/faststream); .get/.post/.subscriber/… all match.
+    # FastAPI and job routers — handlers are dispatched by the framework or the
+    # worker. Every router in this app is named `*_router` (see presentation/web,
+    # presentation/worker); .get/.post/.handler/… all match.
     "@*_router.*",
     # Dishka DI — providers are resolved by the container, not called directly.
     "@provide",
@@ -243,7 +244,7 @@ forbidden_modules = [
 
 [project.scripts]
 web = "fanfan.main.web:main"
-stream = "fanfan.main.faststream:main"
+worker = "fanfan.main.worker:main"
 cli = "fanfan.main.cli:main"
 scheduler = "fanfan.main.scheduler:main"
 generate-vapid = "fanfan.main.generate_vapid:main"

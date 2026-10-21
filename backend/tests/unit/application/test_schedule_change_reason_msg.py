@@ -32,7 +32,6 @@ async def _reason_msg(change: ScheduleChangeFullDTO) -> str | None:
         unused,
         unused,
         unused,
-        unused,
     )
     return await interactor._render_reason_msg(change)
 

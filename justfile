@@ -5,7 +5,7 @@
 
 # ---- Setup ----
 # One-command local setup: create .env from the template, fill generated
-# secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
+# secrets (DB/Redis passwords, WEB__SECRET_KEY), and generate VAPID keys.
 # Idempotent — re-run anytime; it never overwrites values you've already set.
 bootstrap:
     cd backend && uv run python scripts/bootstrap.py
@@ -90,17 +90,16 @@ backend-setup-hooks:
 backend-dev:
     cd backend && uv run python -m fanfan.main.web
 
-# FastStream consumer on the host (pair with `just run-infra`). Without it,
-# published domain events are never handled — email codes, broadcasts and
-# notifications silently do nothing. --reload restarts the app on file changes
-# (watchfiles ships via faststream[cli]), mirroring the api's UVICORN_RELOAD.
-backend-stream:
-    cd backend && uv run faststream run --factory --reload fanfan.main.faststream:create_app
+# Job worker on the host (pair with `just run-infra`). Without it, jobs written
+# on commit are never run — broadcasts, notifications and requested syncs
+# silently do nothing. It has no native reload, so watchfiles restarts it on
+# source changes, mirroring the api's UVICORN_RELOAD.
+backend-worker:
+    cd backend && uv run watchfiles "python -m fanfan.main.worker" src
 
-# Scheduler on the host (pair with `just run-infra`). Runs the periodic syncs AND
-# the outbox relay — without it, aggregate events written on commit never leave
-# the DB. APScheduler has no native reload, so watchfiles restarts it on source
-# changes (parity with backend-dev / backend-stream).
+# Scheduler on the host (pair with `just run-infra`). Runs the periodic syncs and
+# retention jobs. APScheduler has no native reload, so watchfiles restarts it on
+# source changes (parity with backend-dev / backend-worker).
 backend-scheduler:
     cd backend && uv run watchfiles "python -m fanfan.main.scheduler" src
 
@@ -200,20 +199,20 @@ dockerfile-lint:
 
 # ---- Docker infra helpers ----
 # For the hybrid loop: infra in Docker, the host processes (`just backend-dev`,
-# `just backend-stream`, `just backend-scheduler`, `just frontend-dev`) reaching
+# `just backend-worker`, `just backend-scheduler`, `just frontend-dev`) reaching
 # the containers through their published 127.0.0.1 ports. Naming the
 # services explicitly is enough — Compose starts a service targeted on the
 # command line even when its profile ("core") isn't enabled. Migrations are NOT
 # run here: the `migration` service belongs to the containerised path, so follow
 # up with `just backend-migrate` on the host.
 
-# Start the backing services alone (Postgres, Redis, NATS), detached
+# Start the backing services alone (Postgres, Redis), detached
 run-infra:
-    docker compose up -d db redis nats
+    docker compose up -d db redis
 
 # Stop the backing services (keeps the volumes, so data survives)
 stop-infra:
-    docker compose stop db redis nats
+    docker compose stop db redis
 
 # Dev: Compose auto-builds any image that doesn't exist yet, and `--watch`
 # live-syncs source + rebuilds only when package.json/pnpm-lock/uv.lock change —
@@ -250,6 +249,6 @@ _backups-dir:
 dev:
     @echo "Run in separate terminals:"
     @echo "  just backend-dev"
-    @echo "  just backend-stream"
+    @echo "  just backend-worker"
     @echo "  just backend-scheduler"
     @echo "  just frontend-dev"

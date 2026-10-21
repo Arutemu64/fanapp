@@ -9,5 +9,5 @@
 # These imports are used only inside cast("<Name>", ...) string literals, which
 # ruff resolves (no F401) but vulture cannot see into. Keep in sync if the
 # cast() sites move or go away.
-CursorResult  # cast() in adapters/db/gateways/{notifications,outbox}.py
+CursorResult  # cast() in adapters/db/gateways/{notifications,jobs}.py
 AnyHttpUrl  # cast() in adapters/push/client.py

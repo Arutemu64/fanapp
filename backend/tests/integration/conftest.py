@@ -13,9 +13,7 @@ from redis.asyncio import Redis
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.email_sender import EmailSender
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways import UserPermissionGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.notifier import (
@@ -45,7 +43,6 @@ from fanfan.main.ioc.sync import SyncProvider
 from tests.fakes.captcha import FakeCaptchaVerifier
 from tests.fakes.cosplay_source import FakeCosplaySource
 from tests.fakes.email_sender import FakeEmailSender
-from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
 from tests.fakes.notifier import (
     FakePushNotifier,
@@ -57,19 +54,17 @@ from tests.fakes.tickets_source import FakeTicketsSource
 from tests.fixtures.config import TestConfigProvider, TestSyncProvider
 from tests.fixtures.db_provider import TestDbProvider
 from tests.fixtures.db_session import TestSessionProvider
+from tests.fixtures.outbox import Outbox
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
 @pytest_asyncio.fixture(scope="session")
 async def dishka() -> AsyncGenerator[AsyncContainer]:
-    # Fakes for ports that would otherwise reach external systems
-    # (NATS, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so each test
+    # Fakes for ports that would otherwise reach external systems (Valkey
+    # pub/sub, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so each test
     # gets a fresh instance and the interactor under test shares it with the test.
     fakes_provider = Provider(scope=Scope.REQUEST)
-    fakes_provider.provide(
-        FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker]
-    )
     fakes_provider.provide(FakeIdProvider, provides=AnyOf[IdProvider, FakeIdProvider])
     fakes_provider.provide(
         FakeEmailSender, provides=AnyOf[EmailSender, FakeEmailSender]
@@ -121,7 +116,7 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         # Same trick: must come after SyncProvider to win AvailableSyncSources,
         # whose real factory reads the EnvConfig tests never build.
         TestSyncProvider(),
-        # External integrations (NATS broker, Telegram bot, SMTP, OAuth,
+        # External integrations (Telegram bot, SMTP, OAuth,
         # Cosplay2 HTTP client) are intentionally NOT wired. Interactors that
         # need them are not yet testable here; everything else resolves, so we
         # skip eager dependency validation. (TicketsCloud now has a port + fake,
@@ -175,20 +170,20 @@ async def make_broadcaster(dishka_request: AsyncContainer, uow: UnitOfWork) -> U
 
 
 def as_outbox(*events: AppEvent) -> list[tuple[str, dict[str, Any]]]:
-    """Render typed domain events the way they land in the outbox table.
+    """Render typed domain events the way ``Outbox.events`` reads them back.
 
-    Aggregate events are no longer published on commit — the UnitOfWork writes
-    them to the outbox, and the relay delivers them later. Tests assert that the
-    right events were *enqueued* by comparing against this serialization.
+    Events are not run on commit — the UnitOfWork stores them as jobs, and the
+    worker runs those later. Tests assert that the right events were
+    *enqueued* by comparing against this serialization.
     """
     return [(e.subject, e.model_dump(mode="json")) for e in events]
 
 
 @pytest_asyncio.fixture
-async def outbox(dishka_request: AsyncContainer) -> OutboxGateway:
-    # Read post-run like events_broker: the UnitOfWork writes events to the same
-    # session the test rolls back, so fetch_unpublished returns what was enqueued.
-    return await dishka_request.get(OutboxGateway)
+async def outbox(dishka_request: AsyncContainer) -> Outbox:
+    # The UnitOfWork writes jobs to the same session the test rolls back, so
+    # reading that session back returns what was enqueued.
+    return await Outbox.resolve(dishka_request)
 
 
 @pytest_asyncio.fixture

@@ -10,7 +10,7 @@ class NotificationNotFound(NotificationException):
 
 
 # Markers first so they win MRO precedence: these three are raised from the
-# CancelMailing HTTP command (as well as the NATS consumers), so they must
+# CancelMailing HTTP command (as well as the worker's jobs), so they must
 # resolve to real 4xx statuses rather than the internal-only 500.
 class MailingNotFound(NotFound, NotificationException):
     code = "MAILING_NOT_FOUND"

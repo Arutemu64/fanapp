@@ -39,7 +39,7 @@ body:
       label: Area
       description: Where does it surface? Pick the closest.
       options:
-        - Backend (FastAPI / DB / NATS)
+        - Backend (FastAPI / DB / worker)
         - Frontend (SvelteKit PWA)
         - Infra / deployment
         - Not sure

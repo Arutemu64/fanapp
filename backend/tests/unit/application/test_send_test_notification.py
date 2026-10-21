@@ -16,8 +16,8 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions import notifications as notification_errors
 from fanfan.core.exceptions.rate_limit import CooldownActive
 from fanfan.core.vo.user import generate_user_id
-from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
+from tests.fakes.uow import FakeUnitOfWork
 
 pytestmark = pytest.mark.asyncio
 
@@ -44,36 +44,36 @@ class FakeCooldown(Cooldown):
 
 
 def make_interactor(
-    broker: FakeEventBroker, cooldown: FakeCooldown, id_provider: FakeIdProvider
+    uow: FakeUnitOfWork, cooldown: FakeCooldown, id_provider: FakeIdProvider
 ) -> SendTestNotification:
     # require_user_id reads the id provider alone; the gateway is never touched.
     provider = CurrentUserProvider(id_provider, cast("UserGateway", object()))
-    return SendTestNotification(provider, broker, cooldown)
+    return SendTestNotification(provider, uow, cooldown)
 
 
 async def test_a_second_test_within_the_cooldown_is_rejected() -> None:
-    broker = FakeEventBroker()
+    uow = FakeUnitOfWork()
     id_provider = FakeIdProvider()
     id_provider.set_current_user_id(generate_user_id())
-    send = make_interactor(broker, FakeCooldown(), id_provider)
+    send = make_interactor(uow, FakeCooldown(), id_provider)
 
     await send()
     with pytest.raises(notification_errors.TestNotificationTooFast) as error:
         await send()
 
-    assert len(broker.published_events) == 1
+    assert len(uow.committed) == 1
     assert error.value.details["retry_after"] == TEST_NOTIFICATION_COOLDOWN_SECONDS
 
 
 async def test_the_cooldown_is_per_user() -> None:
-    broker = FakeEventBroker()
+    uow = FakeUnitOfWork()
     cooldown = FakeCooldown()
     id_provider = FakeIdProvider()
-    send = make_interactor(broker, cooldown, id_provider)
+    send = make_interactor(uow, cooldown, id_provider)
 
     id_provider.set_current_user_id(generate_user_id())
     await send()
     id_provider.set_current_user_id(generate_user_id())
     await send()
 
-    assert len(broker.published_events) == 2
+    assert len(uow.committed) == 2

@@ -1,6 +1,6 @@
 # ADR-0004: Transactional outbox for domain-event delivery
 
-- **Status:** Accepted
+- **Status:** Accepted; NATS delivery superseded by [ADR-0040](0040-postgres-job-queue-replaces-nats.md)
 - **Date:** 2026-07-09
 - **Deciders:** Project maintainers
 

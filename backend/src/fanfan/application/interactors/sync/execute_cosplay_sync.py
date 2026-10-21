@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ExecuteCosplaySync:
     """Run a Cosplay2 sync and record it, for every trigger.
 
-    Cron, the CLI and the NATS consumer all go through here rather than calling
+    Cron, the CLI and the worker's sync job all go through here rather than calling
     SyncCosplay directly, so every run leaves an audit row and takes part in the
     one-active-run-per-source guard.
     """
@@ -34,7 +34,7 @@ class ExecuteCosplaySync:
         self.sync_cosplay = sync_cosplay
 
     async def __call__(self, run_id: SyncRunId | None = None) -> None:
-        # Under cron/CLI/NATS this resolves to the seeded system user, which is
+        # Under cron/CLI/the worker this resolves to the seeded system user, which is
         # granted sync:run by migration — the check is real, not decorative.
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
@@ -49,8 +49,8 @@ class ExecuteCosplaySync:
             output = await self.sync_cosplay()
         except Exception:
             # Recorded on the run and logged (Sentry picks ERROR logs up), but
-            # deliberately not re-raised: the NATS consumer would redeliver and
-            # retry forever against a vendor that is simply down.
+            # deliberately not re-raised: the worker would retry the job over and
+            # over against a vendor that is simply down.
             logger.exception("Cosplay2 sync failed", extra={"sync_run_id": str(run.id)})
             await self.tracker.fail(run, SYNC_FAILED_ERROR)
             return

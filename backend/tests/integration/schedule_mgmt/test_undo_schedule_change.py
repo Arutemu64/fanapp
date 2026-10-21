@@ -14,7 +14,6 @@ from fanfan.application.ports.gateways import (
     ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated, ScheduleChangeUndone
 from fanfan.core.exceptions.base import AccessDenied
@@ -30,6 +29,7 @@ from fanfan.core.vo.schedule_change import (
     ScheduleChangeId,
 )
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
+from tests.fixtures.outbox import Outbox
 from tests.integration.conftest import as_outbox
 
 pytestmark = [
@@ -61,7 +61,7 @@ async def test_undo_skipped_change_unskips_event(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
@@ -99,9 +99,7 @@ async def test_undo_skipped_change_unskips_event(
     )
 
     # Outbox holds the setup's created event plus the undo event, in order.
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         ScheduleChangeCreated(schedule_change_id=change.id),
         ScheduleChangeUndone(mailing_id=mailing.id),
     )
@@ -111,7 +109,7 @@ async def test_undo_unskipped_change_skips_event(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
@@ -140,9 +138,7 @@ async def test_undo_unskipped_change_skips_event(
     assert saved_event.is_skipped is True
     assert await changes_gateway.get_by_id(change.id) is None
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         ScheduleChangeCreated(schedule_change_id=change.id),
         ScheduleChangeUndone(mailing_id=mailing.id),
     )
@@ -152,7 +148,7 @@ async def test_undo_moved_change_places_event_back_on_top(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
@@ -189,9 +185,7 @@ async def test_undo_moved_change_places_event_back_on_top(
     assert saved_moved.order == 0
     assert await changes_gateway.get_by_id(change.id) is None
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         ScheduleChangeCreated(schedule_change_id=change.id),
         ScheduleChangeUndone(mailing_id=mailing.id),
     )
@@ -201,7 +195,7 @@ async def test_undo_set_as_current_restores_previous_event(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
@@ -237,9 +231,7 @@ async def test_undo_set_as_current_restores_previous_event(
     assert saved_previous.is_current is True
     assert await changes_gateway.get_by_id(change.id) is None
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
+    assert await outbox.events() == as_outbox(
         ScheduleChangeCreated(schedule_change_id=change.id),
         ScheduleChangeUndone(mailing_id=mailing.id),
     )
@@ -249,7 +241,7 @@ async def test_undo_set_as_current_raises_when_current_moved_on(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
@@ -282,16 +274,16 @@ async def test_undo_set_as_current_raises_when_current_moved_on(
     assert saved_now_current.is_current is True
     assert await changes_gateway.get_by_id(change.id) is not None
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await outbox.events() == as_outbox(
+        ScheduleChangeCreated(schedule_change_id=change.id)
+    )
 
 
 async def test_undo_raises_when_change_not_found(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     login(schedule_editor)
@@ -300,14 +292,14 @@ async def test_undo_raises_when_change_not_found(
     with pytest.raises(ScheduleChangeNotFound):
         await interactor(UndoScheduleChangeInput(schedule_change_id=unknown_change_id))
 
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await outbox.events() == []
 
 
 async def test_undo_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
@@ -336,6 +328,6 @@ async def test_undo_without_permission_raises_access_denied(
     assert saved_event.is_skipped is True
     assert await changes_gateway.get_by_id(change.id) is not None
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await outbox.events() == as_outbox(
+        ScheduleChangeCreated(schedule_change_id=change.id)
+    )

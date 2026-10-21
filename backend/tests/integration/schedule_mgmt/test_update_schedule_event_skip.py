@@ -14,7 +14,6 @@ from fanfan.application.ports.gateways import (
     ScheduleEntryGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
@@ -30,6 +29,7 @@ from fanfan.core.vo.schedule_entry import (
     ScheduleEntryId,
     generate_schedule_entry_id,
 )
+from tests.fixtures.outbox import Outbox
 from tests.integration.conftest import as_outbox
 
 pytestmark = [
@@ -61,7 +61,7 @@ async def test_skip_marks_event_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -103,16 +103,16 @@ async def test_skip_marks_event_and_records_change(
     assert mailing is not None
     assert mailing.by_user_id == schedule_editor.id
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await outbox.events() == as_outbox(
+        ScheduleChangeCreated(schedule_change_id=change.id)
+    )
 
 
 async def test_unskip_marks_event_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -143,16 +143,16 @@ async def test_unskip_marks_event_and_records_change(
     assert change.user is not None
     assert change.user.id == schedule_editor.id
 
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+    assert await outbox.events() == as_outbox(
+        ScheduleChangeCreated(schedule_change_id=change.id)
+    )
 
 
 async def test_skip_current_event_raises_and_records_nothing(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -181,14 +181,14 @@ async def test_skip_current_event_raises_and_records_nothing(
         )
         == []
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await outbox.events() == []
 
 
 async def test_skip_raises_when_event_not_found(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -208,14 +208,14 @@ async def test_skip_raises_when_event_not_found(
         )
         == []
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await outbox.events() == []
 
 
 async def test_skip_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -242,14 +242,14 @@ async def test_skip_without_permission_raises_access_denied(
         )
         == []
     )
-    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+    assert await outbox.events() == []
 
 
 async def test_skip_twice_in_a_row_raises_too_fast(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -283,16 +283,16 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     assert len(changes) == 1
     assert changes[0].changed_event is not None
     assert changes[0].changed_event.id == first.id
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+    assert await outbox.events() == as_outbox(
+        ScheduleChangeCreated(schedule_change_id=changes[0].id)
+    )
 
 
 async def test_skip_repeat_is_a_no_op_inside_the_cooldown(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
@@ -312,6 +312,6 @@ async def test_skip_repeat_is_a_no_op_inside_the_cooldown(
         pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+    assert await outbox.events() == as_outbox(
+        ScheduleChangeCreated(schedule_change_id=changes[0].id)
+    )

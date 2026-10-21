@@ -1,6 +1,6 @@
 # ADR-0015: LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop
 
-- **Status:** Accepted
+- **Status:** Accepted; the relay it wakes superseded by [ADR-0040](0040-postgres-job-queue-replaces-nats.md)
 - **Date:** 2026-08-26
 - **Deciders:** Backend
 

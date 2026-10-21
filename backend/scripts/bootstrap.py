@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # One-command local setup: create .env from the template, fill every generated
-# secret (DB / Redis / NATS passwords, WEB__SECRET_KEY, ALTCHA__HMAC_KEY), and
+# secret (DB / Redis passwords, WEB__SECRET_KEY, ALTCHA__HMAC_KEY), and
 # generate the Web Push VAPID keys (secrets/*.pem + PUBLIC_VAPID_KEY). Driven by
 # `just bootstrap`.
 #
@@ -39,7 +39,6 @@ SECRETS_DIR = ROOT / "secrets"
 GENERATED_SECRETS = {
     "DB__PASSWORD": "change-me-db-password",
     "REDIS__PASSWORD": "change-me-redis-password",
-    "NATS__PASSWORD": "change-me-nats-password",
     "WEB__SECRET_KEY": "change-me-long-random-string",
     "ALTCHA__HMAC_KEY": "change-me-altcha-hmac-key",
 }

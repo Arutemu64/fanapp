@@ -8,6 +8,7 @@ from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.html_sanitizer import HtmlSanitizer
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.events.notifications import NotificationCreated
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.vo.notification import NotificationId
@@ -66,8 +67,8 @@ class CreateNotification:
                 raise MailingNotFound
             mailing.ensure_active()
         inserted = await self.notification_gateway.add(notification)
-        # Only count a genuinely new notification: a redelivered
-        # NotificationQueued re-runs this with the same id, and the gateway
+        # Only count a genuinely new notification: a rerun of the
+        # NotificationQueued job re-runs this with the same id, and the gateway
         # upsert above no-ops it, so incrementing here as well would drift
         # sent_count above the true delivered count.
         if inserted and mailing is not None:
@@ -82,6 +83,12 @@ class CreateNotification:
                 sent_count=sent_count, total_count=total_count
             ):
                 await self.mailing_gateway.save(mailing)
+        if inserted:
+            # Queue the channel sends with the insert itself: a rerun that finds
+            # the notification already stored knows its sends were queued then.
+            self.uow.record_events(
+                [NotificationCreated(notification_id=notification.id)]
+            )
         await self.uow.commit()
         await self._publish_realtime(notification)
         return notification.id
@@ -90,8 +97,8 @@ class CreateNotification:
         # After commit, so a toast never shows a notification that rolled back.
         # Best-effort: the notification is stored and the feed shows it on the
         # next load, so a failure here is logged, not raised — raising would
-        # stop the caller from queuing the channel sends. A redelivery publishes
-        # again, like those sends: a repeated toast beats a lost one.
+        # retry a job whose work is already committed. A rerun publishes again:
+        # a repeated toast beats a lost one.
         try:
             dto = await self.notification_gateway.read_realtime_notification(
                 notification.id

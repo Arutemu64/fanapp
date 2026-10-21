@@ -10,7 +10,7 @@ from fanfan.presentation.web.config import WebConfig
 class TestConfigProvider(Provider):
     """Provides the slice of app config the resolvable interactors need.
 
-    The full ``EnvConfig`` is not built in tests (it pulls in NATS, Telegram,
+    The full ``EnvConfig`` is not built in tests (it pulls in Telegram,
     SMTP, etc., none of which are wired). ``WebConfig`` (session store, token
     registry) and ``timezone`` (Jinja env used to render email codes) are the
     cross-cutting slices the interactors need, so they are supplied here with

@@ -9,7 +9,6 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
 )
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
@@ -36,8 +35,8 @@ logger = logging.getLogger(__name__)
 # The notifications describe the schedule as it is when they are built (current
 # and next event are read now, not at change time), so a change processed long
 # after it was made announces the wrong event. Past this age it is dropped:
-# delivery is only this late after an outage (relay retries, NATS or consumer
-# down), and a stale "event started" push is worse than none.
+# a job only runs this late after an outage (the worker or the database
+# down, the job retrying), and a stale "event started" push is worse than none.
 _STALE_AFTER = timedelta(minutes=10)
 
 
@@ -49,8 +48,8 @@ def _is_stale(occurred_at: datetime | None) -> bool:
 
 class SendScheduleChangeNotificationsInput(BaseModel):
     schedule_change_id: ScheduleChangeId
-    # When the change was committed. None when unknown (a message relayed before
-    # the timestamp was sent), which is treated as fresh.
+    # When the change was committed. None when unknown, which is treated as
+    # fresh.
     occurred_at: datetime | None = None
 
 
@@ -64,7 +63,6 @@ class SendScheduleChangeNotifications:
         subscription_gateway: SubscriptionGateway,
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
-        events_broker: EventBroker,
     ) -> None:
         self.template_renderer = template_renderer
         self.changes_gateway = changes_gateway
@@ -73,7 +71,6 @@ class SendScheduleChangeNotifications:
         self.subscription_gateway = subscription_gateway
         self.mailing_gateway = mailing_gateway
         self.uow = uow
-        self.events_broker = events_broker
 
     async def _render_reason_msg(
         self, schedule_change: ScheduleChangeFullDTO
@@ -289,9 +286,11 @@ class SendScheduleChangeNotifications:
             # Mirror the broadcast lifecycle: SENDING while CreateNotification
             # fans out (it flips to FINISHED on the last insert), or straight to
             # FINISHED when the change reached nobody. start_sending() no-ops on a
-            # redelivery that finds the mailing already terminal.
+            # rerun that finds the mailing already terminal.
             mailing.begin_fan_out(len(notification_events))
             await self.mailing_gateway.save(mailing)
-            await self.uow.commit()
 
-        await self.events_broker.publish_many(notification_events)
+        # Queued in the mailing's transaction, so the fan-out is recorded
+        # together with the SENDING status or not at all.
+        self.uow.record_events(notification_events)
+        await self.uow.commit()

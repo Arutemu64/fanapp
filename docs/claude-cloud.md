@@ -179,7 +179,7 @@ avoids pulling/running an extra container per session.
 
 Everything else is deliberately **not** prepulled and left to CI:
 
-* the rest of the compose stack (`nats`, db-backup) — not needed for Alembic
+* the rest of the compose stack (db-backup) — not needed for Alembic
   autogenerate or the test suite.
 * Dockerfile bases (`uv`, `debian`, `node`, `nginx`) and the project's own
   `ghcr.io/arutemu64/fanapp-*` images — image builds run in

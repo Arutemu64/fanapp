@@ -30,14 +30,14 @@ correct test.
 2. **An interactor** (`application/interactors/`) → `@pytest.mark.integration`
    test in `tests/integration/<feature>/`. Runs against real PostgreSQL and
    Redis. Resolve the interactor from `dishka_request`, assert on persisted
-   state and enqueued/published events. **Never unit-test an interactor with
+   state and enqueued events. **Never unit-test an interactor with
    mocked gateways** — its behavior lives in SQL.
 3. **Copy the reference example**:
    `tests/integration/schedule_mgmt/test_set_current_event.py` (happy path,
    permission failure, rate limit, rollback on error).
 4. **Real vs fake**: everything behind PostgreSQL/Redis is real (gateways,
    `UnitOfWork`, rate limiter, sessions), and so are deterministic ports
-   (hasher, Jinja). Ports that reach *other* external systems (NATS, SMTP,
+   (hasher, Jinja). Ports that reach *other* external systems (SMTP,
    Telegram, WebPush, realtime) are faked. New side-effecting port? Add a
    recording fake in `tests/fakes/` and register it in
    `tests/integration/conftest.py` via `AnyOf[ThePort, TheFake]`.
@@ -185,15 +185,13 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
     uow: UnitOfWork,
 ):
     login(schedule_editor)                  # set the acting user
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     ...
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(ScheduleChangeCreated(...))
+    assert await outbox.events() == as_outbox(ScheduleChangeCreated(...))
 ```
 
 `tests/integration/schedule_mgmt/test_set_current_event.py` is the reference
@@ -209,7 +207,7 @@ repeat:
 | Fixture | Type | Use |
 |---------|------|-----|
 | `login` | `Callable[[User], None]` | `login(user)` sets the acting user (wraps `FakeIdProvider`) |
-| `outbox` | `OutboxGateway` | assert on enqueued aggregate events: compare `fetch_unpublished(...)` against the `as_outbox(...)` helper |
+| `outbox` | `Outbox` (`tests/fixtures/outbox.py`) | assert on enqueued events, read back from their jobs: compare `events()` against the `as_outbox(...)` helper, or take typed events with `events_of(EventType)` |
 | `uow` | `UnitOfWork` | commit setup state; `uow.rollback()` after an expected error |
 
 Rule of thumb: take the plumbing you need from fixtures, but resolve the
@@ -226,9 +224,9 @@ adapters for real; fake the ports that reach other external systems.**
 | Gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
 | `TokenRegistry`, `SessionStore`, `RateLimiter`, `Cooldown` | **real** (Redis) | behavior is in Redis semantics |
 | `PasswordHasher`, Jinja `TemplateRenderer` | **real** | deterministic, no external I/O |
-| `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
+| Job queue (`jobs` table) | **real** (PostgreSQL) | assert *what* was enqueued via `outbox`; the worker itself is unit-tested with a fake queue |
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
-| `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / NATS) |
+| `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / Valkey pub/sub) |
 | `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see and the refunded sales it should revoke |
 | `CosplaySource` (Cosplay2) | **fake** (`FakeCosplaySource`) | external HTTP; test supplies nominations/participants, or sets `raises` to exercise the failure path |
 
@@ -287,8 +285,8 @@ providers plus test overrides:
   (fixed test `WebConfig` for the session store and token registry — the full
   `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),
   and the fakes above.
-* `skip_validation=True` is intentional: external integrations (NATS broker,
-  Telegram Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
+* `skip_validation=True` is intentional: external integrations (Telegram
+  Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
   yet resolvable. Everything else resolves. Both vendor syncs sit behind
   ports with fakes (`FakeTicketsSource`, `FakeCosplaySource`), so the sync
   interactors are testable. When the remaining integrations gain a port + fake,

@@ -68,7 +68,7 @@ async def test_close_runs_source_cleanup() -> None:
     async def source() -> AsyncGenerator[SSEMessage]:
         try:
             yield HANDSHAKE
-            await asyncio.sleep(3600)  # Block like a quiet NATS subscription.
+            await asyncio.sleep(3600)  # Block like a quiet pub/sub subscription.
         finally:
             cleaned_up.set()
 

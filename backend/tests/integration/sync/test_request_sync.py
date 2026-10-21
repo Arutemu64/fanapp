@@ -12,7 +12,6 @@ from fanfan.application.interactors.sync.request_sync import (
     RequestSync,
     RequestSyncInput,
 )
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import (
@@ -26,6 +25,7 @@ from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.sync_run import SyncRun
 from fanfan.core.models.user import User
 from fanfan.core.vo.sync import SyncRunStatus, SyncSource
+from tests.fixtures.outbox import Outbox
 from tests.integration.conftest import as_outbox
 
 pytestmark = [
@@ -38,7 +38,7 @@ async def test_request_sync_creates_pending_run_and_enqueues_event(
     dishka_request: AsyncContainer,
     sync_operator: User,
     login: Callable[[User], None],
-    outbox: OutboxGateway,
+    outbox: Outbox,
 ) -> None:
     login(sync_operator)
     interactor = await dishka_request.get(RequestSync)
@@ -48,9 +48,9 @@ async def test_request_sync_creates_pending_run_and_enqueues_event(
     assert run.source is SyncSource.COSPLAY2
     assert run.status is SyncRunStatus.PENDING
     assert run.finished_at is None
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(SyncRequested(sync_run_id=run.id, source=SyncSource.COSPLAY2))
+    assert await outbox.events() == as_outbox(
+        SyncRequested(sync_run_id=run.id, source=SyncSource.COSPLAY2)
+    )
 
 
 async def test_request_sync_records_the_requesting_organizer(

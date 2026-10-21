@@ -30,7 +30,7 @@ from fanfan.core.vo.sync import SyncRunStatus, SyncSource
 from fanfan.core.vo.user import UserId
 from tests.fakes.cosplay_source import FakeCosplaySource
 
-# Seeded by the initial-data migration; the actor for CLI/scheduler/NATS work.
+# Seeded by the initial-data migration; the actor for CLI/scheduler/worker work.
 SYSTEM_USER_ID = UserId(UUID("00000000-0000-0000-0000-000000000000"))
 
 pytestmark = [
@@ -130,10 +130,11 @@ async def test_redelivered_trigger_resumes_an_interrupted_run(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A worker that died after committing RUNNING never acked its trigger, so
-    # NATS redelivers it. The consumer heartbeats while a sync is alive, so that
-    # redelivery means the run was interrupted, and it must be picked up again
-    # rather than acked away and left for reap_stale.
+    # A worker that died after committing RUNNING never settled its trigger
+    # job, so its lease lapses and the job reruns. The worker renews the lease
+    # while a sync is alive, so that rerun means the run was interrupted, and
+    # it must be picked up again rather than settled away and left for
+    # reap_stale.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
@@ -161,10 +162,10 @@ async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A worker that missed its NATS heartbeats is still running, and its trigger
-    # got redelivered. Redelivery alone cannot tell it from a dead worker; the
-    # lock it holds can. The redelivered trigger must back off (raise, so the
-    # consumer retries later) instead of running the same sync alongside it.
+    # A worker that missed its lease heartbeats is still running, and its
+    # trigger job got claimed again. The rerun alone cannot tell it from a dead
+    # worker; the lock it holds can. The rerun must back off (raise, so the
+    # job retries later) instead of running the same sync alongside it.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
@@ -276,7 +277,7 @@ async def test_vendor_failure_is_recorded_not_raised(
     sync_operator: User,
     login: Callable[[User], None],
 ) -> None:
-    # Re-raising would make the NATS consumer redeliver and retry forever
+    # Re-raising would make the worker retry the job over and over
     # against a vendor that is simply down.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)

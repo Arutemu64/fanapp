@@ -77,8 +77,8 @@ class VkApiClient:
                     # random_id 0 disables VK's uniqueness check, so every send
                     # goes through even when two notifications carry identical
                     # text; a fixed non-zero value would instead let VK drop the
-                    # second as a duplicate. The outbox is the deduplication
-                    # authority upstream.
+                    # second as a duplicate. Deduplication is the job
+                    # queue's concern upstream.
                     "random_id": 0,
                 },
             )

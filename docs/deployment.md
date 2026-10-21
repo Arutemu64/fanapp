@@ -63,7 +63,7 @@ read at runtime:
 
 | Path | Why |
 | --- | --- |
-| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The NATS and Valkey server configs are inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
+| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The Valkey server config is inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
 | `.env` | All runtime config. Start from `.env.example`. |
 | `secrets/` | VAPID PEM keys, mounted read-only. Ships empty — the keys are yours. |
 
@@ -149,60 +149,24 @@ services gate on it with `service_completed_successfully`. `just deploy` caps th
 wait at 300s, which covers `pgbackup`'s on-start dump. `--remove-orphans` stops
 containers of services the Compose files no longer define.
 
-### Changing a JetStream consumer's config
+### Renaming or removing a job handler
 
-nats-py sends a `ConsumerConfig` only when it creates a durable; an existing
-durable keeps its first config, and the NATS data volume outlives deploys. The
-stream worker closes that gap on startup: `sync_consumer_configs`
-(`presentation/faststream/redelivery.py`) re-sends every durable subscriber's
-declared config, and NATS updates the
-[editable fields](https://docs.nats.io/nats-concepts/jetstream/consumers) —
-`ack_wait`, `max_deliver`, `max_ack_pending`, the filter subject — in place. So a
-change to one of those takes effect on the next deploy with no manual step; the
-worker logs `Consumer config updated` with the changed fields.
-
-A change to a **non-editable** field (`ack_policy`, `deliver_policy`) is rejected
-by the server. The worker logs `Could not update consumer config` and keeps
-running on the old config, so the deploy succeeds but the change does not apply
-until the durable is recreated.
-
-Renaming a durable is not an update and logs nothing: startup finds no consumer
-under the new name and creates one, which starts from the default `DeliverAll`
-and so replays every message the stream still holds (up to its 24 h `max_age`,
-`presentation/faststream/jstream.py`). The old durable stays on the server,
-orphaned. Delete it with the command below.
-
-To apply a non-editable change in production, delete the affected durables once so
-FastStream recreates them with the new config on the next boot. Deleting a
-*consumer* is safe: it is routing/cursor state, not the stream or its messages,
-and any un-acked in-flight message is redelivered after recreation (the
-notification consumers are idempotent, which is why this stream tolerates
-redelivery — see [backend.md](backend.md)). The `nats:2.14-alpine` image is the
-server only and carries no `nats` CLI, so run one from `nats-box` on the backend
-network. The server's creds live in `.env` (Compose's `env_file`), not your
-shell, so pass that file into the container with `--env-file` and let the
-container's shell expand them — hence `sh -c '…'` in single quotes, so the host
-shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
-(where `.env` is):
+A queued job names its handler (`jobs.name`) and carries its event's JSON
+payload, and the table outlives deploys. A deploy that renames or removes a
+handler leaves that handler's pending jobs behind: the worker settles each one
+as `failed` the first time it claims it (`No handler named …`), and the work is
+lost. A payload field renamed or retyped breaks the same way, as a validation
+error retried until the job gives up. Before such a deploy, check that nothing
+is waiting for the old name:
 
 ```sh
-# Look up the app's backend network, then substitute it below. It is named
-# <project>_backend-network, where the Compose project name defaults to the
-# deploy directory (usually fanapp) but can differ (a renamed dir, or -p /
-# COMPOSE_PROJECT_NAME). Look it up rather than auto-derive: a host running more
-# than one stack has several *_backend-network networks, and picking the wrong
-# one — or matching several — silently leaves the durables on their old config.
-docker network ls | grep backend-network
-
-docker run --rm -it --network <project>_backend-network --env-file .env natsio/nats-box \
-  sh -c 'nats --server "nats://$NATS__USER:$NATS__PASSWORD@nats:4222" \
-    consumer rm stream send_notification_to_telegram'
-# repeat for send_notification_to_vk and send_push_notification
+docker compose exec db sh -c \
+  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT name, count(*) FROM jobs WHERE status = '"'"'pending'"'"' GROUP BY name"'
 ```
 
-This applies to server-side config only. FastStream's `ack_policy`
-(`NACK_ON_ERROR` vs the default) is client-side handler behaviour, not consumer
-config, so a change to it takes effect on redeploy with no consumer recreation.
+If the old name still has pending jobs, ship the change in two steps: first
+register the new handler alongside the old one, then remove the old one once
+its jobs have drained.
 
 ### Creating a user
 
@@ -433,13 +397,13 @@ Only into a database you intend to overwrite. Stop the app services first so
 nothing writes mid-restore, recreate the database empty, then load the dump:
 
 ```sh
-docker compose stop api frontend migration scheduler stream pgbackup
+docker compose stop api frontend migration scheduler worker pgbackup
 docker compose exec db sh -c \
   'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
 docker compose exec -T db sh -c \
   'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --single-transaction --exit-on-error' \
   < backups/daily/<file>.dump
-docker compose start api frontend migration scheduler stream pgbackup
+docker compose start api frontend migration scheduler worker pgbackup
 ```
 
 `--single-transaction` makes the load all-or-nothing, so a failed restore leaves
@@ -457,8 +421,8 @@ The shape of it:
 
 - **Resource limits** (`deploy.resources.limits` in
   [`docker-compose.yml`](../docker-compose.yml)) are sized so the steady-state
-  memory total of the long-running services (`core` + `ops` profiles) is 1792 MiB,
-  leaving ~12% of the 2 GB for the kernel, Docker and sshd. The one-shot
+  memory total of the long-running services (`core` + `ops` profiles) is 1696 MiB,
+  leaving ~17% of the 2 GB for the kernel, Docker and sshd. The one-shot
   `migration` limit applies only while it runs at deploy.
   A `cpus` limit may never exceed the host's core count or the container fails to
   create. Plain `docker compose up` (non-swarm) enforces `limits` only —
@@ -610,7 +574,7 @@ network Docker DNS also resolves the bare `api` / `frontend`, and if another
 stack on `proxy` defines a service by the same name, DNS returns both containers
 and round-robins between them silently. The prefixed alias stays unambiguous no
 matter what else joins the network. The internal service-to-service names
-(`db`, `redis`, `nats`, and `api` for same-stack callers) are unaffected — they
+(`db`, `redis`, and `api` for same-stack callers) are unaffected — they
 resolve on the private `backend-network` / `frontend-network` as before.
 
 The base file's loopback host bindings (`127.0.0.1:3000` / `:8000`) are kept, so

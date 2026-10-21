@@ -11,10 +11,10 @@ from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.db.factory import create_engine, create_session_pool
 from fanfan.adapters.db.gateways.app_settings import SqlAppSettingsGateway
 from fanfan.adapters.db.gateways.feedback import SqlFeedbackGateway
+from fanfan.adapters.db.gateways.jobs import SqlJobGateway
 from fanfan.adapters.db.gateways.mailings import SqlMailingGateway
 from fanfan.adapters.db.gateways.nominations import SqlNominationGateway
 from fanfan.adapters.db.gateways.notifications import SqlNotificationGateway
-from fanfan.adapters.db.gateways.outbox import SqlOutboxGateway
 from fanfan.adapters.db.gateways.participants import SqlParticipantGateway
 from fanfan.adapters.db.gateways.permissions import (
     SqlUserPermissionGateway,
@@ -34,6 +34,7 @@ from fanfan.adapters.db.gateways.users import SqlUserGateway
 from fanfan.adapters.db.gateways.votes import SqlVoteGateway
 from fanfan.adapters.db.uow import SqlUnitOfWork
 from fanfan.adapters.db.worker_lock import PostgresWorkerLock
+from fanfan.application.dto.jobs import EventRoutes
 from fanfan.application.ports.gateways import (
     AppSettingsGateway,
     ScheduleChangeGateway,
@@ -41,10 +42,10 @@ from fanfan.application.ports.gateways import (
     UserPermissionGateway,
 )
 from fanfan.application.ports.gateways.feedback import FeedbackGateway
+from fanfan.application.ports.gateways.jobs import JobGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
-from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
@@ -59,6 +60,7 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.ports.worker_lock import WorkerLock
+from fanfan.presentation.worker.routes import setup_router
 
 
 class DbProvider(Provider):
@@ -79,6 +81,12 @@ class DbProvider(Provider):
     ) -> AsyncIterable[AsyncSession]:
         async with pool() as session:
             yield session
+
+    @provide(scope=Scope.APP)
+    def get_event_routes(self) -> EventRoutes:
+        # From the worker's handler registry, so every process that stores
+        # events enqueues exactly the jobs the worker knows how to run.
+        return setup_router().routes()
 
     uow = provide(SqlUnitOfWork, provides=UnitOfWork, scope=Scope.REQUEST)
 
@@ -117,5 +125,5 @@ class SqlGatewaysProvider(Provider):
     social_identities = provide(
         SqlSocialIdentityGateway, provides=SocialIdentityGateway
     )
-    outbox = provide(SqlOutboxGateway, provides=OutboxGateway)
+    jobs = provide(SqlJobGateway, provides=JobGateway)
     sync_runs = provide(SqlSyncRunGateway, provides=SyncRunGateway)

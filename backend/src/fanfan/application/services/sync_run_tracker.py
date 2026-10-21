@@ -104,10 +104,11 @@ class SyncRunTracker:
                     extra={"source": source.value},
                 )
                 return None
-            # Redelivery alone does not prove the previous worker stopped: one
-            # that missed its NATS heartbeats may still be running. The lock
-            # does — a live worker holds it — so without it, back off and let
-            # the trigger come again (the consumer redelivers on this error).
+            # A rerun job alone does not prove the previous worker stopped: one
+            # whose lease lapsed while it missed heartbeats may still be
+            # running. The lock does — a live worker holds it — so without it,
+            # back off and let the trigger come again (the job retries on this
+            # error).
             raise SyncAlreadyRunning
 
         run: SyncRun | None = None
@@ -148,7 +149,7 @@ class SyncRunTracker:
                     extra={"sync_run_id": str(run_id)},
                 )
                 return None
-            # The trigger is redelivered after an error or a dead worker. A
+            # The trigger job reruns after an error or a dead worker. A
             # finished or failed run is done, so its trigger is a duplicate.
             if run.status in (SyncRunStatus.FINISHED, SyncRunStatus.FAILED):
                 logger.info(

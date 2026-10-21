@@ -169,7 +169,7 @@ class ImportSchedule:
         await self.schedule_edit.edit(Permission.SCHEDULE_IMPORT, mutate)
 
         # Import rewrites the whole schedule but deliberately records no
-        # ScheduleChange, so nothing reaches the outbox → NATS → SSE path the
+        # ScheduleChange, so nothing reaches the jobs → worker → SSE path the
         # schedule_mgmt interactors rely on. Broadcast here instead, or every
         # other connected client keeps a stale schedule until it reconnects.
         # Published after commit: SSE carries no committed state, and a

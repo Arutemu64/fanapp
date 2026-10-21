@@ -15,11 +15,11 @@ from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.mail import MailProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
 from fanfan.main.ioc.push import PushProvider
+from fanfan.main.ioc.realtime import RealtimeProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
-from fanfan.main.ioc.stream import StreamProvider
 from fanfan.main.ioc.sync import SyncProvider
 from fanfan.main.ioc.tcloud import TCloudProvider
 from fanfan.main.ioc.vk import VkProvider
@@ -34,12 +34,12 @@ def get_common_providers() -> list[Provider]:
         InteractorsProvider(),
         BotProvider(),
         RedisProvider(),
+        RealtimeProvider(),
         TCloudProvider(),
         SecurityProvider(),
         SerializationProvider(),
         ServicesProvider(),
         SqlGatewaysProvider(),
-        StreamProvider(),
         SyncProvider(),
         Cosplay2Provider(),
         JinjaProvider(),

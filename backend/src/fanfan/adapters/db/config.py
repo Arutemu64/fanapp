@@ -21,7 +21,7 @@ class DatabaseConfig(BaseModel):
 
     # Connection pool sizing (SQLAlchemy QueuePool). A single process may open up
     # to pool_size + max_overflow connections. Kept explicit so the three
-    # long-lived services (api, faststream, scheduler), each with its own engine,
+    # long-lived services (api, worker, scheduler), each with its own engine,
     # stay well under Postgres' default max_connections=100.
     pool_size: int = 5
     max_overflow: int = 10
@@ -33,8 +33,8 @@ class DatabaseConfig(BaseModel):
     # every connection. They bound the blast radius of a runaway query or a
     # transaction left open across an await: a tripped timeout raises instead of
     # pinning a pooled connection (and any locks it holds) forever. Defaults are
-    # generous enough for the batch deletes the outbox and notification relays
-    # run. Set to 0 to disable an individual timeout.
+    # generous enough for the batch deletes the job and notification retention
+    # sweeps run. Set to 0 to disable an individual timeout.
     statement_timeout: int = 30000
     lock_timeout: int = 10000
     idle_in_transaction_session_timeout: int = 60000

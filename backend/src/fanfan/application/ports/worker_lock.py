@@ -4,8 +4,8 @@ from typing import Protocol
 class WorkerLock(Protocol):
     """Proof that this worker, and no other, is doing the work named by a key.
 
-    A redelivered trigger cannot tell a dead worker from a live one that merely
-    missed its NATS heartbeats. The lock can: it is held for as long as the
+    A rerun job cannot tell a dead worker from a live one that merely missed
+    its lease heartbeats. The lock can: it is held for as long as the
     holding worker is alive and released the moment it is gone, so taking it
     proves the previous holder stopped. Deliberately not a lease (a lock with a
     timeout): a slow worker never loses it by outliving an expiry.

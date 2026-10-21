@@ -20,7 +20,7 @@ from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 
-# Seeded by the initial-data migration; the actor for CLI/scheduler/NATS work.
+# Seeded by the initial-data migration; the actor for CLI/scheduler/worker work.
 SYSTEM_USER_ID = UserId(UUID("00000000-0000-0000-0000-000000000000"))
 
 pytestmark = [
