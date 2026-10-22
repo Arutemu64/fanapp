@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { m } from '#lib/paraglide/messages.js';
 
 import {
-	checkAnnouncementTimeout,
 	checkFestivalEnd,
 	checkFestivalStart,
 	checkQuestCancelWindow,
@@ -31,20 +30,6 @@ describe('festival dates', () => {
 
 	it('leaves the range to the start rule while the start is empty', () => {
 		expect(checkFestivalEnd('', '2026-10-17T20:00')).toBe('');
-	});
-});
-
-describe('announcement timeout', () => {
-	it.each([undefined, Number.NaN])('requires a value (%s)', (value) => {
-		expect(checkAnnouncementTimeout(value)).toBe(m.settings_validation_timeout_required());
-	});
-
-	it.each([0, -1, 1.5])('rejects %s', (value) => {
-		expect(checkAnnouncementTimeout(value)).toBe(m.settings_validation_timeout_integer());
-	});
-
-	it('accepts a positive whole number', () => {
-		expect(checkAnnouncementTimeout(1)).toBe('');
 	});
 });
 

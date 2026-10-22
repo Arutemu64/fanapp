@@ -1507,6 +1507,195 @@
         }
       }
     },
+    "/schedule/import": {
+      "post": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Import Schedule",
+        "operationId": "import_schedule",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_schedule"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/schedule/settings": {
+      "get": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Get schedule settings",
+        "description": "Returns the cooldown between announced schedule edits and the changeover added per act to wait estimates. Requires 'schedule:setup'.",
+        "operationId": "get_schedule_settings",
+        "responses": {
+          "200": {
+            "description": "Schedule settings retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleSettingsDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Update schedule settings",
+        "description": "Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.",
+        "operationId": "update_schedule_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduleSettingsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Schedule settings saved."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
     "/schedule/{event_id}/current": {
       "patch": {
         "tags": [
@@ -2279,80 +2468,6 @@
             }
           }
         }
-      }
-    },
-    "/schedule/import": {
-      "post": {
-        "tags": [
-          "Schedule"
-        ],
-        "summary": "Import Schedule",
-        "operationId": "import_schedule",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_import_schedule"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
       }
     },
     "/voting/status": {
@@ -5455,23 +5570,15 @@
             "format": "date-time",
             "title": "Festival End"
           },
-          "limits": {
-            "$ref": "#/components/schemas/LimitsConfigDTO"
-          },
           "quest": {
             "$ref": "#/components/schemas/QuestConfigDTO"
-          },
-          "schedule": {
-            "$ref": "#/components/schemas/ScheduleConfigDTO"
           }
         },
         "type": "object",
         "required": [
           "festival_start",
           "festival_end",
-          "limits",
-          "quest",
-          "schedule"
+          "quest"
         ],
         "title": "AppSettingsDTO"
       },
@@ -6317,20 +6424,6 @@
         ],
         "title": "LeaderboardEntryDTO"
       },
-      "LimitsConfigDTO": {
-        "properties": {
-          "announcement_timeout": {
-            "type": "integer",
-            "minimum": 1.0,
-            "title": "Announcement Timeout"
-          }
-        },
-        "type": "object",
-        "required": [
-          "announcement_timeout"
-        ],
-        "title": "LimitsConfigDTO"
-      },
       "LinkTicketInput": {
         "properties": {
           "barcode": {
@@ -7024,7 +7117,7 @@
         "enum": [
           "*",
           "schedule:manage",
-          "schedule:import",
+          "schedule:setup",
           "notifications:send",
           "settings:manage",
           "tickets:manage",
@@ -7486,20 +7579,6 @@
         ],
         "title": "ScheduleChangeUserDTO"
       },
-      "ScheduleConfigDTO": {
-        "properties": {
-          "changeover_seconds": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Changeover Seconds"
-          }
-        },
-        "type": "object",
-        "required": [
-          "changeover_seconds"
-        ],
-        "title": "ScheduleConfigDTO"
-      },
       "ScheduleEntryDTO": {
         "oneOf": [
           {
@@ -7606,6 +7685,27 @@
           "position"
         ],
         "title": "ScheduleEventFullDTO"
+      },
+      "ScheduleSettingsDTO": {
+        "properties": {
+          "announcement_timeout": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Announcement Timeout"
+          },
+          "changeover_seconds": {
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Changeover Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "announcement_timeout",
+          "changeover_seconds"
+        ],
+        "title": "ScheduleSettingsDTO"
       },
       "SendBroadcastInput": {
         "properties": {
@@ -8123,18 +8223,6 @@
             ],
             "title": "Festival End"
           },
-          "announcement_timeout": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Announcement Timeout"
-          },
           "quest_enabled": {
             "anyOf": [
               {
@@ -8171,19 +8259,6 @@
               }
             ],
             "title": "Quest Cancel Window Minutes"
-          },
-          "schedule_changeover_seconds": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 600.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Schedule Changeover Seconds"
           }
         },
         "type": "object",
@@ -8233,6 +8308,37 @@
           "is_skipped"
         ],
         "title": "UpdateScheduleEventRequest"
+      },
+      "UpdateScheduleSettingsInput": {
+        "properties": {
+          "announcement_timeout": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Announcement Timeout"
+          },
+          "changeover_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 600.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changeover Seconds"
+          }
+        },
+        "type": "object",
+        "title": "UpdateScheduleSettingsInput"
       },
       "UpdateUserSettingsInput": {
         "properties": {

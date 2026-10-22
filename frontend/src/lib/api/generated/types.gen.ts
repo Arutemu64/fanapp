@@ -36,9 +36,7 @@ export type AppSettingsDto = {
 	 * Festival End
 	 */
 	festival_end: string;
-	limits: LimitsConfigDto;
 	quest: QuestConfigDto;
-	schedule: ScheduleConfigDto;
 };
 
 /**
@@ -578,16 +576,6 @@ export type LeaderboardEntryDto = {
 };
 
 /**
- * LimitsConfigDTO
- */
-export type LimitsConfigDto = {
-	/**
-	 * Announcement Timeout
-	 */
-	announcement_timeout: number;
-};
-
-/**
  * LinkTicketInput
  */
 export type LinkTicketInput = {
@@ -977,7 +965,7 @@ export type ParticipantVoteDto = {
 export type Permission =
 	| '*'
 	| 'schedule:manage'
-	| 'schedule:import'
+	| 'schedule:setup'
 	| 'notifications:send'
 	| 'settings:manage'
 	| 'tickets:manage'
@@ -1272,16 +1260,6 @@ export type ScheduleChangeUserDto = {
 	username: string;
 };
 
-/**
- * ScheduleConfigDTO
- */
-export type ScheduleConfigDto = {
-	/**
-	 * Changeover Seconds
-	 */
-	changeover_seconds: number;
-};
-
 export type ScheduleEntryDto =
 	| ({
 			type: 'event';
@@ -1346,6 +1324,20 @@ export type ScheduleEventFullDto = {
 	 * Position
 	 */
 	position: number | null;
+};
+
+/**
+ * ScheduleSettingsDTO
+ */
+export type ScheduleSettingsDto = {
+	/**
+	 * Announcement Timeout
+	 */
+	announcement_timeout: number;
+	/**
+	 * Changeover Seconds
+	 */
+	changeover_seconds: number;
 };
 
 /**
@@ -1657,10 +1649,6 @@ export type UpdateAppSettingsInput = {
 	 */
 	festival_end?: string | null;
 	/**
-	 * Announcement Timeout
-	 */
-	announcement_timeout?: number | null;
-	/**
 	 * Quest Enabled
 	 */
 	quest_enabled?: boolean | null;
@@ -1672,10 +1660,6 @@ export type UpdateAppSettingsInput = {
 	 * Quest Cancel Window Minutes
 	 */
 	quest_cancel_window_minutes?: number | null;
-	/**
-	 * Schedule Changeover Seconds
-	 */
-	schedule_changeover_seconds?: number | null;
 };
 
 /**
@@ -1700,6 +1684,20 @@ export type UpdateScheduleEventRequest = {
 	 * Is Skipped
 	 */
 	is_skipped: boolean;
+};
+
+/**
+ * UpdateScheduleSettingsInput
+ */
+export type UpdateScheduleSettingsInput = {
+	/**
+	 * Announcement Timeout
+	 */
+	announcement_timeout?: number | null;
+	/**
+	 * Changeover Seconds
+	 */
+	changeover_seconds?: number | null;
 };
 
 /**
@@ -2768,6 +2766,110 @@ export type GetScheduleResponses = {
 
 export type GetScheduleResponse = GetScheduleResponses[keyof GetScheduleResponses];
 
+export type ImportScheduleData = {
+	body: BodyImportSchedule;
+	path?: never;
+	query?: never;
+	url: '/schedule/import';
+};
+
+export type ImportScheduleErrors = {
+	/**
+	 * The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.
+	 */
+	400: ErrorMessage;
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleErrors];
+
+export type ImportScheduleResponses = {
+	/**
+	 * Successful Response
+	 */
+	201: unknown;
+};
+
+export type GetScheduleSettingsData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/schedule/settings';
+};
+
+export type GetScheduleSettingsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GetScheduleSettingsError = GetScheduleSettingsErrors[keyof GetScheduleSettingsErrors];
+
+export type GetScheduleSettingsResponses = {
+	/**
+	 * Schedule settings retrieved successfully.
+	 */
+	200: ScheduleSettingsDto;
+};
+
+export type GetScheduleSettingsResponse =
+	GetScheduleSettingsResponses[keyof GetScheduleSettingsResponses];
+
+export type UpdateScheduleSettingsData = {
+	body: UpdateScheduleSettingsInput;
+	path?: never;
+	query?: never;
+	url: '/schedule/settings';
+};
+
+export type UpdateScheduleSettingsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type UpdateScheduleSettingsError =
+	UpdateScheduleSettingsErrors[keyof UpdateScheduleSettingsErrors];
+
+export type UpdateScheduleSettingsResponses = {
+	/**
+	 * Schedule settings saved.
+	 */
+	204: void;
+};
+
+export type UpdateScheduleSettingsResponse =
+	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
+
 export type SetEventAsCurrentData = {
 	body?: never;
 	path: {
@@ -3173,41 +3275,6 @@ export type DeleteSubscriptionResponses = {
 
 export type DeleteSubscriptionResponse =
 	DeleteSubscriptionResponses[keyof DeleteSubscriptionResponses];
-
-export type ImportScheduleData = {
-	body: BodyImportSchedule;
-	path?: never;
-	query?: never;
-	url: '/schedule/import';
-};
-
-export type ImportScheduleErrors = {
-	/**
-	 * The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.
-	 */
-	400: ErrorMessage;
-	/**
-	 * Not authenticated.
-	 */
-	401: ErrorMessage;
-	/**
-	 * Access denied.
-	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleErrors];
-
-export type ImportScheduleResponses = {
-	/**
-	 * Successful Response
-	 */
-	201: unknown;
-};
 
 export type GetVotingStatusData = {
 	body?: never;

@@ -3,13 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class LimitsConfigDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    # Keep the validation rule close to the schema so OpenAPI documents it too.
-    announcement_timeout: int = Field(ge=1)
-
-
 class QuestConfigDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,22 +11,16 @@ class QuestConfigDTO(BaseModel):
     cancel_window_minutes: int = Field(ge=0)
 
 
-class ScheduleConfigDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    changeover_seconds: int = Field(ge=0)
-
-
 class AppSettingsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     # Voting time range is managed separately, under voting:manage — see the
-    # voting dashboard (GET/PATCH /voting/dashboard). It is deliberately not here.
+    # voting dashboard (GET/PATCH /voting/dashboard) — and the announcement
+    # cooldown and changeover under schedule:setup (GET/PATCH /schedule/settings).
+    # They are deliberately not here.
     festival_start: datetime
     festival_end: datetime
-    limits: LimitsConfigDTO
     quest: QuestConfigDTO
-    schedule: ScheduleConfigDTO
 
 
 class PublicConfigDTO(BaseModel):

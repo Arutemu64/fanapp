@@ -78,6 +78,9 @@ import type {
 	GetScheduleData,
 	GetScheduleErrors,
 	GetScheduleResponses,
+	GetScheduleSettingsData,
+	GetScheduleSettingsErrors,
+	GetScheduleSettingsResponses,
 	GetSettingsData,
 	GetSettingsErrors,
 	GetSettingsResponses,
@@ -243,6 +246,9 @@ import type {
 	UpdateScheduleEventData,
 	UpdateScheduleEventErrors,
 	UpdateScheduleEventResponses,
+	UpdateScheduleSettingsData,
+	UpdateScheduleSettingsErrors,
+	UpdateScheduleSettingsResponses,
 	UpdateSettingsData,
 	UpdateSettingsErrors,
 	UpdateSettingsResponses
@@ -765,6 +771,81 @@ export const getSchedule = <ThrowOnError extends boolean = false>(
 	});
 
 /**
+ * Import Schedule
+ */
+export const importSchedule = <ThrowOnError extends boolean = false>(
+	options: Options<ImportScheduleData, ThrowOnError>
+): RequestResult<ImportScheduleResponses, ImportScheduleErrors, ThrowOnError> =>
+	(options.client ?? client).post<ImportScheduleResponses, ImportScheduleErrors, ThrowOnError>({
+		...formDataBodySerializer,
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/schedule/import',
+		...options,
+		headers: {
+			'Content-Type': null,
+			...options.headers
+		}
+	});
+
+/**
+ * Get schedule settings
+ *
+ * Returns the cooldown between announced schedule edits and the changeover added per act to wait estimates. Requires 'schedule:setup'.
+ */
+export const getScheduleSettings = <ThrowOnError extends boolean = false>(
+	options?: Options<GetScheduleSettingsData, ThrowOnError>
+): RequestResult<GetScheduleSettingsResponses, GetScheduleSettingsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		GetScheduleSettingsResponses,
+		GetScheduleSettingsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/schedule/settings',
+		...options
+	});
+
+/**
+ * Update schedule settings
+ *
+ * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
+ */
+export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
+	options: Options<UpdateScheduleSettingsData, ThrowOnError>
+): RequestResult<UpdateScheduleSettingsResponses, UpdateScheduleSettingsErrors, ThrowOnError> =>
+	(options.client ?? client).patch<
+		UpdateScheduleSettingsResponses,
+		UpdateScheduleSettingsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/schedule/settings',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
  * Set specific event as current
  *
  * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
@@ -982,29 +1063,6 @@ export const deleteSubscription = <ThrowOnError extends boolean = false>(
 		],
 		url: '/schedule/subscriptions/{subscription_id}',
 		...options
-	});
-
-/**
- * Import Schedule
- */
-export const importSchedule = <ThrowOnError extends boolean = false>(
-	options: Options<ImportScheduleData, ThrowOnError>
-): RequestResult<ImportScheduleResponses, ImportScheduleErrors, ThrowOnError> =>
-	(options.client ?? client).post<ImportScheduleResponses, ImportScheduleErrors, ThrowOnError>({
-		...formDataBodySerializer,
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/schedule/import',
-		...options,
-		headers: {
-			'Content-Type': null,
-			...options.headers
-		}
 	});
 
 /**

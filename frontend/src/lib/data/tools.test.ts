@@ -32,7 +32,7 @@ describe('toolsFor', () => {
 		expect(keys(userWith(['*']))).toEqual([
 			'settings',
 			'voting',
-			'import-schedule',
+			'schedule',
 			'broadcast',
 			'tickets',
 			'sync',

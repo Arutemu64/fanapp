@@ -135,13 +135,13 @@ async def voting_manager(dishka_request: AsyncContainer) -> User:
 @pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
-    Create a user granted schedule:manage and schedule:import.
+    Create a user granted schedule:manage and schedule:setup.
     """
     return await _org_user_with(
         dishka_request,
         "schedule_editor",
         Permission.SCHEDULE_MANAGE,
-        Permission.SCHEDULE_IMPORT,
+        Permission.SCHEDULE_SETUP,
     )
 
 

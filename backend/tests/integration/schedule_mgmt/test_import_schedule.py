@@ -255,7 +255,7 @@ async def test_import_without_permission_raises_access_denied(
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
-    # A regular visitor does not have the SCHEDULE_IMPORT permission.
+    # A regular visitor does not have the SCHEDULE_SETUP permission.
     login(visitor)
 
     existing = _schedule_event(1, "Существующее событие", 100.0)
