@@ -1,4 +1,7 @@
-from sqlalchemy import Select, delete, select
+from collections.abc import Sequence
+from uuid import UUID
+
+from sqlalchemy import Select, delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
@@ -14,9 +17,16 @@ from fanfan.core.exceptions.subscriptions import SubscriptionAlreadyExists
 from fanfan.core.models.subscription import (
     Subscription,
 )
+from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
+
+
+def _change_id_or_none(value: UUID | None) -> ScheduleChangeId | None:
+    if value is None:
+        return None
+    return ScheduleChangeId(value)
 
 
 def _from_model(model: Subscription) -> SubscriptionORM:
@@ -24,7 +34,8 @@ def _from_model(model: Subscription) -> SubscriptionORM:
         id=model.id,
         user_id=model.user_id,
         event_id=model.event_id,
-        counter=model.counter,
+        lead_minutes=model.lead_minutes,
+        reminded_by_change_id=model.reminded_by_change_id,
     )
 
 
@@ -33,7 +44,8 @@ def _to_model(orm: SubscriptionORM) -> Subscription:
         id=SubscriptionId(orm.id),
         user_id=UserId(orm.user_id),
         event_id=ScheduleEntryId(orm.event_id),
-        counter=orm.counter,
+        lead_minutes=orm.lead_minutes,
+        reminded_by_change_id=_change_id_or_none(orm.reminded_by_change_id),
     )
 
 
@@ -41,7 +53,10 @@ def _parse_full_dto(subscription_orm: SubscriptionORM) -> SubscriptionFullDTO:
     return SubscriptionFullDTO(
         id=SubscriptionId(subscription_orm.id),
         user_id=UserId(subscription_orm.user_id),
-        counter=subscription_orm.counter,
+        lead_minutes=subscription_orm.lead_minutes,
+        reminded_by_change_id=_change_id_or_none(
+            subscription_orm.reminded_by_change_id
+        ),
         event=SubscriptionEventDTO(
             id=ScheduleEntryId(subscription_orm.event.id),
             number=subscription_orm.event.number,
@@ -93,21 +108,39 @@ class SqlSubscriptionGateway(SubscriptionGateway):
             delete(SubscriptionORM).where(SubscriptionORM.id == subscription.id)
         )
 
-    async def read_upcoming_subscriptions(
-        self, current_event_position: int
-    ) -> list[SubscriptionFullDTO]:
-        stmt = _select_subscription_full_dto().where(
-            ScheduleEventORM.is_skipped.isnot(True),  # noqa: FBT003
-            # Fire once the event is within `counter` positions of the stage.
-            SubscriptionORM.counter
-            >= (ScheduleEventORM.position - current_event_position),
-            # Excludes past events (negative diff); the counter check above
-            # doesn't reject those on its own.
-            (ScheduleEventORM.position - current_event_position) >= 0,
+    async def set_reminded_by(
+        self,
+        subscription_ids: Sequence[SubscriptionId],
+        change_id: ScheduleChangeId | None,
+    ) -> None:
+        if not subscription_ids:
+            return
+        await self.session.execute(
+            update(SubscriptionORM)
+            .where(SubscriptionORM.id.in_(subscription_ids))
+            .values(reminded_by_change_id=change_id)
         )
 
+    async def read_subscriptions_to_notify(
+        self,
+        current_event_position: int | None,
+        changed_event_id: ScheduleEntryId,
+    ) -> list[SubscriptionFullDTO]:
+        # The change was to this act itself: a skip takes it out of the running
+        # order, and its subscribers hear about that too.
+        is_changed_event = SubscriptionORM.event_id == changed_event_id
+        if current_event_position is None:
+            stmt = _select_subscription_full_dto().where(is_changed_event)
+        else:
+            stmt = _select_subscription_full_dto().where(
+                or_(
+                    # Still ahead of the stage, or on it. A skipped event has
+                    # no position, so the comparison leaves it out.
+                    ScheduleEventORM.position >= current_event_position,
+                    is_changed_event,
+                )
+            )
         results = await self.session.scalars(stmt)
-
         return [_parse_full_dto(subscription_orm) for subscription_orm in results]
 
     async def read_subscriptions_by_user(

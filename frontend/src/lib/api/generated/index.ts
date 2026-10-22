@@ -419,6 +419,7 @@ export type {
 	ScheduleChangeFullDto,
 	ScheduleChangeType,
 	ScheduleChangeUserDto,
+	ScheduleConfigDto,
 	ScheduleEntryDto,
 	ScheduleEntryType,
 	ScheduleEventFullDto,

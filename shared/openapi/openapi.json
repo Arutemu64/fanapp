@@ -5238,6 +5238,9 @@
           },
           "quest": {
             "$ref": "#/components/schemas/QuestConfigDTO"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleConfigDTO"
           }
         },
         "type": "object",
@@ -5245,7 +5248,8 @@
           "festival_start",
           "festival_end",
           "limits",
-          "quest"
+          "quest",
+          "schedule"
         ],
         "title": "AppSettingsDTO"
       },
@@ -5476,15 +5480,17 @@
             "format": "uuid",
             "title": "Event Id"
           },
-          "counter": {
+          "lead_minutes": {
             "type": "integer",
-            "title": "Counter"
+            "maximum": 240.0,
+            "minimum": 1.0,
+            "title": "Lead Minutes"
           }
         },
         "type": "object",
         "required": [
           "event_id",
-          "counter"
+          "lead_minutes"
         ],
         "title": "CreateSubscriptionInput"
       },
@@ -6796,6 +6802,10 @@
           "quest_max_award": {
             "type": "integer",
             "title": "Quest Max Award"
+          },
+          "schedule_changeover_seconds": {
+            "type": "integer",
+            "title": "Schedule Changeover Seconds"
           }
         },
         "type": "object",
@@ -6803,7 +6813,8 @@
           "festival_start",
           "festival_end",
           "quest_enabled",
-          "quest_max_award"
+          "quest_max_award",
+          "schedule_changeover_seconds"
         ],
         "title": "PublicConfigDTO",
         "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` and `festival_end` so the client can run the\nlive countdown and pick its before/during/after phase itself — flipping at\neach boundary without provoking a 403 on a guarded endpoint. Voting\navailability is intentionally not here: the UI reads it per-user from\nGET /voting/status (which already reflects the time range as a DISABLED\nstate), so a second public copy would only be a redundant source of truth to\ndrift."
@@ -7219,6 +7230,20 @@
         ],
         "title": "ScheduleChangeUserDTO"
       },
+      "ScheduleConfigDTO": {
+        "properties": {
+          "changeover_seconds": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Changeover Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "changeover_seconds"
+        ],
+        "title": "ScheduleConfigDTO"
+      },
       "ScheduleEntryDTO": {
         "oneOf": [
           {
@@ -7500,9 +7525,9 @@
             "format": "uuid",
             "title": "User Id"
           },
-          "counter": {
+          "lead_minutes": {
             "type": "integer",
-            "title": "Counter"
+            "title": "Lead Minutes"
           },
           "event": {
             "$ref": "#/components/schemas/SubscriptionEventDTO"
@@ -7512,7 +7537,7 @@
         "required": [
           "id",
           "user_id",
-          "counter",
+          "lead_minutes",
           "event"
         ],
         "title": "SubscriptionFullDTO"
@@ -7762,6 +7787,19 @@
               }
             ],
             "title": "Quest Cancel Window Minutes"
+          },
+          "schedule_changeover_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 600.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule Changeover Seconds"
           }
         },
         "type": "object",
@@ -8023,7 +8061,7 @@
           "receive_all_announcements": {
             "type": "boolean",
             "title": "Receive All Announcements",
-            "default": true
+            "default": false
           },
           "receive_telegram_notifications": {
             "type": "boolean",

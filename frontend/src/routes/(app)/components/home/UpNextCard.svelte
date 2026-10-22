@@ -23,7 +23,8 @@
 
 	function untilLabel(event: ScheduleEventWithSubscription): string | null {
 		const distance = actsUntil(event, snapshot.current);
-		return distance === null ? null : formatUntil(distance);
+		if (distance === null) return null;
+		return formatUntil(distance, snapshot.secondsAhead.get(event.id) ?? 0);
 	}
 </script>
 

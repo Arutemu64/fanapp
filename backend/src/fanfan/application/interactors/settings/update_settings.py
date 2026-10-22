@@ -25,6 +25,7 @@ class UpdateAppSettingsInput(BaseModel):
     quest_enabled: bool | None = None
     quest_max_award: int | None = Field(default=None, ge=1, le=10_000)
     quest_cancel_window_minutes: int | None = Field(default=None, ge=0, le=1440)
+    schedule_changeover_seconds: int | None = Field(default=None, ge=0, le=600)
 
 
 class UpdateSettings:
@@ -98,6 +99,12 @@ class UpdateSettings:
                 cancel_window_minutes=quest_cancel_window,
             )
             update_flag = True
+
+        changeover_seconds = data_to_update.get("schedule_changeover_seconds")
+        if changeover_seconds is not None:
+            settings.update_schedule(changeover_seconds=changeover_seconds)
+            update_flag = True
+            public_config_changed = True
 
         if not update_flag:
             return

@@ -201,11 +201,19 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
                 )
             seen_numbers.add(number)
 
+        duration = _read_int(row["duration"], column="duration", row=row_index)
+        if duration <= 0:
+            raise InvalidScheduleFile(
+                InvalidScheduleFileReason.DURATION_NOT_POSITIVE,
+                column="duration",
+                row=row_index,
+            )
+
         schedule.append(
             ScheduleEventRow(
                 number=number,
                 title=_read_text(row["title"], column="title", row=row_index),
-                duration=_read_int(row["duration"], column="duration", row=row_index),
+                duration=duration,
                 nomination_title=_read_optional_text(
                     row["nomination_title"], column="nomination_title", row=row_index
                 ),

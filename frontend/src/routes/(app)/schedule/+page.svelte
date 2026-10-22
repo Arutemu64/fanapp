@@ -2,6 +2,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
 	import X from '@lucide/svelte/icons/x';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { onDestroy, tick, untrack } from 'svelte';
@@ -14,6 +15,7 @@
 	import type { ReadyView } from '#lib/utils/queryView.js';
 
 	import {
+		getPublicConfigOptions,
 		getScheduleOptions,
 		getSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -24,6 +26,7 @@
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
@@ -31,12 +34,14 @@
 	import {
 		blockTitleByEventId,
 		mergeSubscriptions,
-		scheduleEvents
+		scheduleEvents,
+		secondsUntilActs
 	} from '#lib/utils/scheduleData.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
 	import CurrentEventBar from './components/CurrentEventBar.svelte';
 	import EventCard from './components/EventCard.svelte';
+	import ScheduleNotificationsDialog from './components/ScheduleNotificationsDialog.svelte';
 	import ScheduleSkeleton from './components/ScheduleSkeleton.svelte';
 	import {
 		buildScheduleFiltersQuery,
@@ -50,6 +55,8 @@
 	} from './scheduleGrouping';
 
 	const SEARCH_WRITE_DELAY_MS = 300;
+
+	let showNotificationsDialog = $state(false);
 
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
@@ -67,6 +74,11 @@
 		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
 	);
 	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	let changeoverSeconds = $derived(
+		(configQuery.data ?? FALLBACK_CONFIG).schedule_changeover_seconds
+	);
+	let secondsAhead = $derived(secondsUntilActs(schedule, changeoverSeconds));
 	let scheduleView = $derived(
 		queryView(scheduleQuery, {
 			policy: 'cached',
@@ -297,13 +309,27 @@
 
 					<!-- Always mounted so screen readers hear the list shrink and grow, but shown
 			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
-					<p
-						class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
-						aria-live="polite"
-						role="status"
-					>
-						{resultsSummary}
-					</p>
+					<div class="flex items-center gap-2">
+						<p
+							class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
+							aria-live="polite"
+							role="status"
+						>
+							{resultsSummary}
+						</p>
+						<!-- Here rather than only in the profile: whether to hear about every act is
+						     decided while looking at the stage. Needs an account to save the choice. -->
+						{#if user}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								aria-label={m.schedule_notifications_button()}
+								onclick={() => (showNotificationsDialog = true)}
+							>
+								<BellRing class="size-5" />
+							</Button>
+						{/if}
+					</div>
 				</div>
 			</div>
 
@@ -317,7 +343,13 @@
 							data-event-id={node.event.id}
 							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
 						>
-							<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
+							<EventCard
+								event={node.event}
+								{currentEvent}
+								{user}
+								secondsAhead={secondsAhead.get(node.event.id) ?? null}
+								variant="interlude"
+							/>
 						</div>
 					{:else}
 						{@render blockSection(node)}
@@ -347,6 +379,10 @@
 		</div>
 	{/snippet}
 </QueryState>
+
+{#if user && showNotificationsDialog}
+	<ScheduleNotificationsDialog bind:open={showNotificationsDialog} {user} />
+{/if}
 
 <!-- A block section: sticky block header + its nomination cards. Taken as a
 	snippet so the {#each} above narrows a node to a concrete ScheduleBlockGroup
@@ -408,7 +444,12 @@
 						<!-- The margin reaches every descendant too: keyboard focus scrolls the focused
 							control into view, not its row, and it must clear the sticky headers. -->
 						<div data-event-id={event.id} class="scroll-mt-28 **:scroll-mt-28">
-							<EventCard {event} {currentEvent} {user} />
+							<EventCard
+								{event}
+								{currentEvent}
+								{user}
+								secondsAhead={secondsAhead.get(event.id) ?? null}
+							/>
 						</div>
 					{/each}
 				</div>

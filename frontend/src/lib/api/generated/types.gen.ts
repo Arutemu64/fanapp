@@ -38,6 +38,7 @@ export type AppSettingsDto = {
 	festival_end: string;
 	limits: LimitsConfigDto;
 	quest: QuestConfigDto;
+	schedule: ScheduleConfigDto;
 };
 
 /**
@@ -198,9 +199,9 @@ export type CreateSubscriptionInput = {
 	 */
 	event_id: string;
 	/**
-	 * Counter
+	 * Lead Minutes
 	 */
-	counter: number;
+	lead_minutes: number;
 };
 
 /**
@@ -1001,6 +1002,10 @@ export type PublicConfigDto = {
 	 * Quest Max Award
 	 */
 	quest_max_award: number;
+	/**
+	 * Schedule Changeover Seconds
+	 */
+	schedule_changeover_seconds: number;
 };
 
 /**
@@ -1248,6 +1253,16 @@ export type ScheduleChangeUserDto = {
 	username: string;
 };
 
+/**
+ * ScheduleConfigDTO
+ */
+export type ScheduleConfigDto = {
+	/**
+	 * Changeover Seconds
+	 */
+	changeover_seconds: number;
+};
+
 export type ScheduleEntryDto =
 	| ({
 			type: 'event';
@@ -1434,9 +1449,9 @@ export type SubscriptionFullDto = {
 	 */
 	user_id: string;
 	/**
-	 * Counter
+	 * Lead Minutes
 	 */
-	counter: number;
+	lead_minutes: number;
 	event: SubscriptionEventDto;
 };
 
@@ -1568,6 +1583,10 @@ export type UpdateAppSettingsInput = {
 	 * Quest Cancel Window Minutes
 	 */
 	quest_cancel_window_minutes?: number | null;
+	/**
+	 * Schedule Changeover Seconds
+	 */
+	schedule_changeover_seconds?: number | null;
 };
 
 /**

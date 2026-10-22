@@ -36,6 +36,15 @@ class QuestConfig:
 
 
 @dataclass(slots=True, kw_only=True)
+class ScheduleConfig:
+    # The pause between two acts while one group leaves and the next walks on,
+    # which the planned durations leave out. Added once per act to the wait
+    # estimate (ADR-0043). The default is a guess until a festival's
+    # set-as-current log measures it.
+    changeover_seconds: int = 30
+
+
+@dataclass(slots=True, kw_only=True)
 class AppSettings(AggregateRoot):
     # Voting is open when ``now`` falls within [voting_start, voting_end).
     # Both None means voting is closed (the default).
@@ -50,6 +59,7 @@ class AppSettings(AggregateRoot):
 
     limits: LimitsConfig = field(default_factory=LimitsConfig)
     quest: QuestConfig = field(default_factory=QuestConfig)
+    schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
 
     def set_voting_time_range(
         self,
@@ -89,6 +99,11 @@ class AppSettings(AggregateRoot):
         # so callers never reach into it directly. None means "leave as is".
         if announcement_timeout is not None:
             self.limits.announcement_timeout = announcement_timeout
+
+    def update_schedule(self, *, changeover_seconds: int | None = None) -> None:
+        # None means "leave as is", like update_limits.
+        if changeover_seconds is not None:
+            self.schedule.changeover_seconds = changeover_seconds
 
     def ensure_quest_enabled(self) -> None:
         if not self.quest.enabled:

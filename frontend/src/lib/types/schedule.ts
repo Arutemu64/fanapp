@@ -1,11 +1,12 @@
 import type { ScheduleBlockStartDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 /**
- * The viewer's subscription to a single event (id + reminder threshold).
+ * The viewer's subscription to a single event (id + reminder lead time).
  * `queued` marks one still waiting to be sent, which has no ID yet.
  */
 export type EventSubscription =
-	{ id: string; counter: number; queued: false } | { id: null; counter: number; queued: true };
+	| { id: string; lead_minutes: number; queued: false }
+	| { id: null; lead_minutes: number; queued: true };
 
 /**
  * Schedule row as the page renders it: the universal event plus the viewer's

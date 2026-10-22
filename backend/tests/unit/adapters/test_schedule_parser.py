@@ -275,6 +275,20 @@ def test_rejects_a_fractional_duration() -> None:
     assert exc_info.value.details["column"] == "duration"
 
 
+@pytest.mark.parametrize("duration", [0, -60])
+def test_rejects_a_duration_that_is_not_positive(duration: int) -> None:
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=duration)])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert (
+        exc_info.value.details["reason"]
+        == InvalidScheduleFileReason.DURATION_NOT_POSITIVE
+    )
+    assert exc_info.value.details["column"] == "duration"
+
+
 def test_rejects_a_repeated_number() -> None:
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(), valid_row(title="Другое")])
 

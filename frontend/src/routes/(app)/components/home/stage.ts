@@ -1,5 +1,7 @@
 import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
+import { secondsUntilActs } from '#lib/utils/scheduleData.js';
+
 const UP_NEXT_COUNT = 3;
 
 export interface FeaturedAct {
@@ -17,9 +19,14 @@ export interface StageSnapshot {
 	nextSubscribed: ScheduleEventWithSubscription | null;
 	/** The act on stage, for position distances; null before the first one is marked. */
 	current: ScheduleEventWithSubscription | null;
+	/** Estimated seconds until each act after the current one (secondsUntilActs). */
+	secondsAhead: Map<string, number>;
 }
 
-export function getStageSnapshot(schedule: ScheduleEventWithSubscription[]): StageSnapshot {
+export function getStageSnapshot(
+	schedule: ScheduleEventWithSubscription[],
+	changeoverSeconds: number
+): StageSnapshot {
 	const ordered = [...schedule].sort((a, b) => a.order - b.order);
 	const currentIndex = ordered.findIndex((event) => event.is_current);
 	const current = ordered[currentIndex] ?? null;
@@ -40,13 +47,18 @@ export function getStageSnapshot(schedule: ScheduleEventWithSubscription[]): Sta
 	const later = afterFeatured.slice(UP_NEXT_COUNT);
 	const nextSubscribed = later.find((event) => event.user_subscription !== null) ?? null;
 
-	return { featured, upNext, nextSubscribed, current };
+	return {
+		featured,
+		upNext,
+		nextSubscribed,
+		current,
+		secondsAhead: secondsUntilActs(schedule, changeoverSeconds)
+	};
 }
 
 /**
- * How many acts away `event` is from the one on stage, by position — the
- * same drift-proof distance the schedule rows show (ADR-0014). Null when either
- * has no position or the event isn't ahead.
+ * How many acts away `event` is from the one on stage, by position. Null when
+ * either has no position or the event isn't ahead.
  */
 export function actsUntil(
 	event: ScheduleEventWithSubscription,

@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import html
 import logging
 from datetime import UTC, datetime, timedelta
@@ -60,6 +61,20 @@ _TOPIC_TAGS: dict[NotificationType, str] = {
 }
 
 
+def _topic_for(notification: Notification) -> str | None:
+    # A subscription notice narrows its lane to its act: two acts close in the
+    # running order each keep their notice instead of the later replacing the
+    # earlier. "sub" plus the 22-character base64url id fits the 32-character
+    # Topic limit.
+    if (
+        notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
+        and notification.event_id is not None
+    ):
+        event_key = base64.urlsafe_b64encode(notification.event_id.bytes)
+        return "sub" + event_key.decode().rstrip("=")
+    return _TOPIC_TAGS.get(notification.type)
+
+
 class PushNotifier(PushNotifierPort):
     def __init__(
         self,
@@ -86,7 +101,7 @@ class PushNotifier(PushNotifierPort):
     def _build_message_data(self, notification: Notification) -> MessageData:
         # Identical for every subscription of this user, so build it once; only
         # the per-subscription encryption downstream varies.
-        topic = _TOPIC_TAGS.get(notification.type)
+        topic = _topic_for(notification)
         return {
             "web_push": 8030,
             "mutable": True,
@@ -110,7 +125,7 @@ class PushNotifier(PushNotifierPort):
         self, notification: Notification, push_subs: list[PushSubscription]
     ) -> list[httpx2.Response | BaseException]:
         message_data = self._build_message_data(notification)
-        topic = _TOPIC_TAGS.get(notification.type)
+        topic = _topic_for(notification)
         # A schedule notification lives only as long as its text is true, so
         # the push service may hold it for what is left of that, not a fresh
         # lifetime. TTL 0 still delivers to a device reachable right now.

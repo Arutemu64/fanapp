@@ -70,7 +70,7 @@ class UserTicketDTO(BaseModel):
 
 
 class UserSettingsDTO(BaseModel):
-    receive_all_announcements: bool = True
+    receive_all_announcements: bool = False
     receive_telegram_notifications: bool = True
     receive_vk_notifications: bool = True
 

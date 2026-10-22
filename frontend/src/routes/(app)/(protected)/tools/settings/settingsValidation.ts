@@ -5,6 +5,7 @@ import { m } from '#lib/paraglide/messages.js';
 // Mirror the backend bounds (UpdateAppSettingsInput).
 export const QUEST_MAX_AWARD_LIMIT = 10_000;
 export const QUEST_CANCEL_WINDOW_LIMIT = 1440;
+export const CHANGEOVER_SECONDS_LIMIT = 600;
 
 function isIntegerInRange(value: number | undefined, min: number, max: number): boolean {
 	return value !== undefined && Number.isInteger(value) && value >= min && value <= max;
@@ -53,4 +54,11 @@ export function checkQuestCancelWindow(value: number | undefined): string {
 		return '';
 	}
 	return m.settings_validation_quest_window();
+}
+
+export function checkChangeover(value: number | undefined): string {
+	if (isIntegerInRange(value, 0, CHANGEOVER_SECONDS_LIMIT)) {
+		return '';
+	}
+	return m.settings_validation_changeover();
 }

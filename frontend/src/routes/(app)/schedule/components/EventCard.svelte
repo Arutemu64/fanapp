@@ -24,6 +24,8 @@
 		event: ScheduleEventWithSubscription;
 		currentEvent: ScheduleEventWithSubscription | null;
 		user: CurrentUserDto | null;
+		/** Estimated seconds until this act starts; null when it isn't ahead of the stage. */
+		secondsAhead?: number | null;
 		// 'interlude' for a block-less row (a break, the opening, the closing):
 		// drops the number column, since these stand alone rather than in the
 		// numbered list. Everything else — the bell, staff actions, the live
@@ -32,7 +34,7 @@
 		variant?: 'default' | 'interlude';
 	}
 
-	let { event, currentEvent, user, variant = 'default' }: Props = $props();
+	let { event, currentEvent, user, secondsAhead = null, variant = 'default' }: Props = $props();
 	const toastService = getToastService();
 
 	let subscribeModal = $state(false);
@@ -64,10 +66,14 @@
 
 	let actsAhead = $derived(currentEvent ? aheadOf(event.position, currentEvent.position) : null);
 
-	// Position distance only ("how many acts away"): the schedule carries no predicted
-	// clock time (ADR-0014), and the distance decrements as the current-event
-	// pointer advances (one set-current SSE per act reloads the schedule).
-	let untilLabel = $derived(actsAhead === null || actsAhead <= 0 ? null : formatUntil(actsAhead));
+	// A relative estimate from planned durations, not a clock time: the schedule
+	// payload stays free of anything time-dependent (ADR-0014), and the label
+	// recomputes as the current-event pointer advances (one set-current SSE per act
+	// reloads the schedule).
+	let untilLabel = $derived.by(() => {
+		if (actsAhead === null || actsAhead <= 0) return null;
+		return formatUntil(actsAhead, secondsAhead ?? 0);
+	});
 
 	function handleSubscribe() {
 		if (!user) {
@@ -169,7 +175,7 @@
 						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
 						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 							<BellRing class="mt-px size-3.5 shrink-0" />
-							{m.subscribe_reminder({ count: event.user_subscription.counter })}
+							{m.subscribe_reminder({ count: event.user_subscription.lead_minutes })}
 						</span>
 						<!-- Subscribing works offline (ADR-0038): until it is sent, say so beside the
 						     threshold rather than pretend the reminder is already set up. -->

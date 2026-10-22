@@ -18,6 +18,12 @@ class QuestConfigDTO(BaseModel):
     cancel_window_minutes: int = Field(ge=0)
 
 
+class ScheduleConfigDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    changeover_seconds: int = Field(ge=0)
+
+
 class AppSettingsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,6 +33,7 @@ class AppSettingsDTO(BaseModel):
     festival_end: datetime
     limits: LimitsConfigDTO
     quest: QuestConfigDTO
+    schedule: ScheduleConfigDTO
 
 
 class PublicConfigDTO(BaseModel):
@@ -51,3 +58,6 @@ class PublicConfigDTO(BaseModel):
     # Lets the volunteer's award form validate before sending; volunteers cannot
     # read the organizer settings.
     quest_max_award: int
+    # Added per act to the wait estimate the schedule shows, the same one the
+    # subscription reminder fires on (ADR-0043).
+    schedule_changeover_seconds: int

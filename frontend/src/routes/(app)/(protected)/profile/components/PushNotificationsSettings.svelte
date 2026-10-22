@@ -16,6 +16,7 @@
 	// Aliased so it doesn't clash with this component's own handler of the same name.
 	import { checkSubscription as checkPushSubscription } from '#lib/api/generated/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import SwitchRow from '#lib/components/SwitchRow.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -25,7 +26,6 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import SettingsSection from './SettingsSection.svelte';
-	import SwitchRow from './SwitchRow.svelte';
 	import VkNotificationsModal from './VkNotificationsModal.svelte';
 
 	interface Props {
@@ -61,9 +61,8 @@
 	let hasVkAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
-	// Writable deriveds: a toggle overrides them optimistically, and they snap back
+	// Writable derived: the toggle overrides it optimistically, and it snaps back
 	// to the server copy whenever `user` refreshes (Svelte "Overriding derived values").
-	let receiveAll = $derived(user.settings.receive_all_announcements ?? false);
 	let receiveVk = $derived(hasVkAccount && (user.settings.receive_vk_notifications ?? false));
 	let vkDescription = $derived(
 		hasVkAccount ? m.vk_notifications_on_description() : m.vk_notifications_connect_first()
@@ -145,18 +144,6 @@
 					toastService.add(m.push_settings_update_failed(), 'error');
 					rollback();
 				}
-			}
-		);
-	}
-
-	function toggleReceiveAll(checked: boolean) {
-		receiveAll = checked;
-		updateSettings(
-			{
-				receive_all_announcements: receiveAll
-			},
-			() => {
-				receiveAll = user.settings.receive_all_announcements ?? false;
 			}
 		);
 	}
@@ -244,20 +231,6 @@
 					</button>
 				</div>
 			</SwitchRow>
-		</MenuGroup>
-	</SettingsSection>
-
-	<SettingsSection title={m.push_types_title()}>
-		<MenuGroup>
-			<SwitchRow
-				id="all-announcements"
-				title={m.push_all_announcements_title()}
-				description={m.push_all_announcements_description()}
-				checked={receiveAll}
-				disabled={settingsMutation.isPending}
-				blocked={offlineGate.blocked}
-				onCheckedChange={offlineGate.guard(toggleReceiveAll)}
-			/>
 		</MenuGroup>
 	</SettingsSection>
 

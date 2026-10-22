@@ -53,14 +53,16 @@ async def test_create_subscription_persists_for_current_user(
     await schedule_gateway.add(event)
     await uow.commit()
 
-    result = await interactor(CreateSubscriptionInput(event_id=event.id, counter=5))
+    result = await interactor(
+        CreateSubscriptionInput(event_id=event.id, lead_minutes=15)
+    )
 
     saved = await subscription_gateway.get_by_id(result.subscription_id)
     assert saved is not None
     assert saved.id == result.subscription_id
     assert saved.user_id == visitor.id
     assert saved.event_id == event.id
-    assert saved.counter == 5
+    assert saved.lead_minutes == 15
 
 
 async def test_create_subscription_for_missing_event_raises_event_not_found(
@@ -83,7 +85,9 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
     missing_event_id = ScheduleEntryId(UUID("00000000-0000-0000-0000-000000000000"))
 
     with pytest.raises(EventNotFound):
-        await interactor(CreateSubscriptionInput(event_id=missing_event_id, counter=1))
+        await interactor(
+            CreateSubscriptionInput(event_id=missing_event_id, lead_minutes=15)
+        )
 
     await uow.rollback()
     assert await subscription_gateway.read_subscriptions_by_user(visitor.id) == []
@@ -107,4 +111,4 @@ async def test_create_subscription_rejects_a_block_start(
     await uow.commit()
 
     with pytest.raises(EventNotFound):
-        await interactor(CreateSubscriptionInput(event_id=block.id, counter=5))
+        await interactor(CreateSubscriptionInput(event_id=block.id, lead_minutes=15))

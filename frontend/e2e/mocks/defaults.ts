@@ -30,7 +30,8 @@ export const baselineHandlers: Handlers = {
 		festival_start: new Date(now + DAY_MS).toISOString(),
 		festival_end: new Date(now + 3 * DAY_MS).toISOString(),
 		quest_enabled: false,
-		quest_max_award: 100
+		quest_max_award: 100,
+		schedule_changeover_seconds: 30
 	}),
 	// Guest by default; personas.ts overrides this with a 200 user.
 	'GET /me/': json({ code: 'unauthorized' }, 401),

@@ -2,8 +2,6 @@
 	import { resolve } from '$app/paths';
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import BellRing from '@lucide/svelte/icons/bell-ring';
-	import Minus from '@lucide/svelte/icons/minus';
-	import Plus from '@lucide/svelte/icons/plus';
 	import { createMutation } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
@@ -15,6 +13,7 @@
 	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
@@ -33,21 +32,32 @@
 		open = false;
 	});
 
+	// A few fixed choices rather than a free number: the minutes are an estimate
+	// from planned durations, so finer steps would promise precision it lacks.
+	const LEAD_MINUTE_OPTIONS = [10, 15, 30, 60];
+
 	// No reset on open: EventCard mounts this modal only while it is open.
-	let counter = $state(5);
+	let leadMinutes = $state(15);
 	let formError = $state('');
 
-	// Clamp to the valid 1–100 range, snapping a cleared/NaN input back to the min
-	// so +/- never dead-locks and submit never POSTs null.
-	function setCounter(next: number) {
-		counter = Number.isFinite(next) ? Math.max(1, Math.min(100, Math.floor(next))) : 1;
+	// Fully controlled, like the schedule's scope switch: a single-select toggle
+	// group clears its value when the pressed item is tapped again, and the
+	// setter ignores that so one option always stays chosen
+	// (https://bits-ui.com/docs/components/toggle-group).
+	function getLeadMinutes() {
+		return String(leadMinutes);
+	}
+
+	function setLeadMinutes(value: string) {
+		if (value === '') return;
+		leadMinutes = Number(value);
+		formError = '';
 	}
 
 	function handleSubmit() {
-		setCounter(counter);
 		formError = '';
 		subscribeMutation.mutate(
-			{ body: { event_id: event.id, counter } },
+			{ body: { event_id: event.id, lead_minutes: leadMinutes } },
 			{
 				onSuccess: () => {
 					toastService.add(m.subscribe_done(), 'success');
@@ -80,56 +90,21 @@
 			</ParaglideMessage>
 		</Dialog.Description>
 
-		<div class="my-4 flex items-center justify-center">
-			<div
-				class="flex -space-x-px overflow-hidden rounded-lg border border-border bg-card has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-3 has-[input:focus-visible]:ring-ring"
+		<div class="my-2 flex flex-col gap-2">
+			<ToggleGroup.Root
+				type="single"
+				variant="outline"
+				class="w-full"
+				bind:value={getLeadMinutes, setLeadMinutes}
+				aria-label={m.subscribe_lead_label()}
 			>
-				<button
-					type="button"
-					onclick={() => {
-						setCounter(counter - 1);
-						formError = '';
-					}}
-					class="flex h-11 w-12 items-center justify-center border-r border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-					disabled={counter <= 1}
-					aria-label={m.subscribe_decrease()}
-				>
-					<Minus class="size-5" />
-				</button>
-
-				<div class="relative flex h-11 w-44 flex-col items-center justify-center">
-					<input
-						name="subscription_counter"
-						type="number"
-						aria-label={m.subscribe_counter_label()}
-						min="1"
-						max="100"
-						inputmode="numeric"
-						autocomplete="off"
-						bind:value={counter}
-						onblur={() => setCounter(counter)}
-						class="size-full border-0 bg-transparent pb-5 text-center font-bold text-foreground [-moz-appearance:textfield] focus:ring-0 focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-					/>
-					<div
-						class="pointer-events-none absolute bottom-1 flex items-center text-xs text-muted-foreground select-none"
-					>
-						<span>{m.subscribe_counter_unit({ count: counter })}</span>
-					</div>
-				</div>
-
-				<button
-					type="button"
-					onclick={() => {
-						setCounter(counter + 1);
-						formError = '';
-					}}
-					class="flex h-11 w-12 items-center justify-center border-l border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-					disabled={counter >= 100}
-					aria-label={m.subscribe_increase()}
-				>
-					<Plus class="size-5" />
-				</button>
-			</div>
+				{#each LEAD_MINUTE_OPTIONS as minutes (minutes)}
+					<ToggleGroup.Item value={String(minutes)} class="h-11 flex-1">
+						{m.subscribe_lead_option({ count: minutes })}
+					</ToggleGroup.Item>
+				{/each}
+			</ToggleGroup.Root>
+			<p class="text-sm leading-relaxed text-muted-foreground">{m.subscribe_estimate_note()}</p>
 		</div>
 
 		<p class="text-sm leading-relaxed text-muted-foreground">

@@ -7,7 +7,7 @@ import type {
 
 /** Subscription writes still in the queue (ADR-0038), not yet in the server's list. */
 export interface QueuedSubscriptionChanges {
-	subscribing: ReadonlyArray<{ event_id: string; counter: number }>;
+	subscribing: ReadonlyArray<{ event_id: string; lead_minutes: number }>;
 	/** Subscription IDs whose unsubscribe is waiting. */
 	unsubscribing: ReadonlyArray<string>;
 }
@@ -34,11 +34,11 @@ export function mergeSubscriptions(
 	const byEventId = new Map<string, EventSubscription>();
 	for (const sub of subscriptions) {
 		if (leaving.has(sub.id)) continue;
-		byEventId.set(sub.event.id, { id: sub.id, counter: sub.counter, queued: false });
+		byEventId.set(sub.event.id, { id: sub.id, lead_minutes: sub.lead_minutes, queued: false });
 	}
-	for (const { event_id, counter } of queued.subscribing) {
+	for (const { event_id, lead_minutes } of queued.subscribing) {
 		if (byEventId.has(event_id)) continue;
-		byEventId.set(event_id, { id: null, counter, queued: true });
+		byEventId.set(event_id, { id: null, lead_minutes, queued: true });
 	}
 
 	return schedule.map((entry) => {
@@ -52,6 +52,39 @@ export function scheduleEvents(
 	entries: ScheduleEntryWithSubscription[]
 ): ScheduleEventWithSubscription[] {
 	return entries.filter((entry) => entry.type === 'event');
+}
+
+/**
+ * Estimated wait, in seconds, until each act after the one on stage: the planned
+ * duration of each act before it plus the changeover after each, the current act
+ * counted in full since when it started is not known. Durations are
+ * self-reported upper limits, so the estimate runs long, and a missing one counts
+ * as zero. An act with no planned duration anywhere before it gets no estimate:
+ * changeovers alone would put it a few minutes away at any distance. It is the
+ * same estimate the subscription reminder fires on (ADR-0043). Empty before the
+ * first act is marked current.
+ */
+export function secondsUntilActs(
+	schedule: ScheduleEventWithSubscription[],
+	changeoverSeconds: number
+): Map<string, number> {
+	const ahead = new Map<string, number>();
+	const running = schedule
+		.filter((event) => event.position !== null)
+		.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+	const currentIndex = running.findIndex((event) => event.is_current);
+	if (currentIndex === -1) return ahead;
+
+	let elapsed = 0;
+	let planned = 0;
+	for (const event of running.slice(currentIndex)) {
+		if (!event.is_current && planned > 0) {
+			ahead.set(event.id, elapsed);
+		}
+		elapsed += event.duration + changeoverSeconds;
+		planned += event.duration;
+	}
+	return ahead;
 }
 
 /**

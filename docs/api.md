@@ -73,7 +73,7 @@ A user-triggered write is a `createMutation` over the generated `…Mutation()` 
 	function handleSubmit() {
 		formError = '';
 		subscribeMutation.mutate(
-			{ body: { event_id: event.id, counter } },
+			{ body: { event_id: event.id, lead_minutes: leadMinutes } },
 			{
 				onSuccess: () => toastService.add('Подписка оформлена', 'success'),
 				onError: (error) => {

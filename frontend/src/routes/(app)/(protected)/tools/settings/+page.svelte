@@ -24,7 +24,9 @@
 
 	import ToolSection from '../components/ToolSection.svelte';
 	import {
+		CHANGEOVER_SECONDS_LIMIT,
 		checkAnnouncementTimeout,
+		checkChangeover,
 		checkFestivalEnd,
 		checkFestivalStart,
 		checkQuestCancelWindow,
@@ -61,6 +63,11 @@
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
 	let announcementTimeoutError = $state('');
+	let savedChangeover = $state(untrack(() => data.settings.schedule.changeover_seconds));
+	let changeover = $state<number | undefined>(
+		untrack(() => data.settings.schedule.changeover_seconds)
+	);
+	let changeoverError = $state('');
 	let savedQuest = $state(untrack(() => ({ ...data.settings.quest })));
 	let questEnabled = $state(untrack(() => data.settings.quest.enabled));
 	let questMaxAward = $state<number | undefined>(untrack(() => data.settings.quest.max_award));
@@ -75,6 +82,7 @@
 		festivalStart !== savedFestivalStart ||
 			festivalEnd !== savedFestivalEnd ||
 			announcementTimeout !== savedAnnouncementTimeout ||
+			changeover !== savedChangeover ||
 			questEnabled !== savedQuest.enabled ||
 			questMaxAward !== savedQuest.max_award ||
 			questCancelWindow !== savedQuest.cancel_window_minutes
@@ -119,6 +127,18 @@
 		}
 	}
 
+	function validateChangeover() {
+		changeoverError = checkChangeover(changeover);
+		return !changeoverError;
+	}
+
+	function handleChangeoverInput() {
+		submitError = '';
+		if (changeoverError) {
+			validateChangeover();
+		}
+	}
+
 	function validateQuestMaxAward() {
 		questMaxAwardError = checkQuestMaxAward(questMaxAward);
 		return !questMaxAwardError;
@@ -155,6 +175,7 @@
 		const isFestivalStartValid = validateFestivalStart();
 		const isFestivalEndValid = validateFestivalEnd();
 		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
+		const isChangeoverValid = validateChangeover();
 		const isQuestMaxAwardValid = validateQuestMaxAward();
 		const isQuestCancelWindowValid = validateQuestCancelWindow();
 
@@ -162,6 +183,7 @@
 			!isFestivalStartValid ||
 			!isFestivalEndValid ||
 			!isAnnouncementTimeoutValid ||
+			!isChangeoverValid ||
 			!isQuestMaxAwardValid ||
 			!isQuestCancelWindowValid
 		) {
@@ -169,11 +191,13 @@
 		}
 
 		const nextAnnouncementTimeout = announcementTimeout;
+		const nextChangeover = changeover;
 		const nextQuestMaxAward = questMaxAward;
 		const nextQuestCancelWindow = questCancelWindow;
 
 		if (
 			nextAnnouncementTimeout === undefined ||
+			nextChangeover === undefined ||
 			nextQuestMaxAward === undefined ||
 			nextQuestCancelWindow === undefined
 		) {
@@ -191,6 +215,7 @@
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
 					announcement_timeout: nextAnnouncementTimeout,
+					schedule_changeover_seconds: nextChangeover,
 					quest_enabled: nextQuest.enabled,
 					quest_max_award: nextQuest.max_award,
 					quest_cancel_window_minutes: nextQuest.cancel_window_minutes
@@ -201,22 +226,26 @@
 					savedFestivalStart = festivalStart;
 					savedFestivalEnd = festivalEnd;
 					savedAnnouncementTimeout = nextAnnouncementTimeout;
+					savedChangeover = nextChangeover;
 					savedQuest = nextQuest;
 					festivalStartError = '';
 					festivalEndError = '';
 					announcementTimeoutError = '';
+					changeoverError = '';
 					toastService.add(m.settings_saved(), 'success');
 				},
 				onError: (error) => {
 					festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
 					festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
 					announcementTimeoutError = getApiFieldError(error, 'announcement_timeout') ?? '';
+					changeoverError = getApiFieldError(error, 'schedule_changeover_seconds') ?? '';
 					questMaxAwardError = getApiFieldError(error, 'quest_max_award') ?? '';
 					questCancelWindowError = getApiFieldError(error, 'quest_cancel_window_minutes') ?? '';
 					const hasFieldError =
 						festivalStartError ||
 						festivalEndError ||
 						announcementTimeoutError ||
+						changeoverError ||
 						questMaxAwardError ||
 						questCancelWindowError;
 					if (hasFieldError) {
@@ -315,6 +344,30 @@
 				<Field.FieldDescription>
 					{m.settings_timeout_hint()}
 				</Field.FieldDescription>
+			{/if}
+		</Field.Field>
+
+		<Field.Field data-invalid={changeoverError ? true : undefined}>
+			<Field.FieldLabel for="changeover">{m.settings_changeover_label()}</Field.FieldLabel>
+			<Input
+				id="changeover"
+				name="schedule_changeover_seconds"
+				type="number"
+				min="0"
+				max={CHANGEOVER_SECONDS_LIMIT}
+				step="1"
+				inputmode="numeric"
+				autocomplete="off"
+				bind:value={changeover}
+				disabled={saveMutation.isPending}
+				oninput={handleChangeoverInput}
+				onblur={validateChangeover}
+				aria-invalid={changeoverError ? true : undefined}
+			/>
+			{#if changeoverError}
+				<Field.FieldError>{changeoverError}</Field.FieldError>
+			{:else}
+				<Field.FieldDescription>{m.settings_changeover_hint()}</Field.FieldDescription>
 			{/if}
 		</Field.Field>
 	</ToolSection>

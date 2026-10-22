@@ -1,12 +1,22 @@
-{# An event without a public number (a break) is announced by title alone. #}
-{% macro event_number_prefix(number) -%}
-{% if number is not none %}№{{ '%03d' % number }} {% endif %}
+{# One notice per moment a subscriber acts on: "soon" (the reminder), "started"
+   (on stage), "changed" (the act itself moved, left or came back). The minutes
+   are an estimate from planned durations, so they are always "примерно" and
+   left out when the durations add up to nothing. An event without a public
+   number (a break) is announced by title alone. #}
+{% macro event_label(number, title) -%}
+{% if number is not none %}№{{ '%03d' % number }} {% endif %}«{{ title }}»
 {%- endmacro -%}
-{% if position_difference == 0 -%}
-<b>Выступление {{ event_number_prefix(event_number) }}«{{ event_title }}» началось!</b>
+{% macro wait(positions_ahead, minutes_ahead) -%}
+осталось <b>{{ positions_ahead }} {{ positions_ahead|plural('выступление', 'выступления', 'выступлений') }}</b>
+{%- if minutes_ahead %}, примерно {{ minutes_ahead }} {{ minutes_ahead|plural('минута', 'минуты', 'минут') }}{% endif %}
+{%- endmacro -%}
+{% if kind == 'started' -%}
+<b>Выступление {{ event_label(event_number, event_title) }} началось</b>
+{%- elif kind == 'soon' -%}
+До выступления <b>{{ event_label(event_number, event_title) }}</b> {{ wait(positions_ahead, minutes_ahead) }}
 {%- else -%}
-До начала выступления <b>{{ event_number_prefix(event_number) }}«{{ event_title }}»</b> осталось <b>{{ position_difference }} {{ position_difference|plural('выступление', 'выступления', 'выступлений') }}</b>
-{% if reason_msg %}
 {{ reason_msg }}
+{%- if positions_ahead %}
+{{ '\n' }}До него {{ wait(positions_ahead, minutes_ahead) }}
 {%- endif %}
 {%- endif %}

@@ -14,6 +14,7 @@ from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId, NotificationType
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.user import UserId
 
 
@@ -28,6 +29,7 @@ def _to_model(orm: NotificationORM) -> Notification:
         mailing_id=MailingId(orm.mailing_id) if orm.mailing_id is not None else None,
         seen_at=orm.seen_at,
         created_at=orm.created_at,
+        event_id=ScheduleEntryId(orm.event_id) if orm.event_id is not None else None,
     )
 
 
@@ -62,6 +64,7 @@ class SqlNotificationGateway(NotificationGateway):
                 "path": notification.path,
                 "mailing_id": notification.mailing_id,
                 "seen_at": notification.seen_at,
+                "event_id": notification.event_id,
             }
             for notification in notifications
         ]

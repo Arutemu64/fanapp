@@ -84,7 +84,7 @@
 	let votingOpen = $derived(isVotingOpenNow(votingStatus, now));
 	let votingEnded = $derived(hasVotingEnded(votingStatus?.voting_end, now));
 
-	let snapshot = $derived(getStageSnapshot(schedule));
+	let snapshot = $derived(getStageSnapshot(schedule, config.schedule_changeover_seconds));
 	let hasProgramme = $derived(schedule.length > 0);
 	let hasSubscriptions = $derived(schedule.some((event) => event.user_subscription !== null));
 	// Before the festival the steps are preparation; once it runs they are app setup.

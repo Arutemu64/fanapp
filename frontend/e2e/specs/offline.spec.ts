@@ -67,7 +67,8 @@ test.describe('offline', { tag: '@critical' }, () => {
 				festival_start: new Date(Date.now() - hour).toISOString(),
 				festival_end: new Date(Date.now() + 24 * hour).toISOString(),
 				quest_enabled: false,
-				quest_max_award: 100
+				quest_max_award: 100,
+				schedule_changeover_seconds: 30
 			}),
 			'GET /schedule/': json<GetScheduleOutput>({
 				schedule: [
@@ -198,12 +199,14 @@ test.describe('offline', { tag: '@critical' }, () => {
 		api.use({
 			...loggedInAs(),
 			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 1 }),
+			'GET /schedule/': json({ schedule: [] }),
 			'PATCH /me/settings': () => {
 				patched = true;
 				return json({});
 			}
 		});
-		await page.goto('/profile/notifications');
+		await page.goto('/schedule');
+		await page.getByRole('button', { name: 'Настроить уведомления' }).click();
 		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
 		await expect(allAnnouncements).toBeChecked();
 		// Every API response the app handles marks the backend reachable, and the

@@ -301,12 +301,24 @@ export function formatDayHeading(value: string | number | Date, now: number = Da
 	return EVENT_DAY_LONG_WITH_YEAR_FORMATTER.format(target).replace(/\s*г\.$/, '');
 }
 
+// Past this wait an estimate is rounded up to whole steps: a minute-exact figure
+// an hour out would promise a precision the planned durations don't have.
+const UNTIL_ROUNDING_FROM_SECONDS = 10 * SECONDS_IN_MINUTE;
+const UNTIL_ROUNDING_STEP_SECONDS = 5 * SECONDS_IN_MINUTE;
+
 /**
- * Countdown label for an upcoming event: the drift-proof position distance ("how
- * many acts away"). The schedule carries no predicted clock time — every value
- * is derived purely from stored columns so the payload stays cacheable (ADR-0014)
- * — so the position distance is the whole label, and it stays exact as acts advance.
+ * Countdown label for an upcoming act: the estimated wait, always "примерно",
+ * since it adds up planned durations rather than tracking the stage. Falls back
+ * to the act count when the durations add up to nothing (none were filled in),
+ * which says more than "примерно 0 минут".
  */
-export function formatUntil(actsAhead: number): string {
-	return m.events_left({ count: actsAhead });
+export function formatUntil(actsAhead: number, secondsAhead: number): string {
+	if (secondsAhead <= 0) {
+		return m.events_left({ count: actsAhead });
+	}
+	let rounded = Math.ceil(secondsAhead / SECONDS_IN_MINUTE) * SECONDS_IN_MINUTE;
+	if (rounded >= UNTIL_ROUNDING_FROM_SECONDS) {
+		rounded = Math.ceil(rounded / UNTIL_ROUNDING_STEP_SECONDS) * UNTIL_ROUNDING_STEP_SECONDS;
+	}
+	return m.events_left_time({ time: formatDuration(rounded) });
 }

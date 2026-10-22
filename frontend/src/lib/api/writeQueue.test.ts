@@ -24,7 +24,7 @@ vi.mock('#lib/api/generated/index.js', async (importOriginal) => ({
 	newSubscription
 }));
 
-const SUBSCRIBE = { body: { event_id: 'event-1', counter: 3 } };
+const SUBSCRIBE = { body: { event_id: 'event-1', lead_minutes: 15 } };
 
 function subscribeObserver(queryClient: QueryClient) {
 	return new MutationObserver(queryClient, queuedSubscribeOptions('event-1'));
