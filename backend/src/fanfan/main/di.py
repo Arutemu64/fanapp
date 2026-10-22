@@ -3,7 +3,6 @@ from dishka.integrations.fastapi import FastapiProvider
 
 from fanfan.main.db_config import DbConfigProvider
 from fanfan.main.ioc.auth import OAuthProvider
-from fanfan.main.ioc.bot import BotProvider
 from fanfan.main.ioc.captcha import CaptchaProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
@@ -22,6 +21,7 @@ from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.stream import StreamProvider
 from fanfan.main.ioc.sync import SyncProvider
 from fanfan.main.ioc.tcloud import TCloudProvider
+from fanfan.main.ioc.telegram import TelegramProvider
 from fanfan.main.ioc.vk import VkProvider
 
 
@@ -32,7 +32,7 @@ def get_common_providers() -> list[Provider]:
         DbConfigProvider(),
         DbProvider(),
         InteractorsProvider(),
-        BotProvider(),
+        TelegramProvider(),
         RedisProvider(),
         TCloudProvider(),
         SecurityProvider(),

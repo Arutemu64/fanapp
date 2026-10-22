@@ -77,8 +77,9 @@ def setup_logging(level: int, *, json_logs: bool) -> None:
 
     # Silence noisy loggers
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("aiogram.event").setLevel(logging.WARNING)
-    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
+    # httpx2 logs every request URL at INFO, and the Telegram bot token is part
+    # of its URL path (adapters/tgbot/client.py) — WARNING keeps it out of logs.
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").addFilter(_HealthCheckFilter())
     # The outbox relay ticks every couple of seconds, and APScheduler's executor
     # logs "Running job"/"executed successfully" at INFO on every tick — tens of
