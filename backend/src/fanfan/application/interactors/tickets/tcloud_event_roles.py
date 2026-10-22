@@ -29,7 +29,7 @@ class SetTCloudEventRolesInput(BaseModel):
     event_roles: list[TCloudEventRoleDTO] = Field(max_length=100)
 
 
-# Guarded by tickets:generate, not settings:manage, the way the voting time range
+# Guarded by tickets:manage, not settings:manage, the way the voting time range
 # lives in AppSettings but is managed under voting:manage: the mapping decides
 # which role a bought ticket grants, the same power as generating one.
 class GetTCloudEventRoles:
@@ -48,7 +48,7 @@ class GetTCloudEventRoles:
     async def __call__(self) -> TCloudEventRolesOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, permission=Permission.TICKETS_GENERATE
+            user=current_user, permission=Permission.TICKETS_MANAGE
         )
 
         settings = await self.app_settings_gateway.get()
@@ -77,7 +77,7 @@ class SetTCloudEventRoles:
     async def __call__(self, data: SetTCloudEventRolesInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, permission=Permission.TICKETS_GENERATE
+            user=current_user, permission=Permission.TICKETS_MANAGE
         )
 
         settings = await self.app_settings_gateway.get_for_update()

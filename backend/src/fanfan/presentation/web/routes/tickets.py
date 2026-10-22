@@ -42,7 +42,7 @@ tickets_router = APIRouter(
         "Newest-first list of every ticket, generated or imported from "
         "TicketsCloud, with the user who linked it. Search matches a "
         "case-insensitive substring of the ticket number. Requires "
-        "'tickets:generate'."
+        "'tickets:manage'."
     ),
     responses={
         200: {"description": "Tickets retrieved successfully."},
@@ -65,7 +65,7 @@ async def list_tickets(
     summary="Generate tickets",
     description=(
         "Generates a batch of new tickets for the given role. Requires the "
-        "'tickets:generate' permission. Returns the created barcodes."
+        "'tickets:manage' permission. Returns the created barcodes."
     ),
     responses={
         200: {"description": "Tickets generated successfully."},
@@ -89,7 +89,7 @@ async def generate_tickets(
     description=(
         "Returns which role a ticket bought for each TicketsCloud event grants, "
         "and whether TicketsCloud is configured for this deployment. An event "
-        "left out grants the visitor role. Requires 'tickets:generate'."
+        "left out grants the visitor role. Requires 'tickets:manage'."
     ),
     responses={
         200: {"description": "Event roles retrieved successfully."},
@@ -108,7 +108,7 @@ async def get_tcloud_event_roles(
     summary="Replace TicketsCloud event roles",
     description=(
         "Replaces the whole event-to-role mapping. Applies to tickets imported "
-        "from now on; stored tickets keep their role. Requires 'tickets:generate'."
+        "from now on; stored tickets keep their role. Requires 'tickets:manage'."
     ),
     responses={
         204: {"description": "Event roles saved."},

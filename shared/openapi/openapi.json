@@ -3806,7 +3806,7 @@
           "Tickets"
         ],
         "summary": "List tickets",
-        "description": "Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.",
+        "description": "Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:manage'.",
         "operationId": "list_tickets",
         "security": [
           {
@@ -3913,7 +3913,7 @@
           "Tickets"
         ],
         "summary": "Generate tickets",
-        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:generate' permission. Returns the created barcodes.",
+        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.",
         "operationId": "generate_tickets",
         "requestBody": {
           "content": {
@@ -3990,7 +3990,7 @@
           "Tickets"
         ],
         "summary": "Get TicketsCloud event roles",
-        "description": "Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:generate'.",
+        "description": "Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.",
         "operationId": "get_tcloud_event_roles",
         "responses": {
           "200": {
@@ -4045,7 +4045,7 @@
           "Tickets"
         ],
         "summary": "Replace TicketsCloud event roles",
-        "description": "Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:generate'.",
+        "description": "Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.",
         "operationId": "set_tcloud_event_roles",
         "requestBody": {
           "content": {
@@ -7027,7 +7027,7 @@
           "schedule:import",
           "notifications:send",
           "settings:manage",
-          "tickets:generate",
+          "tickets:manage",
           "sync:run",
           "demo:seed",
           "feedback:read",

@@ -1494,7 +1494,7 @@ export const submitFeedback = <ThrowOnError extends boolean = false>(
 /**
  * List tickets
  *
- * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.
+ * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:manage'.
  */
 export const listTickets = <ThrowOnError extends boolean = false>(
 	options?: Options<ListTicketsData, ThrowOnError>
@@ -1514,7 +1514,7 @@ export const listTickets = <ThrowOnError extends boolean = false>(
 /**
  * Generate tickets
  *
- * Generates a batch of new tickets for the given role. Requires the 'tickets:generate' permission. Returns the created barcodes.
+ * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.
  */
 export const generateTickets = <ThrowOnError extends boolean = false>(
 	options: Options<GenerateTicketsData, ThrowOnError>
@@ -1538,7 +1538,7 @@ export const generateTickets = <ThrowOnError extends boolean = false>(
 /**
  * Get TicketsCloud event roles
  *
- * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:generate'.
+ * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.
  */
 export const getTcloudEventRoles = <ThrowOnError extends boolean = false>(
 	options?: Options<GetTcloudEventRolesData, ThrowOnError>
@@ -1562,7 +1562,7 @@ export const getTcloudEventRoles = <ThrowOnError extends boolean = false>(
 /**
  * Replace TicketsCloud event roles
  *
- * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:generate'.
+ * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
  */
 export const setTcloudEventRoles = <ThrowOnError extends boolean = false>(
 	options: Options<SetTcloudEventRolesData, ThrowOnError>

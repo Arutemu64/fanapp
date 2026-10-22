@@ -980,7 +980,7 @@ export type Permission =
 	| 'schedule:import'
 	| 'notifications:send'
 	| 'settings:manage'
-	| 'tickets:generate'
+	| 'tickets:manage'
 	| 'sync:run'
 	| 'demo:seed'
 	| 'feedback:read'

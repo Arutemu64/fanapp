@@ -59,7 +59,7 @@ async def _add_user(
 @pytest_asyncio.fixture
 async def ticket_manager(dishka_request: AsyncContainer, uow: UnitOfWork) -> User:
     manager = await _add_user(
-        dishka_request, "ticket_manager", Permission.TICKETS_GENERATE
+        dishka_request, "ticket_manager", Permission.TICKETS_MANAGE
     )
     await uow.commit()
     return manager

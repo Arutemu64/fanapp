@@ -2114,7 +2114,7 @@ export const listTicketsQueryKey = (options?: Options<ListTicketsData>) =>
 /**
  * List tickets
  *
- * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.
+ * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:manage'.
  */
 export const listTicketsOptions = (options?: Options<ListTicketsData>) =>
 	queryOptions<
@@ -2142,7 +2142,7 @@ export const listTicketsInfiniteQueryKey = (
 /**
  * List tickets
  *
- * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.
+ * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:manage'.
  */
 export const listTicketsInfiniteOptions = (options?: Options<ListTicketsData>) => {
 	const opts = infiniteQueryOptions<
@@ -2187,7 +2187,7 @@ export const listTicketsInfiniteOptions = (options?: Options<ListTicketsData>) =
 /**
  * Generate tickets
  *
- * Generates a batch of new tickets for the given role. Requires the 'tickets:generate' permission. Returns the created barcodes.
+ * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.
  */
 export const generateTicketsMutation = (
 	options?: Partial<Options<GenerateTicketsData>>
@@ -2215,7 +2215,7 @@ export const getTcloudEventRolesQueryKey = (options?: Options<GetTcloudEventRole
 /**
  * Get TicketsCloud event roles
  *
- * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:generate'.
+ * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.
  */
 export const getTcloudEventRolesOptions = (options?: Options<GetTcloudEventRolesData>) =>
 	queryOptions<
@@ -2239,7 +2239,7 @@ export const getTcloudEventRolesOptions = (options?: Options<GetTcloudEventRoles
 /**
  * Replace TicketsCloud event roles
  *
- * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:generate'.
+ * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
  */
 export const setTcloudEventRolesMutation = (
 	options?: Partial<Options<SetTcloudEventRolesData>>

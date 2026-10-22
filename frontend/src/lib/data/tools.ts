@@ -86,14 +86,14 @@ const TOOLS: Tool[] = [
 		forbidden: m.broadcast_forbidden
 	},
 	{
-		// tickets:generate lists, issues and maps tickets; sync:run alone still
+		// tickets:manage lists, issues and maps tickets; sync:run alone still
 		// opens it for the TicketsCloud sync, which lives here.
 		key: 'tickets',
 		title: m.tool_tickets,
 		description: m.tool_tickets_description,
 		icon: Ticket,
 		href: 'tools/tickets',
-		anyOf: ['tickets:generate', 'sync:run'],
+		anyOf: ['tickets:manage', 'sync:run'],
 		forbidden: m.tickets_forbidden
 	},
 	{

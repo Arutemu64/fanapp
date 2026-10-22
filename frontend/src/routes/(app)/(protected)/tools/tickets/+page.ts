@@ -24,7 +24,7 @@ export const load: PageLoad = async ({ parent }) => {
 	// The event-role form is seeded once from this, so it waits for a fresh copy
 	// rather than a cached one an edit would then overwrite.
 	let eventRoles = null;
-	if (hasPermission(user, 'tickets:generate')) {
+	if (hasPermission(user, 'tickets:manage')) {
 		eventRoles = await queryForLoad(queryClient, {
 			...getTcloudEventRolesOptions(),
 			staleTime: 0

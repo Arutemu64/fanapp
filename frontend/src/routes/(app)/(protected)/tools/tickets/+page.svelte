@@ -19,7 +19,7 @@
 
 	// The tool opens with either permission (see lib/data/tools.ts); each tab
 	// shows only what the endpoints behind it would accept.
-	let canManage = $derived(hasPermission(data.user, 'tickets:generate'));
+	let canManage = $derived(hasPermission(data.user, 'tickets:manage'));
 	let canSync = $derived(hasPermission(data.user, 'sync:run'));
 	let canOpenUsers = $derived(hasPermission(data.user, 'users:read'));
 	let initialTab = $derived(canManage ? 'list' : 'tcloud');

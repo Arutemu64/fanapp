@@ -35,7 +35,7 @@ class ListTickets:
     async def __call__(self, data: ListTicketsInput) -> ListTicketsOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, permission=Permission.TICKETS_GENERATE
+            user=current_user, permission=Permission.TICKETS_MANAGE
         )
 
         rows = await self.ticket_gateway.read_tickets_page(
