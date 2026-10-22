@@ -1,8 +1,14 @@
-from sqlalchemy import delete, select
+from typing import Any
+
+from sqlalchemy import Select, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.models import TicketORM
+from fanfan.adapters.db.pagination import rows_after
+from fanfan.application.dto.page import CursorPagination
+from fanfan.application.dto.ticket import TicketListFilter, TicketListItemDTO
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.core.exceptions.tickets import (
     TicketBarcodeCollision,
@@ -40,6 +46,20 @@ def _to_model(orm: TicketORM) -> Ticket:
         ticketscloud_ticket_id=orm.ticketscloud_ticket_id,
         ticketscloud_order_id=orm.ticketscloud_order_id,
         revoked_at=orm.revoked_at,
+    )
+
+
+def _to_list_item_dto(orm: TicketORM) -> TicketListItemDTO:
+    used_by_user = orm.used_by_user
+    return TicketListItemDTO(
+        id=TicketId(orm.id),
+        barcode=orm.barcode,
+        role=orm.role,
+        used_by_user_id=UserId(used_by_user.id) if used_by_user else None,
+        used_by_username=used_by_user.username if used_by_user else None,
+        from_ticketscloud=orm.ticketscloud_ticket_id is not None,
+        revoked_at=orm.revoked_at,
+        created_at=orm.created_at,
     )
 
 
@@ -114,3 +134,37 @@ class SqlTicketGateway(TicketGateway):
 
     async def delete(self, ticket: Ticket) -> None:
         await self.session.execute(delete(TicketORM).where(TicketORM.id == ticket.id))
+
+    async def read_tickets_page(
+        self, *, pagination: CursorPagination, ticket_filter: TicketListFilter
+    ) -> list[TicketListItemDTO]:
+        stmt = select(TicketORM).options(joinedload(TicketORM.used_by_user))
+        stmt = self._apply_ticket_filter(stmt, ticket_filter)
+        if pagination.after is not None:
+            stmt = stmt.where(
+                rows_after(TicketORM.created_at, TicketORM.id, pagination.after)
+            )
+        stmt = stmt.order_by(TicketORM.created_at.desc(), TicketORM.id.desc()).limit(
+            pagination.fetch_limit
+        )
+        tickets_orm = await self.session.scalars(stmt)
+        return [_to_list_item_dto(ticket) for ticket in tickets_orm]
+
+    async def count_tickets(self, *, ticket_filter: TicketListFilter) -> int:
+        stmt = select(func.count(TicketORM.id))
+        stmt = self._apply_ticket_filter(stmt, ticket_filter)
+        return await self.session.scalar(stmt) or 0
+
+    @staticmethod
+    def _apply_ticket_filter[SelectT: Select[Any]](
+        stmt: SelectT, ticket_filter: TicketListFilter
+    ) -> SelectT:
+        # Same escaping as the user directory search: %/_ in the term match
+        # themselves instead of acting as wildcards.
+        search = ticket_filter.search
+        if not search or not search.strip():
+            return stmt
+        escaped = (
+            search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        )
+        return stmt.where(TicketORM.barcode.ilike(f"%{escaped}%"))

@@ -1,8 +1,6 @@
 import pytest
-from pydantic import SecretStr
 
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
-from fanfan.adapters.api.ticketscloud.config import TCloudConfig
 from fanfan.adapters.api.ticketscloud.dto.order import (
     Order,
     OrdersResponse,
@@ -17,12 +15,10 @@ from fanfan.adapters.api.ticketscloud.dto.refund import (
 from fanfan.adapters.api.ticketscloud.dto.ticket import Ticket
 from fanfan.adapters.api.ticketscloud.source import TCloudSource
 from fanfan.application.ports.sources.tickets import RevokedExternalTicket
-from fanfan.core.vo.user import UserRole
 
 pytestmark = pytest.mark.unit
 
 EVENT_VOLUNTEER = "event-volunteer"
-EVENT_UNKNOWN = "event-unknown"
 
 
 def _ticket(ticket_id: str, *, barcode: str | None) -> Ticket:
@@ -37,13 +33,6 @@ def _order(
     tickets: list[Ticket],
 ) -> Order:
     return Order(id=order_id, status=status, event=event, tickets=tickets)
-
-
-def _config() -> TCloudConfig:
-    return TCloudConfig(
-        api_key=SecretStr("key"),
-        event_ids_map={EVENT_VOLUNTEER: UserRole.VOLUNTEER},
-    )
 
 
 class FakeTCloudClient(TCloudClient):
@@ -93,7 +82,7 @@ class FakeTCloudClient(TCloudClient):
         )
 
 
-async def test_fetch_order_tickets_filters_and_maps_role() -> None:
+async def test_fetch_order_tickets_filters_and_keeps_event() -> None:
     order = _order(
         "o1",
         tickets=[
@@ -101,9 +90,7 @@ async def test_fetch_order_tickets_filters_and_maps_role() -> None:
             _ticket("t2", barcode=None),  # no barcode -> dropped
         ],
     )
-    source = TCloudSource(
-        FakeTCloudClient(pages=[[]], orders_by_id={"o1": order}), _config()
-    )
+    source = TCloudSource(FakeTCloudClient(pages=[[]], orders_by_id={"o1": order}))
 
     tickets = await source.fetch_order_tickets("o1")
 
@@ -111,35 +98,22 @@ async def test_fetch_order_tickets_filters_and_maps_role() -> None:
     assert tickets[0].order_id == "o1"
     assert tickets[0].external_id == "t1"
     assert tickets[0].barcode == "B1"
-    assert tickets[0].role is UserRole.VOLUNTEER
+    assert tickets[0].event_id == EVENT_VOLUNTEER
 
 
 async def test_fetch_order_tickets_skips_non_done_order() -> None:
     order = _order(
         "o1", status=OrderStatus.CANCELLED, tickets=[_ticket("t1", barcode="B1")]
     )
-    source = TCloudSource(
-        FakeTCloudClient(pages=[[]], orders_by_id={"o1": order}), _config()
-    )
+    source = TCloudSource(FakeTCloudClient(pages=[[]], orders_by_id={"o1": order}))
 
     assert await source.fetch_order_tickets("o1") == []
 
 
 async def test_fetch_order_tickets_missing_order_returns_empty() -> None:
-    source = TCloudSource(FakeTCloudClient(pages=[[]]), _config())
+    source = TCloudSource(FakeTCloudClient(pages=[[]]))
 
     assert await source.fetch_order_tickets("nope") == []
-
-
-async def test_unmapped_event_falls_back_to_visitor() -> None:
-    order = _order("o1", event=EVENT_UNKNOWN, tickets=[_ticket("t1", barcode="B1")])
-    source = TCloudSource(
-        FakeTCloudClient(pages=[[]], orders_by_id={"o1": order}), _config()
-    )
-
-    tickets = await source.fetch_order_tickets("o1")
-
-    assert tickets[0].role is UserRole.VISITOR
 
 
 async def test_fetch_all_tickets_paginates_and_streams() -> None:
@@ -153,7 +127,7 @@ async def test_fetch_all_tickets_paginates_and_streams() -> None:
         ],
     ]
     client = FakeTCloudClient(pages=pages)
-    source = TCloudSource(client, _config())
+    source = TCloudSource(client)
 
     collected = [ticket async for ticket in source.fetch_all_tickets()]
 
@@ -173,7 +147,7 @@ async def test_fetch_revoked_tickets_reads_every_approved_refund_page() -> None:
             [refund("r2", "o2", ["t3"])],
         ],
     )
-    source = TCloudSource(client, _config())
+    source = TCloudSource(client)
 
     revoked = [ticket async for ticket in source.fetch_revoked_tickets()]
 

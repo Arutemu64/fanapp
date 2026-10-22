@@ -4,9 +4,11 @@ from datetime import datetime, timedelta, timezone
 from fanfan.core.exceptions.quest import QuestDisabled
 from fanfan.core.exceptions.settings import (
     InvalidFestivalTimeRange,
+    InvalidTCloudEventId,
     InvalidVotingTimeRange,
 )
 from fanfan.core.models.base import AggregateRoot
+from fanfan.core.vo.user import UserRole
 
 # Programme opening and close, Moscow time (UTC+3). The defaults the app ships
 # with until organizers override them from the settings page; together they
@@ -45,6 +47,16 @@ class ScheduleConfig:
 
 
 @dataclass(slots=True, kw_only=True)
+class TicketsConfig:
+    # TicketsCloud event id → the role its buyers get. Organizers edit it from
+    # the tickets tool; an event left out sells visitor tickets.
+    tcloud_event_roles: dict[str, UserRole] = field(default_factory=dict)
+
+    def role_for_tcloud_event(self, event_id: str) -> UserRole:
+        return self.tcloud_event_roles.get(event_id, UserRole.VISITOR)
+
+
+@dataclass(slots=True, kw_only=True)
 class AppSettings(AggregateRoot):
     # Voting is open when ``now`` falls within [voting_start, voting_end).
     # Both None means voting is closed (the default).
@@ -60,6 +72,7 @@ class AppSettings(AggregateRoot):
     limits: LimitsConfig = field(default_factory=LimitsConfig)
     quest: QuestConfig = field(default_factory=QuestConfig)
     schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
+    tickets: TicketsConfig = field(default_factory=TicketsConfig)
 
     def set_voting_time_range(
         self,
@@ -123,3 +136,14 @@ class AppSettings(AggregateRoot):
             self.quest.max_award = max_award
         if cancel_window_minutes is not None:
             self.quest.cancel_window_minutes = cancel_window_minutes
+
+    def set_tcloud_event_roles(self, event_roles: dict[str, UserRole]) -> None:
+        # Replaces the whole mapping: the form edits it as one list, so a row
+        # removed there must disappear here too.
+        cleaned: dict[str, UserRole] = {}
+        for event_id, role in event_roles.items():
+            key = event_id.strip()
+            if not key:
+                raise InvalidTCloudEventId
+            cleaned[key] = role
+        self.tickets.tcloud_event_roles = cleaned

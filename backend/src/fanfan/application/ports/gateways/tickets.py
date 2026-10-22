@@ -1,5 +1,7 @@
 from typing import Protocol
 
+from fanfan.application.dto.page import CursorPagination
+from fanfan.application.dto.ticket import TicketListFilter, TicketListItemDTO
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.user import UserId
 
@@ -17,3 +19,11 @@ class TicketGateway(Protocol):
     async def get_by_user_id(self, user_id: UserId) -> Ticket | None: ...
     async def save(self, ticket: Ticket) -> None: ...
     async def delete(self, ticket: Ticket) -> None: ...
+
+    # Newest first, read with pagination.fetch_limit for cut_page. count_tickets
+    # applies the same filter, so the total matches what the pages add up to.
+    async def read_tickets_page(
+        self, *, pagination: CursorPagination, ticket_filter: TicketListFilter
+    ) -> list[TicketListItemDTO]: ...
+
+    async def count_tickets(self, *, ticket_filter: TicketListFilter) -> int: ...

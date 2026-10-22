@@ -8,6 +8,7 @@ from fanfan.application.ports.sources.tickets import (
 )
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.ticket import generate_ticket_id
+from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class TicketImportService:
         self.ticket_gateway = ticket_gateway
 
     async def import_ticket(
-        self, external: ExternalTicket, *, refunded: bool = False
+        self, external: ExternalTicket, *, role: UserRole, refunded: bool = False
     ) -> bool:
         existing = await self.ticket_gateway.get_by_ticketscloud_sale(
             order_id=external.order_id, ticket_id=external.external_id
@@ -54,7 +55,7 @@ class TicketImportService:
         ticket = Ticket(
             id=generate_ticket_id(),
             barcode=external.barcode,
-            role=external.role,
+            role=role,
             used_by_user_id=None,
             issued_by_user_id=None,
             ticketscloud_ticket_id=external.external_id,

@@ -87,6 +87,9 @@ import type {
 	GetSyncSourcesData,
 	GetSyncSourcesErrors,
 	GetSyncSourcesResponses,
+	GetTcloudEventRolesData,
+	GetTcloudEventRolesErrors,
+	GetTcloudEventRolesResponses,
 	GetUserData,
 	GetUserErrors,
 	GetUserResponses,
@@ -129,6 +132,9 @@ import type {
 	ListScheduleChangesData,
 	ListScheduleChangesErrors,
 	ListScheduleChangesResponses,
+	ListTicketsData,
+	ListTicketsErrors,
+	ListTicketsResponses,
 	ListUserNotificationsData,
 	ListUserNotificationsErrors,
 	ListUserNotificationsResponses,
@@ -183,6 +189,9 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentErrors,
 	SetEventAsCurrentResponses,
+	SetTcloudEventRolesData,
+	SetTcloudEventRolesErrors,
+	SetTcloudEventRolesResponses,
 	SetUserRoleData,
 	SetUserRoleErrors,
 	SetUserRoleResponses,
@@ -1483,9 +1492,29 @@ export const submitFeedback = <ThrowOnError extends boolean = false>(
 	});
 
 /**
+ * List tickets
+ *
+ * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:manage'.
+ */
+export const listTickets = <ThrowOnError extends boolean = false>(
+	options?: Options<ListTicketsData, ThrowOnError>
+): RequestResult<ListTicketsResponses, ListTicketsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<ListTicketsResponses, ListTicketsErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/tickets',
+		...options
+	});
+
+/**
  * Generate tickets
  *
- * Generates a batch of new tickets for the given role. Requires the 'tickets:generate' permission. Returns the created barcodes.
+ * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.
  */
 export const generateTickets = <ThrowOnError extends boolean = false>(
 	options: Options<GenerateTicketsData, ThrowOnError>
@@ -1499,6 +1528,58 @@ export const generateTickets = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/tickets/generate',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Get TicketsCloud event roles
+ *
+ * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.
+ */
+export const getTcloudEventRoles = <ThrowOnError extends boolean = false>(
+	options?: Options<GetTcloudEventRolesData, ThrowOnError>
+): RequestResult<GetTcloudEventRolesResponses, GetTcloudEventRolesErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		GetTcloudEventRolesResponses,
+		GetTcloudEventRolesErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/tickets/tcloud-event-roles',
+		...options
+	});
+
+/**
+ * Replace TicketsCloud event roles
+ *
+ * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
+ */
+export const setTcloudEventRoles = <ThrowOnError extends boolean = false>(
+	options: Options<SetTcloudEventRolesData, ThrowOnError>
+): RequestResult<SetTcloudEventRolesResponses, SetTcloudEventRolesErrors, ThrowOnError> =>
+	(options.client ?? client).put<
+		SetTcloudEventRolesResponses,
+		SetTcloudEventRolesErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/tickets/tcloud-event-roles',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',

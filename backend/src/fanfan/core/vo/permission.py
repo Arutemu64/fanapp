@@ -21,7 +21,7 @@ class Permission(enum.StrEnum):
     SCHEDULE_IMPORT = "schedule:import"
     NOTIFICATIONS_SEND = "notifications:send"
     SETTINGS_MANAGE = "settings:manage"
-    TICKETS_GENERATE = "tickets:generate"
+    TICKETS_MANAGE = "tickets:manage"
     SYNC_RUN = "sync:run"
     DEMO_SEED = "demo:seed"
     FEEDBACK_READ = "feedback:read"

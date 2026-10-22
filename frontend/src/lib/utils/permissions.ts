@@ -62,7 +62,7 @@ export const PERMISSION_LABELS: Record<Permission, () => string> = {
 	'schedule:import': m.tool_import_schedule,
 	'notifications:send': m.tool_broadcast,
 	'settings:manage': m.tool_settings,
-	'tickets:generate': m.tool_generate_tickets,
+	'tickets:manage': m.tool_tickets,
 	'sync:run': m.tool_sync,
 	'demo:seed': m.permission_demo_seed,
 	'feedback:read': m.permission_feedback_read,

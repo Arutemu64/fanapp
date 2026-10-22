@@ -27,7 +27,7 @@ pytestmark = [
 
 @pytest_asyncio.fixture
 async def ticket_issuer(dishka_request: AsyncContainer) -> User:
-    """Create an organizer granted the tickets:generate permission."""
+    """Create an organizer granted the tickets:manage permission."""
     user_gateway = await dishka_request.get(UserGateway)
     user_permission_gateway = await dishka_request.get(UserPermissionGateway)
     uow = await dishka_request.get(UnitOfWork)
@@ -42,7 +42,7 @@ async def ticket_issuer(dishka_request: AsyncContainer) -> User:
     await user_permission_gateway.add(
         UserPermission(
             id=generate_user_permission_id(),
-            permission=Permission.TICKETS_GENERATE,
+            permission=Permission.TICKETS_MANAGE,
             user_id=issuer.id,
         )
     )

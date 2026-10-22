@@ -15,3 +15,7 @@ class InvalidVotingTimeRange(ConstraintViolation, AppSettingsException):
 
 class InvalidFestivalTimeRange(ConstraintViolation, AppSettingsException):
     code = "INVALID_FESTIVAL_TIME_RANGE"
+
+
+class InvalidTCloudEventId(ConstraintViolation, AppSettingsException):
+    code = "INVALID_TCLOUD_EVENT_ID"

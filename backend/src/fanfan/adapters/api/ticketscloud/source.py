@@ -2,7 +2,6 @@ import logging
 from collections.abc import AsyncIterator, Iterator
 
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
-from fanfan.adapters.api.ticketscloud.config import TCloudConfig
 from fanfan.adapters.api.ticketscloud.dto.order import Order, OrderStatus
 from fanfan.adapters.api.ticketscloud.dto.refund import RefundStatus
 from fanfan.application.ports.sources.tickets import (
@@ -10,7 +9,6 @@ from fanfan.application.ports.sources.tickets import (
     RevokedExternalTicket,
     TicketsSource,
 )
-from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -21,26 +19,24 @@ class TCloudSource(TicketsSource):
     """Anti-corruption layer over the TicketsCloud HTTP client.
 
     Interprets vendor orders into the neutral tickets the application stores:
-    only DONE orders with a barcode yield a ticket, and the vendor event id is
-    mapped to a domain role here so the boundary speaks the domain's language.
-    An approved refund request is what revokes a sold ticket.
+    only DONE orders with a barcode yield a ticket, and an approved refund
+    request is what revokes a sold ticket. The vendor event id passes through
+    as is: which role it grants is organizer data, kept in AppSettings.
     """
 
-    def __init__(self, client: TCloudClient, config: TCloudConfig) -> None:
+    def __init__(self, client: TCloudClient) -> None:
         self.client = client
-        self.config = config
 
     def _extract_tickets(self, order: Order) -> Iterator[ExternalTicket]:
         if order.status != OrderStatus.DONE:
             return
-        role = self.config.event_ids_map.get(order.event, UserRole.VISITOR)
         for order_ticket in order.tickets:
             if order_ticket.barcode:
                 yield ExternalTicket(
                     order_id=order.id,
                     external_id=order_ticket.id,
                     barcode=order_ticket.barcode,
-                    role=role,
+                    event_id=order.event,
                 )
 
     def fetch_all_tickets(self) -> AsyncIterator[ExternalTicket]:

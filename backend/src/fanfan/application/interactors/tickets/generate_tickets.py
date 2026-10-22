@@ -42,7 +42,7 @@ class GenerateTickets:
     async def __call__(self, data: GenerateTicketsInput) -> GenerateTicketsOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, permission=Permission.TICKETS_GENERATE
+            user=current_user, permission=Permission.TICKETS_MANAGE
         )
 
         tickets = _build_tickets(
