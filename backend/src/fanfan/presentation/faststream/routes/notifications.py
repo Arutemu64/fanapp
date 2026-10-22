@@ -48,8 +48,8 @@ notifications_router = NatsRouter()
 # AckWait for the external-send channels, in seconds: how long JetStream waits
 # for an ack before it redelivers. It must clear a send's own client-timeout
 # ceiling so a slow-but-live send is not redelivered mid-flight (the default 30s
-# would be) — Telegram ~60s (aiogram default session), VK up to ~60s (send +
-# delete, 30s each), and push 10s per device, sent to a user's devices at once.
+# would be) — Telegram 30s, VK up to ~60s (send + delete,
+# 30s each), and push 10s per device, sent to a user's devices at once.
 # The channel rate limiters (adapters/rate_limiter.py) wait before a send, so a
 # burst queued behind one adds to this; at the worker counts below that wait
 # stays under a second.

@@ -168,7 +168,6 @@
         "pydantic",
         "sqlalchemy",
         "alembic",
-        "aiogram",
         "faststream",
         "svelte",
         "@sveltejs/kit",

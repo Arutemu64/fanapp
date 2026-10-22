@@ -23,7 +23,6 @@ license = "MIT"
 requires-python = ">=3.14"
 dependencies = [
     "adaptix>=3.0.0b12",
-    "aiogram>=3.31.0",
     "aiosmtplib>=5.1.2",
     "alembic>=1.20.0",
     "altcha>=2.3.0",
