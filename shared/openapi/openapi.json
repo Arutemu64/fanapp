@@ -1003,19 +1003,42 @@
             "description": "The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param."
           }
         }
-      }
-    },
-    "/me/connections/telegram": {
+      },
       "delete": {
         "tags": [
           "Current user"
         ],
-        "summary": "Unlink Telegram account",
-        "description": "Unlinks the Telegram account from the currently authenticated user.",
-        "operationId": "unlink_telegram_account",
+        "summary": "Unlink social account",
+        "description": "Unlinks the provider's account from the currently authenticated user.",
+        "operationId": "unlink_social_account",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SocialProvider"
+            }
+          }
+        ],
         "responses": {
           "204": {
-            "description": "Telegram account unlinked successfully."
+            "description": "Account unlinked successfully."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -1057,72 +1080,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
-      }
-    },
-    "/me/connections/vk": {
-      "delete": {
-        "tags": [
-          "Current user"
-        ],
-        "summary": "Unlink VK account",
-        "description": "Unlinks the VK account from the currently authenticated user.",
-        "operationId": "unlink_vk_account",
-        "responses": {
-          "204": {
-            "description": "VK account unlinked successfully."
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Cannot remove the user's last remaining sign-in method.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
+        }
       }
     },
     "/me/ticket": {
@@ -1584,7 +1542,7 @@
       }
     },
     "/schedule/{event_id}/current": {
-      "patch": {
+      "put": {
         "tags": [
           "Schedule"
         ],
@@ -1775,7 +1733,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveScheduleEventRequest"
+                "$ref": "#/components/schemas/MoveScheduleEventBody"
               }
             }
           }
@@ -1887,7 +1845,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleEventRequest"
+                "$ref": "#/components/schemas/UpdateScheduleEventBody"
               }
             }
           }
@@ -2351,7 +2309,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetVotingStateOutput"
+                  "$ref": "#/components/schemas/GetVotingStatusOutput"
                 }
               }
             }
@@ -2877,7 +2835,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListUserNotificationOutput"
+                  "$ref": "#/components/schemas/ListUserNotificationsOutput"
                 }
               }
             }
@@ -5997,13 +5955,14 @@
           "id",
           "code",
           "title",
+          "works_url",
           "participants_count",
           "user_vote",
           "participants"
         ],
         "title": "GetVotingNominationOutput"
       },
-      "GetVotingStateOutput": {
+      "GetVotingStatusOutput": {
         "properties": {
           "can_vote": {
             "type": "boolean",
@@ -6040,9 +5999,11 @@
         "type": "object",
         "required": [
           "can_vote",
-          "status"
+          "status",
+          "voting_start",
+          "voting_end"
         ],
-        "title": "GetVotingStateOutput"
+        "title": "GetVotingStatusOutput"
       },
       "HealthCheckOutput": {
         "properties": {
@@ -6378,7 +6339,7 @@
         ],
         "title": "ListTicketsOutput"
       },
-      "ListUserNotificationOutput": {
+      "ListUserNotificationsOutput": {
         "properties": {
           "notifications": {
             "items": {
@@ -6404,7 +6365,7 @@
           "notifications",
           "next_cursor"
         ],
-        "title": "ListUserNotificationOutput"
+        "title": "ListUserNotificationsOutput"
       },
       "ListUsersOutput": {
         "properties": {
@@ -6574,7 +6535,7 @@
         ],
         "title": "MarkNotificationsReadInput"
       },
-      "MoveScheduleEventRequest": {
+      "MoveScheduleEventBody": {
         "properties": {
           "place_after_entry_id": {
             "type": "string",
@@ -6586,7 +6547,7 @@
         "required": [
           "place_after_entry_id"
         ],
-        "title": "MoveScheduleEventRequest"
+        "title": "MoveScheduleEventBody"
       },
       "NominationContenderDTO": {
         "properties": {
@@ -6694,6 +6655,7 @@
           "id",
           "code",
           "title",
+          "works_url",
           "participants_count",
           "user_vote"
         ],
@@ -8183,7 +8145,7 @@
         "type": "object",
         "title": "UpdateCurrentUserInput"
       },
-      "UpdateScheduleEventRequest": {
+      "UpdateScheduleEventBody": {
         "properties": {
           "is_skipped": {
             "type": "boolean",
@@ -8194,7 +8156,7 @@
         "required": [
           "is_skipped"
         ],
-        "title": "UpdateScheduleEventRequest"
+        "title": "UpdateScheduleEventBody"
       },
       "UpdateScheduleSettingsInput": {
         "properties": {
@@ -8437,21 +8399,23 @@
         "properties": {
           "receive_all_announcements": {
             "type": "boolean",
-            "title": "Receive All Announcements",
-            "default": false
+            "title": "Receive All Announcements"
           },
           "receive_telegram_notifications": {
             "type": "boolean",
-            "title": "Receive Telegram Notifications",
-            "default": true
+            "title": "Receive Telegram Notifications"
           },
           "receive_vk_notifications": {
             "type": "boolean",
-            "title": "Receive Vk Notifications",
-            "default": true
+            "title": "Receive Vk Notifications"
           }
         },
         "type": "object",
+        "required": [
+          "receive_all_announcements",
+          "receive_telegram_notifications",
+          "receive_vk_notifications"
+        ],
         "title": "UserSettingsDTO"
       },
       "UserSocialIdentityDTO": {

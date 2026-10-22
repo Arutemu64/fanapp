@@ -35,6 +35,14 @@ Everything below this section is detail; these rules alone prevent most mistakes
     UUIDv7 (`UuidVersion(7)` on the input). Replay the same caller and payload
     as success; raise a `Conflict` otherwise, and map `pk_<table>` for the race
     ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)).
+12. Wire schema names are the class names, so the suffix says what a model is: an
+    application DTO taken as the request body as-is is `…Input`; a route's own
+    JSON body, needed because the `…Input` also carries a path param or the
+    client IP, is `…Body` (`MoveScheduleEventBody`); a form or multipart body
+    is `…Form`; a read model is `…DTO`, and an interactor's own result wrapper
+    `…Output`.
+    Every response field is required, nullable when it can be empty — no
+    defaults on response DTOs (guarded by `test_openapi_spec.py`).
 
 ## Common task recipes
 

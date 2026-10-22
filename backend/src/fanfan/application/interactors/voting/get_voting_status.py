@@ -8,17 +8,17 @@ from fanfan.application.services.voting import VotingService
 from fanfan.core.vo.vote import VotingStatus
 
 
-class GetVotingStateOutput(BaseModel):
+class GetVotingStatusOutput(BaseModel):
     can_vote: bool
     status: VotingStatus
     # The configured voting window, so the client can flip its banner exactly when
     # the clock crosses a boundary. Returned to everyone, guests included — the
     # schedule is public info and lets a signed-out visitor see when voting runs.
-    voting_start: datetime | None = None
-    voting_end: datetime | None = None
+    voting_start: datetime | None
+    voting_end: datetime | None
 
 
-class GetVotingState:
+class GetVotingStatus:
     def __init__(
         self,
         voting_service: VotingService,
@@ -29,11 +29,11 @@ class GetVotingState:
         self.current_user_provider = current_user_provider
         self.ticket_gateway = ticket_gateway
 
-    async def __call__(self) -> GetVotingStateOutput:
+    async def __call__(self) -> GetVotingStatusOutput:
         current_user = await self.current_user_provider.get_user()
         if current_user is None:
             start, end = await self.voting_service.get_voting_window()
-            return GetVotingStateOutput(
+            return GetVotingStatusOutput(
                 can_vote=False,
                 status=VotingStatus.NOT_AUTHENTICATED,
                 voting_start=start,
@@ -41,7 +41,7 @@ class GetVotingState:
             )
         ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         state = await self.voting_service.get_voting_state(current_user, ticket)
-        return GetVotingStateOutput(
+        return GetVotingStatusOutput(
             can_vote=state.status == VotingStatus.OPEN,
             status=state.status,
             voting_start=state.voting_start,

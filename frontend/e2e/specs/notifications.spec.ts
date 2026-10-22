@@ -1,5 +1,5 @@
 import type {
-	ListUserNotificationOutput,
+	ListUserNotificationsOutput,
 	NotificationDto,
 	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
@@ -22,7 +22,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('renders the feed and marks loaded items read on open', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationsOutput>({
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
@@ -49,7 +49,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		let unreadCount = 30;
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationsOutput>({
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
@@ -74,7 +74,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('does not link an organizer mailing back to the feed it sits in', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationsOutput>({
 				next_cursor: null,
 				notifications: [
 					{
@@ -138,12 +138,12 @@ test.describe('notifications', { tag: '@critical' }, () => {
 				const params = new URL(route.request().url()).searchParams;
 				requests.push(params);
 				if (params.get('cursor') === null) {
-					return json<ListUserNotificationOutput>({
+					return json<ListUserNotificationsOutput>({
 						next_cursor: firstPageCursor,
 						notifications: firstPage
 					});
 				}
-				return json<ListUserNotificationOutput>({ next_cursor: null, notifications: [older] });
+				return json<ListUserNotificationsOutput>({ next_cursor: null, notifications: [older] });
 			}
 		});
 		const item = (title: string) => page.getByRole('listitem').filter({ hasText: title });

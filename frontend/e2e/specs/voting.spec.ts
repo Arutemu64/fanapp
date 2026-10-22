@@ -1,19 +1,19 @@
 import type {
-	GetVotingStateOutput,
+	GetVotingStatusOutput,
 	ListVotingNominationsOutput,
 	NominationVotingDto
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, test } from '../fixtures';
 
-const CLOSED: GetVotingStateOutput = {
+const CLOSED: GetVotingStatusOutput = {
 	can_vote: false,
 	status: 'disabled',
 	voting_start: null,
 	voting_end: null
 };
 
-const OPEN: GetVotingStateOutput = {
+const OPEN: GetVotingStatusOutput = {
 	can_vote: true,
 	status: 'open',
 	voting_start: null,

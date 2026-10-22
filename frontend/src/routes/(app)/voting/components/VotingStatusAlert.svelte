@@ -2,13 +2,13 @@
 	import { resolve } from '$app/paths';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
-	import type { GetVotingStateOutput, VotingStatus } from '#lib/api/generated/index.js';
+	import type { GetVotingStatusOutput, VotingStatus } from '#lib/api/generated/index.js';
 
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
-		votingState?: GetVotingStateOutput;
+		votingState?: GetVotingStatusOutput;
 		class?: string;
 	}
 

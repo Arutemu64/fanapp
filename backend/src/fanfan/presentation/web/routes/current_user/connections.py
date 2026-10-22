@@ -86,16 +86,13 @@ async def start_account_link(
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
 
-# Two thin endpoints share one interactor: keeping a distinct path per provider
-# preserves the frontend's typed client calls (and the per-provider redirect URI
-# story of ADR-0012), while the unlink logic lives in one place.
 @connections_router.delete(
-    "/telegram",
+    "/{provider}",
     status_code=204,
-    summary="Unlink Telegram account",
-    description="Unlinks the Telegram account from the currently authenticated user.",
+    summary="Unlink social account",
+    description="Unlinks the provider's account from the currently authenticated user.",
     responses={
-        204: {"description": "Telegram account unlinked successfully."},
+        204: {"description": "Account unlinked successfully."},
         404: {"model": ProblemDetails, "description": "User not found."},
         409: {
             "model": ProblemDetails,
@@ -104,28 +101,10 @@ async def start_account_link(
     },
 )
 @inject
-async def unlink_telegram_account(
+async def unlink_social_account(
+    provider: SocialProvider,
     interactor: FromDishka[UnlinkSocialAccount],
 ) -> None:
-    await interactor(UnlinkSocialAccountInput(provider=SocialProvider.TELEGRAM))
-
-
-@connections_router.delete(
-    "/vk",
-    status_code=204,
-    summary="Unlink VK account",
-    description="Unlinks the VK account from the currently authenticated user.",
-    responses={
-        204: {"description": "VK account unlinked successfully."},
-        404: {"model": ProblemDetails, "description": "User not found."},
-        409: {
-            "model": ProblemDetails,
-            "description": "Cannot remove the user's last remaining sign-in method.",
-        },
-    },
-)
-@inject
-async def unlink_vk_account(
-    interactor: FromDishka[UnlinkSocialAccount],
-) -> None:
-    await interactor(UnlinkSocialAccountInput(provider=SocialProvider.VK))
+    # No enabled-provider check, unlike linking: switching a provider off must
+    # not trap the accounts already linked to it.
+    await interactor(UnlinkSocialAccountInput(provider=provider))

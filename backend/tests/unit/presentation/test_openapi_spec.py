@@ -87,3 +87,60 @@ def test_committed_spec_version_matches_pyproject() -> None:
         "distribution is stale (APP_VERSION reads it, not pyproject.toml) — "
         "run `uv sync` in backend/ and regenerate again."
     )
+
+
+def _referenced_schema_names(node: object) -> set[str]:
+    if isinstance(node, dict):
+        names: set[str] = set()
+        ref = node.get("$ref")
+        if isinstance(ref, str):
+            names.add(ref.rsplit("/", 1)[-1])
+        for value in node.values():
+            names |= _referenced_schema_names(value)
+        return names
+    if isinstance(node, list):
+        names: set[str] = set()
+        for item in node:
+            names |= _referenced_schema_names(item)
+        return names
+    return set()
+
+
+def _success_response_schema_names(spec: dict[str, Any]) -> set[str]:
+    schemas = spec["components"]["schemas"]
+    pending: set[str] = set()
+    for path_item in spec["paths"].values():
+        for operation in path_item.values():
+            for status_code, response in operation["responses"].items():
+                if status_code.startswith("2"):
+                    pending |= _referenced_schema_names(response.get("content", {}))
+
+    seen: set[str] = set()
+    while pending:
+        name = pending.pop()
+        seen.add(name)
+        pending |= _referenced_schema_names(schemas[name]) - seen
+    return seen
+
+
+def test_success_response_fields_are_required() -> None:
+    """Every property of a 2xx response schema is required (nullable if empty).
+
+    A defaulted DTO field is optional in the spec, so the generated TS type adds
+    `| undefined` to a field the backend always sends, and every reader has to
+    handle a case that never happens. Error bodies are exempt: problem-details
+    extension members are present only for some reasons (RFC 9457).
+    """
+    spec = committed_spec()
+    schemas = spec["components"]["schemas"]
+    optional = {}
+    for name in sorted(_success_response_schema_names(spec)):
+        properties = set(schemas[name].get("properties", {}))
+        missing = properties - set(schemas[name].get("required", []))
+        if missing:
+            optional[name] = sorted(missing)
+
+    assert not optional, (
+        "Response fields must be required; drop the default on the DTO field "
+        f"(use `X | None` for an empty value): {optional}"
+    )

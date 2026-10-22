@@ -19,9 +19,9 @@ from fanfan.application.interactors.notifications.list_broadcasts import (
     ListBroadcastsOutput,
 )
 from fanfan.application.interactors.notifications.list_user_notifications import (
-    ListUserNotificationOutput,
     ListUserNotifications,
     ListUserNotificationsInput,
+    ListUserNotificationsOutput,
 )
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
 from fanfan.application.interactors.notifications.mark_read import (
@@ -63,7 +63,7 @@ async def list_user_notifications(
     interactor: FromDishka[ListUserNotifications],
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     cursor: PageCursorQuery = None,
-) -> ListUserNotificationOutput:
+) -> ListUserNotificationsOutput:
     data = ListUserNotificationsInput(
         pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
     )

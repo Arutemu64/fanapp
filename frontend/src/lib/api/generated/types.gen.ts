@@ -411,7 +411,7 @@ export type GetVotingNominationOutput = {
 	/**
 	 * Works Url
 	 */
-	works_url?: string | null;
+	works_url: string | null;
 	/**
 	 * Participants Count
 	 */
@@ -424,9 +424,9 @@ export type GetVotingNominationOutput = {
 };
 
 /**
- * GetVotingStateOutput
+ * GetVotingStatusOutput
  */
-export type GetVotingStateOutput = {
+export type GetVotingStatusOutput = {
 	/**
 	 * Can Vote
 	 */
@@ -435,11 +435,11 @@ export type GetVotingStateOutput = {
 	/**
 	 * Voting Start
 	 */
-	voting_start?: string | null;
+	voting_start: string | null;
 	/**
 	 * Voting End
 	 */
-	voting_end?: string | null;
+	voting_end: string | null;
 };
 
 /**
@@ -644,9 +644,9 @@ export type ListTicketsOutput = {
 };
 
 /**
- * ListUserNotificationOutput
+ * ListUserNotificationsOutput
  */
-export type ListUserNotificationOutput = {
+export type ListUserNotificationsOutput = {
 	/**
 	 * Notifications
 	 */
@@ -746,9 +746,9 @@ export type MarkNotificationsReadInput = {
 };
 
 /**
- * MoveScheduleEventRequest
+ * MoveScheduleEventBody
  */
-export type MoveScheduleEventRequest = {
+export type MoveScheduleEventBody = {
 	/**
 	 * Place After Entry Id
 	 */
@@ -811,7 +811,7 @@ export type NominationVotingDto = {
 	/**
 	 * Works Url
 	 */
-	works_url?: string | null;
+	works_url: string | null;
 	/**
 	 * Participants Count
 	 */
@@ -1755,9 +1755,9 @@ export type UpdateCurrentUserInput = {
 };
 
 /**
- * UpdateScheduleEventRequest
+ * UpdateScheduleEventBody
  */
-export type UpdateScheduleEventRequest = {
+export type UpdateScheduleEventBody = {
 	/**
 	 * Is Skipped
 	 */
@@ -1893,15 +1893,15 @@ export type UserSettingsDto = {
 	/**
 	 * Receive All Announcements
 	 */
-	receive_all_announcements?: boolean;
+	receive_all_announcements: boolean;
 	/**
 	 * Receive Telegram Notifications
 	 */
-	receive_telegram_notifications?: boolean;
+	receive_telegram_notifications: boolean;
 	/**
 	 * Receive Vk Notifications
 	 */
-	receive_vk_notifications?: boolean;
+	receive_vk_notifications: boolean;
 };
 
 /**
@@ -2520,6 +2520,50 @@ export type ChangeCurrentUserEmailResponses = {
 export type ChangeCurrentUserEmailResponse =
 	ChangeCurrentUserEmailResponses[keyof ChangeCurrentUserEmailResponses];
 
+export type UnlinkSocialAccountData = {
+	body?: never;
+	path: {
+		provider: SocialProvider;
+	};
+	query?: never;
+	url: '/me/connections/{provider}';
+};
+
+export type UnlinkSocialAccountErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * User not found.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Cannot remove the user's last remaining sign-in method.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+};
+
+export type UnlinkSocialAccountError = UnlinkSocialAccountErrors[keyof UnlinkSocialAccountErrors];
+
+export type UnlinkSocialAccountResponses = {
+	/**
+	 * Account unlinked successfully.
+	 */
+	204: void;
+};
+
+export type UnlinkSocialAccountResponse =
+	UnlinkSocialAccountResponses[keyof UnlinkSocialAccountResponses];
+
 export type StartAccountLinkData = {
 	body?: never;
 	path: {
@@ -2545,82 +2589,6 @@ export type StartAccountLinkErrors = {
 };
 
 export type StartAccountLinkError = StartAccountLinkErrors[keyof StartAccountLinkErrors];
-
-export type UnlinkTelegramAccountData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/me/connections/telegram';
-};
-
-export type UnlinkTelegramAccountErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * User not found.
-	 */
-	404: ProblemDetails;
-	/**
-	 * Cannot remove the user's last remaining sign-in method.
-	 */
-	409: ProblemDetails;
-};
-
-export type UnlinkTelegramAccountError =
-	UnlinkTelegramAccountErrors[keyof UnlinkTelegramAccountErrors];
-
-export type UnlinkTelegramAccountResponses = {
-	/**
-	 * Telegram account unlinked successfully.
-	 */
-	204: void;
-};
-
-export type UnlinkTelegramAccountResponse =
-	UnlinkTelegramAccountResponses[keyof UnlinkTelegramAccountResponses];
-
-export type UnlinkVkAccountData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/me/connections/vk';
-};
-
-export type UnlinkVkAccountErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * User not found.
-	 */
-	404: ProblemDetails;
-	/**
-	 * Cannot remove the user's last remaining sign-in method.
-	 */
-	409: ProblemDetails;
-};
-
-export type UnlinkVkAccountError = UnlinkVkAccountErrors[keyof UnlinkVkAccountErrors];
-
-export type UnlinkVkAccountResponses = {
-	/**
-	 * VK account unlinked successfully.
-	 */
-	204: void;
-};
-
-export type UnlinkVkAccountResponse = UnlinkVkAccountResponses[keyof UnlinkVkAccountResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;
@@ -2953,7 +2921,7 @@ export type UncheckCurrentEventResponse =
 	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
 
 export type MoveScheduleEventData = {
-	body: MoveScheduleEventRequest;
+	body: MoveScheduleEventBody;
 	path: {
 		/**
 		 * Event Id
@@ -3006,7 +2974,7 @@ export type MoveScheduleEventResponse =
 	MoveScheduleEventResponses[keyof MoveScheduleEventResponses];
 
 export type UpdateScheduleEventData = {
-	body: UpdateScheduleEventRequest;
+	body: UpdateScheduleEventBody;
 	path: {
 		/**
 		 * Event Id
@@ -3274,7 +3242,7 @@ export type GetVotingStatusResponses = {
 	/**
 	 * Voting status retrieved successfully.
 	 */
-	200: GetVotingStateOutput;
+	200: GetVotingStatusOutput;
 };
 
 export type GetVotingStatusResponse = GetVotingStatusResponses[keyof GetVotingStatusResponses];
@@ -3596,7 +3564,7 @@ export type ListUserNotificationsResponses = {
 	/**
 	 * Notifications retrieved successfully.
 	 */
-	200: ListUserNotificationOutput;
+	200: ListUserNotificationsOutput;
 };
 
 export type ListUserNotificationsResponse =

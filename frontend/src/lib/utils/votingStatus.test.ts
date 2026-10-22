@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GetVotingStateOutput } from '#lib/api/generated/index.js';
+import type { GetVotingStatusOutput } from '#lib/api/generated/index.js';
 
 import { hasVotingEnded, isVotingOpenNow, isVotingWindowOpen } from './votingStatus';
 
@@ -35,7 +35,7 @@ describe('hasVotingEnded', () => {
 });
 
 describe('isVotingOpenNow', () => {
-	function state(status: GetVotingStateOutput['status']): GetVotingStateOutput {
+	function state(status: GetVotingStatusOutput['status']): GetVotingStatusOutput {
 		return { can_vote: status === 'open', status, voting_start: START, voting_end: END };
 	}
 

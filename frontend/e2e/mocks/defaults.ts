@@ -1,9 +1,9 @@
 import type {
 	CaptchaChallengeDto,
 	GetScheduleOutput,
-	GetVotingStateOutput,
+	GetVotingStatusOutput,
 	HealthCheckOutput,
-	ListUserNotificationOutput,
+	ListUserNotificationsOutput,
 	OAuthProvidersOutput,
 	PublicConfigDto,
 	UnreadNotificationsCountOutput
@@ -39,13 +39,13 @@ export const baselineHandlers: Handlers = {
 	'GET /schedule/subscriptions': json({ subscriptions: [] }),
 	// Home reads it for the "voting is open" card; no window configured keeps the
 	// card hidden, so only voting tests opt into an open window.
-	'GET /voting/status': json<GetVotingStateOutput>({
+	'GET /voting/status': json<GetVotingStatusOutput>({
 		can_vote: false,
 		status: 'not_authenticated',
 		voting_start: null,
 		voting_end: null
 	}),
-	'GET /notifications': json<ListUserNotificationOutput>({ next_cursor: null, notifications: [] }),
+	'GET /notifications': json<ListUserNotificationsOutput>({ next_cursor: null, notifications: [] }),
 	'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({
 		count: 0
 	}),

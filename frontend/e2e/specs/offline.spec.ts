@@ -1,6 +1,6 @@
 import type {
 	GetScheduleOutput,
-	GetVotingStateOutput,
+	GetVotingStatusOutput,
 	PublicConfigDto,
 	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
@@ -86,7 +86,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 					}
 				]
 			}),
-			'GET /voting/status': json<GetVotingStateOutput>({
+			'GET /voting/status': json<GetVotingStatusOutput>({
 				can_vote: false,
 				status: 'not_authenticated',
 				voting_start: new Date(Date.now() - hour).toISOString(),

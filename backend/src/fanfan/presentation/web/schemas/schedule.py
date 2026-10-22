@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 
-class MoveScheduleEventRequest(BaseModel):
+class MoveScheduleEventBody(BaseModel):
     place_after_entry_id: ScheduleEntryId
 
 
-class UpdateScheduleEventRequest(BaseModel):
+class UpdateScheduleEventBody(BaseModel):
     is_skipped: bool

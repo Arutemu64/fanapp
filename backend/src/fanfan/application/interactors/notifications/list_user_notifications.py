@@ -10,7 +10,7 @@ class ListUserNotificationsInput(BaseModel):
     pagination: CursorPagination
 
 
-class ListUserNotificationOutput(BaseModel):
+class ListUserNotificationsOutput(BaseModel):
     notifications: list[NotificationDTO]
     next_cursor: str | None
 
@@ -26,7 +26,7 @@ class ListUserNotifications:
 
     async def __call__(
         self, data: ListUserNotificationsInput
-    ) -> ListUserNotificationOutput:
+    ) -> ListUserNotificationsOutput:
         current_user_id = await self.current_user_provider.require_user_id()
 
         rows = await self.notification_gateway.read_list_user_notifications(
@@ -34,6 +34,6 @@ class ListUserNotifications:
             pagination=data.pagination,
         )
         notifications, next_cursor = cut_page(rows, data.pagination)
-        return ListUserNotificationOutput(
+        return ListUserNotificationsOutput(
             notifications=notifications, next_cursor=next_cursor
         )
