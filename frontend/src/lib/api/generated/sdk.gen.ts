@@ -1348,7 +1348,7 @@ export const listBroadcasts = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/notifications/broadcast',
+		url: '/notifications/broadcasts',
 		...options
 	});
 
@@ -1368,7 +1368,7 @@ export const sendBroadcast = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/notifications/broadcast',
+		url: '/notifications/broadcasts',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
@@ -1392,7 +1392,7 @@ export const cancelMailing = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/notifications/broadcast/{mailing_id}/cancel',
+		url: '/notifications/broadcasts/{mailing_id}/cancel',
 		...options
 	});
 

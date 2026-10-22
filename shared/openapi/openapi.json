@@ -3078,7 +3078,7 @@
         ]
       }
     },
-    "/notifications/broadcast": {
+    "/notifications/broadcasts": {
       "post": {
         "tags": [
           "Notifications"
@@ -3243,7 +3243,7 @@
         }
       }
     },
-    "/notifications/broadcast/{mailing_id}/cancel": {
+    "/notifications/broadcasts/{mailing_id}/cancel": {
       "post": {
         "tags": [
           "Notifications"

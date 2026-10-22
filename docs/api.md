@@ -122,7 +122,7 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 ### Client-generated IDs for creates without a natural key
 
-A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcast` sends to everyone again), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
+A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcasts` sends to everyone again), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
 
 - **Generate a UUIDv7 with `uuidv7()` from `#lib/utils/uuidv7`** when the form opens. The server rejects any other version with a 422.
 - **Keep it across submits; draw a new one only once the intent is settled**: on success, or on the endpoint's "already exists" 409.

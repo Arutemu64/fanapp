@@ -3671,7 +3671,7 @@ export type ListBroadcastsData = {
 		 */
 		cursor?: string | null;
 	};
-	url: '/notifications/broadcast';
+	url: '/notifications/broadcasts';
 };
 
 export type ListBroadcastsErrors = {
@@ -3704,7 +3704,7 @@ export type SendBroadcastData = {
 	body: SendBroadcastInput;
 	path?: never;
 	query?: never;
-	url: '/notifications/broadcast';
+	url: '/notifications/broadcasts';
 };
 
 export type SendBroadcastErrors = {
@@ -3748,7 +3748,7 @@ export type CancelMailingData = {
 		mailing_id: string;
 	};
 	query?: never;
-	url: '/notifications/broadcast/{mailing_id}/cancel';
+	url: '/notifications/broadcasts/{mailing_id}/cancel';
 };
 
 export type CancelMailingErrors = {
