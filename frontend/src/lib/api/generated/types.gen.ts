@@ -2766,6 +2766,110 @@ export type GetScheduleResponses = {
 
 export type GetScheduleResponse = GetScheduleResponses[keyof GetScheduleResponses];
 
+export type ImportScheduleData = {
+	body: BodyImportSchedule;
+	path?: never;
+	query?: never;
+	url: '/schedule/import';
+};
+
+export type ImportScheduleErrors = {
+	/**
+	 * The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.
+	 */
+	400: ErrorMessage;
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleErrors];
+
+export type ImportScheduleResponses = {
+	/**
+	 * Successful Response
+	 */
+	201: unknown;
+};
+
+export type GetScheduleSettingsData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/schedule/settings';
+};
+
+export type GetScheduleSettingsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GetScheduleSettingsError = GetScheduleSettingsErrors[keyof GetScheduleSettingsErrors];
+
+export type GetScheduleSettingsResponses = {
+	/**
+	 * Schedule settings retrieved successfully.
+	 */
+	200: ScheduleSettingsDto;
+};
+
+export type GetScheduleSettingsResponse =
+	GetScheduleSettingsResponses[keyof GetScheduleSettingsResponses];
+
+export type UpdateScheduleSettingsData = {
+	body: UpdateScheduleSettingsInput;
+	path?: never;
+	query?: never;
+	url: '/schedule/settings';
+};
+
+export type UpdateScheduleSettingsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type UpdateScheduleSettingsError =
+	UpdateScheduleSettingsErrors[keyof UpdateScheduleSettingsErrors];
+
+export type UpdateScheduleSettingsResponses = {
+	/**
+	 * Schedule settings saved.
+	 */
+	204: void;
+};
+
+export type UpdateScheduleSettingsResponse =
+	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
+
 export type SetEventAsCurrentData = {
 	body?: never;
 	path: {
@@ -3171,110 +3275,6 @@ export type DeleteSubscriptionResponses = {
 
 export type DeleteSubscriptionResponse =
 	DeleteSubscriptionResponses[keyof DeleteSubscriptionResponses];
-
-export type ImportScheduleData = {
-	body: BodyImportSchedule;
-	path?: never;
-	query?: never;
-	url: '/schedule/import';
-};
-
-export type ImportScheduleErrors = {
-	/**
-	 * The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.
-	 */
-	400: ErrorMessage;
-	/**
-	 * Not authenticated.
-	 */
-	401: ErrorMessage;
-	/**
-	 * Access denied.
-	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleErrors];
-
-export type ImportScheduleResponses = {
-	/**
-	 * Successful Response
-	 */
-	201: unknown;
-};
-
-export type GetScheduleSettingsData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/schedule/settings';
-};
-
-export type GetScheduleSettingsErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ErrorMessage;
-	/**
-	 * Access denied.
-	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type GetScheduleSettingsError = GetScheduleSettingsErrors[keyof GetScheduleSettingsErrors];
-
-export type GetScheduleSettingsResponses = {
-	/**
-	 * Schedule settings retrieved successfully.
-	 */
-	200: ScheduleSettingsDto;
-};
-
-export type GetScheduleSettingsResponse =
-	GetScheduleSettingsResponses[keyof GetScheduleSettingsResponses];
-
-export type UpdateScheduleSettingsData = {
-	body: UpdateScheduleSettingsInput;
-	path?: never;
-	query?: never;
-	url: '/schedule/settings';
-};
-
-export type UpdateScheduleSettingsErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ErrorMessage;
-	/**
-	 * Access denied.
-	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type UpdateScheduleSettingsError =
-	UpdateScheduleSettingsErrors[keyof UpdateScheduleSettingsErrors];
-
-export type UpdateScheduleSettingsResponses = {
-	/**
-	 * Schedule settings saved.
-	 */
-	204: void;
-};
-
-export type UpdateScheduleSettingsResponse =
-	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
 
 export type GetVotingStatusData = {
 	body?: never;

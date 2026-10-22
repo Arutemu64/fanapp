@@ -1019,6 +1019,85 @@ export const getScheduleOptions = (options?: Options<GetScheduleData>) =>
 	});
 
 /**
+ * Import Schedule
+ */
+export const importScheduleMutation = (
+	options?: Partial<Options<ImportScheduleData>>
+): MutationOptions<unknown, ImportScheduleError, Options<ImportScheduleData>> => {
+	const mutationOptions: MutationOptions<
+		unknown,
+		ImportScheduleError,
+		Options<ImportScheduleData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await importSchedule({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+export const getScheduleSettingsQueryKey = (options?: Options<GetScheduleSettingsData>) =>
+	createQueryKey('getScheduleSettings', options);
+
+/**
+ * Get schedule settings
+ *
+ * Returns the cooldown between announced schedule edits and the changeover added per act to wait estimates. Requires 'schedule:setup'.
+ */
+export const getScheduleSettingsOptions = (options?: Options<GetScheduleSettingsData>) =>
+	queryOptions<
+		GetScheduleSettingsResponse,
+		GetScheduleSettingsError,
+		GetScheduleSettingsResponse,
+		ReturnType<typeof getScheduleSettingsQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await getScheduleSettings({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: getScheduleSettingsQueryKey(options)
+	});
+
+/**
+ * Update schedule settings
+ *
+ * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
+ */
+export const updateScheduleSettingsMutation = (
+	options?: Partial<Options<UpdateScheduleSettingsData>>
+): MutationOptions<
+	UpdateScheduleSettingsResponse,
+	UpdateScheduleSettingsError,
+	Options<UpdateScheduleSettingsData>
+> => {
+	const mutationOptions: MutationOptions<
+		UpdateScheduleSettingsResponse,
+		UpdateScheduleSettingsError,
+		Options<UpdateScheduleSettingsData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await updateScheduleSettings({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
  * Set specific event as current
  *
  * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
@@ -1345,85 +1424,6 @@ export const deleteSubscriptionMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await deleteSubscription({
-				...options,
-				...fnOptions,
-				throwOnError: true
-			});
-			return data;
-		}
-	};
-	return mutationOptions;
-};
-
-/**
- * Import Schedule
- */
-export const importScheduleMutation = (
-	options?: Partial<Options<ImportScheduleData>>
-): MutationOptions<unknown, ImportScheduleError, Options<ImportScheduleData>> => {
-	const mutationOptions: MutationOptions<
-		unknown,
-		ImportScheduleError,
-		Options<ImportScheduleData>
-	> = {
-		mutationFn: async (fnOptions) => {
-			const { data } = await importSchedule({
-				...options,
-				...fnOptions,
-				throwOnError: true
-			});
-			return data;
-		}
-	};
-	return mutationOptions;
-};
-
-export const getScheduleSettingsQueryKey = (options?: Options<GetScheduleSettingsData>) =>
-	createQueryKey('getScheduleSettings', options);
-
-/**
- * Get schedule settings
- *
- * Returns the cooldown between announced schedule edits and the changeover added per act to wait estimates. Requires 'schedule:setup'.
- */
-export const getScheduleSettingsOptions = (options?: Options<GetScheduleSettingsData>) =>
-	queryOptions<
-		GetScheduleSettingsResponse,
-		GetScheduleSettingsError,
-		GetScheduleSettingsResponse,
-		ReturnType<typeof getScheduleSettingsQueryKey>
-	>({
-		queryFn: async ({ queryKey, signal }) => {
-			const { data } = await getScheduleSettings({
-				...options,
-				...queryKey[0],
-				signal,
-				throwOnError: true
-			});
-			return data;
-		},
-		queryKey: getScheduleSettingsQueryKey(options)
-	});
-
-/**
- * Update schedule settings
- *
- * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
- */
-export const updateScheduleSettingsMutation = (
-	options?: Partial<Options<UpdateScheduleSettingsData>>
-): MutationOptions<
-	UpdateScheduleSettingsResponse,
-	UpdateScheduleSettingsError,
-	Options<UpdateScheduleSettingsData>
-> => {
-	const mutationOptions: MutationOptions<
-		UpdateScheduleSettingsResponse,
-		UpdateScheduleSettingsError,
-		Options<UpdateScheduleSettingsData>
-	> = {
-		mutationFn: async (fnOptions) => {
-			const { data } = await updateScheduleSettings({
 				...options,
 				...fnOptions,
 				throwOnError: true

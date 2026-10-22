@@ -16,7 +16,7 @@ class AppSettingsDTO(BaseModel):
 
     # Voting time range is managed separately, under voting:manage — see the
     # voting dashboard (GET/PATCH /voting/dashboard) — and the announcement
-    # cooldown and changeover under schedule:setup (GET/PUT /schedule/settings).
+    # cooldown and changeover under schedule:setup (GET/PATCH /schedule/settings).
     # They are deliberately not here.
     festival_start: datetime
     festival_end: datetime

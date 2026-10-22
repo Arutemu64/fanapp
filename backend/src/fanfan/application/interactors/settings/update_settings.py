@@ -55,8 +55,9 @@ class UpdateSettings:
 
         update_flag = False
         # Tracks changes to fields exposed by GET /config, so the CONFIG_UPDATED
-        # cancel-window-only edit would send every client to refetch identical config.
-        # limits-only edit would send every client to refetch identical config.
+        # broadcast fires only when a public-facing value actually moved — a
+        # cancel-window-only edit would send every client to refetch identical
+        # config.
         public_config_changed = False
 
         festival_start = data_to_update.get("festival_start")
