@@ -1,6 +1,9 @@
 import type { BrowserContext, Route } from '@playwright/test';
 
+import { STATUS_CODES } from 'node:http';
+
 import type openapi from '../../../shared/openapi/openapi.json';
+import type { ProblemDetails } from '../../src/lib/api/generated/types.gen';
 
 type Paths = (typeof openapi)['paths'];
 type Path = Extract<keyof Paths, string>;
@@ -47,6 +50,30 @@ export function json<T>(value: T, status = 200): MockResponse {
 }
 
 /**
+ * An error response shaped like the backend's (RFC 9457 problem details, see
+ * `problem_response()`): `type` derived from `code`, `title` the status phrase,
+ * extension members beside them. `code` is typed against the spec's enum, so a
+ * mock can't use a code the API never sends.
+ */
+export function problem(
+	code: ProblemDetails['code'],
+	status: number,
+	extensions: Record<string, unknown> = {}
+): MockResponse {
+	return {
+		status,
+		contentType: 'application/problem+json',
+		body: JSON.stringify({
+			...extensions,
+			type: `/problems/${code.toLowerCase().replaceAll('_', '-')}`,
+			title: STATUS_CODES[status],
+			status,
+			code
+		})
+	};
+}
+
+/**
  * Installs a single catch-all route over every `/api` request, backed by a
  * registry of per-endpoint handlers. Tests start from a baseline and narrow it
  * with `.use()`; an endpoint nobody mocked returns a loud 404 and is recorded in
@@ -88,11 +115,7 @@ export class ApiMock {
 			const handler = this.#handlers[key];
 			if (handler === undefined) {
 				this.unmatched.push(key);
-				return route.fulfill({
-					status: 404,
-					contentType: 'application/json',
-					body: JSON.stringify({ code: 'not_found', message: `Unmocked API route: ${key}` })
-				});
+				return route.fulfill(problem('HTTP_ERROR', 404, { unmocked: key }));
 			}
 
 			const response = typeof handler === 'function' ? await handler(route) : handler;

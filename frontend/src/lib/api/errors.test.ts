@@ -9,7 +9,8 @@ import {
 	getApiFieldError,
 	gotNoApiAnswer,
 	isConnectionFailure,
-	isUnexpectedRequestError
+	isUnexpectedRequestError,
+	throwApiError
 } from './errors';
 
 const CONNECTION_FAILED = 'Не удалось связаться с сервером. Попробуй ещё раз.';
@@ -225,5 +226,34 @@ describe('fetchRecordingConnectionFailures', () => {
 		const error = await pending;
 		expect(error).toBeInstanceOf(DOMException);
 		expect(isConnectionFailure(error)).toBe(false);
+	});
+});
+
+describe('throwApiError', () => {
+	function thrown(apiError: unknown): unknown {
+		try {
+			throwApiError(apiError, 'Не удалось загрузить');
+		} catch (error) {
+			return error;
+		}
+		return undefined;
+	}
+
+	it("keeps the problem's status, so a missing record is a 404 page", () => {
+		expect(thrown({ code: 'USER_NOT_FOUND', status: 404 })).toMatchObject({
+			status: 404,
+			body: { code: 'USER_NOT_FOUND' }
+		});
+	});
+
+	it('is a 500 with the fallback copy when no API answer came back', async () => {
+		expect(thrown(await droppedConnectionError())).toMatchObject({
+			status: 500,
+			body: { message: CONNECTION_FAILED }
+		});
+		expect(thrown(new TypeError('bug'))).toMatchObject({
+			status: 500,
+			body: { message: 'Не удалось загрузить' }
+		});
 	});
 });

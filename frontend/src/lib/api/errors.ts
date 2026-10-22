@@ -460,22 +460,26 @@ export function getApiErrorDetail(error: unknown): string | null {
 /**
  * Throw a SvelteKit error from a failed API call, so a `load` failure
  * speaks the same language as a form/toast failure. Maps the API error `code` to
- * the shared Russian copy and reuses the real HTTP status; `code` rides along on
- * `App.Error` for the error page and Sentry. Usage:
- * `if (apiError) throwApiError(apiError, response, 'Не удалось загрузить …');`
+ * the shared Russian copy; `code` rides along on `App.Error` for the error page
+ * and Sentry. Usage:
+ * `.catch((apiError: unknown) => throwApiError(apiError, 'Не удалось загрузить …'))`
  */
-export function throwApiError(
-	apiError: unknown,
-	response: { status: number } | undefined,
-	fallback: string
-): never {
-	// Clamp to an error status: a non-error response here means data was missing
-	// without an HTTP error, which we treat as a server-side problem.
-	const status = response && response.status >= 400 ? response.status : 500;
-
+export function throwApiError(apiError: unknown, fallback: string): never {
 	const message = getApiErrorDetail(apiError) ?? fallback;
-	const code = getApiProblem(apiError)?.code;
-	return kitError(status, message, code ? { code } : {});
+	const problem = getApiProblem(apiError);
+	return kitError(problemStatus(problem), message, problem ? { code: problem.code } : {});
+}
+
+// A query rethrows the problem body without the HTTP response, so its `status`
+// member is the only status left. RFC 9457 §5 ranks the HTTP status above it,
+// but only our backend writes problem bodies, so the two match. Anything else
+// (no answer, a bug in our code) is a 500.
+function problemStatus(problem: ApiProblem | null): number {
+	const status = problem?.status;
+	if (typeof status === 'number' && status >= 400 && status <= 599) {
+		return status;
+	}
+	return 500;
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the

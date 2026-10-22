@@ -29,7 +29,7 @@ export const load: PageLoad = async ({ params, parent }) => {
 		}
 		// A request that never got an answer leaves the page to its offline state.
 		if (isConnectionFailure(apiError)) return undefined;
-		return throwApiError(apiError, undefined, m.voting_nomination_load_failed());
+		return throwApiError(apiError, m.voting_nomination_load_failed());
 	});
 
 	return { title: nomination?.title ?? m.nav_voting(), back };

@@ -71,7 +71,7 @@ export const test = base.extend<Fixtures>({
 	}
 });
 
-export { json } from './mocks/api';
+export { json, problem } from './mocks/api';
 export { loggedInAs, organizer } from './mocks/personas';
 export { emitSse } from './mocks/sse';
 export { expect } from '@playwright/test';

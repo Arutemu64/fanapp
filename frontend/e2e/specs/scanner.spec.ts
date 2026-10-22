@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { expect, json, loggedInAs, test } from '../fixtures';
+import { expect, loggedInAs, problem, test } from '../fixtures';
 
 // Chromium plays a file as the camera and answers the permission prompt itself
 // (https://webrtc.org/getting-started/testing). WebKit has no such switch, so
@@ -25,7 +25,7 @@ test('links a ticket scanned with the camera, then turns the camera off', async 
 		...loggedInAs(),
 		'POST /me/ticket': (route) => {
 			sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
-			return json({ code: 'TICKET_NOT_FOUND' }, 404);
+			return problem('TICKET_NOT_FOUND', 404);
 		}
 	});
 	await page.goto('/profile/ticket');

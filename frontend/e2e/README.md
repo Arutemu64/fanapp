@@ -113,6 +113,9 @@ for the closed/open, offline and SSE patterns respectively.
 - `api.use({ … })` overrides or adds routes for one test; last write wins.
 - **Type your bodies** with `json<SomeDto>({ … })`, importing the generated type
   from `../fixtures`, so a mock that drifts from the real contract fails to compile.
+- **Mock an error with `problem(code, status, extensions)`**, not `json({ code })`: it
+  answers like the backend (RFC 9457 problem details, `application/problem+json`),
+  and `code` is checked against the spec's enum.
 - An endpoint nobody mocked returns a **loud 404** and lands in `api.unmatched`.
   The `api` fixture fails the test at teardown if it isn't empty, so add the
   missing route; specs don't assert it themselves.
@@ -258,7 +261,7 @@ await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
 e2e/
   fixtures.ts        # test/expect + api / consoleErrors / makeAxeBuilder fixtures — import from here
   mocks/
-    api.ts           # ApiMock: catch-all route registry + json() helper
+    api.ts           # ApiMock: catch-all route registry + json() / problem() helpers
     defaults.ts      # baseline (guest) boot handlers
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()

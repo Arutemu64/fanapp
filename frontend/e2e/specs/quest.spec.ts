@@ -8,7 +8,7 @@ import type {
 	QuestPlayerDto
 } from '../../src/lib/api/generated/types.gen';
 
-import { expect, json, loggedInAs, test } from '../fixtures';
+import { expect, json, loggedInAs, problem, test } from '../fixtures';
 import { QUEST, QUEST_AWARDS, QUEST_HISTORY, questConfig, questPlayer } from '../mocks/quest';
 
 // The QR a player's badge shows for user number 482913, drawn with the app's own
@@ -258,13 +258,9 @@ test.describe('quest', { tag: '@critical' }, () => {
 			...volunteer(),
 			'GET /quest/awards': json(QUEST_AWARDS),
 			'GET /quest/players': json<FindQuestPlayersOutput>({ players: [questPlayer(0, 240)] }),
-			'POST /quest/awards': json(
-				{
-					code: 'VALIDATION_ERROR',
-					errors: [{ loc: ['body', 'message'], type: 'string_too_long' }]
-				},
-				422
-			)
+			'POST /quest/awards': problem('VALIDATION_ERROR', 422, {
+				errors: [{ loc: ['body', 'message'], type: 'string_too_long' }]
+			})
 		});
 
 		await page.goto('/tools/quest');

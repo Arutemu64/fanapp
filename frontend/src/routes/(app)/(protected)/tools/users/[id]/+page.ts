@@ -23,7 +23,7 @@ export const load: PageLoad = async ({ parent, params }) => {
 		if (getApiErrorCode(apiError) === 'USER_NOT_FOUND') {
 			error(404, m.user_not_found());
 		}
-		return throwApiError(apiError, undefined, m.user_load_failed());
+		return throwApiError(apiError, m.user_load_failed());
 	});
 
 	return {

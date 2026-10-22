@@ -28,9 +28,7 @@ export const load: PageLoad = async ({ parent }) => {
 		eventRoles = await queryForLoad(queryClient, {
 			...getTcloudEventRolesOptions(),
 			staleTime: 0
-		}).catch((apiError: unknown) =>
-			throwApiError(apiError, undefined, m.tcloud_roles_load_failed())
-		);
+		}).catch((apiError: unknown) => throwApiError(apiError, m.tcloud_roles_load_failed()));
 	}
 
 	return {

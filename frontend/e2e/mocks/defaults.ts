@@ -10,7 +10,7 @@ import type {
 } from '../../src/lib/api/generated/types.gen';
 import type { Handlers } from './api';
 
-import { json } from './api';
+import { json, problem } from './api';
 
 // A festival window a couple of days out, so the home countdown and before/during
 // /after phase logic have real dates to run against without any test caring.
@@ -34,7 +34,7 @@ export const baselineHandlers: Handlers = {
 		schedule_changeover_seconds: 30
 	}),
 	// Guest by default; personas.ts overrides this with a 200 user.
-	'GET /me': json({ code: 'unauthorized' }, 401),
+	'GET /me': problem('USER_NOT_AUTHENTICATED', 401),
 	'GET /schedule': json<GetScheduleOutput>({ schedule: [] }),
 	'GET /schedule/subscriptions': json({ subscriptions: [] }),
 	// Home reads it for the "voting is open" card; no window configured keeps the

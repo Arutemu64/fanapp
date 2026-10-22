@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- SvelteKit's last-resort page: it renders this when the root +layout itself
+	fails, in the browser too (load_root_error_page), where no +error.svelte can
+	run. The default template is English. The message has already been through
+	handleError (hooks.client.ts), so it is our Russian copy. Self-contained on
+	purpose: the app's CSS and fonts may be exactly what failed to load.
+	https://svelte.dev/docs/kit/errors -->
+<html lang="ru">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>Ошибка %sveltekit.status% · ФАН ФАН</title>
+		<style>
+			:root {
+				color-scheme: light dark;
+				--background: #ffffff;
+				--foreground: #0a0a0a;
+				--muted: #737373;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--background: #0a0a0a;
+					--foreground: #fafafa;
+					--muted: #a3a3a3;
+				}
+			}
+			body {
+				margin: 0;
+				min-height: 100dvh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 16px;
+				box-sizing: border-box;
+				background: var(--background);
+				color: var(--foreground);
+				font-family:
+					system-ui,
+					-apple-system,
+					'Segoe UI',
+					Roboto,
+					sans-serif;
+				text-align: center;
+			}
+			main {
+				max-width: 24rem;
+			}
+			h1 {
+				margin: 0 0 8px;
+				font-size: 1.5rem;
+			}
+			p {
+				margin: 0 0 24px;
+				color: var(--muted);
+				line-height: 1.5;
+			}
+			a {
+				display: inline-block;
+				min-height: 44px;
+				line-height: 44px;
+				padding: 0 20px;
+				border-radius: 8px;
+				background: var(--foreground);
+				color: var(--background);
+				text-decoration: none;
+				font-weight: 600;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Ошибка %sveltekit.status%</h1>
+			<p>%sveltekit.error.message%</p>
+			<a href="/">На главную</a>
+		</main>
+	</body>
+</html>
