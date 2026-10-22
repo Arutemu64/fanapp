@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel, Field
+from pydantic import MISSING, BaseModel, Field
 
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.profanity_filter import ProfanityFilter
@@ -15,12 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateCurrentUserInput(BaseModel):
-    username: str | None = Field(
-        None, min_length=3, max_length=25, pattern=USERNAME_PATTERN
+    # MISSING rather than None, like UpdateAppSettingsInput: neither can be
+    # cleared, so an explicit null is a 422 rather than a silent no-op, and the
+    # patterns already turn away an empty string.
+    username: str | MISSING = Field(
+        default=MISSING, min_length=3, max_length=25, pattern=USERNAME_PATTERN
     )
     # Proposed by the client so the profile editor can preview a face before
     # saving; the pattern keeps it to a harmless token.
-    avatar_seed: str | None = Field(None, pattern=AVATAR_SEED_PATTERN)
+    avatar_seed: str | MISSING = Field(default=MISSING, pattern=AVATAR_SEED_PATTERN)
 
 
 class UpdateCurrentUser:
@@ -48,19 +51,15 @@ class UpdateCurrentUser:
 
     async def __call__(self, data: UpdateCurrentUserInput) -> None:
         current_user = await self.current_user_provider.require_user()
-        data_to_update = data.model_dump(exclude_unset=True)
         user_updated_flag = False
-        # Username is required: a truthy, changed value is the only case that
-        # updates it. Empty / null values are ignored so it can never be cleared.
-        if (
-            data_to_update.get("username")
-            and data_to_update["username"] != current_user.username
-        ):
-            await self._update_username(current_user, data_to_update["username"])
+        if data.username is not MISSING and data.username != current_user.username:
+            await self._update_username(current_user, data.username)
             user_updated_flag = True
-        avatar_seed = data_to_update.get("avatar_seed")
-        if avatar_seed and avatar_seed != current_user.avatar_seed:
-            current_user.set_avatar_seed(avatar_seed)
+        if (
+            data.avatar_seed is not MISSING
+            and data.avatar_seed != current_user.avatar_seed
+        ):
+            current_user.set_avatar_seed(data.avatar_seed)
             user_updated_flag = True
         if user_updated_flag:
             await self.user_gateway.save(current_user)

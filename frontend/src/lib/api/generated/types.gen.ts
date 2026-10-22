@@ -1743,11 +1743,11 @@ export type UpdateCurrentUserInput = {
 	/**
 	 * Username
 	 */
-	username?: string | null;
+	username?: string;
 	/**
 	 * Avatar Seed
 	 */
-	avatar_seed?: string | null;
+	avatar_seed?: string;
 };
 
 /**
@@ -1799,15 +1799,15 @@ export type UpdateUserSettingsInput = {
 	/**
 	 * Receive All Announcements
 	 */
-	receive_all_announcements?: boolean | null;
+	receive_all_announcements?: boolean;
 	/**
 	 * Receive Telegram Notifications
 	 */
-	receive_telegram_notifications?: boolean | null;
+	receive_telegram_notifications?: boolean;
 	/**
 	 * Receive Vk Notifications
 	 */
-	receive_vk_notifications?: boolean | null;
+	receive_vk_notifications?: boolean;
 };
 
 /**
