@@ -83,9 +83,11 @@ backend-install:
 # makes this install both the pre-commit and pre-push stages. Anyone who ran
 # this before the pre-push hooks (ty, svelte-check) were added must re-run it,
 # or those checks are silently skipped locally until they do — CI still runs
-# them on every PR either way.
+# them on every PR either way. --force replaces the shims an earlier
+# `pre-commit install` left: without it prek keeps them as `.legacy` hooks and
+# runs them too, and they fail now that pre-commit is not installed (ADR-0045).
 backend-setup-hooks:
-    cd backend && uv run pre-commit install
+    cd backend && uv run prek install --force
 
 backend-dev:
     cd backend && uv run python -m fanfan.main.web
