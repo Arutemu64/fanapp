@@ -69,7 +69,7 @@ async def test_edit_invalidates_cache_after_commit(
     monkeypatch.setattr(service.schedule_cache, "invalidate", recording_invalidate)
 
     before = await get_schedule()  # populates the cache
-    await service.edit(Permission.SCHEDULE_IMPORT, add_event)
+    await service.edit(Permission.SCHEDULE_SETUP, add_event)
 
     assert calls == ["commit", "invalidate"]
     after = await get_schedule()

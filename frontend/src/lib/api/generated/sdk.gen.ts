@@ -78,6 +78,9 @@ import type {
 	GetScheduleData,
 	GetScheduleErrors,
 	GetScheduleResponses,
+	GetScheduleSettingsData,
+	GetScheduleSettingsErrors,
+	GetScheduleSettingsResponses,
 	GetSettingsData,
 	GetSettingsErrors,
 	GetSettingsResponses,
@@ -189,6 +192,9 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentErrors,
 	SetEventAsCurrentResponses,
+	SetScheduleSettingsData,
+	SetScheduleSettingsErrors,
+	SetScheduleSettingsResponses,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesErrors,
 	SetTcloudEventRolesResponses,
@@ -1003,6 +1009,58 @@ export const importSchedule = <ThrowOnError extends boolean = false>(
 		...options,
 		headers: {
 			'Content-Type': null,
+			...options.headers
+		}
+	});
+
+/**
+ * Get schedule settings
+ *
+ * Returns the cooldown between announced schedule edits and the changeover added per act to wait estimates. Requires 'schedule:setup'.
+ */
+export const getScheduleSettings = <ThrowOnError extends boolean = false>(
+	options?: Options<GetScheduleSettingsData, ThrowOnError>
+): RequestResult<GetScheduleSettingsResponses, GetScheduleSettingsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		GetScheduleSettingsResponses,
+		GetScheduleSettingsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/schedule/settings',
+		...options
+	});
+
+/**
+ * Replace schedule settings
+ *
+ * Replaces the schedule settings. Requires 'schedule:setup'.
+ */
+export const setScheduleSettings = <ThrowOnError extends boolean = false>(
+	options: Options<SetScheduleSettingsData, ThrowOnError>
+): RequestResult<SetScheduleSettingsResponses, SetScheduleSettingsErrors, ThrowOnError> =>
+	(options.client ?? client).put<
+		SetScheduleSettingsResponses,
+		SetScheduleSettingsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/schedule/settings',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
 			...options.headers
 		}
 	});

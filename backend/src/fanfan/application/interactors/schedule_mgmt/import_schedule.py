@@ -166,7 +166,7 @@ class ImportSchedule:
                     },
                 )
 
-        await self.schedule_edit.edit(Permission.SCHEDULE_IMPORT, mutate)
+        await self.schedule_edit.edit(Permission.SCHEDULE_SETUP, mutate)
 
         # Import rewrites the whole schedule but deliberately records no
         # ScheduleChange, so nothing reaches the outbox → NATS → SSE path the

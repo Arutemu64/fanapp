@@ -59,7 +59,7 @@ export function canManagePermissions(user: CurrentUserDto | null): boolean {
 export const PERMISSION_LABELS: Record<Permission, () => string> = {
 	'*': m.permission_all,
 	'schedule:manage': m.permission_schedule_manage,
-	'schedule:import': m.tool_import_schedule,
+	'schedule:setup': m.permission_schedule_setup,
 	'notifications:send': m.tool_broadcast,
 	'settings:manage': m.tool_settings,
 	'tickets:manage': m.tool_tickets,

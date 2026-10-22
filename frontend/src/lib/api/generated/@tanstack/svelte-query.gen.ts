@@ -31,6 +31,7 @@ import {
 	getQuest,
 	getQuestPlayer,
 	getSchedule,
+	getScheduleSettings,
 	getSettings,
 	getSubscriptions,
 	getSyncSources,
@@ -69,6 +70,7 @@ import {
 	sendBroadcast,
 	sendTestNotification,
 	setEventAsCurrent,
+	setScheduleSettings,
 	setTcloudEventRoles,
 	setUserRole,
 	setVotingTimeRange,
@@ -155,6 +157,9 @@ import type {
 	GetScheduleData,
 	GetScheduleError,
 	GetScheduleResponse,
+	GetScheduleSettingsData,
+	GetScheduleSettingsError,
+	GetScheduleSettingsResponse,
 	GetSettingsData,
 	GetSettingsError,
 	GetSettingsResponse,
@@ -263,6 +268,9 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentError,
 	SetEventAsCurrentResponse,
+	SetScheduleSettingsData,
+	SetScheduleSettingsError,
+	SetScheduleSettingsResponse,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesError,
 	SetTcloudEventRolesResponse,
@@ -1360,6 +1368,62 @@ export const importScheduleMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await importSchedule({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+export const getScheduleSettingsQueryKey = (options?: Options<GetScheduleSettingsData>) =>
+	createQueryKey('getScheduleSettings', options);
+
+/**
+ * Get schedule settings
+ *
+ * Returns the cooldown between announced schedule edits and the changeover added per act to wait estimates. Requires 'schedule:setup'.
+ */
+export const getScheduleSettingsOptions = (options?: Options<GetScheduleSettingsData>) =>
+	queryOptions<
+		GetScheduleSettingsResponse,
+		GetScheduleSettingsError,
+		GetScheduleSettingsResponse,
+		ReturnType<typeof getScheduleSettingsQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await getScheduleSettings({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: getScheduleSettingsQueryKey(options)
+	});
+
+/**
+ * Replace schedule settings
+ *
+ * Replaces the schedule settings. Requires 'schedule:setup'.
+ */
+export const setScheduleSettingsMutation = (
+	options?: Partial<Options<SetScheduleSettingsData>>
+): MutationOptions<
+	SetScheduleSettingsResponse,
+	SetScheduleSettingsError,
+	Options<SetScheduleSettingsData>
+> => {
+	const mutationOptions: MutationOptions<
+		SetScheduleSettingsResponse,
+		SetScheduleSettingsError,
+		Options<SetScheduleSettingsData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await setScheduleSettings({
 				...options,
 				...fnOptions,
 				throwOnError: true

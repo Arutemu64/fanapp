@@ -8,7 +8,6 @@
 		importScheduleMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import FormError from '#lib/components/FormError.svelte';
-	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
@@ -17,7 +16,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
-	import FileFormatGuide from './components/FileFormatGuide.svelte';
+	import FileFormatGuide from './FileFormatGuide.svelte';
 
 	const queryClient = useQueryClient();
 
@@ -75,13 +74,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{m.document_title({ title: m.tool_import_schedule() })}</title>
-</svelte:head>
-
-<div class="mx-auto w-full max-w-2xl">
-	<SectionIntro description={m.import_description()} />
-
+<div>
 	<FileFormatGuide />
 
 	<div class="border-t border-border pt-6">

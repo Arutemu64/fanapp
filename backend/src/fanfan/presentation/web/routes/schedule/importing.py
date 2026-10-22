@@ -10,6 +10,11 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportSchedule,
     ImportScheduleInput,
 )
+from fanfan.application.interactors.schedule_mgmt.schedule_settings import (
+    GetScheduleSettings,
+    ScheduleSettingsDTO,
+    SetScheduleSettings,
+)
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.schedule import (
@@ -81,9 +86,44 @@ async def import_schedule(
     # file and runs a CPU-heavy synchronous read, so an unauthorized caller must
     # be rejected before it, not by the interactor afterwards.
     current_user = await current_user_provider.require_user()
-    await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_IMPORT)
+    await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_SETUP)
     _ensure_valid_upload(file)
     # python-calamine is synchronous; parsing on the event loop would stall every
     # other request for the duration of the import.
     schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)
     await interactor(ImportScheduleInput(schedule=schedule))
+
+
+@importing_router.get(
+    "/settings",
+    summary="Get schedule settings",
+    description=(
+        "Returns the cooldown between announced schedule edits and the "
+        "changeover added per act to wait estimates. Requires 'schedule:setup'."
+    ),
+    responses={
+        200: {"description": "Schedule settings retrieved successfully."},
+    },
+)
+@inject
+async def get_schedule_settings(
+    interactor: FromDishka[GetScheduleSettings],
+) -> ScheduleSettingsDTO:
+    return await interactor()
+
+
+@importing_router.put(
+    "/settings",
+    status_code=204,
+    summary="Replace schedule settings",
+    description="Replaces the schedule settings. Requires 'schedule:setup'.",
+    responses={
+        204: {"description": "Schedule settings saved."},
+    },
+)
+@inject
+async def set_schedule_settings(
+    data: ScheduleSettingsDTO,
+    interactor: FromDishka[SetScheduleSettings],
+) -> None:
+    await interactor(data)

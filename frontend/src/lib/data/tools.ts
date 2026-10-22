@@ -2,8 +2,8 @@ import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
 import Award from '@lucide/svelte/icons/award';
+import CalendarCog from '@lucide/svelte/icons/calendar-cog';
 import Coins from '@lucide/svelte/icons/coins';
-import FileUp from '@lucide/svelte/icons/file-up';
 import Megaphone from '@lucide/svelte/icons/megaphone';
 import MessageSquare from '@lucide/svelte/icons/message-square';
 import RotateCw from '@lucide/svelte/icons/rotate-cw';
@@ -20,8 +20,8 @@ import { hasPermission } from '#lib/utils/permissions.js';
 export type ToolKey =
 	| 'broadcast'
 	| 'feedback'
-	| 'import-schedule'
 	| 'quest'
+	| 'schedule'
 	| 'settings'
 	| 'sync'
 	| 'tickets'
@@ -68,13 +68,13 @@ const TOOLS: Tool[] = [
 		forbidden: m.voting_admin_forbidden
 	},
 	{
-		key: 'import-schedule',
-		title: m.tool_import_schedule,
-		description: m.tool_import_schedule_description,
-		icon: FileUp,
-		href: 'tools/import-schedule',
-		anyOf: ['schedule:import'],
-		forbidden: m.import_forbidden
+		key: 'schedule',
+		title: m.nav_schedule,
+		description: m.tool_schedule_description,
+		icon: CalendarCog,
+		href: 'tools/schedule',
+		anyOf: ['schedule:setup'],
+		forbidden: m.schedule_tool_forbidden
 	},
 	{
 		key: 'broadcast',

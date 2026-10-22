@@ -62,21 +62,3 @@ async def test_festival_end_before_start_is_rejected(
 
     # The rejected write leaves the stored range untouched.
     assert (await settings_gateway.get()).festival_end == original_end
-
-
-async def test_limits_only_change_does_not_broadcast(
-    dishka_request: AsyncContainer,
-    settings_editor: User,
-    login: Callable[[User], None],
-) -> None:
-    interactor = await dishka_request.get(UpdateSettings)
-    settings_gateway = await dishka_request.get(AppSettingsGateway)
-    realtime = await dishka_request.get(FakeRealtimeGateway)
-    login(settings_editor)
-
-    await interactor(UpdateAppSettingsInput(announcement_timeout=42))
-
-    # Persisted, but limits are not in GET /config, so nothing should broadcast —
-    # a refetch would return identical public config.
-    assert (await settings_gateway.get()).limits.announcement_timeout == 42
-    assert realtime.published == []

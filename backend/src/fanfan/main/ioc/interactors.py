@@ -125,6 +125,10 @@ from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
 from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
     MoveScheduleEvent,
 )
+from fanfan.application.interactors.schedule_mgmt.schedule_settings import (
+    GetScheduleSettings,
+    SetScheduleSettings,
+)
 from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
 )
@@ -213,6 +217,8 @@ class InteractorsProvider(Provider):
         SendScheduleChangeNotifications,
         ListScheduleChanges,
         ImportSchedule,
+        GetScheduleSettings,
+        SetScheduleSettings,
         SeedDemoData,
         GrantPermission,
         RevokePermission,

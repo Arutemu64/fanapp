@@ -18,7 +18,7 @@ class Permission(enum.StrEnum):
     # nothing here expands audience queries that filter on a specific permission.
     WILDCARD = "*"
     SCHEDULE_MANAGE = "schedule:manage"
-    SCHEDULE_IMPORT = "schedule:import"
+    SCHEDULE_SETUP = "schedule:setup"
     NOTIFICATIONS_SEND = "notifications:send"
     SETTINGS_MANAGE = "settings:manage"
     TICKETS_MANAGE = "tickets:manage"
