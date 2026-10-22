@@ -7,7 +7,7 @@ import type {
 
 /** Subscription writes still in the queue (ADR-0038), not yet in the server's list. */
 export interface QueuedSubscriptionChanges {
-	subscribing: ReadonlyArray<{ event_id: string; counter: number }>;
+	subscribing: ReadonlyArray<{ event_id: string; lead_minutes: number }>;
 	/** Subscription IDs whose unsubscribe is waiting. */
 	unsubscribing: ReadonlyArray<string>;
 }
@@ -34,11 +34,11 @@ export function mergeSubscriptions(
 	const byEventId = new Map<string, EventSubscription>();
 	for (const sub of subscriptions) {
 		if (leaving.has(sub.id)) continue;
-		byEventId.set(sub.event.id, { id: sub.id, counter: sub.counter, queued: false });
+		byEventId.set(sub.event.id, { id: sub.id, lead_minutes: sub.lead_minutes, queued: false });
 	}
-	for (const { event_id, counter } of queued.subscribing) {
+	for (const { event_id, lead_minutes } of queued.subscribing) {
 		if (byEventId.has(event_id)) continue;
-		byEventId.set(event_id, { id: null, counter, queued: true });
+		byEventId.set(event_id, { id: null, lead_minutes, queued: true });
 	}
 
 	return schedule.map((entry) => {

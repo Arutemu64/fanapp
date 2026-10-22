@@ -66,13 +66,13 @@ export const scheduleEntries: ScheduleEntryDto[] = schedule.flatMap((event, inde
 	return [blockStart, event];
 });
 
-function subscription(number: number, counter: number): SubscriptionFullDto {
+function subscription(number: number, leadMinutes: number): SubscriptionFullDto {
 	const event = schedule.find((row) => row.number === number);
 	if (!event) throw new Error(`No act №${number} in the gallery schedule`);
 	return {
 		id: `subscription-${number}`,
 		user_id: 'gallery-visitor',
-		counter,
+		lead_minutes: leadMinutes,
 		event: {
 			id: event.id,
 			number: event.number,
@@ -83,7 +83,7 @@ function subscription(number: number, counter: number): SubscriptionFullDto {
 	};
 }
 
-export const subscriptions: SubscriptionFullDto[] = [subscription(5, 2), subscription(8, 3)];
+export const subscriptions: SubscriptionFullDto[] = [subscription(5, 15), subscription(8, 30)];
 
 const SINGLE_DEFILE_VOTES: readonly number[] = [8, 18, 23, 12];
 

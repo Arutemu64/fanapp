@@ -198,9 +198,9 @@ export type CreateSubscriptionInput = {
 	 */
 	event_id: string;
 	/**
-	 * Counter
+	 * Lead Minutes
 	 */
-	counter: number;
+	lead_minutes: number;
 };
 
 /**
@@ -1434,9 +1434,9 @@ export type SubscriptionFullDto = {
 	 */
 	user_id: string;
 	/**
-	 * Counter
+	 * Lead Minutes
 	 */
-	counter: number;
+	lead_minutes: number;
 	event: SubscriptionEventDto;
 };
 

@@ -2,6 +2,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import BellRing from '@lucide/svelte/icons/bell-ring';
 	import X from '@lucide/svelte/icons/x';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { onDestroy, tick, untrack } from 'svelte';
@@ -37,6 +38,7 @@
 
 	import CurrentEventBar from './components/CurrentEventBar.svelte';
 	import EventCard from './components/EventCard.svelte';
+	import ScheduleNotificationsDialog from './components/ScheduleNotificationsDialog.svelte';
 	import ScheduleSkeleton from './components/ScheduleSkeleton.svelte';
 	import {
 		buildScheduleFiltersQuery,
@@ -50,6 +52,8 @@
 	} from './scheduleGrouping';
 
 	const SEARCH_WRITE_DELAY_MS = 300;
+
+	let showNotificationsDialog = $state(false);
 
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
@@ -297,13 +301,27 @@
 
 					<!-- Always mounted so screen readers hear the list shrink and grow, but shown
 			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
-					<p
-						class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
-						aria-live="polite"
-						role="status"
-					>
-						{resultsSummary}
-					</p>
+					<div class="flex items-center gap-2">
+						<p
+							class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
+							aria-live="polite"
+							role="status"
+						>
+							{resultsSummary}
+						</p>
+						<!-- Here rather than only in the profile: whether to hear about every act is
+						     decided while looking at the stage. Needs an account to save the choice. -->
+						{#if user}
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								aria-label={m.schedule_notifications_button()}
+								onclick={() => (showNotificationsDialog = true)}
+							>
+								<BellRing class="size-5" />
+							</Button>
+						{/if}
+					</div>
 				</div>
 			</div>
 
@@ -347,6 +365,10 @@
 		</div>
 	{/snippet}
 </QueryState>
+
+{#if user && showNotificationsDialog}
+	<ScheduleNotificationsDialog bind:open={showNotificationsDialog} {user} />
+{/if}
 
 <!-- A block section: sticky block header + its nomination cards. Taken as a
 	snippet so the {#each} above narrows a node to a concrete ScheduleBlockGroup

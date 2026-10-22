@@ -55,7 +55,7 @@ An entry for something on stage — an act, a break, the opening. Only events ar
 _Avoid_: Performance, act (in code)
 
 **Position**:
-An event's place in the running order, 1..N, counting only events that are not skipped. "Осталось N выступлений" and subscription reminders count positions.
+An event's place in the running order, 1..N, counting only events that are not skipped. "Осталось N выступлений" counts positions, and so does a reminder's two-act floor.
 _Avoid_: Queue
 
 **Block**:
@@ -79,6 +79,10 @@ _Avoid_: Announcement
 **Change announcement**:
 A mailing a schedule change sends on its own to the users subscribed to the events it touches. The screens call it «уведомление об изменении».
 _Avoid_: Schedule fan-out, change notification
+
+**Reminder**:
+The one notice a subscription sends before its act: once the act is estimated to be within the subscriber's lead time, or two positions from the stage, whichever comes first. The estimate sums the planned durations of the acts ahead, so it is always "примерно". The screens call it «напоминание».
+_Avoid_: Countdown, alert
 
 **Channel**:
 A route a notification reaches a user by outside the app: Telegram, VK or Web Push.

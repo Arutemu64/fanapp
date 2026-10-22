@@ -1,10 +1,13 @@
 import logging
+import math
+from collections.abc import Sequence
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import cast
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.schedule import ScheduleEventFullDTO
+from fanfan.application.dto.schedule import ScheduleEntryDTO, ScheduleEventFullDTO
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
@@ -24,12 +27,14 @@ from fanfan.application.services.notification_fan_out import NotificationFanOut
 from fanfan.core.exceptions.notifications import MailingAlreadyCancelled
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.models.notification import NewNotification
+from fanfan.core.models.subscription import is_reminder_due
 from fanfan.core.vo.notification import (
     SCHEDULE_NOTIFICATION_LIFETIME,
     NotificationType,
     schedule_notification_id_for,
 )
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
+from fanfan.core.vo.subscription import SubscriptionId
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +46,42 @@ logger = logging.getLogger(__name__)
 # down), and a stale "event started" push is worse than none.
 def _is_stale(occurred_at: datetime) -> bool:
     return datetime.now(UTC) - occurred_at > SCHEDULE_NOTIFICATION_LIFETIME
+
+
+def _seconds_ahead_by_position(
+    schedule: Sequence[ScheduleEntryDTO], current_event_position: int
+) -> dict[int, int]:
+    """Planned stage time before each act from the current one on, by position.
+
+    The current act counts in full, as when it started is not known here; with
+    the durations being upper limits too, the estimate runs early, which is the
+    side a reminder can afford to err on.
+    """
+    seconds_ahead: dict[int, int] = {}
+    elapsed = 0
+    for entry in schedule:
+        if not isinstance(entry, ScheduleEventFullDTO) or entry.position is None:
+            continue
+        if entry.position < current_event_position:
+            continue
+        seconds_ahead[entry.position] = elapsed
+        elapsed += entry.duration
+    return seconds_ahead
+
+
+@dataclass(slots=True)
+class _SubscriptionNotices:
+    notifications: list[NewNotification] = field(default_factory=list)
+    # Subscriptions this change reminds, and those it re-arms.
+    reminded: list[SubscriptionId] = field(default_factory=list)
+    rearmed: list[SubscriptionId] = field(default_factory=list)
+
+
+_SUBSCRIPTION_TITLES = {
+    "soon": "Скоро на сцене",
+    "started": "Уже на сцене",
+    "changed": "Выступление из подписок изменилось",
+}
 
 
 class SendScheduleChangeNotificationsInput(BaseModel):
@@ -155,50 +196,92 @@ class SendScheduleChangeNotifications:
         )
         return notifications
 
-    async def _build_subscription_notifications(
+    async def _build_subscription_notices(
         self,
         schedule_change: ScheduleChangeFullDTO,
         current_event: ScheduleEventFullDTO,
         changed_event: ScheduleChangeEntryDTO,
         reason_msg: str | None,
-    ) -> list[NewNotification]:
-        notifications: list[NewNotification] = []
+    ) -> _SubscriptionNotices:
+        """One notice per moment a subscriber acts on, not one per step.
+
+        The act going on stage, the act itself moving or leaving, and a single
+        reminder once it is due; acts passing by in between say nothing.
+        """
+        notices = _SubscriptionNotices()
         # Queue always exists for the (non-skipped) current event.
         current_event_position = cast("int", current_event.position)
-
-        upcoming_subscriptions = (
-            await self.subscription_gateway.read_upcoming_subscriptions(
-                current_event_position=current_event_position
-            )
+        seconds_ahead = _seconds_ahead_by_position(
+            await self.schedule_gateway.read_list_schedule(), current_event_position
         )
-        for s in upcoming_subscriptions:
-            if s.event.position is None:
+        subscriptions = await self.subscription_gateway.read_subscriptions_to_notify(
+            current_event_position=current_event_position,
+            changed_event_id=changed_event.id,
+        )
+        for s in subscriptions:
+            positions_ahead: int | None = None
+            minutes_ahead: int | None = None
+            reminder_due = False
+            if s.event.position is not None:
+                positions_ahead = s.event.position - current_event_position
+                event_seconds_ahead = seconds_ahead.get(s.event.position, 0)
+                minutes_ahead = math.ceil(event_seconds_ahead / 60)
+                reminder_due = is_reminder_due(
+                    lead_minutes=s.lead_minutes,
+                    positions_ahead=positions_ahead,
+                    seconds_ahead=event_seconds_ahead,
+                )
+
+            is_own_change = s.event.id == changed_event.id
+            if (
+                is_own_change
+                and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT
+            ):
+                kind = "started"
+            elif is_own_change:
+                kind = "changed"
+                # The act moved, left or came back, so whatever reminder it had
+                # was about its old place: this notice is the reminder when the
+                # act is already close, otherwise one is due again later.
+                if reminder_due:
+                    notices.reminded.append(s.id)
+                else:
+                    notices.rearmed.append(s.id)
+            elif reminder_due and s.reminded_by_change_id in {
+                None,
+                schedule_change.id,
+            }:
+                kind = "soon"
+                notices.reminded.append(s.id)
+            else:
                 continue
-            if current_event.order <= changed_event.order <= s.event.order:
-                body = await self.template_renderer.render(
-                    "subscription_notification.jinja2",
-                    {
-                        "event_number": s.event.number,
-                        "event_title": s.event.title,
-                        "position_difference": s.event.position
-                        - current_event_position,
-                        "reason_msg": reason_msg,
-                    },
+
+            body = await self.template_renderer.render(
+                "subscription_notification.jinja2",
+                {
+                    "kind": kind,
+                    "event_number": s.event.number,
+                    "event_title": s.event.title,
+                    "positions_ahead": positions_ahead,
+                    "minutes_ahead": minutes_ahead,
+                    "reason_msg": reason_msg,
+                },
+            )
+            notices.notifications.append(
+                NewNotification(
+                    id=schedule_notification_id_for(
+                        schedule_change.id, s.user_id, f"subscription:{s.id}"
+                    ),
+                    user_id=s.user_id,
+                    title=_SUBSCRIPTION_TITLES[kind],
+                    body=body,
+                    type=NotificationType.SCHEDULE_SUBSCRIPTION,
+                    path="/schedule",
+                    mailing_id=schedule_change.mailing_id,
+                    event_id=s.event.id,
                 )
-                notifications.append(
-                    NewNotification(
-                        id=schedule_notification_id_for(
-                            schedule_change.id, s.user_id, f"subscription:{s.id}"
-                        ),
-                        user_id=s.user_id,
-                        title="Уведомление о подписке",
-                        body=body,
-                        type=NotificationType.SCHEDULE_SUBSCRIPTION,
-                        path="/schedule",
-                        mailing_id=schedule_change.mailing_id,
-                    )
-                )
-        return notifications
+            )
+        return notices
 
     async def _fail_mailing(self, schedule_change: ScheduleChangeFullDTO) -> None:
         if schedule_change.mailing_id is None:
@@ -249,14 +332,23 @@ class SendScheduleChangeNotifications:
         # watch it live.
         notifications: list[NewNotification] = []
         if current_event and changed_event:
-            notifications.extend(
-                await self._build_subscription_notifications(
-                    schedule_change=schedule_change,
-                    current_event=current_event,
-                    changed_event=changed_event,
-                    reason_msg=reason_msg,
-                )
+            subscription_notices = await self._build_subscription_notices(
+                schedule_change=schedule_change,
+                current_event=current_event,
+                changed_event=changed_event,
+                reason_msg=reason_msg,
             )
+            # Recorded before the fan-out, not after: a fan-out that fails
+            # midway is redelivered, and the reminder is keyed by this change,
+            # so the rerun rebuilds the same notices rather than losing them.
+            await self.subscription_gateway.set_reminded_by(
+                subscription_notices.reminded, schedule_change.id
+            )
+            await self.subscription_gateway.set_reminded_by(
+                subscription_notices.rearmed, None
+            )
+            await self.uow.commit()
+            notifications.extend(subscription_notices.notifications)
         if schedule_change.next_event_changed and current_event:
             notifications.extend(
                 await self._build_global_announcement_notifications(

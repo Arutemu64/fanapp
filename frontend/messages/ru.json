@@ -565,7 +565,7 @@
 	"profile_update_app_description": "Обнови, чтобы получить новые функции и исправления",
 	"profile_update_failed": "Не удалось обновить профиль",
 	"profile_updated": "Профиль обновлён",
-	"push_all_announcements_description": "Получать уведомления о начале каждого выступления.",
+	"push_all_announcements_description": "Уведомление о начале каждого выступления. На одиночном дефиле это примерно раз в минуту.",
 	"push_all_announcements_title": "Все анонсы",
 	"push_blocked_browser": "Уведомления заблокированы в браузере. Разреши их в настройках сайта (значок замка рядом с адресом).",
 	"push_channels_title": "Каналы",
@@ -589,7 +589,6 @@
 	"push_test_sent": "Тест отправлен. Должны появиться сообщение в приложении, колокольчик и пуш-уведомление.",
 	"push_this_device_description": "Приходят как обычные уведомления телефона, даже когда приложение закрыто.",
 	"push_this_device_title": "На этом устройстве",
-	"push_types_title": "Типы уведомлений",
 	"quest_cached_notice": "Показаны сохранённые баллы и места.",
 	"quest_code_hint": "Покажи код волонтёру или назови ID.",
 	"quest_code_label": "QR-код игрока @{username}",
@@ -737,6 +736,9 @@
 	"schedule_load_failed": "Не удалось загрузить программу",
 	"schedule_loading": "Загружаем программу…",
 	"schedule_my_subscriptions": "Мои подписки",
+	"schedule_notifications_button": "Настроить уведомления",
+	"schedule_notifications_channels": "Куда приходят уведомления, можно выбрать в {#link}профиле{/link}.",
+	"schedule_notifications_title": "Уведомления о программе",
 	"schedule_offline_message": "Появится после подключения к интернету",
 	"schedule_offline_title": "Программа недоступна офлайн",
 	"schedule_reset_filters": "Сбросить фильтры",
@@ -791,25 +793,13 @@
 	"status_not_set": "Не установлен",
 	"status_queued": "В очереди",
 	"status_running": "Выполняется",
-	"subscribe_counter_label": "Сколько выступлений ждать до уведомления",
-	"subscribe_counter_unit": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "выступление",
-				"countPlural=few": "выступления",
-				"countPlural=many": "выступлений",
-				"countPlural=*": "выступления"
-			}
-		}
-	],
-	"subscribe_decrease": "Уменьшить",
 	"subscribe_done": "Подписка оформлена",
 	"subscribe_failed": "Не удалось оформить подписку",
+	"subscribe_estimate_note": "Время примерное: сцена может идти быстрее или медленнее плана. Самое позднее напомним за 2 выступления.",
 	"subscribe_hint": "Напоминание придёт в уведомления\u00a0— проверь, что они включены в {#link}профиле{/link}.",
-	"subscribe_increase": "Увеличить",
-	"subscribe_intro": "За сколько выступлений до {#eventName}{title}{/eventName} начать присылать тебе уведомления?",
+	"subscribe_intro": "За сколько минут до {#eventName}{title}{/eventName} тебе напомнить?",
+	"subscribe_lead_label": "За сколько минут напомнить",
+	"subscribe_lead_option": "{count}\u00a0мин",
 	"subscribe_queued": "Подпишем, когда появится связь",
 	"subscribe_queued_badge": "Ждёт связи",
 	"subscribe_reminder": [
@@ -817,10 +807,10 @@
 			"declarations": ["input count", "local countPlural = count: plural"],
 			"selectors": ["countPlural"],
 			"match": {
-				"countPlural=one": "Напомним за {count} выступление",
-				"countPlural=few": "Напомним за {count} выступления",
-				"countPlural=many": "Напомним за {count} выступлений",
-				"countPlural=*": "Напомним за {count} выступления"
+				"countPlural=one": "Напомним примерно за {count} минуту",
+				"countPlural=few": "Напомним примерно за {count} минуты",
+				"countPlural=many": "Напомним примерно за {count} минут",
+				"countPlural=*": "Напомним примерно за {count} минуты"
 			}
 		}
 	],

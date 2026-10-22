@@ -8,6 +8,7 @@ from fanfan.core.vo.notification import (
     NotificationId,
     NotificationType,
 )
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.core.vo.user import UserId
 
 
@@ -24,6 +25,9 @@ class Notification(AggregateRoot):
     path: str | None
     mailing_id: MailingId | None
     seen_at: datetime | None
+    # The act a subscription notice is about, so each act keeps its own push
+    # lane and a notice about one never replaces a notice about another.
+    event_id: ScheduleEntryId | None = None
     # Set once stored; None on a notification not yet inserted.
     created_at: datetime | None = None
 
@@ -64,3 +68,5 @@ class NewNotification:
     # In-app deep-link path; see Notification.path above. None falls back to root.
     path: str | None
     mailing_id: MailingId | None
+    # See Notification.event_id above.
+    event_id: ScheduleEntryId | None = None

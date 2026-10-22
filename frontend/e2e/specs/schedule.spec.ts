@@ -33,7 +33,7 @@ test.describe('schedule', { tag: '@critical' }, () => {
 					{
 						id: 'subscription-1',
 						user_id: 'user',
-						counter: 2,
+						lead_minutes: 10,
 						event: { id: 'event-1', number: 1, title: 'Выступление 1', order: 1, position: 1 }
 					}
 				]
@@ -52,5 +52,32 @@ test.describe('schedule', { tag: '@critical' }, () => {
 		await expect(subscribed).toBeChecked();
 		await expect(all).not.toBeChecked();
 		await expect(page.getByText('Выступление 2')).toBeHidden();
+	});
+
+	test('toggles every-act announcements from the schedule by tapping the title', async ({
+		page,
+		api
+	}) => {
+		let patched: unknown;
+		api.use({
+			...loggedInAs(),
+			'GET /schedule/': json({ schedule }),
+			'PATCH /me/settings': (route) => {
+				patched = route.request().postDataJSON() as unknown;
+				return json({});
+			}
+		});
+		await page.goto('/schedule');
+		await page.getByRole('button', { name: 'Настроить уведомления' }).click();
+
+		// The switch is named by its visible title alone (WCAG 2.5.3).
+		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
+		await expect(allAnnouncements).toBeChecked();
+
+		await page.getByText('Все анонсы', { exact: true }).click();
+
+		await expect(allAnnouncements).not.toBeChecked();
+		await expect.poll(() => patched).toEqual({ receive_all_announcements: false });
+		await expect(page.getByText('Настройки сохранены')).toHaveCount(0);
 	});
 });

@@ -34,11 +34,16 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     number: Mapped[int] = mapped_column(unique=True)
     # Notification preferences live in columns (not the settings JSON) so they
     # can be filtered on directly — see read_ids_receiving_all_announcements.
-    # Deliberately NOT indexed: the column defaults to true, so the fan-out
-    # query matches ~every row and the planner seq-scans regardless. A partial
-    # index on the same column it filters by also stores no information — the
-    # predicate already pins the value — so it was pure write overhead.
-    receive_all_announcements: Mapped[bool] = mapped_column(server_default=text("true"))
+    # Deliberately NOT indexed: accounts created before the default turned
+    # false still hold true, so the fan-out query matches most rows and the
+    # planner seq-scans regardless. A partial index on the same column it
+    # filters by also stores no information — the predicate already pins the
+    # value — so it was pure write overhead.
+    # Off by default: it pushes every act on stage, about one a minute during
+    # single defiles, so only someone who asked for it should get it.
+    receive_all_announcements: Mapped[bool] = mapped_column(
+        server_default=text("false")
+    )
     receive_telegram_notifications: Mapped[bool] = mapped_column(
         server_default=text("true")
     )

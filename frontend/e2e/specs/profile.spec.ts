@@ -188,28 +188,6 @@ test.describe('profile settings on a phone', () => {
 		await expect(dialog).toBeVisible();
 		expect(linkAttempts).toBe(0);
 	});
-
-	test('toggles a setting by tapping its title, without a success toast', async ({ page, api }) => {
-		let patched: unknown;
-		api.use({
-			...loggedInAs(),
-			'PATCH /me/settings': (route) => {
-				patched = route.request().postDataJSON() as unknown;
-				return json({});
-			}
-		});
-		await page.goto('/profile/notifications');
-
-		// The switch is named by its visible title alone (WCAG 2.5.3).
-		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
-		await expect(allAnnouncements).toBeChecked();
-
-		await page.getByText('Все анонсы', { exact: true }).click();
-
-		await expect(allAnnouncements).not.toBeChecked();
-		await expect.poll(() => patched).toEqual({ receive_all_announcements: false });
-		await expect(page.getByText('Настройки сохранены')).toHaveCount(0);
-	});
 });
 
 test.describe('logging out', { tag: '@critical' }, () => {

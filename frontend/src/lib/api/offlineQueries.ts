@@ -68,7 +68,7 @@ export const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
  * than the build version: every deploy would then wipe the saved programme, and
  * one applied just before a mobile shutdown would leave nothing offline.
  */
-export const QUERY_CACHE_BUSTER = '2';
+export const QUERY_CACHE_BUSTER = '3';
 
 const QUEST_HISTORY_PAGE_SIZE = 20;
 

@@ -63,7 +63,7 @@ async def test_delete_subscription_removes_own_subscription(
         id=generate_subscription_id(),
         user_id=visitor.id,
         event_id=event.id,
-        counter=3,
+        lead_minutes=15,
     )
     await subscription_gateway.add(subscription)
     await uow.commit()
@@ -119,7 +119,7 @@ async def test_delete_subscription_of_another_user_raises_access_denied(
         id=generate_subscription_id(),
         user_id=visitor.id,
         event_id=event.id,
-        counter=3,
+        lead_minutes=15,
     )
     await subscription_gateway.add(subscription)
     await uow.commit()

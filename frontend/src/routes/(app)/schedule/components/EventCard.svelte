@@ -169,7 +169,7 @@
 						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
 						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 							<BellRing class="mt-px size-3.5 shrink-0" />
-							{m.subscribe_reminder({ count: event.user_subscription.counter })}
+							{m.subscribe_reminder({ count: event.user_subscription.lead_minutes })}
 						</span>
 						<!-- Subscribing works offline (ADR-0038): until it is sent, say so beside the
 						     threshold rather than pretend the reminder is already set up. -->

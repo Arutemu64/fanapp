@@ -34,7 +34,7 @@ const schedule = [
 const subscriptionToA = {
 	id: 'sub-a',
 	user_id: 'me',
-	counter: 2,
+	lead_minutes: 10,
 	event: { id: 'a' }
 } as SubscriptionFullDto;
 
@@ -47,17 +47,17 @@ describe('mergeSubscriptions', () => {
 	it("attaches the server's subscriptions by event", () => {
 		const merged = mergeSubscriptions(schedule, [subscriptionToA]);
 
-		expect(subscriptionOf(merged, 'a')).toEqual({ id: 'sub-a', counter: 2, queued: false });
+		expect(subscriptionOf(merged, 'a')).toEqual({ id: 'sub-a', lead_minutes: 10, queued: false });
 		expect(subscriptionOf(merged, 'b')).toBeNull();
 	});
 
 	it('shows a subscribe still in the queue, without an ID', () => {
 		const merged = mergeSubscriptions(schedule, [], {
-			subscribing: [{ event_id: 'b', counter: 5 }],
+			subscribing: [{ event_id: 'b', lead_minutes: 25 }],
 			unsubscribing: []
 		});
 
-		expect(subscriptionOf(merged, 'b')).toEqual({ id: null, counter: 5, queued: true });
+		expect(subscriptionOf(merged, 'b')).toEqual({ id: null, lead_minutes: 25, queued: true });
 	});
 
 	it('hides a subscription whose unsubscribe is still in the queue', () => {
@@ -71,10 +71,10 @@ describe('mergeSubscriptions', () => {
 
 	it("prefers the server's copy once a queued subscribe has landed", () => {
 		const merged = mergeSubscriptions(schedule, [subscriptionToA], {
-			subscribing: [{ event_id: 'a', counter: 9 }],
+			subscribing: [{ event_id: 'a', lead_minutes: 45 }],
 			unsubscribing: []
 		});
 
-		expect(subscriptionOf(merged, 'a')).toEqual({ id: 'sub-a', counter: 2, queued: false });
+		expect(subscriptionOf(merged, 'a')).toEqual({ id: 'sub-a', lead_minutes: 10, queued: false });
 	});
 });

@@ -32,6 +32,9 @@ class NotificationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         index=True,
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # No foreign key: a notification is a record of what was said, and it
+    # outlives the act it was about. Only the push lane reads it.
+    event_id: Mapped[UUID | None] = mapped_column()
 
     __table_args__ = (
         # Covers "list user notifications newest first" filter + sort.

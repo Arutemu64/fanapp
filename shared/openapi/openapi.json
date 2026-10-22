@@ -5476,15 +5476,17 @@
             "format": "uuid",
             "title": "Event Id"
           },
-          "counter": {
+          "lead_minutes": {
             "type": "integer",
-            "title": "Counter"
+            "maximum": 240.0,
+            "minimum": 1.0,
+            "title": "Lead Minutes"
           }
         },
         "type": "object",
         "required": [
           "event_id",
-          "counter"
+          "lead_minutes"
         ],
         "title": "CreateSubscriptionInput"
       },
@@ -7500,9 +7502,9 @@
             "format": "uuid",
             "title": "User Id"
           },
-          "counter": {
+          "lead_minutes": {
             "type": "integer",
-            "title": "Counter"
+            "title": "Lead Minutes"
           },
           "event": {
             "$ref": "#/components/schemas/SubscriptionEventDTO"
@@ -7512,7 +7514,7 @@
         "required": [
           "id",
           "user_id",
-          "counter",
+          "lead_minutes",
           "event"
         ],
         "title": "SubscriptionFullDTO"
@@ -8023,7 +8025,7 @@
           "receive_all_announcements": {
             "type": "boolean",
             "title": "Receive All Announcements",
-            "default": true
+            "default": false
           },
           "receive_telegram_notifications": {
             "type": "boolean",

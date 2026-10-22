@@ -1,4 +1,5 @@
 import json
+import re
 from base64 import urlsafe_b64encode
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -26,6 +27,7 @@ from fanfan.core.models.notification import Notification
 from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.push_subscription import generate_push_subscription_id
+from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 from fanfan.main.generate_vapid import write_vapid_keys
 from fanfan.presentation.web.config import WebConfig
@@ -296,6 +298,33 @@ async def test_notifier_groups_topic_notifications_by_tag(
     data = client.calls[0]["message_data"]["notification"]
     assert data["tag"] == expected_tag
     assert data["renotify"] is True
+
+
+async def test_notifier_gives_each_subscribed_act_its_own_lane() -> None:
+    """Notices about two acts close in the running order both stay on the
+    shade; a later notice about the same act replaces the earlier one."""
+    sub = _browser_subscription(endpoint="https://push.example/one")
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway([sub]),
+        uow=_StubUow(),
+        client=(client := _RecordingClient()),
+        web_config=WEB_CONFIG,
+    )
+    first_act = generate_schedule_entry_id()
+    second_act = generate_schedule_entry_id()
+
+    for event_id in (first_act, second_act, first_act):
+        notification = _notification(NotificationType.SCHEDULE_SUBSCRIPTION)
+        notification.event_id = event_id
+        await notifier.send_notification(notification)
+
+    topics = [call["topic"] for call in client.calls]
+    tags = [call["message_data"]["notification"]["tag"] for call in client.calls]
+    assert topics == tags
+    assert topics[0] == topics[2] != topics[1]
+    # RFC 8030 §5.4: at most 32 characters from the base64url alphabet.
+    assert all(len(topic) <= 32 for topic in topics)
+    assert all(re.fullmatch(r"[A-Za-z0-9_-]+", topic) for topic in topics)
 
 
 async def test_notifier_prunes_gone_subscription() -> None:

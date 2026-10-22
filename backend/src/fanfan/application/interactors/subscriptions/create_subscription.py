@@ -1,6 +1,7 @@
 import logging
+from typing import Annotated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
@@ -21,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 class CreateSubscriptionInput(BaseModel):
     event_id: ScheduleEntryId
-    counter: int
+    # The screen offers 10 to 60 minutes; the bounds only reject nonsense.
+    lead_minutes: Annotated[int, Field(ge=1, le=240)]
 
 
 class CreateSubscriptionOutput(BaseModel):
@@ -57,7 +59,7 @@ class CreateSubscription:
             id=generate_subscription_id(),
             user_id=current_user.id,
             event_id=data.event_id,
-            counter=data.counter,
+            lead_minutes=data.lead_minutes,
         )
         await self.subscription_gateway.add(subscription)
         await self.uow.commit()

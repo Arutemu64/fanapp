@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # mailing's row lock, and its channel sends start as soon as it commits, so a
 # large mailing starts delivering after the first chunk rather than after the
 # last. Small enough to keep the lock short and the statement well under
-# Postgres' 65535 bind-parameter cap (8 columns per row).
+# Postgres' 65535 bind-parameter cap (9 columns per row).
 _CHUNK_SIZE = 500
 
 
@@ -93,6 +93,7 @@ class NotificationFanOut:
             path=notification.path,
             mailing_id=notification.mailing_id,
             seen_at=None,
+            event_id=notification.event_id,
         )
 
     async def _store(

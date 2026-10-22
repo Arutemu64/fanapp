@@ -21,7 +21,7 @@ from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
-from fanfan.core.models.user import User
+from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.permission import Permission, generate_user_permission_id
@@ -38,13 +38,18 @@ pytestmark = [
 
 
 def _schedule_event(
-    number: int, title: str, order: float, *, is_current: bool = False
+    number: int,
+    title: str,
+    order: float,
+    *,
+    is_current: bool = False,
+    duration: int = 15,
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
-        duration=15,
+        duration=duration,
         order=order,
         is_current=is_current,
         is_skipped=False,
@@ -52,88 +57,183 @@ def _schedule_event(
     )
 
 
-async def test_schedule_change_notifies_only_subscribers_in_window(
+async def _subscribe(
     dishka_request: AsyncContainer,
-    visitor: User,
-    login: Callable[[User], None],
-    uow: UnitOfWork,
-) -> None:
-    """Subscription fan-out honours the window and carries the queue difference.
-
-    Layout by (order, position): current=(1,1), B=(2,2), C=(3,3). A MOVED change
-    targets C. The window condition is
-    current.order <= changed.order <= subscription.event.order, so:
-      * a subscriber to C (order 3) is inside the window and is notified, with
-        position_difference = C.position - current.position = 3 - 1 = 2;
-      * a subscriber to B (order 2) is outside it (3 > 2) and is not notified.
-    The change carries no user and next_event_changed=False, so neither the
-    editor nor the global-announcement branch fires — only subscriptions do.
-    """
-    interactor = await dishka_request.get(SendScheduleChangeNotifications)
-    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    user_id: UserId,
+    event: ScheduleEvent,
+    *,
+    lead_minutes: int = 15,
+) -> Subscription:
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
-    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    subscription = Subscription(
+        id=generate_subscription_id(),
+        user_id=user_id,
+        event_id=event.id,
+        lead_minutes=lead_minutes,
+    )
+    await subscription_gateway.add(subscription)
+    return subscription
+
+
+async def _new_visitor(dishka_request: AsyncContainer, username: str) -> User:
     user_gateway = await dishka_request.get(UserGateway)
-    login(visitor)
-
-    current_event = _schedule_event(1, "Текущее", 1, is_current=True)
-    event_b = _schedule_event(2, "Событие B", 2)
-    event_c = _schedule_event(3, "Событие C", 3)
-    await schedule_gateway.add(current_event)
-    await schedule_gateway.add(event_b)
-    await schedule_gateway.add(event_c)
-    # Commit the events first so the subscriptions' FK sees persisted rows.
-    await uow.commit()
-
-    # visitor subscribes to C (inside the window); a second user to B (outside).
-    subscriber_outside = User(
+    user = User(
         id=UserId(uuid7()),
-        username=Username("subscriber_b"),
+        username=Username(username),
         hashed_password=None,
         role=UserRole.VISITOR,
     )
-    await user_gateway.add(subscriber_outside)
-    await subscription_gateway.add(
-        Subscription(
-            id=generate_subscription_id(),
-            user_id=visitor.id,
-            event_id=event_c.id,
-            counter=5,
-        )
-    )
-    await subscription_gateway.add(
-        Subscription(
-            id=generate_subscription_id(),
-            user_id=subscriber_outside.id,
-            event_id=event_b.id,
-            counter=5,
-        )
-    )
+    await user_gateway.add(user)
+    return user
 
-    change = ScheduleChange.moved(
-        event_id=event_c.id,
-        previous_entry_id=None,
-        mailing_id=None,
-        user_id=None,
-        next_event_changed=False,
-    )
+
+async def _process(
+    dishka_request: AsyncContainer, uow: UnitOfWork, change: ScheduleChange
+) -> None:
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
     await changes_gateway.add(change)
     await uow.commit()
-
     await interactor(
         SendScheduleChangeNotificationsInput(
             schedule_change_id=change.id, occurred_at=datetime.now(UTC)
         )
     )
 
+
+async def test_reminder_goes_out_once_when_due(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """A reminder fires once the act is within its lead time or two acts away.
+
+    Ten-minute acts at positions 1 (current) to 5. Seconds ahead of an act are
+    the planned durations from the current act up to it: e3 is 20 min and two
+    acts away, e4 30 min, e5 40 min.
+      * e3 at a 15-minute lead: outside by the clock, due by the running order;
+      * e4 at a 60-minute lead: due by the clock;
+      * e5 at a 15-minute lead: not due either way.
+    A second change reminds nobody again.
+    """
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(visitor)
+    ten_minutes = 600
+    events = [
+        _schedule_event(n, f"Событие {n}", n, is_current=n == 1, duration=ten_minutes)
+        for n in range(1, 6)
+    ]
+    for event in events:
+        await schedule_gateway.add(event)
+    await uow.commit()
+    by_lead_order = await _new_visitor(dishka_request, "by_order")
+    by_clock = await _new_visitor(dishka_request, "by_clock")
+    not_due = await _new_visitor(dishka_request, "not_due")
+    await _subscribe(dishka_request, by_lead_order.id, events[2])
+    await _subscribe(dishka_request, by_clock.id, events[3], lead_minutes=60)
+    await _subscribe(dishka_request, not_due.id, events[4])
+    await uow.commit()
+
+    # Re-marking the current act current changes nothing on stage but runs the
+    # fan-out against the schedule as it stands.
+    await _process(
+        dishka_request,
+        uow,
+        ScheduleChange.set_as_current(
+            changed_event_id=events[0].id,
+            previous_event_id=events[0].id,
+            mailing_id=None,
+            user_id=None,
+        ),
+    )
+
     delivered = await delivered_notifications(dishka_request)
-    assert len(delivered) == 1
-    notification = delivered[0]
-    assert notification.user_id == visitor.id
-    assert notification.type is NotificationType.SCHEDULE_SUBSCRIPTION
-    # position_difference = 3 - 1 = 2 is rendered into the body.
-    assert "2 выступления" in notification.body
-    assert "Событие C" in notification.body
+    reminded = {n.user_id: n for n in delivered}
+    assert set(reminded) == {by_lead_order.id, by_clock.id}
+    assert reminded[by_lead_order.id].event_id == events[2].id
+    assert "2 выступления" in reminded[by_lead_order.id].body
+    assert "20 минут" in reminded[by_lead_order.id].body
+    assert "30 минут" in reminded[by_clock.id].body
+    assert all(n.type is NotificationType.SCHEDULE_SUBSCRIPTION for n in delivered)
+
+    await _process(
+        dishka_request,
+        uow,
+        ScheduleChange.set_as_current(
+            changed_event_id=events[0].id,
+            previous_event_id=events[0].id,
+            mailing_id=None,
+            user_id=None,
+        ),
+    )
+
+    assert len(await delivered_notifications(dishka_request)) == len(delivered)
+
+
+async def test_own_act_moving_is_announced_and_its_start_too(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """The subscriber hears when their act itself moves and when it starts;
+    another act's change says nothing to them until theirs is due."""
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(visitor)
+    hour = 3600
+    current_event = _schedule_event(1, "Текущее", 1, is_current=True, duration=hour)
+    event_b = _schedule_event(2, "Событие B", 2, duration=hour)
+    event_c = _schedule_event(3, "Событие C", 3, duration=hour)
+    event_d = _schedule_event(4, "Событие D", 4, duration=hour)
+    for event in (current_event, event_b, event_c, event_d):
+        await schedule_gateway.add(event)
+    await uow.commit()
+    other = await _new_visitor(dishka_request, "subscriber_d")
+    await _subscribe(dishka_request, visitor.id, event_c)
+    await _subscribe(dishka_request, other.id, event_d)
+    await uow.commit()
+
+    await _process(
+        dishka_request,
+        uow,
+        ScheduleChange.moved(
+            event_id=event_c.id,
+            previous_entry_id=None,
+            mailing_id=None,
+            user_id=None,
+            next_event_changed=False,
+        ),
+    )
+    moved = await delivered_notifications(dishka_request)
+    assert [n.user_id for n in moved] == [visitor.id]
+    assert "перенесено" in moved[0].body
+    assert "2 выступления" in moved[0].body
+    assert moved[0].event_id == event_c.id
+
+    current_event.unset_current()
+    event_c.set_current()
+    await schedule_gateway.save(current_event)
+    await schedule_gateway.save(event_c)
+    await _process(
+        dishka_request,
+        uow,
+        ScheduleChange.set_as_current(
+            changed_event_id=event_c.id,
+            previous_event_id=current_event.id,
+            mailing_id=None,
+            user_id=None,
+        ),
+    )
+
+    # C went on stage, which brings D to the next place and its reminder due.
+    by_user = {
+        n.user_id: n for n in (await delivered_notifications(dishka_request))[1:]
+    }
+    assert set(by_user) == {visitor.id, other.id}
+    assert "началось" in by_user[visitor.id].body
+    assert by_user[other.id].event_id == event_d.id
+    assert "1 выступление" in by_user[other.id].body
 
 
 async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
@@ -167,7 +267,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
             id=generate_subscription_id(),
             user_id=visitor.id,
             event_id=event_c.id,
-            counter=5,
+            lead_minutes=15,
         )
     )
     change = ScheduleChange.moved(
@@ -225,7 +325,7 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
             id=generate_subscription_id(),
             user_id=visitor.id,
             event_id=event_c.id,
-            counter=5,
+            lead_minutes=15,
         )
     )
     mailing = Mailing.create(by_user_id=visitor.id)
@@ -284,6 +384,16 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
         role=UserRole.ORGANIZER,
     )
     await user_gateway.add(editor)
+    # The stage announcement is opt-in, off by default.
+    await user_gateway.add(
+        User(
+            id=UserId(uuid7()),
+            username=Username("announcement_fan"),
+            hashed_password=None,
+            role=UserRole.VISITOR,
+            settings=UserSettings(receive_all_announcements=True),
+        )
+    )
     await permission_gateway.add(
         UserPermission(
             id=generate_user_permission_id(),
@@ -297,7 +407,7 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
             id=generate_subscription_id(),
             user_id=visitor.id,
             event_id=event_c.id,
-            counter=5,
+            lead_minutes=15,
         )
     )
     change = ScheduleChange.moved(
@@ -317,7 +427,11 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
     )
 
     titles = [n.title for n in await delivered_notifications(dishka_request)]
-    expected_order = ["Уведомление о подписке", "На сцене", "Изменение программы"]
+    expected_order = [
+        "Выступление из подписок изменилось",
+        "На сцене",
+        "Изменение программы",
+    ]
     # Collapse runs of one kind: what is left is the order the kinds went out.
     kinds: list[str] = []
     for title in titles:
