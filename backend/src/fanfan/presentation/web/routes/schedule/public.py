@@ -10,6 +10,13 @@ from fanfan.application.interactors.schedule.get_schedule import (
 
 public_router = APIRouter()
 
+_ETAG_HEADERS = {
+    "ETag": {
+        "schema": {"type": "string"},
+        "description": "Schedule version; send it back in If-None-Match.",
+    },
+}
+
 
 def _if_none_match_hits(header: str | None, etag: str) -> bool:
     """Whether a conditional request already holds this exact schedule version.
@@ -25,7 +32,7 @@ def _if_none_match_hits(header: str | None, etag: str) -> bool:
 
 
 @public_router.get(
-    path="/",
+    path="",
     summary="Get current schedule",
     description="Returns the full public schedule with an ETag for conditional "
     "revalidation.",
@@ -38,8 +45,12 @@ def _if_none_match_hits(header: str | None, etag: str) -> bool:
         200: {
             "model": GetScheduleOutput,
             "description": "Schedule retrieved successfully.",
+            "headers": _ETAG_HEADERS,
         },
-        304: {"description": "Schedule unchanged since the client's cached version."},
+        304: {
+            "description": "Schedule unchanged since the client's cached version.",
+            "headers": _ETAG_HEADERS,
+        },
     },
 )
 @inject

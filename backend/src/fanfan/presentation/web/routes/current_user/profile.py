@@ -21,7 +21,7 @@ profile_router = APIRouter()
 
 
 @profile_router.get(
-    "/",
+    "",
     summary="Get current user",
     description="Retrieves the currently authenticated user's profile information.",
     responses={
@@ -36,7 +36,7 @@ async def get_current_user(
 
 
 @profile_router.patch(
-    "/",
+    "",
     status_code=204,
     summary="Update current user",
     description="Updates the currently authenticated user's profile information.",

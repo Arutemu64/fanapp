@@ -52,7 +52,15 @@ async def get_sync_sources(
         "from GET /sync/sources. Requires the 'sync:run' permission."
     ),
     responses={
-        202: {"description": "Sync queued; poll GET /sync/sources for its state."},
+        202: {
+            "description": "Sync queued; poll GET /sync/sources for its state.",
+            "headers": {
+                "Location": {
+                    "schema": {"type": "string"},
+                    "description": "The status resource to re-read for progress.",
+                }
+            },
+        },
         409: {
             "model": ErrorMessage,
             "description": "A sync for this source is already running.",

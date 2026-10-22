@@ -18,10 +18,10 @@ const DAY_MS = 86_400_000;
 const now = Date.now();
 
 // The boot-critical endpoints every page load hits, mocked for a logged-out
-// visitor. Observed from a real build: on boot the app requests /me/, /config,
+// visitor. Observed from a real build: on boot the app requests /me, /config,
 // /debug/health, /schedule/ and, from home, /voting/status (the SSE /events stream
 // is handled by the EventSource double, so it never reaches the network). Log a
-// user in by layering a persona from personas.ts over `GET /me/`.
+// user in by layering a persona from personas.ts over `GET /me`.
 export const baselineHandlers: Handlers = {
 	// Reachability probe (reachability.ts). Must succeed or the app paints the
 	// offline banner and every test fights it.
@@ -34,9 +34,9 @@ export const baselineHandlers: Handlers = {
 		schedule_changeover_seconds: 30
 	}),
 	// Guest by default; personas.ts overrides this with a 200 user.
-	'GET /me/': json({ code: 'unauthorized' }, 401),
-	'GET /schedule/': json<GetScheduleOutput>({ schedule: [] }),
-	'GET /schedule/subscriptions/': json({ subscriptions: [] }),
+	'GET /me': json({ code: 'unauthorized' }, 401),
+	'GET /schedule': json<GetScheduleOutput>({ schedule: [] }),
+	'GET /schedule/subscriptions': json({ subscriptions: [] }),
 	// Home reads it for the "voting is open" card; no window configured keeps the
 	// card hidden, so only voting tests opt into an open window.
 	'GET /voting/status': json<GetVotingStateOutput>({
@@ -45,7 +45,7 @@ export const baselineHandlers: Handlers = {
 		voting_start: null,
 		voting_end: null
 	}),
-	'GET /notifications/': json<ListUserNotificationOutput>({ next_cursor: null, notifications: [] }),
+	'GET /notifications': json<ListUserNotificationOutput>({ next_cursor: null, notifications: [] }),
 	'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({
 		count: 0
 	}),

@@ -249,7 +249,7 @@ test.describe('avatar', () => {
 		let patched: unknown;
 		api.use({
 			...loggedInAs(),
-			'PATCH /me/': (route) => {
+			'PATCH /me': (route) => {
 				patched = route.request().postDataJSON() as unknown;
 				return json({});
 			}

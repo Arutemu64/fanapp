@@ -5,7 +5,7 @@
     "version": "2.1.0"
   },
   "paths": {
-    "/debug/": {
+    "/debug": {
       "get": {
         "tags": [
           "Debug"
@@ -19,16 +19,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DebugOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -50,16 +40,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthCheckOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -217,16 +197,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CaptchaChallengeDTO"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -396,16 +366,6 @@
         "responses": {
           "204": {
             "description": "Successfully logged out."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -425,16 +385,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OAuthProvidersOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -477,13 +427,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "302": {
+            "description": "Redirect to the provider's authorization page."
           },
           "422": {
             "description": "Request validation error.",
@@ -494,9 +439,6 @@
                 }
               }
             }
-          },
-          "302": {
-            "description": "Redirect to the provider's authorization page."
           },
           "303": {
             "description": "The provider could not be reached. Redirects to the login page with an `oauthLoginError` query param."
@@ -523,13 +465,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "303": {
+            "description": "Flow finished. Redirects to the post-login path, the app root or the profile page; on any failure an error query param is included."
           },
           "422": {
             "description": "Request validation error.",
@@ -540,9 +477,6 @@
                 }
               }
             }
-          },
-          "303": {
-            "description": "Flow finished. Redirects to the post-login path, the app root or the profile page; on any failure an error query param is included."
           }
         }
       }
@@ -565,21 +499,11 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/me/": {
+    "/me": {
       "get": {
         "tags": [
           "Current user"
@@ -594,16 +518,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CurrentUserDTO"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -719,16 +633,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UsernameSuggestionDTO"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -1023,13 +927,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "302": {
+            "description": "Redirect to the provider's authorization page."
           },
           "422": {
             "description": "Request validation error.",
@@ -1061,9 +960,6 @@
               }
             }
           },
-          "302": {
-            "description": "Redirect to the provider's authorization page."
-          },
           "303": {
             "description": "The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param."
           }
@@ -1081,16 +977,6 @@
         "responses": {
           "204": {
             "description": "Telegram account unlinked successfully."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -1151,16 +1037,6 @@
         "responses": {
           "204": {
             "description": "VK account unlinked successfully."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -1309,16 +1185,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
@@ -1458,21 +1324,11 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/schedule/": {
+    "/schedule": {
       "get": {
         "tags": [
           "Schedule"
@@ -1483,6 +1339,14 @@
         "responses": {
           "200": {
             "description": "Schedule retrieved successfully.",
+            "headers": {
+              "ETag": {
+                "description": "Schedule version; send it back in If-None-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1491,18 +1355,16 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
+          "304": {
+            "description": "Schedule unchanged since the client's cached version.",
+            "headers": {
+              "ETag": {
+                "description": "Schedule version; send it back in If-None-Match.",
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "type": "string"
                 }
               }
             }
-          },
-          "304": {
-            "description": "Schedule unchanged since the client's cached version."
           }
         }
       }
@@ -1596,16 +1458,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ScheduleSettingsDTO"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -1809,16 +1661,6 @@
         "responses": {
           "204": {
             "description": "Current event cleared successfully."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -2090,7 +1932,7 @@
         }
       }
     },
-    "/schedule/changes/": {
+    "/schedule/changes": {
       "get": {
         "tags": [
           "Schedule"
@@ -2254,7 +2096,7 @@
         }
       }
     },
-    "/schedule/subscriptions/": {
+    "/schedule/subscriptions": {
       "get": {
         "tags": [
           "Schedule"
@@ -2269,16 +2111,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetSubscriptionsOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -2488,16 +2320,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -2517,16 +2339,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListVotingNominationsOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -2769,16 +2581,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
@@ -2894,16 +2696,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
@@ -2998,7 +2790,7 @@
         }
       }
     },
-    "/notifications/": {
+    "/notifications": {
       "get": {
         "tags": [
           "Notifications"
@@ -3107,16 +2899,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
@@ -3156,16 +2938,6 @@
         "responses": {
           "204": {
             "description": "All notifications marked as read."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -3266,16 +3038,6 @@
         "responses": {
           "204": {
             "description": "Test notification created successfully."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -3572,14 +3334,14 @@
         }
       }
     },
-    "/push/": {
+    "/push": {
       "post": {
         "tags": [
           "Push"
         ],
         "summary": "Subscribe to push notifications",
         "description": "Registers a push subscription endpoint for the authenticated user's device.",
-        "operationId": "subscribe",
+        "operationId": "create_push_subscription",
         "security": [
           {
             "SessionCookie": []
@@ -3647,7 +3409,7 @@
         ],
         "summary": "Check push subscription",
         "description": "Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.",
-        "operationId": "check_subscription",
+        "operationId": "check_push_subscription",
         "security": [
           {
             "SessionCookie": []
@@ -3713,22 +3475,23 @@
         ],
         "summary": "Unsubscribe from push notifications",
         "description": "Removes a push subscription endpoint for the authenticated user.",
-        "operationId": "unsubscribe",
+        "operationId": "delete_push_subscription",
         "security": [
           {
             "SessionCookie": []
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeletePushSubscriptionInput"
-              }
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Endpoint"
             }
           }
-        },
+        ],
         "responses": {
           "204": {
             "description": "Push subscription removed successfully."
@@ -3766,8 +3529,11 @@
         }
       }
     },
-    "/feedback/": {
+    "/feedback": {
       "post": {
+        "tags": [
+          "Feedback"
+        ],
         "summary": "Submit app feedback",
         "description": "Submits free-text feedback about the app from the current user.",
         "operationId": "submit_feedback",
@@ -3830,6 +3596,9 @@
         }
       },
       "get": {
+        "tags": [
+          "Feedback"
+        ],
         "summary": "List app feedback",
         "description": "Returns a paginated list of feedback submitted by users, newest first. Requires the feedback:read permission.",
         "operationId": "list_feedback",
@@ -4118,16 +3887,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
@@ -4237,16 +3996,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
@@ -4307,6 +4056,14 @@
                   "$ref": "#/components/schemas/SyncRunDTO"
                 }
               }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "The status resource to re-read for progress."
+              }
             }
           },
           "422": {
@@ -4352,7 +4109,7 @@
         }
       }
     },
-    "/users/": {
+    "/users": {
       "get": {
         "tags": [
           "Users"
@@ -4506,16 +4263,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OnlineUsersCountOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -4988,16 +4735,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetQuestOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -5944,19 +5681,6 @@
           "headers"
         ],
         "title": "DebugOutput"
-      },
-      "DeletePushSubscriptionInput": {
-        "properties": {
-          "endpoint": {
-            "type": "string",
-            "title": "Endpoint"
-          }
-        },
-        "type": "object",
-        "required": [
-          "endpoint"
-        ],
-        "title": "DeletePushSubscriptionInput"
       },
       "DrawVotingContestWinnerOutput": {
         "properties": {
@@ -7717,6 +7441,8 @@
           },
           "body": {
             "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
             "title": "Body"
           },
           "roles": {
@@ -7724,6 +7450,7 @@
               "$ref": "#/components/schemas/UserRole"
             },
             "type": "array",
+            "minItems": 1,
             "title": "Roles"
           }
         },

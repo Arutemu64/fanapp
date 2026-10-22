@@ -82,7 +82,7 @@ test.describe('native feel', () => {
 		page,
 		api
 	}, testInfo) => {
-		api.use({ ...loggedInAs(), 'GET /schedule/': json({ schedule: longSchedule }) });
+		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 		const title = page.getByRole('heading', { level: 1, name: 'Программа' });
@@ -123,7 +123,7 @@ test.describe('native feel', () => {
 	// The tab link reopens the query the tab was left at, so the restored offset lands on
 	// the same filtered list it was measured on.
 	test('reopens a tab with the filters it was left with', async ({ page, api }) => {
-		api.use({ ...loggedInAs(), 'GET /schedule/': json({ schedule: longSchedule }) });
+		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
 		await page.goto('/schedule');
 		const search = page.getByRole('searchbox', { name: 'Поиск по программе' });
 
@@ -143,8 +143,8 @@ test.describe('native feel', () => {
 	test('the back arrow returns to the tab with its filters', async ({ page, api }) => {
 		api.use({
 			...organizer(),
-			'GET /schedule/': json({ schedule: longSchedule }),
-			'GET /schedule/changes/': json({ schedule_changes: [], next_cursor: null })
+			'GET /schedule': json({ schedule: longSchedule }),
+			'GET /schedule/changes': json({ schedule_changes: [], next_cursor: null })
 		});
 		await page.goto('/schedule?q=Выступление+5');
 
@@ -163,7 +163,7 @@ test.describe('native feel', () => {
 	test('forgets the tabs’ filters on logout', async ({ page, api }) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule/': json({ schedule: longSchedule }),
+			'GET /schedule': json({ schedule: longSchedule }),
 			'POST /auth/logout': json({})
 		});
 		await page.goto('/schedule?q=Выступление+5');
@@ -186,7 +186,7 @@ test.describe('native feel', () => {
 	// WCAG 2.4.11: a control that keyboard focus scrolls into view must not land under
 	// the top chrome, the schedule's sticky headers or the floating bottom nav.
 	test('keeps a focused control clear of the bars', async ({ page, api }) => {
-		api.use({ ...loggedInAs(), 'GET /schedule/': json({ schedule: longSchedule }) });
+		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 

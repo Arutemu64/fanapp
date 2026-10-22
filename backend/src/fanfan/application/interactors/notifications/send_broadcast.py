@@ -18,6 +18,13 @@ from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
 
+# Sized for Web Push, the tightest channel: a push service need not accept more
+# than 3993 octets of plaintext (RFC 8291 §4), and the push library JSON-encodes
+# with \uXXXX escapes, so each Cyrillic letter costs 6 bytes. 500 letters leave
+# the payload near 3.3 KB with its title and link. The broadcast form mirrors it
+# (frontend lib/constants/notifications.ts).
+BROADCAST_BODY_MAX_LENGTH = 500
+
 
 class SendBroadcastInput(BaseModel):
     # Client-generated so a retry after a lost response replays the broadcast
@@ -28,8 +35,8 @@ class SendBroadcastInput(BaseModel):
         UuidVersion(7),
         Field(description="UUIDv7 the client generates once per broadcast form."),
     ]
-    body: str
-    roles: list[UserRole]
+    body: str = Field(min_length=1, max_length=BROADCAST_BODY_MAX_LENGTH)
+    roles: list[UserRole] = Field(min_length=1)
 
 
 class SendBroadcastOutput(BaseModel):

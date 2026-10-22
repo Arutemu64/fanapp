@@ -49,7 +49,7 @@ export function queryForLoad<TData, TError, TQueryKey extends QueryKey>(
 // password/code, which is not a session expiry, and the visitor is a guest
 // already. (`/auth/logout` is NOT excluded: a 401 there means the session is
 // already gone — checking is exactly what we want.)
-const IDENTITY_PATH = '/me/';
+const IDENTITY_PATH = '/me';
 const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code']);
 
 // A 401 is session expiry, which `watchApiResponses` already turns into the
@@ -96,7 +96,7 @@ export function watchApiResponses(
 ): () => void {
 	// The response interceptor runs for every response the client receives, before
 	// it decides ok vs error — so it sees 4xx/5xx too, not just 2xx. `options.url`
-	// is the operation's path template (e.g. `/me/`), not the resolved URL, which
+	// is the operation's path template (e.g. `/me`), not the resolved URL, which
 	// is what the path checks match against.
 	const responseId = client.interceptors.response.use(
 		(response: Response, _request: Request, options: ResolvedRequestOptions) => {

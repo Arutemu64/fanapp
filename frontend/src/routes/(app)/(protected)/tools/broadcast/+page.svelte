@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
+	import type { UserRole } from '#lib/api/generated/index.js';
+
 	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import {
 		listBroadcastsQueryKey,
@@ -13,6 +15,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { BROADCAST_BODY_MAX_LENGTH } from '#lib/constants/notifications.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
@@ -34,7 +37,9 @@
 	let mailingId = uuidv7();
 
 	let bodyText = $state('');
-	let selectedRoles = $state<string[]>([]);
+	let selectedRoles = $state<UserRole[]>([]);
+
+	let charsLeft = $derived(BROADCAST_BODY_MAX_LENGTH - bodyText.length);
 
 	let bodyError = $state('');
 	let rolesError = $state('');
@@ -72,7 +77,7 @@
 		}
 	}
 
-	function toggleRole(role: string, checked: boolean) {
+	function toggleRole(role: UserRole, checked: boolean) {
 		if (checked) {
 			if (!selectedRoles.includes(role)) selectedRoles = [...selectedRoles, role];
 		} else {
@@ -98,7 +103,7 @@
 				body: {
 					mailing_id: mailingId,
 					body: bodyText.trim(),
-					roles: selectedRoles as ('visitor' | 'participant' | 'volunteer' | 'organizer')[]
+					roles: selectedRoles
 				}
 			},
 			{
@@ -144,6 +149,7 @@
 				id="broadcast-body"
 				name="body"
 				rows={4}
+				maxlength={BROADCAST_BODY_MAX_LENGTH}
 				placeholder={m.broadcast_text_placeholder()}
 				bind:value={bodyText}
 				disabled={broadcastMutation.isPending}
@@ -156,6 +162,9 @@
 			{:else}
 				<Field.FieldDescription>
 					{m.broadcast_text_hint()}
+				</Field.FieldDescription>
+				<Field.FieldDescription>
+					{m.broadcast_chars_left({ count: charsLeft })}
 				</Field.FieldDescription>
 			{/if}
 		</Field.Field>

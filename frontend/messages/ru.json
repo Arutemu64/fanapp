@@ -24,6 +24,7 @@
 	"bell_label_unread": "Открыть уведомления, непрочитанных: {count}",
 	"broadcast_cancel_failed": "Не удалось отозвать рассылку",
 	"broadcast_cancelled": "Рассылка отозвана",
+	"broadcast_chars_left": "Осталось символов: {count}",
 	"broadcast_description": "Создавай массовые рассылки уведомлений для выбранных ролей.",
 	"broadcast_forbidden": "У тебя нет доступа к рассылке уведомлений",
 	"broadcast_history_empty": "Пока ничего не отправлено",

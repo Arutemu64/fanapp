@@ -30,7 +30,7 @@ subscriptions_router = APIRouter(
 
 
 @subscriptions_router.get(
-    "/",
+    "",
     summary="List the current user's subscriptions",
     description="Returns every schedule event the current user is subscribed to. "
     "Served separately from the schedule so the schedule itself stays universal "
@@ -44,7 +44,7 @@ async def get_subscriptions(
 
 
 @subscriptions_router.post(
-    "/",
+    "",
     status_code=201,
     summary="Create a new event subscription",
     description="Subscribes the current user to a specific schedule event. "

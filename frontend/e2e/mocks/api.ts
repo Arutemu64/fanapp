@@ -14,7 +14,7 @@ type Concrete<P extends string> = P extends `${infer Head}{${string}}${infer Tai
 
 // A route key is `"<METHOD> <path>"`, where <path> is the API path WITHOUT the
 // `/api` base and WITH the trailing slash exactly as the backend declares it —
-// e.g. `"GET /me/"`, `"GET /voting/status"`. The union is derived from the
+// e.g. `"GET /me"`, `"GET /voting/status"`. The union is derived from the
 // committed OpenAPI spec, so a typo or a route the backend dropped fails to
 // compile instead of failing at runtime as an unmocked 404.
 export type RouteKey = {

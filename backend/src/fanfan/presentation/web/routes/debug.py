@@ -20,7 +20,7 @@ class HealthCheckOutput(BaseModel):
     status: Literal["healthy"]
 
 
-@debug_router.get("/")
+@debug_router.get("")
 @inject
 async def debug(request: Request, config: FromDishka[DebugConfig]) -> DebugOutput:
     # Echoes request headers (incl. cookies and proxy internals), so keep it to

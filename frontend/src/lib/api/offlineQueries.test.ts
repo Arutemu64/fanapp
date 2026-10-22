@@ -14,7 +14,7 @@ vi.mock('#lib/services/reachability.js', () => ({ isReachable: () => true }));
 function stubApi(feedGate: Promise<unknown> = Promise.resolve()) {
 	const fetchMock = vi.fn<typeof fetch>(async (input) => {
 		const url = new URL(input instanceof Request ? input.url : String(input), 'https://api.test');
-		if (!url.pathname.endsWith('/notifications/')) return Response.json({});
+		if (!url.pathname.endsWith('/notifications')) return Response.json({});
 		await feedGate;
 		return Response.json({ notifications: [], next_cursor: 'next' });
 	});
@@ -25,7 +25,7 @@ function stubApi(feedGate: Promise<unknown> = Promise.resolve()) {
 function feedRequests(fetchMock: ReturnType<typeof stubApi>): number {
 	return fetchMock.mock.calls.filter(([input]) => {
 		const url = input instanceof Request ? input.url : String(input);
-		return new URL(url, 'https://api.test').pathname.endsWith('/notifications/');
+		return new URL(url, 'https://api.test').pathname.endsWith('/notifications');
 	}).length;
 }
 

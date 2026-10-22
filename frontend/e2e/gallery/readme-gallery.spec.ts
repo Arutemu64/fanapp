@@ -49,10 +49,10 @@ const visitorAtFestival: Handlers = {
 		voting_start: new Date(now - HOUR_MS).toISOString(),
 		voting_end: new Date(now + 4 * HOUR_MS).toISOString()
 	}),
-	'GET /schedule/': json({ schedule: scheduleEntries }),
-	'GET /schedule/subscriptions/': json({ subscriptions }),
+	'GET /schedule': json({ schedule: scheduleEntries }),
+	'GET /schedule/subscriptions': json({ subscriptions }),
 	'GET /voting/nominations/single': json(singleDefile),
-	'GET /notifications/': json({ notifications, next_cursor: null }),
+	'GET /notifications': json({ notifications, next_cursor: null }),
 	'GET /quest': json(questStanding),
 	'GET /quest/history': json<ListQuestHistoryOutput>({ awards: [], next_cursor: null })
 };

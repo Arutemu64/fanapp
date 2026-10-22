@@ -131,7 +131,7 @@ export class Session {
 		return !isLogoutPending();
 	}
 
-	/** The server said the session is gone (a 401 from `/me/`), whatever the screen. */
+	/** The server said the session is gone (a 401 from `/me`), whatever the screen. */
 	async expired(): Promise<void> {
 		const { queryKey } = currentUserOptions();
 		// A guest was already a guest; this also makes a burst of 401s end it once.

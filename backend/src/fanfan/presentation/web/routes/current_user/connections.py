@@ -28,6 +28,8 @@ connections_router = APIRouter(prefix="/connections")
 
 @connections_router.get(
     "/{provider}",
+    status_code=status.HTTP_302_FOUND,
+    response_class=RedirectResponse,
     summary="Start account linking",
     description="Redirects the browser to the provider's OAuth page to begin linking "
     "the account to the current user. The provider then calls back to the shared "

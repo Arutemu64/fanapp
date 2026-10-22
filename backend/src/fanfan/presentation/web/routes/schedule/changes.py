@@ -28,7 +28,7 @@ changes_router = APIRouter(
 
 
 @changes_router.get(
-    "/",
+    "",
     summary="List schedule audit log",
     description="Returns a history of all modifications made to the schedule, "
     "including skips, moves, and status changes.",

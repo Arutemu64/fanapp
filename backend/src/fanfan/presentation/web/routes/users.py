@@ -44,7 +44,7 @@ users_router = APIRouter(
 
 
 @users_router.get(
-    "/",
+    "",
     summary="List users",
     description="Newest-first, filterable directory of all users. Search matches a "
     "case-insensitive substring of the username, email or ticket number; the "

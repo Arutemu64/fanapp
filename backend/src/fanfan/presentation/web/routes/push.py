@@ -34,7 +34,7 @@ class PushSubscriptionStatus(BaseModel):
 
 
 @push_router.post(
-    "/",
+    "",
     status_code=204,
     summary="Subscribe to push notifications",
     description="Registers a push subscription endpoint "
@@ -48,14 +48,14 @@ class PushSubscriptionStatus(BaseModel):
     },
 )
 @inject
-async def subscribe(
+async def create_push_subscription(
     data: CreatePushSubscriptionInput, interactor: FromDishka[CreatePushSubscription]
 ) -> None:
     await interactor(data)
 
 
 @push_router.get(
-    "/",
+    "",
     summary="Check push subscription",
     description="Reports whether the given endpoint is registered for the "
     "authenticated user. The client only needs this yes/no answer for its own "
@@ -65,7 +65,7 @@ async def subscribe(
     },
 )
 @inject
-async def check_subscription(
+async def check_push_subscription(
     endpoint: Annotated[str, Query()],
     interactor: FromDishka[CheckPushSubscription],
 ) -> PushSubscriptionStatus:
@@ -73,8 +73,11 @@ async def check_subscription(
     return PushSubscriptionStatus(subscribed=subscribed)
 
 
+# The endpoint travels in the query, as on the GET above: a DELETE body has no
+# defined semantics (RFC 9110 §9.3.5) and some servers and proxies reject or
+# drop one.
 @push_router.delete(
-    "/",
+    "",
     summary="Unsubscribe from push notifications",
     description="Removes a push subscription endpoint for the authenticated user.",
     status_code=204,
@@ -83,7 +86,8 @@ async def check_subscription(
     },
 )
 @inject
-async def unsubscribe(
-    data: DeletePushSubscriptionInput, interactor: FromDishka[DeletePushSubscription]
+async def delete_push_subscription(
+    endpoint: Annotated[str, Query()],
+    interactor: FromDishka[DeletePushSubscription],
 ) -> None:
-    await interactor(data)
+    await interactor(DeletePushSubscriptionInput(endpoint=endpoint))

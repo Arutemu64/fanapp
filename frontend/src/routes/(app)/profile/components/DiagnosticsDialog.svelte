@@ -8,7 +8,7 @@
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
-	import { checkSubscription } from '#lib/api/generated/index.js';
+	import { checkPushSubscription } from '#lib/api/generated/index.js';
 	import { QUERY_CACHE_KEY } from '#lib/api/queryPersister.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -105,7 +105,7 @@
 		if (subscription && user && reachability.current) {
 			// Bounded so a stalled request can't hold back the rest of the report,
 			// which is all local; a timeout leaves the answer unknown.
-			const { data } = await checkSubscription({
+			const { data } = await checkPushSubscription({
 				query: { endpoint: subscription.endpoint },
 				signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 			});

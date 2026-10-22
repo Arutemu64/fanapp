@@ -51,7 +51,7 @@ notifications_router = APIRouter(
 
 
 @notifications_router.get(
-    "/",
+    "",
     summary="List user notifications",
     description="Returns a paginated list of notifications for the authenticated user.",
     responses={
