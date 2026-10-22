@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 import pytest
-from pydantic import ValidationError
+from pydantic import MISSING, ValidationError
 
 from fanfan.application.interactors.schedule_mgmt.schedule_settings import (
     UpdateScheduleSettingsInput,
@@ -53,8 +53,8 @@ def test_explicit_null_is_rejected_rather_than_ignored(
 def test_omitted_fields_stay_unset() -> None:
     parsed = UpdateAppSettingsInput.model_validate({"quest": {"enabled": True}})
 
-    assert parsed.festival_start is None
-    assert parsed.quest.model_fields_set == {"enabled"}
+    assert parsed.festival_start is MISSING
+    assert parsed.model_dump() == {"quest": {"enabled": True}}
 
 
 def test_schedule_settings_reject_an_explicit_null() -> None:

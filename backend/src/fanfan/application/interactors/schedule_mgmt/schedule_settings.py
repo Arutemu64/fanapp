@@ -1,9 +1,7 @@
 import logging
-from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import MISSING, BaseModel, Field
 
-from fanfan.application.dto.patch import NOT_NULL
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
@@ -23,11 +21,10 @@ class ScheduleSettingsDTO(BaseModel):
 
 class UpdateScheduleSettingsInput(BaseModel):
     # Partial, like UpdateAppSettingsInput: an omitted field is left as is, so
-    # an older client that doesn't know a newer field can't reset it.
-    announcement_timeout: Annotated[int | None, NOT_NULL] = Field(default=None, ge=1)
-    changeover_seconds: Annotated[int | None, NOT_NULL] = Field(
-        default=None, ge=0, le=600
-    )
+    # an older client that doesn't know a newer field can't reset it. MISSING
+    # rather than None, so an explicit null is a 422, not a silent no-op.
+    announcement_timeout: int | MISSING = Field(default=MISSING, ge=1)
+    changeover_seconds: int | MISSING = Field(default=MISSING, ge=0, le=600)
 
 
 # Guarded by schedule:setup, not settings:manage, the way the voting time range
@@ -80,11 +77,13 @@ class UpdateScheduleSettings:
 
         settings = await self.app_settings_gateway.get_for_update()
         changeover_changed = (
-            data.changeover_seconds is not None
+            data.changeover_seconds is not MISSING
             and data.changeover_seconds != settings.schedule.changeover_seconds
         )
-        settings.update_limits(announcement_timeout=data.announcement_timeout)
-        settings.update_schedule(changeover_seconds=data.changeover_seconds)
+        if data.announcement_timeout is not MISSING:
+            settings.update_limits(announcement_timeout=data.announcement_timeout)
+        if data.changeover_seconds is not MISSING:
+            settings.update_schedule(changeover_seconds=data.changeover_seconds)
         await self.app_settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(

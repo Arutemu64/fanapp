@@ -137,7 +137,7 @@ A form seeded from a GET and saved whole would silently undo a colleague's save 
 - **The GET carries an `etag` field** — in the body, since the generated query options hand the page the body alone ([AIP-154](https://google.aip.dev/154) does the same). It hashes only what that resource shows, so an edit to another slice of the same row does not turn the form stale.
 - **The PATCH requires `If-Match`** with that etag (`*` saves regardless). It is a required header in the spec rather than a runtime 428, so the generated client will not compile a save that forgets it.
 - **A stale etag is a 412** (`APP_SETTINGS_CHANGED`, `TCLOUD_EVENT_ROLES_CHANGED`): nothing is written, and the page tells the organizer to reload. A save answers 200 with what it stored and the new etag, which the page keeps for its next save.
-- **An omitted field is left as is; an explicit `null` is a 422.** JSON Merge Patch ([RFC 7396](https://datatracker.ietf.org/doc/html/rfc7396)) reads null as "remove", and none of these fields can be cleared. `NOT_NULL` (`application/dto/patch.py`) marks such a field.
+- **An omitted field is left as is; an explicit `null` is a 422.** JSON Merge Patch ([RFC 7396](https://datatracker.ietf.org/doc/html/rfc7396)) reads null as "remove", and none of these fields can be cleared. Such a field defaults to Pydantic's [`MISSING`](https://pydantic.dev/docs/validation/dev/concepts/types/#missing-sentinel) instead of `None`, so `null` fails its type and the spec does not offer it.
 
 A `PATCH` that sets an absolute state (the schedule edits above, a role, the voting range) needs no etag: last writer wins _is_ the intent there, and a 412 mid-show would only get in the way.
 

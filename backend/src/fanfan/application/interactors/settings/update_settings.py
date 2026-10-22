@@ -1,9 +1,7 @@
 import logging
-from typing import Annotated
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import MISSING, AwareDatetime, BaseModel, Field
 
-from fanfan.application.dto.patch import NOT_NULL
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.dto.settings import AppSettingsDTO
 from fanfan.application.interactors.settings.get_settings import read_app_settings
@@ -20,24 +18,24 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateQuestInput(BaseModel):
-    enabled: Annotated[bool | None, NOT_NULL] = None
-    max_award: Annotated[int | None, NOT_NULL] = Field(default=None, ge=1, le=10_000)
-    cancel_window_minutes: Annotated[int | None, NOT_NULL] = Field(
-        default=None, ge=0, le=1440
-    )
+    enabled: bool | MISSING = MISSING
+    max_award: int | MISSING = Field(default=MISSING, ge=1, le=10_000)
+    cancel_window_minutes: int | MISSING = Field(default=MISSING, ge=0, le=1440)
 
 
 class UpdateAppSettingsInput(BaseModel):
     """A partial update, nested like AppSettingsDTO: omitted fields stay as is."""
 
+    # Omitted is MISSING rather than None so that an explicit null is a 422: JSON
+    # Merge Patch (RFC 7396) reads null as "remove", and none of these fields can
+    # be cleared, so accepting it as "leave as is" would be a silent no-op.
+
     # Require an offset: the range check compares an incoming boundary against the
     # persisted (tz-aware) counterpart, and a naive value would raise TypeError —
     # a 500 — instead of a clean 422. The organizer form always sends an instant.
-    festival_start: Annotated[AwareDatetime | None, NOT_NULL] = None
-    festival_end: Annotated[AwareDatetime | None, NOT_NULL] = None
-    # A default instance rather than None keeps null a plain type error and the
-    # schema free of a nullable union.
-    quest: UpdateQuestInput = Field(default_factory=UpdateQuestInput)
+    festival_start: AwareDatetime | MISSING = MISSING
+    festival_end: AwareDatetime | MISSING = MISSING
+    quest: UpdateQuestInput | MISSING = MISSING
 
 
 class UpdateSettings:
@@ -85,28 +83,28 @@ class UpdateSettings:
         # config.
         public_config_changed = False
 
-        if data.festival_start is not None or data.festival_end is not None:
+        if data.festival_start is not MISSING or data.festival_end is not MISSING:
             # PATCH may carry either boundary alone, so validate the range as a
             # whole — filling the untouched side from the persisted value — rather
             # than each field in isolation, which could reject a valid shift of both.
-            # A datetime is always truthy, so `or` picks the persisted value only
-            # when this PATCH left the boundary out.
-            new_start = data.festival_start or settings.festival_start
-            new_end = data.festival_end or settings.festival_end
+            new_start = settings.festival_start
+            if data.festival_start is not MISSING:
+                new_start = data.festival_start
+            new_end = settings.festival_end
+            if data.festival_end is not MISSING:
+                new_end = data.festival_end
             settings.set_festival_schedule(start=new_start, end=new_end)
             update_flag = True
             public_config_changed = True
 
-        quest = data.quest
-        if quest.model_fields_set:
+        if data.quest is not MISSING and data.quest.model_fields_set:
+            quest = data.quest
             # The switch and the cap are public; the cancel window is not.
-            if quest.enabled is not None or quest.max_award is not None:
+            if quest.enabled is not MISSING or quest.max_award is not MISSING:
                 public_config_changed = True
-            settings.update_quest(
-                enabled=quest.enabled,
-                max_award=quest.max_award,
-                cancel_window_minutes=quest.cancel_window_minutes,
-            )
+            # model_dump leaves out MISSING fields, which update_quest reads as
+            # "leave as is".
+            settings.update_quest(**quest.model_dump())
             update_flag = True
 
         if not update_flag:
