@@ -27,6 +27,9 @@ class InvalidScheduleFileReason(enum.StrEnum):
     EMPTY_CELL = "EMPTY_CELL"
     INVALID_NUMBER = "INVALID_NUMBER"
     DUPLICATE_NUMBER = "DUPLICATE_NUMBER"
+    # Every act takes stage time, and the wait estimate (ADR-0043) has nothing
+    # to go on for an act of zero seconds.
+    DURATION_NOT_POSITIVE = "DURATION_NOT_POSITIVE"
     # A `type` cell other than blank, `event` or `block`.
     INVALID_TYPE = "INVALID_TYPE"
     # A block row carries only its title; a number, duration or nomination

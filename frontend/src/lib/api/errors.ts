@@ -210,6 +210,8 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 			return m.import_error_cell_empty({ at });
 		case 'INVALID_NUMBER':
 			return m.import_error_integer_required({ at });
+		case 'DURATION_NOT_POSITIVE':
+			return m.import_error_duration_positive({ at });
 		case 'INVALID_TYPE':
 			return m.import_error_block_hint({ at });
 		case 'BLOCK_ROW_WITH_EVENT_DATA':
