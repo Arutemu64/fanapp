@@ -10,6 +10,10 @@ class CheckPushSubscriptionInput(BaseModel):
     endpoint: str
 
 
+class CheckPushSubscriptionOutput(BaseModel):
+    subscribed: bool
+
+
 class CheckPushSubscription:
     def __init__(
         self,
@@ -19,8 +23,11 @@ class CheckPushSubscription:
         self.current_user_provider = current_user_provider
         self.push_sub_gateway = push_sub_gateway
 
-    async def __call__(self, data: CheckPushSubscriptionInput) -> bool:
+    async def __call__(
+        self, data: CheckPushSubscriptionInput
+    ) -> CheckPushSubscriptionOutput:
         current_user_id = await self.current_user_provider.require_user_id()
-        return await self.push_sub_gateway.exists_for_user(
+        subscribed = await self.push_sub_gateway.exists_for_user(
             current_user_id, data.endpoint
         )
+        return CheckPushSubscriptionOutput(subscribed=subscribed)

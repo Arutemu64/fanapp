@@ -112,6 +112,16 @@ export type ChangePasswordInput = {
 };
 
 /**
+ * CheckPushSubscriptionOutput
+ */
+export type CheckPushSubscriptionOutput = {
+	/**
+	 * Subscribed
+	 */
+	subscribed: boolean;
+};
+
+/**
  * ConfirmEmailCodeInput
  */
 export type ConfirmEmailCodeInput = {
@@ -1063,16 +1073,6 @@ export type PublicConfigDto = {
 	 * Schedule Changeover Seconds
 	 */
 	schedule_changeover_seconds: number;
-};
-
-/**
- * PushSubscriptionStatus
- */
-export type PushSubscriptionStatus = {
-	/**
-	 * Subscribed
-	 */
-	subscribed: boolean;
 };
 
 /**
@@ -3859,7 +3859,7 @@ export type CheckPushSubscriptionResponses = {
 	/**
 	 * Subscription status for the endpoint.
 	 */
-	200: PushSubscriptionStatus;
+	200: CheckPushSubscriptionOutput;
 };
 
 export type CheckPushSubscriptionResponse =

@@ -3426,7 +3426,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PushSubscriptionStatus"
+                  "$ref": "#/components/schemas/CheckPushSubscriptionOutput"
                 }
               }
             }
@@ -5427,6 +5427,19 @@
         ],
         "title": "ChangePasswordInput"
       },
+      "CheckPushSubscriptionOutput": {
+        "properties": {
+          "subscribed": {
+            "type": "boolean",
+            "title": "Subscribed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscribed"
+        ],
+        "title": "CheckPushSubscriptionOutput"
+      },
       "ConfirmEmailCodeInput": {
         "properties": {
           "code": {
@@ -6974,19 +6987,6 @@
         ],
         "title": "PublicConfigDTO",
         "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` and `festival_end` so the client can run the\nlive countdown and pick its before/during/after phase itself — flipping at\neach boundary without provoking a 403 on a guarded endpoint. Voting\navailability is intentionally not here: the UI reads it per-user from\nGET /voting/status (which already reflects the time range as a DISABLED\nstate), so a second public copy would only be a redundant source of truth to\ndrift."
-      },
-      "PushSubscriptionStatus": {
-        "properties": {
-          "subscribed": {
-            "type": "boolean",
-            "title": "Subscribed"
-          }
-        },
-        "type": "object",
-        "required": [
-          "subscribed"
-        ],
-        "title": "PushSubscriptionStatus"
       },
       "QuestAwardItemDTO": {
         "properties": {
