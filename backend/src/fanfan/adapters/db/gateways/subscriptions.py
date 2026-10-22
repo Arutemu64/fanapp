@@ -123,19 +123,23 @@ class SqlSubscriptionGateway(SubscriptionGateway):
 
     async def read_subscriptions_to_notify(
         self,
-        current_event_position: int,
+        current_event_position: int | None,
         changed_event_id: ScheduleEntryId,
     ) -> list[SubscriptionFullDTO]:
-        stmt = _select_subscription_full_dto().where(
-            or_(
-                # Still ahead of the stage, or on it. A skipped event has no
-                # position, so the comparison leaves it out.
-                ScheduleEventORM.position >= current_event_position,
-                # The change was to this act itself: a skip takes it out of
-                # the running order, and its subscribers hear about that too.
-                SubscriptionORM.event_id == changed_event_id,
+        # The change was to this act itself: a skip takes it out of the running
+        # order, and its subscribers hear about that too.
+        is_changed_event = SubscriptionORM.event_id == changed_event_id
+        if current_event_position is None:
+            stmt = _select_subscription_full_dto().where(is_changed_event)
+        else:
+            stmt = _select_subscription_full_dto().where(
+                or_(
+                    # Still ahead of the stage, or on it. A skipped event has
+                    # no position, so the comparison leaves it out.
+                    ScheduleEventORM.position >= current_event_position,
+                    is_changed_event,
+                )
             )
-        )
         results = await self.session.scalars(stmt)
         return [_parse_full_dto(subscription_orm) for subscription_orm in results]
 

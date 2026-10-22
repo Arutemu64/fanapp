@@ -57,10 +57,12 @@ export function scheduleEvents(
 /**
  * Estimated wait, in seconds, until each act after the one on stage: the planned
  * duration of each act before it plus the changeover after each, the current act
- * counted in full since when it started is not known. Durations are self-reported upper limits, so the estimate
- * runs long, and a missing one counts as zero; it is the same estimate the
- * subscription reminder fires on (ADR-0043). Empty before the first act is
- * marked current.
+ * counted in full since when it started is not known. Durations are
+ * self-reported upper limits, so the estimate runs long, and a missing one counts
+ * as zero. An act with no planned duration anywhere before it gets no estimate:
+ * changeovers alone would put it a few minutes away at any distance. It is the
+ * same estimate the subscription reminder fires on (ADR-0043). Empty before the
+ * first act is marked current.
  */
 export function secondsUntilActs(
 	schedule: ScheduleEventWithSubscription[],
@@ -74,11 +76,13 @@ export function secondsUntilActs(
 	if (currentIndex === -1) return ahead;
 
 	let elapsed = 0;
+	let planned = 0;
 	for (const event of running.slice(currentIndex)) {
-		if (!event.is_current) {
+		if (!event.is_current && planned > 0) {
 			ahead.set(event.id, elapsed);
 		}
 		elapsed += event.duration + changeoverSeconds;
+		planned += event.duration;
 	}
 	return ahead;
 }

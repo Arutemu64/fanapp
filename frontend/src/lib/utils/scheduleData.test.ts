@@ -120,6 +120,15 @@ describe('secondsUntilActs', () => {
 		]);
 	});
 
+	it('estimates nothing while no planned duration is filled in', () => {
+		const ahead = secondsUntilActs(
+			[act('now', 1, 0, true), act('next', 2, 0), act('later', 3, 60)],
+			30
+		);
+
+		expect(ahead.size).toBe(0);
+	});
+
 	it('estimates nothing before the first act is marked current', () => {
 		expect(secondsUntilActs([act('a', 1, 60), act('b', 2, 60)], 10).size).toBe(0);
 	});

@@ -37,8 +37,10 @@ leaves and the next walks on, which the planned durations leave out.
   the estimate is relative to the current act, not to the clock, so the
   response stays byte-stable between edits and cacheable per ADR-0014.
 - The label always says "примерно". Up to 10 minutes it shows whole minutes;
-  past that it rounds up to 5-minute steps. It falls back to the act count when
-  the durations add up to nothing.
+  past that it rounds up to 5-minute steps.
+- No planned duration before an act means no estimate for it, changeovers
+  notwithstanding (they alone would put any act a few minutes away): the label
+  falls back to the act count, and the reminder to the two-act floor.
 
 ## Consequences
 

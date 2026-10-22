@@ -28,11 +28,14 @@ class Subscription(AggregateRoot):
 
 
 def is_reminder_due(
-    *, lead_minutes: int, positions_ahead: int, seconds_ahead: int
+    *, lead_minutes: int, positions_ahead: int, seconds_ahead: int | None
 ) -> bool:
+    """``seconds_ahead`` is None when no planned duration backs an estimate;
+    the running order alone decides then."""
     if positions_ahead <= 0:
         return False
-    return (
-        positions_ahead <= REMINDER_POSITIONS_AHEAD
-        or seconds_ahead <= lead_minutes * 60
-    )
+    if positions_ahead <= REMINDER_POSITIONS_AHEAD:
+        return True
+    if seconds_ahead is None:
+        return False
+    return seconds_ahead <= lead_minutes * 60

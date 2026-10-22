@@ -26,10 +26,13 @@ class SubscriptionGateway(Protocol):
 
     async def read_subscriptions_to_notify(
         self,
-        current_event_position: int,
+        current_event_position: int | None,
         changed_event_id: ScheduleEntryId,
     ) -> list[SubscriptionFullDTO]:
-        """Subscriptions to acts at or after the stage, plus the changed act's."""
+        """Subscriptions to acts at or after the stage, plus the changed act's.
+
+        Only the changed act's before any act is current.
+        """
         ...
 
     async def read_subscriptions_by_user(

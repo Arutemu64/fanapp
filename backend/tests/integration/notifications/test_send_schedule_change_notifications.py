@@ -236,6 +236,76 @@ async def test_own_act_moving_is_announced_and_its_start_too(
     assert "1 выступление" in by_user[other.id].body
 
 
+async def test_act_removed_before_the_show_is_announced(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """With no act current yet there is no wait to estimate, but subscribers
+    still hear that their act was taken out of the programme."""
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(visitor)
+    event = _schedule_event(1, "Событие", 1)
+    await schedule_gateway.add(event)
+    await uow.commit()
+    await _subscribe(dishka_request, visitor.id, event)
+    await uow.commit()
+
+    await _process(
+        dishka_request,
+        uow,
+        ScheduleChange.skipped(
+            event_id=event.id,
+            mailing_id=None,
+            user_id=None,
+            next_event_changed=False,
+        ),
+    )
+
+    delivered = await delivered_notifications(dishka_request)
+    assert [n.user_id for n in delivered] == [visitor.id]
+    assert "снято" in delivered[0].body
+
+
+async def test_missing_durations_leave_the_reminder_to_the_running_order(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """Acts with no planned duration give no estimate: changeovers alone would
+    put every act a few minutes away and remind everyone at once."""
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    login(visitor)
+    events = [
+        _schedule_event(n, f"Событие {n}", n, is_current=n == 1, duration=0)
+        for n in range(1, 6)
+    ]
+    for event in events:
+        await schedule_gateway.add(event)
+    await uow.commit()
+    far = await _new_visitor(dishka_request, "far")
+    await _subscribe(dishka_request, visitor.id, events[2])
+    await _subscribe(dishka_request, far.id, events[4])
+    await uow.commit()
+
+    await _process(
+        dishka_request,
+        uow,
+        ScheduleChange.set_as_current(
+            changed_event_id=events[0].id,
+            previous_event_id=events[0].id,
+            mailing_id=None,
+            user_id=None,
+        ),
+    )
+
+    delivered = await delivered_notifications(dishka_request)
+    assert [n.user_id for n in delivered] == [visitor.id]
+    assert "минут" not in delivered[0].body
+
+
 async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     dishka_request: AsyncContainer,
     visitor: User,

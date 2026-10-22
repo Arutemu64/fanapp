@@ -53,24 +53,31 @@ def _seconds_ahead_by_position(
     schedule: Sequence[ScheduleEntryDTO],
     current_event_position: int,
     changeover_seconds: int,
-) -> dict[int, int]:
+) -> dict[int, int | None]:
     """Estimated wait before each act from the current one on, by position.
 
     Each act ahead adds its planned duration plus the changeover after it. The
     current act counts in full, as when it started is not known here; with the
     durations being upper limits too, the estimate runs long and the reminder
-    comes early, the side it can afford to err on. The schedule screen shows the
-    same sum (frontend secondsUntilActs; ADR-0043).
+    comes early, the side it can afford to err on. None while no act ahead has
+    a planned duration: changeovers alone would read as a wait of a few minutes
+    for an act any distance away. The schedule screen shows the same sum
+    (frontend secondsUntilActs; ADR-0043).
     """
-    seconds_ahead: dict[int, int] = {}
+    seconds_ahead: dict[int, int | None] = {}
     elapsed = 0
+    planned = 0
     for entry in schedule:
         if not isinstance(entry, ScheduleEventFullDTO) or entry.position is None:
             continue
         if entry.position < current_event_position:
             continue
-        seconds_ahead[entry.position] = elapsed
+        if planned > 0:
+            seconds_ahead[entry.position] = elapsed
+        else:
+            seconds_ahead[entry.position] = None
         elapsed += entry.duration + changeover_seconds
+        planned += entry.duration
     return seconds_ahead
 
 
@@ -206,7 +213,7 @@ class SendScheduleChangeNotifications:
     async def _build_subscription_notices(
         self,
         schedule_change: ScheduleChangeFullDTO,
-        current_event: ScheduleEventFullDTO,
+        current_event: ScheduleEventFullDTO | None,
         changed_event: ScheduleChangeEntryDTO,
         reason_msg: str | None,
     ) -> _SubscriptionNotices:
@@ -216,14 +223,20 @@ class SendScheduleChangeNotifications:
         reminder once it is due; acts passing by in between say nothing.
         """
         notices = _SubscriptionNotices()
-        # Queue always exists for the (non-skipped) current event.
-        current_event_position = cast("int", current_event.position)
-        settings = await self.app_settings_gateway.get()
-        seconds_ahead = _seconds_ahead_by_position(
-            await self.schedule_gateway.read_list_schedule(),
-            current_event_position,
-            settings.schedule.changeover_seconds,
-        )
+        # Before the first act is marked current there is no stage to measure
+        # from: no waits and no reminders, but an act moved or removed is still
+        # news to its subscribers.
+        current_event_position: int | None = None
+        seconds_ahead: dict[int, int | None] = {}
+        if current_event is not None:
+            # Queue always exists for the (non-skipped) current event.
+            current_event_position = cast("int", current_event.position)
+            settings = await self.app_settings_gateway.get()
+            seconds_ahead = _seconds_ahead_by_position(
+                await self.schedule_gateway.read_list_schedule(),
+                current_event_position,
+                settings.schedule.changeover_seconds,
+            )
         subscriptions = await self.subscription_gateway.read_subscriptions_to_notify(
             current_event_position=current_event_position,
             changed_event_id=changed_event.id,
@@ -232,10 +245,11 @@ class SendScheduleChangeNotifications:
             positions_ahead: int | None = None
             minutes_ahead: int | None = None
             reminder_due = False
-            if s.event.position is not None:
+            if s.event.position is not None and current_event_position is not None:
                 positions_ahead = s.event.position - current_event_position
-                event_seconds_ahead = seconds_ahead.get(s.event.position, 0)
-                minutes_ahead = math.ceil(event_seconds_ahead / 60)
+                event_seconds_ahead = seconds_ahead.get(s.event.position)
+                if event_seconds_ahead is not None:
+                    minutes_ahead = math.ceil(event_seconds_ahead / 60)
                 reminder_due = is_reminder_due(
                     lead_minutes=s.lead_minutes,
                     positions_ahead=positions_ahead,
@@ -341,7 +355,7 @@ class SendScheduleChangeNotifications:
         # opt-in and can be large; the handful of editors made the change and
         # watch it live.
         notifications: list[NewNotification] = []
-        if current_event and changed_event:
+        if changed_event:
             subscription_notices = await self._build_subscription_notices(
                 schedule_change=schedule_change,
                 current_event=current_event,

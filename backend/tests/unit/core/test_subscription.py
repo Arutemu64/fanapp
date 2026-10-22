@@ -30,3 +30,14 @@ def test_is_reminder_due(
         )
         is expected
     )
+
+
+def test_without_planned_durations_only_the_running_order_decides() -> None:
+    assert not is_reminder_due(
+        lead_minutes=15,
+        positions_ahead=REMINDER_POSITIONS_AHEAD + 1,
+        seconds_ahead=None,
+    )
+    assert is_reminder_due(
+        lead_minutes=15, positions_ahead=REMINDER_POSITIONS_AHEAD, seconds_ahead=None
+    )
