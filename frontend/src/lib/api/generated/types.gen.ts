@@ -86,20 +86,6 @@ export type BodyImportSchedule = {
 };
 
 /**
- * Body_login
- */
-export type BodyLogin = {
-	/**
-	 * Email
-	 */
-	email: string;
-	/**
-	 * Password
-	 */
-	password: string;
-};
-
-/**
  * Body_set_user_role
  */
 export type BodySetUserRole = {
@@ -282,6 +268,20 @@ export type DrawVotingContestWinnerOutput = {
 	 * Pool Size
 	 */
 	pool_size: number;
+};
+
+/**
+ * EmailPasswordLoginForm
+ */
+export type EmailPasswordLoginForm = {
+	/**
+	 * Email
+	 */
+	email: string;
+	/**
+	 * Password
+	 */
+	password: string;
 };
 
 /**
@@ -1996,7 +1996,7 @@ export type HealthCheckResponses = {
 export type HealthCheckResponse = HealthCheckResponses[keyof HealthCheckResponses];
 
 export type LoginData = {
-	body: BodyLogin;
+	body: EmailPasswordLoginForm;
 	path?: never;
 	query?: never;
 	url: '/auth/login';

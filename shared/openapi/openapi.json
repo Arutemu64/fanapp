@@ -59,7 +59,7 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/Body_login"
+                "$ref": "#/components/schemas/EmailPasswordLoginForm"
               }
             }
           },
@@ -3422,6 +3422,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "maxLength": 2048,
               "title": "Endpoint"
             }
           }
@@ -3488,6 +3489,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "maxLength": 2048,
               "title": "Endpoint"
             }
           }
@@ -5383,25 +5385,6 @@
         ],
         "title": "Body_import_schedule"
       },
-      "Body_login": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "Body_login"
-      },
       "Body_set_user_role": {
         "properties": {
           "role": {
@@ -5454,7 +5437,8 @@
           "old_password": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 128
               },
               {
                 "type": "null"
@@ -5520,14 +5504,17 @@
         "properties": {
           "endpoint": {
             "type": "string",
+            "maxLength": 2048,
             "title": "Endpoint"
           },
           "p256dh": {
             "type": "string",
+            "maxLength": 256,
             "title": "P256Dh"
           },
           "auth": {
             "type": "string",
+            "maxLength": 256,
             "title": "Auth"
           }
         },
@@ -5705,6 +5692,26 @@
           "pool_size"
         ],
         "title": "DrawVotingContestWinnerOutput"
+      },
+      "EmailPasswordLoginForm": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "EmailPasswordLoginForm"
       },
       "ErrorMessage": {
         "properties": {
@@ -6250,6 +6257,7 @@
         "properties": {
           "barcode": {
             "type": "string",
+            "maxLength": 128,
             "title": "Barcode"
           }
         },

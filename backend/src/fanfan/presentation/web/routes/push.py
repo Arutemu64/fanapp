@@ -10,6 +10,7 @@ from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscriptionInput,
 )
 from fanfan.application.interactors.push_sub.create_push_subscription import (
+    PUSH_ENDPOINT_MAX_LENGTH,
     CreatePushSubscription,
     CreatePushSubscriptionInput,
 )
@@ -66,7 +67,7 @@ async def create_push_subscription(
 )
 @inject
 async def check_push_subscription(
-    endpoint: Annotated[str, Query()],
+    endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
     interactor: FromDishka[CheckPushSubscription],
 ) -> PushSubscriptionStatus:
     subscribed = await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
@@ -87,7 +88,7 @@ async def check_push_subscription(
 )
 @inject
 async def delete_push_subscription(
-    endpoint: Annotated[str, Query()],
+    endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
     interactor: FromDishka[DeletePushSubscription],
 ) -> None:
     await interactor(DeletePushSubscriptionInput(endpoint=endpoint))

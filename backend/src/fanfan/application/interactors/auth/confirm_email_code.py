@@ -14,7 +14,8 @@ from fanfan.core.vo.email import Email
 
 
 class ConfirmEmailCodeInput(BaseModel):
-    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    # repr=False keeps the one-time code out of error reports (core/vo/fields.py).
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$", repr=False)
 
 
 class ConfirmEmailCode:

@@ -1,7 +1,7 @@
 import logging
 from typing import ClassVar
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
@@ -10,6 +10,7 @@ from fanfan.application.ports.session_store import SessionStore
 from fanfan.core.exceptions.auth import InvalidCredentials
 from fanfan.core.exceptions.rate_limit import TooManyAttempts, TooManyLoginAttempts
 from fanfan.core.utils.email import normalize_email
+from fanfan.core.vo.fields import PASSWORD_MAX_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,9 @@ LOGIN_ATTEMPTS_WINDOW_SECONDS = 900
 
 class AuthenticateUserInput(BaseModel):
     email: EmailStr
-    password: str
+    # repr=False keeps it out of error reports (core/vo/fields.py). No minimum:
+    # a login checks the password, it doesn't set one.
+    password: str = Field(max_length=PASSWORD_MAX_LENGTH, repr=False)
     # Caller (web route) fills this in; the interactor stays framework-agnostic.
     client_ip: str | None = None
 

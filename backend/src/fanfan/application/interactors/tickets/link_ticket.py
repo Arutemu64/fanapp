@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class LinkTicketInput(BaseModel):
-    barcode: str
+    # Generous for any real barcode (our own are 10 characters); it only keeps an
+    # oversized value from reaching the unique index.
+    barcode: str = Field(max_length=128)
 
 
 class LinkTicket:
