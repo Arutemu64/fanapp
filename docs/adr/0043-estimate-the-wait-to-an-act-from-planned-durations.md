@@ -22,8 +22,13 @@ estimate built on it is approximate.
 
 We will show and act on an **estimated wait in minutes**, summed from the
 planned durations of the acts between the stage and the act, the current act
-counted in full.
+counted in full, plus a **changeover** after each: the pause while one group
+leaves and the next walks on, which the planned durations leave out.
 
+- The changeover is one organizer-set value, `AppSettings.schedule.changeover_seconds`
+  (30 s by default, a guess until measured), served to clients in `GET /config`
+  so the estimate works offline from the cached config. It lives in the settings
+  row, not an env var, so it can be tuned on show day without a deploy.
 - The backend computes it when building subscription notices, and fires one
   reminder when the estimate falls within the subscriber's `lead_minutes`, or
   when the act is two positions away, whichever comes first.
@@ -53,6 +58,9 @@ counted in full.
 - **Bring back a predicted clock time (ADR-0008).** A clock time depends on
   `now`, which is what made the schedule uncacheable; a relative estimate gives
   the same planning value without that cost.
+- **A changeover per block, or none.** A block start is not a pause on stage,
+  and a real break is already an act with its own duration; the gap that is
+  missing comes between every two acts.
 - **Measure real durations from `set_as_current` timestamps.** More accurate,
   and possible later from the schedule change log, but it needs the stage to
   have run first, which is when the estimate matters least.

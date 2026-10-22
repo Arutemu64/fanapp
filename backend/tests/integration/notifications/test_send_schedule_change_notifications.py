@@ -109,9 +109,9 @@ async def test_reminder_goes_out_once_when_due(
 ) -> None:
     """A reminder fires once the act is within its lead time or two acts away.
 
-    Ten-minute acts at positions 1 (current) to 5. Seconds ahead of an act are
-    the planned durations from the current act up to it: e3 is 20 min and two
-    acts away, e4 30 min, e5 40 min.
+    Ten-minute acts at positions 1 (current) to 5, with the default 30-second
+    changeover after each. The wait for an act sums the acts from the current
+    one up to it: e3 is 21 min and two acts away, e4 31.5 min, e5 42 min.
       * e3 at a 15-minute lead: outside by the clock, due by the running order;
       * e4 at a 60-minute lead: due by the clock;
       * e5 at a 15-minute lead: not due either way.
@@ -153,8 +153,8 @@ async def test_reminder_goes_out_once_when_due(
     assert set(reminded) == {by_lead_order.id, by_clock.id}
     assert reminded[by_lead_order.id].event_id == events[2].id
     assert "2 выступления" in reminded[by_lead_order.id].body
-    assert "20 минут" in reminded[by_lead_order.id].body
-    assert "30 минут" in reminded[by_clock.id].body
+    assert "21 минута" in reminded[by_lead_order.id].body
+    assert "32 минуты" in reminded[by_clock.id].body
     assert all(n.type is NotificationType.SCHEDULE_SUBSCRIPTION for n in delivered)
 
     await _process(

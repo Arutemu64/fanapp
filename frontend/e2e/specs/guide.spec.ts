@@ -42,7 +42,8 @@ test.describe('guide articles', () => {
 				festival_start: '2027-04-01T09:00:00+03:00',
 				festival_end: '2027-04-01T19:00:00+03:00',
 				quest_enabled: false,
-				quest_max_award: 100
+				quest_max_award: 100,
+				schedule_changeover_seconds: 30
 			})
 		});
 
@@ -58,7 +59,8 @@ test.describe('guide articles', () => {
 				festival_start: '2020-04-01T09:00:00+03:00',
 				festival_end: '2020-04-01T19:00:00+03:00',
 				quest_enabled: false,
-				quest_max_award: 100
+				quest_max_award: 100,
+				schedule_changeover_seconds: 30
 			})
 		});
 

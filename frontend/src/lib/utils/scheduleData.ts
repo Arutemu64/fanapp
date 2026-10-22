@@ -56,13 +56,16 @@ export function scheduleEvents(
 
 /**
  * Estimated wait, in seconds, until each act after the one on stage: the planned
- * durations of the acts before it, the current act counted in full since when it
- * started is not known. Durations are self-reported upper limits, so the estimate
+ * duration of each act before it plus the changeover after each, the current act
+ * counted in full since when it started is not known. Durations are self-reported upper limits, so the estimate
  * runs long, and a missing one counts as zero; it is the same estimate the
  * subscription reminder fires on (ADR-0043). Empty before the first act is
  * marked current.
  */
-export function secondsUntilActs(schedule: ScheduleEventWithSubscription[]): Map<string, number> {
+export function secondsUntilActs(
+	schedule: ScheduleEventWithSubscription[],
+	changeoverSeconds: number
+): Map<string, number> {
 	const ahead = new Map<string, number>();
 	const running = schedule
 		.filter((event) => event.position !== null)
@@ -75,7 +78,7 @@ export function secondsUntilActs(schedule: ScheduleEventWithSubscription[]): Map
 		if (!event.is_current) {
 			ahead.set(event.id, elapsed);
 		}
-		elapsed += event.duration;
+		elapsed += event.duration + changeoverSeconds;
 	}
 	return ahead;
 }

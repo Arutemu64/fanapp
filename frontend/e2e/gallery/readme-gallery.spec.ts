@@ -39,7 +39,8 @@ const visitorAtFestival: Handlers = {
 		festival_start: new Date(now - 2 * HOUR_MS).toISOString(),
 		festival_end: new Date(now + 6 * HOUR_MS).toISOString(),
 		quest_enabled: true,
-		quest_max_award: 100
+		quest_max_award: 100,
+		schedule_changeover_seconds: 30
 	}),
 	'GET /notifications/unread-count': json({ count: 2 }),
 	'GET /voting/status': json({

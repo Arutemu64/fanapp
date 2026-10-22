@@ -129,7 +129,8 @@ export function questConfig(): Handlers {
 			festival_start: new Date(now - day).toISOString(),
 			festival_end: new Date(now + day).toISOString(),
 			quest_enabled: true,
-			quest_max_award: 100
+			quest_max_award: 100,
+			schedule_changeover_seconds: 30
 		}),
 		'GET /quest': json(QUEST),
 		'GET /quest/history': json(QUEST_HISTORY)

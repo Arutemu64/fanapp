@@ -15,6 +15,7 @@
 	import type { ReadyView } from '#lib/utils/queryView.js';
 
 	import {
+		getPublicConfigOptions,
 		getScheduleOptions,
 		getSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -25,6 +26,7 @@
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
@@ -72,7 +74,11 @@
 		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
 	);
 	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
-	let secondsAhead = $derived(secondsUntilActs(schedule));
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	let changeoverSeconds = $derived(
+		(configQuery.data ?? FALLBACK_CONFIG).schedule_changeover_seconds
+	);
+	let secondsAhead = $derived(secondsUntilActs(schedule, changeoverSeconds));
 	let scheduleView = $derived(
 		queryView(scheduleQuery, {
 			policy: 'cached',

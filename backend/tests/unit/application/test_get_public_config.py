@@ -53,3 +53,12 @@ async def test_projects_the_quest_switch() -> None:
     result = await GetPublicConfig(_FakeAppSettingsGateway(settings))()
 
     assert result.quest_enabled is True
+
+
+async def test_projects_the_changeover() -> None:
+    settings = AppSettings()
+    settings.update_schedule(changeover_seconds=45)
+
+    result = await GetPublicConfig(_FakeAppSettingsGateway(settings))()
+
+    assert result.schedule_changeover_seconds == 45

@@ -20,4 +20,5 @@ class GetPublicConfig:
             festival_end=settings.festival_end,
             quest_enabled=settings.quest.enabled,
             quest_max_award=settings.quest.max_award,
+            schedule_changeover_seconds=settings.schedule.changeover_seconds,
         )

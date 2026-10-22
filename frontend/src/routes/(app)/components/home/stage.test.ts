@@ -37,7 +37,7 @@ describe('getStageSnapshot', () => {
 			event({ id: 'd', order: 4 })
 		];
 
-		const snapshot = getStageSnapshot(schedule);
+		const snapshot = getStageSnapshot(schedule, 0);
 
 		expect(snapshot.featured).toEqual({ event: schedule[2], live: true });
 		expect(snapshot.current?.id).toBe('b');
@@ -51,7 +51,7 @@ describe('getStageSnapshot', () => {
 			event({ id: 'b', order: 2 })
 		];
 
-		const snapshot = getStageSnapshot(schedule);
+		const snapshot = getStageSnapshot(schedule, 0);
 
 		expect(snapshot.current).toBeNull();
 		expect(snapshot.featured?.event.id).toBe('a');
@@ -60,7 +60,7 @@ describe('getStageSnapshot', () => {
 	});
 
 	it('features nothing when the programme is empty', () => {
-		expect(getStageSnapshot([]).featured).toBeNull();
+		expect(getStageSnapshot([], 0).featured).toBeNull();
 	});
 
 	it('leaves skipped acts out and caps the list at three', () => {
@@ -73,7 +73,7 @@ describe('getStageSnapshot', () => {
 			event({ id: 'd', order: 5 })
 		];
 
-		expect(ids(getStageSnapshot(schedule).upNext)).toEqual(['a', 'b', 'c']);
+		expect(ids(getStageSnapshot(schedule, 0).upNext)).toEqual(['a', 'b', 'c']);
 	});
 
 	it('finds the nearest subscribed act beyond the up-next list', () => {
@@ -87,13 +87,13 @@ describe('getStageSnapshot', () => {
 			event({ id: 'later', order: 6, user_subscription: SUBSCRIPTION })
 		];
 
-		expect(getStageSnapshot(schedule).nextSubscribed?.id).toBe('mine');
+		expect(getStageSnapshot(schedule, 0).nextSubscribed?.id).toBe('mine');
 	});
 
 	it('has nothing up next once the last act is on stage', () => {
 		const schedule = [event({ id: 'a', order: 1 }), event({ id: 'b', order: 2, is_current: true })];
 
-		const snapshot = getStageSnapshot(schedule);
+		const snapshot = getStageSnapshot(schedule, 0);
 
 		expect(snapshot.upNext).toEqual([]);
 		expect(snapshot.nextSubscribed).toBeNull();

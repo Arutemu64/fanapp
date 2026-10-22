@@ -23,7 +23,10 @@ export interface StageSnapshot {
 	secondsAhead: Map<string, number>;
 }
 
-export function getStageSnapshot(schedule: ScheduleEventWithSubscription[]): StageSnapshot {
+export function getStageSnapshot(
+	schedule: ScheduleEventWithSubscription[],
+	changeoverSeconds: number
+): StageSnapshot {
 	const ordered = [...schedule].sort((a, b) => a.order - b.order);
 	const currentIndex = ordered.findIndex((event) => event.is_current);
 	const current = ordered[currentIndex] ?? null;
@@ -44,7 +47,13 @@ export function getStageSnapshot(schedule: ScheduleEventWithSubscription[]): Sta
 	const later = afterFeatured.slice(UP_NEXT_COUNT);
 	const nextSubscribed = later.find((event) => event.user_subscription !== null) ?? null;
 
-	return { featured, upNext, nextSubscribed, current, secondsAhead: secondsUntilActs(schedule) };
+	return {
+		featured,
+		upNext,
+		nextSubscribed,
+		current,
+		secondsAhead: secondsUntilActs(schedule, changeoverSeconds)
+	};
 }
 
 /**

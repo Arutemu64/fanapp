@@ -58,6 +58,10 @@ _Avoid_: Performance, act (in code)
 An event's place in the running order, 1..N, counting only events that are not skipped. "Осталось N выступлений" counts positions, and so does a reminder's two-act floor.
 _Avoid_: Queue
 
+**Changeover**:
+The pause between two events while one group leaves the stage and the next walks on. Planned durations leave it out, so the wait estimate adds an organizer-set average after each event. The screens call it «пауза между выступлениями».
+_Avoid_: Interlude (that is a block-less entry), gap, transition
+
 **Block**:
 A titled section of the schedule: a block start and every event after it up to the next block start. An event's block is wherever it sits, so moving it across a block start moves it into that block.
 _Avoid_: Section, group

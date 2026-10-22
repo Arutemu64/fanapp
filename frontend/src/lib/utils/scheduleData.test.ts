@@ -102,22 +102,25 @@ describe('secondsUntilActs', () => {
 		};
 	}
 
-	it('sums the planned durations from the act on stage, counted in full', () => {
-		const ahead = secondsUntilActs([
-			act('done', 1, 60),
-			act('now', 2, 120, true),
-			act('skipped', null, 999),
-			act('next', 3, 180),
-			act('later', 4, 60)
-		]);
+	it('sums the planned durations and changeovers from the act on stage, counted in full', () => {
+		const ahead = secondsUntilActs(
+			[
+				act('done', 1, 60),
+				act('now', 2, 120, true),
+				act('skipped', null, 999),
+				act('next', 3, 180),
+				act('later', 4, 60)
+			],
+			10
+		);
 
 		expect([...ahead]).toEqual([
-			['next', 120],
-			['later', 300]
+			['next', 130],
+			['later', 320]
 		]);
 	});
 
 	it('estimates nothing before the first act is marked current', () => {
-		expect(secondsUntilActs([act('a', 1, 60), act('b', 2, 60)]).size).toBe(0);
+		expect(secondsUntilActs([act('a', 1, 60), act('b', 2, 60)], 10).size).toBe(0);
 	});
 });

@@ -12,6 +12,7 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
 )
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
@@ -49,14 +50,17 @@ def _is_stale(occurred_at: datetime) -> bool:
 
 
 def _seconds_ahead_by_position(
-    schedule: Sequence[ScheduleEntryDTO], current_event_position: int
+    schedule: Sequence[ScheduleEntryDTO],
+    current_event_position: int,
+    changeover_seconds: int,
 ) -> dict[int, int]:
-    """Planned stage time before each act from the current one on, by position.
+    """Estimated wait before each act from the current one on, by position.
 
-    The current act counts in full, as when it started is not known here; with
-    the durations being upper limits too, the estimate runs early, which is the
-    side a reminder can afford to err on. The schedule screen shows the same
-    sum (frontend secondsUntilActs; ADR-0043).
+    Each act ahead adds its planned duration plus the changeover after it. The
+    current act counts in full, as when it started is not known here; with the
+    durations being upper limits too, the estimate runs long and the reminder
+    comes early, the side it can afford to err on. The schedule screen shows the
+    same sum (frontend secondsUntilActs; ADR-0043).
     """
     seconds_ahead: dict[int, int] = {}
     elapsed = 0
@@ -66,7 +70,7 @@ def _seconds_ahead_by_position(
         if entry.position < current_event_position:
             continue
         seconds_ahead[entry.position] = elapsed
-        elapsed += entry.duration
+        elapsed += entry.duration + changeover_seconds
     return seconds_ahead
 
 
@@ -102,8 +106,10 @@ class SendScheduleChangeNotifications:
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
         fan_out: NotificationFanOut,
+        app_settings_gateway: AppSettingsGateway,
     ) -> None:
         self.template_renderer = template_renderer
+        self.app_settings_gateway = app_settings_gateway
         self.changes_gateway = changes_gateway
         self.schedule_gateway = schedule_gateway
         self.user_gateway = user_gateway
@@ -212,8 +218,11 @@ class SendScheduleChangeNotifications:
         notices = _SubscriptionNotices()
         # Queue always exists for the (non-skipped) current event.
         current_event_position = cast("int", current_event.position)
+        settings = await self.app_settings_gateway.get()
         seconds_ahead = _seconds_ahead_by_position(
-            await self.schedule_gateway.read_list_schedule(), current_event_position
+            await self.schedule_gateway.read_list_schedule(),
+            current_event_position,
+            settings.schedule.changeover_seconds,
         )
         subscriptions = await self.subscription_gateway.read_subscriptions_to_notify(
             current_event_position=current_event_position,

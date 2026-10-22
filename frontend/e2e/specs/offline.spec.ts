@@ -67,7 +67,8 @@ test.describe('offline', { tag: '@critical' }, () => {
 				festival_start: new Date(Date.now() - hour).toISOString(),
 				festival_end: new Date(Date.now() + 24 * hour).toISOString(),
 				quest_enabled: false,
-				quest_max_award: 100
+				quest_max_award: 100,
+				schedule_changeover_seconds: 30
 			}),
 			'GET /schedule/': json<GetScheduleOutput>({
 				schedule: [
