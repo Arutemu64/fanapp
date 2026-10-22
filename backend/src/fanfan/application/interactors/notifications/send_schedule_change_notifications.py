@@ -81,6 +81,21 @@ def _seconds_ahead_by_position(
     return seconds_ahead
 
 
+# Past this wait the minutes are rounded up to whole steps, as on the schedule
+# screen (frontend formatUntil), so a notice and the screen it opens name the
+# same wait.
+_WAIT_ROUNDING_FROM_MINUTES = 10
+_WAIT_ROUNDING_STEP_MINUTES = 5
+
+
+def _rounded_wait_minutes(seconds: int) -> int:
+    minutes = math.ceil(seconds / 60)
+    if minutes >= _WAIT_ROUNDING_FROM_MINUTES:
+        steps = math.ceil(minutes / _WAIT_ROUNDING_STEP_MINUTES)
+        minutes = steps * _WAIT_ROUNDING_STEP_MINUTES
+    return minutes
+
+
 @dataclass(slots=True)
 class _SubscriptionNotices:
     notifications: list[NewNotification] = field(default_factory=list)
@@ -249,7 +264,7 @@ class SendScheduleChangeNotifications:
                 positions_ahead = s.event.position - current_event_position
                 event_seconds_ahead = seconds_ahead.get(s.event.position)
                 if event_seconds_ahead is not None:
-                    minutes_ahead = math.ceil(event_seconds_ahead / 60)
+                    minutes_ahead = _rounded_wait_minutes(event_seconds_ahead)
                 reminder_due = is_reminder_due(
                     lead_minutes=s.lead_minutes,
                     positions_ahead=positions_ahead,

@@ -153,8 +153,9 @@ async def test_reminder_goes_out_once_when_due(
     assert set(reminded) == {by_lead_order.id, by_clock.id}
     assert reminded[by_lead_order.id].event_id == events[2].id
     assert "2 выступления" in reminded[by_lead_order.id].body
-    assert "21 минута" in reminded[by_lead_order.id].body
-    assert "32 минуты" in reminded[by_clock.id].body
+    # Shown rounded up to 5 minutes, as on the schedule screen.
+    assert "25 минут" in reminded[by_lead_order.id].body
+    assert "35 минут" in reminded[by_clock.id].body
     assert all(n.type is NotificationType.SCHEDULE_SUBSCRIPTION for n in delivered)
 
     await _process(

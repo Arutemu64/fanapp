@@ -302,7 +302,9 @@ export function formatDayHeading(value: string | number | Date, now: number = Da
 }
 
 // Past this wait an estimate is rounded up to whole steps: a minute-exact figure
-// an hour out would promise a precision the planned durations don't have.
+// an hour out would promise a precision the planned durations don't have. The
+// subscription reminder rounds the same way (_rounded_wait_minutes), so a push
+// and the screen it opens name the same wait.
 const UNTIL_ROUNDING_FROM_SECONDS = 10 * SECONDS_IN_MINUTE;
 const UNTIL_ROUNDING_STEP_SECONDS = 5 * SECONDS_IN_MINUTE;
 
