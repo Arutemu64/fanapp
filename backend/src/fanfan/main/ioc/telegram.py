@@ -15,7 +15,7 @@ from fanfan.application.ports.notifier import TelegramNotifierPort
 TELEGRAM_TIMEOUT = httpx2.Timeout(30.0, connect=10.0)
 
 
-class BotProvider(Provider):
+class TelegramProvider(Provider):
     scope = Scope.APP
 
     @provide
