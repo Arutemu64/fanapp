@@ -841,6 +841,7 @@
 	"tcloud_roles_empty": "Пока все билеты из TicketsCloud дают роль зрителя.",
 	"tcloud_roles_event_label": "ID мероприятия {number}",
 	"tcloud_roles_event_placeholder": "ID мероприятия",
+	"tcloud_roles_limit": "Больше {max} мероприятий добавить нельзя",
 	"tcloud_roles_load_failed": "Не удалось загрузить роли TicketsCloud",
 	"tcloud_roles_remove": "Удалить мероприятие {number}",
 	"tcloud_roles_role_label": "Роль для мероприятия {number}",

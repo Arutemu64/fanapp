@@ -42,6 +42,10 @@
 		error: string;
 	}
 
+	// Mirror the backend bounds (SetTCloudEventRolesInput, TCloudEventRoleDTO).
+	const MAX_EVENTS = 100;
+	const EVENT_ID_MAX_LENGTH = 100;
+
 	let nextKey = 0;
 
 	function newRow(eventId: string, role: UserRole): Row {
@@ -59,6 +63,7 @@
 	let savedSnapshot = $state(untrack(() => snapshot(rows)));
 	let hasChanges = $derived(snapshot(rows) !== savedSnapshot);
 	let submitError = $state('');
+	let atLimit = $derived(rows.length >= MAX_EVENTS);
 
 	const saveMutation = createMutation(() => ({
 		...setTcloudEventRolesMutation(),
@@ -138,6 +143,7 @@
 					spellcheck={false}
 					placeholder={m.tcloud_roles_event_placeholder()}
 					class="font-mono"
+					maxlength={EVENT_ID_MAX_LENGTH}
 					bind:value={row.eventId}
 					disabled={saveMutation.isPending}
 					oninput={() => (row.error = '')}
@@ -178,12 +184,15 @@
 		type="button"
 		variant="outline"
 		class="w-full sm:w-auto sm:self-start"
-		disabled={saveMutation.isPending}
+		disabled={saveMutation.isPending || atLimit}
 		onclick={addRow}
 	>
 		<Plus data-icon="inline-start" />
 		{m.tcloud_roles_add()}
 	</Button>
+	{#if atLimit}
+		<p class="text-sm text-muted-foreground">{m.tcloud_roles_limit({ max: MAX_EVENTS })}</p>
+	{/if}
 
 	<FormError message={submitError} />
 

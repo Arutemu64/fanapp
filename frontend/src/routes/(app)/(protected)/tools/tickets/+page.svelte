@@ -1,14 +1,21 @@
 <script lang="ts">
 	import { createQuery } from '@tanstack/svelte-query';
 
+	import type { SyncSourceStatusDto } from '#lib/api/generated/index.js';
+	import type { ReadyView } from '#lib/utils/queryView.js';
+
 	import { getSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { hasPermission } from '#lib/utils/permissions.js';
+	import { queryView } from '#lib/utils/queryView.js';
 
 	import type { PageProps } from './$types';
 
+	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 	import SyncSourceCard from '../components/SyncSourceCard.svelte';
 	import ToolSection from '../components/ToolSection.svelte';
 	import GenerateTicketsForm from './components/GenerateTicketsForm.svelte';
@@ -26,8 +33,12 @@
 
 	// Kept live by sync_run_updated events (see the root layout).
 	const sourcesQuery = createQuery(() => ({ ...getSyncSourcesOptions(), enabled: canSync }));
-	let tcloudSource = $derived(
-		sourcesQuery.data?.find((source) => source.source === 'tcloud') ?? null
+	let sourcesView = $derived(
+		queryView(sourcesQuery, {
+			policy: 'cached',
+			reachable: reachability.current,
+			errorMessage: m.sync_load_failed()
+		})
 	);
 </script>
 
@@ -60,8 +71,18 @@
 		{/if}
 
 		<Tabs.Content value="tcloud" class="flex flex-col gap-4">
-			{#if canSync && tcloudSource}
-				<SyncSourceCard source={tcloudSource} />
+			{#if canSync}
+				<QueryState view={sourcesView}>
+					{#snippet loading()}
+						<SectionSpinner />
+					{/snippet}
+
+					{#snippet ready({ data: sources }: ReadyView<SyncSourceStatusDto[]>)}
+						{#each sources.filter((source) => source.source === 'tcloud') as source (source.source)}
+							<SyncSourceCard {source} />
+						{/each}
+					{/snippet}
+				</QueryState>
 			{/if}
 
 			{#if data.eventRoles}
