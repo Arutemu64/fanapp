@@ -69,14 +69,20 @@ describe('formatDuration', () => {
 	});
 });
 
-// The label is just the position distance ("how many acts away") — the schedule
-// carries no predicted clock time (ADR-0014). These cases pin the three-form
-// Russian pluralization of the distance.
 describe('formatUntil', () => {
-	it('pluralizes the position distance', () => {
-		expect(formatUntil(1)).toBe('Осталось 1 выступление');
-		expect(formatUntil(3)).toBe('Осталось 3 выступления');
-		expect(formatUntil(5)).toBe('Осталось 5 выступлений');
+	it('shows the estimate in whole minutes up close', () => {
+		expect(formatUntil(2, 61)).toBe('До начала примерно 2 минуты');
+		expect(formatUntil(3, 9 * 60)).toBe('До начала примерно 9 минут');
+	});
+
+	it('rounds a longer wait up to five minutes', () => {
+		expect(formatUntil(4, 11 * 60)).toBe('До начала примерно 15 минут');
+		expect(formatUntil(30, 83 * 60)).toBe('До начала примерно 1 час 25 минут');
+	});
+
+	it('falls back to the act count when no durations were filled in', () => {
+		expect(formatUntil(1, 0)).toBe('Осталось 1 выступление');
+		expect(formatUntil(5, 0)).toBe('Осталось 5 выступлений');
 	});
 });
 

@@ -55,7 +55,8 @@ def _seconds_ahead_by_position(
 
     The current act counts in full, as when it started is not known here; with
     the durations being upper limits too, the estimate runs early, which is the
-    side a reminder can afford to err on.
+    side a reminder can afford to err on. The schedule screen shows the same
+    sum (frontend secondsUntilActs; ADR-0043).
     """
     seconds_ahead: dict[int, int] = {}
     elapsed = 0

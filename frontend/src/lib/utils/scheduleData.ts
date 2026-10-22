@@ -55,6 +55,32 @@ export function scheduleEvents(
 }
 
 /**
+ * Estimated wait, in seconds, until each act after the one on stage: the planned
+ * durations of the acts before it, the current act counted in full since when it
+ * started is not known. Durations are self-reported upper limits, so the estimate
+ * runs long, and a missing one counts as zero; it is the same estimate the
+ * subscription reminder fires on (ADR-0043). Empty before the first act is
+ * marked current.
+ */
+export function secondsUntilActs(schedule: ScheduleEventWithSubscription[]): Map<string, number> {
+	const ahead = new Map<string, number>();
+	const running = schedule
+		.filter((event) => event.position !== null)
+		.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+	const currentIndex = running.findIndex((event) => event.is_current);
+	if (currentIndex === -1) return ahead;
+
+	let elapsed = 0;
+	for (const event of running.slice(currentIndex)) {
+		if (!event.is_current) {
+			ahead.set(event.id, elapsed);
+		}
+		elapsed += event.duration;
+	}
+	return ahead;
+}
+
+/**
  * Each event's block title, for search: an event belongs to the nearest block
  * start above it, and events above the first block start belong to none.
  */

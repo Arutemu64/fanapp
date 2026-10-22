@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ScheduleEntryDto, SubscriptionFullDto } from '#lib/api/generated/index.js';
+import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
-import { mergeSubscriptions } from './scheduleData';
+import { mergeSubscriptions, secondsUntilActs } from './scheduleData';
 
 const schedule = [
 	{
@@ -76,5 +77,47 @@ describe('mergeSubscriptions', () => {
 		});
 
 		expect(subscriptionOf(merged, 'a')).toEqual({ id: 'sub-a', lead_minutes: 10, queued: false });
+	});
+});
+
+describe('secondsUntilActs', () => {
+	function act(
+		id: string,
+		position: number | null,
+		duration: number,
+		isCurrent = false
+	): ScheduleEventWithSubscription {
+		return {
+			type: 'event',
+			id,
+			number: null,
+			title: id,
+			duration,
+			order: position ?? 0,
+			is_current: isCurrent,
+			is_skipped: position === null,
+			nomination_title: null,
+			position,
+			user_subscription: null
+		};
+	}
+
+	it('sums the planned durations from the act on stage, counted in full', () => {
+		const ahead = secondsUntilActs([
+			act('done', 1, 60),
+			act('now', 2, 120, true),
+			act('skipped', null, 999),
+			act('next', 3, 180),
+			act('later', 4, 60)
+		]);
+
+		expect([...ahead]).toEqual([
+			['next', 120],
+			['later', 300]
+		]);
+	});
+
+	it('estimates nothing before the first act is marked current', () => {
+		expect(secondsUntilActs([act('a', 1, 60), act('b', 2, 60)]).size).toBe(0);
 	});
 });

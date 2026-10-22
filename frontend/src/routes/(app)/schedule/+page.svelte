@@ -32,7 +32,8 @@
 	import {
 		blockTitleByEventId,
 		mergeSubscriptions,
-		scheduleEvents
+		scheduleEvents,
+		secondsUntilActs
 	} from '#lib/utils/scheduleData.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
@@ -71,6 +72,7 @@
 		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
 	);
 	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
+	let secondsAhead = $derived(secondsUntilActs(schedule));
 	let scheduleView = $derived(
 		queryView(scheduleQuery, {
 			policy: 'cached',
@@ -335,7 +337,13 @@
 							data-event-id={node.event.id}
 							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
 						>
-							<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
+							<EventCard
+								event={node.event}
+								{currentEvent}
+								{user}
+								secondsAhead={secondsAhead.get(node.event.id) ?? null}
+								variant="interlude"
+							/>
 						</div>
 					{:else}
 						{@render blockSection(node)}
@@ -430,7 +438,12 @@
 						<!-- The margin reaches every descendant too: keyboard focus scrolls the focused
 							control into view, not its row, and it must clear the sticky headers. -->
 						<div data-event-id={event.id} class="scroll-mt-28 **:scroll-mt-28">
-							<EventCard {event} {currentEvent} {user} />
+							<EventCard
+								{event}
+								{currentEvent}
+								{user}
+								secondsAhead={secondsAhead.get(event.id) ?? null}
+							/>
 						</div>
 					{/each}
 				</div>
