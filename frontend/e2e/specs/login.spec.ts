@@ -105,7 +105,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 			'GET /auth/captcha-challenge': json(
 				{
 					code: 'TOO_MANY_LOGIN_CODE_REQUESTS',
-					details: { retry_after: 42 }
+					retry_after: 42
 				},
 				429
 			)
@@ -170,7 +170,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 	}) => {
 		api.use({
 			'POST /auth/request-login-code': json(null),
-			'POST /auth/login-with-code': json({ code: 'INVALID_OTP_CODE', details: {} }, 400)
+			'POST /auth/login-with-code': json({ code: 'INVALID_OTP_CODE' }, 400)
 		});
 		const email = await openEmailStep(page);
 		await email.fill('ann@example.com');

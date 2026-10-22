@@ -2,25 +2,23 @@ import { error as kitError } from '@sveltejs/kit';
 import { CancelledError } from '@tanstack/svelte-query';
 
 import type {
-	ErrorMessage,
-	InvalidScheduleFileDetails,
-	InvalidScheduleFileReason
+	InvalidScheduleFileProblem,
+	InvalidScheduleFileReason,
+	ProblemDetails
 } from '#lib/api/generated/index.js';
 
 import { m } from '#lib/paraglide/messages.js';
 import { anySignal, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 // The closed set of error codes the API can return, generated from the backend
-// OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
+// OpenAPI spec (ProblemDetails.code enum). Drives both typo safety on the message
 // dictionary and the compile-time drift guard at the bottom of this file.
-type ApiErrorCode = ErrorMessage['code'];
+type ApiErrorCode = ProblemDetails['code'];
 
-type ApiErrorDetails = Record<string, unknown>;
-
-interface ApiErrorPayload {
-	code: string;
-	details?: ApiErrorDetails;
-}
+// An RFC 9457 problem details body as received: unverified, so every member but
+// `code` is unknown. Problem-specific members (`retry_after`, `reason`,
+// `errors`, …) sit beside the standard ones at the top level.
+type ApiProblem = Record<string, unknown> & { code: string };
 
 // The limits Pydantic reports for the broken rule (`max_length`, `ge`, …).
 type ValidationContext = Record<string, unknown>;
@@ -35,20 +33,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return Boolean(value) && typeof value === 'object';
 }
 
-function getApiErrorPayload(error: unknown): ApiErrorPayload | null {
+function getApiProblem(error: unknown): ApiProblem | null {
 	if (!isRecord(error) || typeof error.code !== 'string') {
 		return null;
 	}
 
-	const details = isRecord(error.details) ? error.details : {};
-	return {
-		code: error.code,
-		details
-	};
+	return { ...error, code: error.code };
 }
 
-function getValidationErrors(details: ApiErrorDetails): ApiValidationErrorDetail[] {
-	const rawErrors = details.errors;
+function getValidationErrors(problem: ApiProblem): ApiValidationErrorDetail[] {
+	const rawErrors = problem.errors;
 	if (!Array.isArray(rawErrors)) {
 		return [];
 	}
@@ -136,8 +130,8 @@ function capitalize(text: string): string {
 	return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function getValidationMessage(details: ApiErrorDetails): string {
-	const firstError = getValidationErrors(details)[0];
+function getValidationMessage(problem: ApiProblem): string {
+	const firstError = getValidationErrors(problem)[0];
 	if (!firstError) {
 		return m.validation_check_form();
 	}
@@ -162,7 +156,7 @@ function getValidationMessage(details: ApiErrorDetails): string {
  * error body without its HTTP status, so a "not found" is told apart by code.
  */
 export function getApiErrorCode(error: unknown): string | undefined {
-	return getApiErrorPayload(error)?.code;
+	return getApiProblem(error)?.code;
 }
 
 /**
@@ -172,14 +166,12 @@ export function getApiErrorCode(error: unknown): string | undefined {
  * getApiErrorDetail for the form as a whole.
  */
 export function getApiFieldError(error: unknown, field: string): string | null {
-	const payload = getApiErrorPayload(error);
-	if (payload?.code !== 'VALIDATION_ERROR') {
+	const problem = getApiProblem(error);
+	if (problem?.code !== 'VALIDATION_ERROR') {
 		return null;
 	}
 
-	const fieldError = getValidationErrors(payload.details ?? {}).find(
-		(item) => getFieldName(item.loc) === field
-	);
+	const fieldError = getValidationErrors(problem).find((item) => getFieldName(item.loc) === field);
 	if (!fieldError) {
 		return null;
 	}
@@ -206,7 +198,7 @@ function formatColumnList(value: unknown): string {
 	return value.filter((column): column is string => typeof column === 'string').join(', ');
 }
 
-type ScheduleFileMessage = (details: Partial<InvalidScheduleFileDetails>, at: string) => string;
+type ScheduleFileMessage = (problem: Partial<InvalidScheduleFileProblem>, at: string) => string;
 
 // The backend rejects a schedule spreadsheet with a `reason` plus whatever
 // locates the problem (column, spreadsheet row, duplicated number), so the copy
@@ -215,26 +207,26 @@ type ScheduleFileMessage = (details: Partial<InvalidScheduleFileDetails>, at: st
 // backend adds a compile error here until it has copy.
 const SCHEDULE_FILE_MESSAGES = {
 	UNREADABLE_FILE: () => m.import_error_unreadable(),
-	MISSING_COLUMNS: (details) =>
-		m.import_error_missing_columns({ columns: formatColumnList(details.columns) }),
+	MISSING_COLUMNS: (problem) =>
+		m.import_error_missing_columns({ columns: formatColumnList(problem.columns) }),
 	EMPTY_FILE: () => m.import_error_no_events(),
-	EMPTY_CELL: (_details, at) => m.import_error_cell_empty({ at }),
-	INVALID_NUMBER: (_details, at) => m.import_error_integer_required({ at }),
-	DURATION_NOT_POSITIVE: (_details, at) => m.import_error_duration_positive({ at }),
-	INVALID_TYPE: (_details, at) => m.import_error_block_hint({ at }),
-	BLOCK_ROW_WITH_EVENT_DATA: (_details, at) => m.import_error_block_cell({ at }),
-	DUPLICATE_NUMBER: (details) =>
+	EMPTY_CELL: (_problem, at) => m.import_error_cell_empty({ at }),
+	INVALID_NUMBER: (_problem, at) => m.import_error_integer_required({ at }),
+	DURATION_NOT_POSITIVE: (_problem, at) => m.import_error_duration_positive({ at }),
+	INVALID_TYPE: (_problem, at) => m.import_error_block_hint({ at }),
+	BLOCK_ROW_WITH_EVENT_DATA: (_problem, at) => m.import_error_block_cell({ at }),
+	DUPLICATE_NUMBER: (problem) =>
 		m.import_error_duplicate_number({
-			number: String(details.number),
-			row: String(details.row)
+			number: String(problem.number),
+			row: String(problem.row)
 		}),
 	FILE_TOO_LARGE: () => m.import_error_file_too_large(),
 	UNSUPPORTED_FILE_TYPE: () => m.import_error_xlsx_required()
 } satisfies Record<InvalidScheduleFileReason, ScheduleFileMessage>;
 
-function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
+function getInvalidScheduleFileMessage(problem: ApiProblem): string {
 	// Unverified wire data: every field may be missing, the reason may be unknown.
-	const fields = details as Partial<InvalidScheduleFileDetails>;
+	const fields = problem as Partial<InvalidScheduleFileProblem>;
 	const at = m.import_error_location({
 		row: String(fields.row),
 		column: String(fields.column)
@@ -425,7 +417,7 @@ export function gotNoApiAnswer(error: unknown): boolean {
  * a frontend bug worth reporting. A deliberate cancel or abort is not.
  */
 export function isUnexpectedRequestError(error: unknown): boolean {
-	if (gotNoApiAnswer(error) || getApiErrorPayload(error) || error instanceof CancelledError) {
+	if (gotNoApiAnswer(error) || getApiProblem(error) || error instanceof CancelledError) {
 		return false;
 	}
 	return !(error instanceof DOMException && error.name === 'AbortError');
@@ -441,27 +433,26 @@ export function getApiErrorDetail(error: unknown): string | null {
 		return m.error_connection_failed();
 	}
 
-	const payload = getApiErrorPayload(error);
-	if (!payload) {
+	const problem = getApiProblem(error);
+	if (!problem) {
 		return null;
 	}
 
-	// Dictionary covers most codes. Cast because payload.code is an unverified
+	// Dictionary covers most codes. Cast because problem.code is an unverified
 	// wire string, not a known ApiErrorCode.
-	const simple = (ERROR_MESSAGES as Record<string, (() => string) | undefined>)[payload.code];
+	const simple = (ERROR_MESSAGES as Record<string, (() => string) | undefined>)[problem.code];
 	if (simple) {
 		return simple();
 	}
 
-	const details = payload.details ?? {};
-	if ((RETRY_AFTER_CODES as readonly string[]).includes(payload.code)) {
-		return formatRetryAfter(details.retry_after);
+	if ((RETRY_AFTER_CODES as readonly string[]).includes(problem.code)) {
+		return formatRetryAfter(problem.retry_after);
 	}
-	if (payload.code === 'INVALID_SCHEDULE_FILE') {
-		return getInvalidScheduleFileMessage(details);
+	if (problem.code === 'INVALID_SCHEDULE_FILE') {
+		return getInvalidScheduleFileMessage(problem);
 	}
-	if (payload.code === 'VALIDATION_ERROR') {
-		return getValidationMessage(details);
+	if (problem.code === 'VALIDATION_ERROR') {
+		return getValidationMessage(problem);
 	}
 	return null;
 }
@@ -483,7 +474,7 @@ export function throwApiError(
 	const status = response && response.status >= 400 ? response.status : 500;
 
 	const message = getApiErrorDetail(apiError) ?? fallback;
-	const code = getApiErrorPayload(apiError)?.code;
+	const code = getApiProblem(apiError)?.code;
 	return kitError(status, message, code ? { code } : {});
 }
 

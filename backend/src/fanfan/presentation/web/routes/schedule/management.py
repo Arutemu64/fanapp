@@ -18,7 +18,7 @@ from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip imp
 )
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.schedule import (
     MoveScheduleEventRequest,
     UpdateScheduleEventRequest,
@@ -43,10 +43,10 @@ management_router = APIRouter(
     responses={
         204: {"description": "Event set as current successfully."},
         400: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Event is skipped or invalid for this operation.",
         },
-        404: {"model": ErrorMessage, "description": "Event ID not found."},
+        404: {"model": ProblemDetails, "description": "Event ID not found."},
     },
 )
 @inject
@@ -84,11 +84,11 @@ async def uncheck_current_event(
     responses={
         204: {"description": "Event moved successfully."},
         400: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Invalid move: target and destination are the same.",
         },
         404: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Event to move or target neighbor event was not found.",
         },
     },
@@ -116,10 +116,10 @@ async def move_schedule_event(
     responses={
         204: {"description": "Event updated successfully."},
         400: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Cannot skip the current active event.",
         },
-        404: {"model": ErrorMessage, "description": "Event ID not found."},
+        404: {"model": ProblemDetails, "description": "Event ID not found."},
     },
 )
 @inject

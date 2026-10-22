@@ -15,7 +15,7 @@ from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
     UpdateUserSettingsInput,
 )
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 
 profile_router = APIRouter()
 
@@ -42,7 +42,7 @@ async def get_current_user(
     description="Updates the currently authenticated user's profile information.",
     responses={
         204: {"description": "User updated successfully."},
-        409: {"model": ErrorMessage, "description": "Username already taken."},
+        409: {"model": ProblemDetails, "description": "Username already taken."},
     },
 )
 @inject

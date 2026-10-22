@@ -19,7 +19,7 @@ from fanfan.presentation.web.routes.auth.oauth import (
     build_authorization_url,
     build_profile_redirect,
 )
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +96,9 @@ async def start_account_link(
     description="Unlinks the Telegram account from the currently authenticated user.",
     responses={
         204: {"description": "Telegram account unlinked successfully."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        404: {"model": ProblemDetails, "description": "User not found."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Cannot remove the user's last remaining sign-in method.",
         },
     },
@@ -117,9 +117,9 @@ async def unlink_telegram_account(
     description="Unlinks the VK account from the currently authenticated user.",
     responses={
         204: {"description": "VK account unlinked successfully."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        404: {"model": ProblemDetails, "description": "User not found."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Cannot remove the user's last remaining sign-in method.",
         },
     },

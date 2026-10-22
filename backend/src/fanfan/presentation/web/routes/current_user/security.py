@@ -13,7 +13,7 @@ from fanfan.application.interactors.auth.change_password import (
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 
 security_router = APIRouter()
 
@@ -26,8 +26,8 @@ security_router = APIRouter()
     "Requires the current password for verification when one is already set.",
     responses={
         204: {"description": "Password changed successfully."},
-        404: {"model": ErrorMessage, "description": "User not found."},
-        400: {"model": ErrorMessage, "description": "Current password is incorrect."},
+        404: {"model": ProblemDetails, "description": "User not found."},
+        400: {"model": ProblemDetails, "description": "Current password is incorrect."},
     },
 )
 @inject
@@ -51,9 +51,9 @@ async def change_current_user_password(
     responses={
         **RATE_LIMIT_RESPONSES,
         204: {"description": "Confirmation code sent to the new email address."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        404: {"model": ProblemDetails, "description": "User not found."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Email already in use by another account.",
         },
     },

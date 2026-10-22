@@ -182,7 +182,6 @@ export type {
 	DrawVotingContestWinnerResponse,
 	DrawVotingContestWinnerResponses,
 	EmailPasswordLoginForm,
-	ErrorMessage,
 	FeedbackDto,
 	FeedbackUserDto,
 	FindQuestPlayersData,
@@ -286,8 +285,7 @@ export type {
 	ImportScheduleError,
 	ImportScheduleErrors,
 	ImportScheduleResponses,
-	InvalidScheduleFileDetails,
-	InvalidScheduleFileError,
+	InvalidScheduleFileProblem,
 	InvalidScheduleFileReason,
 	LeaderboardEntryDto,
 	LinkTicketData,
@@ -402,6 +400,7 @@ export type {
 	ParticipantFullDto,
 	ParticipantVoteDto,
 	Permission,
+	ProblemDetails,
 	ProcessTcloudOrderData,
 	ProcessTcloudOrderError,
 	ProcessTcloudOrderErrors,
@@ -571,6 +570,6 @@ export type {
 	UserSocialLinkDto,
 	UserTicketDto,
 	ValidationErrorDetail,
-	ValidationErrorResponse,
+	ValidationProblem,
 	VotingStatus
 } from './types.gen';

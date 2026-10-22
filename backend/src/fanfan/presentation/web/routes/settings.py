@@ -9,7 +9,7 @@ from fanfan.application.interactors.settings.update_settings import (
     UpdateSettings,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 settings_router = APIRouter(
@@ -27,7 +27,7 @@ settings_router = APIRouter(
     responses={
         200: {"description": "Festival settings retrieved successfully."},
         404: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Festival settings were not found.",
         },
     },
@@ -47,7 +47,7 @@ async def get_settings(
     responses={
         204: {"description": "Festival settings updated successfully."},
         404: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Festival settings were not found.",
         },
     },

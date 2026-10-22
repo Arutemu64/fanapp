@@ -19,7 +19,7 @@ from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscriptionInput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 push_router = APIRouter(
@@ -43,7 +43,7 @@ class PushSubscriptionStatus(BaseModel):
     responses={
         204: {"description": "Push subscription registered successfully."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Push subscription already exists.",
         },
     },

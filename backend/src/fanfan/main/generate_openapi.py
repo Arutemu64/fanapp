@@ -27,15 +27,17 @@ def build_openapi_schema(version: str = APP_VERSION) -> dict[str, Any]:
 
 
 def _stamp_error_code_enum(schema: dict[str, Any]) -> None:
-    """Expose the closed set of error codes on ErrorMessage.code as an enum.
+    """Expose the closed set of error codes on ProblemDetails.code as an enum.
 
     The model keeps `code: str` at runtime (so an unexpected code never breaks
     serialization); we add the enum to the generated spec only, so the frontend
     gets a typed union and can verify its error copy covers every code.
     """
-    error_message = schema.get("components", {}).get("schemas", {}).get("ErrorMessage")
+    error_message = (
+        schema.get("components", {}).get("schemas", {}).get("ProblemDetails")
+    )
     if error_message is None:
-        msg = "ErrorMessage schema missing from OpenAPI output"
+        msg = "ProblemDetails schema missing from OpenAPI output"
         raise RuntimeError(msg)
     error_message["properties"]["code"]["enum"] = sorted(client_facing_error_codes())
 

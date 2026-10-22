@@ -25,7 +25,7 @@ test('links a ticket scanned with the camera, then turns the camera off', async 
 		...loggedInAs(),
 		'POST /me/ticket': (route) => {
 			sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
-			return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+			return json({ code: 'TICKET_NOT_FOUND' }, 404);
 		}
 	});
 	await page.goto('/profile/ticket');

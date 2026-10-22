@@ -6,7 +6,7 @@ from fanfan.application.interactors.tickets.link_ticket import (
     LinkTicket,
     LinkTicketInput,
 )
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 
 tickets_router = APIRouter()
 
@@ -18,9 +18,9 @@ tickets_router = APIRouter()
     description="Links provided ticket to current user.",
     responses={
         204: {"description": "Ticket linked successfully."},
-        404: {"model": ErrorMessage, "description": "Ticket not found."},
+        404: {"model": ProblemDetails, "description": "Ticket not found."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": (
                 "User already has a ticket linked or ticket is already used."
             ),

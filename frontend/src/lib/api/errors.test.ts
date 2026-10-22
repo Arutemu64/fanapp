@@ -17,12 +17,12 @@ const CONNECTION_FAILED = 'Не удалось связаться с серве�
 function validationError(
 	errors: Array<{ loc: Array<string | number>; type: string; ctx?: Record<string, unknown> }>
 ) {
-	return { code: 'VALIDATION_ERROR', details: { errors } };
+	return { code: 'VALIDATION_ERROR', errors };
 }
 
 describe('getApiErrorDetail', () => {
 	it('maps a known code to its copy', () => {
-		expect(getApiErrorDetail({ code: 'TICKET_NOT_FOUND', details: {} })).toBe('Билет не найден');
+		expect(getApiErrorDetail({ code: 'TICKET_NOT_FOUND' })).toBe('Билет не найден');
 	});
 
 	it('treats a rejected fetch as a connection failure', async () => {
@@ -52,14 +52,16 @@ describe('getApiErrorDetail', () => {
 	it('points a schedule-file error at the cell to fix', () => {
 		const error = {
 			code: 'INVALID_SCHEDULE_FILE',
-			details: { reason: 'EMPTY_CELL', column: 'C', row: 4 }
+			reason: 'EMPTY_CELL',
+			column: 'C',
+			row: 4
 		};
 		expect(getApiErrorDetail(error)).toContain('4');
 	});
 
 	it('falls back to the generic schedule-file copy for an unknown reason', () => {
-		const unknown = { code: 'INVALID_SCHEDULE_FILE', details: { reason: 'NEW_REASON' } };
-		const unreadable = { code: 'INVALID_SCHEDULE_FILE', details: { reason: 'UNREADABLE_FILE' } };
+		const unknown = { code: 'INVALID_SCHEDULE_FILE', reason: 'NEW_REASON' };
+		const unreadable = { code: 'INVALID_SCHEDULE_FILE', reason: 'UNREADABLE_FILE' };
 		expect(getApiErrorDetail(unknown)).toBe(getApiErrorDetail(unreadable));
 	});
 });
@@ -93,7 +95,7 @@ describe('getApiFieldError', () => {
 	});
 
 	it('ignores error codes other than VALIDATION_ERROR', () => {
-		expect(getApiFieldError({ code: 'INVALID_EMAIL', details: {} }, 'email')).toBeNull();
+		expect(getApiFieldError({ code: 'INVALID_EMAIL' }, 'email')).toBeNull();
 	});
 });
 
@@ -105,7 +107,7 @@ describe('gotNoApiAnswer', () => {
 	});
 
 	it('is false for an API error body and for a bug in our own code', () => {
-		expect(gotNoApiAnswer({ code: 'INTERNAL_ERROR', details: {} })).toBe(false);
+		expect(gotNoApiAnswer({ code: 'INTERNAL_ERROR' })).toBe(false);
 		expect(gotNoApiAnswer(new SyntaxError('Unexpected token'))).toBe(false);
 	});
 });
@@ -119,7 +121,7 @@ describe('isUnexpectedRequestError', () => {
 	});
 
 	it('leaves out API errors, missing answers and cancellations', async () => {
-		expect(isUnexpectedRequestError({ code: 'TICKET_NOT_FOUND', details: {} })).toBe(false);
+		expect(isUnexpectedRequestError({ code: 'TICKET_NOT_FOUND' })).toBe(false);
 		expect(isUnexpectedRequestError(await droppedConnectionError())).toBe(false);
 		expect(isUnexpectedRequestError('<html>502 Bad Gateway</html>')).toBe(false);
 		expect(isUnexpectedRequestError(new DOMException('aborted', 'AbortError'))).toBe(false);

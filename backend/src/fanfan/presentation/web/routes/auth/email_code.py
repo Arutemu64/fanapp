@@ -7,7 +7,7 @@ from fanfan.application.interactors.auth.confirm_email_code import (
     ConfirmEmailCodeInput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 email_code_router = APIRouter()
@@ -24,8 +24,8 @@ email_code_router = APIRouter()
     responses={
         **AUTH_RESPONSES,
         204: {"description": "Email successfully confirmed."},
-        400: {"model": ErrorMessage, "description": "Code is invalid or expired."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        400: {"model": ProblemDetails, "description": "Code is invalid or expired."},
+        404: {"model": ProblemDetails, "description": "User not found."},
     },
 )
 @inject

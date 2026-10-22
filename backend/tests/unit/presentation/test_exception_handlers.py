@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 from typing import Annotated
 
 import pytest
@@ -75,7 +76,12 @@ def test_unexpected_error_keeps_the_middleware_headers(client: TestClient) -> No
     response = client.get("/boom")
 
     assert response.status_code == 500
-    assert response.json() == {"code": "INTERNAL_ERROR", "details": {}}
+    assert response.json() == {
+        "type": "/problems/internal-error",
+        "title": "Internal Server Error",
+        "status": 500,
+        "code": "INTERNAL_ERROR",
+    }
     assert response.headers["X-Request-ID"]
     assert response.headers["Cache-Control"] == "no-store"
 
@@ -98,7 +104,12 @@ def test_unmarked_domain_exception_does_not_leak(
         response = client.get("/unmarked")
 
     assert response.status_code == 500
-    assert response.json() == {"code": "INTERNAL_ERROR", "details": {}}
+    assert response.json() == {
+        "type": "/problems/internal-error",
+        "title": "Internal Server Error",
+        "status": 500,
+        "code": "INTERNAL_ERROR",
+    }
     assert any(r.levelno == logging.ERROR for r in caplog.records)
 
 
@@ -114,9 +125,12 @@ def test_router_errors_use_the_error_shape(
     response = client.request(method, path)
 
     assert response.status_code == status_code
+    assert response.headers["Content-Type"] == "application/problem+json"
     assert response.json() == {
+        "type": "/problems/http-error",
+        "title": HTTPStatus(status_code).phrase,
+        "status": status_code,
         "code": "HTTP_ERROR",
-        "details": {"status_code": status_code},
     }
 
 
@@ -148,7 +162,7 @@ def test_validation_error_carries_the_broken_limit_but_not_the_input(
 ) -> None:
     response = client.post("/limited", json={"name": "toolong", "code": "secret"})
 
-    errors = response.json()["details"]["errors"]
+    errors = response.json()["errors"]
     by_field = {error["loc"][-1]: error for error in errors}
     assert by_field["name"]["ctx"] == {"max_length": 3}
     # A custom validator's ctx holds the exception object, which stays out.

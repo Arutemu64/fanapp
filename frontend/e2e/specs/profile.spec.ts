@@ -101,7 +101,7 @@ test.describe('profile settings on a phone', () => {
 			...loggedInAs(),
 			'POST /me/ticket': (route) => {
 				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
-				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+				return json({ code: 'TICKET_NOT_FOUND' }, 404);
 			}
 		});
 		await page.goto('/profile/ticket');
@@ -122,7 +122,7 @@ test.describe('profile settings on a phone', () => {
 			...loggedInAs(),
 			'POST /me/ticket': (route) => {
 				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
-				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+				return json({ code: 'TICKET_NOT_FOUND' }, 404);
 			}
 		});
 		await page.goto('/profile/ticket');
@@ -151,7 +151,7 @@ test.describe('profile settings on a phone', () => {
 			...loggedInAs(),
 			'POST /me/ticket': () => {
 				linkAttempts += 1;
-				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+				return json({ code: 'TICKET_NOT_FOUND' }, 404);
 			}
 		});
 		// Hold the decoder download, so the first read is still waiting on it when the

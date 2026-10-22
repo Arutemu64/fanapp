@@ -10,19 +10,20 @@ scopes (lifespan) untouched.
 
 import re
 import uuid
+from http import HTTPStatus
 
 import structlog
 from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.exceptions import (
     HTTP_ERROR_CODE,
     internal_error_response,
+    problem_response,
 )
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
-from fanfan.presentation.web.schemas.error import ErrorMessage
 
 # Standard header used by proxies/clients to carry a request id; we reuse it
 # when present so logs can be correlated across services, and generate one
@@ -211,11 +212,8 @@ class LimitRequestBodySizeMiddleware:
             except ValueError:
                 declared_size = None
             if declared_size is not None and declared_size > _MAX_REQUEST_BODY_BYTES:
-                response = JSONResponse(
-                    status_code=413,
-                    content=ErrorMessage(
-                        code=HTTP_ERROR_CODE, details={"status_code": 413}
-                    ).model_dump(),
+                response = problem_response(
+                    HTTPStatus.REQUEST_ENTITY_TOO_LARGE, HTTP_ERROR_CODE
                 )
                 await response(scope, receive, send)
                 return

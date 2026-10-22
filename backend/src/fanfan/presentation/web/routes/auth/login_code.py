@@ -20,7 +20,7 @@ from fanfan.application.interactors.auth.request_login_code import (
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.utils import get_client_ip
 
 
@@ -69,9 +69,9 @@ async def get_captcha_challenge(
     responses={
         **RATE_LIMIT_RESPONSES,
         200: {"description": "The login code was sent to the email address."},
-        403: {"model": ErrorMessage, "description": "Captcha verification failed."},
+        403: {"model": ProblemDetails, "description": "Captcha verification failed."},
         502: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "The email could not be delivered — the mail service "
             "was unreachable or refused the message.",
         },
@@ -100,10 +100,10 @@ async def request_login_code(
     responses={
         204: {"description": "Successfully authenticated. Session cookie is set."},
         400: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Email code is invalid or has already been used.",
         },
-        404: {"model": ErrorMessage, "description": "User not found."},
+        404: {"model": ProblemDetails, "description": "User not found."},
     },
 )
 @inject

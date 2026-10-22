@@ -261,7 +261,7 @@ test.describe('quest', { tag: '@critical' }, () => {
 			'POST /quest/awards': json(
 				{
 					code: 'VALIDATION_ERROR',
-					details: { errors: [{ loc: ['body', 'message'], type: 'string_too_long' }] }
+					errors: [{ loc: ['body', 'message'], type: 'string_too_long' }]
 				},
 				422
 			)

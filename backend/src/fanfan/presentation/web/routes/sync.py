@@ -10,7 +10,7 @@ from fanfan.application.interactors.sync.request_sync import (
 )
 from fanfan.core.vo.sync import SyncSource
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 sync_router = APIRouter(
@@ -62,7 +62,7 @@ async def get_sync_sources(
             },
         },
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "A sync for this source is already running.",
         },
     },
