@@ -25,7 +25,7 @@ describe('toolsFor', () => {
 	});
 
 	it('lists only the tools whose permission is held', () => {
-		expect(keys(userWith(['sync:run', 'feedback:read']))).toEqual(['sync', 'feedback']);
+		expect(keys(userWith(['sync:run', 'feedback:read']))).toEqual(['tickets', 'sync', 'feedback']);
 	});
 
 	it('lists every tool for the wildcard holder, in dashboard order', () => {
@@ -34,7 +34,7 @@ describe('toolsFor', () => {
 			'voting',
 			'import-schedule',
 			'broadcast',
-			'generate-tickets',
+			'tickets',
 			'sync',
 			'feedback',
 			'users',

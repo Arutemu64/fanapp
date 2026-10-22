@@ -2,8 +2,6 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Protocol
 
-from fanfan.core.vo.user import UserRole
-
 
 @dataclass(slots=True, frozen=True)
 class ExternalTicket:
@@ -12,7 +10,10 @@ class ExternalTicket:
     order_id: str
     external_id: str
     barcode: str
-    role: UserRole
+    # The vendor event the ticket was sold for. The role it grants is the
+    # organizer's call (AppSettings.tickets), so it is resolved on import rather
+    # than here.
+    event_id: str
 
 
 @dataclass(slots=True, frozen=True)
@@ -24,8 +25,8 @@ class RevokedExternalTicket:
 class TicketsSource(Protocol):
     """Read port into the external ticketing platform (TicketsCloud).
 
-    Yields only valid, purchasable tickets already resolved to a domain role;
-    vendor order/status concepts never cross this boundary.
+    Yields only valid, purchasable tickets; vendor order/status concepts never
+    cross this boundary.
     """
 
     def fetch_all_tickets(self) -> AsyncIterator[ExternalTicket]: ...

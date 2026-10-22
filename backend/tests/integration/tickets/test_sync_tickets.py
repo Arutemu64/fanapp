@@ -5,6 +5,7 @@ from fanfan.application.interactors.tickets.sync_tickets import (
     COMMIT_BATCH_SIZE,
     SyncTickets,
 )
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.sources.tickets import (
     ExternalTicket,
@@ -21,30 +22,49 @@ pytestmark = [
     pytest.mark.integration,
 ]
 
+EVENT_VISITOR = "event-visitor"
+EVENT_PARTICIPANT = "event-participant"
+EVENT_UNMAPPED = "event-unmapped"
+
 
 def _external(
     external_id: str,
     barcode: str,
-    role: UserRole = UserRole.VISITOR,
+    event_id: str = EVENT_VISITOR,
     order_id: str = "order-1",
 ) -> ExternalTicket:
     return ExternalTicket(
-        order_id=order_id, external_id=external_id, barcode=barcode, role=role
+        order_id=order_id, external_id=external_id, barcode=barcode, event_id=event_id
     )
 
 
 async def test_sync_tickets_imports_new_tickets(
     dishka_request: AsyncContainer,
+    uow: UnitOfWork,
 ) -> None:
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+
+    settings = await settings_gateway.get_for_update()
+    settings.set_tcloud_event_roles(
+        {EVENT_VISITOR: UserRole.VISITOR, EVENT_PARTICIPANT: UserRole.PARTICIPANT}
+    )
+    await settings_gateway.save(settings)
+    await uow.commit()
 
     source.tickets = [
-        _external("ext-1", "barcode-1", UserRole.VISITOR),
-        _external("ext-2", "barcode-2", UserRole.PARTICIPANT),
-        _external("ext-3", "barcode-3", UserRole.VISITOR),
+        _external("ext-1", "barcode-1", EVENT_VISITOR),
+        _external("ext-2", "barcode-2", EVENT_PARTICIPANT),
+        # An event the organizers never mapped sells visitor tickets.
+        _external("ext-3", "barcode-3", EVENT_UNMAPPED),
     ]
+    expected_roles = {
+        "barcode-1": UserRole.VISITOR,
+        "barcode-2": UserRole.PARTICIPANT,
+        "barcode-3": UserRole.VISITOR,
+    }
 
     result = await interactor()
 
@@ -55,7 +75,7 @@ async def test_sync_tickets_imports_new_tickets(
         saved = await ticket_gateway.get_by_barcode(external.barcode)
         assert saved is not None
         assert saved.barcode == external.barcode
-        assert saved.role == external.role
+        assert saved.role == expected_roles[external.barcode]
         # Synced tickets are unissued and unlinked until a user claims them.
         assert saved.used_by_user_id is None
         assert saved.issued_by_user_id is None
@@ -86,8 +106,8 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
     # ticket. Import keys off the sale, so ext-1 must be left untouched
     # and only ext-2 counts as new.
     source.tickets = [
-        _external("ext-1", "changed-barcode", UserRole.VISITOR),
-        _external("ext-2", "barcode-2", UserRole.VISITOR),
+        _external("ext-1", "changed-barcode"),
+        _external("ext-2", "barcode-2"),
     ]
 
     result = await interactor()

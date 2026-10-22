@@ -326,6 +326,7 @@ export type ErrorMessage = {
 		| 'INVALID_OTP_CODE'
 		| 'INVALID_PAGE_CURSOR'
 		| 'INVALID_SCHEDULE_FILE'
+		| 'INVALID_TCLOUD_EVENT_ID'
 		| 'INVALID_TELEGRAM_AUTH_PAYLOAD'
 		| 'INVALID_VOTING_TIME_RANGE'
 		| 'LINK_INITIATOR_MISMATCH'
@@ -660,6 +661,24 @@ export type ListScheduleChangesOutput = {
 	 * Schedule Changes
 	 */
 	schedule_changes: Array<ScheduleChangeFullDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
+};
+
+/**
+ * ListTicketsOutput
+ */
+export type ListTicketsOutput = {
+	/**
+	 * Tickets
+	 */
+	tickets: Array<TicketListItemDto>;
+	/**
+	 * Total
+	 */
+	total: number;
 	/**
 	 * Next Cursor
 	 */
@@ -1360,6 +1379,16 @@ export type SendBroadcastOutput = {
 };
 
 /**
+ * SetTCloudEventRolesInput
+ */
+export type SetTCloudEventRolesInput = {
+	/**
+	 * Event Roles
+	 */
+	event_roles: Array<TCloudEventRoleDto>;
+};
+
+/**
  * SetVotingTimeRangeInput
  */
 export type SetVotingTimeRangeInput = {
@@ -1519,6 +1548,31 @@ export type SyncSourceStatusDto = {
 };
 
 /**
+ * TCloudEventRoleDTO
+ */
+export type TCloudEventRoleDto = {
+	/**
+	 * Event Id
+	 */
+	event_id: string;
+	role: UserRole;
+};
+
+/**
+ * TCloudEventRolesOutput
+ */
+export type TCloudEventRolesOutput = {
+	/**
+	 * Available
+	 */
+	available: boolean;
+	/**
+	 * Event Roles
+	 */
+	event_roles: Array<TCloudEventRoleDto>;
+};
+
+/**
  * TCloudWebhookOrderRef
  */
 export type TCloudWebhookOrderRef = {
@@ -1543,6 +1597,41 @@ export type TCloudWebhookResponse = {
 	 * New Tickets Count
 	 */
 	new_tickets_count: number;
+};
+
+/**
+ * TicketListItemDTO
+ */
+export type TicketListItemDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Barcode
+	 */
+	barcode: string;
+	role: UserRole;
+	/**
+	 * Used By User Id
+	 */
+	used_by_user_id: string | null;
+	/**
+	 * Used By Username
+	 */
+	used_by_username: string | null;
+	/**
+	 * From Ticketscloud
+	 */
+	from_ticketscloud: boolean;
+	/**
+	 * Revoked At
+	 */
+	revoked_at: string | null;
+	/**
+	 * Created At
+	 */
+	created_at: string;
 };
 
 /**
@@ -3945,6 +4034,54 @@ export type SubmitFeedbackResponses = {
 
 export type SubmitFeedbackResponse = SubmitFeedbackResponses[keyof SubmitFeedbackResponses];
 
+export type ListTicketsData = {
+	body?: never;
+	path?: never;
+	query?: {
+		/**
+		 * Limit
+		 */
+		limit?: number;
+		/**
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
+		 */
+		cursor?: string | null;
+		/**
+		 * Search
+		 */
+		search?: string | null;
+	};
+	url: '/tickets';
+};
+
+export type ListTicketsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type ListTicketsError = ListTicketsErrors[keyof ListTicketsErrors];
+
+export type ListTicketsResponses = {
+	/**
+	 * Tickets retrieved successfully.
+	 */
+	200: ListTicketsOutput;
+};
+
+export type ListTicketsResponse = ListTicketsResponses[keyof ListTicketsResponses];
+
 export type GenerateTicketsData = {
 	body: GenerateTicketsInput;
 	path?: never;
@@ -3981,6 +4118,74 @@ export type GenerateTicketsResponses = {
 };
 
 export type GenerateTicketsResponse = GenerateTicketsResponses[keyof GenerateTicketsResponses];
+
+export type GetTcloudEventRolesData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/tickets/tcloud-event-roles';
+};
+
+export type GetTcloudEventRolesErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type GetTcloudEventRolesError = GetTcloudEventRolesErrors[keyof GetTcloudEventRolesErrors];
+
+export type GetTcloudEventRolesResponses = {
+	/**
+	 * Event roles retrieved successfully.
+	 */
+	200: TCloudEventRolesOutput;
+};
+
+export type GetTcloudEventRolesResponse =
+	GetTcloudEventRolesResponses[keyof GetTcloudEventRolesResponses];
+
+export type SetTcloudEventRolesData = {
+	body: SetTCloudEventRolesInput;
+	path?: never;
+	query?: never;
+	url: '/tickets/tcloud-event-roles';
+};
+
+export type SetTcloudEventRolesErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ErrorMessage;
+	/**
+	 * Access denied.
+	 */
+	403: ErrorMessage;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationErrorResponse;
+};
+
+export type SetTcloudEventRolesError = SetTcloudEventRolesErrors[keyof SetTcloudEventRolesErrors];
+
+export type SetTcloudEventRolesResponses = {
+	/**
+	 * Event roles saved.
+	 */
+	204: void;
+};
+
+export type SetTcloudEventRolesResponse =
+	SetTcloudEventRolesResponses[keyof SetTcloudEventRolesResponses];
 
 export type GetSyncSourcesData = {
 	body?: never;

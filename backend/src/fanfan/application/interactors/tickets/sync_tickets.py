@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.sources.tickets import (
     RevokedExternalTicket,
     TicketsSource,
@@ -25,14 +26,20 @@ class SyncTickets:
     def __init__(
         self,
         source: TicketsSource,
+        app_settings_gateway: AppSettingsGateway,
         ticket_import_service: TicketImportService,
         uow: UnitOfWork,
     ) -> None:
         self.source = source
+        self.app_settings_gateway = app_settings_gateway
         self.ticket_import_service = ticket_import_service
         self.uow = uow
 
     async def __call__(self) -> SyncTicketsOutput:
+        # Read once: the sweep commits in batches, and every batch should grant
+        # roles from the same mapping.
+        tickets_config = (await self.app_settings_gateway.get()).tickets
+
         # Refunds are read before any ticket is committed, so a sale refunded
         # before its first import is stored already revoked and never sits
         # linkable between the import and revocation passes.
@@ -47,7 +54,9 @@ class SyncTickets:
             )
             is_refunded = sale in refunded
             imported = await self.ticket_import_service.import_ticket(
-                external, refunded=is_refunded
+                external,
+                role=tickets_config.role_for_tcloud_event(external.event_id),
+                refunded=is_refunded,
             )
             if imported and is_refunded:
                 revoked_tickets_count += 1

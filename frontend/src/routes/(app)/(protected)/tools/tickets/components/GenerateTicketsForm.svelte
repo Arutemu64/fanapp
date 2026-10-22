@@ -1,13 +1,15 @@
 <script lang="ts">
 	import ClipboardCopy from '@lucide/svelte/icons/clipboard-copy';
-	import { createMutation } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { UserRole } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { generateTicketsMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import {
+		generateTicketsMutation,
+		listTicketsQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import FormError from '#lib/components/FormError.svelte';
-	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -21,6 +23,7 @@
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
 	const MIN_AMOUNT = 1;
 	const MAX_AMOUNT = 100;
@@ -30,7 +33,10 @@
 	// A `type="number"` binding yields a number, or an empty value when the field is
 	// cleared — never a string. Validated as an integer in range on submit.
 	let amountInput = $state<number | undefined>(10);
-	const generateMutation = createMutation(() => generateTicketsMutation());
+	const generateMutation = createMutation(() => ({
+		...generateTicketsMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: listTicketsQueryKey() })
+	}));
 
 	let amountError = $state('');
 	let submitError = $state('');
@@ -107,12 +113,8 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{m.document_title({ title: m.tool_generate_tickets() })}</title>
-</svelte:head>
-
-<div class="mx-auto w-full max-w-2xl">
-	<SectionIntro description={m.tickets_description()} />
+<div class="flex flex-col">
+	<p class="mb-4 text-sm text-muted-foreground">{m.tickets_description()}</p>
 
 	<form class="flex flex-col gap-6" onsubmit={offlineGate.guard(handleSubmit)}>
 		<Field.FieldGroup class="gap-6">

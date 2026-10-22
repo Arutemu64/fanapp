@@ -248,6 +248,7 @@ const ERROR_MESSAGES = {
 	INVALID_EMAIL: m.error_invalid_email,
 	INVALID_FESTIVAL_TIME_RANGE: m.error_invalid_festival_time_range,
 	INVALID_OTP_CODE: m.error_invalid_otp_code,
+	INVALID_TCLOUD_EVENT_ID: m.error_invalid_tcloud_event_id,
 	INVALID_TELEGRAM_AUTH_PAYLOAD: m.error_invalid_telegram_auth_payload,
 	INVALID_VOTING_TIME_RANGE: m.error_invalid_voting_time_range,
 	LINK_INITIATOR_MISMATCH: m.error_link_initiator_mismatch,

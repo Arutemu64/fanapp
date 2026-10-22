@@ -3800,6 +3800,113 @@
         }
       }
     },
+    "/tickets": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "List tickets",
+        "description": "Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.",
+        "operationId": "list_tickets",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque `next_cursor` from the previous page; omit it for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tickets retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTicketsOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tickets/generate": {
       "post": {
         "tags": [
@@ -3861,6 +3968,121 @@
           },
           "409": {
             "description": "A generated barcode collided; retry the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/tickets/tcloud-event-roles": {
+      "get": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Get TicketsCloud event roles",
+        "description": "Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:generate'.",
+        "operationId": "get_tcloud_event_roles",
+        "responses": {
+          "200": {
+            "description": "Event roles retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TCloudEventRolesOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Replace TicketsCloud event roles",
+        "description": "Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:generate'.",
+        "operationId": "set_tcloud_event_roles",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTCloudEventRolesInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Event roles saved."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5681,6 +5903,7 @@
               "INVALID_OTP_CODE",
               "INVALID_PAGE_CURSOR",
               "INVALID_SCHEDULE_FILE",
+              "INVALID_TCLOUD_EVENT_ID",
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
               "INVALID_VOTING_TIME_RANGE",
               "LINK_INITIATOR_MISMATCH",
@@ -6260,6 +6483,39 @@
           "next_cursor"
         ],
         "title": "ListScheduleChangesOutput"
+      },
+      "ListTicketsOutput": {
+        "properties": {
+          "tickets": {
+            "items": {
+              "$ref": "#/components/schemas/TicketListItemDTO"
+            },
+            "type": "array",
+            "title": "Tickets"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tickets",
+          "total",
+          "next_cursor"
+        ],
+        "title": "ListTicketsOutput"
       },
       "ListUserNotificationOutput": {
         "properties": {
@@ -7393,6 +7649,23 @@
         ],
         "title": "SendBroadcastOutput"
       },
+      "SetTCloudEventRolesInput": {
+        "properties": {
+          "event_roles": {
+            "items": {
+              "$ref": "#/components/schemas/TCloudEventRoleDTO"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Event Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_roles"
+        ],
+        "title": "SetTCloudEventRolesInput"
+      },
       "SetVotingTimeRangeInput": {
         "properties": {
           "voting_start": {
@@ -7662,6 +7935,45 @@
         ],
         "title": "SyncSourceStatusDTO"
       },
+      "TCloudEventRoleDTO": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Event Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id",
+          "role"
+        ],
+        "title": "TCloudEventRoleDTO"
+      },
+      "TCloudEventRolesOutput": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "event_roles": {
+            "items": {
+              "$ref": "#/components/schemas/TCloudEventRoleDTO"
+            },
+            "type": "array",
+            "title": "Event Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available",
+          "event_roles"
+        ],
+        "title": "TCloudEventRolesOutput"
+      },
       "TCloudWebhookOrderRef": {
         "properties": {
           "id": {
@@ -7699,6 +8011,78 @@
           "new_tickets_count"
         ],
         "title": "TCloudWebhookResponse"
+      },
+      "TicketListItemDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "used_by_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Used By User Id"
+          },
+          "used_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Used By Username"
+          },
+          "from_ticketscloud": {
+            "type": "boolean",
+            "title": "From Ticketscloud"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "barcode",
+          "role",
+          "used_by_user_id",
+          "used_by_username",
+          "from_ticketscloud",
+          "revoked_at",
+          "created_at"
+        ],
+        "title": "TicketListItemDTO"
       },
       "UnreadNotificationsCountOutput": {
         "properties": {

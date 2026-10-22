@@ -34,6 +34,7 @@ import {
 	getSettings,
 	getSubscriptions,
 	getSyncSources,
+	getTcloudEventRoles,
 	getUser,
 	getVotingDashboard,
 	getVotingNomination,
@@ -48,6 +49,7 @@ import {
 	listQuestAwards,
 	listQuestHistory,
 	listScheduleChanges,
+	listTickets,
 	listUserNotifications,
 	listUsers,
 	listVotingNominations,
@@ -67,6 +69,7 @@ import {
 	sendBroadcast,
 	sendTestNotification,
 	setEventAsCurrent,
+	setTcloudEventRoles,
 	setUserRole,
 	setVotingTimeRange,
 	startAccountLink,
@@ -161,6 +164,9 @@ import type {
 	GetSyncSourcesData,
 	GetSyncSourcesError,
 	GetSyncSourcesResponse,
+	GetTcloudEventRolesData,
+	GetTcloudEventRolesError,
+	GetTcloudEventRolesResponse,
 	GetUserData,
 	GetUserError,
 	GetUserResponse,
@@ -202,6 +208,9 @@ import type {
 	ListScheduleChangesData,
 	ListScheduleChangesError,
 	ListScheduleChangesResponse,
+	ListTicketsData,
+	ListTicketsError,
+	ListTicketsResponse,
 	ListUserNotificationsData,
 	ListUserNotificationsError,
 	ListUserNotificationsResponse,
@@ -254,6 +263,9 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentError,
 	SetEventAsCurrentResponse,
+	SetTcloudEventRolesData,
+	SetTcloudEventRolesError,
+	SetTcloudEventRolesResponse,
 	SetUserRoleData,
 	SetUserRoleError,
 	SetUserRoleResponse,
@@ -2096,6 +2108,82 @@ export const submitFeedbackMutation = (
 	return mutationOptions;
 };
 
+export const listTicketsQueryKey = (options?: Options<ListTicketsData>) =>
+	createQueryKey('listTickets', options);
+
+/**
+ * List tickets
+ *
+ * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.
+ */
+export const listTicketsOptions = (options?: Options<ListTicketsData>) =>
+	queryOptions<
+		ListTicketsResponse,
+		ListTicketsError,
+		ListTicketsResponse,
+		ReturnType<typeof listTicketsQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await listTickets({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: listTicketsQueryKey(options)
+	});
+
+export const listTicketsInfiniteQueryKey = (
+	options?: Options<ListTicketsData>
+): QueryKey<Options<ListTicketsData>> => createQueryKey('listTickets', options, true);
+
+/**
+ * List tickets
+ *
+ * Newest-first list of every ticket, generated or imported from TicketsCloud, with the user who linked it. Search matches a case-insensitive substring of the ticket number. Requires 'tickets:generate'.
+ */
+export const listTicketsInfiniteOptions = (options?: Options<ListTicketsData>) => {
+	const opts = infiniteQueryOptions<
+		ListTicketsResponse,
+		ListTicketsError,
+		InfiniteData<ListTicketsResponse>,
+		QueryKey<Options<ListTicketsData>>,
+		| string
+		| null
+		| Pick<QueryKey<Options<ListTicketsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+	>(
+		// @ts-ignore
+		{
+			queryFn: async ({ pageParam, queryKey, signal }) => {
+				// @ts-ignore
+				const page: Pick<
+					QueryKey<Options<ListTicketsData>>[0],
+					'body' | 'headers' | 'path' | 'query'
+				> =
+					typeof pageParam === 'object'
+						? pageParam
+						: {
+								query: {
+									cursor: pageParam
+								}
+							};
+				const params = createInfiniteParams(queryKey, page);
+				const { data } = await listTickets({
+					...options,
+					...params,
+					signal,
+					throwOnError: true
+				});
+				return data;
+			},
+			queryKey: listTicketsInfiniteQueryKey(options)
+		}
+	);
+	return opts as Omit<typeof opts, 'initialData'>;
+};
+
 /**
  * Generate tickets
  *
@@ -2111,6 +2199,62 @@ export const generateTicketsMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await generateTickets({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+export const getTcloudEventRolesQueryKey = (options?: Options<GetTcloudEventRolesData>) =>
+	createQueryKey('getTcloudEventRoles', options);
+
+/**
+ * Get TicketsCloud event roles
+ *
+ * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:generate'.
+ */
+export const getTcloudEventRolesOptions = (options?: Options<GetTcloudEventRolesData>) =>
+	queryOptions<
+		GetTcloudEventRolesResponse,
+		GetTcloudEventRolesError,
+		GetTcloudEventRolesResponse,
+		ReturnType<typeof getTcloudEventRolesQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await getTcloudEventRoles({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true
+			});
+			return data;
+		},
+		queryKey: getTcloudEventRolesQueryKey(options)
+	});
+
+/**
+ * Replace TicketsCloud event roles
+ *
+ * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:generate'.
+ */
+export const setTcloudEventRolesMutation = (
+	options?: Partial<Options<SetTcloudEventRolesData>>
+): MutationOptions<
+	SetTcloudEventRolesResponse,
+	SetTcloudEventRolesError,
+	Options<SetTcloudEventRolesData>
+> => {
+	const mutationOptions: MutationOptions<
+		SetTcloudEventRolesResponse,
+		SetTcloudEventRolesError,
+		Options<SetTcloudEventRolesData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await setTcloudEventRoles({
 				...options,
 				...fnOptions,
 				throwOnError: true

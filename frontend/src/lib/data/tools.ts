@@ -20,11 +20,11 @@ import { hasPermission } from '#lib/utils/permissions.js';
 export type ToolKey =
 	| 'broadcast'
 	| 'feedback'
-	| 'generate-tickets'
 	| 'import-schedule'
 	| 'quest'
 	| 'settings'
 	| 'sync'
+	| 'tickets'
 	| 'users'
 	| 'voting';
 
@@ -86,12 +86,14 @@ const TOOLS: Tool[] = [
 		forbidden: m.broadcast_forbidden
 	},
 	{
-		key: 'generate-tickets',
-		title: m.tool_generate_tickets,
-		description: m.tool_generate_tickets_description,
+		// tickets:generate lists, issues and maps tickets; sync:run alone still
+		// opens it for the TicketsCloud sync, which lives here.
+		key: 'tickets',
+		title: m.tool_tickets,
+		description: m.tool_tickets_description,
 		icon: Ticket,
-		href: 'tools/generate-tickets',
-		anyOf: ['tickets:generate'],
+		href: 'tools/tickets',
+		anyOf: ['tickets:generate', 'sync:run'],
 		forbidden: m.tickets_forbidden
 	},
 	{

@@ -4,6 +4,7 @@ import pytest
 
 from fanfan.core.exceptions.settings import (
     InvalidFestivalTimeRange,
+    InvalidTCloudEventId,
     InvalidVotingTimeRange,
 )
 from fanfan.core.models.app_settings import (
@@ -11,6 +12,7 @@ from fanfan.core.models.app_settings import (
     DEFAULT_FESTIVAL_START,
     AppSettings,
 )
+from fanfan.core.vo.user import UserRole
 
 pytestmark = pytest.mark.unit
 
@@ -161,3 +163,26 @@ def test_update_limits_updates_announcement_timeout() -> None:
     settings.update_limits(announcement_timeout=30)
 
     assert settings.limits.announcement_timeout == 30
+
+
+def test_unmapped_tcloud_event_grants_visitor() -> None:
+    settings = AppSettings()
+
+    assert settings.tickets.role_for_tcloud_event("any-event") is UserRole.VISITOR
+
+
+def test_set_tcloud_event_roles_replaces_mapping_and_trims_ids() -> None:
+    settings = AppSettings()
+    settings.set_tcloud_event_roles({"old": UserRole.VOLUNTEER})
+
+    settings.set_tcloud_event_roles({"  event-1 ": UserRole.PARTICIPANT})
+
+    assert settings.tickets.tcloud_event_roles == {"event-1": UserRole.PARTICIPANT}
+    assert settings.tickets.role_for_tcloud_event("old") is UserRole.VISITOR
+
+
+def test_set_tcloud_event_roles_rejects_blank_event_id() -> None:
+    settings = AppSettings()
+
+    with pytest.raises(InvalidTCloudEventId):
+        settings.set_tcloud_event_roles({"   ": UserRole.PARTICIPANT})
