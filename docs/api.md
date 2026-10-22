@@ -130,6 +130,17 @@ A lost response followed by a second press must not create the row twice. Where 
 
 A `PATCH` that sets a state needs no ID: requesting the state that already holds is a 204 that writes and announces nothing (the schedule edits: set current, skip, move).
 
+### Saving a form several people edit (If-Match)
+
+A form seeded from a GET and saved whole would silently undo a colleague's save in between. `PATCH /settings` guards against that lost update with optimistic concurrency ([RFC 9110 §13.1.1](https://www.rfc-editor.org/rfc/rfc9110.html#name-if-match)):
+
+- **The GET carries an `etag` field** — in the body, since the generated query options hand the page the body alone ([AIP-154](https://google.aip.dev/154) does the same). It hashes only what that resource shows, so an edit to another slice of the same row does not turn the form stale.
+- **The PATCH requires `If-Match`** with that etag (`*` saves regardless). It is a required header in the spec rather than a runtime 428, so the generated client will not compile a save that forgets it.
+- **A stale etag is a 412** (`APP_SETTINGS_CHANGED`): nothing is written, and the page tells the organizer to reload. A save answers 200 with the stored settings and their new etag, which the page keeps for its next save.
+- **An omitted field is left as is; an explicit `null` is a 422.** JSON Merge Patch ([RFC 7396](https://datatracker.ietf.org/doc/html/rfc7396)) reads null as "remove", and none of these fields can be cleared. `NOT_NULL` (`application/dto/patch.py`) marks such a field.
+
+A `PATCH` that sets an absolute state (the schedule edits above, a role, the voting range) needs no etag: last writer wins _is_ the intent there, and a 412 mid-show would only get in the way.
+
 ### Long-running actions (202 Accepted)
 
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.

@@ -1,5 +1,3 @@
-import hashlib
-
 from pydantic import BaseModel
 
 from fanfan.application.dto.schedule import ScheduleEntryDTO
@@ -10,23 +8,17 @@ from fanfan.application.ports.schedule_cache import (
     CachedSchedule,
     ScheduleCacheGateway,
 )
+from fanfan.application.services.etag import compute_strong_etag
 
 
 class GetScheduleOutput(BaseModel):
     schedule: list[ScheduleEntryDTO]
 
 
-def _compute_etag(payload: str) -> str:
-    # Strong validator (no W/ prefix): the payload is byte-stable, so a matching
-    # ETag guarantees byte-identical content. Quoted per RFC 9110.
-    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-    return f'"{digest}"'
-
-
 async def render_schedule(schedule_gateway: ScheduleEntryGateway) -> CachedSchedule:
     entries = await schedule_gateway.read_list_schedule()
     payload = GetScheduleOutput(schedule=entries).model_dump_json()
-    return CachedSchedule(etag=_compute_etag(payload), payload=payload)
+    return CachedSchedule(etag=compute_strong_etag(payload), payload=payload)
 
 
 class GetSchedule:

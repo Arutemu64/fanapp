@@ -1,7 +1,9 @@
 import logging
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
+from fanfan.application.dto.patch import NOT_NULL
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
@@ -22,8 +24,10 @@ class ScheduleSettingsDTO(BaseModel):
 class UpdateScheduleSettingsInput(BaseModel):
     # Partial, like UpdateAppSettingsInput: an omitted field is left as is, so
     # an older client that doesn't know a newer field can't reset it.
-    announcement_timeout: int | None = Field(default=None, ge=1)
-    changeover_seconds: int | None = Field(default=None, ge=0, le=600)
+    announcement_timeout: Annotated[int | None, NOT_NULL] = Field(default=None, ge=1)
+    changeover_seconds: Annotated[int | None, NOT_NULL] = Field(
+        default=None, ge=0, le=600
+    )
 
 
 # Guarded by schedule:setup, not settings:manage, the way the voting time range

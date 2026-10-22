@@ -118,7 +118,8 @@ async def get_schedule_settings(
     status_code=204,
     summary="Update schedule settings",
     description=(
-        "Updates the schedule settings; an omitted field is left as is. "
+        "Updates the schedule settings; an omitted field is left as is and "
+        "null is rejected. "
         "Requires 'schedule:setup'."
     ),
     responses={

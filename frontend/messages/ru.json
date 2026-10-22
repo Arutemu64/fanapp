@@ -233,6 +233,7 @@
 	"email_send_code": "Отправить код",
 	"email_sending_code": "Отправляем код…",
 	"error_already_voted_in_this_nomination": "В этой номинации голос уже учтён",
+	"error_app_settings_changed": "Кто-то уже сохранил другие настройки — твои правки не сохранились. Обнови страницу и внеси их ещё раз.",
 	"error_cannot_award_self": "Себе баллы начислять нельзя",
 	"error_cannot_change_own_access": "Свою роль и права может изменить только другой организатор",
 	"error_cannot_remove_last_sign_in_method": "Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт.",

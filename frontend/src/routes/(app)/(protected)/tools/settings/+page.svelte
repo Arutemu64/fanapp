@@ -38,10 +38,11 @@
 
 	const saveMutation = createMutation(() => ({
 		...updateSettingsMutation(),
-		onSuccess: () => {
+		onSuccess: (saved) => {
+			// The save answers with the stored settings, so no refetch is needed.
+			queryClient.setQueryData(getSettingsQueryKey(), saved);
 			// The festival dates are public config too; config_updated would refresh it,
 			// but not before this organizer looks at the home hero.
-			void queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
 			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
 		}
 	}));
@@ -64,6 +65,10 @@
 	let questMaxAwardError = $state('');
 	let questCancelWindowError = $state('');
 	let submitError = $state('');
+	// The version this form was filled from. A save carries it in If-Match, so one
+	// that lands after another organizer's save is refused instead of silently
+	// overwriting their change.
+	let etag = $state(untrack(() => data.settings.etag));
 
 	let hasChanges = $derived(
 		festivalStart !== savedFestivalStart ||
@@ -163,13 +168,13 @@
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
-					quest_enabled: nextQuest.enabled,
-					quest_max_award: nextQuest.max_award,
-					quest_cancel_window_minutes: nextQuest.cancel_window_minutes
-				}
+					quest: nextQuest
+				},
+				headers: { 'if-match': etag }
 			},
 			{
-				onSuccess: () => {
+				onSuccess: (saved) => {
+					etag = saved.etag;
 					savedFestivalStart = festivalStart;
 					savedFestivalEnd = festivalEnd;
 					savedQuest = nextQuest;
@@ -180,8 +185,8 @@
 				onError: (error) => {
 					festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
 					festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
-					questMaxAwardError = getApiFieldError(error, 'quest_max_award') ?? '';
-					questCancelWindowError = getApiFieldError(error, 'quest_cancel_window_minutes') ?? '';
+					questMaxAwardError = getApiFieldError(error, 'max_award') ?? '';
+					questCancelWindowError = getApiFieldError(error, 'cancel_window_minutes') ?? '';
 					const hasFieldError =
 						festivalStartError || festivalEndError || questMaxAwardError || questCancelWindowError;
 					if (hasFieldError) {

@@ -487,15 +487,44 @@
           "Config"
         ],
         "summary": "Get public config",
-        "description": "Returns the public festival config the SPA needs before login.",
+        "description": "Returns the public festival config the SPA needs before login, with an ETag for conditional revalidation.",
         "operationId": "get_public_config",
         "responses": {
           "200": {
             "description": "Public config retrieved successfully.",
+            "headers": {
+              "ETag": {
+                "description": "Config version; send it back in If-None-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PublicConfigDTO"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Config unchanged since the client's cached version.",
+            "headers": {
+              "ETag": {
+                "description": "Config version; send it back in If-None-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Festival settings were not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1172,8 +1201,13 @@
           "Settings"
         ],
         "summary": "Get festival settings",
-        "description": "Returns the current festival settings that organizers can manage.",
+        "description": "Returns the current festival settings that organizers can manage, with the `etag` to send back in If-Match when saving them.",
         "operationId": "get_settings",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Festival settings retrieved successfully.",
@@ -1215,33 +1249,53 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
+        }
       },
       "patch": {
         "tags": [
           "Settings"
         ],
         "summary": "Update festival settings",
-        "description": "Updates festival settings that are available to organizers.",
+        "description": "Updates festival settings that are available to organizers; an omitted field is left as is and null is rejected. Returns the saved settings.",
         "operationId": "update_settings",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The `etag` from GET /settings, or `*` to save regardless.",
+              "title": "If-Match"
+            },
+            "description": "The `etag` from GET /settings, or `*` to save regardless."
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateAppSettingsInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "204": {
-            "description": "Festival settings updated successfully."
+          "200": {
+            "description": "Festival settings updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppSettingsDTO"
+                }
+              }
+            }
           },
           "422": {
             "description": "Request validation error.",
@@ -1282,13 +1336,18 @@
                 }
               }
             }
+          },
+          "412": {
+            "description": "Someone saved the settings after the If-Match version was read; reload and edit again.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
+        }
       }
     },
     "/events": {
@@ -1494,7 +1553,7 @@
           "Schedule"
         ],
         "summary": "Update schedule settings",
-        "description": "Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.",
+        "description": "Updates the schedule settings; an omitted field is left as is and null is rejected. Requires 'schedule:setup'.",
         "operationId": "update_schedule_settings",
         "requestBody": {
           "content": {
@@ -5311,13 +5370,18 @@
           },
           "quest": {
             "$ref": "#/components/schemas/QuestConfigDTO"
+          },
+          "etag": {
+            "type": "string",
+            "title": "Etag"
           }
         },
         "type": "object",
         "required": [
           "festival_start",
           "festival_end",
-          "quest"
+          "quest",
+          "etag"
         ],
         "title": "AppSettingsDTO"
       },
@@ -6895,6 +6959,7 @@
             "enum": [
               "ACCESS_DENIED",
               "ALREADY_VOTED_IN_THIS_NOMINATION",
+              "APP_SETTINGS_CHANGED",
               "APP_SETTINGS_NOT_FOUND",
               "AUTHENTICATION_ERROR",
               "CANNOT_AWARD_SELF",
@@ -8049,69 +8114,22 @@
       "UpdateAppSettingsInput": {
         "properties": {
           "festival_start": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Festival Start"
           },
           "festival_end": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Festival End"
           },
-          "quest_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Quest Enabled"
-          },
-          "quest_max_award": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 10000.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Quest Max Award"
-          },
-          "quest_cancel_window_minutes": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 1440.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Quest Cancel Window Minutes"
+          "quest": {
+            "$ref": "#/components/schemas/UpdateQuestInput"
           }
         },
         "type": "object",
-        "title": "UpdateAppSettingsInput"
+        "title": "UpdateAppSettingsInput",
+        "description": "A partial update, nested like AppSettingsDTO: omitted fields stay as is."
       },
       "UpdateCurrentUserInput": {
         "properties": {
@@ -8145,6 +8163,28 @@
         "type": "object",
         "title": "UpdateCurrentUserInput"
       },
+      "UpdateQuestInput": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "max_award": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Max Award"
+          },
+          "cancel_window_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 0.0,
+            "title": "Cancel Window Minutes"
+          }
+        },
+        "type": "object",
+        "title": "UpdateQuestInput"
+      },
       "UpdateScheduleEventRequest": {
         "properties": {
           "is_skipped": {
@@ -8161,28 +8201,14 @@
       "UpdateScheduleSettingsInput": {
         "properties": {
           "announcement_timeout": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "minimum": 1.0,
             "title": "Announcement Timeout"
           },
           "changeover_seconds": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 600.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 0.0,
             "title": "Changeover Seconds"
           }
         },

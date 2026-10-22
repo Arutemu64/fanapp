@@ -42,6 +42,10 @@ class Conflict(AppException):
     """The request conflicts with current state: duplicate, stale, etc. (409)."""
 
 
+class PreconditionFailed(AppException):
+    """The client edited a stale copy: its If-Match no longer holds (412)."""
+
+
 class RateLimited(AppException):
     """The caller exceeded an allowed rate; carries a retry_after detail (429)."""
 

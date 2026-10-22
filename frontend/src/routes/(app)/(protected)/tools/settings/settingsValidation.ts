@@ -2,7 +2,7 @@ import { m } from '#lib/paraglide/messages.js';
 
 // Each check returns the field's error message, or '' when the value is valid.
 
-// Mirror the backend bounds (UpdateAppSettingsInput).
+// Mirror the backend bounds (UpdateQuestInput).
 export const QUEST_MAX_AWARD_LIMIT = 10_000;
 export const QUEST_CANCEL_WINDOW_LIMIT = 1440;
 

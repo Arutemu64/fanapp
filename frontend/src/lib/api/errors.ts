@@ -247,6 +247,7 @@ function getInvalidScheduleFileMessage(problem: ApiProblem): string {
 const ERROR_MESSAGES = {
 	ACCESS_DENIED: m.error_no_access,
 	ALREADY_VOTED_IN_THIS_NOMINATION: m.error_already_voted_in_this_nomination,
+	APP_SETTINGS_CHANGED: m.error_app_settings_changed,
 	CANNOT_AWARD_SELF: m.error_cannot_award_self,
 	CANNOT_CHANGE_OWN_ACCESS: m.error_cannot_change_own_access,
 	CANNOT_REMOVE_LAST_SIGN_IN_METHOD: m.error_cannot_remove_last_sign_in_method,

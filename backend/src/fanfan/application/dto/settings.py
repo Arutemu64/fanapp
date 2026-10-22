@@ -11,7 +11,7 @@ class QuestConfigDTO(BaseModel):
     cancel_window_minutes: int = Field(ge=0)
 
 
-class AppSettingsDTO(BaseModel):
+class AppSettingsFieldsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     # Voting time range is managed separately, under voting:manage — see the
@@ -21,6 +21,13 @@ class AppSettingsDTO(BaseModel):
     festival_start: datetime
     festival_end: datetime
     quest: QuestConfigDTO
+
+
+class AppSettingsDTO(AppSettingsFieldsDTO):
+    # Strong entity-tag of the fields above, for If-Match on PATCH /settings. In
+    # the body rather than an ETag header because the generated query options
+    # hand the SPA the body alone; Google AIP-154 carries an etag the same way.
+    etag: str
 
 
 class PublicConfigDTO(BaseModel):

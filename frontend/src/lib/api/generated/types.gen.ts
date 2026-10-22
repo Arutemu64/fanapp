@@ -37,6 +37,10 @@ export type AppSettingsDto = {
 	 */
 	festival_end: string;
 	quest: QuestConfigDto;
+	/**
+	 * Etag
+	 */
+	etag: string;
 };
 
 /**
@@ -979,6 +983,7 @@ export type ProblemDetails = {
 	code:
 		| 'ACCESS_DENIED'
 		| 'ALREADY_VOTED_IN_THIS_NOMINATION'
+		| 'APP_SETTINGS_CHANGED'
 		| 'APP_SETTINGS_NOT_FOUND'
 		| 'AUTHENTICATION_ERROR'
 		| 'CANNOT_AWARD_SELF'
@@ -1711,28 +1716,19 @@ export type UnreadNotificationsCountOutput = {
 
 /**
  * UpdateAppSettingsInput
+ *
+ * A partial update, nested like AppSettingsDTO: omitted fields stay as is.
  */
 export type UpdateAppSettingsInput = {
 	/**
 	 * Festival Start
 	 */
-	festival_start?: string | null;
+	festival_start?: string;
 	/**
 	 * Festival End
 	 */
-	festival_end?: string | null;
-	/**
-	 * Quest Enabled
-	 */
-	quest_enabled?: boolean | null;
-	/**
-	 * Quest Max Award
-	 */
-	quest_max_award?: number | null;
-	/**
-	 * Quest Cancel Window Minutes
-	 */
-	quest_cancel_window_minutes?: number | null;
+	festival_end?: string;
+	quest?: UpdateQuestInput;
 };
 
 /**
@@ -1747,6 +1743,24 @@ export type UpdateCurrentUserInput = {
 	 * Avatar Seed
 	 */
 	avatar_seed?: string | null;
+};
+
+/**
+ * UpdateQuestInput
+ */
+export type UpdateQuestInput = {
+	/**
+	 * Enabled
+	 */
+	enabled?: boolean;
+	/**
+	 * Max Award
+	 */
+	max_award?: number;
+	/**
+	 * Cancel Window Minutes
+	 */
+	cancel_window_minutes?: number;
 };
 
 /**
@@ -1766,11 +1780,11 @@ export type UpdateScheduleSettingsInput = {
 	/**
 	 * Announcement Timeout
 	 */
-	announcement_timeout?: number | null;
+	announcement_timeout?: number;
 	/**
 	 * Changeover Seconds
 	 */
-	changeover_seconds?: number | null;
+	changeover_seconds?: number;
 };
 
 /**
@@ -2275,6 +2289,15 @@ export type GetPublicConfigData = {
 	url: '/config';
 };
 
+export type GetPublicConfigErrors = {
+	/**
+	 * Festival settings were not found.
+	 */
+	404: ProblemDetails;
+};
+
+export type GetPublicConfigError = GetPublicConfigErrors[keyof GetPublicConfigErrors];
+
 export type GetPublicConfigResponses = {
 	/**
 	 * Public config retrieved successfully.
@@ -2683,6 +2706,14 @@ export type GetSettingsResponse = GetSettingsResponses[keyof GetSettingsResponse
 
 export type UpdateSettingsData = {
 	body: UpdateAppSettingsInput;
+	headers: {
+		/**
+		 * If-Match
+		 *
+		 * The `etag` from GET /settings, or `*` to save regardless.
+		 */
+		'if-match': string;
+	};
 	path?: never;
 	query?: never;
 	url: '/settings';
@@ -2702,6 +2733,10 @@ export type UpdateSettingsErrors = {
 	 */
 	404: ProblemDetails;
 	/**
+	 * Someone saved the settings after the If-Match version was read; reload and edit again.
+	 */
+	412: ProblemDetails;
+	/**
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
@@ -2713,7 +2748,7 @@ export type UpdateSettingsResponses = {
 	/**
 	 * Festival settings updated successfully.
 	 */
-	204: void;
+	200: AppSettingsDto;
 };
 
 export type UpdateSettingsResponse = UpdateSettingsResponses[keyof UpdateSettingsResponses];

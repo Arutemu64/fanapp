@@ -152,6 +152,7 @@ import type {
 	GetCurrentUserError,
 	GetCurrentUserResponse,
 	GetPublicConfigData,
+	GetPublicConfigError,
 	GetPublicConfigResponse,
 	GetQuestData,
 	GetQuestError,
@@ -635,12 +636,12 @@ export const getPublicConfigQueryKey = (options?: Options<GetPublicConfigData>) 
 /**
  * Get public config
  *
- * Returns the public festival config the SPA needs before login.
+ * Returns the public festival config the SPA needs before login, with an ETag for conditional revalidation.
  */
 export const getPublicConfigOptions = (options?: Options<GetPublicConfigData>) =>
 	queryOptions<
 		GetPublicConfigResponse,
-		DefaultError,
+		GetPublicConfigError,
 		GetPublicConfigResponse,
 		ReturnType<typeof getPublicConfigQueryKey>
 	>({
@@ -938,7 +939,7 @@ export const getSettingsQueryKey = (options?: Options<GetSettingsData>) =>
 /**
  * Get festival settings
  *
- * Returns the current festival settings that organizers can manage.
+ * Returns the current festival settings that organizers can manage, with the `etag` to send back in If-Match when saving them.
  */
 export const getSettingsOptions = (options?: Options<GetSettingsData>) =>
 	queryOptions<
@@ -962,7 +963,7 @@ export const getSettingsOptions = (options?: Options<GetSettingsData>) =>
 /**
  * Update festival settings
  *
- * Updates festival settings that are available to organizers.
+ * Updates festival settings that are available to organizers; an omitted field is left as is and null is rejected. Returns the saved settings.
  */
 export const updateSettingsMutation = (
 	options?: Partial<Options<UpdateSettingsData>>
@@ -1064,7 +1065,7 @@ export const getScheduleSettingsOptions = (options?: Options<GetScheduleSettings
 /**
  * Update schedule settings
  *
- * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
+ * Updates the schedule settings; an omitted field is left as is and null is rejected. Requires 'schedule:setup'.
  */
 export const updateScheduleSettingsMutation = (
 	options?: Partial<Options<UpdateScheduleSettingsData>>

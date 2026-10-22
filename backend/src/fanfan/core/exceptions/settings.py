@@ -1,4 +1,9 @@
-from fanfan.core.exceptions.base import AppException, ConstraintViolation, NotFound
+from fanfan.core.exceptions.base import (
+    AppException,
+    ConstraintViolation,
+    NotFound,
+    PreconditionFailed,
+)
 
 
 class AppSettingsException(AppException):
@@ -19,3 +24,7 @@ class InvalidFestivalTimeRange(ConstraintViolation, AppSettingsException):
 
 class InvalidTCloudEventId(ConstraintViolation, AppSettingsException):
     code = "INVALID_TCLOUD_EVENT_ID"
+
+
+class AppSettingsChanged(PreconditionFailed, AppSettingsException):
+    code = "APP_SETTINGS_CHANGED"

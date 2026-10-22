@@ -7,6 +7,7 @@ from fanfan.application.interactors.schedule.get_schedule import (
     GetSchedule,
     GetScheduleOutput,
 )
+from fanfan.presentation.web.preconditions import if_none_match_hits
 
 public_router = APIRouter()
 
@@ -16,19 +17,6 @@ _ETAG_HEADERS = {
         "description": "Schedule version; send it back in If-None-Match.",
     },
 }
-
-
-def _if_none_match_hits(header: str | None, etag: str) -> bool:
-    """Whether a conditional request already holds this exact schedule version.
-
-    Clients echo the ETag back verbatim in ``If-None-Match``; the header may carry
-    several comma-separated validators, so match against any of them. ``*`` matches
-    any current representation (RFC 9110).
-    """
-    if header is None:
-        return False
-    candidates = [value.strip() for value in header.split(",")]
-    return "*" in candidates or etag in candidates
 
 
 @public_router.get(
@@ -65,7 +53,7 @@ async def get_schedule(
     # operator edits it. See ADR-0014.
     headers = {"ETag": cached.etag, "Cache-Control": "no-cache"}
 
-    if _if_none_match_hits(request.headers.get("if-none-match"), cached.etag):
+    if if_none_match_hits(request.headers.get("if-none-match"), cached.etag):
         return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers=headers)
 
     return Response(

@@ -72,6 +72,7 @@ import type {
 	GetCurrentUserErrors,
 	GetCurrentUserResponses,
 	GetPublicConfigData,
+	GetPublicConfigErrors,
 	GetPublicConfigResponses,
 	GetQuestData,
 	GetQuestErrors,
@@ -427,12 +428,12 @@ export const oauthCallback = <ThrowOnError extends boolean = false>(
 /**
  * Get public config
  *
- * Returns the public festival config the SPA needs before login.
+ * Returns the public festival config the SPA needs before login, with an ETag for conditional revalidation.
  */
 export const getPublicConfig = <ThrowOnError extends boolean = false>(
 	options?: Options<GetPublicConfigData, ThrowOnError>
-): RequestResult<GetPublicConfigResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<GetPublicConfigResponses, unknown, ThrowOnError>({
+): RequestResult<GetPublicConfigResponses, GetPublicConfigErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetPublicConfigResponses, GetPublicConfigErrors, ThrowOnError>({
 		url: '/config',
 		...options
 	});
@@ -690,7 +691,7 @@ export const linkTicket = <ThrowOnError extends boolean = false>(
 /**
  * Get festival settings
  *
- * Returns the current festival settings that organizers can manage.
+ * Returns the current festival settings that organizers can manage, with the `etag` to send back in If-Match when saving them.
  */
 export const getSettings = <ThrowOnError extends boolean = false>(
 	options?: Options<GetSettingsData, ThrowOnError>
@@ -710,7 +711,7 @@ export const getSettings = <ThrowOnError extends boolean = false>(
 /**
  * Update festival settings
  *
- * Updates festival settings that are available to organizers.
+ * Updates festival settings that are available to organizers; an omitted field is left as is and null is rejected. Returns the saved settings.
  */
 export const updateSettings = <ThrowOnError extends boolean = false>(
 	options: Options<UpdateSettingsData, ThrowOnError>
@@ -807,7 +808,7 @@ export const getScheduleSettings = <ThrowOnError extends boolean = false>(
 /**
  * Update schedule settings
  *
- * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
+ * Updates the schedule settings; an omitted field is left as is and null is rejected. Requires 'schedule:setup'.
  */
 export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
 	options: Options<UpdateScheduleSettingsData, ThrowOnError>
