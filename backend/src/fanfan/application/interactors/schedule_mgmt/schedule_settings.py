@@ -19,6 +19,13 @@ class ScheduleSettingsDTO(BaseModel):
     changeover_seconds: int = Field(ge=0, le=600)
 
 
+class UpdateScheduleSettingsInput(BaseModel):
+    # Partial, like UpdateAppSettingsInput: an omitted field is left as is, so
+    # an older client that doesn't know a newer field can't reset it.
+    announcement_timeout: int | None = Field(default=None, ge=1)
+    changeover_seconds: int | None = Field(default=None, ge=0, le=600)
+
+
 # Guarded by schedule:setup, not settings:manage, the way the voting time range
 # lives in AppSettings but is managed under voting:manage: the schedule tool
 # holds everything that shapes the programme, so one grant opens all of it.
@@ -46,7 +53,7 @@ class GetScheduleSettings:
         )
 
 
-class SetScheduleSettings:
+class UpdateScheduleSettings:
     def __init__(
         self,
         app_settings_gateway: AppSettingsGateway,
@@ -61,7 +68,7 @@ class SetScheduleSettings:
         self.uow = uow
         self.realtime = realtime
 
-    async def __call__(self, data: ScheduleSettingsDTO) -> None:
+    async def __call__(self, data: UpdateScheduleSettingsInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SCHEDULE_SETUP
@@ -69,7 +76,8 @@ class SetScheduleSettings:
 
         settings = await self.app_settings_gateway.get_for_update()
         changeover_changed = (
-            settings.schedule.changeover_seconds != data.changeover_seconds
+            data.changeover_seconds is not None
+            and data.changeover_seconds != settings.schedule.changeover_seconds
         )
         settings.update_limits(announcement_timeout=data.announcement_timeout)
         settings.update_schedule(changeover_seconds=data.changeover_seconds)

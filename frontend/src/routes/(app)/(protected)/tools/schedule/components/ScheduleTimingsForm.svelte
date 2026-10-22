@@ -8,7 +8,7 @@
 	import {
 		getPublicConfigQueryKey,
 		getScheduleSettingsQueryKey,
-		setScheduleSettingsMutation
+		updateScheduleSettingsMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import FormError from '#lib/components/FormError.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -36,7 +36,7 @@
 	const queryClient = useQueryClient();
 
 	const saveMutation = createMutation(() => ({
-		...setScheduleSettingsMutation(),
+		...updateScheduleSettingsMutation(),
 		onSuccess: () => {
 			// The changeover is public config too; config_updated would refresh it,
 			// but not before this organizer looks at the schedule.

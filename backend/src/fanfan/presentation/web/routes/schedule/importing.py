@@ -13,7 +13,8 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import (
 from fanfan.application.interactors.schedule_mgmt.schedule_settings import (
     GetScheduleSettings,
     ScheduleSettingsDTO,
-    SetScheduleSettings,
+    UpdateScheduleSettings,
+    UpdateScheduleSettingsInput,
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -112,18 +113,21 @@ async def get_schedule_settings(
     return await interactor()
 
 
-@importing_router.put(
+@importing_router.patch(
     "/settings",
     status_code=204,
-    summary="Replace schedule settings",
-    description="Replaces the schedule settings. Requires 'schedule:setup'.",
+    summary="Update schedule settings",
+    description=(
+        "Updates the schedule settings; an omitted field is left as is. "
+        "Requires 'schedule:setup'."
+    ),
     responses={
         204: {"description": "Schedule settings saved."},
     },
 )
 @inject
-async def set_schedule_settings(
-    data: ScheduleSettingsDTO,
-    interactor: FromDishka[SetScheduleSettings],
+async def update_schedule_settings(
+    data: UpdateScheduleSettingsInput,
+    interactor: FromDishka[UpdateScheduleSettings],
 ) -> None:
     await interactor(data)

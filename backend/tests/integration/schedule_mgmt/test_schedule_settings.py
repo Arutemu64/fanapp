@@ -7,7 +7,8 @@ from fanfan.application.dto.realtime import SSEEventName
 from fanfan.application.interactors.schedule_mgmt.schedule_settings import (
     GetScheduleSettings,
     ScheduleSettingsDTO,
-    SetScheduleSettings,
+    UpdateScheduleSettings,
+    UpdateScheduleSettingsInput,
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.core.exceptions.base import AccessDenied
@@ -25,13 +26,13 @@ async def test_changeover_change_broadcasts_config_updated(
     schedule_editor: User,
     login: Callable[[User], None],
 ) -> None:
-    interactor = await dishka_request.get(SetScheduleSettings)
+    interactor = await dishka_request.get(UpdateScheduleSettings)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(schedule_editor)
 
     await interactor(
-        ScheduleSettingsDTO(announcement_timeout=20, changeover_seconds=45)
+        UpdateScheduleSettingsInput(announcement_timeout=20, changeover_seconds=45)
     )
 
     settings = await settings_gateway.get()
@@ -48,19 +49,20 @@ async def test_cooldown_only_change_does_not_broadcast(
     schedule_editor: User,
     login: Callable[[User], None],
 ) -> None:
-    interactor = await dishka_request.get(SetScheduleSettings)
+    interactor = await dishka_request.get(UpdateScheduleSettings)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(schedule_editor)
     changeover = (await settings_gateway.get()).schedule.changeover_seconds
 
-    await interactor(
-        ScheduleSettingsDTO(announcement_timeout=42, changeover_seconds=changeover)
-    )
+    await interactor(UpdateScheduleSettingsInput(announcement_timeout=42))
 
-    # Persisted, but the cooldown is not in GET /config, so nothing should
-    # broadcast — a refetch would return identical public config.
-    assert (await settings_gateway.get()).limits.announcement_timeout == 42
+    # Persisted, the omitted changeover left as is, and the cooldown is not in
+    # GET /config, so nothing should broadcast — a refetch would return
+    # identical public config.
+    settings = await settings_gateway.get()
+    assert settings.limits.announcement_timeout == 42
+    assert settings.schedule.changeover_seconds == changeover
     assert realtime.published == []
 
 
@@ -69,11 +71,13 @@ async def test_reads_the_stored_settings(
     schedule_editor: User,
     login: Callable[[User], None],
 ) -> None:
-    setter = await dishka_request.get(SetScheduleSettings)
+    setter = await dishka_request.get(UpdateScheduleSettings)
     getter = await dishka_request.get(GetScheduleSettings)
     login(schedule_editor)
 
-    await setter(ScheduleSettingsDTO(announcement_timeout=15, changeover_seconds=60))
+    await setter(
+        UpdateScheduleSettingsInput(announcement_timeout=15, changeover_seconds=60)
+    )
 
     assert await getter() == ScheduleSettingsDTO(
         announcement_timeout=15, changeover_seconds=60
@@ -86,12 +90,10 @@ async def test_settings_editor_without_schedule_setup_is_denied(
     login: Callable[[User], None],
 ) -> None:
     getter = await dishka_request.get(GetScheduleSettings)
-    setter = await dishka_request.get(SetScheduleSettings)
+    setter = await dishka_request.get(UpdateScheduleSettings)
     login(settings_editor)
 
     with pytest.raises(AccessDenied):
         await getter()
     with pytest.raises(AccessDenied):
-        await setter(
-            ScheduleSettingsDTO(announcement_timeout=10, changeover_seconds=30)
-        )
+        await setter(UpdateScheduleSettingsInput(announcement_timeout=10))

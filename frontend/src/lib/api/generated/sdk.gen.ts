@@ -192,9 +192,6 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentErrors,
 	SetEventAsCurrentResponses,
-	SetScheduleSettingsData,
-	SetScheduleSettingsErrors,
-	SetScheduleSettingsResponses,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesErrors,
 	SetTcloudEventRolesResponses,
@@ -249,6 +246,9 @@ import type {
 	UpdateScheduleEventData,
 	UpdateScheduleEventErrors,
 	UpdateScheduleEventResponses,
+	UpdateScheduleSettingsData,
+	UpdateScheduleSettingsErrors,
+	UpdateScheduleSettingsResponses,
 	UpdateSettingsData,
 	UpdateSettingsErrors,
 	UpdateSettingsResponses
@@ -1038,16 +1038,16 @@ export const getScheduleSettings = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Replace schedule settings
+ * Update schedule settings
  *
- * Replaces the schedule settings. Requires 'schedule:setup'.
+ * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
  */
-export const setScheduleSettings = <ThrowOnError extends boolean = false>(
-	options: Options<SetScheduleSettingsData, ThrowOnError>
-): RequestResult<SetScheduleSettingsResponses, SetScheduleSettingsErrors, ThrowOnError> =>
-	(options.client ?? client).put<
-		SetScheduleSettingsResponses,
-		SetScheduleSettingsErrors,
+export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
+	options: Options<UpdateScheduleSettingsData, ThrowOnError>
+): RequestResult<UpdateScheduleSettingsResponses, UpdateScheduleSettingsErrors, ThrowOnError> =>
+	(options.client ?? client).patch<
+		UpdateScheduleSettingsResponses,
+		UpdateScheduleSettingsErrors,
 		ThrowOnError
 	>({
 		security: [

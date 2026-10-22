@@ -2411,18 +2411,18 @@
           }
         ]
       },
-      "put": {
+      "patch": {
         "tags": [
           "Schedule"
         ],
-        "summary": "Replace schedule settings",
-        "description": "Replaces the schedule settings. Requires 'schedule:setup'.",
-        "operationId": "set_schedule_settings",
+        "summary": "Update schedule settings",
+        "description": "Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.",
+        "operationId": "update_schedule_settings",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ScheduleSettingsDTO"
+                "$ref": "#/components/schemas/UpdateScheduleSettingsInput"
               }
             }
           },
@@ -8308,6 +8308,37 @@
           "is_skipped"
         ],
         "title": "UpdateScheduleEventRequest"
+      },
+      "UpdateScheduleSettingsInput": {
+        "properties": {
+          "announcement_timeout": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Announcement Timeout"
+          },
+          "changeover_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 600.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changeover Seconds"
+          }
+        },
+        "type": "object",
+        "title": "UpdateScheduleSettingsInput"
       },
       "UpdateUserSettingsInput": {
         "properties": {

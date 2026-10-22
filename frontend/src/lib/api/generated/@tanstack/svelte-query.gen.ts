@@ -70,7 +70,6 @@ import {
 	sendBroadcast,
 	sendTestNotification,
 	setEventAsCurrent,
-	setScheduleSettings,
 	setTcloudEventRoles,
 	setUserRole,
 	setVotingTimeRange,
@@ -88,6 +87,7 @@ import {
 	updateCurrentUser,
 	updateCurrentUserSettings,
 	updateScheduleEvent,
+	updateScheduleSettings,
 	updateSettings
 } from '../sdk.gen';
 import type {
@@ -268,9 +268,6 @@ import type {
 	SetEventAsCurrentData,
 	SetEventAsCurrentError,
 	SetEventAsCurrentResponse,
-	SetScheduleSettingsData,
-	SetScheduleSettingsError,
-	SetScheduleSettingsResponse,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesError,
 	SetTcloudEventRolesResponse,
@@ -320,6 +317,9 @@ import type {
 	UpdateScheduleEventData,
 	UpdateScheduleEventError,
 	UpdateScheduleEventResponse,
+	UpdateScheduleSettingsData,
+	UpdateScheduleSettingsError,
+	UpdateScheduleSettingsResponse,
 	UpdateSettingsData,
 	UpdateSettingsError,
 	UpdateSettingsResponse
@@ -1406,24 +1406,24 @@ export const getScheduleSettingsOptions = (options?: Options<GetScheduleSettings
 	});
 
 /**
- * Replace schedule settings
+ * Update schedule settings
  *
- * Replaces the schedule settings. Requires 'schedule:setup'.
+ * Updates the schedule settings; an omitted field is left as is. Requires 'schedule:setup'.
  */
-export const setScheduleSettingsMutation = (
-	options?: Partial<Options<SetScheduleSettingsData>>
+export const updateScheduleSettingsMutation = (
+	options?: Partial<Options<UpdateScheduleSettingsData>>
 ): MutationOptions<
-	SetScheduleSettingsResponse,
-	SetScheduleSettingsError,
-	Options<SetScheduleSettingsData>
+	UpdateScheduleSettingsResponse,
+	UpdateScheduleSettingsError,
+	Options<UpdateScheduleSettingsData>
 > => {
 	const mutationOptions: MutationOptions<
-		SetScheduleSettingsResponse,
-		SetScheduleSettingsError,
-		Options<SetScheduleSettingsData>
+		UpdateScheduleSettingsResponse,
+		UpdateScheduleSettingsError,
+		Options<UpdateScheduleSettingsData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await setScheduleSettings({
+			const { data } = await updateScheduleSettings({
 				...options,
 				...fnOptions,
 				throwOnError: true

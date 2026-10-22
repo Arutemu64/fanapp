@@ -1687,6 +1687,20 @@ export type UpdateScheduleEventRequest = {
 };
 
 /**
+ * UpdateScheduleSettingsInput
+ */
+export type UpdateScheduleSettingsInput = {
+	/**
+	 * Announcement Timeout
+	 */
+	announcement_timeout?: number | null;
+	/**
+	 * Changeover Seconds
+	 */
+	changeover_seconds?: number | null;
+};
+
+/**
  * UpdateUserSettingsInput
  */
 export type UpdateUserSettingsInput = {
@@ -3227,14 +3241,14 @@ export type GetScheduleSettingsResponses = {
 export type GetScheduleSettingsResponse =
 	GetScheduleSettingsResponses[keyof GetScheduleSettingsResponses];
 
-export type SetScheduleSettingsData = {
-	body: ScheduleSettingsDto;
+export type UpdateScheduleSettingsData = {
+	body: UpdateScheduleSettingsInput;
 	path?: never;
 	query?: never;
 	url: '/schedule/settings';
 };
 
-export type SetScheduleSettingsErrors = {
+export type UpdateScheduleSettingsErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -3249,17 +3263,18 @@ export type SetScheduleSettingsErrors = {
 	422: ValidationErrorResponse;
 };
 
-export type SetScheduleSettingsError = SetScheduleSettingsErrors[keyof SetScheduleSettingsErrors];
+export type UpdateScheduleSettingsError =
+	UpdateScheduleSettingsErrors[keyof UpdateScheduleSettingsErrors];
 
-export type SetScheduleSettingsResponses = {
+export type UpdateScheduleSettingsResponses = {
 	/**
 	 * Schedule settings saved.
 	 */
 	204: void;
 };
 
-export type SetScheduleSettingsResponse =
-	SetScheduleSettingsResponses[keyof SetScheduleSettingsResponses];
+export type UpdateScheduleSettingsResponse =
+	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
 
 export type GetVotingStatusData = {
 	body?: never;
