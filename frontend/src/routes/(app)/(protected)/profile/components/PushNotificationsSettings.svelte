@@ -62,7 +62,7 @@
 	);
 	// Writable derived: the toggle overrides it optimistically, and it snaps back
 	// to the server copy whenever `user` refreshes (Svelte "Overriding derived values").
-	let receiveVk = $derived(hasVkAccount && (user.settings.receive_vk_notifications ?? false));
+	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
 	let vkDescription = $derived(
 		hasVkAccount ? m.vk_notifications_on_description() : m.vk_notifications_connect_first()
 	);
@@ -158,7 +158,7 @@
 				// unlinked while the request was in flight, restoring the raw `true`
 				// would force the disabled toggle back ON — the misleading state this
 				// card avoids. Mirrors the receiveVk derived above.
-				receiveVk = hasVkAccount && (user.settings.receive_vk_notifications ?? false);
+				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
 			}
 		);
 	}

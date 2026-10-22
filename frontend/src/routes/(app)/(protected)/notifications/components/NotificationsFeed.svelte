@@ -28,6 +28,7 @@
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { MARK_READ_BATCH_MAX } from '#lib/constants/notifications.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
@@ -102,16 +103,22 @@
 			unseenOnArrival.add(id);
 		}
 
-		const { error, response } = await markNotificationsRead({
-			body: { notification_ids: ids }
-		});
-		if (error || !response?.ok) {
-			// Retried with the next batch the effect below sends.
-			for (const id of ids) {
-				requestedReadIds.delete(id);
+		let markedAny = false;
+		for (let start = 0; start < ids.length; start += MARK_READ_BATCH_MAX) {
+			const batch = ids.slice(start, start + MARK_READ_BATCH_MAX);
+			const { error, response } = await markNotificationsRead({
+				body: { notification_ids: batch }
+			});
+			if (error || !response?.ok) {
+				// Retried with the next batch the effect below sends.
+				for (const id of batch) {
+					requestedReadIds.delete(id);
+				}
+			} else {
+				markedAny = true;
 			}
-			return;
 		}
+		if (!markedAny) return;
 
 		await queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
 		// The cached feed still carries these as unseen. Mark it stale without

@@ -81,8 +81,7 @@ export function getNotificationsOn(
 
 function hasMessengerNotifications(user: CurrentUserDto): boolean {
 	const providers = user.social_identities.map((identity) => identity.provider);
-	const telegramOn =
-		providers.includes('telegram') && (user.settings.receive_telegram_notifications ?? false);
-	const vkOn = providers.includes('vk') && (user.settings.receive_vk_notifications ?? false);
+	const telegramOn = providers.includes('telegram') && user.settings.receive_telegram_notifications;
+	const vkOn = providers.includes('vk') && user.settings.receive_vk_notifications;
 	return telegramOn || vkOn;
 }
