@@ -1,31 +1,33 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+# Run by prek (https://prek.j178.dev), a drop-in pre-commit replacement that
+# reads this file unchanged (ADR-0045).
 exclude: '^(\.agent|\.agents|\.claude)/'
 
 # ty and svelte-check scan the whole project on any file change (both are
 # pass_filenames: false), which is seconds per commit — too slow for the
 # commit path, so they run at pre-push while the fast formatters/linters stay
-# on pre-commit. `just backend-setup-hooks` runs a plain `pre-commit install`,
+# on pre-commit. `just backend-setup-hooks` runs a plain `prek install`,
 # which installs every hook type listed here.
 default_install_hook_types: [pre-commit, pre-push]
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  # prek's Rust-native ports of the pre-commit/pre-commit-hooks hooks: no rev to
+  # pin, no Python env to build. Renovate's pre-commit manager skips a repo with
+  # no `rev`, so this entry is invisible to it (ADR-0045).
+  - repo: builtin
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      # Strict load for every YAML except the Compose files, which need --unsafe
-      # (below) for their custom merge tags. Splitting the hook keeps full
-      # construction — the real syntax check — on workflows and everything else,
-      # instead of weakening it repo-wide.
+      # prek's check-yaml accepts unknown tags by default, unlike upstream's.
+      # Rejecting them everywhere except the Compose files keeps a typo'd or
+      # stray tag in a workflow a failure, while Compose still loads fully with
+      # its own merge tags (!reset / !override) instead of the syntax-only
+      # --unsafe parse. Multi-document files are valid YAML and pnpm writes its
+      # lockfile as two documents.
       - id: check-yaml
+        args: [--disallow-unknown-tags, --allow-multiple-documents]
         exclude: '^docker-compose(\.[a-z0-9]+)?\.ya?ml$'
       - id: check-yaml
         name: check-yaml (compose)
-        # --unsafe checks YAML syntax without constructing custom tags, which
-        # docker-compose uses (!reset / !override for merge control).
-        args: [--unsafe]
         files: '^docker-compose(\.[a-z0-9]+)?\.ya?ml$'
       - id: check-added-large-files
 
