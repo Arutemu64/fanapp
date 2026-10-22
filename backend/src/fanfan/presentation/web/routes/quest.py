@@ -32,7 +32,7 @@ from fanfan.application.interactors.quest.list_quest_history import (
 from fanfan.core.vo.quest import QuestAwardId
 from fanfan.core.vo.user import USER_NUMBER_MAX, USER_NUMBER_MIN, UserNumber
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
@@ -51,7 +51,7 @@ quest_router = APIRouter(
     "leaderboard. Ties rank by who reached the score first.",
     responses={
         200: {"description": "Quest retrieved successfully."},
-        403: {"model": ErrorMessage, "description": "The quest is disabled."},
+        403: {"model": ProblemDetails, "description": "The quest is disabled."},
     },
 )
 @inject
@@ -66,7 +66,7 @@ async def get_quest(interactor: FromDishka[GetQuest]) -> GetQuestOutput:
     "cancelled ones included.",
     responses={
         200: {"description": "Awards retrieved successfully."},
-        403: {"model": ErrorMessage, "description": "The quest is disabled."},
+        403: {"model": ProblemDetails, "description": "The quest is disabled."},
     },
 )
 @inject
@@ -103,7 +103,7 @@ async def find_quest_players(
     "award form after a QR scan. Requires the quest:award permission.",
     responses={
         200: {"description": "Player retrieved successfully."},
-        404: {"model": ErrorMessage, "description": "The user does not exist."},
+        404: {"model": ProblemDetails, "description": "The user does not exist."},
     },
 )
 @inject
@@ -123,9 +123,9 @@ async def get_quest_player(
     "quest:award permission.",
     responses={
         201: {"description": "Points awarded."},
-        404: {"model": ErrorMessage, "description": "The user does not exist."},
+        404: {"model": ProblemDetails, "description": "The user does not exist."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "The award ID is taken by a different award.",
         },
     },
@@ -165,9 +165,9 @@ async def list_quest_awards(
     "award within the cancel window; quest:manage cancels any award at any time.",
     responses={
         204: {"description": "Award cancelled."},
-        404: {"model": ErrorMessage, "description": "The award does not exist."},
+        404: {"model": ProblemDetails, "description": "The award does not exist."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "The award is already cancelled or its window expired.",
         },
     },

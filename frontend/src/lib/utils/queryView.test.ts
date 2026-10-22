@@ -93,7 +93,7 @@ describe('queryView', () => {
 		const options = { policy: 'cached', reachable: true, errorMessage: FALLBACK } as const;
 
 		const known = queryView(
-			snapshot({ isError: true, error: { code: 'TICKET_NOT_FOUND', details: {} }, refetch }),
+			snapshot({ isError: true, error: { code: 'TICKET_NOT_FOUND' }, refetch }),
 			options
 		);
 		const unknown = queryView(snapshot({ isError: true, error: { code: 'NOPE' } }), options);

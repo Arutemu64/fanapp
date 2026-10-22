@@ -117,8 +117,12 @@ def _build_redirect(path: str, params: dict[str, str]) -> RedirectResponse:
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 
+# Declaring the redirect as the route's own status and response class keeps
+# FastAPI from also documenting a JSON 200 that the route never sends.
 @oauth_router.get(
     "/oauth/{provider}/start",
+    status_code=status.HTTP_302_FOUND,
+    response_class=RedirectResponse,
     summary="Start social login",
     description="Redirects the browser to the provider's OAuth page to begin signing "
     "in. The provider then calls back to the callback endpoint to finish. An "
@@ -182,6 +186,8 @@ async def start_social_login(
 # docstring. Only the *intent* is merged into this one callback.
 @oauth_router.get(
     "/oauth/{provider}/callback",
+    status_code=status.HTTP_303_SEE_OTHER,
+    response_class=RedirectResponse,
     summary="Finish a social login or account link",
     description="OAuth callback shared by both flows; which one it is comes from the "
     "intent stored in the OAuth state, never from the request. On a login it sets the "

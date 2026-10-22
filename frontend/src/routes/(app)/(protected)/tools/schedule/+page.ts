@@ -18,9 +18,7 @@ export const load: PageLoad = async ({ parent }) => {
 	const timings = await queryForLoad(queryClient, {
 		...getScheduleSettingsOptions(),
 		staleTime: 0
-	}).catch((apiError: unknown) =>
-		throwApiError(apiError, undefined, m.schedule_timings_load_failed())
-	);
+	}).catch((apiError: unknown) => throwApiError(apiError, m.schedule_timings_load_failed()));
 
 	return {
 		title: m.nav_schedule(),

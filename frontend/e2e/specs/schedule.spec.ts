@@ -27,8 +27,8 @@ test.describe('schedule', { tag: '@critical' }, () => {
 	}) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule/': json({ schedule }),
-			'GET /schedule/subscriptions/': json({
+			'GET /schedule': json({ schedule }),
+			'GET /schedule/subscriptions': json({
 				subscriptions: [
 					{
 						id: 'subscription-1',
@@ -61,7 +61,7 @@ test.describe('schedule', { tag: '@critical' }, () => {
 		let patched: unknown;
 		api.use({
 			...loggedInAs(),
-			'GET /schedule/': json({ schedule }),
+			'GET /schedule': json({ schedule }),
 			'PATCH /me/settings': (route) => {
 				patched = route.request().postDataJSON() as unknown;
 				return json({});

@@ -16,7 +16,7 @@ from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
 )
 from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
@@ -28,7 +28,7 @@ changes_router = APIRouter(
 
 
 @changes_router.get(
-    "/",
+    "",
     summary="List schedule audit log",
     description="Returns a history of all modifications made to the schedule, "
     "including skips, moves, and status changes.",
@@ -57,7 +57,7 @@ async def list_schedule_changes(
     responses={
         204: {"description": "Change successfully undone."},
         404: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Schedule change ID not found.",
         },
     },

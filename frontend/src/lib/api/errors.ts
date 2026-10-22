@@ -1,46 +1,48 @@
 import { error as kitError } from '@sveltejs/kit';
 import { CancelledError } from '@tanstack/svelte-query';
 
-import type { ErrorMessage } from '#lib/api/generated/index.js';
+import type {
+	InvalidScheduleFileProblem,
+	InvalidScheduleFileReason,
+	ProblemDetails
+} from '#lib/api/generated/index.js';
 
 import { m } from '#lib/paraglide/messages.js';
 import { anySignal, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 // The closed set of error codes the API can return, generated from the backend
-// OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
+// OpenAPI spec (ProblemDetails.code enum). Drives both typo safety on the message
 // dictionary and the compile-time drift guard at the bottom of this file.
-type ApiErrorCode = ErrorMessage['code'];
+type ApiErrorCode = ProblemDetails['code'];
 
-type ApiErrorDetails = Record<string, unknown>;
+// An RFC 9457 problem details body as received: unverified, so every member but
+// `code` is unknown. Problem-specific members (`retry_after`, `reason`,
+// `errors`, …) sit beside the standard ones at the top level.
+type ApiProblem = Record<string, unknown> & { code: string };
 
-interface ApiErrorPayload {
-	code: string;
-	details?: ApiErrorDetails;
-}
+// The limits Pydantic reports for the broken rule (`max_length`, `ge`, …).
+type ValidationContext = Record<string, unknown>;
 
 interface ApiValidationErrorDetail {
 	loc: Array<string | number>;
 	type: string;
+	ctx?: ValidationContext;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return Boolean(value) && typeof value === 'object';
 }
 
-function getApiErrorPayload(error: unknown): ApiErrorPayload | null {
+function getApiProblem(error: unknown): ApiProblem | null {
 	if (!isRecord(error) || typeof error.code !== 'string') {
 		return null;
 	}
 
-	const details = isRecord(error.details) ? error.details : {};
-	return {
-		code: error.code,
-		details
-	};
+	return { ...error, code: error.code };
 }
 
-function getValidationErrors(details: ApiErrorDetails): ApiValidationErrorDetail[] {
-	const rawErrors = details.errors;
+function getValidationErrors(problem: ApiProblem): ApiValidationErrorDetail[] {
+	const rawErrors = problem.errors;
 	if (!Array.isArray(rawErrors)) {
 		return [];
 	}
@@ -88,12 +90,30 @@ function getFieldLabel(path: Array<string | number>): string | null {
 	return labels[fieldName] ?? null;
 }
 
+function uncapitalize(text: string): string {
+	return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
+function tooShortReason(ctx: ValidationContext): string {
+	if (typeof ctx.min_length === 'number') {
+		return uncapitalize(m.validation_min_chars({ count: ctx.min_length }));
+	}
+	return m.validation_too_short();
+}
+
+function tooLongReason(ctx: ValidationContext): string {
+	if (typeof ctx.max_length === 'number') {
+		return uncapitalize(m.validation_max_chars({ count: ctx.max_length }));
+	}
+	return m.validation_too_long();
+}
+
 // Pydantic error "type" -> short Russian reason. Kept lowercase so it reads
 // naturally when appended after a field label ("поле «пароль»: ...").
-const VALIDATION_TYPE_MESSAGES: Record<string, () => string> = {
+const VALIDATION_TYPE_MESSAGES: Record<string, (ctx: ValidationContext) => string> = {
 	missing: m.validation_missing,
-	string_too_short: m.validation_too_short,
-	string_too_long: m.validation_too_long,
+	string_too_short: tooShortReason,
+	string_too_long: tooLongReason,
 	string_pattern_mismatch: m.validation_bad_format,
 	value_error: m.validation_bad_format,
 	greater_than: m.validation_too_small,
@@ -110,14 +130,14 @@ function capitalize(text: string): string {
 	return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function getValidationMessage(details: ApiErrorDetails): string {
-	const firstError = getValidationErrors(details)[0];
+function getValidationMessage(problem: ApiProblem): string {
+	const firstError = getValidationErrors(problem)[0];
 	if (!firstError) {
 		return m.validation_check_form();
 	}
 
 	const fieldLabel = getFieldLabel(firstError.loc);
-	const reason = VALIDATION_TYPE_MESSAGES[firstError.type]?.();
+	const reason = VALIDATION_TYPE_MESSAGES[firstError.type]?.(firstError.ctx ?? {});
 
 	if (fieldLabel && reason) {
 		return m.validation_check_field_reason({ fieldLabel, reason });
@@ -136,7 +156,7 @@ function getValidationMessage(details: ApiErrorDetails): string {
  * error body without its HTTP status, so a "not found" is told apart by code.
  */
 export function getApiErrorCode(error: unknown): string | undefined {
-	return getApiErrorPayload(error)?.code;
+	return getApiProblem(error)?.code;
 }
 
 /**
@@ -146,19 +166,19 @@ export function getApiErrorCode(error: unknown): string | undefined {
  * getApiErrorDetail for the form as a whole.
  */
 export function getApiFieldError(error: unknown, field: string): string | null {
-	const payload = getApiErrorPayload(error);
-	if (payload?.code !== 'VALIDATION_ERROR') {
+	const problem = getApiProblem(error);
+	if (problem?.code !== 'VALIDATION_ERROR') {
 		return null;
 	}
 
-	const fieldError = getValidationErrors(payload.details ?? {}).find(
-		(item) => getFieldName(item.loc) === field
-	);
+	const fieldError = getValidationErrors(problem).find((item) => getFieldName(item.loc) === field);
 	if (!fieldError) {
 		return null;
 	}
 
-	const reason = (VALIDATION_TYPE_MESSAGES[fieldError.type] ?? m.validation_bad_format)();
+	const reason = (VALIDATION_TYPE_MESSAGES[fieldError.type] ?? m.validation_bad_format)(
+		fieldError.ctx ?? {}
+	);
 	return capitalize(reason);
 }
 
@@ -170,19 +190,6 @@ function formatRetryAfter(value: unknown): string {
 	return m.retry_later();
 }
 
-function getAccessDeniedMessage(details: ApiErrorDetails): string {
-	switch (details.reason) {
-		case 'VOTING_TICKET_REQUIRED':
-			return m.error_voting_needs_ticket();
-		case 'VOTING_DISABLED':
-			return m.error_voting_closed();
-		case 'MAILING_DELETE_FORBIDDEN':
-			return m.error_mailing_not_deletable();
-		default:
-			return m.error_no_access();
-	}
-}
-
 function formatColumnList(value: unknown): string {
 	if (!Array.isArray(value)) {
 		return '';
@@ -191,49 +198,54 @@ function formatColumnList(value: unknown): string {
 	return value.filter((column): column is string => typeof column === 'string').join(', ');
 }
 
+type ScheduleFileMessage = (problem: Partial<InvalidScheduleFileProblem>, at: string) => string;
+
 // The backend rejects a schedule spreadsheet with a `reason` plus whatever
 // locates the problem (column, spreadsheet row, duplicated number), so the copy
 // can point the organizer at the cell to fix instead of just saying the file is
-// wrong. Reasons come from InvalidScheduleFileReason in core/exceptions/schedule.py.
-function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
+// wrong. `satisfies Record<InvalidScheduleFileReason, …>` makes a reason the
+// backend adds a compile error here until it has copy.
+const SCHEDULE_FILE_MESSAGES = {
+	UNREADABLE_FILE: () => m.import_error_unreadable(),
+	MISSING_COLUMNS: (problem) =>
+		m.import_error_missing_columns({ columns: formatColumnList(problem.columns) }),
+	EMPTY_FILE: () => m.import_error_no_events(),
+	EMPTY_CELL: (_problem, at) => m.import_error_cell_empty({ at }),
+	INVALID_NUMBER: (_problem, at) => m.import_error_integer_required({ at }),
+	DURATION_NOT_POSITIVE: (_problem, at) => m.import_error_duration_positive({ at }),
+	INVALID_TYPE: (_problem, at) => m.import_error_block_hint({ at }),
+	BLOCK_ROW_WITH_EVENT_DATA: (_problem, at) => m.import_error_block_cell({ at }),
+	DUPLICATE_NUMBER: (problem) =>
+		m.import_error_duplicate_number({
+			number: String(problem.number),
+			row: String(problem.row)
+		}),
+	FILE_TOO_LARGE: () => m.import_error_file_too_large(),
+	UNSUPPORTED_FILE_TYPE: () => m.import_error_xlsx_required()
+} satisfies Record<InvalidScheduleFileReason, ScheduleFileMessage>;
+
+function getInvalidScheduleFileMessage(problem: ApiProblem): string {
+	// Unverified wire data: every field may be missing, the reason may be unknown.
+	const fields = problem as Partial<InvalidScheduleFileProblem>;
 	const at = m.import_error_location({
-		row: String(details.row),
-		column: String(details.column)
+		row: String(fields.row),
+		column: String(fields.column)
 	});
 
-	switch (details.reason) {
-		case 'MISSING_COLUMNS':
-			return m.import_error_missing_columns({ columns: formatColumnList(details.columns) });
-		case 'EMPTY_FILE':
-			return m.import_error_no_events();
-		case 'EMPTY_CELL':
-			return m.import_error_cell_empty({ at });
-		case 'INVALID_NUMBER':
-			return m.import_error_integer_required({ at });
-		case 'DURATION_NOT_POSITIVE':
-			return m.import_error_duration_positive({ at });
-		case 'INVALID_TYPE':
-			return m.import_error_block_hint({ at });
-		case 'BLOCK_ROW_WITH_EVENT_DATA':
-			return m.import_error_block_cell({ at });
-		case 'DUPLICATE_NUMBER':
-			return m.import_error_duplicate_number({
-				number: String(details.number),
-				row: String(details.row)
-			});
-		case 'FILE_TOO_LARGE':
-			return m.import_error_file_too_large();
-		case 'UNSUPPORTED_FILE_TYPE':
-			return m.import_error_xlsx_required();
-		default:
-			return m.import_error_unreadable();
+	const message = (SCHEDULE_FILE_MESSAGES as Record<string, ScheduleFileMessage | undefined>)[
+		String(fields.reason)
+	];
+	if (!message) {
+		return m.import_error_unreadable();
 	}
+	return message(fields, at);
 }
 
 // Dictionary: error code -> user-facing message. `satisfies` keeps the literal
 // keys (so the drift guard below can see which codes are covered) while checking
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
+	ACCESS_DENIED: m.error_no_access,
 	ALREADY_VOTED_IN_THIS_NOMINATION: m.error_already_voted_in_this_nomination,
 	CANNOT_AWARD_SELF: m.error_cannot_award_self,
 	CANNOT_CHANGE_OWN_ACCESS: m.error_cannot_change_own_access,
@@ -282,7 +294,9 @@ const ERROR_MESSAGES = {
 	USER_NOT_FOUND: m.error_user_not_found,
 	USERNAME_ALREADY_TAKEN: m.error_username_already_taken,
 	USERNAME_PROFANITY: m.error_username_profanity,
-	VOTE_NOT_FOUND: m.error_vote_not_found
+	VOTE_NOT_FOUND: m.error_vote_not_found,
+	VOTING_DISABLED: m.error_voting_closed,
+	VOTING_TICKET_REQUIRED: m.error_voting_needs_ticket
 } satisfies Partial<Record<ApiErrorCode, () => string>>;
 
 // Codes carrying a `retry_after` detail; all share the same formatted message.
@@ -403,7 +417,7 @@ export function gotNoApiAnswer(error: unknown): boolean {
  * a frontend bug worth reporting. A deliberate cancel or abort is not.
  */
 export function isUnexpectedRequestError(error: unknown): boolean {
-	if (gotNoApiAnswer(error) || getApiErrorPayload(error) || error instanceof CancelledError) {
+	if (gotNoApiAnswer(error) || getApiProblem(error) || error instanceof CancelledError) {
 		return false;
 	}
 	return !(error instanceof DOMException && error.name === 'AbortError');
@@ -419,30 +433,26 @@ export function getApiErrorDetail(error: unknown): string | null {
 		return m.error_connection_failed();
 	}
 
-	const payload = getApiErrorPayload(error);
-	if (!payload) {
+	const problem = getApiProblem(error);
+	if (!problem) {
 		return null;
 	}
 
-	// Dictionary covers most codes. Cast because payload.code is an unverified
+	// Dictionary covers most codes. Cast because problem.code is an unverified
 	// wire string, not a known ApiErrorCode.
-	const simple = (ERROR_MESSAGES as Record<string, (() => string) | undefined>)[payload.code];
+	const simple = (ERROR_MESSAGES as Record<string, (() => string) | undefined>)[problem.code];
 	if (simple) {
 		return simple();
 	}
 
-	const details = payload.details ?? {};
-	if ((RETRY_AFTER_CODES as readonly string[]).includes(payload.code)) {
-		return formatRetryAfter(details.retry_after);
+	if ((RETRY_AFTER_CODES as readonly string[]).includes(problem.code)) {
+		return formatRetryAfter(problem.retry_after);
 	}
-	if (payload.code === 'ACCESS_DENIED') {
-		return getAccessDeniedMessage(details);
+	if (problem.code === 'INVALID_SCHEDULE_FILE') {
+		return getInvalidScheduleFileMessage(problem);
 	}
-	if (payload.code === 'INVALID_SCHEDULE_FILE') {
-		return getInvalidScheduleFileMessage(details);
-	}
-	if (payload.code === 'VALIDATION_ERROR') {
-		return getValidationMessage(details);
+	if (problem.code === 'VALIDATION_ERROR') {
+		return getValidationMessage(problem);
 	}
 	return null;
 }
@@ -450,26 +460,30 @@ export function getApiErrorDetail(error: unknown): string | null {
 /**
  * Throw a SvelteKit error from a failed API call, so a `load` failure
  * speaks the same language as a form/toast failure. Maps the API error `code` to
- * the shared Russian copy and reuses the real HTTP status; `code` rides along on
- * `App.Error` for the error page and Sentry. Usage:
- * `if (apiError) throwApiError(apiError, response, 'Не удалось загрузить …');`
+ * the shared Russian copy; `code` rides along on `App.Error` for the error page
+ * and Sentry. Usage:
+ * `.catch((apiError: unknown) => throwApiError(apiError, 'Не удалось загрузить …'))`
  */
-export function throwApiError(
-	apiError: unknown,
-	response: { status: number } | undefined,
-	fallback: string
-): never {
-	// Clamp to an error status: a non-error response here means data was missing
-	// without an HTTP error, which we treat as a server-side problem.
-	const status = response && response.status >= 400 ? response.status : 500;
-
+export function throwApiError(apiError: unknown, fallback: string): never {
 	const message = getApiErrorDetail(apiError) ?? fallback;
-	const code = getApiErrorPayload(apiError)?.code;
-	return kitError(status, message, code ? { code } : {});
+	const problem = getApiProblem(apiError);
+	return kitError(problemStatus(problem), message, problem ? { code: problem.code } : {});
+}
+
+// A query rethrows the problem body without the HTTP response, so its `status`
+// member is the only status left. RFC 9457 §5 ranks the HTTP status above it,
+// but only our backend writes problem bodies, so the two match. Anything else
+// (no answer, a bug in our code) is a 500.
+function problemStatus(problem: ApiProblem | null): number {
+	const status = problem?.status;
+	if (typeof status === 'number' && status >= 400 && status <= 599) {
+		return status;
+	}
+	return 500;
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the
-// dictionary, the retry-after / access-denied / validation handling, or the
+// dictionary, the retry-after / schedule-file / validation handling, or the
 // explicit generic-fallback list. If the backend adds a new code that is none of
 // these, UnhandledCode stops being `never` and this line fails `pnpm check` —
 // naming the missing code(s). Resolve by adding copy to ERROR_MESSAGES or
@@ -478,7 +492,6 @@ type HandledCode =
 	| keyof typeof ERROR_MESSAGES
 	| (typeof RETRY_AFTER_CODES)[number]
 	| (typeof _GENERIC_FALLBACK_CODES)[number]
-	| 'ACCESS_DENIED'
 	| 'INVALID_SCHEDULE_FILE'
 	| 'VALIDATION_ERROR';
 type UnhandledCode = Exclude<ApiErrorCode, HandledCode>;

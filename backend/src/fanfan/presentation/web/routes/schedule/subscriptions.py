@@ -19,7 +19,7 @@ from fanfan.application.interactors.subscriptions.get_subscriptions import (
 )
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 subscriptions_router = APIRouter(
@@ -30,7 +30,7 @@ subscriptions_router = APIRouter(
 
 
 @subscriptions_router.get(
-    "/",
+    "",
     summary="List the current user's subscriptions",
     description="Returns every schedule event the current user is subscribed to. "
     "Served separately from the schedule so the schedule itself stays universal "
@@ -44,16 +44,16 @@ async def get_subscriptions(
 
 
 @subscriptions_router.post(
-    "/",
+    "",
     status_code=201,
     summary="Create a new event subscription",
     description="Subscribes the current user to a specific schedule event. "
     "Prevents duplicate subscriptions.",
     responses={
         201: {"description": "Subscription created successfully."},
-        404: {"model": ErrorMessage, "description": "Event ID does not exist."},
+        404: {"model": ProblemDetails, "description": "Event ID does not exist."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Subscription for this event already exists.",
         },
     },
@@ -74,7 +74,7 @@ async def new_subscription(
     responses={
         204: {"description": "Subscription deleted successfully."},
         404: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Subscription ID not found.",
         },
     },

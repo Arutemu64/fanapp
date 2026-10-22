@@ -2,13 +2,13 @@ from typing import Any
 
 from starlette import status
 
-from fanfan.presentation.web.schemas.error import ErrorMessage, ValidationErrorResponse
+from fanfan.presentation.web.schemas.error import ProblemDetails, ValidationProblem
 
 # Validation can happen on any route that accepts input, so this set is applied
 # globally in setup_api_router().
 VALIDATION_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_422_UNPROCESSABLE_CONTENT: {
-        "model": ValidationErrorResponse,
+        "model": ValidationProblem,
         "description": "Request validation error.",
     },
 }
@@ -17,11 +17,11 @@ VALIDATION_RESPONSES: dict[int | str, dict[str, Any]] = {
 # SessionCookie security marker), so public routes don't advertise 401/403.
 AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_401_UNAUTHORIZED: {
-        "model": ErrorMessage,
+        "model": ProblemDetails,
         "description": "Not authenticated.",
     },
     status.HTTP_403_FORBIDDEN: {
-        "model": ErrorMessage,
+        "model": ProblemDetails,
         "description": "Access denied.",
     },
 }
@@ -31,7 +31,7 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
 # documented in one place instead of being repeated per route.
 RATE_LIMIT_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_429_TOO_MANY_REQUESTS: {
-        "model": ErrorMessage,
+        "model": ProblemDetails,
         "description": "Rate limited — editing too fast.",
         "headers": {
             "Retry-After": {

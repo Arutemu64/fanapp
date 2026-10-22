@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
-from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.exceptions.votes import VotingDisabled, VotingTicketRequired
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
 from fanfan.core.vo.vote import VotingStatus
@@ -40,6 +40,6 @@ class VotingService:
     async def ensure_user_can_vote(self, user: User, ticket: Ticket | None) -> None:
         state = await self.get_voting_state(user, ticket)
         if state.status is VotingStatus.NO_TICKET:
-            raise AccessDenied(details={"reason": "VOTING_TICKET_REQUIRED"})
+            raise VotingTicketRequired
         if state.status is VotingStatus.DISABLED:
-            raise AccessDenied(details={"reason": "VOTING_DISABLED"})
+            raise VotingDisabled

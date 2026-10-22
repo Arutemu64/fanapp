@@ -22,7 +22,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('renders the feed and marks loaded items read on open', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications/': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationOutput>({
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
@@ -49,7 +49,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		let unreadCount = 30;
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications/': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationOutput>({
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
@@ -74,7 +74,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('does not link an organizer mailing back to the feed it sits in', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications/': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationOutput>({
 				next_cursor: null,
 				notifications: [
 					{
@@ -134,7 +134,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		const requests: URLSearchParams[] = [];
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications/': (route) => {
+			'GET /notifications': (route) => {
 				const params = new URL(route.request().url()).searchParams;
 				requests.push(params);
 				if (params.get('cursor') === null) {

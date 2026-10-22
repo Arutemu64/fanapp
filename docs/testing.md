@@ -402,7 +402,7 @@ the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the
 E2E tier stays about the UI and mocks the rest: re-proving backend behaviour
 through the browser would be slower and no more trustworthy than those guards.
 Auth is faked by mocking
-`/me/` (the session cookie is HttpOnly and can't be forged in JS); a flow that
+`/me` (the session cookie is HttpOnly and can't be forged in JS); a flow that
 must prove the real login handshake or a persisted write belongs in a full-stack
 run (boot the stack with `just run-infra` + the backend processes + `just
 backend-seed-demo`), which is opt-in, not the default a session reaches for.

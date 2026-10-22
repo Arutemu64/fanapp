@@ -38,20 +38,17 @@ describe('watchBackgroundRefetchErrors', () => {
 	afterEach(() => vi.restoreAllMocks());
 
 	it('reports a failed refetch of a query still showing its last data', async () => {
-		const onFailure = await failRefetch({ code: 'INTERNAL_ERROR', details: {} });
+		const onFailure = await failRefetch({ code: 'INTERNAL_ERROR' });
 		expect(onFailure).toHaveBeenCalledOnce();
 	});
 
 	it('stays quiet when there is no data on screen — the page shows the error itself', async () => {
-		const onFailure = await failRefetch({ code: 'INTERNAL_ERROR', details: {} }, { cached: false });
+		const onFailure = await failRefetch({ code: 'INTERNAL_ERROR' }, { cached: false });
 		expect(onFailure).not.toHaveBeenCalled();
 	});
 
 	it('stays quiet for a query nobody is looking at', async () => {
-		const onFailure = await failRefetch(
-			{ code: 'INTERNAL_ERROR', details: {} },
-			{ observed: false }
-		);
+		const onFailure = await failRefetch({ code: 'INTERNAL_ERROR' }, { observed: false });
 		expect(onFailure).not.toHaveBeenCalled();
 	});
 
@@ -61,13 +58,13 @@ describe('watchBackgroundRefetchErrors', () => {
 	});
 
 	it('leaves session expiry to the session handling', async () => {
-		const onFailure = await failRefetch({ code: 'USER_NOT_AUTHENTICATED', details: {} });
+		const onFailure = await failRefetch({ code: 'USER_NOT_AUTHENTICATED' });
 		expect(onFailure).not.toHaveBeenCalled();
 	});
 
 	it('respects a query that opts out', async () => {
 		const onFailure = await failRefetch(
-			{ code: 'INTERNAL_ERROR', details: {} },
+			{ code: 'INTERNAL_ERROR' },
 			{ meta: { quietRefetchErrors: true } }
 		);
 		expect(onFailure).not.toHaveBeenCalled();
@@ -85,7 +82,7 @@ describe('watchBackgroundRefetchErrors', () => {
 				queryFn: ({ pageParam }) => {
 					if (!failing) return Promise.resolve(pageParam);
 					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- an API error body, as the real client rejects with
-					return Promise.reject({ code: 'INTERNAL_ERROR', details: {} });
+					return Promise.reject({ code: 'INTERNAL_ERROR' });
 				},
 				initialPageParam: 0,
 				getNextPageParam: (lastPage: number) => lastPage + 1

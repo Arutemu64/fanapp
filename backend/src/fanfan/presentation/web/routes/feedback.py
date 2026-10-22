@@ -20,6 +20,7 @@ from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
 feedback_router = APIRouter(
+    tags=["Feedback"],
     prefix="/feedback",
     dependencies=[session_security],
     responses=AUTH_RESPONSES,
@@ -27,7 +28,7 @@ feedback_router = APIRouter(
 
 
 @feedback_router.post(
-    "/",
+    "",
     status_code=201,
     summary="Submit app feedback",
     description="Submits free-text feedback about the app from the current user.",
@@ -44,7 +45,7 @@ async def submit_feedback(
 
 
 @feedback_router.get(
-    "/",
+    "",
     summary="List app feedback",
     description="Returns a paginated list of feedback submitted by users, newest "
     "first. Requires the feedback:read permission.",

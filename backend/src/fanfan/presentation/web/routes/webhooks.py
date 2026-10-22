@@ -10,7 +10,7 @@ from fanfan.application.interactors.tickets.process_ticket_order import (
     ProcessTicketOrder,
     ProcessTicketOrderInput,
 )
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 
 webhooks_router = APIRouter(tags=["Webhooks"], prefix="/webhooks")
 
@@ -37,7 +37,7 @@ class TCloudWebhookResponse(BaseModel):
     description="Handles incoming webhook events from TicketsCloud ticketing system.",
     responses={
         200: {"description": "Webhook processed successfully."},
-        400: {"model": ErrorMessage, "description": "Invalid webhook payload."},
+        400: {"model": ProblemDetails, "description": "Invalid webhook payload."},
         404: {"description": "Unknown endpoint."},
     },
 )

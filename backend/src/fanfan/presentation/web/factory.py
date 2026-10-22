@@ -20,7 +20,11 @@ from fanfan.presentation.web.middlewares import (
     SecurityHeadersMiddleware,
 )
 from fanfan.presentation.web.oauth import OAUTH_STATE_TTL_SECONDS
-from fanfan.presentation.web.openapi import API_TITLE, generate_operation_id
+from fanfan.presentation.web.openapi import (
+    API_TITLE,
+    FanfanAPI,
+    generate_operation_id,
+)
 from fanfan.presentation.web.routes import setup_api_router
 
 
@@ -38,7 +42,7 @@ def create_app() -> FastAPI:
         yield
         await container.close()
 
-    app = FastAPI(
+    app = FanfanAPI(
         lifespan=lifespan,
         debug=config.debug.enabled,
         title=API_TITLE,

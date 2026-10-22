@@ -86,20 +86,6 @@ export type BodyImportSchedule = {
 };
 
 /**
- * Body_login
- */
-export type BodyLogin = {
-	/**
-	 * Email
-	 */
-	email: string;
-	/**
-	 * Password
-	 */
-	password: string;
-};
-
-/**
  * Body_set_user_role
  */
 export type BodySetUserRole = {
@@ -274,16 +260,6 @@ export type DebugOutput = {
 };
 
 /**
- * DeletePushSubscriptionInput
- */
-export type DeletePushSubscriptionInput = {
-	/**
-	 * Endpoint
-	 */
-	endpoint: string;
-};
-
-/**
  * DrawVotingContestWinnerOutput
  */
 export type DrawVotingContestWinnerOutput = {
@@ -295,88 +271,17 @@ export type DrawVotingContestWinnerOutput = {
 };
 
 /**
- * ErrorMessage
+ * EmailPasswordLoginForm
  */
-export type ErrorMessage = {
+export type EmailPasswordLoginForm = {
 	/**
-	 * Code
+	 * Email
 	 */
-	code:
-		| 'ACCESS_DENIED'
-		| 'ALREADY_VOTED_IN_THIS_NOMINATION'
-		| 'APP_SETTINGS_NOT_FOUND'
-		| 'AUTHENTICATION_ERROR'
-		| 'CANNOT_AWARD_SELF'
-		| 'CANNOT_CHANGE_OWN_ACCESS'
-		| 'CANNOT_REMOVE_LAST_SIGN_IN_METHOD'
-		| 'CAPTCHA_VERIFICATION_FAILED'
-		| 'CURRENT_EVENT_NOT_ALLOWED'
-		| 'EMAIL_ALREADY_EXISTS'
-		| 'EMAIL_CODE_REQUEST_TOO_FAST'
-		| 'EMAIL_DELIVERY_FAILED'
-		| 'EVENT_NOT_FOUND'
-		| 'HTTP_ERROR'
-		| 'INCORRECT_PASSWORD'
-		| 'INTERNAL_ERROR'
-		| 'INVALID_CREDENTIALS'
-		| 'INVALID_EMAIL'
-		| 'INVALID_FESTIVAL_TIME_RANGE'
-		| 'INVALID_OTP_CODE'
-		| 'INVALID_PAGE_CURSOR'
-		| 'INVALID_SCHEDULE_FILE'
-		| 'INVALID_TCLOUD_EVENT_ID'
-		| 'INVALID_TELEGRAM_AUTH_PAYLOAD'
-		| 'INVALID_VOTING_TIME_RANGE'
-		| 'LINK_INITIATOR_MISMATCH'
-		| 'MAILING_ALREADY_EXISTS'
-		| 'MAILING_CANCELLED'
-		| 'MAILING_NOT_FOUND'
-		| 'NOMINATION_NOT_FOUND'
-		| 'OUTDATED_SCHEDULE_CHANGE'
-		| 'PARTICIPANT_NOT_FOUND'
-		| 'PERMISSION_NOT_ASSIGNABLE'
-		| 'PUSH_SUBSCRIPTION_ALREADY_EXISTS'
-		| 'PUSH_SUBSCRIPTION_NOT_FOUND'
-		| 'QUEST_AWARD_ALREADY_CANCELLED'
-		| 'QUEST_AWARD_ALREADY_EXISTS'
-		| 'QUEST_AWARD_AMOUNT_OUT_OF_RANGE'
-		| 'QUEST_AWARD_CANCEL_WINDOW_EXPIRED'
-		| 'QUEST_AWARD_NOT_FOUND'
-		| 'QUEST_DISABLED'
-		| 'SAME_EVENTS_ARE_NOT_ALLOWED'
-		| 'SCHEDULE_CHANGE_NOT_FOUND'
-		| 'SCHEDULE_EDIT_TOO_FAST'
-		| 'SKIPPED_EVENT_NOT_ALLOWED'
-		| 'SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER'
-		| 'SUBSCRIPTION_ALREADY_EXISTS'
-		| 'SUBSCRIPTION_NOT_FOUND'
-		| 'SYNC_ALREADY_RUNNING'
-		| 'TEST_NOTIFICATION_TOO_FAST'
-		| 'TICKET_ALREADY_USED'
-		| 'TICKET_BARCODE_COLLISION'
-		| 'TICKET_NOT_FOUND'
-		| 'TICKET_NOT_LINKED'
-		| 'TICKET_REVOKED'
-		| 'TOO_MANY_ATTEMPTS'
-		| 'TOO_MANY_LOGIN_ATTEMPTS'
-		| 'TOO_MANY_LOGIN_CODE_REQUESTS'
-		| 'TOO_MANY_OTP_ATTEMPTS'
-		| 'USERNAME_ALREADY_TAKEN'
-		| 'USERNAME_PROFANITY'
-		| 'USER_ALREADY_EXISTS'
-		| 'USER_ALREADY_HAS_PROVIDER_LINKED'
-		| 'USER_ALREADY_HAS_TICKET_LINKED'
-		| 'USER_HAS_NO_EMAIL'
-		| 'USER_NOT_AUTHENTICATED'
-		| 'USER_NOT_FOUND'
-		| 'VALIDATION_ERROR'
-		| 'VOTE_NOT_FOUND';
+	email: string;
 	/**
-	 * Details
+	 * Password
 	 */
-	details?: {
-		[key: string]: unknown;
-	};
+	password: string;
 };
 
 /**
@@ -563,6 +468,73 @@ export type HealthCheckOutput = {
 	 */
 	status: 'healthy';
 };
+
+/**
+ * InvalidScheduleFileProblem
+ *
+ * ProblemDetails narrowed to INVALID_SCHEDULE_FILE, for the import route's docs.
+ *
+ * Gives the frontend a typed `reason` union to check its copy against, as the
+ * code enum does for codes. The response itself is still built from the
+ * exception's details dict; a unit test keeps the two in step.
+ */
+export type InvalidScheduleFileProblem = {
+	/**
+	 * Type
+	 */
+	type: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Status
+	 */
+	status: number;
+	/**
+	 * Code
+	 */
+	code: 'INVALID_SCHEDULE_FILE';
+	reason: InvalidScheduleFileReason;
+	/**
+	 * Columns
+	 */
+	columns?: Array<string> | null;
+	/**
+	 * Column
+	 */
+	column?: string | null;
+	/**
+	 * Row
+	 */
+	row?: number | null;
+	/**
+	 * Number
+	 */
+	number?: number | null;
+	[key: string]: unknown;
+};
+
+/**
+ * InvalidScheduleFileReason
+ *
+ * Why a schedule spreadsheet was rejected.
+ *
+ * Travels to the client inside the error `details`, so each member is part of
+ * the API contract — the frontend switches on it to pick Russian copy.
+ */
+export type InvalidScheduleFileReason =
+	| 'UNREADABLE_FILE'
+	| 'MISSING_COLUMNS'
+	| 'EMPTY_FILE'
+	| 'EMPTY_CELL'
+	| 'INVALID_NUMBER'
+	| 'DUPLICATE_NUMBER'
+	| 'DURATION_NOT_POSITIVE'
+	| 'INVALID_TYPE'
+	| 'BLOCK_ROW_WITH_EVENT_DATA'
+	| 'FILE_TOO_LARGE'
+	| 'UNSUPPORTED_FILE_TYPE';
 
 /**
  * LeaderboardEntryDTO
@@ -977,6 +949,107 @@ export type Permission =
 	| 'users:manage'
 	| 'quest:award'
 	| 'quest:manage';
+
+/**
+ * ProblemDetails
+ *
+ * An RFC 9457 problem details object; every error response is one.
+ *
+ * `code` is our extension member and what the client branches on: a closed
+ * set, stamped into the spec as an enum. `type` is derived from it, so the two
+ * never disagree. Problem-specific members (`retry_after`, `reason`, `errors`,
+ * …) sit beside these at the top level, as RFC 9457 §3.2 extensions do.
+ */
+export type ProblemDetails = {
+	/**
+	 * Type
+	 */
+	type: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Status
+	 */
+	status: number;
+	/**
+	 * Code
+	 */
+	code:
+		| 'ACCESS_DENIED'
+		| 'ALREADY_VOTED_IN_THIS_NOMINATION'
+		| 'APP_SETTINGS_NOT_FOUND'
+		| 'AUTHENTICATION_ERROR'
+		| 'CANNOT_AWARD_SELF'
+		| 'CANNOT_CHANGE_OWN_ACCESS'
+		| 'CANNOT_REMOVE_LAST_SIGN_IN_METHOD'
+		| 'CAPTCHA_VERIFICATION_FAILED'
+		| 'CURRENT_EVENT_NOT_ALLOWED'
+		| 'EMAIL_ALREADY_EXISTS'
+		| 'EMAIL_CODE_REQUEST_TOO_FAST'
+		| 'EMAIL_DELIVERY_FAILED'
+		| 'EVENT_NOT_FOUND'
+		| 'HTTP_ERROR'
+		| 'INCORRECT_PASSWORD'
+		| 'INTERNAL_ERROR'
+		| 'INVALID_CREDENTIALS'
+		| 'INVALID_EMAIL'
+		| 'INVALID_FESTIVAL_TIME_RANGE'
+		| 'INVALID_OTP_CODE'
+		| 'INVALID_PAGE_CURSOR'
+		| 'INVALID_SCHEDULE_FILE'
+		| 'INVALID_TCLOUD_EVENT_ID'
+		| 'INVALID_TELEGRAM_AUTH_PAYLOAD'
+		| 'INVALID_VOTING_TIME_RANGE'
+		| 'LINK_INITIATOR_MISMATCH'
+		| 'MAILING_ALREADY_EXISTS'
+		| 'MAILING_CANCELLED'
+		| 'MAILING_NOT_FOUND'
+		| 'NOMINATION_NOT_FOUND'
+		| 'OUTDATED_SCHEDULE_CHANGE'
+		| 'PARTICIPANT_NOT_FOUND'
+		| 'PERMISSION_NOT_ASSIGNABLE'
+		| 'PUSH_SUBSCRIPTION_ALREADY_EXISTS'
+		| 'PUSH_SUBSCRIPTION_NOT_FOUND'
+		| 'QUEST_AWARD_ALREADY_CANCELLED'
+		| 'QUEST_AWARD_ALREADY_EXISTS'
+		| 'QUEST_AWARD_AMOUNT_OUT_OF_RANGE'
+		| 'QUEST_AWARD_CANCEL_WINDOW_EXPIRED'
+		| 'QUEST_AWARD_NOT_FOUND'
+		| 'QUEST_DISABLED'
+		| 'SAME_EVENTS_ARE_NOT_ALLOWED'
+		| 'SCHEDULE_CHANGE_NOT_FOUND'
+		| 'SCHEDULE_EDIT_TOO_FAST'
+		| 'SKIPPED_EVENT_NOT_ALLOWED'
+		| 'SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER'
+		| 'SUBSCRIPTION_ALREADY_EXISTS'
+		| 'SUBSCRIPTION_NOT_FOUND'
+		| 'SYNC_ALREADY_RUNNING'
+		| 'TEST_NOTIFICATION_TOO_FAST'
+		| 'TICKET_ALREADY_USED'
+		| 'TICKET_BARCODE_COLLISION'
+		| 'TICKET_NOT_FOUND'
+		| 'TICKET_NOT_LINKED'
+		| 'TICKET_REVOKED'
+		| 'TOO_MANY_ATTEMPTS'
+		| 'TOO_MANY_LOGIN_ATTEMPTS'
+		| 'TOO_MANY_LOGIN_CODE_REQUESTS'
+		| 'TOO_MANY_OTP_ATTEMPTS'
+		| 'USERNAME_ALREADY_TAKEN'
+		| 'USERNAME_PROFANITY'
+		| 'USER_ALREADY_EXISTS'
+		| 'USER_ALREADY_HAS_PROVIDER_LINKED'
+		| 'USER_ALREADY_HAS_TICKET_LINKED'
+		| 'USER_HAS_NO_EMAIL'
+		| 'USER_NOT_AUTHENTICATED'
+		| 'USER_NOT_FOUND'
+		| 'VALIDATION_ERROR'
+		| 'VOTE_NOT_FOUND'
+		| 'VOTING_DISABLED'
+		| 'VOTING_TICKET_REQUIRED';
+	[key: string]: unknown;
+};
 
 /**
  * PublicConfigDTO
@@ -1881,22 +1954,39 @@ export type ValidationErrorDetail = {
 	 * Type
 	 */
 	type: string;
+	/**
+	 * Ctx
+	 */
+	ctx?: {
+		[key: string]: string | number | number | boolean;
+	};
 };
 
 /**
- * ValidationErrorResponse
+ * ValidationProblem
  */
-export type ValidationErrorResponse = {
+export type ValidationProblem = {
+	/**
+	 * Type
+	 */
+	type: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Status
+	 */
+	status: number;
 	/**
 	 * Code
 	 */
-	code?: string;
+	code: 'VALIDATION_ERROR';
 	/**
-	 * Details
+	 * Errors
 	 */
-	details?: {
-		[key: string]: Array<ValidationErrorDetail>;
-	};
+	errors: Array<ValidationErrorDetail>;
+	[key: string]: unknown;
 };
 
 /**
@@ -1908,17 +1998,8 @@ export type DebugData = {
 	body?: never;
 	path?: never;
 	query?: never;
-	url: '/debug/';
+	url: '/debug';
 };
-
-export type DebugErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type DebugError = DebugErrors[keyof DebugErrors];
 
 export type DebugResponses = {
 	/**
@@ -1936,15 +2017,6 @@ export type HealthCheckData = {
 	url: '/debug/health';
 };
 
-export type HealthCheckErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type HealthCheckError = HealthCheckErrors[keyof HealthCheckErrors];
-
 export type HealthCheckResponses = {
 	/**
 	 * Successful Response
@@ -1955,7 +2027,7 @@ export type HealthCheckResponses = {
 export type HealthCheckResponse = HealthCheckResponses[keyof HealthCheckResponses];
 
 export type LoginData = {
-	body: BodyLogin;
+	body: EmailPasswordLoginForm;
 	path?: never;
 	query?: never;
 	url: '/auth/login';
@@ -1965,15 +2037,15 @@ export type LoginErrors = {
 	/**
 	 * Invalid email or password.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 	/**
 	 * Too many login attempts. Try again later.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type LoginError = LoginErrors[keyof LoginErrors];
@@ -1998,23 +2070,23 @@ export type ConfirmEmailCodeErrors = {
 	/**
 	 * Code is invalid or expired.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ConfirmEmailCodeError = ConfirmEmailCodeErrors[keyof ConfirmEmailCodeErrors];
@@ -2037,13 +2109,9 @@ export type GetCaptchaChallengeData = {
 
 export type GetCaptchaChallengeErrors = {
 	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type GetCaptchaChallengeError = GetCaptchaChallengeErrors[keyof GetCaptchaChallengeErrors];
@@ -2069,19 +2137,19 @@ export type RequestLoginCodeErrors = {
 	/**
 	 * Captcha verification failed.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 	/**
 	 * The email could not be delivered — the mail service was unreachable or refused the message.
 	 */
-	502: ErrorMessage;
+	502: ProblemDetails;
 };
 
 export type RequestLoginCodeError = RequestLoginCodeErrors[keyof RequestLoginCodeErrors];
@@ -2104,15 +2172,15 @@ export type LoginWithCodeErrors = {
 	/**
 	 * Email code is invalid or has already been used.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type LoginWithCodeError = LoginWithCodeErrors[keyof LoginWithCodeErrors];
@@ -2133,15 +2201,6 @@ export type LogoutUserData = {
 	url: '/auth/logout';
 };
 
-export type LogoutUserErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type LogoutUserError = LogoutUserErrors[keyof LogoutUserErrors];
-
 export type LogoutUserResponses = {
 	/**
 	 * Successfully logged out.
@@ -2157,15 +2216,6 @@ export type ListOauthProvidersData = {
 	query?: never;
 	url: '/auth/oauth/providers';
 };
-
-export type ListOauthProvidersErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type ListOauthProvidersError = ListOauthProvidersErrors[keyof ListOauthProvidersErrors];
 
 export type ListOauthProvidersResponses = {
 	/**
@@ -2195,17 +2245,10 @@ export type StartSocialLoginErrors = {
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type StartSocialLoginError = StartSocialLoginErrors[keyof StartSocialLoginErrors];
-
-export type StartSocialLoginResponses = {
-	/**
-	 * Successful Response
-	 */
-	200: unknown;
-};
 
 export type OauthCallbackData = {
 	body?: never;
@@ -2220,17 +2263,10 @@ export type OauthCallbackErrors = {
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type OauthCallbackError = OauthCallbackErrors[keyof OauthCallbackErrors];
-
-export type OauthCallbackResponses = {
-	/**
-	 * Successful Response
-	 */
-	200: unknown;
-};
 
 export type GetPublicConfigData = {
 	body?: never;
@@ -2238,15 +2274,6 @@ export type GetPublicConfigData = {
 	query?: never;
 	url: '/config';
 };
-
-export type GetPublicConfigErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type GetPublicConfigError = GetPublicConfigErrors[keyof GetPublicConfigErrors];
 
 export type GetPublicConfigResponses = {
 	/**
@@ -2261,22 +2288,18 @@ export type GetCurrentUserData = {
 	body?: never;
 	path?: never;
 	query?: never;
-	url: '/me/';
+	url: '/me';
 };
 
 export type GetCurrentUserErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
@@ -2294,26 +2317,26 @@ export type UpdateCurrentUserData = {
 	body: UpdateCurrentUserInput;
 	path?: never;
 	query?: never;
-	url: '/me/';
+	url: '/me';
 };
 
 export type UpdateCurrentUserErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Username already taken.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type UpdateCurrentUserError = UpdateCurrentUserErrors[keyof UpdateCurrentUserErrors];
@@ -2339,15 +2362,11 @@ export type SuggestUsernameErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type SuggestUsernameError = SuggestUsernameErrors[keyof SuggestUsernameErrors];
@@ -2372,15 +2391,15 @@ export type UpdateCurrentUserSettingsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type UpdateCurrentUserSettingsError =
@@ -2407,23 +2426,23 @@ export type ChangeCurrentUserPasswordErrors = {
 	/**
 	 * Current password is incorrect.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ChangeCurrentUserPasswordError =
@@ -2450,27 +2469,27 @@ export type ChangeCurrentUserEmailErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Email already in use by another account.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type ChangeCurrentUserEmailError =
@@ -2499,25 +2518,18 @@ export type StartAccountLinkErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type StartAccountLinkError = StartAccountLinkErrors[keyof StartAccountLinkErrors];
-
-export type StartAccountLinkResponses = {
-	/**
-	 * Successful Response
-	 */
-	200: unknown;
-};
 
 export type UnlinkTelegramAccountData = {
 	body?: never;
@@ -2530,23 +2542,19 @@ export type UnlinkTelegramAccountErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Cannot remove the user's last remaining sign-in method.
 	 */
-	409: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	409: ProblemDetails;
 };
 
 export type UnlinkTelegramAccountError =
@@ -2573,23 +2581,19 @@ export type UnlinkVkAccountErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Cannot remove the user's last remaining sign-in method.
 	 */
-	409: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	409: ProblemDetails;
 };
 
 export type UnlinkVkAccountError = UnlinkVkAccountErrors[keyof UnlinkVkAccountErrors];
@@ -2614,23 +2618,23 @@ export type LinkTicketErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Ticket not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * User already has a ticket linked or ticket is already used.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type LinkTicketError = LinkTicketErrors[keyof LinkTicketErrors];
@@ -2655,19 +2659,15 @@ export type GetSettingsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Festival settings were not found.
 	 */
-	404: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	404: ProblemDetails;
 };
 
 export type GetSettingsError = GetSettingsErrors[keyof GetSettingsErrors];
@@ -2692,19 +2692,19 @@ export type UpdateSettingsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Festival settings were not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type UpdateSettingsError = UpdateSettingsErrors[keyof UpdateSettingsErrors];
@@ -2725,15 +2725,6 @@ export type StreamEventsData = {
 	url: '/events';
 };
 
-export type StreamEventsErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type StreamEventsError = StreamEventsErrors[keyof StreamEventsErrors];
-
 export type StreamEventsResponses = {
 	/**
 	 * SSE stream established. Returns text/event-stream.
@@ -2745,17 +2736,8 @@ export type GetScheduleData = {
 	body?: never;
 	path?: never;
 	query?: never;
-	url: '/schedule/';
+	url: '/schedule';
 };
-
-export type GetScheduleErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type GetScheduleError = GetScheduleErrors[keyof GetScheduleErrors];
 
 export type GetScheduleResponses = {
 	/**
@@ -2777,19 +2759,19 @@ export type ImportScheduleErrors = {
 	/**
 	 * The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.
 	 */
-	400: ErrorMessage;
+	400: InvalidScheduleFileProblem;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleErrors];
@@ -2812,15 +2794,11 @@ export type GetScheduleSettingsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetScheduleSettingsError = GetScheduleSettingsErrors[keyof GetScheduleSettingsErrors];
@@ -2846,15 +2824,15 @@ export type UpdateScheduleSettingsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type UpdateScheduleSettingsError =
@@ -2888,27 +2866,27 @@ export type SetEventAsCurrentErrors = {
 	/**
 	 * Event is skipped or invalid for this operation.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Event ID not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type SetEventAsCurrentError = SetEventAsCurrentErrors[keyof SetEventAsCurrentErrors];
@@ -2934,19 +2912,15 @@ export type UncheckCurrentEventErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type UncheckCurrentEventError = UncheckCurrentEventErrors[keyof UncheckCurrentEventErrors];
@@ -2979,27 +2953,27 @@ export type MoveScheduleEventErrors = {
 	/**
 	 * Invalid move: target and destination are the same.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Event to move or target neighbor event was not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type MoveScheduleEventError = MoveScheduleEventErrors[keyof MoveScheduleEventErrors];
@@ -3032,27 +3006,27 @@ export type UpdateScheduleEventErrors = {
 	/**
 	 * Cannot skip the current active event.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Event ID not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type UpdateScheduleEventError = UpdateScheduleEventErrors[keyof UpdateScheduleEventErrors];
@@ -3082,22 +3056,22 @@ export type ListScheduleChangesData = {
 		 */
 		cursor?: string | null;
 	};
-	url: '/schedule/changes/';
+	url: '/schedule/changes';
 };
 
 export type ListScheduleChangesErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListScheduleChangesError = ListScheduleChangesErrors[keyof ListScheduleChangesErrors];
@@ -3130,19 +3104,19 @@ export type UndoScheduleChangeErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Schedule change ID not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type UndoScheduleChangeError = UndoScheduleChangeErrors[keyof UndoScheduleChangeErrors];
@@ -3161,22 +3135,18 @@ export type GetSubscriptionsData = {
 	body?: never;
 	path?: never;
 	query?: never;
-	url: '/schedule/subscriptions/';
+	url: '/schedule/subscriptions';
 };
 
 export type GetSubscriptionsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetSubscriptionsError = GetSubscriptionsErrors[keyof GetSubscriptionsErrors];
@@ -3194,30 +3164,30 @@ export type NewSubscriptionData = {
 	body: CreateSubscriptionInput;
 	path?: never;
 	query?: never;
-	url: '/schedule/subscriptions/';
+	url: '/schedule/subscriptions';
 };
 
 export type NewSubscriptionErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Event ID does not exist.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Subscription for this event already exists.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type NewSubscriptionError = NewSubscriptionErrors[keyof NewSubscriptionErrors];
@@ -3249,19 +3219,19 @@ export type DeleteSubscriptionErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Subscription ID not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type DeleteSubscriptionError = DeleteSubscriptionErrors[keyof DeleteSubscriptionErrors];
@@ -3283,15 +3253,6 @@ export type GetVotingStatusData = {
 	url: '/voting/status';
 };
 
-export type GetVotingStatusErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type GetVotingStatusError = GetVotingStatusErrors[keyof GetVotingStatusErrors];
-
 export type GetVotingStatusResponses = {
 	/**
 	 * Voting status retrieved successfully.
@@ -3307,16 +3268,6 @@ export type ListVotingNominationsData = {
 	query?: never;
 	url: '/voting/nominations';
 };
-
-export type ListVotingNominationsErrors = {
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type ListVotingNominationsError =
-	ListVotingNominationsErrors[keyof ListVotingNominationsErrors];
 
 export type ListVotingNominationsResponses = {
 	/**
@@ -3346,11 +3297,11 @@ export type GetVotingNominationErrors = {
 	/**
 	 * Nomination not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type GetVotingNominationError = GetVotingNominationErrors[keyof GetVotingNominationErrors];
@@ -3376,23 +3327,23 @@ export type AddVoteErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Participant not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Already voted in this nomination.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type AddVoteError = AddVoteErrors[keyof AddVoteErrors];
@@ -3424,19 +3375,19 @@ export type CancelVoteErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * No vote found to cancel.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type CancelVoteError = CancelVoteErrors[keyof CancelVoteErrors];
@@ -3461,15 +3412,11 @@ export type GetVotingDashboardErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing voting:manage.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetVotingDashboardError = GetVotingDashboardErrors[keyof GetVotingDashboardErrors];
@@ -3495,19 +3442,19 @@ export type SetVotingTimeRangeErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing voting:manage.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Festival settings not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type SetVotingTimeRangeError = SetVotingTimeRangeErrors[keyof SetVotingTimeRangeErrors];
@@ -3533,15 +3480,11 @@ export type DrawVotingContestWinnerErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing voting:manage.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type DrawVotingContestWinnerError =
@@ -3573,7 +3516,7 @@ export type ProcessTcloudOrderErrors = {
 	/**
 	 * Invalid webhook payload.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Unknown endpoint.
 	 */
@@ -3581,7 +3524,7 @@ export type ProcessTcloudOrderErrors = {
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ProcessTcloudOrderError = ProcessTcloudOrderErrors[keyof ProcessTcloudOrderErrors];
@@ -3611,22 +3554,22 @@ export type ListUserNotificationsData = {
 		 */
 		cursor?: string | null;
 	};
-	url: '/notifications/';
+	url: '/notifications';
 };
 
 export type ListUserNotificationsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListUserNotificationsError =
@@ -3653,15 +3596,11 @@ export type CountUnreadNotificationsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type CountUnreadNotificationsError =
@@ -3688,15 +3627,11 @@ export type MarkAllNotificationsReadErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type MarkAllNotificationsReadError =
@@ -3723,15 +3658,15 @@ export type MarkNotificationsReadErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type MarkNotificationsReadError =
@@ -3758,19 +3693,15 @@ export type SendTestNotificationErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 	/**
 	 * Rate limited — editing too fast.
 	 */
-	429: ErrorMessage;
+	429: ProblemDetails;
 };
 
 export type SendTestNotificationError =
@@ -3808,15 +3739,15 @@ export type ListBroadcastsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListBroadcastsError = ListBroadcastsErrors[keyof ListBroadcastsErrors];
@@ -3841,19 +3772,19 @@ export type SendBroadcastErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * The mailing ID belongs to a different broadcast.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type SendBroadcastError = SendBroadcastErrors[keyof SendBroadcastErrors];
@@ -3885,23 +3816,23 @@ export type CancelMailingErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Mailing not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Mailing cannot be cancelled.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type CancelMailingError = CancelMailingErrors[keyof CancelMailingErrors];
@@ -3915,40 +3846,7 @@ export type CancelMailingResponses = {
 
 export type CancelMailingResponse = CancelMailingResponses[keyof CancelMailingResponses];
 
-export type UnsubscribeData = {
-	body: DeletePushSubscriptionInput;
-	path?: never;
-	query?: never;
-	url: '/push/';
-};
-
-export type UnsubscribeErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ErrorMessage;
-	/**
-	 * Access denied.
-	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
-};
-
-export type UnsubscribeError = UnsubscribeErrors[keyof UnsubscribeErrors];
-
-export type UnsubscribeResponses = {
-	/**
-	 * Push subscription removed successfully.
-	 */
-	204: void;
-};
-
-export type UnsubscribeResponse = UnsubscribeResponses[keyof UnsubscribeResponses];
-
-export type CheckSubscriptionData = {
+export type DeletePushSubscriptionData = {
 	body?: never;
 	path?: never;
 	query: {
@@ -3957,72 +3855,115 @@ export type CheckSubscriptionData = {
 		 */
 		endpoint: string;
 	};
-	url: '/push/';
+	url: '/push';
 };
 
-export type CheckSubscriptionErrors = {
+export type DeletePushSubscriptionErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
-export type CheckSubscriptionError = CheckSubscriptionErrors[keyof CheckSubscriptionErrors];
+export type DeletePushSubscriptionError =
+	DeletePushSubscriptionErrors[keyof DeletePushSubscriptionErrors];
 
-export type CheckSubscriptionResponses = {
+export type DeletePushSubscriptionResponses = {
+	/**
+	 * Push subscription removed successfully.
+	 */
+	204: void;
+};
+
+export type DeletePushSubscriptionResponse =
+	DeletePushSubscriptionResponses[keyof DeletePushSubscriptionResponses];
+
+export type CheckPushSubscriptionData = {
+	body?: never;
+	path?: never;
+	query: {
+		/**
+		 * Endpoint
+		 */
+		endpoint: string;
+	};
+	url: '/push';
+};
+
+export type CheckPushSubscriptionErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+};
+
+export type CheckPushSubscriptionError =
+	CheckPushSubscriptionErrors[keyof CheckPushSubscriptionErrors];
+
+export type CheckPushSubscriptionResponses = {
 	/**
 	 * Subscription status for the endpoint.
 	 */
 	200: PushSubscriptionStatus;
 };
 
-export type CheckSubscriptionResponse =
-	CheckSubscriptionResponses[keyof CheckSubscriptionResponses];
+export type CheckPushSubscriptionResponse =
+	CheckPushSubscriptionResponses[keyof CheckPushSubscriptionResponses];
 
-export type SubscribeData = {
+export type CreatePushSubscriptionData = {
 	body: CreatePushSubscriptionInput;
 	path?: never;
 	query?: never;
-	url: '/push/';
+	url: '/push';
 };
 
-export type SubscribeErrors = {
+export type CreatePushSubscriptionErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Push subscription already exists.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
-export type SubscribeError = SubscribeErrors[keyof SubscribeErrors];
+export type CreatePushSubscriptionError =
+	CreatePushSubscriptionErrors[keyof CreatePushSubscriptionErrors];
 
-export type SubscribeResponses = {
+export type CreatePushSubscriptionResponses = {
 	/**
 	 * Push subscription registered successfully.
 	 */
 	204: void;
 };
 
-export type SubscribeResponse = SubscribeResponses[keyof SubscribeResponses];
+export type CreatePushSubscriptionResponse =
+	CreatePushSubscriptionResponses[keyof CreatePushSubscriptionResponses];
 
 export type ListFeedbackData = {
 	body?: never;
@@ -4039,22 +3980,22 @@ export type ListFeedbackData = {
 		 */
 		cursor?: string | null;
 	};
-	url: '/feedback/';
+	url: '/feedback';
 };
 
 export type ListFeedbackErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListFeedbackError = ListFeedbackErrors[keyof ListFeedbackErrors];
@@ -4072,22 +4013,22 @@ export type SubmitFeedbackData = {
 	body: SubmitFeedbackInput;
 	path?: never;
 	query?: never;
-	url: '/feedback/';
+	url: '/feedback';
 };
 
 export type SubmitFeedbackErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type SubmitFeedbackError = SubmitFeedbackErrors[keyof SubmitFeedbackErrors];
@@ -4127,15 +4068,15 @@ export type ListTicketsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListTicketsError = ListTicketsErrors[keyof ListTicketsErrors];
@@ -4160,19 +4101,19 @@ export type GenerateTicketsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * A generated barcode collided; retry the request.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type GenerateTicketsError = GenerateTicketsErrors[keyof GenerateTicketsErrors];
@@ -4197,15 +4138,11 @@ export type GetTcloudEventRolesErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetTcloudEventRolesError = GetTcloudEventRolesErrors[keyof GetTcloudEventRolesErrors];
@@ -4231,15 +4168,15 @@ export type SetTcloudEventRolesErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type SetTcloudEventRolesError = SetTcloudEventRolesErrors[keyof SetTcloudEventRolesErrors];
@@ -4265,15 +4202,11 @@ export type GetSyncSourcesErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetSyncSourcesError = GetSyncSourcesErrors[keyof GetSyncSourcesErrors];
@@ -4302,19 +4235,19 @@ export type RequestSyncErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * A sync for this source is already running.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type RequestSyncError = RequestSyncErrors[keyof RequestSyncErrors];
@@ -4355,22 +4288,22 @@ export type ListUsersData = {
 		 */
 		has_ticket?: boolean | null;
 	};
-	url: '/users/';
+	url: '/users';
 };
 
 export type ListUsersErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing users:read.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
@@ -4395,15 +4328,11 @@ export type CountOnlineUsersErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type CountOnlineUsersError = CountOnlineUsersErrors[keyof CountOnlineUsersErrors];
@@ -4435,19 +4364,19 @@ export type GetUserErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing users:read.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type GetUserError = GetUserErrors[keyof GetUserErrors];
@@ -4479,23 +4408,23 @@ export type SetUserRoleErrors = {
 	/**
 	 * Tried to change own role.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing users:manage.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type SetUserRoleError = SetUserRoleErrors[keyof SetUserRoleErrors];
@@ -4531,23 +4460,23 @@ export type RevokeUserPermissionErrors = {
 	/**
 	 * Own permissions, or the superuser grant.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing the superuser grant.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type RevokeUserPermissionError =
@@ -4585,23 +4514,23 @@ export type GrantUserPermissionErrors = {
 	/**
 	 * Own permissions, or the superuser grant.
 	 */
-	400: ErrorMessage;
+	400: ProblemDetails;
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing the superuser grant.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * User not found.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type GrantUserPermissionError = GrantUserPermissionErrors[keyof GrantUserPermissionErrors];
@@ -4634,15 +4563,15 @@ export type UnlinkUserTicketErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Missing users:manage.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type UnlinkUserTicketError = UnlinkUserTicketErrors[keyof UnlinkUserTicketErrors];
@@ -4667,15 +4596,11 @@ export type GetQuestErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * The quest is disabled.
 	 */
-	403: ErrorMessage;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationErrorResponse;
+	403: ProblemDetails;
 };
 
 export type GetQuestError = GetQuestErrors[keyof GetQuestErrors];
@@ -4711,15 +4636,15 @@ export type ListQuestHistoryErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * The quest is disabled.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListQuestHistoryError = ListQuestHistoryErrors[keyof ListQuestHistoryErrors];
@@ -4749,15 +4674,15 @@ export type FindQuestPlayersErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type FindQuestPlayersError = FindQuestPlayersErrors[keyof FindQuestPlayersErrors];
@@ -4787,19 +4712,19 @@ export type GetQuestPlayerErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * The user does not exist.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type GetQuestPlayerError = GetQuestPlayerErrors[keyof GetQuestPlayerErrors];
@@ -4835,15 +4760,15 @@ export type ListQuestAwardsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type ListQuestAwardsError = ListQuestAwardsErrors[keyof ListQuestAwardsErrors];
@@ -4868,23 +4793,23 @@ export type AwardQuestPointsErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * The user does not exist.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * The award ID is taken by a different award.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type AwardQuestPointsError = AwardQuestPointsErrors[keyof AwardQuestPointsErrors];
@@ -4914,23 +4839,23 @@ export type CancelQuestAwardErrors = {
 	/**
 	 * Not authenticated.
 	 */
-	401: ErrorMessage;
+	401: ProblemDetails;
 	/**
 	 * Access denied.
 	 */
-	403: ErrorMessage;
+	403: ProblemDetails;
 	/**
 	 * The award does not exist.
 	 */
-	404: ErrorMessage;
+	404: ProblemDetails;
 	/**
 	 * The award is already cancelled or its window expired.
 	 */
-	409: ErrorMessage;
+	409: ProblemDetails;
 	/**
 	 * Request validation error.
 	 */
-	422: ValidationErrorResponse;
+	422: ValidationProblem;
 };
 
 export type CancelQuestAwardError = CancelQuestAwardErrors[keyof CancelQuestAwardErrors];

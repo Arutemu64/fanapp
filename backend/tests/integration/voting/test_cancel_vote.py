@@ -16,8 +16,7 @@ from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.exceptions.votes import VoteNotFound
+from fanfan.core.exceptions.votes import VoteNotFound, VotingDisabled
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
@@ -198,10 +197,9 @@ async def test_cancel_vote_when_voting_closed_raises_access_denied(
     await vote_gateway.add(vote)
     await uow.commit()
 
-    with pytest.raises(AccessDenied) as exc_info:
+    with pytest.raises(VotingDisabled):
         await interactor(CancelVoteInput(vote_id=vote.id))
 
     # A closed ballot is final: the vote still counts.
-    assert exc_info.value.details == {"reason": "VOTING_DISABLED"}
     assert await vote_gateway.get(vote.id) is not None
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []

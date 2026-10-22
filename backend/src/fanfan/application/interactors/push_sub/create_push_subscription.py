@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
@@ -9,11 +9,17 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.push_subscription import generate_push_subscription_id
 
+# Bounds well above what browsers send (an endpoint URL of a few hundred
+# characters, base64url keys of 87 and 22) but below Postgres's ~2.7 KB B-tree
+# entry limit, which the unique index on `endpoint` would otherwise hit as a 500.
+PUSH_ENDPOINT_MAX_LENGTH = 2048
+PUSH_KEY_MAX_LENGTH = 256
+
 
 class CreatePushSubscriptionInput(BaseModel):
-    endpoint: str
-    p256dh: str
-    auth: str
+    endpoint: str = Field(max_length=PUSH_ENDPOINT_MAX_LENGTH)
+    p256dh: str = Field(max_length=PUSH_KEY_MAX_LENGTH)
+    auth: str = Field(max_length=PUSH_KEY_MAX_LENGTH)
 
 
 class CreatePushSubscription:

@@ -104,15 +104,18 @@ for the closed/open, offline and SSE patterns respectively.
 
 - One catch-all route over `**/api/**` (`mocks/api.ts`). A registry maps
   `"<METHOD> <path>"` (path **without** `/api`, **with** the trailing slash the
-  OpenAPI spec uses — `"GET /me/"`) to a response. The keys are typed from the
+  OpenAPI spec uses — `"GET /me"`) to a response. The keys are typed from the
   committed spec (`RouteKey`), so a typo, a wrong method or a removed route fails
   to compile; a path parameter takes the concrete value (`` `GET /users/${id}` ``).
-- `mocks/defaults.ts` pre-mocks the **boot-critical** endpoints (`/me/`,
+- `mocks/defaults.ts` pre-mocks the **boot-critical** endpoints (`/me`,
   `/config`, `/debug/health`, `/schedule/`, …) as a logged-out guest. Every test
   starts from this baseline.
 - `api.use({ … })` overrides or adds routes for one test; last write wins.
 - **Type your bodies** with `json<SomeDto>({ … })`, importing the generated type
   from `../fixtures`, so a mock that drifts from the real contract fails to compile.
+- **Mock an error with `problem(code, status, extensions)`**, not `json({ code })`: it
+  answers like the backend (RFC 9457 problem details, `application/problem+json`),
+  and `code` is checked against the spec's enum.
 - An endpoint nobody mocked returns a **loud 404** and lands in `api.unmatched`.
   The `api` fixture fails the test at teardown if it isn't empty, so add the
   missing route; specs don't assert it themselves.
@@ -131,7 +134,7 @@ for the closed/open, offline and SSE patterns respectively.
 ### Personas (auth)
 
 The session is an HttpOnly cookie JS can't forge, so auth is faked by mocking
-`/me/`, not by a real login. `loggedInAs(overrides)` / `organizer()`
+`/me`, not by a real login. `loggedInAs(overrides)` / `organizer()`
 (`mocks/personas.ts`) return handlers you layer with `api.use(...)`. Flows that
 must exercise the **real** cookie/login handshake belong in a full-stack run, not
 here.
@@ -258,7 +261,7 @@ await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
 e2e/
   fixtures.ts        # test/expect + api / consoleErrors / makeAxeBuilder fixtures — import from here
   mocks/
-    api.ts           # ApiMock: catch-all route registry + json() helper
+    api.ts           # ApiMock: catch-all route registry + json() / problem() helpers
     defaults.ts      # baseline (guest) boot handlers
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()

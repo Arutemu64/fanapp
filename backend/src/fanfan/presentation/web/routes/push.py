@@ -10,6 +10,7 @@ from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscriptionInput,
 )
 from fanfan.application.interactors.push_sub.create_push_subscription import (
+    PUSH_ENDPOINT_MAX_LENGTH,
     CreatePushSubscription,
     CreatePushSubscriptionInput,
 )
@@ -18,7 +19,7 @@ from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscriptionInput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 push_router = APIRouter(
@@ -34,7 +35,7 @@ class PushSubscriptionStatus(BaseModel):
 
 
 @push_router.post(
-    "/",
+    "",
     status_code=204,
     summary="Subscribe to push notifications",
     description="Registers a push subscription endpoint "
@@ -42,20 +43,20 @@ class PushSubscriptionStatus(BaseModel):
     responses={
         204: {"description": "Push subscription registered successfully."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Push subscription already exists.",
         },
     },
 )
 @inject
-async def subscribe(
+async def create_push_subscription(
     data: CreatePushSubscriptionInput, interactor: FromDishka[CreatePushSubscription]
 ) -> None:
     await interactor(data)
 
 
 @push_router.get(
-    "/",
+    "",
     summary="Check push subscription",
     description="Reports whether the given endpoint is registered for the "
     "authenticated user. The client only needs this yes/no answer for its own "
@@ -65,16 +66,19 @@ async def subscribe(
     },
 )
 @inject
-async def check_subscription(
-    endpoint: Annotated[str, Query()],
+async def check_push_subscription(
+    endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
     interactor: FromDishka[CheckPushSubscription],
 ) -> PushSubscriptionStatus:
     subscribed = await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
     return PushSubscriptionStatus(subscribed=subscribed)
 
 
+# The endpoint travels in the query, as on the GET above: a DELETE body has no
+# defined semantics (RFC 9110 §9.3.5) and some servers and proxies reject or
+# drop one.
 @push_router.delete(
-    "/",
+    "",
     summary="Unsubscribe from push notifications",
     description="Removes a push subscription endpoint for the authenticated user.",
     status_code=204,
@@ -83,7 +87,8 @@ async def check_subscription(
     },
 )
 @inject
-async def unsubscribe(
-    data: DeletePushSubscriptionInput, interactor: FromDishka[DeletePushSubscription]
+async def delete_push_subscription(
+    endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
+    interactor: FromDishka[DeletePushSubscription],
 ) -> None:
-    await interactor(data)
+    await interactor(DeletePushSubscriptionInput(endpoint=endpoint))

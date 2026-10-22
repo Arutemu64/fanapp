@@ -1,8 +1,9 @@
 import logging
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field
 from pydantic.types import UuidVersion
+from pydantic_core import PydanticCustomError
 
 from fanfan.application.commands.notifications import ProcessBroadcastCommand
 from fanfan.application.ports.gateways.mailings import MailingGateway
@@ -18,6 +19,26 @@ from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
 
+# Sized for Web Push, the tightest channel: a push service need not accept more
+# than 3993 octets of plaintext (RFC 8291 §4), and the push library JSON-encodes
+# with \uXXXX escapes, 6 bytes per UTF-16 code unit at most. So the cap counts
+# code units, not characters: an emoji outside the BMP is two (a surrogate pair,
+# 12 bytes). 500 units stay under 3 KB, leaving room for the title and link.
+# The broadcast form mirrors it (frontend lib/constants/notifications.ts), and
+# a textarea's maxlength counts code units too.
+BROADCAST_BODY_MAX_LENGTH = 500
+
+
+def _within_utf16_limit(body: str) -> str:
+    utf16_units = len(body.encode("utf-16-le")) // 2
+    if utf16_units > BROADCAST_BODY_MAX_LENGTH:
+        # The same error type as max_length, so the client's copy names the cap.
+        error_type = "string_too_long"
+        message = "String should have at most {max_length} characters"
+        context = {"max_length": BROADCAST_BODY_MAX_LENGTH}
+        raise PydanticCustomError(error_type, message, context)
+    return body
+
 
 class SendBroadcastInput(BaseModel):
     # Client-generated so a retry after a lost response replays the broadcast
@@ -28,8 +49,12 @@ class SendBroadcastInput(BaseModel):
         UuidVersion(7),
         Field(description="UUIDv7 the client generates once per broadcast form."),
     ]
-    body: str
-    roles: list[UserRole]
+    body: Annotated[
+        str,
+        Field(min_length=1, max_length=BROADCAST_BODY_MAX_LENGTH),
+        AfterValidator(_within_utf16_limit),
+    ]
+    roles: list[UserRole] = Field(min_length=1)
 
 
 class SendBroadcastOutput(BaseModel):

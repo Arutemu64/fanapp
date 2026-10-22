@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Mapping
+from http import HTTPStatus
 from typing import Any, cast
 
 from fastapi import FastAPI, Request, status
@@ -18,9 +19,10 @@ from fanfan.core.exceptions.base import (
     UpstreamServiceError,
 )
 from fanfan.presentation.web.schemas.error import (
-    ErrorMessage,
+    PROBLEM_JSON_MEDIA_TYPE,
+    VALIDATION_ERROR_CODE,
+    ValidationContextValue,
     ValidationErrorDetail,
-    ValidationErrorResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -70,11 +72,38 @@ def is_expected_error(exc: BaseException) -> bool:
     return False
 
 
-def _build_error_content(
+def problem_type(code: str) -> str:
+    """The RFC 9457 `type` URI for an error code.
+
+    A relative reference with the full path, which RFC 9457 §3.1.1 allows: an
+    absolute URI would need the deployment's host, and the client identifies
+    a problem by `code` anyway. Nothing is served there yet; consumers are not
+    meant to dereference it.
+    """
+    return "/problems/" + code.lower().replace("_", "-")
+
+
+def problem_response(
+    status_code: int,
     code: str,
-    details: Mapping[str, object] | None = None,
-) -> dict[str, Any]:
-    return ErrorMessage(code=code, details=dict(details or {})).model_dump()
+    extensions: Mapping[str, object] | None = None,
+    headers: Mapping[str, str] | None = None,
+) -> JSONResponse:
+    """An RFC 9457 problem details response for an error `code`."""
+    content: dict[str, Any] = dict(extensions or {})
+    # The standard members go last so an extension can never overwrite them.
+    content.update(
+        type=problem_type(code),
+        title=HTTPStatus(status_code).phrase,
+        status=status_code,
+        code=code,
+    )
+    return JSONResponse(
+        status_code=status_code,
+        content=content,
+        headers=headers,
+        media_type=PROBLEM_JSON_MEDIA_TYPE,
+    )
 
 
 def internal_error_response(exc: Exception) -> JSONResponse:
@@ -88,10 +117,7 @@ def internal_error_response(exc: Exception) -> JSONResponse:
     # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
     logger.error("Unhandled exception while handling request", exc_info=exc)
 
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=_build_error_content(code=INTERNAL_ERROR_CODE),
-    )
+    return problem_response(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_CODE)
 
 
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
@@ -108,11 +134,16 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     if isinstance(retry_after, int):
         headers = {"Retry-After": str(retry_after)}
 
-    return JSONResponse(
-        status_code=status_code,
-        content=_build_error_content(exc.code, exc.details),
-        headers=headers,
-    )
+    return problem_response(status_code, exc.code, exc.details, headers)
+
+
+def _scalar_context(ctx: Mapping[str, object]) -> dict[str, ValidationContextValue]:
+    # The input itself never goes back (`input` is dropped): it may be a password.
+    return {
+        key: value
+        for key, value in ctx.items()
+        if isinstance(value, str | int | float | bool)
+    }
 
 
 async def validation_exception_handler(
@@ -120,21 +151,18 @@ async def validation_exception_handler(
 ) -> JSONResponse:
     _ = request
 
-    error_content = ValidationErrorResponse(
-        details={
-            "errors": [
-                ValidationErrorDetail(
-                    loc=list(error["loc"]),
-                    type=error["type"],
-                )
-                for error in exc.errors()
-            ]
-        }
-    ).model_dump()
-
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-        content=error_content,
+    errors = [
+        ValidationErrorDetail(
+            loc=list(error["loc"]),
+            type=error["type"],
+            ctx=_scalar_context(error.get("ctx", {})),
+        ).model_dump()
+        for error in exc.errors()
+    ]
+    return problem_response(
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+        VALIDATION_ERROR_CODE,
+        {"errors": errors},
     )
 
 
@@ -146,26 +174,18 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         code = detail.get("code")
         details = detail.get("details")
         if isinstance(code, str) and isinstance(details, Mapping):
-            return JSONResponse(
-                status_code=exc.status_code,
-                content=_build_error_content(
-                    code, cast("Mapping[str, object]", details)
-                ),
-                headers=exc.headers,
+            return problem_response(
+                exc.status_code,
+                code,
+                cast("Mapping[str, object]", details),
+                exc.headers,
             )
 
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=_build_error_content(
-            code=HTTP_ERROR_CODE,
-            details={"status_code": exc.status_code},
-        ),
-        headers=exc.headers,
-    )
+    return problem_response(exc.status_code, HTTP_ERROR_CODE, headers=exc.headers)
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Last-resort handler so unexpected errors still match the ErrorMessage shape.
+    """Last-resort handler so unexpected errors still answer as problem details.
 
     Starlette runs an `Exception` handler in `ServerErrorMiddleware`, outside
     every other middleware, so its response carries no CORS, request-id or
@@ -183,10 +203,10 @@ def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppException, app_exception_handler)  # ty: ignore[invalid-argument-type]
     # Starlette's HTTPException, not FastAPI's subclass: the router raises the
     # Starlette one for an unknown path (404) or method (405), and only a handler
-    # on the base class gives those the ErrorMessage shape too.
+    # on the base class answers those as problem details too.
     # https://fastapi.tiangolo.com/tutorial/handling-errors/
     app.add_exception_handler(HTTPException, http_exception_handler)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # ty: ignore[invalid-argument-type]
     # Last resort for an error raised outside `CatchUnexpectedErrorsMiddleware` (in an
-    # outer middleware), so even that response keeps the ErrorMessage shape.
+    # outer middleware), so even that response stays problem details.
     app.add_exception_handler(Exception, unhandled_exception_handler)

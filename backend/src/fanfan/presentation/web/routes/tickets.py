@@ -23,7 +23,7 @@ from fanfan.application.interactors.tickets.tcloud_event_roles import (
     TCloudEventRolesOutput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.tickets import TicketListQuery
 from fanfan.presentation.web.security import session_security
 
@@ -70,7 +70,7 @@ async def list_tickets(
     responses={
         200: {"description": "Tickets generated successfully."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "A generated barcode collided; retry the request.",
         },
     },

@@ -5,7 +5,7 @@ import type {
 	OAuthProvidersOutput
 } from '../../src/lib/api/generated/types.gen';
 
-import { expect, json, test } from '../fixtures';
+import { expect, json, problem, test } from '../fixtures';
 
 // A real deterministic ALTCHA challenge at the API's own difficulty, pinned to
 // counter 750. The browser never checks the signatures (only the API does), and
@@ -102,13 +102,9 @@ test.describe('email login', { tag: '@critical' }, () => {
 		// Venue NAT can put many visitors behind one IP, so the challenge cap is
 		// reachable; its retry_after must survive the captcha layer.
 		api.use({
-			'GET /auth/captcha-challenge': json(
-				{
-					code: 'TOO_MANY_LOGIN_CODE_REQUESTS',
-					details: { retry_after: 42 }
-				},
-				429
-			)
+			'GET /auth/captcha-challenge': problem('TOO_MANY_LOGIN_CODE_REQUESTS', 429, {
+				retry_after: 42
+			})
 		});
 		const email = await openEmailStep(page);
 		await email.fill('ann@example.com');
@@ -170,7 +166,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 	}) => {
 		api.use({
 			'POST /auth/request-login-code': json(null),
-			'POST /auth/login-with-code': json({ code: 'INVALID_OTP_CODE', details: {} }, 400)
+			'POST /auth/login-with-code': problem('INVALID_OTP_CODE', 400)
 		});
 		const email = await openEmailStep(page);
 		await email.fill('ann@example.com');

@@ -41,7 +41,7 @@ from fanfan.application.interactors.voting.set_voting_time_range import (
 from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.vote import VoteId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
 voting_router = APIRouter(tags=["Voting"], prefix="/voting")
@@ -85,7 +85,7 @@ async def list_voting_nominations(
     description="Retrieves detailed information about a specific nomination.",
     responses={
         200: {"description": "Nomination details retrieved successfully."},
-        404: {"model": ErrorMessage, "description": "Nomination not found."},
+        404: {"model": ProblemDetails, "description": "Nomination not found."},
     },
 )
 @inject
@@ -108,9 +108,9 @@ async def get_voting_nomination(
     responses={
         **AUTH_RESPONSES,
         201: {"description": "Vote successfully cast."},
-        404: {"model": ErrorMessage, "description": "Participant not found."},
+        404: {"model": ProblemDetails, "description": "Participant not found."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Already voted in this nomination.",
         },
     },
@@ -133,7 +133,7 @@ async def add_vote(
     responses={
         **AUTH_RESPONSES,
         204: {"description": "Vote successfully cancelled."},
-        404: {"model": ErrorMessage, "description": "No vote found to cancel."},
+        404: {"model": ProblemDetails, "description": "No vote found to cancel."},
     },
 )
 @inject
@@ -153,7 +153,7 @@ async def cancel_vote(
     responses={
         **AUTH_RESPONSES,
         200: {"description": "Dashboard retrieved successfully."},
-        403: {"model": ErrorMessage, "description": "Missing voting:manage."},
+        403: {"model": ProblemDetails, "description": "Missing voting:manage."},
     },
 )
 @inject
@@ -173,8 +173,8 @@ async def get_voting_dashboard(
     responses={
         **AUTH_RESPONSES,
         204: {"description": "Voting time range updated successfully."},
-        403: {"model": ErrorMessage, "description": "Missing voting:manage."},
-        404: {"model": ErrorMessage, "description": "Festival settings not found."},
+        403: {"model": ProblemDetails, "description": "Missing voting:manage."},
+        404: {"model": ProblemDetails, "description": "Festival settings not found."},
     },
 )
 @inject
@@ -194,7 +194,7 @@ async def set_voting_time_range(
     responses={
         **AUTH_RESPONSES,
         200: {"description": "Winner drawn (or an empty pool reported)."},
-        403: {"model": ErrorMessage, "description": "Missing voting:manage."},
+        403: {"model": ProblemDetails, "description": "Missing voting:manage."},
     },
 )
 @inject

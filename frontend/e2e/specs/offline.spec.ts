@@ -70,7 +70,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 				quest_max_award: 100,
 				schedule_changeover_seconds: 30
 			}),
-			'GET /schedule/': json<GetScheduleOutput>({
+			'GET /schedule': json<GetScheduleOutput>({
 				schedule: [
 					{
 						type: 'event',
@@ -145,7 +145,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		const sent: unknown[] = [];
 		api.use({
 			...loggedInAs(),
-			'POST /feedback/': (route) => {
+			'POST /feedback': (route) => {
 				sent.push(route.request().postDataJSON());
 				return json({ feedback_id: 'feedback-1' }, 201);
 			}
@@ -153,7 +153,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		// A boot or warm-up response the page handles after the `offline` event marks
 		// the backend reachable again, so let the signed-in warm-up land first.
 		const warmedUp = Promise.all(
-			['/notifications/', '/schedule/subscriptions/'].map((path) =>
+			['/notifications', '/schedule/subscriptions'].map((path) =>
 				page.waitForResponse((response) => new URL(response.url()).pathname.endsWith(path))
 			)
 		);
@@ -164,7 +164,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 
 		api.use({
 			'GET /debug/health': (route) => route.abort(),
-			'POST /feedback/': (route) => route.abort()
+			'POST /feedback': (route) => route.abort()
 		});
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
@@ -183,7 +183,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 
 		api.use({
 			'GET /debug/health': json({ status: 'healthy' }),
-			'POST /feedback/': (route) => {
+			'POST /feedback': (route) => {
 				sent.push(route.request().postDataJSON());
 				return json({ feedback_id: 'feedback-1' }, 201);
 			}
@@ -199,7 +199,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		api.use({
 			...loggedInAs(),
 			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 1 }),
-			'GET /schedule/': json({ schedule: [] }),
+			'GET /schedule': json({ schedule: [] }),
 			'PATCH /me/settings': () => {
 				patched = true;
 				return json({});
@@ -241,7 +241,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		// load's own probe tells the protected guard that a failed /me/ means
 		// "offline" rather than "guest".
 		api.use({
-			'GET /me/': (route) => route.abort(),
+			'GET /me': (route) => route.abort(),
 			'GET /debug/health': (route) => route.abort()
 		});
 		await page.goto('/notifications');

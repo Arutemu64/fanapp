@@ -37,7 +37,7 @@ test.describe('organizer user directory', () => {
 		const listRequests: URLSearchParams[] = [];
 		api.use({
 			...organizer(),
-			'GET /users/': (route) => {
+			'GET /users': (route) => {
 				const params = new URL(route.request().url()).searchParams;
 				listRequests.push(params);
 				if (params.get('role') === 'participant') {

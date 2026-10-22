@@ -5,7 +5,7 @@
     "version": "2.1.0"
   },
   "paths": {
-    "/debug/": {
+    "/debug": {
       "get": {
         "tags": [
           "Debug"
@@ -19,16 +19,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DebugOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -53,16 +43,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -79,7 +59,7 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/Body_login"
+                "$ref": "#/components/schemas/EmailPasswordLoginForm"
               }
             }
           },
@@ -92,9 +72,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -102,9 +82,9 @@
           "401": {
             "description": "Invalid email or password.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -112,9 +92,9 @@
           "429": {
             "description": "Too many login attempts. Try again later.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -147,9 +127,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -157,9 +137,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -167,9 +147,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -177,9 +157,9 @@
           "400": {
             "description": "Code is invalid or expired.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -187,9 +167,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -221,16 +201,6 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "429": {
             "description": "Rate limited — editing too fast.",
             "headers": {
@@ -242,9 +212,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -282,9 +252,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -300,9 +270,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -310,9 +280,9 @@
           "403": {
             "description": "Captcha verification failed.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -320,9 +290,9 @@
           "502": {
             "description": "The email could not be delivered — the mail service was unreachable or refused the message.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -355,9 +325,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -365,9 +335,9 @@
           "400": {
             "description": "Email code is invalid or has already been used.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -375,9 +345,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -396,16 +366,6 @@
         "responses": {
           "204": {
             "description": "Successfully logged out."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -425,16 +385,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OAuthProvidersOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -477,26 +427,18 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "302": {
+            "description": "Redirect to the provider's authorization page."
           },
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
-          },
-          "302": {
-            "description": "Redirect to the provider's authorization page."
           },
           "303": {
             "description": "The provider could not be reached. Redirects to the login page with an `oauthLoginError` query param."
@@ -523,26 +465,18 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "303": {
+            "description": "Flow finished. Redirects to the post-login path, the app root or the profile page; on any failure an error query param is included."
           },
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
-          },
-          "303": {
-            "description": "Flow finished. Redirects to the post-login path, the app root or the profile page; on any failure an error query param is included."
           }
         }
       }
@@ -565,21 +499,11 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/me/": {
+    "/me": {
       "get": {
         "tags": [
           "Current user"
@@ -598,22 +522,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -621,9 +535,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -659,9 +573,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -669,9 +583,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -679,9 +593,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -689,9 +603,9 @@
           "409": {
             "description": "Username already taken.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -723,22 +637,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -746,9 +650,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -786,9 +690,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -796,9 +700,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -806,9 +710,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -846,9 +750,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -856,9 +760,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -866,9 +770,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -876,9 +780,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -886,9 +790,9 @@
           "400": {
             "description": "Current password is incorrect.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -926,9 +830,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -936,9 +840,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -946,9 +850,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -964,9 +868,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -974,9 +878,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -984,9 +888,9 @@
           "409": {
             "description": "Email already in use by another account.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1023,20 +927,15 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "302": {
+            "description": "Redirect to the provider's authorization page."
           },
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1044,9 +943,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1054,15 +953,12 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
-          },
-          "302": {
-            "description": "Redirect to the provider's authorization page."
           },
           "303": {
             "description": "The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param."
@@ -1082,22 +978,12 @@
           "204": {
             "description": "Telegram account unlinked successfully."
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1105,9 +991,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1115,9 +1001,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1125,9 +1011,9 @@
           "409": {
             "description": "Cannot remove the user's last remaining sign-in method.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1152,22 +1038,12 @@
           "204": {
             "description": "VK account unlinked successfully."
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1175,9 +1051,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1185,9 +1061,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1195,9 +1071,9 @@
           "409": {
             "description": "Cannot remove the user's last remaining sign-in method.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1235,9 +1111,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1245,9 +1121,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1255,9 +1131,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1265,9 +1141,9 @@
           "404": {
             "description": "Ticket not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1275,9 +1151,9 @@
           "409": {
             "description": "User already has a ticket linked or ticket is already used.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1309,22 +1185,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1332,9 +1198,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1342,9 +1208,9 @@
           "404": {
             "description": "Festival settings were not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1380,9 +1246,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1390,9 +1256,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1400,9 +1266,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1410,9 +1276,9 @@
           "404": {
             "description": "Festival settings were not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1458,21 +1324,11 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
     },
-    "/schedule/": {
+    "/schedule": {
       "get": {
         "tags": [
           "Schedule"
@@ -1483,6 +1339,14 @@
         "responses": {
           "200": {
             "description": "Schedule retrieved successfully.",
+            "headers": {
+              "ETag": {
+                "description": "Schedule version; send it back in If-None-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1491,18 +1355,16 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
+          "304": {
+            "description": "Schedule unchanged since the client's cached version.",
+            "headers": {
+              "ETag": {
+                "description": "Schedule version; send it back in If-None-Match.",
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "type": "string"
                 }
               }
             }
-          },
-          "304": {
-            "description": "Schedule unchanged since the client's cached version."
           }
         }
       }
@@ -1536,9 +1398,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1546,9 +1408,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1556,9 +1418,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1566,9 +1428,9 @@
           "400": {
             "description": "The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/InvalidScheduleFileProblem"
                 }
               }
             }
@@ -1600,22 +1462,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1623,9 +1475,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1661,9 +1513,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1671,9 +1523,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1681,9 +1533,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1730,9 +1582,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1740,9 +1592,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1750,9 +1602,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1768,9 +1620,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1778,9 +1630,9 @@
           "400": {
             "description": "Event is skipped or invalid for this operation.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1788,9 +1640,9 @@
           "404": {
             "description": "Event ID not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1810,22 +1662,12 @@
           "204": {
             "description": "Current event cleared successfully."
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1833,9 +1675,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1851,9 +1693,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1910,9 +1752,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -1920,9 +1762,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1930,9 +1772,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1948,9 +1790,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1958,9 +1800,9 @@
           "400": {
             "description": "Invalid move: target and destination are the same.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1968,9 +1810,9 @@
           "404": {
             "description": "Event to move or target neighbor event was not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2022,9 +1864,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2032,9 +1874,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2042,9 +1884,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2060,9 +1902,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2070,9 +1912,9 @@
           "400": {
             "description": "Cannot skip the current active event.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2080,9 +1922,9 @@
           "404": {
             "description": "Event ID not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2090,7 +1932,7 @@
         }
       }
     },
-    "/schedule/changes/": {
+    "/schedule/changes": {
       "get": {
         "tags": [
           "Schedule"
@@ -2150,9 +1992,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2160,9 +2002,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2170,9 +2012,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2214,9 +2056,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2224,9 +2066,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2234,9 +2076,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2244,9 +2086,9 @@
           "404": {
             "description": "Schedule change ID not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2254,7 +2096,7 @@
         }
       }
     },
-    "/schedule/subscriptions/": {
+    "/schedule/subscriptions": {
       "get": {
         "tags": [
           "Schedule"
@@ -2273,22 +2115,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2296,9 +2128,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2341,9 +2173,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2351,9 +2183,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2361,9 +2193,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2371,9 +2203,9 @@
           "404": {
             "description": "Event ID does not exist.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2381,9 +2213,9 @@
           "409": {
             "description": "Subscription for this event already exists.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2430,9 +2262,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2440,9 +2272,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2450,9 +2282,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2460,9 +2292,9 @@
           "404": {
             "description": "Subscription ID not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2488,16 +2320,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -2517,16 +2339,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListVotingNominationsOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -2569,9 +2381,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2579,9 +2391,9 @@
           "404": {
             "description": "Nomination not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2621,9 +2433,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2631,9 +2443,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2641,9 +2453,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2651,9 +2463,9 @@
           "404": {
             "description": "Participant not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2661,9 +2473,9 @@
           "409": {
             "description": "Already voted in this nomination.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2710,9 +2522,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2720,9 +2532,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2730,9 +2542,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2740,9 +2552,9 @@
           "404": {
             "description": "No vote found to cancel.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2769,22 +2581,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2792,9 +2594,9 @@
           "403": {
             "description": "Missing voting:manage.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2830,9 +2632,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2840,9 +2642,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2850,9 +2652,9 @@
           "403": {
             "description": "Missing voting:manage.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2860,9 +2662,9 @@
           "404": {
             "description": "Festival settings not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2894,22 +2696,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2917,9 +2709,9 @@
           "403": {
             "description": "Missing voting:manage.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2975,9 +2767,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -2985,9 +2777,9 @@
           "400": {
             "description": "Invalid webhook payload.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2998,7 +2790,7 @@
         }
       }
     },
-    "/notifications/": {
+    "/notifications": {
       "get": {
         "tags": [
           "Notifications"
@@ -3058,9 +2850,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3068,9 +2860,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3078,9 +2870,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3107,22 +2899,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3130,9 +2912,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3157,22 +2939,12 @@
           "204": {
             "description": "All notifications marked as read."
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3180,9 +2952,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3220,9 +2992,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3230,9 +3002,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3240,9 +3012,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3267,22 +3039,12 @@
           "204": {
             "description": "Test notification created successfully."
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3290,9 +3052,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3308,9 +3070,9 @@
               }
             },
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3360,9 +3122,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3370,9 +3132,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3380,9 +3142,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3390,9 +3152,9 @@
           "409": {
             "description": "The mailing ID belongs to a different broadcast.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3458,9 +3220,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3468,9 +3230,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3478,9 +3240,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3522,9 +3284,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3532,9 +3294,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3542,9 +3304,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3552,9 +3314,9 @@
           "404": {
             "description": "Mailing not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3562,9 +3324,9 @@
           "409": {
             "description": "Mailing cannot be cancelled.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3572,14 +3334,14 @@
         }
       }
     },
-    "/push/": {
+    "/push": {
       "post": {
         "tags": [
           "Push"
         ],
         "summary": "Subscribe to push notifications",
         "description": "Registers a push subscription endpoint for the authenticated user's device.",
-        "operationId": "subscribe",
+        "operationId": "create_push_subscription",
         "security": [
           {
             "SessionCookie": []
@@ -3602,9 +3364,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3612,9 +3374,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3622,9 +3384,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3632,9 +3394,9 @@
           "409": {
             "description": "Push subscription already exists.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3647,7 +3409,7 @@
         ],
         "summary": "Check push subscription",
         "description": "Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.",
-        "operationId": "check_subscription",
+        "operationId": "check_push_subscription",
         "security": [
           {
             "SessionCookie": []
@@ -3660,6 +3422,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "maxLength": 2048,
               "title": "Endpoint"
             }
           }
@@ -3678,9 +3441,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3688,9 +3451,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3698,9 +3461,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3713,22 +3476,24 @@
         ],
         "summary": "Unsubscribe from push notifications",
         "description": "Removes a push subscription endpoint for the authenticated user.",
-        "operationId": "unsubscribe",
+        "operationId": "delete_push_subscription",
         "security": [
           {
             "SessionCookie": []
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeletePushSubscriptionInput"
-              }
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 2048,
+              "title": "Endpoint"
             }
           }
-        },
+        ],
         "responses": {
           "204": {
             "description": "Push subscription removed successfully."
@@ -3736,9 +3501,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3746,9 +3511,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3756,9 +3521,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3766,8 +3531,11 @@
         }
       }
     },
-    "/feedback/": {
+    "/feedback": {
       "post": {
+        "tags": [
+          "Feedback"
+        ],
         "summary": "Submit app feedback",
         "description": "Submits free-text feedback about the app from the current user.",
         "operationId": "submit_feedback",
@@ -3800,9 +3568,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3810,9 +3578,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3820,9 +3588,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3830,6 +3598,9 @@
         }
       },
       "get": {
+        "tags": [
+          "Feedback"
+        ],
         "summary": "List app feedback",
         "description": "Returns a paginated list of feedback submitted by users, newest first. Requires the feedback:read permission.",
         "operationId": "list_feedback",
@@ -3885,9 +3656,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -3895,9 +3666,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3905,9 +3676,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3992,9 +3763,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4002,9 +3773,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4012,9 +3783,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4054,9 +3825,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4064,9 +3835,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4074,9 +3845,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4084,9 +3855,9 @@
           "409": {
             "description": "A generated barcode collided; retry the request.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4118,22 +3889,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4141,9 +3902,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4179,9 +3940,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4189,9 +3950,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4199,9 +3960,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4237,22 +3998,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4260,9 +4011,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4307,14 +4058,22 @@
                   "$ref": "#/components/schemas/SyncRunDTO"
                 }
               }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "The status resource to re-read for progress."
+              }
             }
           },
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4322,9 +4081,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4332,9 +4091,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4342,9 +4101,9 @@
           "409": {
             "description": "A sync for this source is already running.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4352,7 +4111,7 @@
         }
       }
     },
-    "/users/": {
+    "/users": {
       "get": {
         "tags": [
           "Users"
@@ -4461,9 +4220,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4471,9 +4230,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4481,9 +4240,9 @@
           "403": {
             "description": "Missing users:read.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4510,22 +4269,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4533,9 +4282,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4589,9 +4338,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4599,9 +4348,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4609,9 +4358,9 @@
           "403": {
             "description": "Missing users:read.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4619,9 +4368,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4673,9 +4422,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4683,9 +4432,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4693,9 +4442,9 @@
           "403": {
             "description": "Missing users:manage.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4703,9 +4452,9 @@
           "400": {
             "description": "Tried to change own role.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4713,9 +4462,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4767,9 +4516,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4777,9 +4526,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4787,9 +4536,9 @@
           "403": {
             "description": "Missing the superuser grant.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4797,9 +4546,9 @@
           "400": {
             "description": "Own permissions, or the superuser grant.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4807,9 +4556,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4859,9 +4608,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4869,9 +4618,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4879,9 +4628,9 @@
           "403": {
             "description": "Missing the superuser grant.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4889,9 +4638,9 @@
           "400": {
             "description": "Own permissions, or the superuser grant.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4899,9 +4648,9 @@
           "404": {
             "description": "User not found.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4943,9 +4692,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -4953,9 +4702,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4963,9 +4712,9 @@
           "403": {
             "description": "Missing users:manage.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -4992,22 +4741,12 @@
               }
             }
           },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5015,9 +4754,9 @@
           "403": {
             "description": "The quest is disabled.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5090,9 +4829,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -5100,9 +4839,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5110,9 +4849,9 @@
           "403": {
             "description": "The quest is disabled.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5160,9 +4899,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -5170,9 +4909,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5180,9 +4919,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5230,9 +4969,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -5240,9 +4979,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5250,9 +4989,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5260,9 +4999,9 @@
           "404": {
             "description": "The user does not exist.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5307,9 +5046,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -5317,9 +5056,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5327,9 +5066,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5337,9 +5076,9 @@
           "404": {
             "description": "The user does not exist.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5347,9 +5086,9 @@
           "409": {
             "description": "The award ID is taken by a different award.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5415,9 +5154,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -5425,9 +5164,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5435,9 +5174,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5477,9 +5216,9 @@
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                  "$ref": "#/components/schemas/ValidationProblem"
                 }
               }
             }
@@ -5487,9 +5226,9 @@
           "401": {
             "description": "Not authenticated.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5497,9 +5236,9 @@
           "403": {
             "description": "Access denied.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5507,9 +5246,9 @@
           "404": {
             "description": "The award does not exist.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5517,9 +5256,9 @@
           "409": {
             "description": "The award is already cancelled or its window expired.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5646,25 +5385,6 @@
         ],
         "title": "Body_import_schedule"
       },
-      "Body_login": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "Body_login"
-      },
       "Body_set_user_role": {
         "properties": {
           "role": {
@@ -5717,7 +5437,8 @@
           "old_password": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 128
               },
               {
                 "type": "null"
@@ -5783,14 +5504,17 @@
         "properties": {
           "endpoint": {
             "type": "string",
+            "maxLength": 2048,
             "title": "Endpoint"
           },
           "p256dh": {
             "type": "string",
+            "maxLength": 256,
             "title": "P256Dh"
           },
           "auth": {
             "type": "string",
+            "maxLength": 256,
             "title": "Auth"
           }
         },
@@ -5945,19 +5669,6 @@
         ],
         "title": "DebugOutput"
       },
-      "DeletePushSubscriptionInput": {
-        "properties": {
-          "endpoint": {
-            "type": "string",
-            "title": "Endpoint"
-          }
-        },
-        "type": "object",
-        "required": [
-          "endpoint"
-        ],
-        "title": "DeletePushSubscriptionInput"
-      },
       "DrawVotingContestWinnerOutput": {
         "properties": {
           "winner": {
@@ -5982,94 +5693,25 @@
         ],
         "title": "DrawVotingContestWinnerOutput"
       },
-      "ErrorMessage": {
+      "EmailPasswordLoginForm": {
         "properties": {
-          "code": {
+          "email": {
             "type": "string",
-            "title": "Code",
-            "enum": [
-              "ACCESS_DENIED",
-              "ALREADY_VOTED_IN_THIS_NOMINATION",
-              "APP_SETTINGS_NOT_FOUND",
-              "AUTHENTICATION_ERROR",
-              "CANNOT_AWARD_SELF",
-              "CANNOT_CHANGE_OWN_ACCESS",
-              "CANNOT_REMOVE_LAST_SIGN_IN_METHOD",
-              "CAPTCHA_VERIFICATION_FAILED",
-              "CURRENT_EVENT_NOT_ALLOWED",
-              "EMAIL_ALREADY_EXISTS",
-              "EMAIL_CODE_REQUEST_TOO_FAST",
-              "EMAIL_DELIVERY_FAILED",
-              "EVENT_NOT_FOUND",
-              "HTTP_ERROR",
-              "INCORRECT_PASSWORD",
-              "INTERNAL_ERROR",
-              "INVALID_CREDENTIALS",
-              "INVALID_EMAIL",
-              "INVALID_FESTIVAL_TIME_RANGE",
-              "INVALID_OTP_CODE",
-              "INVALID_PAGE_CURSOR",
-              "INVALID_SCHEDULE_FILE",
-              "INVALID_TCLOUD_EVENT_ID",
-              "INVALID_TELEGRAM_AUTH_PAYLOAD",
-              "INVALID_VOTING_TIME_RANGE",
-              "LINK_INITIATOR_MISMATCH",
-              "MAILING_ALREADY_EXISTS",
-              "MAILING_CANCELLED",
-              "MAILING_NOT_FOUND",
-              "NOMINATION_NOT_FOUND",
-              "OUTDATED_SCHEDULE_CHANGE",
-              "PARTICIPANT_NOT_FOUND",
-              "PERMISSION_NOT_ASSIGNABLE",
-              "PUSH_SUBSCRIPTION_ALREADY_EXISTS",
-              "PUSH_SUBSCRIPTION_NOT_FOUND",
-              "QUEST_AWARD_ALREADY_CANCELLED",
-              "QUEST_AWARD_ALREADY_EXISTS",
-              "QUEST_AWARD_AMOUNT_OUT_OF_RANGE",
-              "QUEST_AWARD_CANCEL_WINDOW_EXPIRED",
-              "QUEST_AWARD_NOT_FOUND",
-              "QUEST_DISABLED",
-              "SAME_EVENTS_ARE_NOT_ALLOWED",
-              "SCHEDULE_CHANGE_NOT_FOUND",
-              "SCHEDULE_EDIT_TOO_FAST",
-              "SKIPPED_EVENT_NOT_ALLOWED",
-              "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER",
-              "SUBSCRIPTION_ALREADY_EXISTS",
-              "SUBSCRIPTION_NOT_FOUND",
-              "SYNC_ALREADY_RUNNING",
-              "TEST_NOTIFICATION_TOO_FAST",
-              "TICKET_ALREADY_USED",
-              "TICKET_BARCODE_COLLISION",
-              "TICKET_NOT_FOUND",
-              "TICKET_NOT_LINKED",
-              "TICKET_REVOKED",
-              "TOO_MANY_ATTEMPTS",
-              "TOO_MANY_LOGIN_ATTEMPTS",
-              "TOO_MANY_LOGIN_CODE_REQUESTS",
-              "TOO_MANY_OTP_ATTEMPTS",
-              "USERNAME_ALREADY_TAKEN",
-              "USERNAME_PROFANITY",
-              "USER_ALREADY_EXISTS",
-              "USER_ALREADY_HAS_PROVIDER_LINKED",
-              "USER_ALREADY_HAS_TICKET_LINKED",
-              "USER_HAS_NO_EMAIL",
-              "USER_NOT_AUTHENTICATED",
-              "USER_NOT_FOUND",
-              "VALIDATION_ERROR",
-              "VOTE_NOT_FOUND"
-            ]
+            "format": "email",
+            "title": "Email"
           },
-          "details": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Details"
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Password"
           }
         },
         "type": "object",
         "required": [
-          "code"
+          "email",
+          "password"
         ],
-        "title": "ErrorMessage"
+        "title": "EmailPasswordLoginForm"
       },
       "FeedbackDTO": {
         "properties": {
@@ -6407,6 +6049,106 @@
         ],
         "title": "HealthCheckOutput"
       },
+      "InvalidScheduleFileProblem": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "code": {
+            "type": "string",
+            "const": "INVALID_SCHEDULE_FILE",
+            "title": "Code"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/InvalidScheduleFileReason"
+          },
+          "columns": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "row": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "reason"
+        ],
+        "title": "InvalidScheduleFileProblem",
+        "description": "ProblemDetails narrowed to INVALID_SCHEDULE_FILE, for the import route's docs.\n\nGives the frontend a typed `reason` union to check its copy against, as the\ncode enum does for codes. The response itself is still built from the\nexception's details dict; a unit test keeps the two in step."
+      },
+      "InvalidScheduleFileReason": {
+        "type": "string",
+        "enum": [
+          "UNREADABLE_FILE",
+          "MISSING_COLUMNS",
+          "EMPTY_FILE",
+          "EMPTY_CELL",
+          "INVALID_NUMBER",
+          "DUPLICATE_NUMBER",
+          "DURATION_NOT_POSITIVE",
+          "INVALID_TYPE",
+          "BLOCK_ROW_WITH_EVENT_DATA",
+          "FILE_TOO_LARGE",
+          "UNSUPPORTED_FILE_TYPE"
+        ],
+        "title": "InvalidScheduleFileReason",
+        "description": "Why a schedule spreadsheet was rejected.\n\nTravels to the client inside the error `details`, so each member is part of\nthe API contract — the frontend switches on it to pick Russian copy."
+      },
       "LeaderboardEntryDTO": {
         "properties": {
           "rank": {
@@ -6428,6 +6170,7 @@
         "properties": {
           "barcode": {
             "type": "string",
+            "maxLength": 128,
             "title": "Barcode"
           }
         },
@@ -7132,6 +6875,109 @@
         ],
         "title": "Permission"
       },
+      "ProblemDetails": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "enum": [
+              "ACCESS_DENIED",
+              "ALREADY_VOTED_IN_THIS_NOMINATION",
+              "APP_SETTINGS_NOT_FOUND",
+              "AUTHENTICATION_ERROR",
+              "CANNOT_AWARD_SELF",
+              "CANNOT_CHANGE_OWN_ACCESS",
+              "CANNOT_REMOVE_LAST_SIGN_IN_METHOD",
+              "CAPTCHA_VERIFICATION_FAILED",
+              "CURRENT_EVENT_NOT_ALLOWED",
+              "EMAIL_ALREADY_EXISTS",
+              "EMAIL_CODE_REQUEST_TOO_FAST",
+              "EMAIL_DELIVERY_FAILED",
+              "EVENT_NOT_FOUND",
+              "HTTP_ERROR",
+              "INCORRECT_PASSWORD",
+              "INTERNAL_ERROR",
+              "INVALID_CREDENTIALS",
+              "INVALID_EMAIL",
+              "INVALID_FESTIVAL_TIME_RANGE",
+              "INVALID_OTP_CODE",
+              "INVALID_PAGE_CURSOR",
+              "INVALID_SCHEDULE_FILE",
+              "INVALID_TCLOUD_EVENT_ID",
+              "INVALID_TELEGRAM_AUTH_PAYLOAD",
+              "INVALID_VOTING_TIME_RANGE",
+              "LINK_INITIATOR_MISMATCH",
+              "MAILING_ALREADY_EXISTS",
+              "MAILING_CANCELLED",
+              "MAILING_NOT_FOUND",
+              "NOMINATION_NOT_FOUND",
+              "OUTDATED_SCHEDULE_CHANGE",
+              "PARTICIPANT_NOT_FOUND",
+              "PERMISSION_NOT_ASSIGNABLE",
+              "PUSH_SUBSCRIPTION_ALREADY_EXISTS",
+              "PUSH_SUBSCRIPTION_NOT_FOUND",
+              "QUEST_AWARD_ALREADY_CANCELLED",
+              "QUEST_AWARD_ALREADY_EXISTS",
+              "QUEST_AWARD_AMOUNT_OUT_OF_RANGE",
+              "QUEST_AWARD_CANCEL_WINDOW_EXPIRED",
+              "QUEST_AWARD_NOT_FOUND",
+              "QUEST_DISABLED",
+              "SAME_EVENTS_ARE_NOT_ALLOWED",
+              "SCHEDULE_CHANGE_NOT_FOUND",
+              "SCHEDULE_EDIT_TOO_FAST",
+              "SKIPPED_EVENT_NOT_ALLOWED",
+              "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER",
+              "SUBSCRIPTION_ALREADY_EXISTS",
+              "SUBSCRIPTION_NOT_FOUND",
+              "SYNC_ALREADY_RUNNING",
+              "TEST_NOTIFICATION_TOO_FAST",
+              "TICKET_ALREADY_USED",
+              "TICKET_BARCODE_COLLISION",
+              "TICKET_NOT_FOUND",
+              "TICKET_NOT_LINKED",
+              "TICKET_REVOKED",
+              "TOO_MANY_ATTEMPTS",
+              "TOO_MANY_LOGIN_ATTEMPTS",
+              "TOO_MANY_LOGIN_CODE_REQUESTS",
+              "TOO_MANY_OTP_ATTEMPTS",
+              "USERNAME_ALREADY_TAKEN",
+              "USERNAME_PROFANITY",
+              "USER_ALREADY_EXISTS",
+              "USER_ALREADY_HAS_PROVIDER_LINKED",
+              "USER_ALREADY_HAS_TICKET_LINKED",
+              "USER_HAS_NO_EMAIL",
+              "USER_NOT_AUTHENTICATED",
+              "USER_NOT_FOUND",
+              "VALIDATION_ERROR",
+              "VOTE_NOT_FOUND",
+              "VOTING_DISABLED",
+              "VOTING_TICKET_REQUIRED"
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "ProblemDetails",
+        "description": "An RFC 9457 problem details object; every error response is one.\n\n`code` is our extension member and what the client branches on: a closed\nset, stamped into the spec as an enum. `type` is derived from it, so the two\nnever disagree. Problem-specific members (`retry_after`, `reason`, `errors`,\n…) sit beside these at the top level, as RFC 9457 §3.2 extensions do."
+      },
       "PublicConfigDTO": {
         "properties": {
           "festival_start": {
@@ -7717,6 +7563,8 @@
           },
           "body": {
             "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
             "title": "Body"
           },
           "roles": {
@@ -7724,6 +7572,7 @@
               "$ref": "#/components/schemas/UserRole"
             },
             "type": "array",
+            "minItems": 1,
             "title": "Roles"
           }
         },
@@ -8651,6 +8500,26 @@
           "type": {
             "type": "string",
             "title": "Type"
+          },
+          "ctx": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Ctx"
           }
         },
         "type": "object",
@@ -8660,26 +8529,43 @@
         ],
         "title": "ValidationErrorDetail"
       },
-      "ValidationErrorResponse": {
+      "ValidationProblem": {
         "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
           "code": {
             "type": "string",
-            "title": "Code",
-            "default": "VALIDATION_ERROR"
+            "const": "VALIDATION_ERROR",
+            "title": "Code"
           },
-          "details": {
-            "additionalProperties": {
-              "items": {
-                "$ref": "#/components/schemas/ValidationErrorDetail"
-              },
-              "type": "array"
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationErrorDetail"
             },
-            "type": "object",
-            "title": "Details"
+            "type": "array",
+            "title": "Errors"
           }
         },
+        "additionalProperties": true,
         "type": "object",
-        "title": "ValidationErrorResponse"
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "errors"
+        ],
+        "title": "ValidationProblem"
       },
       "VotingStatus": {
         "type": "string",

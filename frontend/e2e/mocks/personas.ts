@@ -29,9 +29,9 @@ function user(overrides: Partial<User> = {}): User {
 	};
 }
 
-/** Handlers that log the given user in (replaces the guest `GET /me/`). */
+/** Handlers that log the given user in (replaces the guest `GET /me`). */
 export function loggedInAs(overrides: Partial<User> = {}): Handlers {
-	return { 'GET /me/': json<User>(user(overrides)) };
+	return { 'GET /me': json<User>(user(overrides)) };
 }
 
 /** An organizer with full permissions — for tools/ and other gated surfaces. */

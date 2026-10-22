@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 class LoginWithCodeInput(BaseModel):
     email: EmailStr
-    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    # repr=False keeps the one-time code out of error reports (core/vo/fields.py).
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$", repr=False)
 
 
 class LoginWithCode:

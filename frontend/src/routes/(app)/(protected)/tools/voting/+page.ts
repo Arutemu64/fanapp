@@ -18,9 +18,7 @@ export const load: PageLoad = async ({ parent }) => {
 	const dashboard = await queryForLoad(queryClient, {
 		...getVotingDashboardOptions(),
 		staleTime: 0
-	}).catch((apiError: unknown) =>
-		throwApiError(apiError, undefined, m.voting_dashboard_load_failed())
-	);
+	}).catch((apiError: unknown) => throwApiError(apiError, m.voting_dashboard_load_failed()));
 
 	return {
 		title: m.nav_voting(),

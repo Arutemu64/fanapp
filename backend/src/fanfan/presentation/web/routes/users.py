@@ -31,7 +31,7 @@ from fanfan.application.interactors.users.unlink_user_ticket import (
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.user import UserId, UserRole
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.users import UserListQuery
 from fanfan.presentation.web.security import session_security
 
@@ -44,14 +44,14 @@ users_router = APIRouter(
 
 
 @users_router.get(
-    "/",
+    "",
     summary="List users",
     description="Newest-first, filterable directory of all users. Search matches a "
     "case-insensitive substring of the username, email or ticket number; the "
     "filters combine with AND. Requires users:read.",
     responses={
         200: {"description": "Users retrieved successfully."},
-        403: {"model": ErrorMessage, "description": "Missing users:read."},
+        403: {"model": ProblemDetails, "description": "Missing users:read."},
     },
 )
 @inject
@@ -93,8 +93,8 @@ async def count_online_users(
     "for one user. Requires users:read.",
     responses={
         200: {"description": "User details retrieved successfully."},
-        403: {"model": ErrorMessage, "description": "Missing users:read."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        403: {"model": ProblemDetails, "description": "Missing users:read."},
+        404: {"model": ProblemDetails, "description": "User not found."},
     },
 )
 @inject
@@ -113,9 +113,9 @@ async def get_user(
     "cannot change their own role.",
     responses={
         204: {"description": "Role changed."},
-        400: {"model": ErrorMessage, "description": "Tried to change own role."},
-        403: {"model": ErrorMessage, "description": "Missing users:manage."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        400: {"model": ProblemDetails, "description": "Tried to change own role."},
+        403: {"model": ProblemDetails, "description": "Missing users:manage."},
+        404: {"model": ProblemDetails, "description": "User not found."},
     },
 )
 @inject
@@ -136,11 +136,11 @@ async def set_user_role(
     responses={
         204: {"description": "Permission granted."},
         400: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Own permissions, or the superuser grant.",
         },
-        403: {"model": ErrorMessage, "description": "Missing the superuser grant."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        403: {"model": ProblemDetails, "description": "Missing the superuser grant."},
+        404: {"model": ProblemDetails, "description": "User not found."},
     },
 )
 @inject
@@ -163,11 +163,11 @@ async def grant_user_permission(
     responses={
         204: {"description": "Permission revoked."},
         400: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "Own permissions, or the superuser grant.",
         },
-        403: {"model": ErrorMessage, "description": "Missing the superuser grant."},
-        404: {"model": ErrorMessage, "description": "User not found."},
+        403: {"model": ProblemDetails, "description": "Missing the superuser grant."},
+        404: {"model": ProblemDetails, "description": "User not found."},
     },
 )
 @inject
@@ -190,7 +190,7 @@ async def revoke_user_permission(
     "Requires users:manage.",
     responses={
         204: {"description": "Ticket unlinked and votes deleted."},
-        403: {"model": ErrorMessage, "description": "Missing users:manage."},
+        403: {"model": ProblemDetails, "description": "Missing users:manage."},
     },
 )
 @inject

@@ -38,7 +38,7 @@ from fanfan.application.interactors.notifications.send_test_notification import 
 )
 from fanfan.core.vo.mailing import MailingId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
@@ -51,7 +51,7 @@ notifications_router = APIRouter(
 
 
 @notifications_router.get(
-    "/",
+    "",
     summary="List user notifications",
     description="Returns a paginated list of notifications for the authenticated user.",
     responses={
@@ -155,7 +155,7 @@ async def send_test_notification(
     responses={
         200: {"description": "Broadcast initiated, or an identical one replayed."},
         409: {
-            "model": ErrorMessage,
+            "model": ProblemDetails,
             "description": "The mailing ID belongs to a different broadcast.",
         },
     },
@@ -201,8 +201,8 @@ async def list_broadcasts(
     ),
     responses={
         204: {"description": "Mailing cancellation requested."},
-        404: {"model": ErrorMessage, "description": "Mailing not found."},
-        409: {"model": ErrorMessage, "description": "Mailing cannot be cancelled."},
+        404: {"model": ProblemDetails, "description": "Mailing not found."},
+        409: {"model": ProblemDetails, "description": "Mailing cannot be cancelled."},
     },
 )
 @inject

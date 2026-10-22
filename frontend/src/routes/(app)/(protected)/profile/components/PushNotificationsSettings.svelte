@@ -7,14 +7,13 @@
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '#lib/api/generated/index.js';
 
 	import {
+		createPushSubscriptionMutation,
+		deletePushSubscriptionMutation,
 		getCurrentUserQueryKey,
 		sendTestNotificationMutation,
-		subscribeMutation,
-		unsubscribeMutation,
 		updateCurrentUserSettingsMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	// Aliased so it doesn't clash with this component's own handler of the same name.
-	import { checkSubscription as checkPushSubscription } from '#lib/api/generated/index.js';
+	import { checkPushSubscription } from '#lib/api/generated/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SwitchRow from '#lib/components/SwitchRow.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -40,11 +39,11 @@
 	}
 
 	const pushSubscribeMutation = createMutation(() => ({
-		...subscribeMutation(),
+		...createPushSubscriptionMutation(),
 		onSuccess: refreshUser
 	}));
 	const pushUnsubscribeMutation = createMutation(() => ({
-		...unsubscribeMutation(),
+		...deletePushSubscriptionMutation(),
 		onSuccess: refreshUser
 	}));
 	const settingsMutation = createMutation(() => ({
@@ -101,7 +100,7 @@
 				await pushSubscribeMutation.mutateAsync({ body: registration });
 			},
 			async unregister(endpoint) {
-				await pushUnsubscribeMutation.mutateAsync({ body: { endpoint } });
+				await pushUnsubscribeMutation.mutateAsync({ query: { endpoint } });
 			}
 		}
 	});

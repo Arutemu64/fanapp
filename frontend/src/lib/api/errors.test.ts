@@ -9,18 +9,21 @@ import {
 	getApiFieldError,
 	gotNoApiAnswer,
 	isConnectionFailure,
-	isUnexpectedRequestError
+	isUnexpectedRequestError,
+	throwApiError
 } from './errors';
 
 const CONNECTION_FAILED = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 
-function validationError(errors: Array<{ loc: Array<string | number>; type: string }>) {
-	return { code: 'VALIDATION_ERROR', details: { errors } };
+function validationError(
+	errors: Array<{ loc: Array<string | number>; type: string; ctx?: Record<string, unknown> }>
+) {
+	return { code: 'VALIDATION_ERROR', errors };
 }
 
 describe('getApiErrorDetail', () => {
 	it('maps a known code to its copy', () => {
-		expect(getApiErrorDetail({ code: 'TICKET_NOT_FOUND', details: {} })).toBe('Билет не найден');
+		expect(getApiErrorDetail({ code: 'TICKET_NOT_FOUND' })).toBe('Билет не найден');
 	});
 
 	it('treats a rejected fetch as a connection failure', async () => {
@@ -46,6 +49,22 @@ describe('getApiErrorDetail', () => {
 	it('never passes a non-JSON error body through as copy', () => {
 		expect(getApiErrorDetail('<html>502 Bad Gateway</html>')).toBeNull();
 	});
+
+	it('points a schedule-file error at the cell to fix', () => {
+		const error = {
+			code: 'INVALID_SCHEDULE_FILE',
+			reason: 'EMPTY_CELL',
+			column: 'C',
+			row: 4
+		};
+		expect(getApiErrorDetail(error)).toContain('4');
+	});
+
+	it('falls back to the generic schedule-file copy for an unknown reason', () => {
+		const unknown = { code: 'INVALID_SCHEDULE_FILE', reason: 'NEW_REASON' };
+		const unreadable = { code: 'INVALID_SCHEDULE_FILE', reason: 'UNREADABLE_FILE' };
+		expect(getApiErrorDetail(unknown)).toBe(getApiErrorDetail(unreadable));
+	});
 });
 
 describe('getApiFieldError', () => {
@@ -64,13 +83,20 @@ describe('getApiFieldError', () => {
 		expect(getApiFieldError(error, 'body')).toBe('Слишком короткое значение');
 	});
 
+	it('names the limit the input broke when the server sends it', () => {
+		const error = validationError([
+			{ loc: ['body', 'body'], type: 'string_too_long', ctx: { max_length: 500 } }
+		]);
+		expect(getApiFieldError(error, 'body')).toBe('Максимум 500 символов');
+	});
+
 	it('ignores errors about other fields', () => {
 		const error = validationError([{ loc: ['body', 'email'], type: 'missing' }]);
 		expect(getApiFieldError(error, 'password')).toBeNull();
 	});
 
 	it('ignores error codes other than VALIDATION_ERROR', () => {
-		expect(getApiFieldError({ code: 'INVALID_EMAIL', details: {} }, 'email')).toBeNull();
+		expect(getApiFieldError({ code: 'INVALID_EMAIL' }, 'email')).toBeNull();
 	});
 });
 
@@ -82,7 +108,7 @@ describe('gotNoApiAnswer', () => {
 	});
 
 	it('is false for an API error body and for a bug in our own code', () => {
-		expect(gotNoApiAnswer({ code: 'INTERNAL_ERROR', details: {} })).toBe(false);
+		expect(gotNoApiAnswer({ code: 'INTERNAL_ERROR' })).toBe(false);
 		expect(gotNoApiAnswer(new SyntaxError('Unexpected token'))).toBe(false);
 	});
 });
@@ -96,7 +122,7 @@ describe('isUnexpectedRequestError', () => {
 	});
 
 	it('leaves out API errors, missing answers and cancellations', async () => {
-		expect(isUnexpectedRequestError({ code: 'TICKET_NOT_FOUND', details: {} })).toBe(false);
+		expect(isUnexpectedRequestError({ code: 'TICKET_NOT_FOUND' })).toBe(false);
 		expect(isUnexpectedRequestError(await droppedConnectionError())).toBe(false);
 		expect(isUnexpectedRequestError('<html>502 Bad Gateway</html>')).toBe(false);
 		expect(isUnexpectedRequestError(new DOMException('aborted', 'AbortError'))).toBe(false);
@@ -200,5 +226,34 @@ describe('fetchRecordingConnectionFailures', () => {
 		const error = await pending;
 		expect(error).toBeInstanceOf(DOMException);
 		expect(isConnectionFailure(error)).toBe(false);
+	});
+});
+
+describe('throwApiError', () => {
+	function thrown(apiError: unknown): unknown {
+		try {
+			throwApiError(apiError, 'Не удалось загрузить');
+		} catch (error) {
+			return error;
+		}
+		return undefined;
+	}
+
+	it("keeps the problem's status, so a missing record is a 404 page", () => {
+		expect(thrown({ code: 'USER_NOT_FOUND', status: 404 })).toMatchObject({
+			status: 404,
+			body: { code: 'USER_NOT_FOUND' }
+		});
+	});
+
+	it('is a 500 with the fallback copy when no API answer came back', async () => {
+		expect(thrown(await droppedConnectionError())).toMatchObject({
+			status: 500,
+			body: { message: CONNECTION_FAILED }
+		});
+		expect(thrown(new TypeError('bug'))).toMatchObject({
+			status: 500,
+			body: { message: 'Не удалось загрузить' }
+		});
 	});
 });

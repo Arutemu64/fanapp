@@ -2,7 +2,7 @@
 
 A single source of truth for two consumers:
 
-* the OpenAPI generator, which stamps these codes onto ``ErrorMessage.code`` as an
+* the OpenAPI generator, which stamps these codes onto ``ProblemDetails.code`` as an
   ``enum`` so the frontend gets a typed union (and can check its copy is complete);
 * the status-map completeness test.
 """

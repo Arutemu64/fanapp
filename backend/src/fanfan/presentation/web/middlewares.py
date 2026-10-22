@@ -8,25 +8,32 @@ also cutting contextvar propagation for whatever sits around it
 scopes (lifespan) untouched.
 """
 
+import re
 import uuid
+from http import HTTPStatus
 
 import structlog
 from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import JSONResponse, Response
+from starlette.responses import Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.exceptions import (
     HTTP_ERROR_CODE,
     internal_error_response,
+    problem_response,
 )
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
-from fanfan.presentation.web.schemas.error import ErrorMessage
 
 # Standard header used by proxies/clients to carry a request id; we reuse it
 # when present so logs can be correlated across services, and generate one
 # otherwise.
 _REQUEST_ID_HEADER = "X-Request-ID"
+
+# Any client can send the header, and its value lands in every log line of the
+# request (CWE-117), so a reused id must look like one: room for a UUID or a
+# proxy's own format, nothing that could pose as another field or record.
+_REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
 # Matches the reverse proxy's own cap (Caddyfile.example's request_body
 # max_size). Generous: the largest legitimate body today is a schedule
@@ -205,11 +212,8 @@ class LimitRequestBodySizeMiddleware:
             except ValueError:
                 declared_size = None
             if declared_size is not None and declared_size > _MAX_REQUEST_BODY_BYTES:
-                response = JSONResponse(
-                    status_code=413,
-                    content=ErrorMessage(
-                        code=HTTP_ERROR_CODE, details={"status_code": 413}
-                    ).model_dump(),
+                response = problem_response(
+                    HTTPStatus.REQUEST_ENTITY_TOO_LARGE, HTTP_ERROR_CODE
                 )
                 await response(scope, receive, send)
                 return
@@ -235,7 +239,9 @@ class BindRequestContextMiddleware:
             return
 
         structlog.contextvars.clear_contextvars()
-        request_id = Headers(scope=scope).get(_REQUEST_ID_HEADER) or uuid.uuid4().hex
+        request_id = Headers(scope=scope).get(_REQUEST_ID_HEADER)
+        if request_id is None or not _REQUEST_ID_PATTERN.fullmatch(request_id):
+            request_id = uuid.uuid4().hex
         structlog.contextvars.bind_contextvars(request_id=request_id)
 
         async def send_with_request_id(message: Message) -> None:
