@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 
 from pydantic import MISSING, BaseModel
 
@@ -29,11 +30,11 @@ class UpdateUserSettings:
         self.uow = uow
 
     async def __call__(self, data: UpdateUserSettingsInput) -> None:
-        # model_dump leaves out MISSING fields, which update_settings reads as
-        # "leave as is".
+        # model_dump leaves out the MISSING fields, so the merge keeps their
+        # current values.
         data_to_update = data.model_dump()
         current_user = await self.current_user_provider.require_user()
-        current_user.update_settings(**data_to_update)
+        current_user.set_settings(replace(current_user.settings, **data_to_update))
         if data_to_update:
             await self.user_gateway.save(current_user)
             await self.uow.commit()

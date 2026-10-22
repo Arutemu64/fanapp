@@ -13,7 +13,8 @@ from fanfan.core.vo.user import (
 )
 
 
-@dataclass(slots=True, kw_only=True)
+# Frozen, like AppSettings' nested configs: a change replaces it whole.
+@dataclass(frozen=True, slots=True, kw_only=True)
 class UserSettings:
     receive_all_announcements: bool = False
     receive_telegram_notifications: bool = True
@@ -64,24 +65,8 @@ class User(AggregateRoot):
     def set_avatar_seed(self, avatar_seed: str) -> None:
         self.avatar_seed = avatar_seed
 
-    def update_settings(
-        self,
-        *,
-        receive_all_announcements: bool | None = None,
-        receive_telegram_notifications: bool | None = None,
-        receive_vk_notifications: bool | None = None,
-    ) -> None:
-        # Only the fields that were explicitly passed get changed; None means
-        # "leave as is". Mutation goes through the aggregate root so callers
-        # never reach into the settings object directly.
-        if receive_all_announcements is not None:
-            self.settings.receive_all_announcements = receive_all_announcements
-        if receive_telegram_notifications is not None:
-            self.settings.receive_telegram_notifications = (
-                receive_telegram_notifications
-            )
-        if receive_vk_notifications is not None:
-            self.settings.receive_vk_notifications = receive_vk_notifications
+    def set_settings(self, settings: UserSettings) -> None:
+        self.settings = settings
 
     def set_email(self, email: Email) -> None:
         self.email = email

@@ -21,12 +21,15 @@ DEFAULT_FESTIVAL_END = datetime(
 )
 
 
-@dataclass(slots=True, kw_only=True)
+# The nested configs are frozen value objects: a change replaces one whole
+# (dataclasses.replace), so the aggregate takes a complete value and never has
+# to tell "leave as is" apart from a new value.
+@dataclass(frozen=True, slots=True, kw_only=True)
 class LimitsConfig:
     announcement_timeout: int = 10
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class QuestConfig:
     # Off by default: the quest runs only at festivals that hand out merch for it.
     enabled: bool = False
@@ -37,7 +40,7 @@ class QuestConfig:
     cancel_window_minutes: int = 15
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class ScheduleConfig:
     # The pause between two acts while one group leaves and the next walks on,
     # which the planned durations leave out. Added once per act to the wait
@@ -103,39 +106,20 @@ class AppSettings(AggregateRoot):
         self.festival_start = start
         self.festival_end = end
 
-    def update_limits(
-        self,
-        *,
-        announcement_timeout: int | None = None,
-    ) -> None:
-        # Mutation of the nested limits config goes through the aggregate root
-        # so callers never reach into it directly. None means "leave as is".
-        if announcement_timeout is not None:
-            self.limits.announcement_timeout = announcement_timeout
+    # Changes to the nested configs go through the aggregate root, so a rule
+    # that spans them has one place to live.
+    def set_limits(self, limits: LimitsConfig) -> None:
+        self.limits = limits
 
-    def update_schedule(self, *, changeover_seconds: int | None = None) -> None:
-        # None means "leave as is", like update_limits.
-        if changeover_seconds is not None:
-            self.schedule.changeover_seconds = changeover_seconds
+    def set_schedule(self, schedule: ScheduleConfig) -> None:
+        self.schedule = schedule
 
     def ensure_quest_enabled(self) -> None:
         if not self.quest.enabled:
             raise QuestDisabled
 
-    def update_quest(
-        self,
-        *,
-        enabled: bool | None = None,
-        max_award: int | None = None,
-        cancel_window_minutes: int | None = None,
-    ) -> None:
-        # None means "leave as is", like update_limits.
-        if enabled is not None:
-            self.quest.enabled = enabled
-        if max_award is not None:
-            self.quest.max_award = max_award
-        if cancel_window_minutes is not None:
-            self.quest.cancel_window_minutes = cancel_window_minutes
+    def set_quest(self, quest: QuestConfig) -> None:
+        self.quest = quest
 
     def set_tcloud_event_roles(self, event_roles: dict[str, UserRole]) -> None:
         # Replaces the whole mapping: the form edits it as one list, so a row

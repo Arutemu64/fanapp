@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from dataclasses import replace
 from uuid import uuid7
 
 import pytest
@@ -44,7 +45,7 @@ async def quest_enabled(dishka_request: AsyncContainer) -> None:
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     uow = await dishka_request.get(UnitOfWork)
     settings = await settings_gateway.get_for_update()
-    settings.update_quest(enabled=True)
+    settings.set_quest(replace(settings.quest, enabled=True))
     await settings_gateway.save(settings)
     await uow.commit()
 

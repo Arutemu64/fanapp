@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -157,10 +158,10 @@ def test_announcement_timeout_has_default() -> None:
     assert settings.limits.announcement_timeout == 10
 
 
-def test_update_limits_updates_announcement_timeout() -> None:
+def test_set_limits_replaces_the_limits() -> None:
     settings = AppSettings()
 
-    settings.update_limits(announcement_timeout=30)
+    settings.set_limits(replace(settings.limits, announcement_timeout=30))
 
     assert settings.limits.announcement_timeout == 30
 

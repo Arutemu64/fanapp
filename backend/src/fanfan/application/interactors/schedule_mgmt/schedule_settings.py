@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 
 from pydantic import MISSING, BaseModel, Field
 
@@ -81,9 +82,13 @@ class UpdateScheduleSettings:
             and data.changeover_seconds != settings.schedule.changeover_seconds
         )
         if data.announcement_timeout is not MISSING:
-            settings.update_limits(announcement_timeout=data.announcement_timeout)
+            settings.set_limits(
+                replace(settings.limits, announcement_timeout=data.announcement_timeout)
+            )
         if data.changeover_seconds is not MISSING:
-            settings.update_schedule(changeover_seconds=data.changeover_seconds)
+            settings.set_schedule(
+                replace(settings.schedule, changeover_seconds=data.changeover_seconds)
+            )
         await self.app_settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(

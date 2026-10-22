@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 
 from pydantic import MISSING, AwareDatetime, BaseModel, Field
 
@@ -102,9 +103,9 @@ class UpdateSettings:
             # The switch and the cap are public; the cancel window is not.
             if quest.enabled is not MISSING or quest.max_award is not MISSING:
                 public_config_changed = True
-            # model_dump leaves out MISSING fields, which update_quest reads as
-            # "leave as is".
-            settings.update_quest(**quest.model_dump())
+            # model_dump leaves out the MISSING fields, so the merge keeps their
+            # current values.
+            settings.set_quest(replace(settings.quest, **quest.model_dump()))
             update_flag = True
 
         if not update_flag:

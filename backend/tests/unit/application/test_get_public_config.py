@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -48,7 +49,7 @@ async def test_projects_public_fields_from_settings() -> None:
 
 async def test_projects_the_quest_switch() -> None:
     settings = AppSettings()
-    settings.update_quest(enabled=True)
+    settings.set_quest(replace(settings.quest, enabled=True))
 
     result = await GetPublicConfig(_FakeAppSettingsGateway(settings))()
 
@@ -57,7 +58,7 @@ async def test_projects_the_quest_switch() -> None:
 
 async def test_projects_the_changeover() -> None:
     settings = AppSettings()
-    settings.update_schedule(changeover_seconds=45)
+    settings.set_schedule(replace(settings.schedule, changeover_seconds=45))
 
     result = await GetPublicConfig(_FakeAppSettingsGateway(settings))()
 
