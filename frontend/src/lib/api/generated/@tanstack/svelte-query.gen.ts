@@ -194,6 +194,7 @@ import type {
 	HealthCheckResponse,
 	ImportScheduleData,
 	ImportScheduleError,
+	ImportScheduleResponse,
 	LinkTicketData,
 	LinkTicketError,
 	LinkTicketResponse,
@@ -252,6 +253,7 @@ import type {
 	ProcessTcloudOrderResponse,
 	RequestLoginCodeData,
 	RequestLoginCodeError,
+	RequestLoginCodeResponse,
 	RequestSyncData,
 	RequestSyncError,
 	RequestSyncResponse,
@@ -485,9 +487,13 @@ export const getCaptchaChallengeOptions = (options?: Options<GetCaptchaChallenge
  */
 export const requestLoginCodeMutation = (
 	options?: Partial<Options<RequestLoginCodeData>>
-): MutationOptions<unknown, RequestLoginCodeError, Options<RequestLoginCodeData>> => {
+): MutationOptions<
+	RequestLoginCodeResponse,
+	RequestLoginCodeError,
+	Options<RequestLoginCodeData>
+> => {
 	const mutationOptions: MutationOptions<
-		unknown,
+		RequestLoginCodeResponse,
 		RequestLoginCodeError,
 		Options<RequestLoginCodeData>
 	> = {
@@ -1012,13 +1018,15 @@ export const getScheduleOptions = (options?: Options<GetScheduleData>) =>
 	});
 
 /**
- * Import Schedule
+ * Import schedule
+ *
+ * Syncs the programme to the rows of an .xlsx spreadsheet (the downloadable template): matching entries are updated in place, new rows added and missing ones deleted. Requires 'schedule:setup'.
  */
 export const importScheduleMutation = (
 	options?: Partial<Options<ImportScheduleData>>
-): MutationOptions<unknown, ImportScheduleError, Options<ImportScheduleData>> => {
+): MutationOptions<ImportScheduleResponse, ImportScheduleError, Options<ImportScheduleData>> => {
 	const mutationOptions: MutationOptions<
-		unknown,
+		ImportScheduleResponse,
 		ImportScheduleError,
 		Options<ImportScheduleData>
 	> = {

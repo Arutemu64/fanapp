@@ -79,8 +79,16 @@
               }
             }
           },
-          "401": {
-            "description": "Invalid email or password.",
+          "429": {
+            "description": "Rate limited — too many requests.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -89,8 +97,8 @@
               }
             }
           },
-          "429": {
-            "description": "Too many login attempts. Try again later.",
+          "401": {
+            "description": "Invalid email or password.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -154,6 +162,24 @@
               }
             }
           },
+          "429": {
+            "description": "Rate limited — too many requests.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Code is invalid or expired.",
             "content": {
@@ -202,7 +228,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -241,13 +267,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "The login code was sent to the email address.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "The login code was sent to the email address."
           },
           "422": {
             "description": "Request validation error.",
@@ -260,7 +281,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -328,6 +349,24 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — too many requests.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -858,7 +897,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -1374,26 +1413,22 @@
         "tags": [
           "Schedule"
         ],
-        "summary": "Import Schedule",
+        "summary": "Import schedule",
+        "description": "Syncs the programme to the rows of an .xlsx spreadsheet (the downloadable template): matching entries are updated in place, new rows added and missing ones deleted. Requires 'schedule:setup'.",
         "operationId": "import_schedule",
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_import_schedule"
+                "$ref": "#/components/schemas/ImportScheduleForm"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Schedule imported."
           },
           "422": {
             "description": "Request validation error.",
@@ -1610,7 +1645,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "schema": {
@@ -1683,7 +1718,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -1780,7 +1815,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "schema": {
@@ -1892,7 +1927,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "schema": {
@@ -3060,7 +3095,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -4410,7 +4445,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Body_set_user_role"
+                "$ref": "#/components/schemas/SetUserRoleBody"
               }
             }
           }
@@ -5370,33 +5405,6 @@
         ],
         "title": "AwardQuestPointsOutput"
       },
-      "Body_import_schedule": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File",
-            "description": "Excel file with schedule data."
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_import_schedule"
-      },
-      "Body_set_user_role": {
-        "properties": {
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          }
-        },
-        "type": "object",
-        "required": [
-          "role"
-        ],
-        "title": "Body_set_user_role"
-      },
       "CaptchaChallengeDTO": {
         "properties": {
           "challenge": {
@@ -5409,7 +5417,8 @@
                 "type": "null"
               }
             ],
-            "title": "Challenge"
+            "title": "Challenge",
+            "description": "ALTCHA challenge, passed verbatim to the widget; its fields are the provider's, not part of this API. Null when captcha is disabled."
           }
         },
         "type": "object",
@@ -6049,6 +6058,22 @@
         ],
         "title": "HealthCheckOutput"
       },
+      "ImportScheduleForm": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Excel file with schedule data."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "ImportScheduleForm",
+        "description": "Multipart body of POST /schedule/import, named so the spec and the\ngenerated client don't carry FastAPI's ``Body_import_schedule``."
+      },
       "InvalidScheduleFileProblem": {
         "properties": {
           "type": {
@@ -6539,6 +6564,7 @@
               "format": "uuid"
             },
             "type": "array",
+            "maxItems": 500,
             "title": "Notification Ids"
           }
         },
@@ -7614,6 +7640,18 @@
           "event_roles"
         ],
         "title": "SetTCloudEventRolesInput"
+      },
+      "SetUserRoleBody": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "SetUserRoleBody"
       },
       "SetVotingTimeRangeInput": {
         "properties": {

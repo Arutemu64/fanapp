@@ -26,13 +26,14 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     },
 }
 
-# Attached to routes whose interactor enforces a cooldown (e.g. schedule edits
-# share the announcement cooldown), so the 429 + Retry-After contract is
-# documented in one place instead of being repeated per route.
+# Attached to routes whose interactor enforces a cooldown or attempt limit (e.g.
+# schedule edits share the announcement cooldown, sign-in counts guesses), so
+# the 429 + Retry-After contract is documented in one place instead of being
+# repeated per route.
 RATE_LIMIT_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_429_TOO_MANY_REQUESTS: {
         "model": ProblemDetails,
-        "description": "Rate limited — editing too fast.",
+        "description": "Rate limited — too many requests.",
         "headers": {
             "Retry-After": {
                 "schema": {"type": "integer"},

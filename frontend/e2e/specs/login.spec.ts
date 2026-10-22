@@ -49,7 +49,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 		page,
 		api
 	}) => {
-		api.use({ 'POST /auth/request-login-code': json(null) });
+		api.use({ 'POST /auth/request-login-code': { status: 204 } });
 		const email = await openEmailStep(page);
 		await email.fill('ann@example.com');
 		await email.press('Enter');
@@ -76,7 +76,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 			'GET /auth/captcha-challenge': json<CaptchaChallengeDto>({ challenge: CAPTCHA_CHALLENGE }),
 			'POST /auth/request-login-code': (route) => {
 				sentToken = (route.request().postDataJSON() as { captcha_token: unknown }).captcha_token;
-				return json(null);
+				return { status: 204 };
 			}
 		});
 		const email = await openEmailStep(page);
@@ -132,7 +132,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 			'POST /auth/request-login-code': async () => {
 				requested();
 				await delivered;
-				return json(null);
+				return { status: 204 };
 			}
 		});
 		const email = await openEmailStep(page);
@@ -165,7 +165,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 		api
 	}) => {
 		api.use({
-			'POST /auth/request-login-code': json(null),
+			'POST /auth/request-login-code': { status: 204 },
 			'POST /auth/login-with-code': problem('INVALID_OTP_CODE', 400)
 		});
 		const email = await openEmailStep(page);
@@ -202,7 +202,7 @@ test(
 	async ({ page, api, expectAccessible }) => {
 		api.use({
 			'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: ['vk', 'telegram'] }),
-			'POST /auth/request-login-code': json(null)
+			'POST /auth/request-login-code': { status: 204 }
 		});
 		await page.goto('/login');
 		await expect(page.getByRole('link', { name: 'Войти через VK ID' })).toBeVisible();

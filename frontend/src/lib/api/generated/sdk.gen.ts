@@ -758,7 +758,9 @@ export const getSchedule = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Import Schedule
+ * Import schedule
+ *
+ * Syncs the programme to the rows of an .xlsx spreadsheet (the downloadable template): matching entries are updated in place, new rows added and missing ones deleted. Requires 'schedule:setup'.
  */
 export const importSchedule = <ThrowOnError extends boolean = false>(
 	options: Options<ImportScheduleData, ThrowOnError>

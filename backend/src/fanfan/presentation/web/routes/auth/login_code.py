@@ -59,6 +59,7 @@ async def get_captcha_challenge(
 
 @login_code_router.post(
     "/request-login-code",
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Request email login code",
     description=(
         "Sends a one-time six-digit sign-in code to the requested email "
@@ -68,7 +69,7 @@ async def get_captcha_challenge(
     ),
     responses={
         **RATE_LIMIT_RESPONSES,
-        200: {"description": "The login code was sent to the email address."},
+        204: {"description": "The login code was sent to the email address."},
         403: {"model": ProblemDetails, "description": "Captcha verification failed."},
         502: {
             "model": ProblemDetails,
@@ -98,6 +99,7 @@ async def request_login_code(
     summary="Login with email code",
     description="Consumes a one-time email code and sets session cookie.",
     responses={
+        **RATE_LIMIT_RESPONSES,
         204: {"description": "Successfully authenticated. Session cookie is set."},
         400: {
             "model": ProblemDetails,

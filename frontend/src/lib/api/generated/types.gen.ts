@@ -74,30 +74,13 @@ export type AwardQuestPointsOutput = {
 };
 
 /**
- * Body_import_schedule
- */
-export type BodyImportSchedule = {
-	/**
-	 * File
-	 *
-	 * Excel file with schedule data.
-	 */
-	file: Blob | File;
-};
-
-/**
- * Body_set_user_role
- */
-export type BodySetUserRole = {
-	role: UserRole;
-};
-
-/**
  * CaptchaChallengeDTO
  */
 export type CaptchaChallengeDto = {
 	/**
 	 * Challenge
+	 *
+	 * ALTCHA challenge, passed verbatim to the widget; its fields are the provider's, not part of this API. Null when captcha is disabled.
 	 */
 	challenge: {
 		[key: string]: unknown;
@@ -467,6 +450,21 @@ export type HealthCheckOutput = {
 	 * Status
 	 */
 	status: 'healthy';
+};
+
+/**
+ * ImportScheduleForm
+ *
+ * Multipart body of POST /schedule/import, named so the spec and the
+ * generated client don't carry FastAPI's ``Body_import_schedule``.
+ */
+export type ImportScheduleForm = {
+	/**
+	 * File
+	 *
+	 * Excel file with schedule data.
+	 */
+	file: Blob | File;
 };
 
 /**
@@ -1454,6 +1452,13 @@ export type SetTCloudEventRolesInput = {
 };
 
 /**
+ * SetUserRoleBody
+ */
+export type SetUserRoleBody = {
+	role: UserRole;
+};
+
+/**
  * SetVotingTimeRangeInput
  */
 export type SetVotingTimeRangeInput = {
@@ -2043,7 +2048,7 @@ export type LoginErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Too many login attempts. Try again later.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2087,6 +2092,10 @@ export type ConfirmEmailCodeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Rate limited — too many requests.
+	 */
+	429: ProblemDetails;
 };
 
 export type ConfirmEmailCodeError = ConfirmEmailCodeErrors[keyof ConfirmEmailCodeErrors];
@@ -2109,7 +2118,7 @@ export type GetCaptchaChallengeData = {
 
 export type GetCaptchaChallengeErrors = {
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2143,7 +2152,7 @@ export type RequestLoginCodeErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 	/**
@@ -2158,8 +2167,10 @@ export type RequestLoginCodeResponses = {
 	/**
 	 * The login code was sent to the email address.
 	 */
-	200: unknown;
+	204: void;
 };
+
+export type RequestLoginCodeResponse = RequestLoginCodeResponses[keyof RequestLoginCodeResponses];
 
 export type LoginWithCodeData = {
 	body: LoginWithCodeInput;
@@ -2181,6 +2192,10 @@ export type LoginWithCodeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Rate limited — too many requests.
+	 */
+	429: ProblemDetails;
 };
 
 export type LoginWithCodeError = LoginWithCodeErrors[keyof LoginWithCodeErrors];
@@ -2487,7 +2502,7 @@ export type ChangeCurrentUserEmailErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2749,7 +2764,7 @@ export type GetScheduleResponses = {
 export type GetScheduleResponse = GetScheduleResponses[keyof GetScheduleResponses];
 
 export type ImportScheduleData = {
-	body: BodyImportSchedule;
+	body: ImportScheduleForm;
 	path?: never;
 	query?: never;
 	url: '/schedule/import';
@@ -2778,10 +2793,12 @@ export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleError
 
 export type ImportScheduleResponses = {
 	/**
-	 * Successful Response
+	 * Schedule imported.
 	 */
-	201: unknown;
+	204: void;
 };
+
+export type ImportScheduleResponse = ImportScheduleResponses[keyof ImportScheduleResponses];
 
 export type GetScheduleSettingsData = {
 	body?: never;
@@ -2884,7 +2901,7 @@ export type SetEventAsCurrentErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2918,7 +2935,7 @@ export type UncheckCurrentEventErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2971,7 +2988,7 @@ export type MoveScheduleEventErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -3024,7 +3041,7 @@ export type UpdateScheduleEventErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -3699,7 +3716,7 @@ export type SendTestNotificationErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -4391,7 +4408,7 @@ export type GetUserResponses = {
 export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 
 export type SetUserRoleData = {
-	body: BodySetUserRole;
+	body: SetUserRoleBody;
 	path: {
 		/**
 		 * User Id
