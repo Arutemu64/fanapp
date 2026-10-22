@@ -1430,7 +1430,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
+                  "$ref": "#/components/schemas/InvalidScheduleFileError"
                 }
               }
             }
@@ -5780,7 +5780,9 @@
               "USER_NOT_AUTHENTICATED",
               "USER_NOT_FOUND",
               "VALIDATION_ERROR",
-              "VOTE_NOT_FOUND"
+              "VOTE_NOT_FOUND",
+              "VOTING_DISABLED",
+              "VOTING_TICKET_REQUIRED"
             ]
           },
           "details": {
@@ -6130,6 +6132,102 @@
           "status"
         ],
         "title": "HealthCheckOutput"
+      },
+      "InvalidScheduleFileDetails": {
+        "properties": {
+          "reason": {
+            "$ref": "#/components/schemas/InvalidScheduleFileReason"
+          },
+          "columns": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Column"
+          },
+          "row": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "InvalidScheduleFileDetails"
+      },
+      "InvalidScheduleFileError": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "const": "INVALID_SCHEDULE_FILE",
+            "title": "Code"
+          },
+          "details": {
+            "$ref": "#/components/schemas/InvalidScheduleFileDetails"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "details"
+        ],
+        "title": "InvalidScheduleFileError",
+        "description": "ErrorMessage narrowed to INVALID_SCHEDULE_FILE, for the import route's docs.\n\nGives the frontend a typed `reason` union to check its copy against, as the\ncode enum does for codes. The response itself is still built from the\nexception's details dict; a unit test keeps the two in step."
+      },
+      "InvalidScheduleFileReason": {
+        "type": "string",
+        "enum": [
+          "UNREADABLE_FILE",
+          "MISSING_COLUMNS",
+          "EMPTY_FILE",
+          "EMPTY_CELL",
+          "INVALID_NUMBER",
+          "DUPLICATE_NUMBER",
+          "DURATION_NOT_POSITIVE",
+          "INVALID_TYPE",
+          "BLOCK_ROW_WITH_EVENT_DATA",
+          "FILE_TOO_LARGE",
+          "UNSUPPORTED_FILE_TYPE"
+        ],
+        "title": "InvalidScheduleFileReason",
+        "description": "Why a schedule spreadsheet was rejected.\n\nTravels to the client inside the error `details`, so each member is part of\nthe API contract — the frontend switches on it to pick Russian copy."
       },
       "LeaderboardEntryDTO": {
         "properties": {
@@ -8378,6 +8476,26 @@
           "type": {
             "type": "string",
             "title": "Type"
+          },
+          "ctx": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Ctx"
           }
         },
         "type": "object",

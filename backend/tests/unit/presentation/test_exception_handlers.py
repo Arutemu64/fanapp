@@ -1,8 +1,10 @@
 import logging
+from typing import Annotated
 
 import pytest
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from pydantic import AfterValidator, BaseModel, Field
 from starlette.testclient import TestClient
 
 from fanfan.core.exceptions.auth import IncorrectPassword
@@ -22,6 +24,16 @@ from fanfan.presentation.web.middlewares import (
 pytestmark = pytest.mark.unit
 
 
+def _reject(value: str) -> str:
+    msg = "rejected"
+    raise ValueError(msg)
+
+
+class _LimitedInput(BaseModel):
+    name: str = Field(max_length=3)
+    code: Annotated[str, AfterValidator(_reject)] = "x"
+
+
 def _app() -> FastAPI:
     app = FastAPI()
 
@@ -37,6 +49,10 @@ def _app() -> FastAPI:
     @app.post("/password")
     async def change_password() -> None:
         raise IncorrectPassword
+
+    @app.post("/limited")
+    async def limited(_: _LimitedInput) -> None:
+        pass
 
     # The same relative order as create_app: the catch sits inside the
     # middleware whose headers every response must carry.
@@ -125,3 +141,31 @@ def test_incorrect_password_is_bad_input_not_a_lost_session(
 )
 def test_is_expected_error(exc: BaseException, *, expected: bool) -> None:
     assert is_expected_error(exc) is expected
+
+
+def test_validation_error_carries_the_broken_limit_but_not_the_input(
+    client: TestClient,
+) -> None:
+    response = client.post("/limited", json={"name": "toolong", "code": "secret"})
+
+    errors = response.json()["details"]["errors"]
+    by_field = {error["loc"][-1]: error for error in errors}
+    assert by_field["name"]["ctx"] == {"max_length": 3}
+    # A custom validator's ctx holds the exception object, which stays out.
+    assert by_field["code"]["ctx"] == {}
+    assert "toolong" not in response.text
+    assert "secret" not in response.text
+
+
+def test_well_formed_request_id_is_reused(client: TestClient) -> None:
+    response = client.get("/boom", headers={"X-Request-ID": "proxy-id.42"})
+
+    assert response.headers["X-Request-ID"] == "proxy-id.42"
+
+
+@pytest.mark.parametrize("request_id", ['x" level=critical', "a" * 129, "line\tbreak"])
+def test_malformed_request_id_is_replaced(client: TestClient, request_id: str) -> None:
+    response = client.get("/boom", headers={"X-Request-ID": request_id})
+
+    assert response.headers["X-Request-ID"] != request_id
+    assert len(response.headers["X-Request-ID"]) == 32

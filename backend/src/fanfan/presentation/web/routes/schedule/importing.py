@@ -24,7 +24,7 @@ from fanfan.core.exceptions.schedule import (
 )
 from fanfan.core.vo.permission import Permission
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.error import InvalidScheduleFileError
 from fanfan.presentation.web.security import session_security
 
 # A real convention schedule is a few hundred rows — well under a megabyte. Cap
@@ -70,7 +70,7 @@ importing_router = APIRouter(
     status_code=201,
     responses={
         400: {
-            "model": ErrorMessage,
+            "model": InvalidScheduleFileError,
             "description": "The upload is not an acceptable schedule spreadsheet: "
             "too large, the wrong type, or unreadable as a schedule.",
         },

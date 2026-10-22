@@ -14,7 +14,9 @@ import {
 
 const CONNECTION_FAILED = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 
-function validationError(errors: Array<{ loc: Array<string | number>; type: string }>) {
+function validationError(
+	errors: Array<{ loc: Array<string | number>; type: string; ctx?: Record<string, unknown> }>
+) {
 	return { code: 'VALIDATION_ERROR', details: { errors } };
 }
 
@@ -46,6 +48,20 @@ describe('getApiErrorDetail', () => {
 	it('never passes a non-JSON error body through as copy', () => {
 		expect(getApiErrorDetail('<html>502 Bad Gateway</html>')).toBeNull();
 	});
+
+	it('points a schedule-file error at the cell to fix', () => {
+		const error = {
+			code: 'INVALID_SCHEDULE_FILE',
+			details: { reason: 'EMPTY_CELL', column: 'C', row: 4 }
+		};
+		expect(getApiErrorDetail(error)).toContain('4');
+	});
+
+	it('falls back to the generic schedule-file copy for an unknown reason', () => {
+		const unknown = { code: 'INVALID_SCHEDULE_FILE', details: { reason: 'NEW_REASON' } };
+		const unreadable = { code: 'INVALID_SCHEDULE_FILE', details: { reason: 'UNREADABLE_FILE' } };
+		expect(getApiErrorDetail(unknown)).toBe(getApiErrorDetail(unreadable));
+	});
 });
 
 describe('getApiFieldError', () => {
@@ -62,6 +78,13 @@ describe('getApiFieldError', () => {
 	it('keeps a field that is itself named like the location', () => {
 		const error = validationError([{ loc: ['body', 'body'], type: 'string_too_short' }]);
 		expect(getApiFieldError(error, 'body')).toBe('Слишком короткое значение');
+	});
+
+	it('names the limit the input broke when the server sends it', () => {
+		const error = validationError([
+			{ loc: ['body', 'body'], type: 'string_too_long', ctx: { max_length: 500 } }
+		]);
+		expect(getApiFieldError(error, 'body')).toBe('Максимум 500 символов');
 	});
 
 	it('ignores errors about other fields', () => {

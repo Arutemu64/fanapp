@@ -19,6 +19,7 @@ from fanfan.core.exceptions.base import (
 )
 from fanfan.presentation.web.schemas.error import (
     ErrorMessage,
+    ValidationContextValue,
     ValidationErrorDetail,
     ValidationErrorResponse,
 )
@@ -115,6 +116,15 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
+def _scalar_context(ctx: Mapping[str, object]) -> dict[str, ValidationContextValue]:
+    # The input itself never goes back (`input` is dropped): it may be a password.
+    return {
+        key: value
+        for key, value in ctx.items()
+        if isinstance(value, str | int | float | bool)
+    }
+
+
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
@@ -126,6 +136,7 @@ async def validation_exception_handler(
                 ValidationErrorDetail(
                     loc=list(error["loc"]),
                     type=error["type"],
+                    ctx=_scalar_context(error.get("ctx", {})),
                 )
                 for error in exc.errors()
             ]

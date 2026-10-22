@@ -12,9 +12,12 @@ from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.participants import ParticipantNotFound
-from fanfan.core.exceptions.votes import VoteAlreadyExists
+from fanfan.core.exceptions.votes import (
+    VoteAlreadyExists,
+    VotingDisabled,
+    VotingTicketRequired,
+)
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
@@ -123,10 +126,8 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     await participant_gateway.add(participant)
     await uow.commit()
 
-    with pytest.raises(AccessDenied) as exc_info:
+    with pytest.raises(VotingTicketRequired):
         await interactor(AddVoteInput(participant_id=participant.id))
-
-    assert exc_info.value.details == {"reason": "VOTING_TICKET_REQUIRED"}
     assert (
         await vote_gateway.get_user_vote_by_nomination(
             nomination_id=nomination.id, user_id=visitor.id
@@ -172,10 +173,8 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     await participant_gateway.add(participant)
     await uow.commit()
 
-    with pytest.raises(AccessDenied) as exc_info:
+    with pytest.raises(VotingDisabled):
         await interactor(AddVoteInput(participant_id=participant.id))
-
-    assert exc_info.value.details == {"reason": "VOTING_DISABLED"}
     assert (
         await vote_gateway.get_user_vote_by_nomination(
             nomination_id=nomination.id, user_id=visitor_with_ticket.id

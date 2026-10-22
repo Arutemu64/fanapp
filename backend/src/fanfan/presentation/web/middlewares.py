@@ -8,6 +8,7 @@ also cutting contextvar propagation for whatever sits around it
 scopes (lifespan) untouched.
 """
 
+import re
 import uuid
 
 import structlog
@@ -27,6 +28,11 @@ from fanfan.presentation.web.schemas.error import ErrorMessage
 # when present so logs can be correlated across services, and generate one
 # otherwise.
 _REQUEST_ID_HEADER = "X-Request-ID"
+
+# Any client can send the header, and its value lands in every log line of the
+# request (CWE-117), so a reused id must look like one: room for a UUID or a
+# proxy's own format, nothing that could pose as another field or record.
+_REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
 # Matches the reverse proxy's own cap (Caddyfile.example's request_body
 # max_size). Generous: the largest legitimate body today is a schedule
@@ -235,7 +241,9 @@ class BindRequestContextMiddleware:
             return
 
         structlog.contextvars.clear_contextvars()
-        request_id = Headers(scope=scope).get(_REQUEST_ID_HEADER) or uuid.uuid4().hex
+        request_id = Headers(scope=scope).get(_REQUEST_ID_HEADER)
+        if request_id is None or not _REQUEST_ID_PATTERN.fullmatch(request_id):
+            request_id = uuid.uuid4().hex
         structlog.contextvars.bind_contextvars(request_id=request_id)
 
         async def send_with_request_id(message: Message) -> None:

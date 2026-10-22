@@ -360,7 +360,9 @@ export type ErrorMessage = {
 		| 'USER_NOT_AUTHENTICATED'
 		| 'USER_NOT_FOUND'
 		| 'VALIDATION_ERROR'
-		| 'VOTE_NOT_FOUND';
+		| 'VOTE_NOT_FOUND'
+		| 'VOTING_DISABLED'
+		| 'VOTING_TICKET_REQUIRED';
 	/**
 	 * Details
 	 */
@@ -553,6 +555,67 @@ export type HealthCheckOutput = {
 	 */
 	status: 'healthy';
 };
+
+/**
+ * InvalidScheduleFileDetails
+ */
+export type InvalidScheduleFileDetails = {
+	reason: InvalidScheduleFileReason;
+	/**
+	 * Columns
+	 */
+	columns?: Array<string> | null;
+	/**
+	 * Column
+	 */
+	column?: string | null;
+	/**
+	 * Row
+	 */
+	row?: number | null;
+	/**
+	 * Number
+	 */
+	number?: number | null;
+};
+
+/**
+ * InvalidScheduleFileError
+ *
+ * ErrorMessage narrowed to INVALID_SCHEDULE_FILE, for the import route's docs.
+ *
+ * Gives the frontend a typed `reason` union to check its copy against, as the
+ * code enum does for codes. The response itself is still built from the
+ * exception's details dict; a unit test keeps the two in step.
+ */
+export type InvalidScheduleFileError = {
+	/**
+	 * Code
+	 */
+	code: 'INVALID_SCHEDULE_FILE';
+	details: InvalidScheduleFileDetails;
+};
+
+/**
+ * InvalidScheduleFileReason
+ *
+ * Why a schedule spreadsheet was rejected.
+ *
+ * Travels to the client inside the error `details`, so each member is part of
+ * the API contract — the frontend switches on it to pick Russian copy.
+ */
+export type InvalidScheduleFileReason =
+	| 'UNREADABLE_FILE'
+	| 'MISSING_COLUMNS'
+	| 'EMPTY_FILE'
+	| 'EMPTY_CELL'
+	| 'INVALID_NUMBER'
+	| 'DUPLICATE_NUMBER'
+	| 'DURATION_NOT_POSITIVE'
+	| 'INVALID_TYPE'
+	| 'BLOCK_ROW_WITH_EVENT_DATA'
+	| 'FILE_TOO_LARGE'
+	| 'UNSUPPORTED_FILE_TYPE';
 
 /**
  * LeaderboardEntryDTO
@@ -1871,6 +1934,12 @@ export type ValidationErrorDetail = {
 	 * Type
 	 */
 	type: string;
+	/**
+	 * Ctx
+	 */
+	ctx?: {
+		[key: string]: string | number | number | boolean;
+	};
 };
 
 /**
@@ -2659,7 +2728,7 @@ export type ImportScheduleErrors = {
 	/**
 	 * The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.
 	 */
-	400: ErrorMessage;
+	400: InvalidScheduleFileError;
 	/**
 	 * Not authenticated.
 	 */
