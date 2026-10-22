@@ -40,3 +40,33 @@ async def test_login_email_names_the_expiry_in_the_right_form() -> None:
     text = await renderer.render("email_login_code.txt.jinja2", context)
 
     assert "Код действует 2 минуты." in text
+
+
+@pytest.mark.parametrize(
+    ("minutes_ahead", "expected"),
+    [
+        (1, ", примерно 1 минута"),
+        (7, ", примерно 7 минут"),
+        (60, ", примерно 1 час"),
+        (65, ", примерно 1 час 5 минут"),
+        (None, ""),
+    ],
+)
+async def test_subscription_reminder_writes_the_wait_as_the_screen_does(
+    minutes_ahead: int | None, expected: str
+) -> None:
+    renderer = JinjaTemplateRenderer(create_jinja_env())
+    context = {
+        "kind": "soon",
+        "event_number": 7,
+        "event_title": "Акт",
+        "positions_ahead": 3,
+        "minutes_ahead": minutes_ahead,
+        "reason_msg": None,
+    }
+
+    body = await renderer.render("subscription_notification.jinja2", context)
+
+    assert body == (
+        "До выступления <b>№007 «Акт»</b> осталось <b>3 выступления</b>" + expected
+    )
