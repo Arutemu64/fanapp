@@ -26,9 +26,9 @@ from fanfan.application.interactors.voting.get_voting_nomination import (
     GetVotingNominationInput,
     GetVotingNominationOutput,
 )
-from fanfan.application.interactors.voting.get_voting_state import (
-    GetVotingState,
-    GetVotingStateOutput,
+from fanfan.application.interactors.voting.get_voting_status import (
+    GetVotingStatus,
+    GetVotingStatusOutput,
 )
 from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
@@ -58,8 +58,8 @@ voting_router = APIRouter(tags=["Voting"], prefix="/voting")
 )
 @inject
 async def get_voting_status(
-    interactor: FromDishka[GetVotingState],
-) -> GetVotingStateOutput:
+    interactor: FromDishka[GetVotingStatus],
+) -> GetVotingStatusOutput:
     return await interactor()
 
 

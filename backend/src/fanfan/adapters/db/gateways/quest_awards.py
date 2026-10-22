@@ -8,11 +8,11 @@ from sqlalchemy.orm import joinedload
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.models import QuestAwardORM, UserORM
 from fanfan.adapters.db.pagination import rows_after
+from fanfan.adapters.db.user_ref import parse_user_ref
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.quest import (
     LeaderboardEntryDTO,
     QuestAwardDTO,
-    QuestAwardUserDTO,
     QuestPlayerDTO,
 )
 from fanfan.application.ports.gateways.quest_awards import QuestAwardGateway
@@ -59,16 +59,14 @@ def _to_model(orm: QuestAwardORM) -> QuestAward:
 def _parse_award_dto(orm: QuestAwardORM) -> QuestAwardDTO:
     awarded_by = None
     if orm.awarder is not None:
-        awarded_by = QuestAwardUserDTO(
-            id=UserId(orm.awarder.id), username=orm.awarder.username
-        )
+        awarded_by = parse_user_ref(orm.awarder)
     return QuestAwardDTO(
         id=QuestAwardId(orm.id),
         amount=orm.amount,
         message=orm.message,
         created_at=orm.created_at,
         cancelled_at=orm.cancelled_at,
-        user=QuestAwardUserDTO(id=UserId(orm.user.id), username=orm.user.username),
+        user=parse_user_ref(orm.user),
         awarded_by=awarded_by,
     )
 

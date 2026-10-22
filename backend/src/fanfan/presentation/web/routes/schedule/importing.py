@@ -3,6 +3,7 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, File, UploadFile
+from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
@@ -59,6 +60,13 @@ def _ensure_valid_upload(file: UploadFile) -> None:
         )
 
 
+class ImportScheduleForm(BaseModel):
+    """Multipart body of POST /schedule/import, named so the spec and the
+    generated client don't carry FastAPI's ``Body_import_schedule``."""
+
+    file: UploadFile = Field(description="Excel file with schedule data.")
+
+
 importing_router = APIRouter(
     dependencies=[session_security],
     responses=AUTH_RESPONSES,
@@ -67,8 +75,15 @@ importing_router = APIRouter(
 
 @importing_router.post(
     "/import",
-    status_code=201,
+    status_code=204,
+    summary="Import schedule",
+    description=(
+        "Syncs the programme to the rows of an .xlsx spreadsheet (the "
+        "downloadable template): matching entries are updated in place, new "
+        "rows added and missing ones deleted. Requires 'schedule:setup'."
+    ),
     responses={
+        204: {"description": "Schedule imported."},
         400: {
             "model": InvalidScheduleFileProblem,
             "description": "The upload is not an acceptable schedule spreadsheet: "
@@ -78,7 +93,7 @@ importing_router = APIRouter(
 )
 @inject
 async def import_schedule(
-    file: Annotated[UploadFile, File(description="Excel file with schedule data.")],
+    form: Annotated[ImportScheduleForm, File()],
     interactor: FromDishka[ImportSchedule],
     current_user_provider: FromDishka[CurrentUserProvider],
     perm_service: FromDishka[PermissionService],
@@ -88,10 +103,10 @@ async def import_schedule(
     # be rejected before it, not by the interactor afterwards.
     current_user = await current_user_provider.require_user()
     await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_SETUP)
-    _ensure_valid_upload(file)
+    _ensure_valid_upload(form.file)
     # python-calamine is synchronous; parsing on the event loop would stall every
     # other request for the duration of the import.
-    schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)
+    schedule = await run_in_threadpool(parse_schedule_from_excel, form.file.file)
     await interactor(ImportScheduleInput(schedule=schedule))
 
 

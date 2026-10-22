@@ -216,15 +216,12 @@ import type {
 	UndoScheduleChangeData,
 	UndoScheduleChangeErrors,
 	UndoScheduleChangeResponses,
-	UnlinkTelegramAccountData,
-	UnlinkTelegramAccountErrors,
-	UnlinkTelegramAccountResponses,
+	UnlinkSocialAccountData,
+	UnlinkSocialAccountErrors,
+	UnlinkSocialAccountResponses,
 	UnlinkUserTicketData,
 	UnlinkUserTicketErrors,
 	UnlinkUserTicketResponses,
-	UnlinkVkAccountData,
-	UnlinkVkAccountErrors,
-	UnlinkVkAccountResponses,
 	UpdateCurrentUserData,
 	UpdateCurrentUserErrors,
 	UpdateCurrentUserResponses,
@@ -598,6 +595,30 @@ export const changeCurrentUserEmail = <ThrowOnError extends boolean = false>(
 	});
 
 /**
+ * Unlink social account
+ *
+ * Unlinks the provider's account from the currently authenticated user.
+ */
+export const unlinkSocialAccount = <ThrowOnError extends boolean = false>(
+	options: Options<UnlinkSocialAccountData, ThrowOnError>
+): RequestResult<UnlinkSocialAccountResponses, UnlinkSocialAccountErrors, ThrowOnError> =>
+	(options.client ?? client).delete<
+		UnlinkSocialAccountResponses,
+		UnlinkSocialAccountErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/me/connections/{provider}',
+		...options
+	});
+
+/**
  * Start account linking
  *
  * Redirects the browser to the provider's OAuth page to begin linking the account to the current user. The provider then calls back to the shared callback (`/auth/oauth/{provider}/callback`) to finish. If the redirect cannot be built the browser goes back to the profile page with an `oauthLinkError` query param instead.
@@ -616,52 +637,6 @@ export const startAccountLink = <ThrowOnError extends boolean = false>(
 		url: '/me/connections/{provider}',
 		...options
 	});
-
-/**
- * Unlink Telegram account
- *
- * Unlinks the Telegram account from the currently authenticated user.
- */
-export const unlinkTelegramAccount = <ThrowOnError extends boolean = false>(
-	options?: Options<UnlinkTelegramAccountData, ThrowOnError>
-): RequestResult<UnlinkTelegramAccountResponses, UnlinkTelegramAccountErrors, ThrowOnError> =>
-	(options?.client ?? client).delete<
-		UnlinkTelegramAccountResponses,
-		UnlinkTelegramAccountErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/me/connections/telegram',
-		...options
-	});
-
-/**
- * Unlink VK account
- *
- * Unlinks the VK account from the currently authenticated user.
- */
-export const unlinkVkAccount = <ThrowOnError extends boolean = false>(
-	options?: Options<UnlinkVkAccountData, ThrowOnError>
-): RequestResult<UnlinkVkAccountResponses, UnlinkVkAccountErrors, ThrowOnError> =>
-	(options?.client ?? client).delete<UnlinkVkAccountResponses, UnlinkVkAccountErrors, ThrowOnError>(
-		{
-			security: [
-				{
-					in: 'cookie',
-					name: 'session_id',
-					type: 'apiKey'
-				}
-			],
-			url: '/me/connections/vk',
-			...options
-		}
-	);
 
 /**
  * Link ticket
@@ -758,7 +733,9 @@ export const getSchedule = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Import Schedule
+ * Import schedule
+ *
+ * Syncs the programme to the rows of an .xlsx spreadsheet (the downloadable template): matching entries are updated in place, new rows added and missing ones deleted. Requires 'schedule:setup'.
  */
 export const importSchedule = <ThrowOnError extends boolean = false>(
 	options: Options<ImportScheduleData, ThrowOnError>
@@ -840,21 +817,19 @@ export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
 export const setEventAsCurrent = <ThrowOnError extends boolean = false>(
 	options: Options<SetEventAsCurrentData, ThrowOnError>
 ): RequestResult<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError> =>
-	(options.client ?? client).patch<
-		SetEventAsCurrentResponses,
-		SetEventAsCurrentErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/schedule/{event_id}/current',
-		...options
-	});
+	(options.client ?? client).put<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError>(
+		{
+			security: [
+				{
+					in: 'cookie',
+					name: 'session_id',
+					type: 'apiKey'
+				}
+			],
+			url: '/schedule/{event_id}/current',
+			...options
+		}
+	);
 
 /**
  * Unset current schedule event
@@ -1373,7 +1348,7 @@ export const listBroadcasts = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/notifications/broadcast',
+		url: '/notifications/broadcasts',
 		...options
 	});
 
@@ -1393,7 +1368,7 @@ export const sendBroadcast = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/notifications/broadcast',
+		url: '/notifications/broadcasts',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
@@ -1417,7 +1392,7 @@ export const cancelMailing = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/notifications/broadcast/{mailing_id}/cancel',
+		url: '/notifications/broadcasts/{mailing_id}/cancel',
 		...options
 	});
 

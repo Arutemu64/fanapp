@@ -7,7 +7,7 @@ const BODY = 'Скоро начнётся церемония открытия н
 const FINISHED: MailingDto = {
 	id: '01890000-0000-7000-8000-0000000000b1',
 	status: 'finished',
-	by_user_id: '01890000-0000-7000-8000-000000000001',
+	created_by: { id: '01890000-0000-7000-8000-000000000001', username: 'ЯркийФеникс7' },
 	body: BODY,
 	roles: ['visitor'],
 	total_count: 10,
@@ -18,11 +18,11 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 	test('organizer sees a sent broadcast and can recall it', async ({ page, api }) => {
 		api.use(organizer());
 		api.use({
-			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
+			'GET /notifications/broadcasts': json<ListBroadcastsOutput>({
 				next_cursor: null,
 				mailings: [FINISHED]
 			}),
-			[`POST /notifications/broadcast/${FINISHED.id}/cancel`]: json({}, 204)
+			[`POST /notifications/broadcasts/${FINISHED.id}/cancel`]: json({}, 204)
 		});
 
 		await page.goto('/tools/broadcast');
@@ -35,7 +35,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		// A finished broadcast is stored, not necessarily delivered, so it can still
 		// be recalled. After the recall, the feed reloads (invalidate) — return the mailing cancelled.
 		api.use({
-			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
+			'GET /notifications/broadcasts': json<ListBroadcastsOutput>({
 				next_cursor: null,
 				mailings: [{ ...FINISHED, status: 'cancelled' }]
 			})
@@ -59,7 +59,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		api.use(organizer());
 		// Baseline has no broadcast handler; mock an empty history explicitly.
 		api.use({
-			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
+			'GET /notifications/broadcasts': json<ListBroadcastsOutput>({
 				next_cursor: null,
 				mailings: []
 			})

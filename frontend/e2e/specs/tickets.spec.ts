@@ -17,8 +17,7 @@ const TICKETS: ListTicketsOutput = {
 			id: '01890000-0000-7000-8000-0000000000d1',
 			barcode: 'FAN-ABCD-1234',
 			role: 'participant',
-			used_by_user_id: HOLDER_ID,
-			used_by_username: 'ЛунныйКот42',
+			used_by: { id: HOLDER_ID, username: 'ЛунныйКот42' },
 			from_ticketscloud: false,
 			revoked_at: null,
 			created_at: new Date().toISOString()
@@ -27,8 +26,7 @@ const TICKETS: ListTicketsOutput = {
 			id: '01890000-0000-7000-8000-0000000000d2',
 			barcode: '7700112233',
 			role: 'visitor',
-			used_by_user_id: null,
-			used_by_username: null,
+			used_by: null,
 			from_ticketscloud: true,
 			revoked_at: new Date().toISOString(),
 			created_at: new Date().toISOString()

@@ -21,3 +21,7 @@ class UserListQuery(BaseModel):
     search: Annotated[str | None, Field(max_length=100)] = None
     role: UserRole | None = None
     has_ticket: bool | None = None
+
+
+class SetUserRoleBody(BaseModel):
+    role: UserRole

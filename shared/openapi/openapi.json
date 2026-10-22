@@ -79,8 +79,16 @@
               }
             }
           },
-          "401": {
-            "description": "Invalid email or password.",
+          "429": {
+            "description": "Rate limited — too many requests.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -89,8 +97,8 @@
               }
             }
           },
-          "429": {
-            "description": "Too many login attempts. Try again later.",
+          "401": {
+            "description": "Invalid email or password.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -154,6 +162,24 @@
               }
             }
           },
+          "429": {
+            "description": "Rate limited — too many requests.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "400": {
             "description": "Code is invalid or expired.",
             "content": {
@@ -202,7 +228,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -241,13 +267,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "The login code was sent to the email address.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "The login code was sent to the email address."
           },
           "422": {
             "description": "Request validation error.",
@@ -260,7 +281,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -328,6 +349,24 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — too many requests.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -858,7 +897,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -964,19 +1003,42 @@
             "description": "The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param."
           }
         }
-      }
-    },
-    "/me/connections/telegram": {
+      },
       "delete": {
         "tags": [
           "Current user"
         ],
-        "summary": "Unlink Telegram account",
-        "description": "Unlinks the Telegram account from the currently authenticated user.",
-        "operationId": "unlink_telegram_account",
+        "summary": "Unlink social account",
+        "description": "Unlinks the provider's account from the currently authenticated user.",
+        "operationId": "unlink_social_account",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SocialProvider"
+            }
+          }
+        ],
         "responses": {
           "204": {
-            "description": "Telegram account unlinked successfully."
+            "description": "Account unlinked successfully."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated.",
@@ -1018,72 +1080,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
-      }
-    },
-    "/me/connections/vk": {
-      "delete": {
-        "tags": [
-          "Current user"
-        ],
-        "summary": "Unlink VK account",
-        "description": "Unlinks the VK account from the currently authenticated user.",
-        "operationId": "unlink_vk_account",
-        "responses": {
-          "204": {
-            "description": "VK account unlinked successfully."
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Cannot remove the user's last remaining sign-in method.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
+        }
       }
     },
     "/me/ticket": {
@@ -1374,26 +1371,22 @@
         "tags": [
           "Schedule"
         ],
-        "summary": "Import Schedule",
+        "summary": "Import schedule",
+        "description": "Syncs the programme to the rows of an .xlsx spreadsheet (the downloadable template): matching entries are updated in place, new rows added and missing ones deleted. Requires 'schedule:setup'.",
         "operationId": "import_schedule",
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_import_schedule"
+                "$ref": "#/components/schemas/ImportScheduleForm"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Schedule imported."
           },
           "422": {
             "description": "Request validation error.",
@@ -1549,7 +1542,7 @@
       }
     },
     "/schedule/{event_id}/current": {
-      "patch": {
+      "put": {
         "tags": [
           "Schedule"
         ],
@@ -1610,7 +1603,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "schema": {
@@ -1683,7 +1676,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -1740,7 +1733,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveScheduleEventRequest"
+                "$ref": "#/components/schemas/MoveScheduleEventBody"
               }
             }
           }
@@ -1780,7 +1773,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "schema": {
@@ -1852,7 +1845,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleEventRequest"
+                "$ref": "#/components/schemas/UpdateScheduleEventBody"
               }
             }
           }
@@ -1892,7 +1885,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "schema": {
@@ -2316,7 +2309,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetVotingStateOutput"
+                  "$ref": "#/components/schemas/GetVotingStatusOutput"
                 }
               }
             }
@@ -2842,7 +2835,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListUserNotificationOutput"
+                  "$ref": "#/components/schemas/ListUserNotificationsOutput"
                 }
               }
             }
@@ -3060,7 +3053,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — editing too fast.",
+            "description": "Rate limited — too many requests.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -3085,7 +3078,7 @@
         ]
       }
     },
-    "/notifications/broadcast": {
+    "/notifications/broadcasts": {
       "post": {
         "tags": [
           "Notifications"
@@ -3250,7 +3243,7 @@
         }
       }
     },
-    "/notifications/broadcast/{mailing_id}/cancel": {
+    "/notifications/broadcasts/{mailing_id}/cancel": {
       "post": {
         "tags": [
           "Notifications"
@@ -3433,7 +3426,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PushSubscriptionStatus"
+                  "$ref": "#/components/schemas/CheckPushSubscriptionOutput"
                 }
               }
             }
@@ -4410,7 +4403,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Body_set_user_role"
+                "$ref": "#/components/schemas/SetUserRoleBody"
               }
             }
           }
@@ -5370,33 +5363,6 @@
         ],
         "title": "AwardQuestPointsOutput"
       },
-      "Body_import_schedule": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File",
-            "description": "Excel file with schedule data."
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_import_schedule"
-      },
-      "Body_set_user_role": {
-        "properties": {
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          }
-        },
-        "type": "object",
-        "required": [
-          "role"
-        ],
-        "title": "Body_set_user_role"
-      },
       "CaptchaChallengeDTO": {
         "properties": {
           "challenge": {
@@ -5409,7 +5375,8 @@
                 "type": "null"
               }
             ],
-            "title": "Challenge"
+            "title": "Challenge",
+            "description": "ALTCHA challenge, passed verbatim to the widget; its fields are the provider's, not part of this API. Null when captcha is disabled."
           }
         },
         "type": "object",
@@ -5459,6 +5426,19 @@
           "new_password"
         ],
         "title": "ChangePasswordInput"
+      },
+      "CheckPushSubscriptionOutput": {
+        "properties": {
+          "subscribed": {
+            "type": "boolean",
+            "title": "Subscribed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscribed"
+        ],
+        "title": "CheckPushSubscriptionOutput"
       },
       "ConfirmEmailCodeInput": {
         "properties": {
@@ -5730,7 +5710,7 @@
             "title": "Created At"
           },
           "user": {
-            "$ref": "#/components/schemas/FeedbackUserDTO"
+            "$ref": "#/components/schemas/UserRefDTO"
           }
         },
         "type": "object",
@@ -5741,25 +5721,6 @@
           "user"
         ],
         "title": "FeedbackDTO"
-      },
-      "FeedbackUserDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username"
-        ],
-        "title": "FeedbackUserDTO"
       },
       "FindQuestPlayersOutput": {
         "properties": {
@@ -5988,13 +5949,14 @@
           "id",
           "code",
           "title",
+          "works_url",
           "participants_count",
           "user_vote",
           "participants"
         ],
         "title": "GetVotingNominationOutput"
       },
-      "GetVotingStateOutput": {
+      "GetVotingStatusOutput": {
         "properties": {
           "can_vote": {
             "type": "boolean",
@@ -6031,9 +5993,11 @@
         "type": "object",
         "required": [
           "can_vote",
-          "status"
+          "status",
+          "voting_start",
+          "voting_end"
         ],
-        "title": "GetVotingStateOutput"
+        "title": "GetVotingStatusOutput"
       },
       "HealthCheckOutput": {
         "properties": {
@@ -6048,6 +6012,22 @@
           "status"
         ],
         "title": "HealthCheckOutput"
+      },
+      "ImportScheduleForm": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Excel file with schedule data."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "ImportScheduleForm",
+        "description": "Multipart body of POST /schedule/import, named so the spec and the\ngenerated client don't carry FastAPI's ``Body_import_schedule``."
       },
       "InvalidScheduleFileProblem": {
         "properties": {
@@ -6353,7 +6333,7 @@
         ],
         "title": "ListTicketsOutput"
       },
-      "ListUserNotificationOutput": {
+      "ListUserNotificationsOutput": {
         "properties": {
           "notifications": {
             "items": {
@@ -6379,7 +6359,7 @@
           "notifications",
           "next_cursor"
         ],
-        "title": "ListUserNotificationOutput"
+        "title": "ListUserNotificationsOutput"
       },
       "ListUsersOutput": {
         "properties": {
@@ -6462,17 +6442,15 @@
           "status": {
             "$ref": "#/components/schemas/MailingStatus"
           },
-          "by_user_id": {
+          "created_by": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "By User Id"
+            ]
           },
           "body": {
             "anyOf": [
@@ -6513,7 +6491,7 @@
         "required": [
           "id",
           "status",
-          "by_user_id",
+          "created_by",
           "body",
           "roles",
           "total_count",
@@ -6539,6 +6517,7 @@
               "format": "uuid"
             },
             "type": "array",
+            "maxItems": 500,
             "title": "Notification Ids"
           }
         },
@@ -6548,7 +6527,7 @@
         ],
         "title": "MarkNotificationsReadInput"
       },
-      "MoveScheduleEventRequest": {
+      "MoveScheduleEventBody": {
         "properties": {
           "place_after_entry_id": {
             "type": "string",
@@ -6560,7 +6539,7 @@
         "required": [
           "place_after_entry_id"
         ],
-        "title": "MoveScheduleEventRequest"
+        "title": "MoveScheduleEventBody"
       },
       "NominationContenderDTO": {
         "properties": {
@@ -6668,6 +6647,7 @@
           "id",
           "code",
           "title",
+          "works_url",
           "participants_count",
           "user_vote"
         ],
@@ -6679,11 +6659,6 @@
             "type": "string",
             "format": "uuid",
             "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
           },
           "title": {
             "type": "string",
@@ -6740,7 +6715,6 @@
         "type": "object",
         "required": [
           "id",
-          "user_id",
           "title",
           "body",
           "type",
@@ -7014,19 +6988,6 @@
         "title": "PublicConfigDTO",
         "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` and `festival_end` so the client can run the\nlive countdown and pick its before/during/after phase itself — flipping at\neach boundary without provoking a 403 on a guarded endpoint. Voting\navailability is intentionally not here: the UI reads it per-user from\nGET /voting/status (which already reflects the time range as a DISABLED\nstate), so a second public copy would only be a redundant source of truth to\ndrift."
       },
-      "PushSubscriptionStatus": {
-        "properties": {
-          "subscribed": {
-            "type": "boolean",
-            "title": "Subscribed"
-          }
-        },
-        "type": "object",
-        "required": [
-          "subscribed"
-        ],
-        "title": "PushSubscriptionStatus"
-      },
       "QuestAwardItemDTO": {
         "properties": {
           "id": {
@@ -7060,12 +7021,12 @@
             "title": "Cancelled At"
           },
           "user": {
-            "$ref": "#/components/schemas/QuestAwardUserDTO"
+            "$ref": "#/components/schemas/UserRefDTO"
           },
           "awarded_by": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/QuestAwardUserDTO"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
@@ -7089,25 +7050,6 @@
           "can_cancel"
         ],
         "title": "QuestAwardItemDTO"
-      },
-      "QuestAwardUserDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username"
-        ],
-        "title": "QuestAwardUserDTO"
       },
       "QuestConfigDTO": {
         "properties": {
@@ -7329,18 +7271,6 @@
             ],
             "title": "Mailing Id"
           },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id"
-          },
           "next_event_changed": {
             "type": "boolean",
             "title": "Next Event Changed"
@@ -7368,7 +7298,7 @@
           "user": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ScheduleChangeUserDTO"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
@@ -7386,7 +7316,6 @@
           "id",
           "type",
           "mailing_id",
-          "user_id",
           "next_event_changed",
           "changed_event",
           "related_entry",
@@ -7405,25 +7334,6 @@
         ],
         "title": "ScheduleChangeType",
         "description": "How to read a `ScheduleChange`'s `changed_event_id`/`related_entry_id`.\n\nSET_AS_CURRENT: `changed_event_id` is the new current event (None if the\n    current event was unchecked); `related_entry_id` is the event that was\n    current before this change.\nMOVED: `related_entry_id` is the entry `changed_event_id` sat right after\n    before the move — a block start when the event opened its block. To\n    undo, place `changed_event_id` back after `related_entry_id` — or at\n    the top of the order if `related_entry_id` is None.\nSKIPPED / UNSKIPPED: `related_entry_id` is unused."
-      },
-      "ScheduleChangeUserDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username"
-        ],
-        "title": "ScheduleChangeUserDTO"
       },
       "ScheduleEntryDTO": {
         "oneOf": [
@@ -7615,6 +7525,18 @@
         ],
         "title": "SetTCloudEventRolesInput"
       },
+      "SetUserRoleBody": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "SetUserRoleBody"
+      },
       "SetVotingTimeRangeInput": {
         "properties": {
           "voting_start": {
@@ -7742,11 +7664,6 @@
             "format": "uuid",
             "title": "Id"
           },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
           "lead_minutes": {
             "type": "integer",
             "title": "Lead Minutes"
@@ -7758,7 +7675,6 @@
         "type": "object",
         "required": [
           "id",
-          "user_id",
           "lead_minutes",
           "event"
         ],
@@ -7975,28 +7891,15 @@
           "role": {
             "$ref": "#/components/schemas/UserRole"
           },
-          "used_by_user_id": {
+          "used_by": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Used By User Id"
-          },
-          "used_by_username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Used By Username"
+            ]
           },
           "from_ticketscloud": {
             "type": "boolean",
@@ -8025,8 +7928,7 @@
           "id",
           "barcode",
           "role",
-          "used_by_user_id",
-          "used_by_username",
+          "used_by",
           "from_ticketscloud",
           "revoked_at",
           "created_at"
@@ -8145,7 +8047,7 @@
         "type": "object",
         "title": "UpdateCurrentUserInput"
       },
-      "UpdateScheduleEventRequest": {
+      "UpdateScheduleEventBody": {
         "properties": {
           "is_skipped": {
             "type": "boolean",
@@ -8156,7 +8058,7 @@
         "required": [
           "is_skipped"
         ],
-        "title": "UpdateScheduleEventRequest"
+        "title": "UpdateScheduleEventBody"
       },
       "UpdateScheduleSettingsInput": {
         "properties": {
@@ -8385,6 +8287,26 @@
         ],
         "title": "UserListItemDTO"
       },
+      "UserRefDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "UserRefDTO",
+        "description": "A person attached to a record, in the field named for their role there\n(`user`, `awarded_by`, `created_by`, …); null when nobody is (a system\naction, a deleted account)."
+      },
       "UserRole": {
         "type": "string",
         "enum": [
@@ -8399,21 +8321,23 @@
         "properties": {
           "receive_all_announcements": {
             "type": "boolean",
-            "title": "Receive All Announcements",
-            "default": false
+            "title": "Receive All Announcements"
           },
           "receive_telegram_notifications": {
             "type": "boolean",
-            "title": "Receive Telegram Notifications",
-            "default": true
+            "title": "Receive Telegram Notifications"
           },
           "receive_vk_notifications": {
             "type": "boolean",
-            "title": "Receive Vk Notifications",
-            "default": true
+            "title": "Receive Vk Notifications"
           }
         },
         "type": "object",
+        "required": [
+          "receive_all_announcements",
+          "receive_telegram_notifications",
+          "receive_vk_notifications"
+        ],
         "title": "UserSettingsDTO"
       },
       "UserSocialIdentityDTO": {

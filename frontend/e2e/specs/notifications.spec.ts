@@ -1,5 +1,5 @@
 import type {
-	ListUserNotificationOutput,
+	ListUserNotificationsOutput,
 	NotificationDto,
 	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
@@ -8,7 +8,6 @@ import { emitSse, expect, json, loggedInAs, test } from '../fixtures';
 
 const UNREAD: NotificationDto = {
 	id: '01890000-0000-7000-8000-0000000000e1',
-	user_id: '01890000-0000-7000-8000-000000000001',
 	title: 'Скоро твоё событие',
 	body: 'Косплей-дефиле начнётся через 15 минут на главной сцене.',
 	type: 'schedule_change',
@@ -22,7 +21,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('renders the feed and marks loaded items read on open', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationsOutput>({
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
@@ -49,7 +48,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		let unreadCount = 30;
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationsOutput>({
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
@@ -74,7 +73,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('does not link an organizer mailing back to the feed it sits in', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications': json<ListUserNotificationOutput>({
+			'GET /notifications': json<ListUserNotificationsOutput>({
 				next_cursor: null,
 				notifications: [
 					{
@@ -138,12 +137,12 @@ test.describe('notifications', { tag: '@critical' }, () => {
 				const params = new URL(route.request().url()).searchParams;
 				requests.push(params);
 				if (params.get('cursor') === null) {
-					return json<ListUserNotificationOutput>({
+					return json<ListUserNotificationsOutput>({
 						next_cursor: firstPageCursor,
 						notifications: firstPage
 					});
 				}
-				return json<ListUserNotificationOutput>({ next_cursor: null, notifications: [older] });
+				return json<ListUserNotificationsOutput>({ next_cursor: null, notifications: [older] });
 			}
 		});
 		const item = (title: string) => page.getByRole('listitem').filter({ hasText: title });

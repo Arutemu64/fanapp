@@ -3,11 +3,11 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
 
 from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscription,
     CheckPushSubscriptionInput,
+    CheckPushSubscriptionOutput,
 )
 from fanfan.application.interactors.push_sub.create_push_subscription import (
     PUSH_ENDPOINT_MAX_LENGTH,
@@ -28,10 +28,6 @@ push_router = APIRouter(
     dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
-
-
-class PushSubscriptionStatus(BaseModel):
-    subscribed: bool
 
 
 @push_router.post(
@@ -69,9 +65,8 @@ async def create_push_subscription(
 async def check_push_subscription(
     endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
     interactor: FromDishka[CheckPushSubscription],
-) -> PushSubscriptionStatus:
-    subscribed = await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
-    return PushSubscriptionStatus(subscribed=subscribed)
+) -> CheckPushSubscriptionOutput:
+    return await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
 
 
 # The endpoint travels in the query, as on the GET above: a DELETE body has no

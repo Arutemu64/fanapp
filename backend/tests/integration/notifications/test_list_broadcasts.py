@@ -58,6 +58,8 @@ async def test_list_broadcasts_pages_newest_first(
 
     assert [m.body for m in first_page.mailings] == ["Вторая рассылка"]
     assert [m.body for m in second_page.mailings] == ["Первая рассылка"]
+    assert first_page.mailings[0].created_by is not None
+    assert first_page.mailings[0].created_by.id == broadcaster.id
     assert first_page.next_cursor is not None
     assert second_page.next_cursor is None
 

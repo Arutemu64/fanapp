@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Path, Query
 
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.user import UserDetailsDTO, UserListFilter
@@ -29,10 +29,10 @@ from fanfan.application.interactors.users.unlink_user_ticket import (
     UnlinkUserTicketInput,
 )
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ProblemDetails
-from fanfan.presentation.web.schemas.users import UserListQuery
+from fanfan.presentation.web.schemas.users import SetUserRoleBody, UserListQuery
 from fanfan.presentation.web.security import session_security
 
 users_router = APIRouter(
@@ -121,10 +121,10 @@ async def get_user(
 @inject
 async def set_user_role(
     user_id: Annotated[UserId, Path(description="ID of the user to change.")],
-    role: Annotated[UserRole, Body(embed=True)],
+    data: SetUserRoleBody,
     interactor: FromDishka[SetUserRole],
 ) -> None:
-    await interactor(SetUserRoleInput(user_id=user_id, role=role))
+    await interactor(SetUserRoleInput(user_id=user_id, role=data.role))
 
 
 @users_router.put(

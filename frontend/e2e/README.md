@@ -78,13 +78,13 @@ double) is an auto fixture, installed on every test even if it never names `api`
 so no spec can reach a real backend by accident.
 
 ```ts
-import type { GetVotingStateOutput, ListVotingNominationsOutput } from '../fixtures';
+import type { GetVotingStatusOutput, ListVotingNominationsOutput } from '../fixtures';
 
 import { expect, json, test } from '../fixtures';
 
 test('closed voting shows the closed banner', async ({ page, api }) => {
 	api.use({
-		'GET /voting/status': json<GetVotingStateOutput>({
+		'GET /voting/status': json<GetVotingStatusOutput>({
 			can_vote: false,
 			status: 'disabled',
 			voting_start: null,

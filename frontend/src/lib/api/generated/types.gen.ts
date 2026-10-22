@@ -74,30 +74,13 @@ export type AwardQuestPointsOutput = {
 };
 
 /**
- * Body_import_schedule
- */
-export type BodyImportSchedule = {
-	/**
-	 * File
-	 *
-	 * Excel file with schedule data.
-	 */
-	file: Blob | File;
-};
-
-/**
- * Body_set_user_role
- */
-export type BodySetUserRole = {
-	role: UserRole;
-};
-
-/**
  * CaptchaChallengeDTO
  */
 export type CaptchaChallengeDto = {
 	/**
 	 * Challenge
+	 *
+	 * ALTCHA challenge, passed verbatim to the widget; its fields are the provider's, not part of this API. Null when captcha is disabled.
 	 */
 	challenge: {
 		[key: string]: unknown;
@@ -126,6 +109,16 @@ export type ChangePasswordInput = {
 	 * New Password
 	 */
 	new_password: string;
+};
+
+/**
+ * CheckPushSubscriptionOutput
+ */
+export type CheckPushSubscriptionOutput = {
+	/**
+	 * Subscribed
+	 */
+	subscribed: boolean;
 };
 
 /**
@@ -300,21 +293,7 @@ export type FeedbackDto = {
 	 * Created At
 	 */
 	created_at: string;
-	user: FeedbackUserDto;
-};
-
-/**
- * FeedbackUserDTO
- */
-export type FeedbackUserDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Username
-	 */
-	username: string;
+	user: UserRefDto;
 };
 
 /**
@@ -428,7 +407,7 @@ export type GetVotingNominationOutput = {
 	/**
 	 * Works Url
 	 */
-	works_url?: string | null;
+	works_url: string | null;
 	/**
 	 * Participants Count
 	 */
@@ -441,9 +420,9 @@ export type GetVotingNominationOutput = {
 };
 
 /**
- * GetVotingStateOutput
+ * GetVotingStatusOutput
  */
-export type GetVotingStateOutput = {
+export type GetVotingStatusOutput = {
 	/**
 	 * Can Vote
 	 */
@@ -452,11 +431,11 @@ export type GetVotingStateOutput = {
 	/**
 	 * Voting Start
 	 */
-	voting_start?: string | null;
+	voting_start: string | null;
 	/**
 	 * Voting End
 	 */
-	voting_end?: string | null;
+	voting_end: string | null;
 };
 
 /**
@@ -467,6 +446,21 @@ export type HealthCheckOutput = {
 	 * Status
 	 */
 	status: 'healthy';
+};
+
+/**
+ * ImportScheduleForm
+ *
+ * Multipart body of POST /schedule/import, named so the spec and the
+ * generated client don't carry FastAPI's ``Body_import_schedule``.
+ */
+export type ImportScheduleForm = {
+	/**
+	 * File
+	 *
+	 * Excel file with schedule data.
+	 */
+	file: Blob | File;
 };
 
 /**
@@ -646,9 +640,9 @@ export type ListTicketsOutput = {
 };
 
 /**
- * ListUserNotificationOutput
+ * ListUserNotificationsOutput
  */
-export type ListUserNotificationOutput = {
+export type ListUserNotificationsOutput = {
 	/**
 	 * Notifications
 	 */
@@ -710,10 +704,7 @@ export type MailingDto = {
 	 */
 	id: string;
 	status: MailingStatus;
-	/**
-	 * By User Id
-	 */
-	by_user_id: string | null;
+	created_by: UserRefDto | null;
 	/**
 	 * Body
 	 */
@@ -748,9 +739,9 @@ export type MarkNotificationsReadInput = {
 };
 
 /**
- * MoveScheduleEventRequest
+ * MoveScheduleEventBody
  */
-export type MoveScheduleEventRequest = {
+export type MoveScheduleEventBody = {
 	/**
 	 * Place After Entry Id
 	 */
@@ -813,7 +804,7 @@ export type NominationVotingDto = {
 	/**
 	 * Works Url
 	 */
-	works_url?: string | null;
+	works_url: string | null;
 	/**
 	 * Participants Count
 	 */
@@ -829,10 +820,6 @@ export type NotificationDto = {
 	 * Id
 	 */
 	id: string;
-	/**
-	 * User Id
-	 */
-	user_id: string;
 	/**
 	 * Title
 	 */
@@ -1089,16 +1076,6 @@ export type PublicConfigDto = {
 };
 
 /**
- * PushSubscriptionStatus
- */
-export type PushSubscriptionStatus = {
-	/**
-	 * Subscribed
-	 */
-	subscribed: boolean;
-};
-
-/**
  * QuestAwardItemDTO
  */
 export type QuestAwardItemDto = {
@@ -1122,26 +1099,12 @@ export type QuestAwardItemDto = {
 	 * Cancelled At
 	 */
 	cancelled_at: string | null;
-	user: QuestAwardUserDto;
-	awarded_by: QuestAwardUserDto | null;
+	user: UserRefDto;
+	awarded_by: UserRefDto | null;
 	/**
 	 * Can Cancel
 	 */
 	can_cancel: boolean;
-};
-
-/**
- * QuestAwardUserDTO
- */
-export type QuestAwardUserDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Username
-	 */
-	username: string;
 };
 
 /**
@@ -1287,16 +1250,12 @@ export type ScheduleChangeFullDto = {
 	 */
 	mailing_id: string | null;
 	/**
-	 * User Id
-	 */
-	user_id: string | null;
-	/**
 	 * Next Event Changed
 	 */
 	next_event_changed: boolean;
 	changed_event: ScheduleChangeEntryDto | null;
 	related_entry: ScheduleChangeEntryDto | null;
-	user: ScheduleChangeUserDto | null;
+	user: UserRefDto | null;
 	/**
 	 * Created At
 	 */
@@ -1318,20 +1277,6 @@ export type ScheduleChangeFullDto = {
  * SKIPPED / UNSKIPPED: `related_entry_id` is unused.
  */
 export type ScheduleChangeType = 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
-
-/**
- * ScheduleChangeUserDTO
- */
-export type ScheduleChangeUserDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Username
-	 */
-	username: string;
-};
 
 export type ScheduleEntryDto =
 	| ({
@@ -1454,6 +1399,13 @@ export type SetTCloudEventRolesInput = {
 };
 
 /**
+ * SetUserRoleBody
+ */
+export type SetUserRoleBody = {
+	role: UserRole;
+};
+
+/**
  * SetVotingTimeRangeInput
  */
 export type SetVotingTimeRangeInput = {
@@ -1538,10 +1490,6 @@ export type SubscriptionFullDto = {
 	 * Id
 	 */
 	id: string;
-	/**
-	 * User Id
-	 */
-	user_id: string;
 	/**
 	 * Lead Minutes
 	 */
@@ -1677,14 +1625,7 @@ export type TicketListItemDto = {
 	 */
 	barcode: string;
 	role: UserRole;
-	/**
-	 * Used By User Id
-	 */
-	used_by_user_id: string | null;
-	/**
-	 * Used By Username
-	 */
-	used_by_username: string | null;
+	used_by: UserRefDto | null;
 	/**
 	 * From Ticketscloud
 	 */
@@ -1750,9 +1691,9 @@ export type UpdateCurrentUserInput = {
 };
 
 /**
- * UpdateScheduleEventRequest
+ * UpdateScheduleEventBody
  */
-export type UpdateScheduleEventRequest = {
+export type UpdateScheduleEventBody = {
 	/**
 	 * Is Skipped
 	 */
@@ -1877,6 +1818,24 @@ export type UserListItemDto = {
 };
 
 /**
+ * UserRefDTO
+ *
+ * A person attached to a record, in the field named for their role there
+ * (`user`, `awarded_by`, `created_by`, …); null when nobody is (a system
+ * action, a deleted account).
+ */
+export type UserRefDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Username
+	 */
+	username: string;
+};
+
+/**
  * UserRole
  */
 export type UserRole = 'visitor' | 'participant' | 'volunteer' | 'organizer';
@@ -1888,15 +1847,15 @@ export type UserSettingsDto = {
 	/**
 	 * Receive All Announcements
 	 */
-	receive_all_announcements?: boolean;
+	receive_all_announcements: boolean;
 	/**
 	 * Receive Telegram Notifications
 	 */
-	receive_telegram_notifications?: boolean;
+	receive_telegram_notifications: boolean;
 	/**
 	 * Receive Vk Notifications
 	 */
-	receive_vk_notifications?: boolean;
+	receive_vk_notifications: boolean;
 };
 
 /**
@@ -2043,7 +2002,7 @@ export type LoginErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Too many login attempts. Try again later.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2087,6 +2046,10 @@ export type ConfirmEmailCodeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Rate limited — too many requests.
+	 */
+	429: ProblemDetails;
 };
 
 export type ConfirmEmailCodeError = ConfirmEmailCodeErrors[keyof ConfirmEmailCodeErrors];
@@ -2109,7 +2072,7 @@ export type GetCaptchaChallengeData = {
 
 export type GetCaptchaChallengeErrors = {
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2143,7 +2106,7 @@ export type RequestLoginCodeErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 	/**
@@ -2158,8 +2121,10 @@ export type RequestLoginCodeResponses = {
 	/**
 	 * The login code was sent to the email address.
 	 */
-	200: unknown;
+	204: void;
 };
+
+export type RequestLoginCodeResponse = RequestLoginCodeResponses[keyof RequestLoginCodeResponses];
 
 export type LoginWithCodeData = {
 	body: LoginWithCodeInput;
@@ -2181,6 +2146,10 @@ export type LoginWithCodeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Rate limited — too many requests.
+	 */
+	429: ProblemDetails;
 };
 
 export type LoginWithCodeError = LoginWithCodeErrors[keyof LoginWithCodeErrors];
@@ -2487,7 +2456,7 @@ export type ChangeCurrentUserEmailErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2504,6 +2473,50 @@ export type ChangeCurrentUserEmailResponses = {
 
 export type ChangeCurrentUserEmailResponse =
 	ChangeCurrentUserEmailResponses[keyof ChangeCurrentUserEmailResponses];
+
+export type UnlinkSocialAccountData = {
+	body?: never;
+	path: {
+		provider: SocialProvider;
+	};
+	query?: never;
+	url: '/me/connections/{provider}';
+};
+
+export type UnlinkSocialAccountErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * User not found.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Cannot remove the user's last remaining sign-in method.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+};
+
+export type UnlinkSocialAccountError = UnlinkSocialAccountErrors[keyof UnlinkSocialAccountErrors];
+
+export type UnlinkSocialAccountResponses = {
+	/**
+	 * Account unlinked successfully.
+	 */
+	204: void;
+};
+
+export type UnlinkSocialAccountResponse =
+	UnlinkSocialAccountResponses[keyof UnlinkSocialAccountResponses];
 
 export type StartAccountLinkData = {
 	body?: never;
@@ -2530,82 +2543,6 @@ export type StartAccountLinkErrors = {
 };
 
 export type StartAccountLinkError = StartAccountLinkErrors[keyof StartAccountLinkErrors];
-
-export type UnlinkTelegramAccountData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/me/connections/telegram';
-};
-
-export type UnlinkTelegramAccountErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * User not found.
-	 */
-	404: ProblemDetails;
-	/**
-	 * Cannot remove the user's last remaining sign-in method.
-	 */
-	409: ProblemDetails;
-};
-
-export type UnlinkTelegramAccountError =
-	UnlinkTelegramAccountErrors[keyof UnlinkTelegramAccountErrors];
-
-export type UnlinkTelegramAccountResponses = {
-	/**
-	 * Telegram account unlinked successfully.
-	 */
-	204: void;
-};
-
-export type UnlinkTelegramAccountResponse =
-	UnlinkTelegramAccountResponses[keyof UnlinkTelegramAccountResponses];
-
-export type UnlinkVkAccountData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/me/connections/vk';
-};
-
-export type UnlinkVkAccountErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * User not found.
-	 */
-	404: ProblemDetails;
-	/**
-	 * Cannot remove the user's last remaining sign-in method.
-	 */
-	409: ProblemDetails;
-};
-
-export type UnlinkVkAccountError = UnlinkVkAccountErrors[keyof UnlinkVkAccountErrors];
-
-export type UnlinkVkAccountResponses = {
-	/**
-	 * VK account unlinked successfully.
-	 */
-	204: void;
-};
-
-export type UnlinkVkAccountResponse = UnlinkVkAccountResponses[keyof UnlinkVkAccountResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;
@@ -2749,7 +2686,7 @@ export type GetScheduleResponses = {
 export type GetScheduleResponse = GetScheduleResponses[keyof GetScheduleResponses];
 
 export type ImportScheduleData = {
-	body: BodyImportSchedule;
+	body: ImportScheduleForm;
 	path?: never;
 	query?: never;
 	url: '/schedule/import';
@@ -2778,10 +2715,12 @@ export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleError
 
 export type ImportScheduleResponses = {
 	/**
-	 * Successful Response
+	 * Schedule imported.
 	 */
-	201: unknown;
+	204: void;
 };
+
+export type ImportScheduleResponse = ImportScheduleResponses[keyof ImportScheduleResponses];
 
 export type GetScheduleSettingsData = {
 	body?: never;
@@ -2884,7 +2823,7 @@ export type SetEventAsCurrentErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2918,7 +2857,7 @@ export type UncheckCurrentEventErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2936,7 +2875,7 @@ export type UncheckCurrentEventResponse =
 	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
 
 export type MoveScheduleEventData = {
-	body: MoveScheduleEventRequest;
+	body: MoveScheduleEventBody;
 	path: {
 		/**
 		 * Event Id
@@ -2971,7 +2910,7 @@ export type MoveScheduleEventErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -2989,7 +2928,7 @@ export type MoveScheduleEventResponse =
 	MoveScheduleEventResponses[keyof MoveScheduleEventResponses];
 
 export type UpdateScheduleEventData = {
-	body: UpdateScheduleEventRequest;
+	body: UpdateScheduleEventBody;
 	path: {
 		/**
 		 * Event Id
@@ -3024,7 +2963,7 @@ export type UpdateScheduleEventErrors = {
 	 */
 	422: ValidationProblem;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -3257,7 +3196,7 @@ export type GetVotingStatusResponses = {
 	/**
 	 * Voting status retrieved successfully.
 	 */
-	200: GetVotingStateOutput;
+	200: GetVotingStatusOutput;
 };
 
 export type GetVotingStatusResponse = GetVotingStatusResponses[keyof GetVotingStatusResponses];
@@ -3579,7 +3518,7 @@ export type ListUserNotificationsResponses = {
 	/**
 	 * Notifications retrieved successfully.
 	 */
-	200: ListUserNotificationOutput;
+	200: ListUserNotificationsOutput;
 };
 
 export type ListUserNotificationsResponse =
@@ -3699,7 +3638,7 @@ export type SendTestNotificationErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * Rate limited — editing too fast.
+	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
 };
@@ -3732,7 +3671,7 @@ export type ListBroadcastsData = {
 		 */
 		cursor?: string | null;
 	};
-	url: '/notifications/broadcast';
+	url: '/notifications/broadcasts';
 };
 
 export type ListBroadcastsErrors = {
@@ -3765,7 +3704,7 @@ export type SendBroadcastData = {
 	body: SendBroadcastInput;
 	path?: never;
 	query?: never;
-	url: '/notifications/broadcast';
+	url: '/notifications/broadcasts';
 };
 
 export type SendBroadcastErrors = {
@@ -3809,7 +3748,7 @@ export type CancelMailingData = {
 		mailing_id: string;
 	};
 	query?: never;
-	url: '/notifications/broadcast/{mailing_id}/cancel';
+	url: '/notifications/broadcasts/{mailing_id}/cancel';
 };
 
 export type CancelMailingErrors = {
@@ -3920,7 +3859,7 @@ export type CheckPushSubscriptionResponses = {
 	/**
 	 * Subscription status for the endpoint.
 	 */
-	200: PushSubscriptionStatus;
+	200: CheckPushSubscriptionOutput;
 };
 
 export type CheckPushSubscriptionResponse =
@@ -4391,7 +4330,7 @@ export type GetUserResponses = {
 export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
 
 export type SetUserRoleData = {
-	body: BodySetUserRole;
+	body: SetUserRoleBody;
 	path: {
 		/**
 		 * User Id

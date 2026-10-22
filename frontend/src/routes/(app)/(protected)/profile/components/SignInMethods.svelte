@@ -8,8 +8,7 @@
 
 	import {
 		getCurrentUserQueryKey,
-		unlinkTelegramAccountMutation,
-		unlinkVkAccountMutation
+		unlinkSocialAccountMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -62,16 +61,10 @@
 	]);
 
 	// SocialConnectionRow owns the confirm-and-loading UI and calls this to perform
-	// the unlink. The DELETE path is per-provider (ADR-0012's distinct routes), so a
-	// literal is picked here rather than an interpolated path the typed client can't
-	// check. Unlink is never gated by enablement — that is what keeps a disabled-but-
-	// linked provider removable.
-	const unlinkVkMutation = createMutation(() => ({
-		...unlinkVkAccountMutation(),
-		onSuccess: refreshUser
-	}));
-	const unlinkTelegramMutation = createMutation(() => ({
-		...unlinkTelegramAccountMutation(),
+	// the unlink. Unlink is never gated by enablement — that is what keeps a
+	// disabled-but-linked provider removable.
+	const unlinkMutation = createMutation(() => ({
+		...unlinkSocialAccountMutation(),
 		onSuccess: refreshUser
 	}));
 
@@ -84,10 +77,9 @@
 	// confirm strip and spinner.
 	async function unlinkProvider(provider: SocialProvider) {
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
-		const unlinkMutation = provider === 'vk' ? unlinkVkMutation : unlinkTelegramMutation;
 
 		try {
-			await unlinkMutation.mutateAsync({});
+			await unlinkMutation.mutateAsync({ path: { provider } });
 		} catch (error) {
 			toastService.error(error);
 			return;

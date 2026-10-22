@@ -11,7 +11,7 @@ class NominationBaseDTO(BaseModel):
     id: NominationId
     code: NominationCode
     title: str
-    works_url: str | None = None
+    works_url: str | None
 
 
 class NominationVoteDTO(BaseModel):

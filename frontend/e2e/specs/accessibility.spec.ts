@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import type {
 	GetVotingNominationOutput,
-	GetVotingStateOutput,
+	GetVotingStatusOutput,
 	ListVotingNominationsOutput
 } from '../../src/lib/api/generated/types.gen';
 
@@ -76,7 +76,7 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 				expectAccessible
 			}) => {
 				api.use({
-					'GET /voting/status': json<GetVotingStateOutput>({
+					'GET /voting/status': json<GetVotingStatusOutput>({
 						can_vote: true,
 						status: 'open',
 						voting_start: null,
@@ -110,7 +110,7 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 			}) => {
 				api.use(loggedInAs());
 				api.use({
-					'GET /voting/status': json<GetVotingStateOutput>({
+					'GET /voting/status': json<GetVotingStatusOutput>({
 						can_vote: true,
 						status: 'open',
 						voting_start: null,

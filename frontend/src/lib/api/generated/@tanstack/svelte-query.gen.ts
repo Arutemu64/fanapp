@@ -82,9 +82,8 @@ import {
 	suggestUsername,
 	uncheckCurrentEvent,
 	undoScheduleChange,
-	unlinkTelegramAccount,
+	unlinkSocialAccount,
 	unlinkUserTicket,
-	unlinkVkAccount,
 	updateCurrentUser,
 	updateCurrentUserSettings,
 	updateScheduleEvent,
@@ -194,6 +193,7 @@ import type {
 	HealthCheckResponse,
 	ImportScheduleData,
 	ImportScheduleError,
+	ImportScheduleResponse,
 	LinkTicketData,
 	LinkTicketError,
 	LinkTicketResponse,
@@ -252,6 +252,7 @@ import type {
 	ProcessTcloudOrderResponse,
 	RequestLoginCodeData,
 	RequestLoginCodeError,
+	RequestLoginCodeResponse,
 	RequestSyncData,
 	RequestSyncError,
 	RequestSyncResponse,
@@ -292,15 +293,12 @@ import type {
 	UndoScheduleChangeData,
 	UndoScheduleChangeError,
 	UndoScheduleChangeResponse,
-	UnlinkTelegramAccountData,
-	UnlinkTelegramAccountError,
-	UnlinkTelegramAccountResponse,
+	UnlinkSocialAccountData,
+	UnlinkSocialAccountError,
+	UnlinkSocialAccountResponse,
 	UnlinkUserTicketData,
 	UnlinkUserTicketError,
 	UnlinkUserTicketResponse,
-	UnlinkVkAccountData,
-	UnlinkVkAccountError,
-	UnlinkVkAccountResponse,
 	UpdateCurrentUserData,
 	UpdateCurrentUserError,
 	UpdateCurrentUserResponse,
@@ -485,9 +483,13 @@ export const getCaptchaChallengeOptions = (options?: Options<GetCaptchaChallenge
  */
 export const requestLoginCodeMutation = (
 	options?: Partial<Options<RequestLoginCodeData>>
-): MutationOptions<unknown, RequestLoginCodeError, Options<RequestLoginCodeData>> => {
+): MutationOptions<
+	RequestLoginCodeResponse,
+	RequestLoginCodeError,
+	Options<RequestLoginCodeData>
+> => {
 	const mutationOptions: MutationOptions<
-		unknown,
+		RequestLoginCodeResponse,
 		RequestLoginCodeError,
 		Options<RequestLoginCodeData>
 	> = {
@@ -826,6 +828,35 @@ export const changeCurrentUserEmailMutation = (
 	return mutationOptions;
 };
 
+/**
+ * Unlink social account
+ *
+ * Unlinks the provider's account from the currently authenticated user.
+ */
+export const unlinkSocialAccountMutation = (
+	options?: Partial<Options<UnlinkSocialAccountData>>
+): MutationOptions<
+	UnlinkSocialAccountResponse,
+	UnlinkSocialAccountError,
+	Options<UnlinkSocialAccountData>
+> => {
+	const mutationOptions: MutationOptions<
+		UnlinkSocialAccountResponse,
+		UnlinkSocialAccountError,
+		Options<UnlinkSocialAccountData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await unlinkSocialAccount({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
 export const startAccountLinkQueryKey = (options: Options<StartAccountLinkData>) =>
 	createQueryKey('startAccountLink', options);
 
@@ -852,60 +883,6 @@ export const startAccountLinkOptions = (options: Options<StartAccountLinkData>) 
 		},
 		queryKey: startAccountLinkQueryKey(options)
 	});
-
-/**
- * Unlink Telegram account
- *
- * Unlinks the Telegram account from the currently authenticated user.
- */
-export const unlinkTelegramAccountMutation = (
-	options?: Partial<Options<UnlinkTelegramAccountData>>
-): MutationOptions<
-	UnlinkTelegramAccountResponse,
-	UnlinkTelegramAccountError,
-	Options<UnlinkTelegramAccountData>
-> => {
-	const mutationOptions: MutationOptions<
-		UnlinkTelegramAccountResponse,
-		UnlinkTelegramAccountError,
-		Options<UnlinkTelegramAccountData>
-	> = {
-		mutationFn: async (fnOptions) => {
-			const { data } = await unlinkTelegramAccount({
-				...options,
-				...fnOptions,
-				throwOnError: true
-			});
-			return data;
-		}
-	};
-	return mutationOptions;
-};
-
-/**
- * Unlink VK account
- *
- * Unlinks the VK account from the currently authenticated user.
- */
-export const unlinkVkAccountMutation = (
-	options?: Partial<Options<UnlinkVkAccountData>>
-): MutationOptions<UnlinkVkAccountResponse, UnlinkVkAccountError, Options<UnlinkVkAccountData>> => {
-	const mutationOptions: MutationOptions<
-		UnlinkVkAccountResponse,
-		UnlinkVkAccountError,
-		Options<UnlinkVkAccountData>
-	> = {
-		mutationFn: async (fnOptions) => {
-			const { data } = await unlinkVkAccount({
-				...options,
-				...fnOptions,
-				throwOnError: true
-			});
-			return data;
-		}
-	};
-	return mutationOptions;
-};
 
 /**
  * Link ticket
@@ -1012,13 +989,15 @@ export const getScheduleOptions = (options?: Options<GetScheduleData>) =>
 	});
 
 /**
- * Import Schedule
+ * Import schedule
+ *
+ * Syncs the programme to the rows of an .xlsx spreadsheet (the downloadable template): matching entries are updated in place, new rows added and missing ones deleted. Requires 'schedule:setup'.
  */
 export const importScheduleMutation = (
 	options?: Partial<Options<ImportScheduleData>>
-): MutationOptions<unknown, ImportScheduleError, Options<ImportScheduleData>> => {
+): MutationOptions<ImportScheduleResponse, ImportScheduleError, Options<ImportScheduleData>> => {
 	const mutationOptions: MutationOptions<
-		unknown,
+		ImportScheduleResponse,
 		ImportScheduleError,
 		Options<ImportScheduleData>
 	> = {

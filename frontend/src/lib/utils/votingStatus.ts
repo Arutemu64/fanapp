@@ -1,4 +1,4 @@
-import type { GetVotingStateOutput } from '#lib/api/generated/index.js';
+import type { GetVotingStatusOutput } from '#lib/api/generated/index.js';
 
 /**
  * Whether `now` falls inside the configured voting window, mirroring the backend's
@@ -20,7 +20,7 @@ export function isVotingWindowOpen(
  * `no_ticket` and `not_authenticated` say nothing about the window, so for those
  * the clock decides.
  */
-export function isVotingOpenNow(state: GetVotingStateOutput | undefined, now: number): boolean {
+export function isVotingOpenNow(state: GetVotingStatusOutput | undefined, now: number): boolean {
 	if (state === undefined || state.status === 'disabled') return false;
 	return isVotingWindowOpen(state.voting_start, state.voting_end, now);
 }

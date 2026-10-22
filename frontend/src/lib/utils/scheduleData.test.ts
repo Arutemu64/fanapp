@@ -34,7 +34,6 @@ const schedule = [
 
 const subscriptionToA = {
 	id: 'sub-a',
-	user_id: 'me',
 	lead_minutes: 10,
 	event: { id: 'a' }
 } as SubscriptionFullDto;

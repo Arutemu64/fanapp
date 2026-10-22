@@ -19,9 +19,9 @@ from fanfan.application.interactors.notifications.list_broadcasts import (
     ListBroadcastsOutput,
 )
 from fanfan.application.interactors.notifications.list_user_notifications import (
-    ListUserNotificationOutput,
     ListUserNotifications,
     ListUserNotificationsInput,
+    ListUserNotificationsOutput,
 )
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
 from fanfan.application.interactors.notifications.mark_read import (
@@ -63,7 +63,7 @@ async def list_user_notifications(
     interactor: FromDishka[ListUserNotifications],
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     cursor: PageCursorQuery = None,
-) -> ListUserNotificationOutput:
+) -> ListUserNotificationsOutput:
     data = ListUserNotificationsInput(
         pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
     )
@@ -145,7 +145,7 @@ async def send_test_notification(
 
 
 @notifications_router.post(
-    "/broadcast",
+    "/broadcasts",
     summary="Send broadcast notification",
     description=(
         "Creates a new mailing broadcast for specified user roles. The client "
@@ -169,7 +169,7 @@ async def send_broadcast(
 
 
 @notifications_router.get(
-    "/broadcast",
+    "/broadcasts",
     summary="List broadcasts",
     description=(
         "Returns organizer broadcasts newest-first, paginated. Schedule-change "
@@ -192,7 +192,7 @@ async def list_broadcasts(
 
 
 @notifications_router.post(
-    "/broadcast/{mailing_id}/cancel",
+    "/broadcasts/{mailing_id}/cancel",
     status_code=204,
     summary="Cancel a mailing",
     description=(

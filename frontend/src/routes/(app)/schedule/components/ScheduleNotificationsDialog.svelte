@@ -35,7 +35,7 @@
 
 	// Writable derived: the toggle overrides it optimistically, and it snaps back to
 	// the server copy whenever `user` refreshes (Svelte "Overriding derived values").
-	let receiveAll = $derived(user.settings.receive_all_announcements ?? false);
+	let receiveAll = $derived(user.settings.receive_all_announcements);
 
 	function toggleReceiveAll(checked: boolean) {
 		receiveAll = checked;
@@ -47,7 +47,7 @@
 			{
 				onError: () => {
 					toastService.add(m.push_settings_update_failed(), 'error');
-					receiveAll = user.settings.receive_all_announcements ?? false;
+					receiveAll = user.settings.receive_all_announcements;
 				}
 			}
 		);

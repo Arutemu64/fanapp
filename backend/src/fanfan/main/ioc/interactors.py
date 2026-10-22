@@ -183,7 +183,7 @@ from fanfan.application.interactors.voting.get_voting_dashboard import (
 from fanfan.application.interactors.voting.get_voting_nomination import (
     GetVotingNomination,
 )
-from fanfan.application.interactors.voting.get_voting_state import GetVotingState
+from fanfan.application.interactors.voting.get_voting_status import GetVotingStatus
 from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
 )
@@ -273,7 +273,7 @@ class InteractorsProvider(Provider):
         GetVotingNomination,
         AddVote,
         CancelVote,
-        GetVotingState,
+        GetVotingStatus,
         GetVotingDashboard,
         SetVotingTimeRange,
         DrawVotingContestWinner,

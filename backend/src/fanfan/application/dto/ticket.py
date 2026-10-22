@@ -2,8 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from fanfan.application.dto.user import UserRefDTO
 from fanfan.core.vo.ticket import TicketId
-from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.user import UserRole
 
 
 class TicketListFilter(BaseModel):
@@ -17,8 +18,7 @@ class TicketListItemDTO(BaseModel):
     id: TicketId
     barcode: str
     role: UserRole
-    used_by_user_id: UserId | None
-    used_by_username: str | None
+    used_by: UserRefDTO | None
     # Imported tickets carry the vendor's ids; generated ones carry neither.
     from_ticketscloud: bool
     revoked_at: datetime | None

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -9,7 +9,9 @@ from fanfan.core.vo.notification import NotificationId
 
 
 class MarkNotificationsReadInput(BaseModel):
-    notification_ids: list[NotificationId]
+    # The feed sends the unread ids it has on screen (pages of at most 100), so a
+    # legitimate batch stays far below this; the cap only bounds a hostile body.
+    notification_ids: list[NotificationId] = Field(max_length=500)
 
 
 class MarkNotificationsRead:

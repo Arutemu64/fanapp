@@ -112,15 +112,15 @@
 									{/if}
 								</div>
 								<div class="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-									{#if ticket.used_by_user_id && canOpenUsers}
+									{#if ticket.used_by && canOpenUsers}
 										<a
-											href={resolve(`tools/users/${ticket.used_by_user_id}`)}
+											href={resolve(`tools/users/${ticket.used_by.id}`)}
 											class="truncate text-primary underline-offset-4 hover:underline"
 										>
-											{ticket.used_by_username}
+											{ticket.used_by.username}
 										</a>
-									{:else if ticket.used_by_user_id}
-										<span class="truncate text-foreground">{ticket.used_by_username}</span>
+									{:else if ticket.used_by}
+										<span class="truncate text-foreground">{ticket.used_by.username}</span>
 									{:else}
 										<span>{m.tickets_not_linked()}</span>
 									{/if}

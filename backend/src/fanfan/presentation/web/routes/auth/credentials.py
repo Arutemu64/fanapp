@@ -12,6 +12,7 @@ from fanfan.application.interactors.auth.authenticate_user import (
 )
 from fanfan.core.vo.fields import PASSWORD_MAX_LENGTH
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.utils import get_client_ip
@@ -34,11 +35,8 @@ credentials_router = APIRouter()
     "Sets an HttpOnly cookie with a Redis-backed session id.",
     responses={
         204: {"description": "Successfully authenticated. Session cookie is set."},
+        **RATE_LIMIT_RESPONSES,
         401: {"model": ProblemDetails, "description": "Invalid email or password."},
-        429: {
-            "model": ProblemDetails,
-            "description": "Too many login attempts. Try again later.",
-        },
     },
 )
 @inject

@@ -20,8 +20,8 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.schedule import (
-    MoveScheduleEventRequest,
-    UpdateScheduleEventRequest,
+    MoveScheduleEventBody,
+    UpdateScheduleEventBody,
 )
 from fanfan.presentation.web.security import session_security
 
@@ -33,7 +33,7 @@ management_router = APIRouter(
 )
 
 
-@management_router.patch(
+@management_router.put(
     "/{event_id}/current",
     status_code=204,
     summary="Set specific event as current",
@@ -96,7 +96,7 @@ async def uncheck_current_event(
 @inject
 async def move_schedule_event(
     event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
-    data: MoveScheduleEventRequest,
+    data: MoveScheduleEventBody,
     interactor: FromDishka[MoveScheduleEvent],
 ) -> None:
     await interactor(
@@ -125,7 +125,7 @@ async def move_schedule_event(
 @inject
 async def update_schedule_event(
     event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
-    data: UpdateScheduleEventRequest,
+    data: UpdateScheduleEventBody,
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:
     await interactor(

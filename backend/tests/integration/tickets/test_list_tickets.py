@@ -94,8 +94,9 @@ async def test_list_tickets_pages_newest_first_with_linked_user(
     assert first.next_cursor is not None
     newest = first.tickets[0]
     assert newest.barcode == linked.barcode
-    assert newest.used_by_user_id == holder.id
-    assert newest.used_by_username == "ticket_holder"
+    assert newest.used_by is not None
+    assert newest.used_by.id == holder.id
+    assert newest.used_by.username == "ticket_holder"
     assert newest.from_ticketscloud is False
 
     rest = await interactor(

@@ -100,17 +100,17 @@ async def test_check_push_subscription_reports_presence(
     check = await dishka_request.get(CheckPushSubscription)
     login(visitor)
 
-    assert await check(CheckPushSubscriptionInput(endpoint=ENDPOINT)) is False
+    before = await check(CheckPushSubscriptionInput(endpoint=ENDPOINT))
+    assert before.subscribed is False
 
     await create(
         CreatePushSubscriptionInput(endpoint=ENDPOINT, p256dh="key", auth="auth")
     )
 
-    assert await check(CheckPushSubscriptionInput(endpoint=ENDPOINT)) is True
-    assert (
-        await check(CheckPushSubscriptionInput(endpoint="https://other.test/x"))
-        is False
-    )
+    after = await check(CheckPushSubscriptionInput(endpoint=ENDPOINT))
+    other = await check(CheckPushSubscriptionInput(endpoint="https://other.test/x"))
+    assert after.subscribed is True
+    assert other.subscribed is False
 
 
 async def test_delete_push_subscription_removes_own_endpoint(

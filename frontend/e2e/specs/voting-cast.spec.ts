@@ -1,7 +1,7 @@
 import type {
 	AddVoteOutput,
 	GetVotingNominationOutput,
-	GetVotingStateOutput
+	GetVotingStatusOutput
 } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
@@ -10,7 +10,7 @@ const NOMINATION_CODE = 'best-cosplay';
 const PARTICIPANT_ID = '01890000-0000-7000-8000-0000000000c1';
 const VOTE_ID = '01890000-0000-7000-8000-0000000000d1';
 
-const OPEN: GetVotingStateOutput = {
+const OPEN: GetVotingStatusOutput = {
 	can_vote: true,
 	status: 'open',
 	voting_start: null,

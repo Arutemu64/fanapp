@@ -21,9 +21,8 @@ export function notificationsStatus(
 	user: ChannelOwner
 ): string | undefined {
 	const linked = new Set(user.social_identities.map((identity) => identity.provider));
-	const vkOn = linked.has('vk') && user.settings.receive_vk_notifications === true;
-	const telegramOn =
-		linked.has('telegram') && user.settings.receive_telegram_notifications === true;
+	const vkOn = linked.has('vk') && user.settings.receive_vk_notifications;
+	const telegramOn = linked.has('telegram') && user.settings.receive_telegram_notifications;
 
 	if (devicePush === 'on' || vkOn || telegramOn) {
 		return m.notifications_status_on();

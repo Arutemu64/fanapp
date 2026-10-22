@@ -2,11 +2,12 @@ from uuid import UUID
 
 from sqlalchemy import ForeignKey, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
+from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.mailing import MailingStatus
 
 
@@ -19,6 +20,9 @@ class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     )
     by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    by_user: Mapped[UserORM | None] = relationship(
+        foreign_keys=by_user_id, lazy="raise"
     )
 
     # So the mailing outlives the per-user notifications it fans out (those are
