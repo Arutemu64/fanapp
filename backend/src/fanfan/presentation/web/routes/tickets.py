@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Header, Query
 
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.ticket import TicketListFilter
@@ -22,6 +22,7 @@ from fanfan.application.interactors.tickets.tcloud_event_roles import (
     SetTCloudEventRolesInput,
     TCloudEventRolesOutput,
 )
+from fanfan.presentation.web.preconditions import parse_if_match
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.tickets import TicketListQuery
@@ -88,8 +89,9 @@ async def generate_tickets(
     summary="Get TicketsCloud event roles",
     description=(
         "Returns which role a ticket bought for each TicketsCloud event grants, "
-        "and whether TicketsCloud is configured for this deployment. An event "
-        "left out grants the visitor role. Requires 'tickets:manage'."
+        "and whether TicketsCloud is configured for this deployment, with the "
+        "`etag` to send back in If-Match when replacing it. An event left out "
+        "grants the visitor role. Requires 'tickets:manage'."
     ),
     responses={
         200: {"description": "Event roles retrieved successfully."},
@@ -104,19 +106,33 @@ async def get_tcloud_event_roles(
 
 @tickets_router.put(
     "/tcloud-event-roles",
-    status_code=204,
     summary="Replace TicketsCloud event roles",
     description=(
-        "Replaces the whole event-to-role mapping. Applies to tickets imported "
-        "from now on; stored tickets keep their role. Requires 'tickets:manage'."
+        "Replaces the whole event-to-role mapping and returns the saved one. "
+        "Applies to tickets imported from now on; stored tickets keep their "
+        "role. Requires 'tickets:manage'."
     ),
     responses={
-        204: {"description": "Event roles saved."},
+        200: {"description": "Event roles saved."},
+        412: {
+            "model": ProblemDetails,
+            "description": "Someone saved the mapping after the If-Match version "
+            "was read; reload and edit again.",
+        },
     },
 )
 @inject
 async def set_tcloud_event_roles(
     data: SetTCloudEventRolesInput,
+    # Required rather than a runtime 428, as on PATCH /settings: the generated
+    # client then cannot compile a save that forgets it.
+    if_match: Annotated[
+        str,
+        Header(
+            description="The `etag` from GET /tickets/tcloud-event-roles, or `*` "
+            "to save regardless."
+        ),
+    ],
     interactor: FromDishka[SetTCloudEventRoles],
-) -> None:
-    await interactor(data)
+) -> TCloudEventRolesOutput:
+    return await interactor(data, if_match=parse_if_match(if_match))

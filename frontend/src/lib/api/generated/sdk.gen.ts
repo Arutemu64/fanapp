@@ -1589,7 +1589,7 @@ export const generateTickets = <ThrowOnError extends boolean = false>(
 /**
  * Get TicketsCloud event roles
  *
- * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.
+ * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment, with the `etag` to send back in If-Match when replacing it. An event left out grants the visitor role. Requires 'tickets:manage'.
  */
 export const getTcloudEventRoles = <ThrowOnError extends boolean = false>(
 	options?: Options<GetTcloudEventRolesData, ThrowOnError>
@@ -1613,7 +1613,7 @@ export const getTcloudEventRoles = <ThrowOnError extends boolean = false>(
 /**
  * Replace TicketsCloud event roles
  *
- * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
+ * Replaces the whole event-to-role mapping and returns the saved one. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
  */
 export const setTcloudEventRoles = <ThrowOnError extends boolean = false>(
 	options: Options<SetTcloudEventRolesData, ThrowOnError>

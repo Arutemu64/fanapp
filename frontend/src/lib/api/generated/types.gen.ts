@@ -1031,6 +1031,7 @@ export type ProblemDetails = {
 		| 'SUBSCRIPTION_ALREADY_EXISTS'
 		| 'SUBSCRIPTION_NOT_FOUND'
 		| 'SYNC_ALREADY_RUNNING'
+		| 'TCLOUD_EVENT_ROLES_CHANGED'
 		| 'TEST_NOTIFICATION_TOO_FAST'
 		| 'TICKET_ALREADY_USED'
 		| 'TICKET_BARCODE_COLLISION'
@@ -1640,6 +1641,10 @@ export type TCloudEventRolesOutput = {
 	 * Event Roles
 	 */
 	event_roles: Array<TCloudEventRoleDto>;
+	/**
+	 * Etag
+	 */
+	etag: string;
 };
 
 /**
@@ -4194,6 +4199,14 @@ export type GetTcloudEventRolesResponse =
 
 export type SetTcloudEventRolesData = {
 	body: SetTCloudEventRolesInput;
+	headers: {
+		/**
+		 * If-Match
+		 *
+		 * The `etag` from GET /tickets/tcloud-event-roles, or `*` to save regardless.
+		 */
+		'if-match': string;
+	};
 	path?: never;
 	query?: never;
 	url: '/tickets/tcloud-event-roles';
@@ -4209,6 +4222,10 @@ export type SetTcloudEventRolesErrors = {
 	 */
 	403: ProblemDetails;
 	/**
+	 * Someone saved the mapping after the If-Match version was read; reload and edit again.
+	 */
+	412: ProblemDetails;
+	/**
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
@@ -4220,7 +4237,7 @@ export type SetTcloudEventRolesResponses = {
 	/**
 	 * Event roles saved.
 	 */
-	204: void;
+	200: TCloudEventRolesOutput;
 };
 
 export type SetTcloudEventRolesResponse =

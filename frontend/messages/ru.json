@@ -278,6 +278,7 @@
 	"error_state_unexpected": "Что-то пошло не так: ошибка на сервере или нет интернета.",
 	"error_subscription_already_exists": "Подписка на это выступление уже оформлена",
 	"error_sync_already_running": "Синхронизация уже выполняется, подожди немного",
+	"error_tcloud_event_roles_changed": "Кто-то уже сохранил другие роли по мероприятиям — твои правки не сохранились. Обнови страницу и внеси их ещё раз.",
 	"error_ticket_already_used": "Этот билет уже использован",
 	"error_ticket_barcode_collision": "Не удалось создать билеты, попробуй ещё раз",
 	"error_ticket_not_found": "Билет не найден",

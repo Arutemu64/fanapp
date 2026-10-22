@@ -63,11 +63,16 @@
 	let savedSnapshot = $state(untrack(() => snapshot(rows)));
 	let hasChanges = $derived(snapshot(rows) !== savedSnapshot);
 	let submitError = $state('');
+	// The version this form was filled from. The save replaces the whole mapping,
+	// so it carries this in If-Match: one landing after another organizer's save is
+	// refused instead of dropping the rows they added.
+	let etag = $state(untrack(() => initial.etag));
 	let atLimit = $derived(rows.length >= MAX_EVENTS);
 
 	const saveMutation = createMutation(() => ({
 		...setTcloudEventRolesMutation(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: getTcloudEventRolesQueryKey() })
+		// The save answers with the stored mapping, so no refetch is needed.
+		onSuccess: (saved) => queryClient.setQueryData(getTcloudEventRolesQueryKey(), saved)
 	}));
 
 	function addRow() {
@@ -109,9 +114,10 @@
 		}
 		const eventRoles = rows.map((row) => ({ event_id: row.eventId.trim(), role: row.role }));
 		saveMutation.mutate(
-			{ body: { event_roles: eventRoles } },
+			{ body: { event_roles: eventRoles }, headers: { 'if-match': etag } },
 			{
-				onSuccess: () => {
+				onSuccess: (saved) => {
+					etag = saved.etag;
 					savedSnapshot = snapshot(rows);
 					toastService.add(m.tcloud_roles_saved(), 'success');
 				},

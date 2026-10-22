@@ -282,6 +282,7 @@ const ERROR_MESSAGES = {
 	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: m.error_social_account_linked_to_another_user,
 	SUBSCRIPTION_ALREADY_EXISTS: m.error_subscription_already_exists,
 	SYNC_ALREADY_RUNNING: m.error_sync_already_running,
+	TCLOUD_EVENT_ROLES_CHANGED: m.error_tcloud_event_roles_changed,
 	TICKET_ALREADY_USED: m.error_ticket_already_used,
 	TICKET_BARCODE_COLLISION: m.error_ticket_barcode_collision,
 	TICKET_NOT_FOUND: m.error_ticket_not_found,

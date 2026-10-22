@@ -3935,8 +3935,13 @@
           "Tickets"
         ],
         "summary": "Get TicketsCloud event roles",
-        "description": "Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.",
+        "description": "Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment, with the `etag` to send back in If-Match when replacing it. An event left out grants the visitor role. Requires 'tickets:manage'.",
         "operationId": "get_tcloud_event_roles",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Event roles retrieved successfully.",
@@ -3968,33 +3973,53 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
+        }
       },
       "put": {
         "tags": [
           "Tickets"
         ],
         "summary": "Replace TicketsCloud event roles",
-        "description": "Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.",
+        "description": "Replaces the whole event-to-role mapping and returns the saved one. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.",
         "operationId": "set_tcloud_event_roles",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "if-match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The `etag` from GET /tickets/tcloud-event-roles, or `*` to save regardless.",
+              "title": "If-Match"
+            },
+            "description": "The `etag` from GET /tickets/tcloud-event-roles, or `*` to save regardless."
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SetTCloudEventRolesInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "204": {
-            "description": "Event roles saved."
+          "200": {
+            "description": "Event roles saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TCloudEventRolesOutput"
+                }
+              }
+            }
           },
           "422": {
             "description": "Request validation error.",
@@ -4025,13 +4050,18 @@
                 }
               }
             }
+          },
+          "412": {
+            "description": "Someone saved the mapping after the If-Match version was read; reload and edit again.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
+        }
       }
     },
     "/sync/sources": {
@@ -7007,6 +7037,7 @@
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
               "SYNC_ALREADY_RUNNING",
+              "TCLOUD_EVENT_ROLES_CHANGED",
               "TEST_NOTIFICATION_TOO_FAST",
               "TICKET_ALREADY_USED",
               "TICKET_BARCODE_COLLISION",
@@ -7979,12 +8010,17 @@
             },
             "type": "array",
             "title": "Event Roles"
+          },
+          "etag": {
+            "type": "string",
+            "title": "Etag"
           }
         },
         "type": "object",
         "required": [
           "available",
-          "event_roles"
+          "event_roles",
+          "etag"
         ],
         "title": "TCloudEventRolesOutput"
       },

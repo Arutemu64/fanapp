@@ -2281,7 +2281,7 @@ export const getTcloudEventRolesQueryKey = (options?: Options<GetTcloudEventRole
 /**
  * Get TicketsCloud event roles
  *
- * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.
+ * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment, with the `etag` to send back in If-Match when replacing it. An event left out grants the visitor role. Requires 'tickets:manage'.
  */
 export const getTcloudEventRolesOptions = (options?: Options<GetTcloudEventRolesData>) =>
 	queryOptions<
@@ -2305,7 +2305,7 @@ export const getTcloudEventRolesOptions = (options?: Options<GetTcloudEventRoles
 /**
  * Replace TicketsCloud event roles
  *
- * Replaces the whole event-to-role mapping. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
+ * Replaces the whole event-to-role mapping and returns the saved one. Applies to tickets imported from now on; stored tickets keep their role. Requires 'tickets:manage'.
  */
 export const setTcloudEventRolesMutation = (
 	options?: Partial<Options<SetTcloudEventRolesData>>

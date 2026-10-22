@@ -28,3 +28,7 @@ class InvalidTCloudEventId(ConstraintViolation, AppSettingsException):
 
 class AppSettingsChanged(PreconditionFailed, AppSettingsException):
     code = "APP_SETTINGS_CHANGED"
+
+
+class TCloudEventRolesChanged(PreconditionFailed, AppSettingsException):
+    code = "TCLOUD_EVENT_ROLES_CHANGED"

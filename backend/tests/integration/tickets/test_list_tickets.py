@@ -21,6 +21,7 @@ from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.exceptions.settings import TCloudEventRolesChanged
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
@@ -143,7 +144,39 @@ async def test_set_tcloud_event_roles_round_trips(
         TCloudEventRoleDTO(event_id="event-b", role=UserRole.VOLUNTEER),
     ]
 
-    await set_roles(SetTCloudEventRolesInput(event_roles=event_roles))
+    saved = await set_roles(
+        SetTCloudEventRolesInput(event_roles=event_roles), if_match=None
+    )
 
     result = await get_roles()
     assert result.event_roles == event_roles
+    assert result.etag == saved.etag
+
+
+async def test_set_tcloud_event_roles_against_a_stale_etag_is_refused(
+    dishka_request: AsyncContainer,
+    ticket_manager: User,
+    login: Callable[[User], None],
+) -> None:
+    login(ticket_manager)
+    set_roles = await dishka_request.get(SetTCloudEventRoles)
+    get_roles = await dishka_request.get(GetTCloudEventRoles)
+    first = TCloudEventRoleDTO(event_id="event-a", role=UserRole.PARTICIPANT)
+    second = TCloudEventRoleDTO(event_id="event-b", role=UserRole.VOLUNTEER)
+
+    # Two organizers open the form on the same version and each adds a row.
+    read_by_both = (await get_roles()).etag
+    await set_roles(
+        SetTCloudEventRolesInput(event_roles=[first]),
+        if_match=frozenset({read_by_both}),
+    )
+
+    # The PUT replaces the whole mapping, so the second save would drop the
+    # first organizer's row.
+    with pytest.raises(TCloudEventRolesChanged):
+        await set_roles(
+            SetTCloudEventRolesInput(event_roles=[second]),
+            if_match=frozenset({read_by_both}),
+        )
+
+    assert (await get_roles()).event_roles == [first]
