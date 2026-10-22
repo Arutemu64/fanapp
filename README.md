@@ -58,7 +58,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 | Layer | Tech |
 |---|---|
 | Frontend | SvelteKit (Svelte 5 runes), TanStack Query (server state, offline cache in IndexedDB), shadcn-svelte, Tailwind CSS v4, `pnpm` |
-| Backend | FastAPI, aiogram (Telegram Bot API), SQLAlchemy + Alembic, Dishka (DI), `uv` |
+| Backend | FastAPI, SQLAlchemy + Alembic, Dishka (DI), `uv` |
 | Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
 | Tooling | Docker Compose, `just` task runner |
@@ -102,7 +102,7 @@ third-party credentials, so you can start exploring immediately:
   `telegram` in `WEB__ENABLED_OAUTH_PROVIDERS` (default `["vk"]`), since a provider
   can be configured yet unreachable from a given host. Email and credentials login
   work without any of this. There is no standalone bot process — the token is used
-  only as a Bot API client for the notifier and OAuth login.
+  only for the notifier (Bot API) and OAuth login.
 - `MAIL__*` (SMTP): optional. Leave unset and outgoing emails are logged instead
   of sent (email login/confirmation codes appear in the app logs).
 - `PUSH__SUBSCRIBER`: your contact email for Web Push.
