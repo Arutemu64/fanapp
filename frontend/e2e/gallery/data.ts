@@ -71,7 +71,6 @@ function subscription(number: number, leadMinutes: number): SubscriptionFullDto 
 	if (!event) throw new Error(`No act №${number} in the gallery schedule`);
 	return {
 		id: `subscription-${number}`,
-		user_id: 'gallery-visitor',
 		lead_minutes: leadMinutes,
 		event: {
 			id: event.id,
@@ -113,7 +112,6 @@ function notification(
 	const createdAt = new Date(GALLERY_NOW.getTime() - minutesAgo * MINUTE_MS).toISOString();
 	return {
 		id: `notification-${minutesAgo}`,
-		user_id: 'gallery-visitor',
 		title,
 		body,
 		type,

@@ -283,21 +283,7 @@ export type FeedbackDto = {
 	 * Created At
 	 */
 	created_at: string;
-	user: FeedbackUserDto;
-};
-
-/**
- * FeedbackUserDTO
- */
-export type FeedbackUserDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Username
-	 */
-	username: string;
+	user: UserRefDto;
 };
 
 /**
@@ -708,10 +694,7 @@ export type MailingDto = {
 	 */
 	id: string;
 	status: MailingStatus;
-	/**
-	 * By User Id
-	 */
-	by_user_id: string | null;
+	created_by: UserRefDto | null;
 	/**
 	 * Body
 	 */
@@ -827,10 +810,6 @@ export type NotificationDto = {
 	 * Id
 	 */
 	id: string;
-	/**
-	 * User Id
-	 */
-	user_id: string;
 	/**
 	 * Title
 	 */
@@ -1120,26 +1099,12 @@ export type QuestAwardItemDto = {
 	 * Cancelled At
 	 */
 	cancelled_at: string | null;
-	user: QuestAwardUserDto;
-	awarded_by: QuestAwardUserDto | null;
+	user: UserRefDto;
+	awarded_by: UserRefDto | null;
 	/**
 	 * Can Cancel
 	 */
 	can_cancel: boolean;
-};
-
-/**
- * QuestAwardUserDTO
- */
-export type QuestAwardUserDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Username
-	 */
-	username: string;
 };
 
 /**
@@ -1285,16 +1250,12 @@ export type ScheduleChangeFullDto = {
 	 */
 	mailing_id: string | null;
 	/**
-	 * User Id
-	 */
-	user_id: string | null;
-	/**
 	 * Next Event Changed
 	 */
 	next_event_changed: boolean;
 	changed_event: ScheduleChangeEntryDto | null;
 	related_entry: ScheduleChangeEntryDto | null;
-	user: ScheduleChangeUserDto | null;
+	user: UserRefDto | null;
 	/**
 	 * Created At
 	 */
@@ -1316,20 +1277,6 @@ export type ScheduleChangeFullDto = {
  * SKIPPED / UNSKIPPED: `related_entry_id` is unused.
  */
 export type ScheduleChangeType = 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
-
-/**
- * ScheduleChangeUserDTO
- */
-export type ScheduleChangeUserDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Username
-	 */
-	username: string;
-};
 
 export type ScheduleEntryDto =
 	| ({
@@ -1544,10 +1491,6 @@ export type SubscriptionFullDto = {
 	 */
 	id: string;
 	/**
-	 * User Id
-	 */
-	user_id: string;
-	/**
 	 * Lead Minutes
 	 */
 	lead_minutes: number;
@@ -1682,14 +1625,7 @@ export type TicketListItemDto = {
 	 */
 	barcode: string;
 	role: UserRole;
-	/**
-	 * Used By User Id
-	 */
-	used_by_user_id: string | null;
-	/**
-	 * Used By Username
-	 */
-	used_by_username: string | null;
+	used_by: UserRefDto | null;
 	/**
 	 * From Ticketscloud
 	 */
@@ -1879,6 +1815,24 @@ export type UserListItemDto = {
 	 * Created At
 	 */
 	created_at: string;
+};
+
+/**
+ * UserRefDTO
+ *
+ * A person attached to a record, in the field named for their role there
+ * (`user`, `awarded_by`, `created_by`, …); null when nobody is (a system
+ * action, a deleted account).
+ */
+export type UserRefDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Username
+	 */
+	username: string;
 };
 
 /**

@@ -7,6 +7,7 @@ from sqlalchemy.orm import joinedload
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.models import TicketORM
 from fanfan.adapters.db.pagination import rows_after
+from fanfan.adapters.db.user_ref import parse_user_ref
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.ticket import TicketListFilter, TicketListItemDTO
 from fanfan.application.ports.gateways.tickets import TicketGateway
@@ -50,13 +51,11 @@ def _to_model(orm: TicketORM) -> Ticket:
 
 
 def _to_list_item_dto(orm: TicketORM) -> TicketListItemDTO:
-    used_by_user = orm.used_by_user
     return TicketListItemDTO(
         id=TicketId(orm.id),
         barcode=orm.barcode,
         role=orm.role,
-        used_by_user_id=UserId(used_by_user.id) if used_by_user else None,
-        used_by_username=used_by_user.username if used_by_user else None,
+        used_by=parse_user_ref(orm.used_by_user) if orm.used_by_user else None,
         from_ticketscloud=orm.ticketscloud_ticket_id is not None,
         revoked_at=orm.revoked_at,
         created_at=orm.created_at,

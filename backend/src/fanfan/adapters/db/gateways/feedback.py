@@ -4,12 +4,12 @@ from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.models import FeedbackORM
 from fanfan.adapters.db.pagination import rows_after
-from fanfan.application.dto.feedback import FeedbackDTO, FeedbackUserDTO
+from fanfan.adapters.db.user_ref import parse_user_ref
+from fanfan.application.dto.feedback import FeedbackDTO
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.feedback import FeedbackGateway
 from fanfan.core.models.feedback import Feedback
 from fanfan.core.vo.feedback import FeedbackId
-from fanfan.core.vo.user import UserId
 
 
 def _from_model(model: Feedback) -> FeedbackORM:
@@ -25,10 +25,7 @@ def _parse_dto(orm: FeedbackORM) -> FeedbackDTO:
         id=FeedbackId(orm.id),
         text=orm.text,
         created_at=orm.created_at,
-        user=FeedbackUserDTO(
-            id=UserId(orm.user.id),
-            username=orm.user.username,
-        ),
+        user=parse_user_ref(orm.user),
     )
 
 

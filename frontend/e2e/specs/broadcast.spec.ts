@@ -7,7 +7,7 @@ const BODY = 'Скоро начнётся церемония открытия н
 const FINISHED: MailingDto = {
 	id: '01890000-0000-7000-8000-0000000000b1',
 	status: 'finished',
-	by_user_id: '01890000-0000-7000-8000-000000000001',
+	created_by: { id: '01890000-0000-7000-8000-000000000001', username: 'ЯркийФеникс7' },
 	body: BODY,
 	roles: ['visitor'],
 	total_count: 10,

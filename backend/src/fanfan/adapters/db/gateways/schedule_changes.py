@@ -4,11 +4,11 @@ from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.models import ScheduleChangeORM
 from fanfan.adapters.db.pagination import rows_after
+from fanfan.adapters.db.user_ref import parse_user_ref
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
-    ScheduleChangeUserDTO,
 )
 from fanfan.application.ports.gateways import ScheduleChangeGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -58,9 +58,6 @@ def _parse_full_dto(
         mailing_id=MailingId(schedule_change_orm.mailing_id)
         if schedule_change_orm.mailing_id is not None
         else None,
-        user_id=UserId(schedule_change_orm.user_id)
-        if schedule_change_orm.user_id is not None
-        else None,
         next_event_changed=schedule_change_orm.next_event_changed,
         changed_event=ScheduleChangeEntryDTO(
             id=ScheduleEntryId(schedule_change_orm.changed_event.id),
@@ -80,10 +77,7 @@ def _parse_full_dto(
         )
         if schedule_change_orm.related_entry
         else None,
-        user=ScheduleChangeUserDTO(
-            id=UserId(schedule_change_orm.user.id),
-            username=schedule_change_orm.user.username,
-        )
+        user=parse_user_ref(schedule_change_orm.user)
         if schedule_change_orm.user
         else None,
         created_at=schedule_change_orm.created_at,

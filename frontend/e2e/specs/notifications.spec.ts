@@ -8,7 +8,6 @@ import { emitSse, expect, json, loggedInAs, test } from '../fixtures';
 
 const UNREAD: NotificationDto = {
 	id: '01890000-0000-7000-8000-0000000000e1',
-	user_id: '01890000-0000-7000-8000-000000000001',
 	title: 'Скоро твоё событие',
 	body: 'Косплей-дефиле начнётся через 15 минут на главной сцене.',
 	type: 'schedule_change',

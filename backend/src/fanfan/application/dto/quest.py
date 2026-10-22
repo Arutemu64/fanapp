@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from fanfan.application.dto.user import UserRefDTO
 from fanfan.core.vo.quest import QuestAwardId
 from fanfan.core.vo.user import UserId, UserNumber
 
@@ -19,19 +20,14 @@ class LeaderboardEntryDTO(BaseModel):
     player: QuestPlayerDTO
 
 
-class QuestAwardUserDTO(BaseModel):
-    id: UserId
-    username: str
-
-
 class QuestAwardDTO(BaseModel):
     id: QuestAwardId
     amount: int
     message: str
     created_at: datetime
     cancelled_at: datetime | None
-    user: QuestAwardUserDTO
-    awarded_by: QuestAwardUserDTO | None
+    user: UserRefDTO
+    awarded_by: UserRefDTO | None
 
 
 class QuestHistoryItemDTO(BaseModel):

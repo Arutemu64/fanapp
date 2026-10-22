@@ -32,7 +32,6 @@ test.describe('schedule', { tag: '@critical' }, () => {
 				subscriptions: [
 					{
 						id: 'subscription-1',
-						user_id: 'user',
 						lead_minutes: 10,
 						event: { id: 'event-1', number: 1, title: 'Выступление 1', order: 1, position: 1 }
 					}

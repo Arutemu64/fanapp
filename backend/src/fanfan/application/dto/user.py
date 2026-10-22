@@ -10,6 +10,15 @@ from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, UserNumber, UserRole
 
 
+class UserRefDTO(BaseModel):
+    """A person attached to a record, in the field named for their role there
+    (`user`, `awarded_by`, `created_by`, …); null when nobody is (a system
+    action, a deleted account)."""
+
+    id: UserId
+    username: str
+
+
 class UserBaseDTO(BaseModel):
     id: UserId
     username: str

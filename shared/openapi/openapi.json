@@ -5697,7 +5697,7 @@
             "title": "Created At"
           },
           "user": {
-            "$ref": "#/components/schemas/FeedbackUserDTO"
+            "$ref": "#/components/schemas/UserRefDTO"
           }
         },
         "type": "object",
@@ -5708,25 +5708,6 @@
           "user"
         ],
         "title": "FeedbackDTO"
-      },
-      "FeedbackUserDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username"
-        ],
-        "title": "FeedbackUserDTO"
       },
       "FindQuestPlayersOutput": {
         "properties": {
@@ -6448,17 +6429,15 @@
           "status": {
             "$ref": "#/components/schemas/MailingStatus"
           },
-          "by_user_id": {
+          "created_by": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "By User Id"
+            ]
           },
           "body": {
             "anyOf": [
@@ -6499,7 +6478,7 @@
         "required": [
           "id",
           "status",
-          "by_user_id",
+          "created_by",
           "body",
           "roles",
           "total_count",
@@ -6668,11 +6647,6 @@
             "format": "uuid",
             "title": "Id"
           },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
           "title": {
             "type": "string",
             "title": "Title"
@@ -6728,7 +6702,6 @@
         "type": "object",
         "required": [
           "id",
-          "user_id",
           "title",
           "body",
           "type",
@@ -7048,12 +7021,12 @@
             "title": "Cancelled At"
           },
           "user": {
-            "$ref": "#/components/schemas/QuestAwardUserDTO"
+            "$ref": "#/components/schemas/UserRefDTO"
           },
           "awarded_by": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/QuestAwardUserDTO"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
@@ -7077,25 +7050,6 @@
           "can_cancel"
         ],
         "title": "QuestAwardItemDTO"
-      },
-      "QuestAwardUserDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username"
-        ],
-        "title": "QuestAwardUserDTO"
       },
       "QuestConfigDTO": {
         "properties": {
@@ -7317,18 +7271,6 @@
             ],
             "title": "Mailing Id"
           },
-          "user_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Id"
-          },
           "next_event_changed": {
             "type": "boolean",
             "title": "Next Event Changed"
@@ -7356,7 +7298,7 @@
           "user": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ScheduleChangeUserDTO"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
@@ -7374,7 +7316,6 @@
           "id",
           "type",
           "mailing_id",
-          "user_id",
           "next_event_changed",
           "changed_event",
           "related_entry",
@@ -7393,25 +7334,6 @@
         ],
         "title": "ScheduleChangeType",
         "description": "How to read a `ScheduleChange`'s `changed_event_id`/`related_entry_id`.\n\nSET_AS_CURRENT: `changed_event_id` is the new current event (None if the\n    current event was unchecked); `related_entry_id` is the event that was\n    current before this change.\nMOVED: `related_entry_id` is the entry `changed_event_id` sat right after\n    before the move — a block start when the event opened its block. To\n    undo, place `changed_event_id` back after `related_entry_id` — or at\n    the top of the order if `related_entry_id` is None.\nSKIPPED / UNSKIPPED: `related_entry_id` is unused."
-      },
-      "ScheduleChangeUserDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "type": "string",
-            "title": "Username"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username"
-        ],
-        "title": "ScheduleChangeUserDTO"
       },
       "ScheduleEntryDTO": {
         "oneOf": [
@@ -7742,11 +7664,6 @@
             "format": "uuid",
             "title": "Id"
           },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
           "lead_minutes": {
             "type": "integer",
             "title": "Lead Minutes"
@@ -7758,7 +7675,6 @@
         "type": "object",
         "required": [
           "id",
-          "user_id",
           "lead_minutes",
           "event"
         ],
@@ -7975,28 +7891,15 @@
           "role": {
             "$ref": "#/components/schemas/UserRole"
           },
-          "used_by_user_id": {
+          "used_by": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "$ref": "#/components/schemas/UserRefDTO"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Used By User Id"
-          },
-          "used_by_username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Used By Username"
+            ]
           },
           "from_ticketscloud": {
             "type": "boolean",
@@ -8025,8 +7928,7 @@
           "id",
           "barcode",
           "role",
-          "used_by_user_id",
-          "used_by_username",
+          "used_by",
           "from_ticketscloud",
           "revoked_at",
           "created_at"
@@ -8384,6 +8286,26 @@
           "created_at"
         ],
         "title": "UserListItemDTO"
+      },
+      "UserRefDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "UserRefDTO",
+        "description": "A person attached to a record, in the field named for their role there\n(`user`, `awarded_by`, `created_by`, …); null when nobody is (a system\naction, a deleted account)."
       },
       "UserRole": {
         "type": "string",

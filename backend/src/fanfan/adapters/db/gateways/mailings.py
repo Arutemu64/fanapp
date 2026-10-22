@@ -1,9 +1,11 @@
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.models import MailingORM
 from fanfan.adapters.db.pagination import rows_after
+from fanfan.adapters.db.user_ref import parse_user_ref
 from fanfan.application.dto.mailing import MailingDTO
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.mailings import MailingGateway
@@ -40,7 +42,7 @@ def _parse_dto(orm: MailingORM) -> MailingDTO:
     return MailingDTO(
         id=MailingId(orm.id),
         status=orm.status,
-        by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
+        created_by=parse_user_ref(orm.by_user) if orm.by_user else None,
         body=orm.body,
         roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
         total_count=orm.total_count,
@@ -97,6 +99,7 @@ class SqlMailingGateway(MailingGateway):
         # plain created_at sort needs no index.
         stmt = (
             select(MailingORM)
+            .options(joinedload(MailingORM.by_user))
             .where(func.jsonb_typeof(MailingORM.roles) == "array")
             # id (uuid7, time-ordered) breaks created_at ties so the page cursor
             # names one row — otherwise same-timestamp rows leave it ambiguous

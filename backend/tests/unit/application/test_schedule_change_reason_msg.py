@@ -58,7 +58,6 @@ def _change(
         id=generate_schedule_change_id(),
         type=change_type,
         mailing_id=None,
-        user_id=None,
         next_event_changed=False,
         changed_event=changed_event,
         related_entry=related_entry,
