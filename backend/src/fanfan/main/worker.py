@@ -24,10 +24,10 @@ _HEALTH_PING_TIMEOUT_SECONDS = 2.0
 
 
 def create_app() -> AsgiFastStream:
-    init(service_name="stream")
+    init(service_name="worker")
 
     config = get_config()
-    broker = create_broker(config=config.nats, name="fanfan-consumer")
+    broker = create_broker(config=config.nats, name="fanfan-worker")
     broker.include_router(setup_router())
 
     # ASGI only to serve the image's HEALTHCHECK on the path the api uses, so
@@ -77,7 +77,7 @@ def create_app() -> AsgiFastStream:
 
 def main() -> None:
     app = create_app()
-    # Off 8000, the api's port on the host; mirrors `just backend-stream`.
+    # Off 8000, the api's port on the host; mirrors `just backend-worker`.
     asyncio.run(app.run(run_extra_options={"port": 8001}), loop_factory=loop_factory())
 
 

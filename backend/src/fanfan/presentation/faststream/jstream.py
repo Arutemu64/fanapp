@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 # Retention must outlast any realistic consumer outage: the outbox never
 # redelivers a row once it is marked published, so events expiring from the
-# stream before the FastStream service catches up are lost for good. 24h keeps
+# stream before the worker catches up are lost for good. 24h keeps
 # an overnight outage survivable.
 # duplicate_window is the span over which JetStream suppresses a re-published
 # Nats-Msg-Id (the outbox row id). It is deliberately NOT stretched to match

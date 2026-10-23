@@ -1,4 +1,4 @@
-# ADR-0046: NATS message schedules replace APScheduler, and the stream worker hosts the outbox relay
+# ADR-0046: NATS message schedules replace APScheduler, and the worker hosts the outbox relay
 
 - **Status:** Accepted
 - **Date:** 2026-10-23
@@ -9,7 +9,8 @@
 A separate `scheduler` container ran APScheduler v3 for four cron jobs (the
 TicketsCloud and cosplay2 syncs, outbox retention, notification retention) and
 the outbox relay loop of [ADR-0015](0015-listen-notify-wakes-the-outbox-relay.md).
-It ran the same image, broker and Dishka container as the `faststream` worker
+It ran the same image, broker and Dishka container as the `faststream` service (renamed
+`worker` in the same change)
 and needed the same 256M memory ceiling, on a VPS where every container counts.
 
 APScheduler kept its schedule in process memory. A tick that fell while the
@@ -59,7 +60,7 @@ and the `scheduler` container.
   `Nats-Schedule-Time-Zone` on cron schedules only, because the server refuses
   it on `@every`.
 
-The outbox relay loop moves into the `faststream` worker as a background task
+The outbox relay loop moves into the worker as a background task
 (`presentation/faststream/outbox_relay.py`), started in `after_startup` and
 cancelled in `on_shutdown`. This partly supersedes ADR-0015: the LISTEN/NOTIFY
 design stands, but the relay no longer runs in a scheduler process.
@@ -67,15 +68,15 @@ design stands, but the relay no longer runs in a scheduler process.
 ## Consequences
 
 - There is one container fewer, which frees its 256M memory reservation and its
-  database pool. The `faststream` pool overflow goes from 5 to 10, because that
-  worker now also runs the relay and the scheduled jobs. The api and faststream
+  database pool. The worker's pool overflow goes from 5 to 10, because that
+  worker now also runs the relay and the scheduled jobs. The api and worker
   pools together stay below the old three-service total.
 - A tick missed while the worker is down still runs once when it returns. It is
   not lost, and it is not replayed once per missed fire. Two worker replicas
   share each durable, so a tick runs only once.
 - The schedule lives in NATS. Changing a cron still means editing `.env` and
-  restarting `faststream`.
-- `faststream` is now required for event delivery, the syncs, and retention.
+  restarting `worker`.
+- `worker` is now required for event delivery, the syncs, and retention.
   Before this change it was already required for consuming events.
 - Disabling a job takes effect after the subscribers start, so a tick that was
   already pending can run once more.

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class OutboxRelay:
-    """Drains the outbox to NATS from a background task of the stream worker.
+    """Drains the outbox to NATS from a background task of the worker.
 
     Not a subscriber or a scheduled job: it is driven by a Postgres NOTIFY
     (fired by the outbox INSERT trigger, ADR-0015) rather than by a message or a

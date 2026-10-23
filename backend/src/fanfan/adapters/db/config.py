@@ -21,7 +21,7 @@ class DatabaseConfig(BaseModel):
 
     # Connection pool sizing (SQLAlchemy QueuePool). A single process may open up
     # to pool_size + max_overflow connections. Kept explicit so the two
-    # long-lived services (api, faststream), each with its own engine,
+    # long-lived services (api, worker), each with its own engine,
     # stay well under Postgres' default max_connections=100.
     pool_size: int = 5
     max_overflow: int = 10

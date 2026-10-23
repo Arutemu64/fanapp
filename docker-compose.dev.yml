@@ -77,13 +77,13 @@ services:
         - action: rebuild
           path: ./backend/uv.lock
 
-  faststream:
+  worker:
     read_only: false
     # The base command has no --reload, so a bare `sync` would copy files into the
     # container but never restart the consumer. --reload (watchfiles ships via
     # faststream[cli]) reloads the process in place, mirroring the api's
     # UVICORN_RELOAD, so a synced change actually takes effect.
-    command: [ "faststream", "run", "--factory", "--reload", "fanfan.main.faststream:create_app" ]
+    command: [ "faststream", "run", "--factory", "--reload", "fanfan.main.worker:create_app" ]
     # Reload forks a worker off the parent — see api for why 256M OOM-kills it.
     deploy:
       resources:

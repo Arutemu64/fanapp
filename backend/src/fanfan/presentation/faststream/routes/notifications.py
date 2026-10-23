@@ -65,7 +65,7 @@ _SEND_ACK_WAIT_SECONDS = 90.0
 # community token, https://dev.vk.ru/ru/api/api-requests) are paced by their
 # rate limiters, and a few workers are enough to keep those busy. Every worker
 # holds a pooled DB connection only for its reads, never across the send, so
-# these can exceed the faststream DB pool.
+# these can exceed the worker's DB pool.
 _PUSH_WORKERS = 32
 _TELEGRAM_WORKERS = 8
 _VK_WORKERS = 8

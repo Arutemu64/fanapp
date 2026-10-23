@@ -97,8 +97,8 @@ backend-dev:
 # notifications silently do nothing. --reload restarts the app on file changes
 # (watchfiles ships via faststream[cli]), mirroring the api's UVICORN_RELOAD.
 # --port moves its health route off 8000, where `just backend-dev` listens.
-backend-stream:
-    cd backend && uv run faststream run --factory --reload --port 8001 fanfan.main.faststream:create_app
+backend-worker:
+    cd backend && uv run faststream run --factory --reload --port 8001 fanfan.main.worker:create_app
 
 backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
@@ -196,7 +196,7 @@ dockerfile-lint:
 
 # ---- Docker infra helpers ----
 # For the hybrid loop: infra in Docker, the host processes (`just backend-dev`,
-# `just backend-stream`, `just frontend-dev`) reaching
+# `just backend-worker`, `just frontend-dev`) reaching
 # the containers through their published 127.0.0.1 ports. Naming the
 # services explicitly is enough — Compose starts a service targeted on the
 # command line even when its profile ("core") isn't enabled. Migrations are NOT
@@ -246,5 +246,5 @@ _backups-dir:
 dev:
     @echo "Run in separate terminals:"
     @echo "  just backend-dev"
-    @echo "  just backend-stream"
+    @echo "  just backend-worker"
     @echo "  just frontend-dev"

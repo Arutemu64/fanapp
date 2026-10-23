@@ -48,7 +48,7 @@ services:
       proxy:
         aliases: [fanapp-api]
 
-  faststream:
+  worker:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
     build: !reset null
 

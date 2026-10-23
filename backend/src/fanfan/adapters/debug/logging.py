@@ -3,7 +3,7 @@ import sys
 
 import structlog
 
-# Path of the container/Dockerfile HEALTHCHECK probe (the api and the stream
+# Path of the container/Dockerfile HEALTHCHECK probe (the api and the
 # worker both serve it); its access logs are noise.
 HEALTH_CHECK_PATH = "/debug/health"
 

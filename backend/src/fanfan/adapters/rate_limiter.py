@@ -8,7 +8,7 @@ class RateLimiter:
     senders share one provider quota instead of each discovering it through
     429s and backing off. Even spacing rather than a bucket that allows a burst:
     providers count requests per second, and a burst at the top of a second is
-    exactly what trips their flood control. Per process; the faststream
+    exactly what trips their flood control. Per process; the worker
     service runs as a single container, so this is the whole app's rate.
     """
 

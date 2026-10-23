@@ -241,6 +241,6 @@ forbidden_modules = [
 
 [project.scripts]
 web = "fanfan.main.web:main"
-stream = "fanfan.main.faststream:main"
+worker = "fanfan.main.worker:main"
 cli = "fanfan.main.cli:main"
 generate-vapid = "fanfan.main.generate_vapid:main"

@@ -126,7 +126,7 @@ services:
       - frontend-network
       - backend-network
 
-  faststream:
+  worker:
     build: ./backend
     depends_on:
       migration:
@@ -141,7 +141,7 @@ services:
       - .env
     environment:
       DB__HOST: "db"
-      DB__APPLICATION_NAME: "fanfan-faststream"
+      DB__APPLICATION_NAME: "fanfan-worker"
       # Trimmed pool: a NATS consumer with modest DB write concurrency. See api.
       # The overflow also covers the outbox relay and the scheduled jobs, which
       # run here too; a running sync pins two connections (its session plus its
@@ -152,7 +152,7 @@ services:
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
-    command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
+    command: [ "faststream", "run", "--factory", "fanfan.main.worker:create_app" ]
     # On SIGTERM the broker waits up to its graceful timeout (15s,
     # presentation/faststream/broker.py) for the dozens of sends in flight
     # before it closes. The 10s default would SIGKILL it first, leaving every
@@ -173,7 +173,7 @@ services:
           # shared-image baseline. Matches the api ceiling.
           memory: 256M
     # Inherits the image's HEALTHCHECK: the worker serves the api's health path
-    # and answers 500 while its broker is disconnected (main/faststream.py).
+    # and answers 500 while its broker is disconnected (main/worker.py).
     # Compose only reports the state; it does not restart an unhealthy
     # container. Reconnecting is the clients' job (adapters/nats/config.py).
     profiles: [ "core" ]
@@ -235,7 +235,7 @@ services:
     # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
     # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
     # single core from spending it JIT-compiling OLTP queries. max_connections
-    # tracks the per-service pool ceilings (see api/faststream).
+    # tracks the per-service pool ceilings (see api/worker).
     # shared_buffers stays at the image default (128M, ~28% of this container's
     # cap and matched to shm_size above); raising it would starve work_mem.
     command:
