@@ -100,13 +100,6 @@ backend-dev:
 backend-stream:
     cd backend && uv run faststream run --factory --reload --port 8001 fanfan.main.faststream:create_app
 
-# Scheduler on the host (pair with `just run-infra`). Runs the periodic syncs AND
-# the outbox relay — without it, aggregate events written on commit never leave
-# the DB. APScheduler has no native reload, so watchfiles restarts it on source
-# changes (parity with backend-dev / backend-stream).
-backend-scheduler:
-    cd backend && uv run watchfiles "python -m fanfan.main.scheduler" src
-
 backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
 
@@ -203,7 +196,7 @@ dockerfile-lint:
 
 # ---- Docker infra helpers ----
 # For the hybrid loop: infra in Docker, the host processes (`just backend-dev`,
-# `just backend-stream`, `just backend-scheduler`, `just frontend-dev`) reaching
+# `just backend-stream`, `just frontend-dev`) reaching
 # the containers through their published 127.0.0.1 ports. Naming the
 # services explicitly is enough — Compose starts a service targeted on the
 # command line even when its profile ("core") isn't enabled. Migrations are NOT
@@ -254,5 +247,4 @@ dev:
     @echo "Run in separate terminals:"
     @echo "  just backend-dev"
     @echo "  just backend-stream"
-    @echo "  just backend-scheduler"
     @echo "  just frontend-dev"

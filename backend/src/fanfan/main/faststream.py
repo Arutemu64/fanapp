@@ -5,14 +5,17 @@ from faststream.asgi import AsgiFastStream, make_ping_asgi
 
 from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.db.event_loop import loop_factory
+from fanfan.adapters.db.outbox_signal import PostgresOutboxSignal
 from fanfan.adapters.debug.logging import HEALTH_CHECK_PATH
 from fanfan.main.common import init
 from fanfan.main.di import create_system_container
 from fanfan.presentation.faststream.broker import create_broker
 from fanfan.presentation.faststream.jstream import retire_stream_subjects
 from fanfan.presentation.faststream.logger import get_stream_logger
+from fanfan.presentation.faststream.outbox_relay import OutboxRelay
 from fanfan.presentation.faststream.redelivery import sync_consumer_configs
 from fanfan.presentation.faststream.routes import setup_router
+from fanfan.presentation.faststream.schedules.jobs import sync_schedules
 
 # How long the health route waits for the broker to report a live connection.
 # Below the 3 s urlopen timeout of the image's HEALTHCHECK (backend/Dockerfile),
@@ -45,13 +48,29 @@ def create_app() -> AsgiFastStream:
         logger=get_stream_logger(),
     )
 
+    container = create_system_container()
+    setup_dishka(container, app)
+
+    outbox_signal = PostgresOutboxSignal(config.db)
+    outbox_relay = OutboxRelay(
+        container, outbox_signal, config.outbox.poll_interval_seconds
+    )
+
     @app.after_startup
     async def _apply_server_config() -> None:
         await retire_stream_subjects(broker)
         await sync_consumer_configs(broker)
+        await sync_schedules(broker, config.scheduler, config.timezone)
 
-    container = create_system_container()
-    setup_dishka(container, app)
+    @app.after_startup
+    async def _start_outbox_relay() -> None:
+        await outbox_signal.start()
+        outbox_relay.start()
+
+    @app.on_shutdown
+    async def _stop_outbox_relay() -> None:
+        await outbox_relay.stop()
+        await outbox_signal.stop()
 
     return app
 

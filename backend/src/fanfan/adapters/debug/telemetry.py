@@ -116,7 +116,7 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
             # list and the SDK's auto-detection.
             integrations=[
                 # Captures unhandled exceptions in detached asyncio tasks
-                # (e.g. SSE fan-out, scheduler/stream background work) that
+                # (e.g. SSE fan-out, the outbox relay) that
                 # would otherwise escape the framework integrations. Unlike the
                 # others here, this one is not auto-enabled, so it must be listed.
                 AsyncioIntegration(),

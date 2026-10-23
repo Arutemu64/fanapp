@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       # One image per service kind. The backend image is shared by the api,
-      # faststream, scheduler and migration services (they differ only by command).
+      # faststream and migration services (they differ only by command).
       matrix:
         include:
           - name: backend

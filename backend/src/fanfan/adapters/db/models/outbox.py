@@ -14,8 +14,8 @@ class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     """A domain event awaiting delivery to NATS.
 
     Rows are written inside the same transaction as the aggregate change, then
-    delivered by the outbox relay (see presentation/scheduler). The row id
-    doubles as the NATS dedup id (``Nats-Msg-Id``).
+    delivered by the outbox relay (see presentation/faststream/outbox_relay.py).
+    The row id doubles as the NATS dedup id (``Nats-Msg-Id``).
     """
 
     __tablename__ = "outbox_events"

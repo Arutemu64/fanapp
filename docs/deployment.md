@@ -443,13 +443,13 @@ Only into a database you intend to overwrite. Stop the app services first so
 nothing writes mid-restore, recreate the database empty, then load the dump:
 
 ```sh
-docker compose stop api frontend migration scheduler stream pgbackup
+docker compose stop api frontend migration faststream pgbackup
 docker compose exec db sh -c \
   'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
 docker compose exec -T db sh -c \
   'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --single-transaction --exit-on-error' \
   < backups/daily/<file>.dump
-docker compose start api frontend migration scheduler stream pgbackup
+docker compose start api frontend migration faststream pgbackup
 ```
 
 `--single-transaction` makes the load all-or-nothing, so a failed restore leaves
