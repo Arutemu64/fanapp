@@ -8,7 +8,7 @@ def get_stream_logger() -> logging.Logger:
     logs and for the ``Logger`` dependency injected into subscribers. We give it
     a plain stdlib logger with no handlers of its own and ``propagate=True`` so
     every record flows to the root handler configured by ``setup_logging()``
-    (structlog). This keeps the stream service consistent with every other
+    (structlog). This keeps the worker consistent with every other
     service: console output in dev, JSON in prod, and the same log level.
 
     Without a custom logger FastStream falls back to its default, which installs

@@ -18,7 +18,7 @@ from fanfan.adapters.tgbot.config import TelegramConfig
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.outbox.config import OutboxConfig
-from fanfan.presentation.scheduler.config import SchedulerConfig
+from fanfan.presentation.faststream.schedules.config import SchedulerConfig
 from fanfan.presentation.web.config import WebConfig
 
 

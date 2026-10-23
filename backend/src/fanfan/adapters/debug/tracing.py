@@ -8,7 +8,7 @@ BAGGAGE_HEADER = "baggage"
 def current_trace_headers() -> dict[str, str]:
     """The active trace's propagation headers, or {} when no span is active.
 
-    Only an active span counts: outside one (the scheduler, a CLI command) the
+    Only an active span counts: outside one (the outbox relay, a CLI command) the
     scope still has a process-wide fallback trace id, and stamping that onto
     messages would stitch every unrelated message into one endless trace.
     """

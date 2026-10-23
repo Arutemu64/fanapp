@@ -23,7 +23,7 @@ class RequestSyncInput(BaseModel):
 class RequestSync:
     """Queue a sync for an organizer and hand back immediately.
 
-    The actual work happens in the stream service (see ExecuteCosplaySync /
+    The actual work happens in the worker (see ExecuteCosplaySync /
     ExecuteTicketsSync) — a full TicketsCloud sweep is unbounded and would
     outlive the HTTP request, and the API container is replaced on every deploy.
     """

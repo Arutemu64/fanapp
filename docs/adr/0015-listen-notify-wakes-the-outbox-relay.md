@@ -1,6 +1,6 @@
 # ADR-0015: LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop
 
-- **Status:** Accepted
+- **Status:** Accepted; the relay's host process superseded by [ADR-0046](0046-nats-message-schedules-replace-apscheduler.md)
 - **Date:** 2026-08-26
 - **Deciders:** Backend
 

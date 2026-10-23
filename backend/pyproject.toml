@@ -26,7 +26,6 @@ dependencies = [
     "aiosmtplib>=5.1.2",
     "alembic>=1.20.0",
     "altcha>=2.3.0",
-    "apscheduler>=3.11.3,<4",
     "authlib>=1.8.0",
     "click>=8.5.0",
     "dishka-faststream>=0.7.0",
@@ -242,7 +241,6 @@ forbidden_modules = [
 
 [project.scripts]
 web = "fanfan.main.web:main"
-stream = "fanfan.main.faststream:main"
+worker = "fanfan.main.worker:main"
 cli = "fanfan.main.cli:main"
-scheduler = "fanfan.main.scheduler:main"
 generate-vapid = "fanfan.main.generate_vapid:main"

@@ -67,7 +67,7 @@ codebase guide.
 | `just run-infra` / `just stop-infra`                  | Backing services only (Postgres, Redis, NATS), for running the app on the host                                                                                                         |
 | `just deploy`                                         | Server deploy: pull prebuilt GHCR images, restart                                                                                                                                      |
 | `just backend-dev` / `just frontend-dev`              | Run one side on the host (pair with `just run-infra`)                                                                                                                                  |
-| `just backend-stream` / `just backend-scheduler`      | Run the FastStream consumer / scheduler (outbox relay + syncs) on the host (pair with `just run-infra`)                                                                                |
+| `just backend-worker`                                 | Run the FastStream worker (outbox relay, consumers, NATS-scheduled jobs) on the host (pair with `just run-infra`)                                                                      |
 | `just backend-seed-demo`                              | Fill an empty environment with a demo programme and voting (idempotent)                                                                                                                |
 | `just backend-lint` / `just backend-typecheck`        | Sort deps + format + ruff + `ty` + import-linter / `ty` alone                                                                                                                          |
 | `just frontend-lint` / `just frontend-check`          | Prettier + ESLint / `svelte-check`                                                                                                                                                     |
@@ -94,9 +94,9 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
-│   ├── presentation/    # HTTP (web/), NATS (faststream/), CLI (cli/), APScheduler cron jobs (scheduler/)
+│   ├── presentation/    # HTTP (web/), NATS (faststream/, incl. scheduled jobs and the outbox relay), CLI (cli/)
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
-│   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
+│   ├── main/            # Entrypoints (web, cli, worker — the FastStream app, which also runs the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
 ├── frontend/
 │   ├── messages/        # ru.json: all user-facing copy (Paraglide JS)

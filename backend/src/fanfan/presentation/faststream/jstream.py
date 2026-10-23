@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 # Retention must outlast any realistic consumer outage: the outbox never
 # redelivers a row once it is marked published, so events expiring from the
-# stream before the FastStream service catches up are lost for good. 24h keeps
+# stream before the worker catches up are lost for good. 24h keeps
 # an overnight outage survivable.
 # duplicate_window is the span over which JetStream suppresses a re-published
 # Nats-Msg-Id (the outbox row id). It is deliberately NOT stretched to match
@@ -34,6 +34,27 @@ stream = JStream(
     duplicate_window=timedelta(minutes=2).total_seconds(),
     max_bytes=256 * 1024 * 1024,
     discard=DiscardPolicy.NEW,
+)
+
+# Holds the cron schedules (presentation/faststream/schedules/) and the ticks
+# they fire. A stream of its own because both `stream` settings above are
+# incompatible with message schedules: the server refuses DiscardPolicy.NEW on a
+# stream that allows them (err 10052), and a schedule stops firing once its
+# message is removed, so max_age would silently delete every schedule a day after
+# it was published. allow_msg_schedules can never be switched off again, which
+# also argues for keeping it off the event stream. Hence no max_age, and the
+# default DiscardPolicy.OLD.
+# max_msgs_per_subject=1 bounds the stream to one message per subject: a
+# republished schedule replaces its predecessor (the server rolls it up anyway),
+# and a tick replaces the one before it, so a worker that was down for a week
+# runs each job once on its return instead of working through a backlog.
+# The tick subjects join through the subscribers in routes/scheduled_jobs.py.
+# https://github.com/nats-io/nats-architecture-and-design/blob/main/adr/ADR-51.md
+scheduler_stream = JStream(
+    name="scheduler",
+    subjects=["scheduler.schedule.*"],
+    max_msgs_per_subject=1,
+    allow_msg_schedules=True,
 )
 
 # Subjects the stream once captured. FastStream keeps every subject the server

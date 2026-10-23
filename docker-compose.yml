@@ -126,7 +126,10 @@ services:
       - frontend-network
       - backend-network
 
-  faststream:
+  # Runs as one container: don't scale it without a shared send limiter. The
+  # Telegram/VK limiters pace per process (adapters/rate_limiter.py), so a
+  # second replica doubles the send rate into the providers' flood control.
+  worker:
     build: ./backend
     depends_on:
       migration:
@@ -141,15 +144,18 @@ services:
       - .env
     environment:
       DB__HOST: "db"
-      DB__APPLICATION_NAME: "fanfan-faststream"
+      DB__APPLICATION_NAME: "fanfan-worker"
       # Trimmed pool: a NATS consumer with modest DB write concurrency. See api.
+      # The overflow also covers the outbox relay and the scheduled jobs, which
+      # run here too; a running sync pins two connections (its session plus its
+      # WorkerLock).
       DB__POOL_SIZE: "5"
-      DB__MAX_OVERFLOW: "5"
+      DB__MAX_OVERFLOW: "10"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
-    command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
+    command: [ "faststream", "run", "--factory", "fanfan.main.worker:create_app" ]
     # On SIGTERM the broker waits up to its graceful timeout (15s,
     # presentation/faststream/broker.py) for the dozens of sends in flight
     # before it closes. The 10s default would SIGKILL it first, leaving every
@@ -167,57 +173,12 @@ services:
           # Idles near 110M but this is where the heavy work runs — full
           # TicketsCloud/cosplay2 sync sweeps and broadcast fan-out load real
           # data and spike well above idle, so leave headroom over the ~130M
-          # shared-image baseline. Matches the scheduler/api ceiling.
+          # shared-image baseline. Matches the api ceiling.
           memory: 256M
     # Inherits the image's HEALTHCHECK: the worker serves the api's health path
-    # and answers 500 while its broker is disconnected (main/faststream.py).
+    # and answers 500 while its broker is disconnected (main/worker.py).
     # Compose only reports the state; it does not restart an unhealthy
     # container. Reconnecting is the clients' job (adapters/nats/config.py).
-    profiles: [ "core" ]
-    networks:
-      - backend-network
-
-  scheduler:
-    build: ./backend
-    depends_on:
-      migration:
-        condition: service_completed_successfully
-      nats:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./secrets:/app/secrets:ro
-    env_file:
-      - .env
-    environment:
-      DB__HOST: "db"
-      DB__APPLICATION_NAME: "fanfan-scheduler"
-      # Smallest pool: cron jobs run a few sequential queries, never a burst.
-      # A running sync pins two connections (its session plus its WorkerLock), so the
-      # ceiling covers both syncs, the outbox relay and both retention jobs at once.
-      DB__POOL_SIZE: "2"
-      DB__MAX_OVERFLOW: "5"
-      REDIS__HOST: "redis"
-      NATS__HOST: "nats"
-    command: [ "scheduler" ]
-    restart: unless-stopped
-    init: true
-    read_only: true
-    tmpfs:
-      - /tmp
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          # Runs the same broker + Dishka DI + sync-executor stack as faststream,
-          # so it needs the same class of memory. At 128M the process thrashed on
-          # page faults (near-zero progress, restart loop) and the outbox relay
-          # never published — it wedged before or during its first NATS publish.
-          # Matches the api ceiling; keep in step with faststream's limit.
-          memory: 256M
-    healthcheck:
-      disable: true
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -277,7 +238,7 @@ services:
     # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
     # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
     # single core from spending it JIT-compiling OLTP queries. max_connections
-    # tracks the per-service pool ceilings (see api/faststream/scheduler).
+    # tracks the per-service pool ceilings (see api/worker).
     # shared_buffers stays at the image default (128M, ~28% of this container's
     # cap and matched to shm_size above); raising it would starve work_mem.
     command:
