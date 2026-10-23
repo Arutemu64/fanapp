@@ -126,6 +126,9 @@ services:
       - frontend-network
       - backend-network
 
+  # Runs as one container: don't scale it without a shared send limiter. The
+  # Telegram/VK limiters pace per process (adapters/rate_limiter.py), so a
+  # second replica doubles the send rate into the providers' flood control.
   worker:
     build: ./backend
     depends_on:
