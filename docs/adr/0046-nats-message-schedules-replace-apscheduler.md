@@ -49,8 +49,9 @@ and the `scheduler` container.
 - **Reconciliation.** On startup the worker publishes each configured schedule,
   skipping one whose stored headers already match. Republishing would restart an
   `@every` interval on every deploy. It purges the schedule and tick of each
-  disabled job. A cron the server rejects is logged and skipped, so it cannot
-  keep the other consumers from starting.
+  disabled job. A cron the server rejects is logged and the job unscheduled,
+  so it neither keeps firing on its previous cron nor keeps the other consumers
+  from starting.
 - **Consumers.** Each job has its own durable pull consumer, so a long sync does
   not hold the retention purges back. The consumers use the same bounded
   redelivery as every other consumer. A retry ends when the next tick replaces

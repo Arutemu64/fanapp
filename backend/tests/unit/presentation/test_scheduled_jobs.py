@@ -137,3 +137,17 @@ async def test_rejected_schedule_does_not_stop_the_rest() -> None:
     await sync_schedules(_broker(js), config, _TZ)
 
     assert list(js.published) == [OUTBOX_RETENTION.schedule_subject]
+
+
+@pytest.mark.asyncio
+async def test_rejected_replacement_unschedules_the_old_cron() -> None:
+    # Left in place, the job would keep firing on a cron the config dropped.
+    stored = schedule_headers(SYNC_TCLOUD, "0 * * * *", _TZ)
+    js = _FakeJetStream({SYNC_TCLOUD.schedule_subject: stored})
+    js.rejected.add(SYNC_TCLOUD.schedule_subject)
+    config = SchedulerConfig(sync_tcloud_cron="not a cron")
+
+    await sync_schedules(_broker(js), config, _TZ)
+
+    assert SYNC_TCLOUD.schedule_subject in js.purged
+    assert SYNC_TCLOUD.tick_subject in js.purged

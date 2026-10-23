@@ -82,17 +82,14 @@ async def sync_schedules(
 
     A schedule lives on the server and fires whether or not a worker is up, so
     a disabled job is purged rather than merely left unsubscribed. A job that
-    fails to schedule (a malformed cron) is logged and skipped: it must not keep
-    the worker, and with it every other consumer, from starting.
+    fails to schedule (a malformed cron) is logged and unscheduled too, rather
+    than left firing on a cron the config no longer holds; it must not keep the
+    worker, and with it every other consumer, from starting.
     """
     js = broker.connection.jetstream()
     for job, cron in scheduled_crons(config).items():
         if cron is None:
-            # The tick too, so one left from when the job was enabled does not
-            # wait for a worker. The subscribers start before this runs, so one
-            # already pending may still be picked up and run once.
-            await js.purge_stream(scheduler_stream.name, subject=job.schedule_subject)
-            await js.purge_stream(scheduler_stream.name, subject=job.tick_subject)
+            await _unschedule(js, job)
             continue
         headers = schedule_headers(job, cron, timezone)
         # Republishing restarts an @every interval, so an unchanged schedule
@@ -110,8 +107,17 @@ async def sync_schedules(
             logger.exception(
                 "Could not schedule job", extra={"job": job.id, "cron": cron}
             )
+            await _unschedule(js, job)
             continue
         logger.info("Job scheduled", extra={"job": job.id, "cron": cron})
+
+
+async def _unschedule(js: JetStreamContext, job: ScheduledJob) -> None:
+    # The tick too, so one left from when the job was enabled does not wait for
+    # a worker. The subscribers start before this runs, so one already pending
+    # may still be picked up and run once.
+    await js.purge_stream(scheduler_stream.name, subject=job.schedule_subject)
+    await js.purge_stream(scheduler_stream.name, subject=job.tick_subject)
 
 
 async def _current_schedule(js: JetStreamContext, job: ScheduledJob) -> dict[str, str]:
