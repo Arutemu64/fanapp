@@ -2,12 +2,12 @@ import math
 import secrets
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import timedelta
 from typing import override
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 
+from fanfan.adapters.db.expiring.expiry import expires_in
 from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import CooldownORM
 from fanfan.application.ports.cooldown import Cooldown
@@ -38,7 +38,7 @@ class PostgresCooldown(Cooldown):
             raise
 
     async def _take(self, key: str, token: str, seconds: int) -> bool:
-        expires_at = func.now() + timedelta(seconds=max(1, seconds))
+        expires_at = expires_in(seconds)
         statement = (
             insert(CooldownORM)
             .values(key=key, token=token, expires_at=expires_at)

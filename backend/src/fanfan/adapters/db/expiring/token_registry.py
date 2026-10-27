@@ -1,6 +1,5 @@
 import hashlib
 import hmac
-from datetime import timedelta
 from enum import StrEnum
 from typing import override
 from uuid import UUID
@@ -8,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import delete, func
 from sqlalchemy.dialects.postgresql import insert
 
+from fanfan.adapters.db.expiring.expiry import expires_in
 from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import AuthCodeORM
 from fanfan.application.ports.rate_limiter import RateLimiter
@@ -44,7 +44,7 @@ class PostgresTokenRegistry(TokenRegistry):
         row = {
             "code_hash": self._hash_code(code),
             "value": value,
-            "expires_at": func.now() + timedelta(seconds=max(1, ttl_seconds)),
+            "expires_at": expires_in(ttl_seconds),
         }
         statement = (
             insert(AuthCodeORM)

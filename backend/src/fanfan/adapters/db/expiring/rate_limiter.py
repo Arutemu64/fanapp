@@ -1,10 +1,10 @@
 import math
-from datetime import timedelta
 from typing import override
 
 from sqlalchemy import case, delete, func
 from sqlalchemy.dialects.postgresql import insert
 
+from fanfan.adapters.db.expiring.expiry import expires_in
 from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import RateLimitORM
 from fanfan.application.ports.rate_limiter import RateLimiter
@@ -23,7 +23,7 @@ class PostgresRateLimiter(RateLimiter):
 
     @override
     async def hit(self, key: str, *, limit: int, window_seconds: int) -> None:
-        window_end = func.now() + timedelta(seconds=max(1, window_seconds))
+        window_end = expires_in(window_seconds)
         window_over = RateLimitORM.expires_at <= func.now()
         statement = (
             insert(RateLimitORM)

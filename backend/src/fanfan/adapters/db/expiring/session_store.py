@@ -5,6 +5,7 @@ from typing import override
 
 from sqlalchemy import delete, func, insert, select, update
 
+from fanfan.adapters.db.expiring.expiry import expires_in
 from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import AuthSessionORM
 from fanfan.application.ports.session_store import SessionResolution, SessionStore
@@ -29,7 +30,7 @@ class PostgresSessionStore(SessionStore):
         touch_threshold_seconds: int,
     ) -> None:
         self.sessions = sessions
-        self.ttl = timedelta(seconds=max(1, ttl_seconds))
+        self.ttl_seconds = ttl_seconds
         self.touch_threshold = timedelta(seconds=max(1, touch_threshold_seconds))
 
     @override
@@ -40,7 +41,7 @@ class PostgresSessionStore(SessionStore):
                 insert(AuthSessionORM).values(
                     token_hash=_hash_token(session_id),
                     user_id=user_id,
-                    expires_at=func.now() + self.ttl,
+                    expires_at=expires_in(self.ttl_seconds),
                 )
             )
         return session_id
@@ -68,7 +69,7 @@ class PostgresSessionStore(SessionStore):
                 await session.execute(
                     update(AuthSessionORM)
                     .where(AuthSessionORM.token_hash == token_hash)
-                    .values(expires_at=func.now() + self.ttl)
+                    .values(expires_at=expires_in(self.ttl_seconds))
                 )
         return SessionResolution(user_id=UserId(row.user_id), touched=touched)
 
