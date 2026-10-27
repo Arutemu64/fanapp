@@ -15,7 +15,7 @@ Loaded only when working with `frontend/**` files.
 - All user-facing copy in Russian; code comments in English.
 - Favour the obvious construction over the compact one — no nested ternaries in markup, no dense one-liners. Prefer a named `$derived` over an inline expression a reader has to unpick.
 - A single-caller helper or a single-use constant needs a reason to exist (AGENTS.md "A helper or constant earns its name"); a template event handler or a hoisted regex/`Intl` formatter already has one.
-- Comment only where the code needs clarification (a browser quirk, an ordering constraint, why an effect is needed). Keep it to one or two short lines, and never narrate or restate the markup or a `$derived`. Update a comment in the same edit as the code under it; don't drop one that carries a *why* unless its code is gone (a pure restatement may go — see AGENTS.md).
+- Comment only where the code needs clarification (a browser quirk, an ordering constraint, why an effect is needed). Keep it to one or two short lines, and never narrate or restate the markup or a `$derived`. Update a comment in the same edit as the code under it.
 - Never store user-scoped state in a module-level singleton unless `Session` resets it on login/logout — modules outlive both in the SPA (AGENTS.md).
 - Research the current best practice (web / current docs) before any non-trivial work — a refactor, a new feature, a library or framework API. Never decide from training memory alone; cite what you find.
 - Mobile-first; bottom padding for the floating nav bar.
