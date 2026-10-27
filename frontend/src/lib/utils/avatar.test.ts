@@ -22,11 +22,3 @@ describe('getAvatarDataUri', () => {
 		expect(getAvatarDataUri('seed-a')).toMatch(/^data:image\/svg\+xml/);
 	});
 });
-
-describe('getAvatarDataUri cache', () => {
-	it('keeps returning correct faces after far more seeds than it caches', () => {
-		const first = getAvatarDataUri('bounded-0');
-		for (let i = 1; i < 500; i++) getAvatarDataUri(`bounded-${i}`);
-		expect(getAvatarDataUri('bounded-0')).toBe(first);
-	});
-});

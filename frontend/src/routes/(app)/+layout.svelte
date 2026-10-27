@@ -55,7 +55,6 @@
 	let navbarHeight = $state(0);
 	let chromeHeight = $state(0);
 	let lastScrollTop = 0;
-	let scrollFrame = 0;
 
 	const isDesktop = new MediaQuery(DESKTOP_MEDIA_QUERY);
 	let chromeHidden = $derived(navbarHidden && !isDesktop.current);
@@ -89,19 +88,16 @@
 		contentScrolled = window.scrollY > 0;
 	}
 
+	// Browsers fire scroll at most once per frame, so no rAF throttle is needed (MDN).
 	function handleScroll() {
-		if (scrollFrame) return;
-		scrollFrame = requestAnimationFrame(() => {
-			scrollFrame = 0;
-			const top = window.scrollY;
-			contentScrolled = top > 0;
-			const maxTop = document.documentElement.scrollHeight - window.innerHeight;
-			if (top < 0 || top > maxTop) return;
-			const delta = top - lastScrollTop;
-			if (Math.abs(delta) < SCROLL_DELTA_PX) return;
-			navbarHidden = delta > 0 && top > navbarHeight;
-			lastScrollTop = top;
-		});
+		const top = window.scrollY;
+		contentScrolled = top > 0;
+		const maxTop = document.documentElement.scrollHeight - window.innerHeight;
+		if (top < 0 || top > maxTop) return;
+		const delta = top - lastScrollTop;
+		if (Math.abs(delta) < SCROLL_DELTA_PX) return;
+		navbarHidden = delta > 0 && top > navbarHeight;
+		lastScrollTop = top;
 	}
 
 	beforeNavigate((navigation) => {
