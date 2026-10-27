@@ -30,6 +30,7 @@ def _client() -> TestClient:
         {},
         {"is_skipped": None},
         {"is_skipped": True, "place_after_entry_id": None},
+        {"place_after_entry_id": None, "is_skippped": True},
     ],
 )
 def test_event_update_takes_exactly_one_change(body: dict[str, object]) -> None:

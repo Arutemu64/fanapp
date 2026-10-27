@@ -7878,6 +7878,7 @@
             "description": "Entry to place the event after. Null moves it to the top."
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdateScheduleEventBody",
         "description": "One change per request: each is its own announcement and undo step."

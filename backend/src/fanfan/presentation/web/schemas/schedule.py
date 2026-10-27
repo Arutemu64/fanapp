@@ -1,6 +1,6 @@
 from typing import Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.json_schema import SkipJsonSchema
 
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
@@ -12,6 +12,9 @@ class SetCurrentScheduleEventBody(BaseModel):
 
 class UpdateScheduleEventBody(BaseModel):
     """One change per request: each is its own announcement and undo step."""
+
+    # The field present picks the action, so a misspelt one must not fall through.
+    model_config = ConfigDict(extra="forbid")
 
     # SkipJsonSchema keeps the spec at a plain boolean; null is still refused below.
     is_skipped: bool | SkipJsonSchema[None] = None
