@@ -1,6 +1,9 @@
 import type { SocialProvider } from '#lib/api/generated/index.js';
 import type { ThemeMode } from '#lib/services/theme.svelte.js';
 
+export type OutboundTarget =
+	'email' | 'max' | 'site' | 'telegram' | 'tickets' | 'vk' | 'yandex-maps';
+
 // Umami custom events and their data. Names stay within Umami's 50-character limit,
 // and data never carries personal details (https://docs.umami.is/docs/track-events).
 interface AnalyticsEvents {
@@ -18,6 +21,11 @@ interface AnalyticsEvents {
 	'pwa-install-open': undefined;
 	'pwa-install': undefined;
 	'theme-change': { mode: ThemeMode };
+	'map-place-select': { source: 'list' | 'plan' };
+	// Never the search text: free text can carry personal details.
+	'schedule-filter': { kind: 'mine' | 'search' };
+	'outbound-link': { target: OutboundTarget };
+	'app-update': undefined;
 }
 
 type AnalyticsEvent = keyof AnalyticsEvents;

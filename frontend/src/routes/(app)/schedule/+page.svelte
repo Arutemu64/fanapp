@@ -28,6 +28,7 @@
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { queryView } from '#lib/utils/queryView.js';
@@ -109,6 +110,8 @@
 		cancelSearchWrite();
 		searchTimer = setTimeout(() => {
 			searchTimer = undefined;
+			// Once per search, not per pause in typing.
+			if (!filters.search && searchQuery.trim()) trackEvent('schedule-filter', { kind: 'search' });
 			void applyFilters({ ...filters, search: searchQuery });
 		}, SEARCH_WRITE_DELAY_MS);
 	}
@@ -128,6 +131,9 @@
 
 	function setScope(value: string) {
 		if (value === '') return;
+		if (value === 'subscribed' && !showOnlySubscribed) {
+			trackEvent('schedule-filter', { kind: 'mine' });
+		}
 		cancelSearchWrite();
 		void applyFilters({ search: searchQuery, onlySubscribed: value === 'subscribed' });
 	}

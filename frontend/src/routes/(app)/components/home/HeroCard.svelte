@@ -4,6 +4,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import {
 		formatEventNumber,
@@ -127,6 +128,7 @@
 					href={yandexMapsUrl}
 					target="_blank"
 					rel="noopener noreferrer"
+					onclick={() => trackEvent('outbound-link', { target: 'yandex-maps' })}
 					class="-mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white underline underline-offset-4"
 				>
 					<MapPin class="size-4 shrink-0" aria-hidden="true" />
