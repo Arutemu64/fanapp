@@ -32,13 +32,12 @@ describe('umamiScriptAttributes', () => {
 
 describe('trackEvent', () => {
 	it('does nothing before the tracker loads', () => {
-		vi.stubGlobal('window', {});
 		expect(() => trackEvent('logout')).not.toThrow();
 	});
 
 	it('forwards the event and its data to Umami', () => {
 		const track = vi.fn();
-		vi.stubGlobal('window', { umami: { track } });
+		vi.stubGlobal('umami', { track });
 
 		trackEvent('login', { method: 'code' });
 

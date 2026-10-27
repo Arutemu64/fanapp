@@ -27,9 +27,8 @@ interface UmamiTracker {
 }
 
 declare global {
-	interface Window {
-		umami?: UmamiTracker;
-	}
+	// Set by the tracker script; `var` is what puts it on `globalThis`.
+	var umami: UmamiTracker | undefined;
 }
 
 export interface UmamiConfig {
@@ -80,5 +79,5 @@ export function startAnalytics(config: UmamiConfig): void {
 export function trackEvent<E extends AnalyticsEvent>(
 	...[event, data]: AnalyticsEvents[E] extends undefined ? [E] : [E, AnalyticsEvents[E]]
 ): void {
-	window.umami?.track(event, data);
+	globalThis.umami?.track(event, data);
 }
