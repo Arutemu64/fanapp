@@ -1453,10 +1453,6 @@ export type SubscriptionEventDto = {
 	 */
 	title: string;
 	/**
-	 * Order
-	 */
-	order: number;
-	/**
 	 * Position
 	 */
 	position: number | null;

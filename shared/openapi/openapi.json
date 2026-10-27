@@ -7447,10 +7447,6 @@
             "type": "string",
             "title": "Title"
           },
-          "order": {
-            "type": "number",
-            "title": "Order"
-          },
           "position": {
             "anyOf": [
               {
@@ -7468,7 +7464,6 @@
           "id",
           "number",
           "title",
-          "order",
           "position"
         ],
         "title": "SubscriptionEventDTO"
