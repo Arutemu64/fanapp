@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduleSettingsDTO(BaseModel):
-    announcement_timeout: int = Field(ge=1)
+    announcement_cooldown_seconds: int = Field(ge=1)
     changeover_seconds: int = Field(ge=0, le=600)
 
 
 class UpdateScheduleSettingsInput(InputModel):
-    announcement_timeout: Annotated[int, Field(ge=1)] | MISSING = MISSING
+    announcement_cooldown_seconds: Annotated[int, Field(ge=1)] | MISSING = MISSING
     changeover_seconds: Annotated[int, Field(ge=0, le=600)] | MISSING = MISSING
 
 
@@ -44,7 +44,7 @@ class GetScheduleSettings:
 
         settings = await self.app_settings_gateway.get()
         return ScheduleSettingsDTO(
-            announcement_timeout=settings.limits.announcement_timeout,
+            announcement_cooldown_seconds=settings.limits.announcement_cooldown_seconds,
             changeover_seconds=settings.schedule.changeover_seconds,
         )
 
@@ -77,7 +77,9 @@ class UpdateScheduleSettings:
             changeover_seconds is not None
             and changeover_seconds != settings.schedule.changeover_seconds
         )
-        settings.update_limits(announcement_timeout=changes.get("announcement_timeout"))
+        settings.update_limits(
+            announcement_cooldown_seconds=changes.get("announcement_cooldown_seconds")
+        )
         settings.update_schedule(changeover_seconds=changeover_seconds)
         await self.app_settings_gateway.save(settings)
         await self.uow.commit()

@@ -4,7 +4,7 @@
 	import type { SyncSourceStatusDto } from '#lib/api/generated/index.js';
 	import type { ReadyView } from '#lib/utils/queryView.js';
 
-	import { getSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { listSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { m } from '#lib/paraglide/messages.js';
@@ -14,7 +14,7 @@
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 	import SyncSourceCard from '../components/SyncSourceCard.svelte';
 
-	const sourcesQuery = createQuery(() => getSyncSourcesOptions());
+	const sourcesQuery = createQuery(() => listSyncSourcesOptions());
 	let sourcesView = $derived(
 		queryView(sourcesQuery, {
 			policy: 'cached',

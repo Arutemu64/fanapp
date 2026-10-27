@@ -1,6 +1,6 @@
 import type { BackTarget } from '#lib/types/navigation.js';
 
-import { getSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { listSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { requireTool } from '#lib/data/tools.js';
 import { m } from '#lib/paraglide/messages.js';
 
@@ -11,7 +11,7 @@ export const load: PageLoad = async ({ parent }) => {
 
 	requireTool('sync', user, toolConfig);
 
-	void queryClient.query(getSyncSourcesOptions()).catch(() => {});
+	void queryClient.query(listSyncSourcesOptions()).catch(() => {});
 
 	return {
 		title: m.tool_sync(),

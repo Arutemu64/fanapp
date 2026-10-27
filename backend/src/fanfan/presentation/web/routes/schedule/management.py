@@ -49,7 +49,7 @@ management_router = APIRouter(
     },
 )
 @inject
-async def set_event_as_current(
+async def set_current_event(
     data: SetCurrentScheduleEventBody,
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
@@ -67,7 +67,7 @@ async def set_event_as_current(
     },
 )
 @inject
-async def uncheck_current_event(
+async def clear_current_event(
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
     await interactor(SetCurrentScheduleEventInput(event_id=None))

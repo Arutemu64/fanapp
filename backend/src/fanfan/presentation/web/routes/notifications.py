@@ -206,7 +206,7 @@ async def list_broadcasts(
     },
 )
 @inject
-async def cancel_mailing(
+async def cancel_broadcast(
     mailing_id: Annotated[MailingId, Path(description="ID of the mailing to cancel.")],
     interactor: FromDishka[CancelMailing],
 ) -> None:

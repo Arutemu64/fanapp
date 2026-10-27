@@ -179,22 +179,22 @@ function formatColumnList(value: unknown): string {
 type ScheduleFileMessage = (problem: Partial<InvalidScheduleFileProblem>, at: string) => string;
 
 const SCHEDULE_FILE_MESSAGES = {
-	UNREADABLE_FILE: () => m.import_error_unreadable(),
-	MISSING_COLUMNS: (problem) =>
+	unreadable_file: () => m.import_error_unreadable(),
+	missing_columns: (problem) =>
 		m.import_error_missing_columns({ columns: formatColumnList(problem.columns) }),
-	EMPTY_FILE: () => m.import_error_no_events(),
-	EMPTY_CELL: (_problem, at) => m.import_error_cell_empty({ at }),
-	INVALID_NUMBER: (_problem, at) => m.import_error_integer_required({ at }),
-	DURATION_NOT_POSITIVE: (_problem, at) => m.import_error_duration_positive({ at }),
-	INVALID_TYPE: (_problem, at) => m.import_error_block_hint({ at }),
-	BLOCK_ROW_WITH_EVENT_DATA: (_problem, at) => m.import_error_block_cell({ at }),
-	DUPLICATE_NUMBER: (problem) =>
+	empty_file: () => m.import_error_no_events(),
+	empty_cell: (_problem, at) => m.import_error_cell_empty({ at }),
+	invalid_number: (_problem, at) => m.import_error_integer_required({ at }),
+	duration_not_positive: (_problem, at) => m.import_error_duration_positive({ at }),
+	invalid_type: (_problem, at) => m.import_error_block_hint({ at }),
+	block_row_with_event_data: (_problem, at) => m.import_error_block_cell({ at }),
+	duplicate_number: (problem) =>
 		m.import_error_duplicate_number({
 			number: String(problem.number),
 			row: String(problem.row)
 		}),
-	FILE_TOO_LARGE: () => m.import_error_file_too_large(),
-	UNSUPPORTED_FILE_TYPE: () => m.import_error_xlsx_required()
+	file_too_large: () => m.import_error_file_too_large(),
+	unsupported_file_type: () => m.import_error_xlsx_required()
 } satisfies Record<InvalidScheduleFileReason, ScheduleFileMessage>;
 
 function getInvalidScheduleFileMessage(problem: ApiProblem): string {

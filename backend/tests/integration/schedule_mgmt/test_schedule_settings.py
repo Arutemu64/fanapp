@@ -32,11 +32,13 @@ async def test_changeover_change_broadcasts_config_updated(
     login(schedule_editor)
 
     await interactor(
-        UpdateScheduleSettingsInput(announcement_timeout=20, changeover_seconds=45)
+        UpdateScheduleSettingsInput(
+            announcement_cooldown_seconds=20, changeover_seconds=45
+        )
     )
 
     settings = await settings_gateway.get()
-    assert settings.limits.announcement_timeout == 20
+    assert settings.limits.announcement_cooldown_seconds == 20
     assert settings.schedule.changeover_seconds == 45
     assert [
         (user_id, message.event_name) for user_id, message in realtime.published
@@ -54,10 +56,10 @@ async def test_cooldown_only_change_does_not_broadcast(
     login(schedule_editor)
     changeover = (await settings_gateway.get()).schedule.changeover_seconds
 
-    await interactor(UpdateScheduleSettingsInput(announcement_timeout=42))
+    await interactor(UpdateScheduleSettingsInput(announcement_cooldown_seconds=42))
 
     settings = await settings_gateway.get()
-    assert settings.limits.announcement_timeout == 42
+    assert settings.limits.announcement_cooldown_seconds == 42
     assert settings.schedule.changeover_seconds == changeover
     assert realtime.published == []
 
@@ -72,11 +74,13 @@ async def test_reads_the_stored_settings(
     login(schedule_editor)
 
     await setter(
-        UpdateScheduleSettingsInput(announcement_timeout=15, changeover_seconds=60)
+        UpdateScheduleSettingsInput(
+            announcement_cooldown_seconds=15, changeover_seconds=60
+        )
     )
 
     assert await getter() == ScheduleSettingsDTO(
-        announcement_timeout=15, changeover_seconds=60
+        announcement_cooldown_seconds=15, changeover_seconds=60
     )
 
 
@@ -92,4 +96,4 @@ async def test_settings_editor_without_schedule_setup_is_denied(
     with pytest.raises(AccessDenied):
         await getter()
     with pytest.raises(AccessDenied):
-        await setter(UpdateScheduleSettingsInput(announcement_timeout=10))
+        await setter(UpdateScheduleSettingsInput(announcement_cooldown_seconds=10))

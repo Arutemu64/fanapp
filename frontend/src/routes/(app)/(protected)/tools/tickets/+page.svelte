@@ -4,7 +4,7 @@
 	import type { SyncSourceStatusDto } from '#lib/api/generated/index.js';
 	import type { ReadyView } from '#lib/utils/queryView.js';
 
-	import { getSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { listSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import QueryState from '#lib/components/QueryState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Tabs from '#lib/components/ui/tabs/index.js';
@@ -29,7 +29,7 @@
 	let canOpenUsers = $derived(hasPermission(data.user, 'users:read'));
 	let initialTab = $derived(canManage ? 'list' : 'tcloud');
 
-	const sourcesQuery = createQuery(() => ({ ...getSyncSourcesOptions(), enabled: canSync }));
+	const sourcesQuery = createQuery(() => ({ ...listSyncSourcesOptions(), enabled: canSync }));
 	let sourcesView = $derived(
 		queryView(sourcesQuery, {
 			policy: 'cached',

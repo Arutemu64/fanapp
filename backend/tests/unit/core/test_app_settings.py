@@ -151,18 +151,18 @@ def test_set_voting_time_range_rejects_partial_end_only() -> None:
         )
 
 
-def test_announcement_timeout_has_default() -> None:
+def test_announcement_cooldown_has_default() -> None:
     settings = AppSettings()
 
-    assert settings.limits.announcement_timeout == 10
+    assert settings.limits.announcement_cooldown_seconds == 10
 
 
-def test_update_limits_updates_announcement_timeout() -> None:
+def test_update_limits_updates_announcement_cooldown() -> None:
     settings = AppSettings()
 
-    settings.update_limits(announcement_timeout=30)
+    settings.update_limits(announcement_cooldown_seconds=30)
 
-    assert settings.limits.announcement_timeout == 30
+    assert settings.limits.announcement_cooldown_seconds == 30
 
 
 def test_unmapped_tcloud_event_grants_visitor() -> None:

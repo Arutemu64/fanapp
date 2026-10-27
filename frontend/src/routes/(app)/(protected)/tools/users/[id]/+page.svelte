@@ -61,12 +61,12 @@
 			<div class="flex flex-col gap-0.5">
 				<dt class="text-xs text-muted-foreground">{m.ticket_number_label()}</dt>
 				<dd class="font-mono text-xs break-all text-foreground select-all">
-					{profile.ticket_number ?? '—'}
+					{profile.ticket_barcode ?? '—'}
 				</dd>
 			</div>
 		</dl>
 
-		{#if profile.ticket_number && canManageUsers(data.user)}
+		{#if profile.ticket_barcode && canManageUsers(data.user)}
 			<UnlinkTicketButton userId={profile.id} username={profile.username} />
 		{/if}
 	</ToolSection>

@@ -37,7 +37,7 @@ class UserListItemDTO(BaseModel):
     role: UserRole
     email: EmailStr | None
     avatar_seed: str
-    ticket_number: str | None
+    ticket_barcode: str | None
     created_at: datetime
 
 
@@ -52,7 +52,7 @@ class UserDetailsDTO(BaseModel):
     role: UserRole
     email: EmailStr | None
     avatar_seed: str
-    ticket_number: str | None
+    ticket_barcode: str | None
     created_at: datetime
     social_links: list[UserSocialLinkDTO]
     permissions: list[Permission]

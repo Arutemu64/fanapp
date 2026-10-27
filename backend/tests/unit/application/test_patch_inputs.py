@@ -36,7 +36,7 @@ PATCH_FIELDS: list[tuple[type[BaseModel], str]] = [
     (UpdateAppSettingsInput, "quest_enabled"),
     (UpdateAppSettingsInput, "quest_max_award"),
     (UpdateAppSettingsInput, "quest_cancel_window_minutes"),
-    (UpdateScheduleSettingsInput, "announcement_timeout"),
+    (UpdateScheduleSettingsInput, "announcement_cooldown_seconds"),
     (UpdateScheduleSettingsInput, "changeover_seconds"),
     (UpdateScheduleEventBody, "is_skipped"),
 ]

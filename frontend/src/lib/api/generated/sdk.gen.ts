@@ -18,9 +18,9 @@ import type {
 	AwardQuestPointsData,
 	AwardQuestPointsErrors,
 	AwardQuestPointsResponses,
-	CancelMailingData,
-	CancelMailingErrors,
-	CancelMailingResponses,
+	CancelBroadcastData,
+	CancelBroadcastErrors,
+	CancelBroadcastResponses,
 	CancelQuestAwardData,
 	CancelQuestAwardErrors,
 	CancelQuestAwardResponses,
@@ -36,6 +36,9 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionErrors,
 	CheckPushSubscriptionResponses,
+	ClearCurrentEventData,
+	ClearCurrentEventErrors,
+	ClearCurrentEventResponses,
 	ConfirmEmailCodeData,
 	ConfirmEmailCodeErrors,
 	ConfirmEmailCodeResponses,
@@ -45,6 +48,9 @@ import type {
 	CreatePushSubscriptionData,
 	CreatePushSubscriptionErrors,
 	CreatePushSubscriptionResponses,
+	CreateSubscriptionData,
+	CreateSubscriptionErrors,
+	CreateSubscriptionResponses,
 	DebugData,
 	DebugResponses,
 	DeletePushSubscriptionData,
@@ -84,12 +90,6 @@ import type {
 	GetSettingsData,
 	GetSettingsErrors,
 	GetSettingsResponses,
-	GetSubscriptionsData,
-	GetSubscriptionsErrors,
-	GetSubscriptionsResponses,
-	GetSyncSourcesData,
-	GetSyncSourcesErrors,
-	GetSyncSourcesResponses,
 	GetTcloudEventRolesData,
 	GetTcloudEventRolesErrors,
 	GetTcloudEventRolesResponses,
@@ -132,6 +132,12 @@ import type {
 	ListScheduleChangesData,
 	ListScheduleChangesErrors,
 	ListScheduleChangesResponses,
+	ListSubscriptionsData,
+	ListSubscriptionsErrors,
+	ListSubscriptionsResponses,
+	ListSyncSourcesData,
+	ListSyncSourcesErrors,
+	ListSyncSourcesResponses,
 	ListTicketsData,
 	ListTicketsErrors,
 	ListTicketsResponses,
@@ -149,17 +155,14 @@ import type {
 	LoginWithCodeData,
 	LoginWithCodeErrors,
 	LoginWithCodeResponses,
-	LogoutUserData,
-	LogoutUserResponses,
+	LogoutData,
+	LogoutResponses,
 	MarkAllNotificationsReadData,
 	MarkAllNotificationsReadErrors,
 	MarkAllNotificationsReadResponses,
 	MarkNotificationsReadData,
 	MarkNotificationsReadErrors,
 	MarkNotificationsReadResponses,
-	NewSubscriptionData,
-	NewSubscriptionErrors,
-	NewSubscriptionResponses,
 	OauthCallbackData,
 	OauthCallbackErrors,
 	ProcessFestengineEventData,
@@ -183,9 +186,9 @@ import type {
 	SendTestNotificationData,
 	SendTestNotificationErrors,
 	SendTestNotificationResponses,
-	SetEventAsCurrentData,
-	SetEventAsCurrentErrors,
-	SetEventAsCurrentResponses,
+	SetCurrentEventData,
+	SetCurrentEventErrors,
+	SetCurrentEventResponses,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesErrors,
 	SetTcloudEventRolesResponses,
@@ -207,9 +210,6 @@ import type {
 	SuggestUsernameData,
 	SuggestUsernameErrors,
 	SuggestUsernameResponses,
-	UncheckCurrentEventData,
-	UncheckCurrentEventErrors,
-	UncheckCurrentEventResponses,
 	UndoScheduleChangeData,
 	UndoScheduleChangeErrors,
 	UndoScheduleChangeResponses,
@@ -371,10 +371,10 @@ export const loginWithCode = <ThrowOnError extends boolean = false>(
  *
  * Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.
  */
-export const logoutUser = <ThrowOnError extends boolean = false>(
-	options?: Options<LogoutUserData, ThrowOnError>
-): RequestResult<LogoutUserResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).post<LogoutUserResponses, unknown, ThrowOnError>({
+export const logout = <ThrowOnError extends boolean = false>(
+	options?: Options<LogoutData, ThrowOnError>
+): RequestResult<LogoutResponses, unknown, ThrowOnError> =>
+	(options?.client ?? client).post<LogoutResponses, unknown, ThrowOnError>({
 		url: '/auth/logout',
 		...options
 	});
@@ -811,12 +811,12 @@ export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
  *
  * Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.
  */
-export const uncheckCurrentEvent = <ThrowOnError extends boolean = false>(
-	options?: Options<UncheckCurrentEventData, ThrowOnError>
-): RequestResult<UncheckCurrentEventResponses, UncheckCurrentEventErrors, ThrowOnError> =>
+export const clearCurrentEvent = <ThrowOnError extends boolean = false>(
+	options?: Options<ClearCurrentEventData, ThrowOnError>
+): RequestResult<ClearCurrentEventResponses, ClearCurrentEventErrors, ThrowOnError> =>
 	(options?.client ?? client).delete<
-		UncheckCurrentEventResponses,
-		UncheckCurrentEventErrors,
+		ClearCurrentEventResponses,
+		ClearCurrentEventErrors,
 		ThrowOnError
 	>({
 		security: [
@@ -835,26 +835,24 @@ export const uncheckCurrentEvent = <ThrowOnError extends boolean = false>(
  *
  * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
  */
-export const setEventAsCurrent = <ThrowOnError extends boolean = false>(
-	options: Options<SetEventAsCurrentData, ThrowOnError>
-): RequestResult<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError> =>
-	(options.client ?? client).put<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError>(
-		{
-			security: [
-				{
-					in: 'cookie',
-					name: 'session_id',
-					type: 'apiKey'
-				}
-			],
-			url: '/schedule/current',
-			...options,
-			headers: {
-				'Content-Type': 'application/json',
-				...options.headers
+export const setCurrentEvent = <ThrowOnError extends boolean = false>(
+	options: Options<SetCurrentEventData, ThrowOnError>
+): RequestResult<SetCurrentEventResponses, SetCurrentEventErrors, ThrowOnError> =>
+	(options.client ?? client).put<SetCurrentEventResponses, SetCurrentEventErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
 			}
+		],
+		url: '/schedule/current',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
 		}
-	);
+	});
 
 /**
  * Update a schedule event
@@ -937,10 +935,14 @@ export const undoScheduleChange = <ThrowOnError extends boolean = false>(
  *
  * Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.
  */
-export const getSubscriptions = <ThrowOnError extends boolean = false>(
-	options?: Options<GetSubscriptionsData, ThrowOnError>
-): RequestResult<GetSubscriptionsResponses, GetSubscriptionsErrors, ThrowOnError> =>
-	(options?.client ?? client).get<GetSubscriptionsResponses, GetSubscriptionsErrors, ThrowOnError>({
+export const listSubscriptions = <ThrowOnError extends boolean = false>(
+	options?: Options<ListSubscriptionsData, ThrowOnError>
+): RequestResult<ListSubscriptionsResponses, ListSubscriptionsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		ListSubscriptionsResponses,
+		ListSubscriptionsErrors,
+		ThrowOnError
+	>({
 		security: [
 			{
 				in: 'cookie',
@@ -957,10 +959,14 @@ export const getSubscriptions = <ThrowOnError extends boolean = false>(
  *
  * Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
  */
-export const newSubscription = <ThrowOnError extends boolean = false>(
-	options: Options<NewSubscriptionData, ThrowOnError>
-): RequestResult<NewSubscriptionResponses, NewSubscriptionErrors, ThrowOnError> =>
-	(options.client ?? client).post<NewSubscriptionResponses, NewSubscriptionErrors, ThrowOnError>({
+export const createSubscription = <ThrowOnError extends boolean = false>(
+	options: Options<CreateSubscriptionData, ThrowOnError>
+): RequestResult<CreateSubscriptionResponses, CreateSubscriptionErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		CreateSubscriptionResponses,
+		CreateSubscriptionErrors,
+		ThrowOnError
+	>({
 		security: [
 			{
 				in: 'cookie',
@@ -1375,10 +1381,10 @@ export const sendBroadcast = <ThrowOnError extends boolean = false>(
  *
  * Cancels a mailing: marks it cancelled and deletes its still-undelivered notifications. Messages already delivered to a device cannot be recalled.
  */
-export const cancelMailing = <ThrowOnError extends boolean = false>(
-	options: Options<CancelMailingData, ThrowOnError>
-): RequestResult<CancelMailingResponses, CancelMailingErrors, ThrowOnError> =>
-	(options.client ?? client).post<CancelMailingResponses, CancelMailingErrors, ThrowOnError>({
+export const cancelBroadcast = <ThrowOnError extends boolean = false>(
+	options: Options<CancelBroadcastData, ThrowOnError>
+): RequestResult<CancelBroadcastResponses, CancelBroadcastErrors, ThrowOnError> =>
+	(options.client ?? client).post<CancelBroadcastResponses, CancelBroadcastErrors, ThrowOnError>({
 		security: [
 			{
 				in: 'cookie',
@@ -1619,10 +1625,10 @@ export const setTcloudEventRoles = <ThrowOnError extends boolean = false>(
  *
  * Returns every vendor sync source, whether it is configured for this deployment, and its most recent run. Requires the 'sync:run' permission.
  */
-export const getSyncSources = <ThrowOnError extends boolean = false>(
-	options?: Options<GetSyncSourcesData, ThrowOnError>
-): RequestResult<GetSyncSourcesResponses, GetSyncSourcesErrors, ThrowOnError> =>
-	(options?.client ?? client).get<GetSyncSourcesResponses, GetSyncSourcesErrors, ThrowOnError>({
+export const listSyncSources = <ThrowOnError extends boolean = false>(
+	options?: Options<ListSyncSourcesData, ThrowOnError>
+): RequestResult<ListSyncSourcesResponses, ListSyncSourcesErrors, ThrowOnError> =>
+	(options?.client ?? client).get<ListSyncSourcesResponses, ListSyncSourcesErrors, ThrowOnError>({
 		security: [
 			{
 				in: 'cookie',

@@ -21,7 +21,7 @@
 
 	import {
 		CHANGEOVER_SECONDS_LIMIT,
-		checkAnnouncementTimeout,
+		checkAnnouncementCooldown,
 		checkChangeover
 	} from '../timingsValidation';
 
@@ -43,25 +43,28 @@
 	}));
 
 	let saved = $state(untrack(() => ({ ...initial })));
-	let announcementTimeout = $state<number | undefined>(untrack(() => initial.announcement_timeout));
+	let announcementCooldown = $state<number | undefined>(
+		untrack(() => initial.announcement_cooldown_seconds)
+	);
 	let changeover = $state<number | undefined>(untrack(() => initial.changeover_seconds));
-	let announcementTimeoutError = $state('');
+	let announcementCooldownError = $state('');
 	let changeoverError = $state('');
 	let submitError = $state('');
 
 	let hasChanges = $derived(
-		announcementTimeout !== saved.announcement_timeout || changeover !== saved.changeover_seconds
+		announcementCooldown !== saved.announcement_cooldown_seconds ||
+			changeover !== saved.changeover_seconds
 	);
 
-	function validateAnnouncementTimeout() {
-		announcementTimeoutError = checkAnnouncementTimeout(announcementTimeout);
-		return !announcementTimeoutError;
+	function validateAnnouncementCooldown() {
+		announcementCooldownError = checkAnnouncementCooldown(announcementCooldown);
+		return !announcementCooldownError;
 	}
 
-	function handleAnnouncementTimeoutInput() {
+	function handleAnnouncementCooldownInput() {
 		submitError = '';
-		if (announcementTimeoutError) {
-			validateAnnouncementTimeout();
+		if (announcementCooldownError) {
+			validateAnnouncementCooldown();
 		}
 	}
 
@@ -83,16 +86,19 @@
 		event.preventDefault();
 		submitError = '';
 
-		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
+		const isAnnouncementCooldownValid = validateAnnouncementCooldown();
 		const isChangeoverValid = validateChangeover();
-		if (!isAnnouncementTimeoutValid || !isChangeoverValid) {
+		if (!isAnnouncementCooldownValid || !isChangeoverValid) {
 			return;
 		}
-		if (announcementTimeout === undefined || changeover === undefined) {
+		if (announcementCooldown === undefined || changeover === undefined) {
 			return;
 		}
 
-		const next = { announcement_timeout: announcementTimeout, changeover_seconds: changeover };
+		const next = {
+			announcement_cooldown_seconds: announcementCooldown,
+			changeover_seconds: changeover
+		};
 		saveMutation.mutate(
 			{ body: next },
 			{
@@ -101,9 +107,10 @@
 					toastService.add(m.schedule_timings_saved(), 'success');
 				},
 				onError: (error) => {
-					announcementTimeoutError = getApiFieldError(error, 'announcement_timeout') ?? '';
+					announcementCooldownError =
+						getApiFieldError(error, 'announcement_cooldown_seconds') ?? '';
 					changeoverError = getApiFieldError(error, 'changeover_seconds') ?? '';
-					if (announcementTimeoutError || changeoverError) {
+					if (announcementCooldownError || changeoverError) {
 						return;
 					}
 					submitError = getApiErrorDetail(error) ?? m.schedule_timings_save_failed();
@@ -117,24 +124,24 @@
 	<FormError message={submitError} />
 
 	<Field.FieldGroup class="gap-4">
-		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
-			<Field.FieldLabel for="announcement-timeout">{m.settings_timeout_label()}</Field.FieldLabel>
+		<Field.Field data-invalid={announcementCooldownError ? true : undefined}>
+			<Field.FieldLabel for="announcement-cooldown">{m.settings_timeout_label()}</Field.FieldLabel>
 			<Input
-				id="announcement-timeout"
-				name="announcement_timeout"
+				id="announcement-cooldown"
+				name="announcement_cooldown_seconds"
 				type="number"
 				min="1"
 				step="1"
 				inputmode="numeric"
 				autocomplete="off"
-				bind:value={announcementTimeout}
+				bind:value={announcementCooldown}
 				disabled={saveMutation.isPending}
-				oninput={handleAnnouncementTimeoutInput}
-				onblur={validateAnnouncementTimeout}
-				aria-invalid={announcementTimeoutError ? true : undefined}
+				oninput={handleAnnouncementCooldownInput}
+				onblur={validateAnnouncementCooldown}
+				aria-invalid={announcementCooldownError ? true : undefined}
 			/>
-			{#if announcementTimeoutError}
-				<Field.FieldError>{announcementTimeoutError}</Field.FieldError>
+			{#if announcementCooldownError}
+				<Field.FieldError>{announcementCooldownError}</Field.FieldError>
 			{:else}
 				<Field.FieldDescription>{m.settings_timeout_hint()}</Field.FieldDescription>
 			{/if}

@@ -4,21 +4,21 @@ import { m } from '#lib/paraglide/messages.js';
 
 import {
 	CHANGEOVER_SECONDS_LIMIT,
-	checkAnnouncementTimeout,
+	checkAnnouncementCooldown,
 	checkChangeover
 } from './timingsValidation';
 
 describe('announcement timeout', () => {
 	it.each([undefined, Number.NaN])('requires a value (%s)', (value) => {
-		expect(checkAnnouncementTimeout(value)).toBe(m.settings_validation_timeout_required());
+		expect(checkAnnouncementCooldown(value)).toBe(m.settings_validation_timeout_required());
 	});
 
 	it.each([0, -1, 1.5])('rejects %s', (value) => {
-		expect(checkAnnouncementTimeout(value)).toBe(m.settings_validation_timeout_integer());
+		expect(checkAnnouncementCooldown(value)).toBe(m.settings_validation_timeout_integer());
 	});
 
 	it('accepts a positive whole number', () => {
-		expect(checkAnnouncementTimeout(1)).toBe('');
+		expect(checkAnnouncementCooldown(1)).toBe('');
 	});
 });
 

@@ -2,7 +2,7 @@ import { m } from '#lib/paraglide/messages.js';
 
 export const CHANGEOVER_SECONDS_LIMIT = 600;
 
-export function checkAnnouncementTimeout(value: number | undefined): string {
+export function checkAnnouncementCooldown(value: number | undefined): string {
 	if (value === undefined || Number.isNaN(value)) {
 		return m.settings_validation_timeout_required();
 	}

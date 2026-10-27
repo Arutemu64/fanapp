@@ -2,7 +2,7 @@
 	import LogOut from '@lucide/svelte/icons/log-out';
 	import { createMutation } from '@tanstack/svelte-query';
 
-	import { logoutUserMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { logoutMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -13,7 +13,7 @@
 
 	const toastService = getToastService();
 	const session = getSession();
-	const logoutMutation = createMutation(() => logoutUserMutation());
+	const logOutRequest = createMutation(() => logoutMutation());
 
 	let isLoggingOut = $state(false);
 	let confirmOpen = $state(false);
@@ -23,7 +23,7 @@
 
 		isLoggingOut = true;
 		try {
-			await session.logOut(() => logoutMutation.mutateAsync({}));
+			await session.logOut(() => logOutRequest.mutateAsync({}));
 			trackEvent('logout');
 		} catch (error) {
 			toastService.error(error);

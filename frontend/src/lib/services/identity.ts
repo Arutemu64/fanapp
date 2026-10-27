@@ -1,7 +1,7 @@
 import { type QueryClient, queryOptions } from '@tanstack/svelte-query';
 
 import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-import { getCurrentUser, logoutUser } from '#lib/api/generated/index.js';
+import { getCurrentUser, logout } from '#lib/api/generated/index.js';
 import { queryForLoad } from '#lib/api/index.js';
 import { readStorage, removeStorage, writeStorage } from '#lib/utils/safeStorage.js';
 
@@ -22,7 +22,7 @@ export function clearLogoutPending(): void {
 export async function flushPendingLogout(signal?: AbortSignal): Promise<void> {
 	if (!isLogoutPending()) return;
 
-	const { response } = await logoutUser({ signal });
+	const { response } = await logout({ signal });
 	if (response?.ok || response?.status === 401 || response?.status === 403) {
 		clearLogoutPending();
 	}

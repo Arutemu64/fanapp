@@ -82,7 +82,9 @@ class ScheduleEditService:
         await self.schedule_gateway.lock_for_edit()
         if await already_applied():
             return False
-        await self._ensure_announcement_cooldown(settings.limits.announcement_timeout)
+        await self._ensure_announcement_cooldown(
+            settings.limits.announcement_cooldown_seconds
+        )
 
         next_event_before = await self.schedule_gateway.get_next()
         build_change = await mutate()

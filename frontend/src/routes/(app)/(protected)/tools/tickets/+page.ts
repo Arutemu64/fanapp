@@ -2,8 +2,8 @@ import type { BackTarget } from '#lib/types/navigation.js';
 
 import { throwApiError } from '#lib/api/errors.js';
 import {
-	getSyncSourcesOptions,
-	getTcloudEventRolesOptions
+	getTcloudEventRolesOptions,
+	listSyncSourcesOptions
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { queryForLoad } from '#lib/api/index.js';
 import { requireTool } from '#lib/data/tools.js';
@@ -18,7 +18,7 @@ export const load: PageLoad = async ({ parent }) => {
 	requireTool('tickets', user, toolConfig);
 
 	if (hasPermission(user, 'sync:run')) {
-		void queryClient.query(getSyncSourcesOptions()).catch(() => {});
+		void queryClient.query(listSyncSourcesOptions()).catch(() => {});
 	}
 
 	let eventRoles = null;

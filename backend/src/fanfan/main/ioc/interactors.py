@@ -148,8 +148,8 @@ from fanfan.application.interactors.subscriptions.create_subscription import (
 from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
 )
-from fanfan.application.interactors.subscriptions.get_subscriptions import (
-    GetSubscriptions,
+from fanfan.application.interactors.subscriptions.list_subscriptions import (
+    ListSubscriptions,
 )
 from fanfan.application.interactors.tickets.generate_tickets import GenerateTickets
 from fanfan.application.interactors.tickets.link_ticket import LinkTicket
@@ -238,7 +238,7 @@ class InteractorsProvider(Provider):
         UpdateSettings,
         CreateSubscription,
         DeleteSubscription,
-        GetSubscriptions,
+        ListSubscriptions,
         LinkTicket,
         SubmitFeedback,
         ListFeedback,

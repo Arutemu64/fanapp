@@ -21,17 +21,17 @@ class InvalidScheduleFileReason(enum.StrEnum):
     the API contract — the frontend switches on it to pick Russian copy.
     """
 
-    UNREADABLE_FILE = "UNREADABLE_FILE"
-    MISSING_COLUMNS = "MISSING_COLUMNS"
-    EMPTY_FILE = "EMPTY_FILE"
-    EMPTY_CELL = "EMPTY_CELL"
-    INVALID_NUMBER = "INVALID_NUMBER"
-    DUPLICATE_NUMBER = "DUPLICATE_NUMBER"
-    DURATION_NOT_POSITIVE = "DURATION_NOT_POSITIVE"
-    INVALID_TYPE = "INVALID_TYPE"
-    BLOCK_ROW_WITH_EVENT_DATA = "BLOCK_ROW_WITH_EVENT_DATA"
-    FILE_TOO_LARGE = "FILE_TOO_LARGE"
-    UNSUPPORTED_FILE_TYPE = "UNSUPPORTED_FILE_TYPE"
+    UNREADABLE_FILE = "unreadable_file"
+    MISSING_COLUMNS = "missing_columns"
+    EMPTY_FILE = "empty_file"
+    EMPTY_CELL = "empty_cell"
+    INVALID_NUMBER = "invalid_number"
+    DUPLICATE_NUMBER = "duplicate_number"
+    DURATION_NOT_POSITIVE = "duration_not_positive"
+    INVALID_TYPE = "invalid_type"
+    BLOCK_ROW_WITH_EVENT_DATA = "block_row_with_event_data"
+    FILE_TOO_LARGE = "file_too_large"
+    UNSUPPORTED_FILE_TYPE = "unsupported_file_type"
 
 
 class EventNotFound(NotFound, ScheduleException):

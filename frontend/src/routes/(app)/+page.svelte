@@ -6,9 +6,9 @@
 		getPublicConfigOptions,
 		getPublicConfigQueryKey,
 		getScheduleOptions,
-		getSubscriptionsOptions,
 		getVotingStatusOptions,
-		getVotingStatusQueryKey
+		getVotingStatusQueryKey,
+		listSubscriptionsOptions
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { useQueuedSubscriptionChanges } from '#lib/api/queuedWrite.svelte.js';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
@@ -44,7 +44,7 @@
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	const scheduleQuery = createQuery(() => getScheduleOptions());
 	const subscriptionsQuery = createQuery(() => ({
-		...getSubscriptionsOptions(),
+		...listSubscriptionsOptions(),
 		enabled: user !== null
 	}));
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());

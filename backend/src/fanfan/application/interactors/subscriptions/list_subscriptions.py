@@ -7,11 +7,11 @@ from fanfan.application.ports.gateways.subscriptions import (
 from fanfan.application.services.current_user import CurrentUserProvider
 
 
-class GetSubscriptionsOutput(BaseModel):
+class ListSubscriptionsOutput(BaseModel):
     subscriptions: list[SubscriptionFullDTO]
 
 
-class GetSubscriptions:
+class ListSubscriptions:
     def __init__(
         self,
         subscription_gateway: SubscriptionGateway,
@@ -20,9 +20,9 @@ class GetSubscriptions:
         self.subscription_gateway = subscription_gateway
         self.current_user_provider = current_user_provider
 
-    async def __call__(self) -> GetSubscriptionsOutput:
+    async def __call__(self) -> ListSubscriptionsOutput:
         current_user_id = await self.current_user_provider.require_user_id()
         subscriptions = await self.subscription_gateway.read_subscriptions_by_user(
             current_user_id
         )
-        return GetSubscriptionsOutput(subscriptions=subscriptions)
+        return ListSubscriptionsOutput(subscriptions=subscriptions)

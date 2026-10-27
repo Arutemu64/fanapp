@@ -32,7 +32,7 @@ SYNC_STATUS_PATH = "/sync/sources"
     ),
 )
 @inject
-async def get_sync_sources(
+async def list_sync_sources(
     interactor: FromDishka[GetSyncSources],
 ) -> list[SyncSourceStatusDTO]:
     return await interactor()

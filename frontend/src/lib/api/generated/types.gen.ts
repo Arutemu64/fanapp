@@ -441,16 +441,6 @@ export type GetQuestOutput = {
 };
 
 /**
- * GetSubscriptionsOutput
- */
-export type GetSubscriptionsOutput = {
-	/**
-	 * Subscriptions
-	 */
-	subscriptions: Array<SubscriptionFullDto>;
-};
-
-/**
  * GetVotingDashboardOutput
  */
 export type GetVotingDashboardOutput = {
@@ -602,17 +592,17 @@ export type InvalidScheduleFileProblem = {
  * the API contract — the frontend switches on it to pick Russian copy.
  */
 export type InvalidScheduleFileReason =
-	| 'UNREADABLE_FILE'
-	| 'MISSING_COLUMNS'
-	| 'EMPTY_FILE'
-	| 'EMPTY_CELL'
-	| 'INVALID_NUMBER'
-	| 'DUPLICATE_NUMBER'
-	| 'DURATION_NOT_POSITIVE'
-	| 'INVALID_TYPE'
-	| 'BLOCK_ROW_WITH_EVENT_DATA'
-	| 'FILE_TOO_LARGE'
-	| 'UNSUPPORTED_FILE_TYPE';
+	| 'unreadable_file'
+	| 'missing_columns'
+	| 'empty_file'
+	| 'empty_cell'
+	| 'invalid_number'
+	| 'duplicate_number'
+	| 'duration_not_positive'
+	| 'invalid_type'
+	| 'block_row_with_event_data'
+	| 'file_too_large'
+	| 'unsupported_file_type';
 
 /**
  * LeaderboardEntryDTO
@@ -703,6 +693,16 @@ export type ListScheduleChangesOutput = {
 	 * Next Cursor
 	 */
 	next_cursor: string | null;
+};
+
+/**
+ * ListSubscriptionsOutput
+ */
+export type ListSubscriptionsOutput = {
+	/**
+	 * Subscriptions
+	 */
+	subscriptions: Array<SubscriptionFullDto>;
 };
 
 /**
@@ -1395,9 +1395,9 @@ export type ScheduleEventFullDto = {
  */
 export type ScheduleSettingsDto = {
 	/**
-	 * Announcement Timeout
+	 * Announcement Cooldown Seconds
 	 */
-	announcement_timeout: number;
+	announcement_cooldown_seconds: number;
 	/**
 	 * Changeover Seconds
 	 */
@@ -1765,9 +1765,9 @@ export type UpdateScheduleEventBody = {
  */
 export type UpdateScheduleSettingsInput = {
 	/**
-	 * Announcement Timeout
+	 * Announcement Cooldown Seconds
 	 */
-	announcement_timeout?: number;
+	announcement_cooldown_seconds?: number;
 	/**
 	 * Changeover Seconds
 	 */
@@ -1829,9 +1829,9 @@ export type UserDetailsDto = {
 	 */
 	avatar_seed: string;
 	/**
-	 * Ticket Number
+	 * Ticket Barcode
 	 */
-	ticket_number: string | null;
+	ticket_barcode: string | null;
 	/**
 	 * Created At
 	 */
@@ -1868,9 +1868,9 @@ export type UserListItemDto = {
 	 */
 	avatar_seed: string;
 	/**
-	 * Ticket Number
+	 * Ticket Barcode
 	 */
-	ticket_number: string | null;
+	ticket_barcode: string | null;
 	/**
 	 * Created At
 	 */
@@ -2247,21 +2247,21 @@ export type LoginWithCodeResponses = {
 
 export type LoginWithCodeResponse = LoginWithCodeResponses[keyof LoginWithCodeResponses];
 
-export type LogoutUserData = {
+export type LogoutData = {
 	body?: never;
 	path?: never;
 	query?: never;
 	url: '/auth/logout';
 };
 
-export type LogoutUserResponses = {
+export type LogoutResponses = {
 	/**
 	 * Successfully logged out.
 	 */
 	204: void;
 };
 
-export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
+export type LogoutResponse = LogoutResponses[keyof LogoutResponses];
 
 export type ListOauthProvidersData = {
 	body?: never;
@@ -2871,14 +2871,14 @@ export type UpdateScheduleSettingsResponses = {
 export type UpdateScheduleSettingsResponse =
 	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
 
-export type UncheckCurrentEventData = {
+export type ClearCurrentEventData = {
 	body?: never;
 	path?: never;
 	query?: never;
 	url: '/schedule/current';
 };
 
-export type UncheckCurrentEventErrors = {
+export type ClearCurrentEventErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -2893,26 +2893,26 @@ export type UncheckCurrentEventErrors = {
 	429: ProblemDetails;
 };
 
-export type UncheckCurrentEventError = UncheckCurrentEventErrors[keyof UncheckCurrentEventErrors];
+export type ClearCurrentEventError = ClearCurrentEventErrors[keyof ClearCurrentEventErrors];
 
-export type UncheckCurrentEventResponses = {
+export type ClearCurrentEventResponses = {
 	/**
 	 * Current event cleared successfully.
 	 */
 	204: void;
 };
 
-export type UncheckCurrentEventResponse =
-	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
+export type ClearCurrentEventResponse =
+	ClearCurrentEventResponses[keyof ClearCurrentEventResponses];
 
-export type SetEventAsCurrentData = {
+export type SetCurrentEventData = {
 	body: SetCurrentScheduleEventBody;
 	path?: never;
 	query?: never;
 	url: '/schedule/current';
 };
 
-export type SetEventAsCurrentErrors = {
+export type SetCurrentEventErrors = {
 	/**
 	 * Event is skipped or invalid for this operation.
 	 */
@@ -2939,17 +2939,16 @@ export type SetEventAsCurrentErrors = {
 	429: ProblemDetails;
 };
 
-export type SetEventAsCurrentError = SetEventAsCurrentErrors[keyof SetEventAsCurrentErrors];
+export type SetCurrentEventError = SetCurrentEventErrors[keyof SetCurrentEventErrors];
 
-export type SetEventAsCurrentResponses = {
+export type SetCurrentEventResponses = {
 	/**
 	 * Event set as current successfully.
 	 */
 	204: void;
 };
 
-export type SetEventAsCurrentResponse =
-	SetEventAsCurrentResponses[keyof SetEventAsCurrentResponses];
+export type SetCurrentEventResponse = SetCurrentEventResponses[keyof SetCurrentEventResponses];
 
 export type UpdateScheduleEventData = {
 	body: UpdateScheduleEventBody;
@@ -3094,14 +3093,14 @@ export type UndoScheduleChangeResponses = {
 export type UndoScheduleChangeResponse =
 	UndoScheduleChangeResponses[keyof UndoScheduleChangeResponses];
 
-export type GetSubscriptionsData = {
+export type ListSubscriptionsData = {
 	body?: never;
 	path?: never;
 	query?: never;
 	url: '/schedule/subscriptions';
 };
 
-export type GetSubscriptionsErrors = {
+export type ListSubscriptionsErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -3112,25 +3111,26 @@ export type GetSubscriptionsErrors = {
 	403: ProblemDetails;
 };
 
-export type GetSubscriptionsError = GetSubscriptionsErrors[keyof GetSubscriptionsErrors];
+export type ListSubscriptionsError = ListSubscriptionsErrors[keyof ListSubscriptionsErrors];
 
-export type GetSubscriptionsResponses = {
+export type ListSubscriptionsResponses = {
 	/**
 	 * Successful Response
 	 */
-	200: GetSubscriptionsOutput;
+	200: ListSubscriptionsOutput;
 };
 
-export type GetSubscriptionsResponse = GetSubscriptionsResponses[keyof GetSubscriptionsResponses];
+export type ListSubscriptionsResponse =
+	ListSubscriptionsResponses[keyof ListSubscriptionsResponses];
 
-export type NewSubscriptionData = {
+export type CreateSubscriptionData = {
 	body: CreateSubscriptionInput;
 	path?: never;
 	query?: never;
 	url: '/schedule/subscriptions';
 };
 
-export type NewSubscriptionErrors = {
+export type CreateSubscriptionErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -3153,16 +3153,17 @@ export type NewSubscriptionErrors = {
 	422: ValidationProblem;
 };
 
-export type NewSubscriptionError = NewSubscriptionErrors[keyof NewSubscriptionErrors];
+export type CreateSubscriptionError = CreateSubscriptionErrors[keyof CreateSubscriptionErrors];
 
-export type NewSubscriptionResponses = {
+export type CreateSubscriptionResponses = {
 	/**
 	 * Subscription created successfully.
 	 */
 	201: CreateSubscriptionOutput;
 };
 
-export type NewSubscriptionResponse = NewSubscriptionResponses[keyof NewSubscriptionResponses];
+export type CreateSubscriptionResponse =
+	CreateSubscriptionResponses[keyof CreateSubscriptionResponses];
 
 export type DeleteSubscriptionData = {
 	body?: never;
@@ -3818,7 +3819,7 @@ export type SendBroadcastResponses = {
 
 export type SendBroadcastResponse = SendBroadcastResponses[keyof SendBroadcastResponses];
 
-export type CancelMailingData = {
+export type CancelBroadcastData = {
 	body?: never;
 	path: {
 		/**
@@ -3832,7 +3833,7 @@ export type CancelMailingData = {
 	url: '/notifications/broadcasts/{mailing_id}/cancel';
 };
 
-export type CancelMailingErrors = {
+export type CancelBroadcastErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -3855,16 +3856,16 @@ export type CancelMailingErrors = {
 	422: ValidationProblem;
 };
 
-export type CancelMailingError = CancelMailingErrors[keyof CancelMailingErrors];
+export type CancelBroadcastError = CancelBroadcastErrors[keyof CancelBroadcastErrors];
 
-export type CancelMailingResponses = {
+export type CancelBroadcastResponses = {
 	/**
 	 * Mailing cancellation requested.
 	 */
 	204: void;
 };
 
-export type CancelMailingResponse = CancelMailingResponses[keyof CancelMailingResponses];
+export type CancelBroadcastResponse = CancelBroadcastResponses[keyof CancelBroadcastResponses];
 
 export type CreatePushSubscriptionData = {
 	body: CreatePushSubscriptionInput;
@@ -4205,14 +4206,14 @@ export type SetTcloudEventRolesResponses = {
 export type SetTcloudEventRolesResponse =
 	SetTcloudEventRolesResponses[keyof SetTcloudEventRolesResponses];
 
-export type GetSyncSourcesData = {
+export type ListSyncSourcesData = {
 	body?: never;
 	path?: never;
 	query?: never;
 	url: '/sync/sources';
 };
 
-export type GetSyncSourcesErrors = {
+export type ListSyncSourcesErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -4223,18 +4224,18 @@ export type GetSyncSourcesErrors = {
 	403: ProblemDetails;
 };
 
-export type GetSyncSourcesError = GetSyncSourcesErrors[keyof GetSyncSourcesErrors];
+export type ListSyncSourcesError = ListSyncSourcesErrors[keyof ListSyncSourcesErrors];
 
-export type GetSyncSourcesResponses = {
+export type ListSyncSourcesResponses = {
 	/**
-	 * Response Get Sync Sources
+	 * Response List Sync Sources
 	 *
 	 * Successful Response
 	 */
 	200: Array<SyncSourceStatusDto>;
 };
 
-export type GetSyncSourcesResponse = GetSyncSourcesResponses[keyof GetSyncSourcesResponses];
+export type ListSyncSourcesResponse = ListSyncSourcesResponses[keyof ListSyncSourcesResponses];
 
 export type RequestSyncData = {
 	body?: never;

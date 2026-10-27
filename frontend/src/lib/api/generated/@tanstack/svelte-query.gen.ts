@@ -12,15 +12,17 @@ import { client } from '../client.gen';
 import {
 	addVote,
 	awardQuestPoints,
-	cancelMailing,
+	cancelBroadcast,
 	cancelQuestAward,
 	cancelVote,
 	changeCurrentUserEmail,
 	changeCurrentUserPassword,
 	checkPushSubscription,
+	clearCurrentEvent,
 	confirmEmailCode,
 	countUnreadNotifications,
 	createPushSubscription,
+	createSubscription,
 	debug,
 	deletePushSubscription,
 	deleteSubscription,
@@ -35,8 +37,6 @@ import {
 	getSchedule,
 	getScheduleSettings,
 	getSettings,
-	getSubscriptions,
-	getSyncSources,
 	getTcloudEventRoles,
 	getUser,
 	getVotingDashboard,
@@ -52,16 +52,17 @@ import {
 	listQuestAwards,
 	listQuestHistory,
 	listScheduleChanges,
+	listSubscriptions,
+	listSyncSources,
 	listTickets,
 	listUserNotifications,
 	listUsers,
 	listVotingNominations,
 	login,
 	loginWithCode,
-	logoutUser,
+	logout,
 	markAllNotificationsRead,
 	markNotificationsRead,
-	newSubscription,
 	oauthCallback,
 	type Options,
 	processFestengineEvent,
@@ -71,7 +72,7 @@ import {
 	revokeUserPermission,
 	sendBroadcast,
 	sendTestNotification,
-	setEventAsCurrent,
+	setCurrentEvent,
 	setTcloudEventRoles,
 	setUserRole,
 	setVotingTimeRange,
@@ -79,7 +80,6 @@ import {
 	startSocialLogin,
 	submitFeedback,
 	suggestUsername,
-	uncheckCurrentEvent,
 	undoScheduleChange,
 	unlinkSocialAccount,
 	unlinkUserTicket,
@@ -96,9 +96,9 @@ import type {
 	AwardQuestPointsData,
 	AwardQuestPointsError,
 	AwardQuestPointsResponse,
-	CancelMailingData,
-	CancelMailingError,
-	CancelMailingResponse,
+	CancelBroadcastData,
+	CancelBroadcastError,
+	CancelBroadcastResponse,
 	CancelQuestAwardData,
 	CancelQuestAwardError,
 	CancelQuestAwardResponse,
@@ -114,6 +114,9 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionError,
 	CheckPushSubscriptionResponse,
+	ClearCurrentEventData,
+	ClearCurrentEventError,
+	ClearCurrentEventResponse,
 	ConfirmEmailCodeData,
 	ConfirmEmailCodeError,
 	ConfirmEmailCodeResponse,
@@ -123,6 +126,9 @@ import type {
 	CreatePushSubscriptionData,
 	CreatePushSubscriptionError,
 	CreatePushSubscriptionResponse,
+	CreateSubscriptionData,
+	CreateSubscriptionError,
+	CreateSubscriptionResponse,
 	DebugData,
 	DebugResponse,
 	DeletePushSubscriptionData,
@@ -162,12 +168,6 @@ import type {
 	GetSettingsData,
 	GetSettingsError,
 	GetSettingsResponse,
-	GetSubscriptionsData,
-	GetSubscriptionsError,
-	GetSubscriptionsResponse,
-	GetSyncSourcesData,
-	GetSyncSourcesError,
-	GetSyncSourcesResponse,
 	GetTcloudEventRolesData,
 	GetTcloudEventRolesError,
 	GetTcloudEventRolesResponse,
@@ -210,6 +210,12 @@ import type {
 	ListScheduleChangesData,
 	ListScheduleChangesError,
 	ListScheduleChangesResponse,
+	ListSubscriptionsData,
+	ListSubscriptionsError,
+	ListSubscriptionsResponse,
+	ListSyncSourcesData,
+	ListSyncSourcesError,
+	ListSyncSourcesResponse,
 	ListTicketsData,
 	ListTicketsError,
 	ListTicketsResponse,
@@ -227,17 +233,14 @@ import type {
 	LoginWithCodeData,
 	LoginWithCodeError,
 	LoginWithCodeResponse,
-	LogoutUserData,
-	LogoutUserResponse,
+	LogoutData,
+	LogoutResponse,
 	MarkAllNotificationsReadData,
 	MarkAllNotificationsReadError,
 	MarkAllNotificationsReadResponse,
 	MarkNotificationsReadData,
 	MarkNotificationsReadError,
 	MarkNotificationsReadResponse,
-	NewSubscriptionData,
-	NewSubscriptionError,
-	NewSubscriptionResponse,
 	OauthCallbackData,
 	OauthCallbackError,
 	ProcessFestengineEventData,
@@ -261,9 +264,9 @@ import type {
 	SendTestNotificationData,
 	SendTestNotificationError,
 	SendTestNotificationResponse,
-	SetEventAsCurrentData,
-	SetEventAsCurrentError,
-	SetEventAsCurrentResponse,
+	SetCurrentEventData,
+	SetCurrentEventError,
+	SetCurrentEventResponse,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesError,
 	SetTcloudEventRolesResponse,
@@ -283,9 +286,6 @@ import type {
 	SuggestUsernameData,
 	SuggestUsernameError,
 	SuggestUsernameResponse,
-	UncheckCurrentEventData,
-	UncheckCurrentEventError,
-	UncheckCurrentEventResponse,
 	UndoScheduleChangeData,
 	UndoScheduleChangeError,
 	UndoScheduleChangeResponse,
@@ -531,16 +531,12 @@ export const loginWithCodeMutation = (
  *
  * Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.
  */
-export const logoutUserMutation = (
-	options?: Partial<Options<LogoutUserData>>
-): MutationOptions<LogoutUserResponse, DefaultError, Options<LogoutUserData>> => {
-	const mutationOptions: MutationOptions<
-		LogoutUserResponse,
-		DefaultError,
-		Options<LogoutUserData>
-	> = {
+export const logoutMutation = (
+	options?: Partial<Options<LogoutData>>
+): MutationOptions<LogoutResponse, DefaultError, Options<LogoutData>> => {
+	const mutationOptions: MutationOptions<LogoutResponse, DefaultError, Options<LogoutData>> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await logoutUser({
+			const { data } = await logout({
 				...options,
 				...fnOptions,
 				throwOnError: true
@@ -1070,20 +1066,20 @@ export const updateScheduleSettingsMutation = (
  *
  * Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.
  */
-export const uncheckCurrentEventMutation = (
-	options?: Partial<Options<UncheckCurrentEventData>>
+export const clearCurrentEventMutation = (
+	options?: Partial<Options<ClearCurrentEventData>>
 ): MutationOptions<
-	UncheckCurrentEventResponse,
-	UncheckCurrentEventError,
-	Options<UncheckCurrentEventData>
+	ClearCurrentEventResponse,
+	ClearCurrentEventError,
+	Options<ClearCurrentEventData>
 > => {
 	const mutationOptions: MutationOptions<
-		UncheckCurrentEventResponse,
-		UncheckCurrentEventError,
-		Options<UncheckCurrentEventData>
+		ClearCurrentEventResponse,
+		ClearCurrentEventError,
+		Options<ClearCurrentEventData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await uncheckCurrentEvent({
+			const { data } = await clearCurrentEvent({
 				...options,
 				...fnOptions,
 				throwOnError: true
@@ -1099,20 +1095,16 @@ export const uncheckCurrentEventMutation = (
  *
  * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
  */
-export const setEventAsCurrentMutation = (
-	options?: Partial<Options<SetEventAsCurrentData>>
-): MutationOptions<
-	SetEventAsCurrentResponse,
-	SetEventAsCurrentError,
-	Options<SetEventAsCurrentData>
-> => {
+export const setCurrentEventMutation = (
+	options?: Partial<Options<SetCurrentEventData>>
+): MutationOptions<SetCurrentEventResponse, SetCurrentEventError, Options<SetCurrentEventData>> => {
 	const mutationOptions: MutationOptions<
-		SetEventAsCurrentResponse,
-		SetEventAsCurrentError,
-		Options<SetEventAsCurrentData>
+		SetCurrentEventResponse,
+		SetCurrentEventError,
+		Options<SetCurrentEventData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await setEventAsCurrent({
+			const { data } = await setCurrentEvent({
 				...options,
 				...fnOptions,
 				throwOnError: true
@@ -1292,23 +1284,23 @@ export const undoScheduleChangeMutation = (
 	return mutationOptions;
 };
 
-export const getSubscriptionsQueryKey = (options?: Options<GetSubscriptionsData>) =>
-	createQueryKey('getSubscriptions', options);
+export const listSubscriptionsQueryKey = (options?: Options<ListSubscriptionsData>) =>
+	createQueryKey('listSubscriptions', options);
 
 /**
  * List the current user's subscriptions
  *
  * Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.
  */
-export const getSubscriptionsOptions = (options?: Options<GetSubscriptionsData>) =>
+export const listSubscriptionsOptions = (options?: Options<ListSubscriptionsData>) =>
 	queryOptions<
-		GetSubscriptionsResponse,
-		GetSubscriptionsError,
-		GetSubscriptionsResponse,
-		ReturnType<typeof getSubscriptionsQueryKey>
+		ListSubscriptionsResponse,
+		ListSubscriptionsError,
+		ListSubscriptionsResponse,
+		ReturnType<typeof listSubscriptionsQueryKey>
 	>({
 		queryFn: async ({ queryKey, signal }) => {
-			const { data } = await getSubscriptions({
+			const { data } = await listSubscriptions({
 				...options,
 				...queryKey[0],
 				signal,
@@ -1316,7 +1308,7 @@ export const getSubscriptionsOptions = (options?: Options<GetSubscriptionsData>)
 			});
 			return data;
 		},
-		queryKey: getSubscriptionsQueryKey(options)
+		queryKey: listSubscriptionsQueryKey(options)
 	});
 
 /**
@@ -1324,16 +1316,20 @@ export const getSubscriptionsOptions = (options?: Options<GetSubscriptionsData>)
  *
  * Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
  */
-export const newSubscriptionMutation = (
-	options?: Partial<Options<NewSubscriptionData>>
-): MutationOptions<NewSubscriptionResponse, NewSubscriptionError, Options<NewSubscriptionData>> => {
+export const createSubscriptionMutation = (
+	options?: Partial<Options<CreateSubscriptionData>>
+): MutationOptions<
+	CreateSubscriptionResponse,
+	CreateSubscriptionError,
+	Options<CreateSubscriptionData>
+> => {
 	const mutationOptions: MutationOptions<
-		NewSubscriptionResponse,
-		NewSubscriptionError,
-		Options<NewSubscriptionData>
+		CreateSubscriptionResponse,
+		CreateSubscriptionError,
+		Options<CreateSubscriptionData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await newSubscription({
+			const { data } = await createSubscription({
 				...options,
 				...fnOptions,
 				throwOnError: true
@@ -1942,16 +1938,16 @@ export const sendBroadcastMutation = (
  *
  * Cancels a mailing: marks it cancelled and deletes its still-undelivered notifications. Messages already delivered to a device cannot be recalled.
  */
-export const cancelMailingMutation = (
-	options?: Partial<Options<CancelMailingData>>
-): MutationOptions<CancelMailingResponse, CancelMailingError, Options<CancelMailingData>> => {
+export const cancelBroadcastMutation = (
+	options?: Partial<Options<CancelBroadcastData>>
+): MutationOptions<CancelBroadcastResponse, CancelBroadcastError, Options<CancelBroadcastData>> => {
 	const mutationOptions: MutationOptions<
-		CancelMailingResponse,
-		CancelMailingError,
-		Options<CancelMailingData>
+		CancelBroadcastResponse,
+		CancelBroadcastError,
+		Options<CancelBroadcastData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await cancelMailing({
+			const { data } = await cancelBroadcast({
 				...options,
 				...fnOptions,
 				throwOnError: true
@@ -2307,23 +2303,23 @@ export const setTcloudEventRolesMutation = (
 	return mutationOptions;
 };
 
-export const getSyncSourcesQueryKey = (options?: Options<GetSyncSourcesData>) =>
-	createQueryKey('getSyncSources', options);
+export const listSyncSourcesQueryKey = (options?: Options<ListSyncSourcesData>) =>
+	createQueryKey('listSyncSources', options);
 
 /**
  * List sync sources with their last run
  *
  * Returns every vendor sync source, whether it is configured for this deployment, and its most recent run. Requires the 'sync:run' permission.
  */
-export const getSyncSourcesOptions = (options?: Options<GetSyncSourcesData>) =>
+export const listSyncSourcesOptions = (options?: Options<ListSyncSourcesData>) =>
 	queryOptions<
-		GetSyncSourcesResponse,
-		GetSyncSourcesError,
-		GetSyncSourcesResponse,
-		ReturnType<typeof getSyncSourcesQueryKey>
+		ListSyncSourcesResponse,
+		ListSyncSourcesError,
+		ListSyncSourcesResponse,
+		ReturnType<typeof listSyncSourcesQueryKey>
 	>({
 		queryFn: async ({ queryKey, signal }) => {
-			const { data } = await getSyncSources({
+			const { data } = await listSyncSources({
 				...options,
 				...queryKey[0],
 				signal,
@@ -2331,7 +2327,7 @@ export const getSyncSourcesOptions = (options?: Options<GetSyncSourcesData>) =>
 			});
 			return data;
 		},
-		queryKey: getSyncSourcesQueryKey(options)
+		queryKey: listSyncSourcesQueryKey(options)
 	});
 
 /**

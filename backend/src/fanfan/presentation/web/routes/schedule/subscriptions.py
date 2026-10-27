@@ -13,9 +13,9 @@ from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
     DeleteSubscriptionInput,
 )
-from fanfan.application.interactors.subscriptions.get_subscriptions import (
-    GetSubscriptions,
-    GetSubscriptionsOutput,
+from fanfan.application.interactors.subscriptions.list_subscriptions import (
+    ListSubscriptions,
+    ListSubscriptionsOutput,
 )
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
@@ -37,9 +37,9 @@ subscriptions_router = APIRouter(
     "and cacheable offline.",
 )
 @inject
-async def get_subscriptions(
-    interactor: FromDishka[GetSubscriptions],
-) -> GetSubscriptionsOutput:
+async def list_subscriptions(
+    interactor: FromDishka[ListSubscriptions],
+) -> ListSubscriptionsOutput:
     return await interactor()
 
 
@@ -59,7 +59,7 @@ async def get_subscriptions(
     },
 )
 @inject
-async def new_subscription(
+async def create_subscription(
     data: CreateSubscriptionInput,
     interactor: FromDishka[CreateSubscription],
 ) -> CreateSubscriptionOutput:

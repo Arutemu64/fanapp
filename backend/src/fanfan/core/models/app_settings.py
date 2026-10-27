@@ -20,7 +20,7 @@ DEFAULT_FESTIVAL_END = datetime(
 
 @dataclass(slots=True, kw_only=True)
 class LimitsConfig:
-    announcement_timeout: int = 10
+    announcement_cooldown_seconds: int = 10
 
 
 @dataclass(slots=True, kw_only=True)
@@ -83,10 +83,10 @@ class AppSettings(AggregateRoot):
     def update_limits(
         self,
         *,
-        announcement_timeout: int | None = None,
+        announcement_cooldown_seconds: int | None = None,
     ) -> None:
-        if announcement_timeout is not None:
-            self.limits.announcement_timeout = announcement_timeout
+        if announcement_cooldown_seconds is not None:
+            self.limits.announcement_cooldown_seconds = announcement_cooldown_seconds
 
     def update_schedule(self, *, changeover_seconds: int | None = None) -> None:
         if changeover_seconds is not None:

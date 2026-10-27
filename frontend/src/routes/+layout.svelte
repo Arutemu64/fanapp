@@ -17,10 +17,10 @@
 		getPublicConfigQueryKey,
 		getQuestQueryKey,
 		getScheduleQueryKey,
-		getSyncSourcesQueryKey,
 		getVotingStatusQueryKey,
 		listQuestHistoryQueryKey,
 		listScheduleChangesQueryKey,
+		listSyncSourcesQueryKey,
 		listUserNotificationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { watchApiResponses, watchBackgroundRefetchErrors } from '#lib/api/index.js';
@@ -164,7 +164,7 @@
 	}
 
 	function handleSyncRunUpdated() {
-		void queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() });
+		void queryClient.invalidateQueries({ queryKey: listSyncSourcesQueryKey() });
 	}
 
 	const user = createQuery(

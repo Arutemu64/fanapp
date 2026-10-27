@@ -9,8 +9,8 @@ import { fakeStorage } from '#lib/testing/storage.js';
 import { Session, type SessionRouter } from './session.js';
 
 const getCurrentUser = vi.hoisted(() => vi.fn());
-const logoutUser = vi.hoisted(() => vi.fn());
-vi.mock('#lib/api/generated/index.js', () => ({ getCurrentUser, logoutUser }));
+const logout = vi.hoisted(() => vi.fn());
+vi.mock('#lib/api/generated/index.js', () => ({ getCurrentUser, logout }));
 
 const USER = { id: '1', username: 'neko' } as CurrentUserDto;
 
@@ -48,7 +48,7 @@ function setup({ reachable = true } = {}) {
 beforeEach(() => {
 	vi.stubGlobal('localStorage', fakeStorage());
 	getCurrentUser.mockReset();
-	logoutUser.mockReset();
+	logout.mockReset();
 });
 
 describe('Session.loggedIn', () => {
@@ -162,18 +162,18 @@ describe('Session.expired', () => {
 
 describe('Session.settlePendingLogout', () => {
 	it('revokes the old session before a social login, so the boot flush cannot end the new one', async () => {
-		logoutUser.mockResolvedValue({ response: { ok: true, status: 204 } });
+		logout.mockResolvedValue({ response: { ok: true, status: 204 } });
 		markLogoutPending();
 		const { session } = setup();
 
 		await expect(session.settlePendingLogout()).resolves.toBe(true);
 
-		expect(logoutUser).toHaveBeenCalledOnce();
+		expect(logout).toHaveBeenCalledOnce();
 		expect(session.logoutPending).toBe(false);
 	});
 
 	it('keeps the intent when the revoke fails, so an abandoned login cannot restore the old account', async () => {
-		logoutUser.mockResolvedValue({ response: { ok: false, status: 503 } });
+		logout.mockResolvedValue({ response: { ok: false, status: 503 } });
 		markLogoutPending();
 		const { session } = setup();
 
@@ -183,7 +183,7 @@ describe('Session.settlePendingLogout', () => {
 	});
 
 	it('gives up on a stalled revoke and keeps the intent, so the user can retry', async () => {
-		logoutUser.mockResolvedValue({
+		logout.mockResolvedValue({
 			error: new DOMException('signal timed out', 'TimeoutError'),
 			response: undefined
 		});
@@ -192,7 +192,7 @@ describe('Session.settlePendingLogout', () => {
 
 		await expect(session.settlePendingLogout()).resolves.toBe(false);
 
-		const [options] = logoutUser.mock.lastCall as [{ signal?: AbortSignal }];
+		const [options] = logout.mock.lastCall as [{ signal?: AbortSignal }];
 		expect(options.signal).toBeInstanceOf(AbortSignal);
 		expect(session.logoutPending).toBe(true);
 	});

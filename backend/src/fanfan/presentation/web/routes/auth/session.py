@@ -23,7 +23,7 @@ session_router = APIRouter()
     responses={204: {"description": "Successfully logged out."}},
 )
 @inject
-async def logout_user(
+async def logout(
     request: Request,
     response: Response,
     interactor: FromDishka[LogoutUser],

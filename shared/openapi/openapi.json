@@ -401,7 +401,7 @@
         ],
         "summary": "Logout user",
         "description": "Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.",
-        "operationId": "logout_user",
+        "operationId": "logout",
         "responses": {
           "204": {
             "description": "Successfully logged out."
@@ -1548,7 +1548,7 @@
         ],
         "summary": "Set specific event as current",
         "description": "Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.",
-        "operationId": "set_event_as_current",
+        "operationId": "set_current_event",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1644,7 +1644,7 @@
         ],
         "summary": "Unset current schedule event",
         "description": "Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.",
-        "operationId": "uncheck_current_event",
+        "operationId": "clear_current_event",
         "responses": {
           "204": {
             "description": "Current event cleared successfully."
@@ -1978,14 +1978,14 @@
         ],
         "summary": "List the current user's subscriptions",
         "description": "Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.",
-        "operationId": "get_subscriptions",
+        "operationId": "list_subscriptions",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetSubscriptionsOutput"
+                  "$ref": "#/components/schemas/ListSubscriptionsOutput"
                 }
               }
             }
@@ -2023,7 +2023,7 @@
         ],
         "summary": "Create a new event subscription",
         "description": "Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.",
-        "operationId": "new_subscription",
+        "operationId": "create_subscription",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3266,7 +3266,7 @@
         ],
         "summary": "Cancel a mailing",
         "description": "Cancels a mailing: marks it cancelled and deletes its still-undelivered notifications. Messages already delivered to a device cannot be recalled.",
-        "operationId": "cancel_mailing",
+        "operationId": "cancel_broadcast",
         "security": [
           {
             "SessionCookie": []
@@ -4001,7 +4001,7 @@
         ],
         "summary": "List sync sources with their last run",
         "description": "Returns every vendor sync source, whether it is configured for this deployment, and its most recent run. Requires the 'sync:run' permission.",
-        "operationId": "get_sync_sources",
+        "operationId": "list_sync_sources",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4012,7 +4012,7 @@
                     "$ref": "#/components/schemas/SyncSourceStatusDTO"
                   },
                   "type": "array",
-                  "title": "Response Get Sync Sources"
+                  "title": "Response List Sync Sources"
                 }
               }
             }
@@ -5956,22 +5956,6 @@
         ],
         "title": "GetQuestOutput"
       },
-      "GetSubscriptionsOutput": {
-        "properties": {
-          "subscriptions": {
-            "items": {
-              "$ref": "#/components/schemas/SubscriptionFullDTO"
-            },
-            "type": "array",
-            "title": "Subscriptions"
-          }
-        },
-        "type": "object",
-        "required": [
-          "subscriptions"
-        ],
-        "title": "GetSubscriptionsOutput"
-      },
       "GetVotingDashboardOutput": {
         "properties": {
           "voting_start": {
@@ -6238,17 +6222,17 @@
       "InvalidScheduleFileReason": {
         "type": "string",
         "enum": [
-          "UNREADABLE_FILE",
-          "MISSING_COLUMNS",
-          "EMPTY_FILE",
-          "EMPTY_CELL",
-          "INVALID_NUMBER",
-          "DUPLICATE_NUMBER",
-          "DURATION_NOT_POSITIVE",
-          "INVALID_TYPE",
-          "BLOCK_ROW_WITH_EVENT_DATA",
-          "FILE_TOO_LARGE",
-          "UNSUPPORTED_FILE_TYPE"
+          "unreadable_file",
+          "missing_columns",
+          "empty_file",
+          "empty_cell",
+          "invalid_number",
+          "duplicate_number",
+          "duration_not_positive",
+          "invalid_type",
+          "block_row_with_event_data",
+          "file_too_large",
+          "unsupported_file_type"
         ],
         "title": "InvalidScheduleFileReason",
         "description": "Why a schedule spreadsheet was rejected.\n\nTravels to the client inside the error `details`, so each member is part of\nthe API contract — the frontend switches on it to pick Russian copy."
@@ -6424,6 +6408,22 @@
           "next_cursor"
         ],
         "title": "ListScheduleChangesOutput"
+      },
+      "ListSubscriptionsOutput": {
+        "properties": {
+          "subscriptions": {
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionFullDTO"
+            },
+            "type": "array",
+            "title": "Subscriptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscriptions"
+        ],
+        "title": "ListSubscriptionsOutput"
       },
       "ListTicketsOutput": {
         "properties": {
@@ -7530,10 +7530,10 @@
       },
       "ScheduleSettingsDTO": {
         "properties": {
-          "announcement_timeout": {
+          "announcement_cooldown_seconds": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Announcement Timeout"
+            "title": "Announcement Cooldown Seconds"
           },
           "changeover_seconds": {
             "type": "integer",
@@ -7544,7 +7544,7 @@
         },
         "type": "object",
         "required": [
-          "announcement_timeout",
+          "announcement_cooldown_seconds",
           "changeover_seconds"
         ],
         "title": "ScheduleSettingsDTO"
@@ -8129,10 +8129,10 @@
       },
       "UpdateScheduleSettingsInput": {
         "properties": {
-          "announcement_timeout": {
+          "announcement_cooldown_seconds": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Announcement Timeout"
+            "title": "Announcement Cooldown Seconds"
           },
           "changeover_seconds": {
             "type": "integer",
@@ -8217,7 +8217,7 @@
             "type": "string",
             "title": "Avatar Seed"
           },
-          "ticket_number": {
+          "ticket_barcode": {
             "anyOf": [
               {
                 "type": "string"
@@ -8226,7 +8226,7 @@
                 "type": "null"
               }
             ],
-            "title": "Ticket Number"
+            "title": "Ticket Barcode"
           },
           "created_at": {
             "type": "string",
@@ -8255,7 +8255,7 @@
           "role",
           "email",
           "avatar_seed",
-          "ticket_number",
+          "ticket_barcode",
           "created_at",
           "social_links",
           "permissions"
@@ -8292,7 +8292,7 @@
             "type": "string",
             "title": "Avatar Seed"
           },
-          "ticket_number": {
+          "ticket_barcode": {
             "anyOf": [
               {
                 "type": "string"
@@ -8301,7 +8301,7 @@
                 "type": "null"
               }
             ],
-            "title": "Ticket Number"
+            "title": "Ticket Barcode"
           },
           "created_at": {
             "type": "string",
@@ -8316,7 +8316,7 @@
           "role",
           "email",
           "avatar_seed",
-          "ticket_number",
+          "ticket_barcode",
           "created_at"
         ],
         "title": "UserListItemDTO"

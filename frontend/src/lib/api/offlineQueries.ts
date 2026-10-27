@@ -10,10 +10,10 @@ import {
 	getQuestQueryKey,
 	getScheduleOptions,
 	getScheduleQueryKey,
-	getSubscriptionsOptions,
-	getSubscriptionsQueryKey,
 	listQuestHistoryInfiniteOptions,
 	listQuestHistoryQueryKey,
+	listSubscriptionsOptions,
+	listSubscriptionsQueryKey,
 	listUserNotificationsInfiniteOptions,
 	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -25,7 +25,7 @@ export const OFFLINE_QUERY_KEYS = [
 	getCurrentUserQueryKey(),
 	getPublicConfigQueryKey(),
 	getScheduleQueryKey(),
-	getSubscriptionsQueryKey(),
+	listSubscriptionsQueryKey(),
 	listUserNotificationsQueryKey(),
 	countUnreadNotificationsQueryKey(),
 	getQuestQueryKey(),
@@ -41,7 +41,7 @@ export function isOfflineQuery(queryKey: QueryKey): boolean {
 
 export const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-export const QUERY_CACHE_BUSTER = '8';
+export const QUERY_CACHE_BUSTER = '9';
 
 const QUEST_HISTORY_PAGE_SIZE = 20;
 
@@ -89,7 +89,7 @@ export async function warmOfflineCache(queryClient: QueryClient): Promise<void> 
 	const user = queryClient.getQueryData(currentUserOptions().queryKey);
 	if (!user) return;
 
-	void queryClient.query(getSubscriptionsOptions()).catch(() => {});
+	void queryClient.query(listSubscriptionsOptions()).catch(() => {});
 	void queryClient.query(countUnreadNotificationsOptions()).catch(() => {});
 	const notificationsFeed = notificationsFeedOptions();
 	const notificationsTrimmed = trimOffScreenFeed(queryClient, notificationsFeed.queryKey);
