@@ -128,9 +128,9 @@
 		async function readFrame() {
 			if (isTornDown() || context === null) return;
 			if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-				const frame = captureFrame(video, canvas, context);
 				let text: string | null;
 				try {
+					const frame = captureFrame(video, canvas, context);
 					text = await readBarcode(frame, formats);
 				} catch {
 					cameraStatus = 'failed';
