@@ -40,9 +40,10 @@ function getValidationErrors(problem: ApiProblem): ApiValidationErrorDetail[] {
 		return [];
 	}
 
-	return rawErrors.filter((item): item is ApiValidationErrorDetail => {
-		return isRecord(item) && Array.isArray(item.loc) && typeof item.type === 'string';
-	});
+	return rawErrors.filter(
+		(item): item is ApiValidationErrorDetail =>
+			isRecord(item) && Array.isArray(item.loc) && typeof item.type === 'string'
+	);
 }
 
 function getFieldName(path: (string | number)[]): string | null {

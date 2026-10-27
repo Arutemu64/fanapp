@@ -16,14 +16,14 @@ import {
 const SETTLE_LOGOUT_TIMEOUT_MS = 8000;
 
 export interface SessionRouter {
-	goToLoginTarget(): Promise<void>;
-	goHome(): Promise<void>;
-	redirectToLogin(): Promise<void>;
+	goToLoginTarget: () => Promise<void>;
+	goHome: () => Promise<void>;
+	redirectToLogin: () => Promise<void>;
 }
 
 interface SessionDeps {
 	queryClient: QueryClient;
-	events: { restart(): void };
+	events: { restart: () => void };
 	router: SessionRouter;
 	isReachable: () => boolean;
 	unsubscribePush: () => Promise<void>;

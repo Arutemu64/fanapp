@@ -31,6 +31,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      root: ${{ steps.filter.outputs.root }}
       dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
@@ -48,6 +49,13 @@ jobs:
             frontend:
               - 'frontend/**'
               - 'shared/**'
+              - '.github/workflows/ci.yml'
+            root:
+              - '**/*.md'
+              - '**/*.yml'
+              - '**/*.yaml'
+              - '.prettierrc'
+              - '.prettierignore'
               - '.github/workflows/ci.yml'
             dockerfiles:
               - '**/Dockerfile'
@@ -213,6 +221,36 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 7
 
+  root:
+    name: Markdown and YAML (prettier)
+    needs: changes
+    if: needs.changes.outputs.root == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 12.10.1
+
+      - name: Install Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting (prettier)
+        run: frontend/node_modules/.bin/prettier --check "**/*.{md,yml,yaml}"
+
   dockerfiles:
     name: Dockerfiles (hadolint)
     needs: changes
@@ -247,7 +285,7 @@ jobs:
         include:
           - name: backend
             context: ./backend
-            target: ''
+            target: ""
           - name: frontend
             context: ./frontend
             target: prod
@@ -320,7 +358,7 @@ jobs:
   ci-ok:
     name: CI success
     if: always()
-    needs: [changes, backend, frontend, dockerfiles, images, secrets, workflows]
+    needs: [changes, backend, frontend, root, dockerfiles, images, secrets, workflows]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

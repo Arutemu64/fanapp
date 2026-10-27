@@ -56,7 +56,7 @@ export async function installSseDouble(context: BrowserContext): Promise<void> {
 }
 
 interface SseHandle {
-	emit(type: string, data: unknown): void;
+	emit: (type: string, data: unknown) => void;
 }
 
 export async function emitSse(page: Page, type: string, data: unknown = {}): Promise<void> {

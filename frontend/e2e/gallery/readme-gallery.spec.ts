@@ -157,7 +157,7 @@ const IPHONE: BrowserContextOptions = {
 const IPHONE_INSETS = { top: 59, bottom: 34 };
 
 interface DeviceFramesWindow {
-	frameScreens(screens: { desktop?: string; phone?: string; title?: string }): Promise<void>;
+	frameScreens: (screens: { desktop?: string; phone?: string; title?: string }) => Promise<void>;
 }
 
 async function captureHome(

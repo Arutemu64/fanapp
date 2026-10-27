@@ -21,6 +21,7 @@ copy you want needs a structural change — a new slot, a split component, a
 different API field — describe it and hand it back. The caller makes that call.
 
 Copy lives in three places, and a change often lands in more than one:
+
 - `frontend/src/**/*.svelte` and `.svelte.ts` — interface strings
 - `backend/src/fanfan/adapters/jinja/templates/*.jinja2` — notifications and email
 - `frontend/static/manifest.json` — app name, shortcut names
@@ -50,7 +51,7 @@ label often appears in a component, a push notification and an email.
 
 ## Stop and hand back
 
-- The English source is ambiguous about what the string actually *means* —
+- The English source is ambiguous about what the string actually _means_ —
   guessing produces confident, wrong copy.
 - The voice or glossary itself needs to change. That is `.agents/redpolitika.md`,
   edited via the `redpolitika` skill, and it is not your call.

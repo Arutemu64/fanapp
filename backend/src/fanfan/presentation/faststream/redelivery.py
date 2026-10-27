@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import dataclasses
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from types import TracebackType
 from typing import override
 
@@ -33,7 +33,7 @@ def consumer_config(*, ack_wait: float | None = None) -> ConsumerConfig:
 @contextlib.asynccontextmanager
 async def in_progress_heartbeat(
     msg: NatsMessage, interval: float = _IN_PROGRESS_INTERVAL_SECONDS
-) -> AsyncIterator[None]:
+) -> AsyncGenerator[None]:
     """Keep a long handler's message from being redelivered while it runs.
 
     An in-progress ack resets the AckWait timer

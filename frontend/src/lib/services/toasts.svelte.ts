@@ -76,10 +76,10 @@ class ToastService {
 	}
 
 	dismiss(id?: string | number) {
-		if (id !== undefined) {
-			toast.dismiss(id);
-		} else {
+		if (id === undefined) {
 			toast.dismiss();
+		} else {
+			toast.dismiss(id);
 		}
 	}
 }

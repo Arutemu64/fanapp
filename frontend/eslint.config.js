@@ -90,6 +90,27 @@ export default defineConfig(
 			'max-params': ['error', 4],
 			'max-lines-per-function': ['error', { max: 60, skipBlankLines: true, skipComments: true }],
 			'no-nested-ternary': 'error',
+			'no-negated-condition': 'error',
+			'no-else-return': ['error', { allowElseIf: false }],
+			'no-lonely-if': 'error',
+			'no-unneeded-ternary': ['error', { defaultAssignment: false }],
+			'no-useless-return': 'error',
+			'no-useless-rename': 'error',
+			'no-useless-computed-key': 'error',
+			'no-useless-concat': 'error',
+			'object-shorthand': 'error',
+			'arrow-body-style': 'error',
+			'prefer-arrow-callback': 'error',
+			'prefer-template': 'error',
+			'prefer-object-has-own': 'error',
+			'logical-assignment-operators': 'error',
+			'default-case-last': 'error',
+			'@typescript-eslint/no-shadow': 'error',
+			// Property signatures are checked contravariantly under strictFunctionTypes; methods are not.
+			'@typescript-eslint/method-signature-style': 'error',
+			'@typescript-eslint/consistent-type-exports': 'error',
+			'@typescript-eslint/no-import-type-side-effects': 'error',
+			'@typescript-eslint/no-useless-empty-export': 'error',
 			'@typescript-eslint/non-nullable-type-assertion-style': 'off',
 			'@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
 			'@typescript-eslint/prefer-nullish-coalescing': [
@@ -142,7 +163,11 @@ export default defineConfig(
 			'svelte/prefer-derived-over-derived-by': 'error',
 			'svelte/require-store-callbacks-use-set-param': 'error',
 			'svelte/valid-style-parse': 'error',
-			'svelte/no-at-const-tags': 'error'
+			'svelte/no-at-const-tags': 'error',
+			'prefer-const': 'off',
+			'svelte/prefer-const': 'error',
+			'svelte/shorthand-attribute': 'error',
+			'svelte/shorthand-directive': 'error'
 		}
 	},
 	{
@@ -151,7 +176,9 @@ export default defineConfig(
 	},
 	{
 		files: ['e2e/**/*.ts'],
-		extends: [playwright.configs['flat/recommended']]
+		extends: [playwright.configs['flat/recommended']],
+		// page.evaluate callbacks run in the browser and take their outer values as same-named args.
+		rules: { '@typescript-eslint/no-shadow': 'off' }
 	},
 	{
 		files: ['e2e/gallery/**/*.ts'],
@@ -195,6 +222,8 @@ export default defineConfig(
 			'max-params': 'off',
 			'max-lines-per-function': 'off',
 			'no-nested-ternary': 'off',
+			'no-negated-condition': 'off',
+			'@typescript-eslint/no-shadow': 'off',
 			'@typescript-eslint/array-type': 'off',
 			'@typescript-eslint/consistent-type-definitions': 'off',
 			'@typescript-eslint/no-empty-function': 'off',

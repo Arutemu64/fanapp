@@ -1,13 +1,13 @@
 import { useMutationState } from '@tanstack/svelte-query';
 import { untrack } from 'svelte';
 
+import type {
+	DeleteSubscriptionData,
+	NewSubscriptionData,
+	Options
+} from '#lib/api/generated/index.js';
 import type { QueuedSubscriptionChanges } from '#lib/utils/scheduleData.js';
 
-import {
-	type DeleteSubscriptionData,
-	type NewSubscriptionData,
-	type Options
-} from '#lib/api/generated/index.js';
 import { QUEUED_WRITES } from '#lib/api/writeQueue.js';
 
 export function handOffWhenQueued(

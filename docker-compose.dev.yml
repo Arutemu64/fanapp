@@ -12,7 +12,7 @@ services:
       VITE_API_PROXY_TARGET: "http://api:8000"
       FRONTEND_PORT: "${FRONTEND_PORT:-3000}"
     ports: !override
-      - '127.0.0.1:${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}'
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
     volumes:
       - frontend-vite-cache:/app/node_modules/.vite
     develop:
@@ -51,7 +51,7 @@ services:
 
   worker:
     read_only: false
-    command: [ "faststream", "run", "--factory", "--reload", "fanfan.main.worker:create_app" ]
+    command: ["faststream", "run", "--factory", "--reload", "fanfan.main.worker:create_app"]
     deploy:
       resources:
         limits:

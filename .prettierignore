@@ -1,0 +1,9 @@
+# Repo-root Prettier covers Markdown and YAML outside frontend/ (`just root-lint`).
+# frontend/ has its own config and check (`just frontend-lint`).
+frontend/
+
+# Vendored skills, pinned in skills-lock.json. Reformatting them fights upstream updates.
+.agents/skills/*
+!.agents/skills/fanfan-*/
+.claude/skills/*
+!.claude/skills/fanfan-*/

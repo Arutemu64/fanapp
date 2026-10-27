@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 export interface ConsoleGuard {
-	allow(...patterns: (string | RegExp)[]): void;
+	allow: (...patterns: (string | RegExp)[]) => void;
 }
 
 function matches(text: string, pattern: string | RegExp): boolean {

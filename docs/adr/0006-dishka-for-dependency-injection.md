@@ -10,7 +10,7 @@ The hexagonal design (ADR-0002) means interactors depend on abstract ports that
 must be wired to concrete adapters somewhere central, with correct lifetimes:
 some dependencies are app-scoped (a shared serialization `Retort`), most are
 request-scoped (gateways, unit of work, current-user provider). We also run the
-*same* interactors from multiple entrypoints — FastAPI routes, FastStream
+_same_ interactors from multiple entrypoints — FastAPI routes, FastStream
 consumers, Telegram handlers, CLI commands, and scheduler jobs — so the wiring
 must not be FastAPI-specific.
 

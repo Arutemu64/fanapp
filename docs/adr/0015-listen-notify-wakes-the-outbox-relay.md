@@ -21,7 +21,7 @@ immediate, that is the one hop worth removing.
 Two directions were considered. Simply shortening the poll interval lowers
 latency but only linearly, and it trades latency for idle database load that
 scales with how tight you set it. Postgres `LISTEN/NOTIFY` instead lets the
-relay be *pushed*: it wakes the moment a row is inserted. The catch is that
+relay be _pushed_: it wakes the moment a row is inserted. The catch is that
 `NOTIFY` is not durable — it is delivered only to connections currently
 listening and is dropped if none are, so using it as the delivery mechanism
 would reintroduce exactly the lost-event failure the outbox exists to prevent.
@@ -49,12 +49,12 @@ speed layer on top of it — a hybrid, not a replacement.
 ## Consequences
 
 - Everyday delivery latency drops from ~1 s average to the time for one NOTIFY
-  round-trip plus a drain (tens of ms), while idle database load *falls*,
+  round-trip plus a drain (tens of ms), while idle database load _falls_,
   because the backstop poll is now 5× slower.
 - The at-least-once guarantee is unchanged: correctness rests entirely on the
   poll and the `FOR UPDATE SKIP LOCKED` drain. A missed or undelivered `NOTIFY`
   degrades latency to one backstop interval; it never loses an event. This is
-  the load-bearing invariant — a future change must not make delivery *depend*
+  the load-bearing invariant — a future change must not make delivery _depend_
   on the notification.
 - The scheduler now holds a second, long-lived Postgres connection (the LISTEN
   socket) separate from its pool. It is labelled in `pg_stat_activity` via

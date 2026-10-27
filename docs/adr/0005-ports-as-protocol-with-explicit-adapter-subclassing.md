@@ -10,7 +10,7 @@ Ports live in `application/ports/` and must not create any inward dependency
 from adapters onto the application layer. The common Python idiom — an abstract
 base class with `@abstractmethod` — has two drawbacks here: `ABC` inheritance
 couples the adapter's class hierarchy to the application layer, and
-`@abstractmethod` only catches a *missing* method at instantiation, not a method
+`@abstractmethod` only catches a _missing_ method at instantiation, not a method
 whose signature has silently drifted from the port.
 
 We wanted the boundary to be checked by the type checker (`ty`), catching drift
@@ -23,7 +23,7 @@ We will define every port as a `typing.Protocol`, without `@abstractmethod`.
 - Structural typing keeps `application/` free of any inward dependency.
 - Adapters in `adapters/` **must explicitly subclass** the port they implement
   (e.g. `class SqlUserGateway(UserGateway): ...`). The explicit inheritance turns
-  structural typing into *checked nominal* typing: `just backend-typecheck`
+  structural typing into _checked nominal_ typing: `just backend-typecheck`
   flags any method that drifts from its port — missing, changed parameters, or
   changed return type.
 

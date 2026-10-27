@@ -66,12 +66,12 @@ class NotificationType(StrEnum):
         person) while the festival runs. Quest points and tests can wait for a
         battery-saving phone to wake up.
         """
-        return self in (
+        return self in {
             NotificationType.SCHEDULE_CHANGE,
             NotificationType.SCHEDULE_SUBSCRIPTION,
             NotificationType.BROADCAST,
             NotificationType.MESSAGE,
-        )
+        }
 
     @property
     def is_replaced_by_later(self) -> bool:
@@ -86,7 +86,7 @@ class NotificationType(StrEnum):
 
     @property
     def is_schedule(self) -> bool:
-        return self in (
+        return self in {
             NotificationType.SCHEDULE_CHANGE,
             NotificationType.SCHEDULE_SUBSCRIPTION,
-        )
+        }

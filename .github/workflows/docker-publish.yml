@@ -3,7 +3,7 @@ name: Publish Docker images
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
 
 concurrency:
@@ -28,7 +28,7 @@ jobs:
           - name: backend
             context: ./backend
             image: ${{ github.repository }}-backend
-            target: ''
+            target: ""
           - name: frontend
             context: ./frontend
             image: ${{ github.repository }}-frontend

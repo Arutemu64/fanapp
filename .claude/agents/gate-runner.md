@@ -12,15 +12,16 @@ what you find — the caller decides what to do.
 
 Run only the gates the caller names, or infer from the paths they give:
 
-| Touched | Run |
-| --- | --- |
-| `backend/**/*.py` | `just backend-lint` (it already chains format, ruff, `ty` and import-linter) |
-| `frontend/**` | `just frontend-lint` then `just frontend-check` |
-| `frontend/src/lib/**` logic | also `just frontend-test` |
-| backend logic | also `just backend-test` |
-| any `Dockerfile` | `just dockerfile-lint` |
-| `adapters/db/models/**` or `migrations/**` | also `just backend-check-migrations` |
-| `shared/openapi/**`, or a changed API route or response schema | also `just frontend-check-api` |
+| Touched                                                        | Run                                                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `backend/**/*.py`                                              | `just backend-lint` (it already chains format, ruff, `ty` and import-linter) |
+| `frontend/**`                                                  | `just frontend-lint` then `just frontend-check`                              |
+| `frontend/src/lib/**` logic                                    | also `just frontend-test`                                                    |
+| backend logic                                                  | also `just backend-test`                                                     |
+| any `Dockerfile`                                               | `just dockerfile-lint`                                                       |
+| `*.md`, `*.yml` outside `frontend/`                            | `just root-lint`                                                             |
+| `adapters/db/models/**` or `migrations/**`                     | also `just backend-check-migrations`                                         |
+| `shared/openapi/**`, or a changed API route or response schema | also `just frontend-check-api`                                               |
 
 `just backend-typecheck` alone is a faster re-check once lint is known green.
 
@@ -47,6 +48,7 @@ frontend/src/lib/api/client.ts:17
 ```
 
 Rules for the failure block:
+
 - One entry per distinct error: `path:line` then the message, trimmed to the
   part that identifies the problem.
 - Collapse repeats — `12 more of the same in frontend/src/lib/` beats twelve entries.

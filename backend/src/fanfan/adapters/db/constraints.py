@@ -1,5 +1,5 @@
 import re
-from collections.abc import Iterator, Mapping
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 
 import psycopg
@@ -29,7 +29,7 @@ def get_constraint_name(error: IntegrityError) -> str | None:
 @contextmanager
 def translate_integrity_error(
     mapping: Mapping[str, type[Exception]],
-) -> Iterator[None]:
+) -> Generator[None]:
     """Map a DB constraint violation to a domain exception.
 
     On IntegrityError, look up the violated constraint name and raise the

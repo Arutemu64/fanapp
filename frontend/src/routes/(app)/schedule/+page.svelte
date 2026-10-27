@@ -214,8 +214,8 @@
 			return;
 		}
 
-		const observer = new IntersectionObserver((entries) => {
-			isCurrentRowOnScreen = entries.some((entry) => entry.isIntersecting);
+		const observer = new IntersectionObserver((observed) => {
+			isCurrentRowOnScreen = observed.some((entry) => entry.isIntersecting);
 		});
 		observer.observe(row);
 

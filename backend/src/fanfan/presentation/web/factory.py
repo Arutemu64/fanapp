@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from dishka.integrations.fastapi import setup_dishka
@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
     container = create_web_container()
 
     @asynccontextmanager
-    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
         yield
         await container.close()
 

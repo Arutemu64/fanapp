@@ -31,9 +31,9 @@
 	}));
 
 	let participantLabel = $derived(
-		participant.voting_number !== null
-			? `№${participant.voting_number} · ${participant.title}`
-			: participant.title
+		participant.voting_number === null
+			? participant.title
+			: `№${participant.voting_number} · ${participant.title}`
 	);
 
 	function handleCancelVote() {

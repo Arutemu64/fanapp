@@ -14,7 +14,7 @@ function normalizeSearchText(value: string): string {
 type SearchFields = (string | number | null | undefined)[];
 
 export interface SearchIndex<T> {
-	filter(query: string): T[];
+	filter: (query: string) => T[];
 }
 
 export function createSearchIndex<T>(

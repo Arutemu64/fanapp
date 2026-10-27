@@ -22,7 +22,7 @@ Clean and friendly. Approachable, trustworthy, easy. Three words: **clear, livel
 - **Generic AI template.** No cream/sand body background, no tiny uppercase tracked eyebrows over every section, no identical icon-card grids, no gradient text. Avoid the 2026 slop look.
 - **Cluttered / overwhelming.** No wall of information, no cramming. Phone-first means breathing room, clear hierarchy, one primary thing per screen.
 
-(Corporate/enterprise SaaS sterility was deliberately *not* ruled out — a degree of clean professionalism is welcome, just warmed by the brand color.)
+(Corporate/enterprise SaaS sterility was deliberately _not_ ruled out — a degree of clean professionalism is welcome, just warmed by the brand color.)
 
 ## Design Principles
 

@@ -3,13 +3,28 @@ line-length = 88
 [lint]
 preview = true
 explicit-preview-rules = true
-select = ["ALL", "PLR6301", "PLC2701", "PLR1702"]
+# Preview rules are opt-in by exact code. Each was checked against the codebase;
+# rules that only flagged framework-required shapes (RUF029, ASYNC119, PLW0717) stay off.
+select = [
+    "ALL",
+    # Size and shape
+    "PLR0914", "PLR0916", "PLR1702", "PLR6301",
+    # Simpler equivalents
+    "FURB101", "FURB103", "FURB113", "FURB118", "FURB131", "FURB140", "FURB142",
+    "FURB145", "FURB148", "FURB152", "FURB154", "FURB156", "FURB180", "FURB189",
+    "PLC2801", "PLR0202", "PLR0203", "PLR1712", "PLR6104", "PLR6201",
+    "RUF038", "RUF047", "RUF050", "RUF055", "RUF056", "RUF070", "RUF072",
+    "UP048", "UP051", "UP052",
+    # Likely bugs
+    "B043", "B901", "B909", "PLC2701", "PLE1141", "PLE4703", "PLW0244", "PLW1514",
+    "RUF027", "RUF039", "RUF045", "RUF052", "RUF065", "RUF066", "RUF071", "RUF073",
+    "RUF074", "RUF077",
+]
 ignore = [
     "D",
     "N818",
     "PLR0904",
     "COM812",
-    "ISC001",
     "ARG001",
     "FIX002",
     "TD002",

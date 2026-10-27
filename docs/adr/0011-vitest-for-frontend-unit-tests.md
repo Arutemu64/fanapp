@@ -46,7 +46,7 @@ modules under `frontend/src/`.
 
 Component, route and `load` testing is explicitly **out of scope** for this
 decision: the runner has no DOM environment, no `@testing-library/svelte` and no
-browser mode. Rune logic in `.svelte.ts` modules is *in* scope — it needs the
+browser mode. Rune logic in `.svelte.ts` modules is _in_ scope — it needs the
 Svelte compiler, which the plugin provides, but not a DOM.
 
 ## Consequences
