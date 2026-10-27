@@ -1,4 +1,8 @@
-import type { ScheduleEntryDto, SubscriptionFullDto } from '#lib/api/generated/index.js';
+import type {
+	ScheduleDto,
+	ScheduleEntryDto,
+	SubscriptionFullDto
+} from '#lib/api/generated/index.js';
 import type {
 	EventSubscription,
 	ScheduleEntryWithSubscription,
@@ -12,8 +16,10 @@ export interface QueuedSubscriptionChanges {
 
 const NO_QUEUED_CHANGES: QueuedSubscriptionChanges = { subscribing: [], unsubscribing: [] };
 
+export const EMPTY_SCHEDULE: ScheduleDto = { current_event_id: null, schedule: [] };
+
 export function mergeSubscriptions(
-	schedule: ScheduleEntryDto[],
+	schedule: ScheduleDto,
 	subscriptions: SubscriptionFullDto[],
 	queued: QueuedSubscriptionChanges = NO_QUEUED_CHANGES
 ): ScheduleEntryWithSubscription[] {
@@ -28,9 +34,13 @@ export function mergeSubscriptions(
 		byEventId.set(event_id, { id: null, lead_minutes, queued: true });
 	}
 
-	return schedule.map((entry) => {
+	return schedule.schedule.map((entry) => {
 		if (entry.type === 'block_start') return entry;
-		return { ...entry, user_subscription: byEventId.get(entry.id) ?? null };
+		return {
+			...entry,
+			is_current: entry.id === schedule.current_event_id,
+			user_subscription: byEventId.get(entry.id) ?? null
+		};
 	});
 }
 
@@ -57,8 +67,8 @@ export function secondsUntilActs(
 		if (!event.is_current && planned > 0) {
 			ahead.set(event.id, elapsed);
 		}
-		elapsed += event.duration + changeoverSeconds;
-		planned += event.duration;
+		elapsed += event.duration_seconds + changeoverSeconds;
+		planned += event.duration_seconds;
 	}
 	return ahead;
 }

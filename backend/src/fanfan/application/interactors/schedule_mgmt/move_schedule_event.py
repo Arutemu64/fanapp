@@ -12,6 +12,7 @@ from fanfan.application.services.schedule_edit import (
 )
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_change import ScheduleChange
+from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
@@ -21,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 class MoveScheduleEventInput(BaseModel):
     event_id: ScheduleEntryId
-    place_after_entry_id: ScheduleEntryId
+    # None moves the event to the top of the schedule.
+    place_after_entry_id: ScheduleEntryId | None
 
 
 class MoveScheduleEvent:
@@ -33,6 +35,17 @@ class MoveScheduleEvent:
         self.schedule_gateway = schedule_gateway
         self.schedule_edit = schedule_edit
 
+    async def _place_after(
+        self, event: ScheduleEvent, place_after_entry_id: ScheduleEntryId
+    ) -> None:
+        place_after_entry = await self.schedule_gateway.get_entry(place_after_entry_id)
+        if place_after_entry is None:
+            raise EventNotFound
+        place_before_entry = await self.schedule_gateway.get_next_by_order(
+            place_after_entry.order
+        )
+        event.place_after(place_after_entry, place_before_entry)
+
     async def __call__(self, data: MoveScheduleEventInput) -> None:
         async def already_applied() -> bool:
             event = await self.schedule_gateway.get_event(data.event_id)
@@ -42,7 +55,7 @@ class MoveScheduleEvent:
                 event.order
             )
             if previous_entry is None:
-                return False
+                return data.place_after_entry_id is None
             return previous_entry.id == data.place_after_entry_id
 
         async def mutate(_: User) -> ChangeFactory:
@@ -50,19 +63,14 @@ class MoveScheduleEvent:
             if event is None:
                 raise EventNotFound
 
-            place_after_event = await self.schedule_gateway.get_entry(
-                data.place_after_entry_id
-            )
-            if place_after_event is None:
-                raise EventNotFound
-            place_before_event = await self.schedule_gateway.get_next_by_order(
-                place_after_event.order
-            )
             previous_entry = await self.schedule_gateway.get_previous_by_order(
                 event.order
             )
 
-            event.place_after(place_after_event, place_before_event)
+            if data.place_after_entry_id is None:
+                event.place_before_first(await self.schedule_gateway.get_first())
+            else:
+                await self._place_after(event, data.place_after_entry_id)
             await self.schedule_gateway.save(event)
 
             def build_change(ctx: AnnouncedChangeContext) -> ScheduleChange:

@@ -11,6 +11,7 @@ from fanfan.adapters.db.models import (
 )
 from fanfan.application.dto.schedule import (
     ScheduleBlockStartDTO,
+    ScheduleDTO,
     ScheduleEntryDTO,
     ScheduleEventFullDTO,
 )
@@ -80,9 +81,7 @@ def _parse_event_dto(
         id=ScheduleEntryId(event_orm.id),
         number=event_orm.number,
         title=event_orm.title,
-        duration=event_orm.duration,
-        order=event_orm.order,
-        is_current=event_orm.is_current,
+        duration_seconds=event_orm.duration,
         is_skipped=event_orm.is_skipped,
         nomination_title=event_orm.nomination_title,
         position=position,
@@ -99,7 +98,6 @@ def _parse_entry_dto(
             type=ScheduleEntryType.BLOCK_START,
             id=ScheduleEntryId(entry_orm.id),
             title=entry_orm.title,
-            order=entry_orm.order,
         )
     return _parse_event_dto(entry_orm, position=position)
 
@@ -266,7 +264,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         return None
 
     @override
-    async def read_list_schedule(self) -> list[ScheduleEntryDTO]:
+    async def read_schedule(self) -> ScheduleDTO:
         ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
             select(ScheduleEntryORM, ranked.c.position)
@@ -274,7 +272,15 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
             .order_by(ScheduleEntryORM.order)
         )
         results = (await self.session.execute(stmt)).all()
-        return [
-            _parse_entry_dto(entry_orm, position=position)
-            for entry_orm, position in results
-        ]
+        # Read from the same rows, so the id always names an entry in the list.
+        current_event_id = next(
+            (ScheduleEntryId(orm.id) for orm, _ in results if orm.is_current),
+            None,
+        )
+        return ScheduleDTO(
+            current_event_id=current_event_id,
+            schedule=[
+                _parse_entry_dto(entry_orm, position=position)
+                for entry_orm, position in results
+            ],
+        )

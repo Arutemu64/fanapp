@@ -12,8 +12,7 @@ function event(
 		type: 'event',
 		number: null,
 		title: 'Выступление',
-		duration: 300,
-		order: 0,
+		duration_seconds: 300,
 		is_current: false,
 		is_skipped: false,
 		nomination_title: null,
@@ -24,7 +23,7 @@ function event(
 }
 
 function block(id: string, title: string): ScheduleBlockStartDto {
-	return { type: 'block_start', id, title, order: 0 };
+	return { type: 'block_start', id, title };
 }
 
 function summarize(nodes: ScheduleNode[]) {

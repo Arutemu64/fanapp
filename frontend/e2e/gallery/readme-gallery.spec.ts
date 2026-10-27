@@ -11,6 +11,7 @@ import { ApiMock } from '../mocks/api';
 import { baselineHandlers } from '../mocks/defaults';
 import { installSseDouble } from '../mocks/sse';
 import {
+	currentEventId,
 	GALLERY_NOW,
 	notifications,
 	questStanding,
@@ -42,7 +43,7 @@ const visitorAtFestival: Handlers = {
 		voting_start: new Date(now - HOUR_MS).toISOString(),
 		voting_end: new Date(now + 4 * HOUR_MS).toISOString()
 	}),
-	'GET /schedule': json({ schedule: scheduleEntries }),
+	'GET /schedule': json({ current_event_id: currentEventId, schedule: scheduleEntries }),
 	'GET /schedule/subscriptions': json({ subscriptions }),
 	'GET /voting/nominations/single': json(singleDefile),
 	'GET /notifications': json({ notifications, next_cursor: null }),

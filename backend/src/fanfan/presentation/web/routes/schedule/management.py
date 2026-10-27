@@ -20,7 +20,7 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.schemas.schedule import (
-    MoveScheduleEventBody,
+    SetCurrentScheduleEventBody,
     UpdateScheduleEventBody,
 )
 from fanfan.presentation.web.security import session_security
@@ -32,7 +32,7 @@ management_router = APIRouter(
 
 
 @management_router.put(
-    "/{event_id}/current",
+    "/current",
     status_code=204,
     summary="Set specific event as current",
     description="Updates the schedule state to mark a specific event as active. "
@@ -49,10 +49,10 @@ management_router = APIRouter(
 )
 @inject
 async def set_event_as_current(
-    event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
+    data: SetCurrentScheduleEventBody,
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
-    await interactor(SetCurrentScheduleEventInput(event_id=event_id))
+    await interactor(SetCurrentScheduleEventInput(event_id=data.event_id))
 
 
 @management_router.delete(
@@ -73,59 +73,40 @@ async def uncheck_current_event(
 
 
 @management_router.patch(
-    "/{event_id}/move",
-    status_code=204,
-    summary="Reorder schedule event",
-    description="Moves an event to a new position in the sequence, "
-    "specifically after the provided event ID. If it is already there, "
-    "nothing is changed or announced.",
-    responses={
-        204: {"description": "Event moved successfully."},
-        400: {
-            "model": ProblemDetails,
-            "description": "Invalid move: target and destination are the same.",
-        },
-        404: {
-            "model": ProblemDetails,
-            "description": "Event to move or target neighbor event was not found.",
-        },
-    },
-)
-@inject
-async def move_schedule_event(
-    event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
-    data: MoveScheduleEventBody,
-    interactor: FromDishka[MoveScheduleEvent],
-) -> None:
-    await interactor(
-        MoveScheduleEventInput(
-            event_id=event_id, place_after_entry_id=data.place_after_entry_id
-        )
-    )
-
-
-@management_router.patch(
     "/{event_id}",
     status_code=204,
     summary="Update a schedule event",
-    description="Updates a schedule event's skip state. Set `is_skipped` to true to "
-    "skip the event or false to restore it. Note: the currently active event cannot "
-    "be skipped. If the event already has that state, nothing is announced.",
+    description="Applies one change per request. `is_skipped` skips the event or "
+    "restores it; the current event cannot be skipped. `place_after_entry_id` moves "
+    "the event right after that entry, or to the top when null. "
+    "Requesting the state that already holds changes and announces nothing.",
     responses={
         204: {"description": "Event updated successfully."},
         400: {
             "model": ProblemDetails,
-            "description": "Cannot skip the current active event.",
+            "description": "The current event cannot be skipped, "
+            "or the event cannot be placed after itself.",
         },
-        404: {"model": ProblemDetails, "description": "Event ID not found."},
+        404: {
+            "model": ProblemDetails,
+            "description": "Event or target entry not found.",
+        },
     },
 )
 @inject
 async def update_schedule_event(
     event_id: Annotated[ScheduleEntryId, Path(description="Schedule event ID.")],
     data: UpdateScheduleEventBody,
-    interactor: FromDishka[UpdateScheduleEventSkip],
+    skip: FromDishka[UpdateScheduleEventSkip],
+    move: FromDishka[MoveScheduleEvent],
 ) -> None:
-    await interactor(
-        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=data.is_skipped)
+    if data.is_skipped is not None:
+        await skip(
+            UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=data.is_skipped)
+        )
+        return
+    await move(
+        MoveScheduleEventInput(
+            event_id=event_id, place_after_entry_id=data.place_after_entry_id
+        )
     )

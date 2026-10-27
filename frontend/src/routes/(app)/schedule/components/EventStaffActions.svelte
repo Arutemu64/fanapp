@@ -82,7 +82,7 @@
 
 	function handleMarkCurrent() {
 		markCurrentMutation.mutate(
-			{ path: { event_id: event.id } },
+			{ body: { event_id: event.id } },
 			{
 				onSuccess: () => toastService.add(m.event_marked_current_toast(), 'success'),
 				onError: (error) => toastService.error(error)

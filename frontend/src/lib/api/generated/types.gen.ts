@@ -347,16 +347,6 @@ export type GetQuestOutput = {
 };
 
 /**
- * GetScheduleOutput
- */
-export type GetScheduleOutput = {
-	/**
-	 * Schedule
-	 */
-	schedule: Array<ScheduleEntryDto>;
-};
-
-/**
  * GetSubscriptionsOutput
  */
 export type GetSubscriptionsOutput = {
@@ -736,16 +726,6 @@ export type MarkNotificationsReadInput = {
 	 * Notification Ids
 	 */
 	notification_ids: Array<string>;
-};
-
-/**
- * MoveScheduleEventBody
- */
-export type MoveScheduleEventBody = {
-	/**
-	 * Place After Entry Id
-	 */
-	place_after_entry_id: string;
 };
 
 /**
@@ -1197,10 +1177,6 @@ export type ScheduleBlockStartDto = {
 	 * Title
 	 */
 	title: string;
-	/**
-	 * Order
-	 */
-	order: number;
 };
 
 /**
@@ -1220,10 +1196,6 @@ export type ScheduleChangeEntryDto = {
 	 * Title
 	 */
 	title: string;
-	/**
-	 * Order
-	 */
-	order: number;
 };
 
 /**
@@ -1268,6 +1240,22 @@ export type ScheduleChangeFullDto = {
  */
 export type ScheduleChangeType = 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
 
+/**
+ * ScheduleDTO
+ */
+export type ScheduleDto = {
+	/**
+	 * Current Event Id
+	 */
+	current_event_id: string | null;
+	/**
+	 * Schedule
+	 *
+	 * Every entry in running order.
+	 */
+	schedule: Array<ScheduleEntryDto>;
+};
+
 export type ScheduleEntryDto =
 	| ({
 			type: 'event';
@@ -1309,17 +1297,9 @@ export type ScheduleEventFullDto = {
 	 */
 	title: string;
 	/**
-	 * Duration
+	 * Duration Seconds
 	 */
-	duration: number;
-	/**
-	 * Order
-	 */
-	order: number;
-	/**
-	 * Is Current
-	 */
-	is_current: boolean;
+	duration_seconds: number;
 	/**
 	 * Is Skipped
 	 */
@@ -1376,6 +1356,16 @@ export type SendBroadcastOutput = {
 	 * Mailing Id
 	 */
 	mailing_id: string;
+};
+
+/**
+ * SetCurrentScheduleEventBody
+ */
+export type SetCurrentScheduleEventBody = {
+	/**
+	 * Event Id
+	 */
+	event_id: string;
 };
 
 /**
@@ -1462,10 +1452,6 @@ export type SubscriptionEventDto = {
 	 * Title
 	 */
 	title: string;
-	/**
-	 * Order
-	 */
-	order: number;
 	/**
 	 * Position
 	 */
@@ -1682,12 +1668,20 @@ export type UpdateCurrentUserInput = {
 
 /**
  * UpdateScheduleEventBody
+ *
+ * One change per request: each is its own announcement and undo step.
  */
 export type UpdateScheduleEventBody = {
 	/**
 	 * Is Skipped
 	 */
-	is_skipped: boolean;
+	is_skipped?: boolean;
+	/**
+	 * Place After Entry Id
+	 *
+	 * Entry to place the event after. Null moves it to the top.
+	 */
+	place_after_entry_id?: string | null;
 };
 
 /**
@@ -2670,7 +2664,7 @@ export type GetScheduleResponses = {
 	/**
 	 * Schedule retrieved successfully.
 	 */
-	200: GetScheduleOutput;
+	200: ScheduleDto;
 };
 
 export type GetScheduleResponse = GetScheduleResponses[keyof GetScheduleResponses];
@@ -2777,18 +2771,45 @@ export type UpdateScheduleSettingsResponses = {
 export type UpdateScheduleSettingsResponse =
 	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
 
-export type SetEventAsCurrentData = {
+export type UncheckCurrentEventData = {
 	body?: never;
-	path: {
-		/**
-		 * Event Id
-		 *
-		 * Schedule event ID.
-		 */
-		event_id: string;
-	};
+	path?: never;
 	query?: never;
-	url: '/schedule/{event_id}/current';
+	url: '/schedule/current';
+};
+
+export type UncheckCurrentEventErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Rate limited — too many requests.
+	 */
+	429: ProblemDetails;
+};
+
+export type UncheckCurrentEventError = UncheckCurrentEventErrors[keyof UncheckCurrentEventErrors];
+
+export type UncheckCurrentEventResponses = {
+	/**
+	 * Current event cleared successfully.
+	 */
+	204: void;
+};
+
+export type UncheckCurrentEventResponse =
+	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
+
+export type SetEventAsCurrentData = {
+	body: SetCurrentScheduleEventBody;
+	path?: never;
+	query?: never;
+	url: '/schedule/current';
 };
 
 export type SetEventAsCurrentErrors = {
@@ -2830,93 +2851,6 @@ export type SetEventAsCurrentResponses = {
 export type SetEventAsCurrentResponse =
 	SetEventAsCurrentResponses[keyof SetEventAsCurrentResponses];
 
-export type UncheckCurrentEventData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/schedule/current';
-};
-
-export type UncheckCurrentEventErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * Rate limited — too many requests.
-	 */
-	429: ProblemDetails;
-};
-
-export type UncheckCurrentEventError = UncheckCurrentEventErrors[keyof UncheckCurrentEventErrors];
-
-export type UncheckCurrentEventResponses = {
-	/**
-	 * Current event cleared successfully.
-	 */
-	204: void;
-};
-
-export type UncheckCurrentEventResponse =
-	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
-
-export type MoveScheduleEventData = {
-	body: MoveScheduleEventBody;
-	path: {
-		/**
-		 * Event Id
-		 *
-		 * Schedule event ID.
-		 */
-		event_id: string;
-	};
-	query?: never;
-	url: '/schedule/{event_id}/move';
-};
-
-export type MoveScheduleEventErrors = {
-	/**
-	 * Invalid move: target and destination are the same.
-	 */
-	400: ProblemDetails;
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * Event to move or target neighbor event was not found.
-	 */
-	404: ProblemDetails;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationProblem;
-	/**
-	 * Rate limited — too many requests.
-	 */
-	429: ProblemDetails;
-};
-
-export type MoveScheduleEventError = MoveScheduleEventErrors[keyof MoveScheduleEventErrors];
-
-export type MoveScheduleEventResponses = {
-	/**
-	 * Event moved successfully.
-	 */
-	204: void;
-};
-
-export type MoveScheduleEventResponse =
-	MoveScheduleEventResponses[keyof MoveScheduleEventResponses];
-
 export type UpdateScheduleEventData = {
 	body: UpdateScheduleEventBody;
 	path: {
@@ -2933,7 +2867,7 @@ export type UpdateScheduleEventData = {
 
 export type UpdateScheduleEventErrors = {
 	/**
-	 * Cannot skip the current active event.
+	 * The current event cannot be skipped, or the event cannot be placed after itself.
 	 */
 	400: ProblemDetails;
 	/**
@@ -2945,7 +2879,7 @@ export type UpdateScheduleEventErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * Event ID not found.
+	 * Event or target entry not found.
 	 */
 	404: ProblemDetails;
 	/**

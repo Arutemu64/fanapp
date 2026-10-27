@@ -5,6 +5,8 @@ export type EventSubscription =
 	| { id: null; lead_minutes: number; queued: true };
 
 export type ScheduleEventWithSubscription = ScheduleEventFullDto & {
+	// Derived from the schedule's `current_event_id`.
+	is_current: boolean;
 	user_subscription: EventSubscription | null;
 };
 

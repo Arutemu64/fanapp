@@ -130,7 +130,7 @@
 				<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
 					<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 						<Clock class="mt-px size-3.5 shrink-0" />
-						{formatDuration(event.duration)}
+						{formatDuration(event.duration_seconds)}
 					</span>
 
 					{#if untilLabel}
