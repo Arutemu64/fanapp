@@ -12,7 +12,7 @@ const CAPTCHA_CHALLENGE = {
 		algorithm: 'PBKDF2/SHA-256',
 		cost: 5000,
 		keyLength: 32,
-		keyPrefix: '687afc72cc05a84c0d4dd5ded62b86ed',
+		keyPrefix: '687afc72cc05a84c0d4dd5ded62b86ed', // gitleaks:allow
 		nonce: '1d8fa1307004e5bf19a024e955438c3e',
 		salt: 'eb91ea0efa8c99bcbf08a8cd17d95e62',
 		keySignature: 'cf27fc8a37aca2adec2a919739effb46e4873301fd81de1b3b0f6ab0612487f6'
