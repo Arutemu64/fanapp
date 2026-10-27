@@ -11,6 +11,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	interface Props {
@@ -29,6 +30,7 @@
 		...addVoteMutation(),
 		mutationKey: VOTE_MUTATION_KEY,
 		onSuccess: async () => {
+			trackEvent('vote');
 			await onVoted?.();
 		}
 	}));

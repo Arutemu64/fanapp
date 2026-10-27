@@ -15,7 +15,7 @@
 				externalHref: string;
 				newTab: boolean;
 				href?: never;
-				onclick?: never;
+				onclick?: () => void;
 		  }
 		| { onclick: () => void; href?: never; externalHref?: never };
 
@@ -82,6 +82,7 @@
 				target={props.newTab ? '_blank' : undefined}
 				rel={props.newTab ? 'noopener noreferrer' : undefined}
 				{...itemProps}
+				onclick={props.onclick}
 			>
 				{@render body()}
 			</a>

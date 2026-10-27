@@ -17,6 +17,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import VerificationCodeInput from '#lib/components/VerificationCodeInput.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { Captcha } from '#lib/services/captcha.svelte.js';
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getSession } from '#lib/services/session.js';
@@ -35,6 +36,7 @@
 	const loginMutation = createMutation(() => ({
 		...loginWithCodeMutation(),
 		onSuccess: async () => {
+			trackEvent('login', { method: 'code' });
 			await session.loggedIn();
 			toastService.add(m.login_success(), 'success');
 		}

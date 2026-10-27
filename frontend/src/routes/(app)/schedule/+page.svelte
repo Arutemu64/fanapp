@@ -28,6 +28,7 @@
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { queryView } from '#lib/utils/queryView.js';
@@ -91,7 +92,16 @@
 
 	let searchQuery = $state(untrack(() => filters.search));
 
+	// Counts turning a filter on, not each pause in typing.
+	function trackFilterChange(next: ScheduleFilters) {
+		if (!filters.search && next.search.trim()) trackEvent('schedule-filter', { kind: 'search' });
+		if (!filters.onlySubscribed && next.onlySubscribed) {
+			trackEvent('schedule-filter', { kind: 'mine' });
+		}
+	}
+
 	function applyFilters(next: ScheduleFilters) {
+		trackFilterChange(next);
 		return goto(`${resolve('schedule')}${buildScheduleFiltersQuery(next)}`, {
 			replace: true,
 			reset: false

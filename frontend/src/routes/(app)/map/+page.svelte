@@ -11,6 +11,7 @@
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { maps, WALL_WIDTH } from '#lib/data/maps.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
 	import { buildMapSelectionQuery, type MapSelection, parseMapSelection } from './mapSelection';
@@ -71,6 +72,11 @@
 		select({ floorId, placeNumber: selectedNumber === number ? null : number });
 	}
 
+	function selectFromPlan(number: number) {
+		if (selectedNumber !== number) trackEvent('map-place-select', { source: 'plan' });
+		togglePoint(number);
+	}
+
 	function selectPlace(place: Place) {
 		if (place.entry.id === floorId) {
 			togglePoint(place.point.number);
@@ -86,6 +92,8 @@
 	}
 
 	function selectFromList(event: MouseEvent, place: Place) {
+		const deselects = place.entry.id === floorId && place.point.number === selectedNumber;
+		if (!deselects) trackEvent('map-place-select', { source: 'list' });
 		selectPlace(place);
 		if (event.detail === 0) return;
 		planElement?.scrollIntoView({
@@ -206,7 +214,7 @@
 						<g
 							data-point={zone.point}
 							data-selected={isSelected || undefined}
-							onclick={() => togglePoint(zone.point)}
+							onclick={() => selectFromPlan(zone.point)}
 							class={[
 								'cursor-pointer transition-opacity motion-reduce:transition-none',
 								selectedNumber !== null && !isSelected && 'opacity-40'

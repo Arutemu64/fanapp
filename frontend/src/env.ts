@@ -4,6 +4,8 @@ export const variables = defineEnvVars({
 	PUBLIC_SENTRY_DSN: { public: true, static: true },
 	PUBLIC_SENTRY_ENVIRONMENT: { public: true, static: true },
 	PUBLIC_SENTRY_TRACES_SAMPLE_RATE: { public: true, static: true },
+	PUBLIC_UMAMI_SCRIPT_URL: { public: true, static: true },
+	PUBLIC_UMAMI_WEBSITE_ID: { public: true, static: true },
 	PUBLIC_API_URL: { public: true, static: true },
 	PUBLIC_VAPID_KEY: { public: true, static: true },
 	PUBLIC_VK_GROUP_ID: { public: true, static: true },

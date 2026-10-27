@@ -1,3 +1,4 @@
+import { trackEvent } from './analytics';
 import { Persisted } from './persisted.svelte';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -39,6 +40,7 @@ class ThemeService {
 	setMode(mode: ThemeMode): void {
 		this.#mode.current = mode;
 		applyTheme(mode);
+		trackEvent('theme-change', { mode });
 	}
 }
 

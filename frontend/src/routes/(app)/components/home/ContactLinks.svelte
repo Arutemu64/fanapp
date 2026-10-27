@@ -9,6 +9,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { type OutboundTarget, trackEvent } from '#lib/services/analytics.js';
 
 	interface ContactLink {
 		href: string;
@@ -16,6 +17,7 @@
 		icon: Component;
 		external: boolean;
 		selectable: boolean;
+		target: OutboundTarget;
 	}
 
 	const EMAIL = 'orgcom.fan@mail.ru';
@@ -23,6 +25,7 @@
 	const contactLinks: ContactLink[] = [
 		{
 			href: 'https://fancom.info/',
+			target: 'site',
 			label: m.guide_website,
 			icon: Globe,
 			external: true,
@@ -30,6 +33,7 @@
 		},
 		{
 			href: 'https://vk.com/ffest_nn',
+			target: 'vk',
 			label: m.guide_vk,
 			icon: IconVk,
 			external: true,
@@ -37,6 +41,7 @@
 		},
 		{
 			href: 'https://t.me/fanfan_fest_news',
+			target: 'telegram',
 			label: m.guide_telegram,
 			icon: IconTelegram,
 			external: true,
@@ -44,12 +49,20 @@
 		},
 		{
 			href: 'https://max.ru/ffest_nn',
+			target: 'max',
 			label: m.guide_max,
 			icon: MessageCircle,
 			external: true,
 			selectable: false
 		},
-		{ href: `mailto:${EMAIL}`, label: () => EMAIL, icon: Mail, external: false, selectable: true }
+		{
+			href: `mailto:${EMAIL}`,
+			label: () => EMAIL,
+			icon: Mail,
+			external: false,
+			selectable: true,
+			target: 'email'
+		}
 	];
 </script>
 
@@ -67,6 +80,7 @@
 					variant="outline"
 					size="sm"
 					class={link.selectable ? 'select-text' : undefined}
+					onclick={() => trackEvent('outbound-link', { target: link.target })}
 				>
 					<link.icon data-icon="inline-start" aria-hidden="true" />
 					{link.label()}

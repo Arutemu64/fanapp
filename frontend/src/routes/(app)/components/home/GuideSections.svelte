@@ -5,6 +5,7 @@
 	import MenuRow from '#lib/components/MenuRow.svelte';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 
 	import type { FestivalPhase } from './festivalPhase';
 
@@ -42,6 +43,7 @@
 				<MenuRow
 					externalHref="https://fancom.info/pages/Tickets"
 					newTab
+					onclick={() => trackEvent('outbound-link', { target: 'tickets' })}
 					label={m.guide_tickets()}
 					description={m.guide_tickets_description()}
 					icon={Ticket}

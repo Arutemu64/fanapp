@@ -29,6 +29,7 @@ export default defineConfig({
 		timeout: 180_000,
 		env: {
 			PUBLIC_SENTRY_DSN: '',
+			PUBLIC_UMAMI_SCRIPT_URL: '',
 			APP_VERSION: '1.0.0',
 			APP_BUILD: '0123456789abcdef0123456789abcdef01234567'
 		}

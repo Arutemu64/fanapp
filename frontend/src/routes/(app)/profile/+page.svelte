@@ -29,6 +29,7 @@
 	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/services/pushDevice.svelte.js';
@@ -106,7 +107,10 @@
 		{#if appUpdate.available}
 			<MenuGroup>
 				<MenuRow
-					onclick={() => appUpdate.apply()}
+					onclick={() => {
+						trackEvent('app-update');
+						appUpdate.apply();
+					}}
 					label={m.profile_update_app()}
 					description={m.profile_update_app_description()}
 					icon={RotateCw}

@@ -10,6 +10,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	interface Props {
@@ -25,6 +26,7 @@
 	const cancelMutation = createMutation(() => ({
 		...cancelVoteMutation(),
 		onSuccess: async () => {
+			trackEvent('vote-cancel');
 			await onCancelled?.();
 			toastService.add(m.voting_vote_cancelled(), 'success');
 		}
