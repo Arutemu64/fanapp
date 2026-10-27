@@ -19,6 +19,7 @@ from fanfan.application.interactors.notifications.config import NotificationConf
 from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.presentation.faststream.schedules.config import SchedulerConfig
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.festengine.config import FestEngineConfig
 
 
 class Environment(StrEnum):
@@ -54,6 +55,7 @@ class EnvConfig(BaseSettings):
 
     cosplay2: Cosplay2Config | None = None
     tcloud: TCloudConfig | None = None
+    festengine: FestEngineConfig = FestEngineConfig()
 
     altcha: AltchaConfig | None = None
 

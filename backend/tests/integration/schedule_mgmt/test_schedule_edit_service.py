@@ -70,7 +70,10 @@ async def test_failed_mutation_does_not_commit_the_announcement(
 
     with pytest.raises(EventNotFound):
         await service.announce(
-            Permission.SCHEDULE_MANAGE, fail, already_applied=_not_applied
+            schedule_editor,
+            Permission.SCHEDULE_MANAGE,
+            fail,
+            already_applied=_not_applied,
         )
 
     async def succeed(_: User) -> ChangeFactory:
@@ -82,7 +85,10 @@ async def test_failed_mutation_does_not_commit_the_announcement(
         )
 
     await service.announce(
-        Permission.SCHEDULE_MANAGE, succeed, already_applied=_not_applied
+        schedule_editor,
+        Permission.SCHEDULE_MANAGE,
+        succeed,
+        already_applied=_not_applied,
     )
 
 
@@ -108,6 +114,10 @@ async def test_already_applied_edit_skips_mutation_and_commit(
     async def applied() -> bool:
         return True
 
-    await service.announce(Permission.SCHEDULE_MANAGE, mutate, already_applied=applied)
+    changed = await service.announce(
+        schedule_editor, Permission.SCHEDULE_MANAGE, mutate, already_applied=applied
+    )
+
+    assert changed is False
 
     assert calls == []

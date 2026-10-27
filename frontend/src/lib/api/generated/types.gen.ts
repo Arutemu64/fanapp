@@ -297,6 +297,18 @@ export type FeedbackDto = {
 };
 
 /**
+ * FestEngineWebhookResponse
+ */
+export type FestEngineWebhookResponse = {
+	status: FestEngineWebhookStatus;
+};
+
+/**
+ * FestEngineWebhookStatus
+ */
+export type FestEngineWebhookStatus = 'updated' | 'unchanged' | 'ignored' | 'stale';
+
+/**
  * FindQuestPlayersOutput
  */
 export type FindQuestPlayersOutput = {
@@ -3467,6 +3479,41 @@ export type ProcessTcloudOrderResponses = {
 
 export type ProcessTcloudOrderResponse =
 	ProcessTcloudOrderResponses[keyof ProcessTcloudOrderResponses];
+
+export type ProcessFestengineEventData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/webhooks/festengine';
+};
+
+export type ProcessFestengineEventErrors = {
+	/**
+	 * The edit breaks a rule.
+	 */
+	400: ProblemDetails;
+	/**
+	 * Unknown endpoint, bad signature, or unknown number.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Announcement cooldown.
+	 */
+	429: ProblemDetails;
+};
+
+export type ProcessFestengineEventError =
+	ProcessFestengineEventErrors[keyof ProcessFestengineEventErrors];
+
+export type ProcessFestengineEventResponses = {
+	/**
+	 * Event applied, already applied, or ignored.
+	 */
+	200: FestEngineWebhookResponse;
+};
+
+export type ProcessFestengineEventResponse =
+	ProcessFestengineEventResponses[keyof ProcessFestengineEventResponses];
 
 export type ListUserNotificationsData = {
 	body?: never;

@@ -138,6 +138,10 @@ An action that cannot finish inside the request returns **202** with the created
 - **Prefer SSE over polling for progress.** The root layout maps each `SSEEventName` to the query keys it invalidates (here `sync_run_updated` → `getSyncSourcesQueryKey()`), and a reconnect after a gap invalidates the whole cache, so an update missed while the stream was down self-heals rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
 - **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
 
+## Inbound webhooks
+
+`/api/webhooks/*` are server-to-server and not called by the frontend. TicketsCloud authenticates with a secret path segment; FestEngine signs per Standard Webhooks. The FestEngine payload contract and event mapping are in [backend.md](backend.md) "FestEngine webhook".
+
 ## Russian Localization & Error Handling
 
 Russian copy is mandatory (AGENTS.md, "Never"). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.

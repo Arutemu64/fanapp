@@ -62,15 +62,16 @@ class ScheduleEditService:
 
     async def announce(
         self,
+        actor: User,
         permission: Permission,
         mutate: Callable[[User], Awaitable[ChangeFactory]],
         *,
         already_applied: Callable[[], Awaitable[bool]],
-    ) -> User:
-        """Edit the schedule and announce it to subscribers.
+    ) -> bool:
+        """Edit the schedule as ``actor`` and announce it to subscribers.
 
         ``mutate`` applies the domain change and returns a factory for the
-        ``ScheduleChange`` that records it. Returns the acting user.
+        ``ScheduleChange`` that records it. Returns whether anything changed.
 
         ``already_applied`` reports whether the schedule is already in the
         requested state. If so, the edit is a no-op: nothing is written or
@@ -79,30 +80,30 @@ class ScheduleEditService:
         (docs/adr/0034). It runs under the edit lock, so no concurrent edit can
         change the answer, and before the cooldown, so a no-op is never a 429.
         """
-        user = await self._authorize(permission)
+        await self.perm_service.ensure(user=actor, permission=permission)
         settings = await self.settings_gateway.get()
         await self.schedule_gateway.lock_for_edit()
         if await already_applied():
-            return user
+            return False
         await self._ensure_announcement_cooldown(settings.limits.announcement_timeout)
 
         next_event_before = await self.schedule_gateway.get_next()
-        build_change = await mutate(user)
+        build_change = await mutate(actor)
         next_event_after = await self.schedule_gateway.get_next()
 
-        mailing = Mailing.create(by_user_id=user.id)
+        mailing = Mailing.create(by_user_id=actor.id)
         await self.mailing_gateway.add(mailing)
         change = build_change(
             AnnouncedChangeContext(
                 mailing_id=mailing.id,
-                user_id=user.id,
+                user_id=actor.id,
                 next_event_changed=next_event_before != next_event_after,
             )
         )
         await self.changes_gateway.add(change)
 
         await self.uow.commit()
-        return user
+        return True
 
     async def edit(
         self,
@@ -113,15 +114,11 @@ class ScheduleEditService:
 
         Returns the acting user.
         """
-        user = await self._authorize(permission)
+        user = await self.current_user_provider.require_user()
+        await self.perm_service.ensure(user=user, permission=permission)
         await self.schedule_gateway.lock_for_edit()
         await mutate(user)
         await self.uow.commit()
-        return user
-
-    async def _authorize(self, permission: Permission) -> User:
-        user = await self.current_user_provider.require_user()
-        await self.perm_service.ensure(user=user, permission=permission)
         return user
 
     async def _ensure_announcement_cooldown(self, cooldown_seconds: int) -> None:

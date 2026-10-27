@@ -119,6 +119,19 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         )
 
     @override
+    async def get_latest_for_event(
+        self, event_id: ScheduleEntryId
+    ) -> ScheduleChange | None:
+        stmt = (
+            select(ScheduleChangeORM)
+            .where(ScheduleChangeORM.changed_event_id == event_id)
+            .order_by(ScheduleChangeORM.created_at.desc(), ScheduleChangeORM.id.desc())
+            .limit(1)
+        )
+        change_orm = await self.session.scalar(stmt)
+        return _to_model(change_orm) if change_orm else None
+
+    @override
     async def read_schedule_change(
         self, change_id: ScheduleChangeId
     ) -> ScheduleChangeFullDTO | None:
