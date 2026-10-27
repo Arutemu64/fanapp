@@ -47,6 +47,8 @@ Copy `2026_07_17_0800-a1b2c3d4e5f6_add_tickets_generate_permission.py`; it spell
 the member list out in module-level constants so the diff shows exactly what
 changed.
 
+`UserRole` guards three tables (`users`, `tickets`, `ticket_batches`); a role swap covers each one.
+
 Adding a `Permission` member is this case. It is also only half the job: a
 permission grants nothing until a `user_permissions` row exists, so an
 unattended interactor's permission needs a data migration granting it to the

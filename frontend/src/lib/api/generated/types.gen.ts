@@ -378,6 +378,12 @@ export type FindQuestPlayersOutput = {
  * GenerateTicketsInput
  */
 export type GenerateTicketsInput = {
+	/**
+	 * Batch Id
+	 *
+	 * UUIDv7 the client generates once per generate form.
+	 */
+	batch_id: string;
 	role: UserRole;
 	/**
 	 * Amount
@@ -1053,7 +1059,7 @@ export type ProblemDetails = {
 		| 'SYNC_ALREADY_RUNNING'
 		| 'TEST_NOTIFICATION_TOO_FAST'
 		| 'TICKET_ALREADY_USED'
-		| 'TICKET_BARCODE_COLLISION'
+		| 'TICKET_BATCH_ALREADY_EXISTS'
 		| 'TICKET_NOT_FOUND'
 		| 'TICKET_NOT_LINKED'
 		| 'TICKET_REVOKED'
@@ -4101,7 +4107,7 @@ export type GenerateTicketsErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * A generated barcode collided; retry the request.
+	 * The batch ID belongs to a different batch.
 	 */
 	409: ProblemDetails;
 	/**
@@ -4114,9 +4120,9 @@ export type GenerateTicketsError = GenerateTicketsErrors[keyof GenerateTicketsEr
 
 export type GenerateTicketsResponses = {
 	/**
-	 * Tickets generated successfully.
+	 * Tickets generated, or an identical batch replayed.
 	 */
-	200: GenerateTicketsOutput;
+	201: GenerateTicketsOutput;
 };
 
 export type GenerateTicketsResponse = GenerateTicketsResponses[keyof GenerateTicketsResponses];

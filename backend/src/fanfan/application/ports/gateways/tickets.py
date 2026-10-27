@@ -3,12 +3,21 @@ from typing import Protocol
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.ticket import TicketListFilter, TicketListItemDTO
 from fanfan.core.models.ticket import Ticket
+from fanfan.core.models.ticket_batch import TicketBatch
+from fanfan.core.vo.ticket import TicketBatchId
 from fanfan.core.vo.user import UserId
 
 
 class TicketGateway(Protocol):
     async def add(self, ticket: Ticket) -> None: ...
-    async def add_all(self, tickets: list[Ticket]) -> None: ...
+    async def add_batch(self, batch: TicketBatch) -> None:
+        """Insert the batch and its tickets, redrawing barcodes that are taken.
+
+        Raises `TicketBatchAlreadyExists` when the batch id is taken.
+        """
+        ...
+
+    async def get_batch(self, batch_id: TicketBatchId) -> TicketBatch | None: ...
     async def get_by_barcode(self, barcode: str) -> Ticket | None: ...
     async def get_by_ticketscloud_sale(
         self, order_id: str, ticket_id: str

@@ -251,7 +251,7 @@ const ERROR_MESSAGES = {
 	SUBSCRIPTION_ALREADY_EXISTS: m.error_subscription_already_exists,
 	SYNC_ALREADY_RUNNING: m.error_sync_already_running,
 	TICKET_ALREADY_USED: m.error_ticket_already_used,
-	TICKET_BARCODE_COLLISION: m.error_ticket_barcode_collision,
+	TICKET_BATCH_ALREADY_EXISTS: m.error_ticket_batch_already_exists,
 	TICKET_NOT_FOUND: m.error_ticket_not_found,
 	TICKET_NOT_LINKED: m.error_ticket_not_linked,
 	TICKET_REVOKED: m.error_ticket_revoked,

@@ -25,5 +25,5 @@ class TicketNotLinked(Conflict, TicketException):
     code = "TICKET_NOT_LINKED"
 
 
-class TicketBarcodeCollision(Conflict, TicketException):
-    code = "TICKET_BARCODE_COLLISION"
+class TicketBatchAlreadyExists(Conflict, TicketException):
+    code = "TICKET_BATCH_ALREADY_EXISTS"

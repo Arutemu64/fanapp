@@ -278,7 +278,7 @@
 	"error_subscription_already_exists": "Подписка на это выступление уже оформлена",
 	"error_sync_already_running": "Синхронизация уже выполняется, подожди немного",
 	"error_ticket_already_used": "Этот билет уже использован",
-	"error_ticket_barcode_collision": "Не удалось создать билеты, попробуй ещё раз",
+	"error_ticket_batch_already_exists": "Эти билеты уже созданы\u00a0— они есть в списке",
 	"error_ticket_not_found": "Билет не найден",
 	"error_ticket_not_linked": "Сначала привяжи билет",
 	"error_ticket_revoked": "По этому билету оформлен возврат",

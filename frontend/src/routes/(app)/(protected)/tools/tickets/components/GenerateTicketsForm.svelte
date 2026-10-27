@@ -4,7 +4,7 @@
 
 	import type { UserRole } from '#lib/api/generated/index.js';
 
-	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import {
 		generateTicketsMutation,
 		listTicketsQueryKey
@@ -21,6 +21,7 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { getRoleLabel } from '#lib/utils/users.js';
+	import { uuidv7 } from '#lib/utils/uuidv7.js';
 
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
@@ -31,6 +32,8 @@
 	let selectedRole = $state<UserRole>('visitor');
 	let selectedRoleLabel = $derived(getRoleLabel(selectedRole));
 	let amountInput = $state<number | undefined>(10);
+	// One ID per intent, so a resend after a lost response returns the same batch.
+	let batchId = uuidv7();
 	const generateMutation = createMutation(() => ({
 		...generateTicketsMutation(),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: listTicketsQueryKey() })
@@ -77,9 +80,10 @@
 		}
 
 		generateMutation.mutate(
-			{ body: { role: selectedRole, amount } },
+			{ body: { batch_id: batchId, role: selectedRole, amount } },
 			{
 				onSuccess: (data) => {
+					batchId = uuidv7();
 					generatedBarcodes = data.barcodes;
 					toastService.add(m.tickets_generated({ count: data.barcodes.length }), 'success');
 				},
@@ -88,6 +92,9 @@
 					if (amountFieldError) {
 						amountError = amountFieldError;
 						return;
+					}
+					if (getApiErrorCode(error) === 'TICKET_BATCH_ALREADY_EXISTS') {
+						batchId = uuidv7();
 					}
 					submitError = getApiErrorDetail(error) ?? m.tickets_generate_failed();
 				}

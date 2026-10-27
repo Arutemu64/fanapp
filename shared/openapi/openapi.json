@@ -3806,7 +3806,7 @@
           "Tickets"
         ],
         "summary": "Generate tickets",
-        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.",
+        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes. The client supplies the batch ID, so repeating the same request returns the existing batch instead of generating another.",
         "operationId": "generate_tickets",
         "requestBody": {
           "content": {
@@ -3819,8 +3819,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Tickets generated successfully.",
+          "201": {
+            "description": "Tickets generated, or an identical batch replayed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3860,7 +3860,7 @@
             }
           },
           "409": {
-            "description": "A generated barcode collided; retry the request.",
+            "description": "The batch ID belongs to a different batch.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5821,6 +5821,12 @@
       },
       "GenerateTicketsInput": {
         "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid7",
+            "title": "Batch Id",
+            "description": "UUIDv7 the client generates once per generate form."
+          },
           "role": {
             "$ref": "#/components/schemas/UserRole"
           },
@@ -5833,6 +5839,7 @@
         },
         "type": "object",
         "required": [
+          "batch_id",
           "role",
           "amount"
         ],
@@ -6956,7 +6963,7 @@
               "SYNC_ALREADY_RUNNING",
               "TEST_NOTIFICATION_TOO_FAST",
               "TICKET_ALREADY_USED",
-              "TICKET_BARCODE_COLLISION",
+              "TICKET_BATCH_ALREADY_EXISTS",
               "TICKET_NOT_FOUND",
               "TICKET_NOT_LINKED",
               "TICKET_REVOKED",

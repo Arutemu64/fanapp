@@ -74,14 +74,15 @@ async def test_list_tickets_pages_newest_first_with_linked_user(
     ticket_gateway = await dishka_request.get(TicketGateway)
     holder = await _add_user(dishka_request, "ticket_holder", None)
     for _ in range(3):
-        await ticket_gateway.add_all(
-            [Ticket.issue(role=UserRole.VOLUNTEER, issued_by_user_id=ticket_manager.id)]
+        await ticket_gateway.add(
+            Ticket.issue(role=UserRole.VOLUNTEER, issued_by_user_id=ticket_manager.id)
         )
+        await uow.flush()
     linked = Ticket.issue(
         role=UserRole.PARTICIPANT, issued_by_user_id=ticket_manager.id
     )
     linked.set_as_used(holder.id)
-    await ticket_gateway.add_all([linked])
+    await ticket_gateway.add(linked)
     await uow.commit()
 
     login(ticket_manager)

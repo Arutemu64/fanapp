@@ -1,23 +1,31 @@
 from typing import Any, override
 
 from sqlalchemy import Select, delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.models import TicketORM
+from fanfan.adapters.db.constraints import (
+    get_constraint_name,
+    translate_integrity_error,
+)
+from fanfan.adapters.db.models import TicketBatchORM, TicketORM
 from fanfan.adapters.db.pagination import rows_after
 from fanfan.adapters.db.user_ref import parse_user_ref
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.ticket import TicketListFilter, TicketListItemDTO
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.core.exceptions.tickets import (
-    TicketBarcodeCollision,
+    TicketBatchAlreadyExists,
     UserAlreadyHasTicketLinked,
 )
 from fanfan.core.models.ticket import Ticket
-from fanfan.core.vo.ticket import TicketId
+from fanfan.core.models.ticket_batch import TicketBatch
+from fanfan.core.vo.ticket import TicketBatchId, TicketId
 from fanfan.core.vo.user import UserId
+
+_BARCODE_CONSTRAINT = "uq_tickets_barcode"
+_BARCODE_ATTEMPTS = 5
 
 
 def _from_model(model: Ticket) -> TicketORM:
@@ -30,6 +38,7 @@ def _from_model(model: Ticket) -> TicketORM:
         ticketscloud_ticket_id=model.ticketscloud_ticket_id,
         ticketscloud_order_id=model.ticketscloud_order_id,
         revoked_at=model.revoked_at,
+        batch_id=model.batch_id,
     )
 
 
@@ -47,6 +56,28 @@ def _to_model(orm: TicketORM) -> Ticket:
         ticketscloud_ticket_id=orm.ticketscloud_ticket_id,
         ticketscloud_order_id=orm.ticketscloud_order_id,
         revoked_at=orm.revoked_at,
+        batch_id=TicketBatchId(orm.batch_id) if orm.batch_id is not None else None,
+    )
+
+
+def _batch_from_model(model: TicketBatch) -> TicketBatchORM:
+    return TicketBatchORM(
+        id=model.id,
+        role=model.role,
+        amount=model.amount,
+        issued_by_user_id=model.issued_by_user_id,
+    )
+
+
+def _batch_to_model(orm: TicketBatchORM, tickets: list[TicketORM]) -> TicketBatch:
+    return TicketBatch(
+        id=TicketBatchId(orm.id),
+        role=orm.role,
+        amount=orm.amount,
+        issued_by_user_id=UserId(orm.issued_by_user_id)
+        if orm.issued_by_user_id is not None
+        else None,
+        tickets=[_to_model(ticket) for ticket in tickets],
     )
 
 
@@ -72,11 +103,42 @@ class SqlTicketGateway(TicketGateway):
         self.session.add(ticket_orm)
 
     @override
-    async def add_all(self, tickets: list[Ticket]) -> None:
-        ticket_orms = [_from_model(ticket) for ticket in tickets]
-        self.session.add_all(ticket_orms)
-        with translate_integrity_error({"uq_tickets_barcode": TicketBarcodeCollision}):
-            await self.session.flush()
+    async def add_batch(self, batch: TicketBatch) -> None:
+        for attempt in range(1, _BARCODE_ATTEMPTS + 1):
+            try:
+                await self._insert_batch(batch)
+                break
+            except IntegrityError as e:
+                if get_constraint_name(e) != _BARCODE_CONSTRAINT:
+                    raise
+                if attempt == _BARCODE_ATTEMPTS:
+                    raise
+                batch.redraw_barcodes()
+
+    async def _insert_batch(self, batch: TicketBatch) -> None:
+        async with self.session.begin_nested():
+            with translate_integrity_error(
+                {"pk_ticket_batches": TicketBatchAlreadyExists}
+            ):
+                # No relationship links the two, so flush the batch row first
+                # for the tickets' foreign key.
+                self.session.add(_batch_from_model(batch))
+                await self.session.flush()
+                self.session.add_all([_from_model(ticket) for ticket in batch.tickets])
+                await self.session.flush()
+
+    @override
+    async def get_batch(self, batch_id: TicketBatchId) -> TicketBatch | None:
+        batch_orm = await self.session.get(TicketBatchORM, batch_id)
+        if batch_orm is None:
+            return None
+        stmt = (
+            select(TicketORM)
+            .where(TicketORM.batch_id == batch_id)
+            .order_by(TicketORM.id)
+        )
+        tickets = list(await self.session.scalars(stmt))
+        return _batch_to_model(batch_orm, tickets)
 
     @override
     async def get_by_barcode(self, barcode: str) -> Ticket | None:

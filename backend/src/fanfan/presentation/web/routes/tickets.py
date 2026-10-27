@@ -62,16 +62,19 @@ async def list_tickets(
 
 @tickets_router.post(
     "/generate",
+    status_code=201,
     summary="Generate tickets",
     description=(
         "Generates a batch of new tickets for the given role. Requires the "
-        "'tickets:manage' permission. Returns the created barcodes."
+        "'tickets:manage' permission. Returns the created barcodes. The client "
+        "supplies the batch ID, so repeating the same request returns the "
+        "existing batch instead of generating another."
     ),
     responses={
-        200: {"description": "Tickets generated successfully."},
+        201: {"description": "Tickets generated, or an identical batch replayed."},
         409: {
             "model": ProblemDetails,
-            "description": "A generated barcode collided; retry the request.",
+            "description": "The batch ID belongs to a different batch.",
         },
     },
 )

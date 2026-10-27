@@ -3,6 +3,7 @@ from typing import NewType
 from uuid import UUID, uuid7
 
 TicketId = NewType("TicketId", UUID)
+TicketBatchId = NewType("TicketBatchId", UUID)
 
 _CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 _BARCODE_PREFIX = "FAN-"

@@ -2227,7 +2227,7 @@ export const listTicketsInfiniteOptions = (options?: Options<ListTicketsData>) =
 /**
  * Generate tickets
  *
- * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.
+ * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes. The client supplies the batch ID, so repeating the same request returns the existing batch instead of generating another.
  */
 export const generateTicketsMutation = (
 	options?: Partial<Options<GenerateTicketsData>>
