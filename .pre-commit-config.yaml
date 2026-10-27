@@ -32,7 +32,7 @@ repos:
         entry: uv run --directory backend ruff check --fix src/fanfan tests scripts
         language: system
         files: ^backend/
-        types: [ python ]
+        types: [python]
         pass_filenames: false
 
       - id: ruff-format
@@ -40,7 +40,7 @@ repos:
         entry: uv run --directory backend ruff format src/fanfan tests scripts
         language: system
         files: ^backend/
-        types: [ python ]
+        types: [python]
         pass_filenames: false
 
       - id: uv-sort
@@ -54,22 +54,22 @@ repos:
         name: ty
         entry: uv run --directory backend ty check
         language: system
-        types: [ python ]
+        types: [python]
         pass_filenames: false
-        stages: [ pre-push ]
+        stages: [pre-push]
 
       - id: frontend-prettier
         name: frontend prettier
         entry: bash -c 'cd frontend && pnpm exec prettier --check "${@#frontend/}"' --
         language: system
         files: ^frontend/
-        types_or: [ svelte, ts, javascript, css, json ]
+        types_or: [svelte, ts, javascript, css, json]
 
-      - id: docs-prettier
-        name: docs prettier
+      - id: root-prettier
+        name: root prettier (markdown, yaml)
         entry: frontend/node_modules/.bin/prettier --check
         language: system
-        types: [ markdown ]
+        types_or: [markdown, yaml]
         exclude: ^frontend/
 
       - id: frontend-eslint
@@ -77,13 +77,13 @@ repos:
         entry: bash -c 'cd frontend && pnpm exec eslint "${@#frontend/}"' --
         language: system
         files: ^frontend/
-        types_or: [ svelte, ts, javascript ]
+        types_or: [svelte, ts, javascript]
 
       - id: frontend-check
         name: frontend svelte-check
         entry: bash -c 'cd frontend && pnpm check'
         language: system
         files: ^frontend/
-        types_or: [ svelte, ts ]
+        types_or: [svelte, ts]
         pass_filenames: false
-        stages: [ pre-push ]
+        stages: [pre-push]

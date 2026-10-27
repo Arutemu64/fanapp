@@ -93,8 +93,8 @@ def check_prettier(path: Path, repo: Path) -> str | None:
     )
 
 
-def check_markdown(path: Path, repo: Path) -> str | None:
-    """Markdown outside frontend/ uses the repo-root .prettierrc and .prettierignore."""
+def check_root_prettier(path: Path, repo: Path) -> str | None:
+    """Markdown and YAML outside frontend/: the root .prettierrc and .prettierignore."""
     rel = path.relative_to(repo)
     prettier = repo / "frontend" / "node_modules" / ".bin" / "prettier"
     code, _ = run([str(prettier), "--check", str(rel)], repo)
@@ -221,8 +221,8 @@ def check_area(path: Path, repo: Path) -> list[str | None]:
         return [check_python(path, repo)]
     if area == "frontend":
         return check_frontend(path, repo)
-    if path.suffix == ".md":
-        return [check_markdown(path, repo)]
+    if path.suffix in {".md", ".yml", ".yaml"}:
+        return [check_root_prettier(path, repo)]
     return []
 
 

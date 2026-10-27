@@ -31,7 +31,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
-      docs: ${{ steps.filter.outputs.docs }}
+      root: ${{ steps.filter.outputs.root }}
       dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
@@ -50,8 +50,10 @@ jobs:
               - 'frontend/**'
               - 'shared/**'
               - '.github/workflows/ci.yml'
-            docs:
+            root:
               - '**/*.md'
+              - '**/*.yml'
+              - '**/*.yaml'
               - '.prettierrc'
               - '.prettierignore'
               - '.github/workflows/ci.yml'
@@ -219,10 +221,10 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 7
 
-  docs:
-    name: Docs (prettier)
+  root:
+    name: Markdown and YAML (prettier)
     needs: changes
-    if: needs.changes.outputs.docs == 'true'
+    if: needs.changes.outputs.root == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -246,8 +248,8 @@ jobs:
         working-directory: frontend
         run: pnpm install --frozen-lockfile
 
-      - name: Lint Markdown (prettier)
-        run: frontend/node_modules/.bin/prettier --check "**/*.md"
+      - name: Check formatting (prettier)
+        run: frontend/node_modules/.bin/prettier --check "**/*.{md,yml,yaml}"
 
   dockerfiles:
     name: Dockerfiles (hadolint)
@@ -283,7 +285,7 @@ jobs:
         include:
           - name: backend
             context: ./backend
-            target: ''
+            target: ""
           - name: frontend
             context: ./frontend
             target: prod
@@ -356,7 +358,7 @@ jobs:
   ci-ok:
     name: CI success
     if: always()
-    needs: [changes, backend, frontend, docs, dockerfiles, images, secrets, workflows]
+    needs: [changes, backend, frontend, root, dockerfiles, images, secrets, workflows]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

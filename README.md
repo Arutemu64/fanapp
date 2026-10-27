@@ -196,7 +196,7 @@ All commands run from the repo root via `just`.
 | `just backend-typecheck`                     | Run `ty` type checker                                                                    |
 | `just backend-test`                          | Backend unit tests (no Docker); `just backend-test-integration` for the integration tier |
 | `just frontend-lint` / `just frontend-check` | Lint / type-check frontend                                                               |
-| `just docs-lint` / `just docs-format`        | Check / fix Prettier formatting of Markdown outside `frontend/`                          |
+| `just root-lint` / `just root-format`        | Check / fix Prettier formatting of Markdown and YAML outside `frontend/`                 |
 | `just frontend-test` / `just frontend-e2e`   | Vitest unit tests / Playwright E2E against a production build                            |
 | `just frontend-generate-api`                 | Regenerate the OpenAPI spec and the frontend API client                                  |
 | `just backend-sync tcloud`                   | Sync tickets from TicketsCloud                                                           |

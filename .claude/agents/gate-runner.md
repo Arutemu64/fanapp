@@ -19,7 +19,7 @@ Run only the gates the caller names, or infer from the paths they give:
 | `frontend/src/lib/**` logic                                    | also `just frontend-test`                                                    |
 | backend logic                                                  | also `just backend-test`                                                     |
 | any `Dockerfile`                                               | `just dockerfile-lint`                                                       |
-| `*.md` outside `frontend/`                                     | `just docs-lint`                                                             |
+| `*.md`, `*.yml` outside `frontend/`                            | `just root-lint`                                                             |
 | `adapters/db/models/**` or `migrations/**`                     | also `just backend-check-migrations`                                         |
 | `shared/openapi/**`, or a changed API route or response schema | also `just frontend-check-api`                                               |
 

@@ -26,7 +26,7 @@ Run the gate for what you touched (CI runs these regardless):
 - **Backend** — `just backend-lint` and `just backend-typecheck`
 - **Frontend** — `just frontend-lint` and `just frontend-check`
 - **Dockerfile** — `just dockerfile-lint`
-- **Markdown outside `frontend/`** — `just docs-lint` (`just docs-format` fixes it)
+- **Markdown or YAML outside `frontend/`** — `just root-lint` (`just root-format` fixes it)
 
 Whether a change needs a _new_ test is a judgement call — see
 [`docs/testing.md`](docs/testing.md).

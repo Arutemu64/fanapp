@@ -22,15 +22,15 @@ services:
     env_file:
       - .env
     ports:
-      - '127.0.0.1:${FRONTEND_PORT:-3000}:80'
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:80"
     restart: unless-stopped
     init: true
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 64M
-    profiles: [ "core" ]
+    profiles: ["core"]
     networks:
       - frontend-network
 
@@ -59,7 +59,7 @@ services:
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
     ports:
-      - '127.0.0.1:${API_PORT:-8000}:8000'
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     restart: unless-stopped
     stop_signal: SIGINT
     init: true
@@ -69,9 +69,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 256M
-    profiles: [ "core" ]
+    profiles: ["core"]
     networks:
       - frontend-network
       - backend-network
@@ -95,7 +95,7 @@ services:
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
-    command: [ "faststream", "run", "--factory", "fanfan.main.worker:create_app" ]
+    command: ["faststream", "run", "--factory", "fanfan.main.worker:create_app"]
     stop_grace_period: 20s
     restart: unless-stopped
     init: true
@@ -105,9 +105,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
-    profiles: [ "core" ]
+    profiles: ["core"]
     networks:
       - backend-network
 
@@ -121,15 +121,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: [ "alembic", "upgrade", "head" ]
+    command: ["alembic", "upgrade", "head"]
     restart: on-failure
     init: true
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 256M
-    profiles: [ "core" ]
+    profiles: ["core"]
     networks:
       - backend-network
 
@@ -161,16 +161,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 2s
       timeout: 60s
       retries: 10
       start_period: 5s
-    profiles: [ "core" ]
+    profiles: ["core"]
     networks:
       - backend-network
 
@@ -187,7 +187,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 96M
     environment:
       GOMEMLIMIT: "86MiB"
@@ -197,7 +197,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 3
-    profiles: [ "core" ]
+    profiles: ["core"]
     networks:
       - backend-network
 
@@ -224,16 +224,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 96M
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080" ]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    profiles: [ "ops" ]
+    profiles: ["ops"]
     networks:
       - backend-network
 

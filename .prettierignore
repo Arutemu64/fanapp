@@ -1,4 +1,4 @@
-# Repo-root Prettier covers Markdown outside frontend/ (`just docs-lint`).
+# Repo-root Prettier covers Markdown and YAML outside frontend/ (`just root-lint`).
 # frontend/ has its own config and check (`just frontend-lint`).
 frontend/
 
