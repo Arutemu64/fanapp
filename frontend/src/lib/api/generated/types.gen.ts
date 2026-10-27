@@ -739,16 +739,6 @@ export type MarkNotificationsReadInput = {
 };
 
 /**
- * MoveScheduleEventBody
- */
-export type MoveScheduleEventBody = {
-	/**
-	 * Place After Entry Id
-	 */
-	place_after_entry_id: string;
-};
-
-/**
  * NominationContenderDTO
  */
 export type NominationContenderDto = {
@@ -1379,6 +1369,16 @@ export type SendBroadcastOutput = {
 };
 
 /**
+ * SetCurrentScheduleEventBody
+ */
+export type SetCurrentScheduleEventBody = {
+	/**
+	 * Event Id
+	 */
+	event_id: string;
+};
+
+/**
  * SetTCloudEventRolesInput
  */
 export type SetTCloudEventRolesInput = {
@@ -1682,12 +1682,20 @@ export type UpdateCurrentUserInput = {
 
 /**
  * UpdateScheduleEventBody
+ *
+ * One change per request: each is its own announcement and undo step.
  */
 export type UpdateScheduleEventBody = {
 	/**
 	 * Is Skipped
 	 */
-	is_skipped: boolean;
+	is_skipped?: boolean;
+	/**
+	 * Place After Entry Id
+	 *
+	 * Entry to place the event after. Null moves it to the top.
+	 */
+	place_after_entry_id?: string | null;
 };
 
 /**
@@ -2777,18 +2785,45 @@ export type UpdateScheduleSettingsResponses = {
 export type UpdateScheduleSettingsResponse =
 	UpdateScheduleSettingsResponses[keyof UpdateScheduleSettingsResponses];
 
-export type SetEventAsCurrentData = {
+export type UncheckCurrentEventData = {
 	body?: never;
-	path: {
-		/**
-		 * Event Id
-		 *
-		 * Schedule event ID.
-		 */
-		event_id: string;
-	};
+	path?: never;
 	query?: never;
-	url: '/schedule/{event_id}/current';
+	url: '/schedule/current';
+};
+
+export type UncheckCurrentEventErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Rate limited — too many requests.
+	 */
+	429: ProblemDetails;
+};
+
+export type UncheckCurrentEventError = UncheckCurrentEventErrors[keyof UncheckCurrentEventErrors];
+
+export type UncheckCurrentEventResponses = {
+	/**
+	 * Current event cleared successfully.
+	 */
+	204: void;
+};
+
+export type UncheckCurrentEventResponse =
+	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
+
+export type SetEventAsCurrentData = {
+	body: SetCurrentScheduleEventBody;
+	path?: never;
+	query?: never;
+	url: '/schedule/current';
 };
 
 export type SetEventAsCurrentErrors = {
@@ -2830,93 +2865,6 @@ export type SetEventAsCurrentResponses = {
 export type SetEventAsCurrentResponse =
 	SetEventAsCurrentResponses[keyof SetEventAsCurrentResponses];
 
-export type UncheckCurrentEventData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/schedule/current';
-};
-
-export type UncheckCurrentEventErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * Rate limited — too many requests.
-	 */
-	429: ProblemDetails;
-};
-
-export type UncheckCurrentEventError = UncheckCurrentEventErrors[keyof UncheckCurrentEventErrors];
-
-export type UncheckCurrentEventResponses = {
-	/**
-	 * Current event cleared successfully.
-	 */
-	204: void;
-};
-
-export type UncheckCurrentEventResponse =
-	UncheckCurrentEventResponses[keyof UncheckCurrentEventResponses];
-
-export type MoveScheduleEventData = {
-	body: MoveScheduleEventBody;
-	path: {
-		/**
-		 * Event Id
-		 *
-		 * Schedule event ID.
-		 */
-		event_id: string;
-	};
-	query?: never;
-	url: '/schedule/{event_id}/move';
-};
-
-export type MoveScheduleEventErrors = {
-	/**
-	 * Invalid move: target and destination are the same.
-	 */
-	400: ProblemDetails;
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * Event to move or target neighbor event was not found.
-	 */
-	404: ProblemDetails;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationProblem;
-	/**
-	 * Rate limited — too many requests.
-	 */
-	429: ProblemDetails;
-};
-
-export type MoveScheduleEventError = MoveScheduleEventErrors[keyof MoveScheduleEventErrors];
-
-export type MoveScheduleEventResponses = {
-	/**
-	 * Event moved successfully.
-	 */
-	204: void;
-};
-
-export type MoveScheduleEventResponse =
-	MoveScheduleEventResponses[keyof MoveScheduleEventResponses];
-
 export type UpdateScheduleEventData = {
 	body: UpdateScheduleEventBody;
 	path: {
@@ -2933,7 +2881,7 @@ export type UpdateScheduleEventData = {
 
 export type UpdateScheduleEventErrors = {
 	/**
-	 * Cannot skip the current active event.
+	 * The current event cannot be skipped, or the event cannot be placed after itself.
 	 */
 	400: ProblemDetails;
 	/**
@@ -2945,7 +2893,7 @@ export type UpdateScheduleEventErrors = {
 	 */
 	403: ProblemDetails;
 	/**
-	 * Event ID not found.
+	 * Event or target entry not found.
 	 */
 	404: ProblemDetails;
 	/**

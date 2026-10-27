@@ -157,9 +157,6 @@ import type {
 	MarkNotificationsReadData,
 	MarkNotificationsReadErrors,
 	MarkNotificationsReadResponses,
-	MoveScheduleEventData,
-	MoveScheduleEventErrors,
-	MoveScheduleEventResponses,
 	NewSubscriptionData,
 	NewSubscriptionErrors,
 	NewSubscriptionResponses,
@@ -807,28 +804,6 @@ export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Set specific event as current
- *
- * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
- */
-export const setEventAsCurrent = <ThrowOnError extends boolean = false>(
-	options: Options<SetEventAsCurrentData, ThrowOnError>
-): RequestResult<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError> =>
-	(options.client ?? client).put<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError>(
-		{
-			security: [
-				{
-					in: 'cookie',
-					name: 'session_id',
-					type: 'apiKey'
-				}
-			],
-			url: '/schedule/{event_id}/current',
-			...options
-		}
-	);
-
-/**
  * Unset current schedule event
  *
  * Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.
@@ -853,37 +828,35 @@ export const uncheckCurrentEvent = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Reorder schedule event
+ * Set specific event as current
  *
- * Moves an event to a new position in the sequence, specifically after the provided event ID. If it is already there, nothing is changed or announced.
+ * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
  */
-export const moveScheduleEvent = <ThrowOnError extends boolean = false>(
-	options: Options<MoveScheduleEventData, ThrowOnError>
-): RequestResult<MoveScheduleEventResponses, MoveScheduleEventErrors, ThrowOnError> =>
-	(options.client ?? client).patch<
-		MoveScheduleEventResponses,
-		MoveScheduleEventErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
+export const setEventAsCurrent = <ThrowOnError extends boolean = false>(
+	options: Options<SetEventAsCurrentData, ThrowOnError>
+): RequestResult<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError> =>
+	(options.client ?? client).put<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError>(
+		{
+			security: [
+				{
+					in: 'cookie',
+					name: 'session_id',
+					type: 'apiKey'
+				}
+			],
+			url: '/schedule/current',
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...options.headers
 			}
-		],
-		url: '/schedule/{event_id}/move',
-		...options,
-		headers: {
-			'Content-Type': 'application/json',
-			...options.headers
 		}
-	});
+	);
 
 /**
  * Update a schedule event
  *
- * Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped. If the event already has that state, nothing is announced.
+ * Applies one change per request. `is_skipped` skips the event or restores it; the current event cannot be skipped. `place_after_entry_id` moves the event right after that entry, or to the top when null. Requesting the state that already holds changes and announces nothing.
  */
 export const updateScheduleEvent = <ThrowOnError extends boolean = false>(
 	options: Options<UpdateScheduleEventData, ThrowOnError>

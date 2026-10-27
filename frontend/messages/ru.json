@@ -309,6 +309,7 @@
 	"event_move_search_placeholder": "Поиск выступления…",
 	"event_move_title": "Перенести выступление",
 	"event_move_to_block_start": "В начало блока",
+	"event_move_to_schedule_start": "В начало расписания",
 	"event_moved_toast": "Выступление перенесено",
 	"event_moving": "Переносим…",
 	"event_restore_confirm": "Вернуть «{title}» в программу?",

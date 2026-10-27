@@ -61,7 +61,6 @@ import {
 	logoutUser,
 	markAllNotificationsRead,
 	markNotificationsRead,
-	moveScheduleEvent,
 	newSubscription,
 	oauthCallback,
 	type Options,
@@ -235,9 +234,6 @@ import type {
 	MarkNotificationsReadData,
 	MarkNotificationsReadError,
 	MarkNotificationsReadResponse,
-	MoveScheduleEventData,
-	MoveScheduleEventError,
-	MoveScheduleEventResponse,
 	NewSubscriptionData,
 	NewSubscriptionError,
 	NewSubscriptionResponse,
@@ -1066,35 +1062,6 @@ export const updateScheduleSettingsMutation = (
 };
 
 /**
- * Set specific event as current
- *
- * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
- */
-export const setEventAsCurrentMutation = (
-	options?: Partial<Options<SetEventAsCurrentData>>
-): MutationOptions<
-	SetEventAsCurrentResponse,
-	SetEventAsCurrentError,
-	Options<SetEventAsCurrentData>
-> => {
-	const mutationOptions: MutationOptions<
-		SetEventAsCurrentResponse,
-		SetEventAsCurrentError,
-		Options<SetEventAsCurrentData>
-	> = {
-		mutationFn: async (fnOptions) => {
-			const { data } = await setEventAsCurrent({
-				...options,
-				...fnOptions,
-				throwOnError: true
-			});
-			return data;
-		}
-	};
-	return mutationOptions;
-};
-
-/**
  * Unset current schedule event
  *
  * Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.
@@ -1124,24 +1091,24 @@ export const uncheckCurrentEventMutation = (
 };
 
 /**
- * Reorder schedule event
+ * Set specific event as current
  *
- * Moves an event to a new position in the sequence, specifically after the provided event ID. If it is already there, nothing is changed or announced.
+ * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
  */
-export const moveScheduleEventMutation = (
-	options?: Partial<Options<MoveScheduleEventData>>
+export const setEventAsCurrentMutation = (
+	options?: Partial<Options<SetEventAsCurrentData>>
 ): MutationOptions<
-	MoveScheduleEventResponse,
-	MoveScheduleEventError,
-	Options<MoveScheduleEventData>
+	SetEventAsCurrentResponse,
+	SetEventAsCurrentError,
+	Options<SetEventAsCurrentData>
 > => {
 	const mutationOptions: MutationOptions<
-		MoveScheduleEventResponse,
-		MoveScheduleEventError,
-		Options<MoveScheduleEventData>
+		SetEventAsCurrentResponse,
+		SetEventAsCurrentError,
+		Options<SetEventAsCurrentData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await moveScheduleEvent({
+			const { data } = await setEventAsCurrent({
 				...options,
 				...fnOptions,
 				throwOnError: true
@@ -1155,7 +1122,7 @@ export const moveScheduleEventMutation = (
 /**
  * Update a schedule event
  *
- * Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped. If the event already has that state, nothing is announced.
+ * Applies one change per request. `is_skipped` skips the event or restores it; the current event cannot be skipped. `place_after_entry_id` moves the event right after that entry, or to the top when null. Requesting the state that already holds changes and announces nothing.
  */
 export const updateScheduleEventMutation = (
 	options?: Partial<Options<UpdateScheduleEventData>>

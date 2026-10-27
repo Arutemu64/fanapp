@@ -38,7 +38,7 @@ Everything below this section is detail; these rules alone prevent most mistakes
 12. Wire schema names are the class names, so the suffix says what a model is: an
     application DTO taken as the request body as-is is `…Input`; a route's own
     JSON body, needed because the `…Input` also carries a path param or the
-    client IP, is `…Body` (`MoveScheduleEventBody`); a form or multipart body
+    client IP, is `…Body` (`UpdateScheduleEventBody`); a form or multipart body
     is `…Form`; a read model is `…DTO`, and an interactor's own result wrapper
     `…Output`.
     Every response field is required, nullable when it can be empty — no

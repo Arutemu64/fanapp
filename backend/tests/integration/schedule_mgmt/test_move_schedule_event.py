@@ -495,3 +495,65 @@ async def test_move_repeat_is_a_no_op_inside_the_cooldown(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+
+
+async def test_move_without_a_neighbour_places_the_event_first(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    first = _schedule_event(1, 1)
+    second = _schedule_event(2, 2)
+    third = _schedule_event(3, 3)
+    for event in (first, second, third):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    await interactor(
+        MoveScheduleEventInput(event_id=third.id, place_after_entry_id=None)
+    )
+
+    saved = await schedule_gateway.get_event(third.id)
+    assert saved is not None
+    assert saved.order == 0
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=CursorPagination(limit=100)
+    )
+    assert changes[0].related_entry is not None
+    assert changes[0].related_entry.id == second.id
+
+
+async def test_move_to_the_top_when_already_first_is_a_no_op(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    first = _schedule_event(1, 1)
+    second = _schedule_event(2, 2)
+    for event in (first, second):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    await interactor(
+        MoveScheduleEventInput(event_id=first.id, place_after_entry_id=None)
+    )
+
+    saved = await schedule_gateway.get_event(first.id)
+    assert saved is not None
+    assert saved.order == 1
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=CursorPagination(limit=100)
+    )
+    assert changes == []
