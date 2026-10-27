@@ -6,10 +6,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
 
-# These tables hold short-lived state written outside the request's unit of work
-# (adapters/db/expiring/). Rows past expires_at are dead; PurgeExpiredState
-# deletes them.
-
 
 class AuthSessionORM(BaseORM):
     """A login session, keyed by the SHA-256 of the opaque cookie token."""

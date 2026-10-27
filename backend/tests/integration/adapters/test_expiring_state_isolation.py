@@ -1,3 +1,8 @@
+"""Real, separate connections, as production uses.
+
+The rollback fixture shares one connection and would hide lock conflicts.
+"""
+
 import asyncio
 from collections.abc import AsyncIterator
 from uuid import uuid7
@@ -16,9 +21,6 @@ from fanfan.adapters.db.models import UserORM
 from fanfan.adapters.db.uow import SqlUnitOfWork
 from fanfan.core.exceptions.rate_limit import TooManyAttempts
 from fanfan.core.vo.user import UserId
-
-# These tests use real, separate connections, as production does. The usual
-# rollback fixture shares one connection and would hide lock conflicts.
 
 pytestmark = [
     pytest.mark.asyncio,

@@ -21,7 +21,6 @@ from fanfan.presentation.web.config import WebConfig
 
 
 class ExpiringStateProvider(Provider):
-    # Request scope lets tests bind the session factory to their own connection.
     scope = Scope.REQUEST
 
     @provide(scope=Scope.APP)

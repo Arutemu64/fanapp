@@ -206,9 +206,6 @@ class SqlUserGateway(UserGateway):
                 self.session.add(_from_model(user))
                 await self.session.flush()
 
-    # FOR NO KEY UPDATE: it never changes users.id, and unlike FOR UPDATE it
-    # lets the auth_sessions foreign-key check through while a login holds the
-    # row (https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS).
     @override
     async def get_by_id(self, user_id: UserId) -> User | None:
         stmt = (
