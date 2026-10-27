@@ -2,6 +2,11 @@
   "openapi": "3.1.0",
   "info": {
     "title": "FAN FAN API",
+    "description": "Backend of the FAN FAN anime convention companion app: the programme, voting, notifications, the quest and the staff tools. Errors are RFC 9457 problem details; map them by `code`.",
+    "contact": {
+      "name": "FAN FAN",
+      "url": "https://github.com/Arutemu64/fanapp"
+    },
     "version": "2.1.0"
   },
   "paths": {
@@ -19,6 +24,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DebugOutput"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -40,6 +55,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HealthCheckOutput"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -85,7 +110,8 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
@@ -99,6 +125,16 @@
           },
           "401": {
             "description": "Invalid email or password.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -168,7 +204,8 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
@@ -192,6 +229,16 @@
           },
           "404": {
             "description": "User not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -233,10 +280,21 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -286,7 +344,8 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
@@ -310,6 +369,16 @@
           },
           "502": {
             "description": "The email could not be delivered — the mail service was unreachable or refused the message.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -359,7 +428,8 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
@@ -390,6 +460,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -405,6 +485,16 @@
         "responses": {
           "204": {
             "description": "Successfully logged out."
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -424,6 +514,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OAuthProvidersOutput"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -481,6 +581,16 @@
           },
           "303": {
             "description": "The provider could not be reached. Redirects to the login page with an `oauthLoginError` query param."
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -516,6 +626,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -535,6 +655,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PublicConfigDTO"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -573,6 +703,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -648,6 +788,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -688,6 +838,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -748,6 +908,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -835,6 +1005,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -902,7 +1082,8 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
@@ -926,6 +1107,16 @@
           },
           "409": {
             "description": "Email already in use by another account.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1001,6 +1192,16 @@
           },
           "303": {
             "description": "The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param."
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -1072,6 +1273,16 @@
           },
           "409": {
             "description": "Cannot remove the user's last remaining sign-in method.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1154,6 +1365,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1204,6 +1425,16 @@
           },
           "404": {
             "description": "Festival settings were not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1279,6 +1510,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1315,9 +1556,20 @@
                     },
                     "retry": {
                       "type": "integer",
-                      "minimum": 0
+                      "minimum": 0,
+                      "format": "int32"
                     }
                   }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1342,6 +1594,12 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Cache-Control": {
+                "description": "`no-cache`: a client may store the schedule but must revalidate it with If-None-Match before reuse.",
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "content": {
@@ -1359,6 +1617,22 @@
                 "description": "Schedule version; send it back in If-None-Match.",
                 "schema": {
                   "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "`no-cache`: a client may store the schedule but must revalidate it with If-None-Match before reuse.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -1427,6 +1701,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1467,6 +1751,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1525,6 +1819,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1599,7 +1903,8 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
@@ -1623,6 +1928,16 @@
           },
           "404": {
             "description": "Event ID not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1675,10 +1990,21 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1771,7 +2097,8 @@
             "headers": {
               "Retry-After": {
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 },
                 "description": "Seconds to wait before retrying."
               }
@@ -1796,6 +2123,16 @@
           },
           "404": {
             "description": "Event or target entry not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1830,7 +2167,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -1886,6 +2224,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1967,6 +2315,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2009,6 +2367,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2037,6 +2405,14 @@
         "responses": {
           "201": {
             "description": "Subscription created successfully.",
+            "headers": {
+              "Location": {
+                "description": "The created subscription.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -2087,6 +2463,16 @@
           },
           "409": {
             "description": "Subscription for this event already exists.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2173,6 +2559,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2195,6 +2591,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2214,6 +2620,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ListVotingNominationsOutput"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -2272,6 +2688,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2297,6 +2723,14 @@
         "responses": {
           "201": {
             "description": "Vote successfully cast.",
+            "headers": {
+              "Location": {
+                "description": "The cast vote.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -2347,6 +2781,16 @@
           },
           "409": {
             "description": "Already voted in this nomination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2433,6 +2877,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2468,6 +2922,16 @@
           },
           "403": {
             "description": "Missing voting:manage.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2545,6 +3009,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2585,6 +3059,16 @@
           },
           "403": {
             "description": "Missing voting:manage.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2663,6 +3147,16 @@
           },
           "404": {
             "description": "Unknown endpoint."
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2788,6 +3282,25 @@
           },
           "429": {
             "description": "Announcement cooldown.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "description": "Seconds to wait before retrying."
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2822,7 +3335,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 10,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -2885,6 +3399,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2927,6 +3451,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2960,6 +3494,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3027,6 +3571,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3074,10 +3628,21 @@
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
                 "schema": {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3167,6 +3732,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -3192,7 +3767,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 10,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -3248,6 +3824,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3339,11 +3925,21 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/push": {
+    "/push-subscriptions": {
       "post": {
         "tags": [
           "Push"
@@ -3404,6 +4000,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3413,7 +4019,7 @@
         ]
       }
     },
-    "/push/lookup": {
+    "/push-subscriptions/lookup": {
       "post": {
         "tags": [
           "Push"
@@ -3471,6 +4077,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3480,7 +4096,7 @@
         ]
       }
     },
-    "/push/remove": {
+    "/push-subscriptions/remove": {
       "post": {
         "tags": [
           "Push"
@@ -3534,6 +4150,16 @@
           },
           "404": {
             "description": "No subscription has this endpoint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3613,6 +4239,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -3638,7 +4274,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -3701,6 +4338,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -3728,7 +4375,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -3751,7 +4399,7 @@
             "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           },
           {
-            "name": "search",
+            "name": "q",
             "in": "query",
             "required": false,
             "schema": {
@@ -3764,8 +4412,10 @@
                   "type": "null"
                 }
               ],
-              "title": "Search"
-            }
+              "description": "Search term.",
+              "title": "Q"
+            },
+            "description": "Search term."
           }
         ],
         "responses": {
@@ -3808,85 +4458,18 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
-      }
-    },
-    "/tickets/generate": {
-      "post": {
-        "tags": [
-          "Tickets"
-        ],
-        "summary": "Generate tickets",
-        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes. The client supplies the batch ID, so repeating the same request returns the existing batch instead of generating another.",
-        "operationId": "generate_tickets",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GenerateTicketsInput"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Tickets generated, or an identical batch replayed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenerateTicketsOutput"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationProblem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The batch ID belongs to a different batch.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
       }
     },
     "/tickets/tcloud-event-roles": {
@@ -3920,6 +4503,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3985,6 +4578,103 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/ticket-batches": {
+      "post": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Generate a batch of tickets",
+        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes. The client supplies the batch ID, so repeating the same request returns the existing batch instead of generating another.",
+        "operationId": "create_ticket_batch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTicketsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Tickets generated, or an identical batch replayed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTicketsOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The batch ID belongs to a different batch.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4008,11 +4698,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/SyncSourceStatusDTO"
-                  },
-                  "type": "array",
-                  "title": "Response List Sync Sources"
+                  "$ref": "#/components/schemas/ListSyncSourcesOutput"
                 }
               }
             }
@@ -4029,6 +4715,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4126,6 +4822,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4153,7 +4859,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -4176,7 +4883,7 @@
             "description": "Opaque `next_cursor` from the previous page; omit it for the first page."
           },
           {
-            "name": "search",
+            "name": "q",
             "in": "query",
             "required": false,
             "schema": {
@@ -4189,8 +4896,10 @@
                   "type": "null"
                 }
               ],
-              "title": "Search"
-            }
+              "description": "Search term.",
+              "title": "Q"
+            },
+            "description": "Search term."
           },
           {
             "name": "role",
@@ -4258,6 +4967,16 @@
           },
           "403": {
             "description": "Missing users:read.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4339,6 +5058,16 @@
           },
           "404": {
             "description": "User not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4440,6 +5169,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4527,6 +5266,16 @@
           },
           "404": {
             "description": "User not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4626,6 +5375,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4690,6 +5449,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4732,6 +5501,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4764,7 +5543,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -4827,6 +5607,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4846,15 +5636,17 @@
         ],
         "parameters": [
           {
-            "name": "search",
+            "name": "q",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "minLength": 1,
               "maxLength": 64,
-              "title": "Search"
-            }
+              "description": "Search term.",
+              "title": "Q"
+            },
+            "description": "Search term."
           }
         ],
         "responses": {
@@ -4897,6 +5689,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -4923,7 +5725,8 @@
               "type": "integer",
               "maximum": 999999,
               "minimum": 100000,
-              "title": "Number"
+              "title": "Number",
+              "format": "int32"
             }
           }
         ],
@@ -4970,6 +5773,16 @@
           },
           "404": {
             "description": "The user does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5064,6 +5877,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -5089,7 +5912,8 @@
               "maximum": 100,
               "minimum": 1,
               "default": 20,
-              "title": "Limit"
+              "title": "Limit",
+              "format": "int32"
             }
           },
           {
@@ -5145,6 +5969,16 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5234,6 +6068,16 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -5272,15 +6116,15 @@
       },
       "AppSettingsDTO": {
         "properties": {
-          "festival_start": {
+          "festival_starts_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Festival Start"
+            "title": "Festival Starts At"
           },
-          "festival_end": {
+          "festival_ends_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Festival End"
+            "title": "Festival Ends At"
           },
           "quest_enabled": {
             "type": "boolean",
@@ -5289,18 +6133,20 @@
           "quest_max_award": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Quest Max Award"
+            "title": "Quest Max Award",
+            "format": "int32"
           },
           "quest_cancel_window_minutes": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Quest Cancel Window Minutes"
+            "title": "Quest Cancel Window Minutes",
+            "format": "int32"
           }
         },
         "type": "object",
         "required": [
-          "festival_start",
-          "festival_end",
+          "festival_starts_at",
+          "festival_ends_at",
           "quest_enabled",
           "quest_max_award",
           "quest_cancel_window_minutes"
@@ -5320,12 +6166,14 @@
             "type": "integer",
             "maximum": 999999.0,
             "minimum": 100000.0,
-            "title": "User Number"
+            "title": "User Number",
+            "format": "int32"
           },
           "amount": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Amount"
+            "title": "Amount",
+            "format": "int32"
           },
           "message": {
             "type": "string",
@@ -5482,7 +6330,8 @@
           },
           "votes_count": {
             "type": "integer",
-            "title": "Votes Count"
+            "title": "Votes Count",
+            "format": "int32"
           }
         },
         "type": "object",
@@ -5531,7 +6380,8 @@
             "type": "integer",
             "maximum": 240.0,
             "minimum": 1.0,
-            "title": "Lead Minutes"
+            "title": "Lead Minutes",
+            "format": "int32"
           }
         },
         "additionalProperties": false,
@@ -5572,7 +6422,8 @@
           },
           "number": {
             "type": "integer",
-            "title": "Number"
+            "title": "Number",
+            "format": "int32"
           },
           "email": {
             "anyOf": [
@@ -5693,7 +6544,8 @@
           },
           "pool_size": {
             "type": "integer",
-            "title": "Pool Size"
+            "title": "Pool Size",
+            "format": "int32"
           }
         },
         "type": "object",
@@ -5884,7 +6736,8 @@
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Amount"
+            "title": "Amount",
+            "format": "int32"
           }
         },
         "additionalProperties": false,
@@ -5916,12 +6769,14 @@
         "properties": {
           "points": {
             "type": "integer",
-            "title": "Points"
+            "title": "Points",
+            "format": "int32"
           },
           "rank": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -5929,12 +6784,12 @@
             ],
             "title": "Rank"
           },
-          "leaderboard": {
+          "leaderboard_entries": {
             "items": {
               "$ref": "#/components/schemas/LeaderboardEntryDTO"
             },
             "type": "array",
-            "title": "Leaderboard"
+            "title": "Leaderboard Entries"
           },
           "own_entry": {
             "anyOf": [
@@ -5951,14 +6806,14 @@
         "required": [
           "points",
           "rank",
-          "leaderboard",
+          "leaderboard_entries",
           "own_entry"
         ],
         "title": "GetQuestOutput"
       },
       "GetVotingDashboardOutput": {
         "properties": {
-          "voting_start": {
+          "voting_starts_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -5968,9 +6823,9 @@
                 "type": "null"
               }
             ],
-            "title": "Voting Start"
+            "title": "Voting Starts At"
           },
-          "voting_end": {
+          "voting_ends_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -5980,11 +6835,12 @@
                 "type": "null"
               }
             ],
-            "title": "Voting End"
+            "title": "Voting Ends At"
           },
           "contest_pool_size": {
             "type": "integer",
-            "title": "Contest Pool Size"
+            "title": "Contest Pool Size",
+            "format": "int32"
           },
           "nominations": {
             "items": {
@@ -5996,8 +6852,8 @@
         },
         "type": "object",
         "required": [
-          "voting_start",
-          "voting_end",
+          "voting_starts_at",
+          "voting_ends_at",
           "contest_pool_size",
           "nominations"
         ],
@@ -6031,7 +6887,8 @@
           },
           "participants_count": {
             "type": "integer",
-            "title": "Participants Count"
+            "title": "Participants Count",
+            "format": "int32"
           },
           "user_vote": {
             "anyOf": [
@@ -6072,7 +6929,7 @@
           "status": {
             "$ref": "#/components/schemas/VotingStatus"
           },
-          "voting_start": {
+          "voting_starts_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -6082,9 +6939,9 @@
                 "type": "null"
               }
             ],
-            "title": "Voting Start"
+            "title": "Voting Starts At"
           },
-          "voting_end": {
+          "voting_ends_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -6094,15 +6951,15 @@
                 "type": "null"
               }
             ],
-            "title": "Voting End"
+            "title": "Voting Ends At"
           }
         },
         "type": "object",
         "required": [
           "can_vote",
           "status",
-          "voting_start",
-          "voting_end"
+          "voting_starts_at",
+          "voting_ends_at"
         ],
         "title": "GetVotingStatusOutput"
       },
@@ -6149,7 +7006,8 @@
           },
           "status": {
             "type": "integer",
-            "title": "Status"
+            "title": "Status",
+            "format": "int32"
           },
           "code": {
             "type": "string",
@@ -6187,7 +7045,8 @@
           "row": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -6198,7 +7057,8 @@
           "number": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -6241,7 +7101,8 @@
         "properties": {
           "rank": {
             "type": "integer",
-            "title": "Rank"
+            "title": "Rank",
+            "format": "int32"
           },
           "player": {
             "$ref": "#/components/schemas/QuestPlayerDTO"
@@ -6425,6 +7286,22 @@
         ],
         "title": "ListSubscriptionsOutput"
       },
+      "ListSyncSourcesOutput": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SyncSourceStatusDTO"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources"
+        ],
+        "title": "ListSyncSourcesOutput"
+      },
       "ListTicketsOutput": {
         "properties": {
           "tickets": {
@@ -6436,7 +7313,8 @@
           },
           "total": {
             "type": "integer",
-            "title": "Total"
+            "title": "Total",
+            "format": "int32"
           },
           "next_cursor": {
             "anyOf": [
@@ -6497,7 +7375,8 @@
           },
           "total": {
             "type": "integer",
-            "title": "Total"
+            "title": "Total",
+            "format": "int32"
           },
           "next_cursor": {
             "anyOf": [
@@ -6590,22 +7469,16 @@
             "title": "Body"
           },
           "roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/UserRole"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            },
+            "type": "array",
             "title": "Roles"
           },
           "total_count": {
             "type": "integer",
-            "title": "Total Count"
+            "title": "Total Count",
+            "format": "int32"
           },
           "created_at": {
             "type": "string",
@@ -6671,7 +7544,8 @@
           },
           "total_votes": {
             "type": "integer",
-            "title": "Total Votes"
+            "title": "Total Votes",
+            "format": "int32"
           },
           "leader": {
             "anyOf": [
@@ -6742,7 +7616,8 @@
           },
           "participants_count": {
             "type": "integer",
-            "title": "Participants Count"
+            "title": "Participants Count",
+            "format": "int32"
           },
           "user_vote": {
             "anyOf": [
@@ -6882,7 +7757,8 @@
           "voting_number": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -6892,7 +7768,8 @@
           },
           "votes_count": {
             "type": "integer",
-            "title": "Votes Count"
+            "title": "Votes Count",
+            "format": "int32"
           },
           "user_vote": {
             "anyOf": [
@@ -6961,7 +7838,8 @@
           },
           "status": {
             "type": "integer",
-            "title": "Status"
+            "title": "Status",
+            "format": "int32"
           },
           "code": {
             "type": "string",
@@ -7054,15 +7932,15 @@
       },
       "PublicConfigDTO": {
         "properties": {
-          "festival_start": {
+          "festival_starts_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Festival Start"
+            "title": "Festival Starts At"
           },
-          "festival_end": {
+          "festival_ends_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Festival End"
+            "title": "Festival Ends At"
           },
           "quest_enabled": {
             "type": "boolean",
@@ -7070,23 +7948,25 @@
           },
           "quest_max_award": {
             "type": "integer",
-            "title": "Quest Max Award"
+            "title": "Quest Max Award",
+            "format": "int32"
           },
           "schedule_changeover_seconds": {
             "type": "integer",
-            "title": "Schedule Changeover Seconds"
+            "title": "Schedule Changeover Seconds",
+            "format": "int32"
           }
         },
         "type": "object",
         "required": [
-          "festival_start",
-          "festival_end",
+          "festival_starts_at",
+          "festival_ends_at",
           "quest_enabled",
           "quest_max_award",
           "schedule_changeover_seconds"
         ],
         "title": "PublicConfigDTO",
-        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` and `festival_end` so the client can run the\nlive countdown and pick its before/during/after phase itself — flipping at\neach boundary without provoking a 403 on a guarded endpoint. Voting\navailability is intentionally not here: the UI reads it per-user from\nGET /voting/status (which already reflects the time range as a DISABLED\nstate), so a second public copy would only be a redundant source of truth to\ndrift."
+        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_starts_at` and `festival_ends_at` so the client can\nrun the live countdown and pick its before/during/after phase itself — flipping at\neach boundary without provoking a 403 on a guarded endpoint. Voting\navailability is intentionally not here: the UI reads it per-user from\nGET /voting/status (which already reflects the time range as a DISABLED\nstate), so a second public copy would only be a redundant source of truth to\ndrift."
       },
       "QuestAwardItemDTO": {
         "properties": {
@@ -7097,7 +7977,8 @@
           },
           "amount": {
             "type": "integer",
-            "title": "Amount"
+            "title": "Amount",
+            "format": "int32"
           },
           "message": {
             "type": "string",
@@ -7160,7 +8041,8 @@
           },
           "amount": {
             "type": "integer",
-            "title": "Amount"
+            "title": "Amount",
+            "format": "int32"
           },
           "message": {
             "type": "string",
@@ -7203,7 +8085,8 @@
           },
           "number": {
             "type": "integer",
-            "title": "Number"
+            "title": "Number",
+            "format": "int32"
           },
           "username": {
             "type": "string",
@@ -7215,7 +8098,8 @@
           },
           "points": {
             "type": "integer",
-            "title": "Points"
+            "title": "Points",
+            "format": "int32"
           }
         },
         "type": "object",
@@ -7293,7 +8177,8 @@
           "number": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -7415,19 +8300,19 @@
             ],
             "title": "Current Event Id"
           },
-          "schedule": {
+          "entries": {
             "items": {
               "$ref": "#/components/schemas/ScheduleEntryDTO"
             },
             "type": "array",
-            "title": "Schedule",
+            "title": "Entries",
             "description": "Every entry in running order."
           }
         },
         "type": "object",
         "required": [
           "current_event_id",
-          "schedule"
+          "entries"
         ],
         "title": "ScheduleDTO"
       },
@@ -7472,7 +8357,8 @@
           "number": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -7486,7 +8372,8 @@
           },
           "duration_seconds": {
             "type": "integer",
-            "title": "Duration Seconds"
+            "title": "Duration Seconds",
+            "format": "int32"
           },
           "is_skipped": {
             "type": "boolean",
@@ -7506,7 +8393,8 @@
           "position": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -7533,13 +8421,15 @@
           "announcement_cooldown_seconds": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Announcement Cooldown Seconds"
+            "title": "Announcement Cooldown Seconds",
+            "format": "int32"
           },
           "changeover_seconds": {
             "type": "integer",
             "maximum": 600.0,
             "minimum": 0.0,
-            "title": "Changeover Seconds"
+            "title": "Changeover Seconds",
+            "format": "int32"
           }
         },
         "type": "object",
@@ -7643,7 +8533,7 @@
       },
       "SetVotingTimeRangeInput": {
         "properties": {
-          "voting_start": {
+          "voting_starts_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -7653,9 +8543,9 @@
                 "type": "null"
               }
             ],
-            "title": "Voting Start"
+            "title": "Voting Starts At"
           },
-          "voting_end": {
+          "voting_ends_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -7665,14 +8555,14 @@
                 "type": "null"
               }
             ],
-            "title": "Voting End"
+            "title": "Voting Ends At"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "voting_start",
-          "voting_end"
+          "voting_starts_at",
+          "voting_ends_at"
         ],
         "title": "SetVotingTimeRangeInput"
       },
@@ -7725,7 +8615,8 @@
           "number": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -7740,7 +8631,8 @@
           "position": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "format": "int32"
               },
               {
                 "type": "null"
@@ -7767,7 +8659,8 @@
           },
           "lead_minutes": {
             "type": "integer",
-            "title": "Lead Minutes"
+            "title": "Lead Minutes",
+            "format": "int32"
           },
           "event": {
             "$ref": "#/components/schemas/SubscriptionEventDTO"
@@ -7970,7 +8863,8 @@
         "properties": {
           "new_tickets_count": {
             "type": "integer",
-            "title": "New Tickets Count"
+            "title": "New Tickets Count",
+            "format": "int32"
           }
         },
         "type": "object",
@@ -8041,7 +8935,8 @@
         "properties": {
           "count": {
             "type": "integer",
-            "title": "Count"
+            "title": "Count",
+            "format": "int32"
           }
         },
         "type": "object",
@@ -8052,15 +8947,15 @@
       },
       "UpdateAppSettingsInput": {
         "properties": {
-          "festival_start": {
+          "festival_starts_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Festival Start"
+            "title": "Festival Starts At"
           },
-          "festival_end": {
+          "festival_ends_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Festival End"
+            "title": "Festival Ends At"
           },
           "quest_enabled": {
             "type": "boolean",
@@ -8070,13 +8965,15 @@
             "type": "integer",
             "maximum": 10000.0,
             "minimum": 1.0,
-            "title": "Quest Max Award"
+            "title": "Quest Max Award",
+            "format": "int32"
           },
           "quest_cancel_window_minutes": {
             "type": "integer",
             "maximum": 1440.0,
             "minimum": 0.0,
-            "title": "Quest Cancel Window Minutes"
+            "title": "Quest Cancel Window Minutes",
+            "format": "int32"
           }
         },
         "additionalProperties": false,
@@ -8132,13 +9029,15 @@
           "announcement_cooldown_seconds": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Announcement Cooldown Seconds"
+            "title": "Announcement Cooldown Seconds",
+            "format": "int32"
           },
           "changeover_seconds": {
             "type": "integer",
             "maximum": 600.0,
             "minimum": 0.0,
-            "title": "Changeover Seconds"
+            "title": "Changeover Seconds",
+            "format": "int32"
           }
         },
         "additionalProperties": false,
@@ -8448,7 +9347,8 @@
                   "type": "string"
                 },
                 {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 }
               ]
             },
@@ -8466,7 +9366,8 @@
                   "type": "string"
                 },
                 {
-                  "type": "integer"
+                  "type": "integer",
+                  "format": "int32"
                 },
                 {
                   "type": "number"
@@ -8499,7 +9400,8 @@
           },
           "status": {
             "type": "integer",
-            "title": "Status"
+            "title": "Status",
+            "format": "int32"
           },
           "code": {
             "type": "string",

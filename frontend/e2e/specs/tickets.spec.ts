@@ -1,4 +1,5 @@
 import type {
+	ListSyncSourcesOutput,
 	ListTicketsOutput,
 	SetTCloudEventRolesInput,
 	SyncSourceStatusDto,
@@ -48,7 +49,7 @@ test.describe('tickets tool', () => {
 				available: true,
 				event_roles: []
 			}),
-			'GET /sync/sources': json<SyncSourceStatusDto[]>(SOURCES)
+			'GET /sync/sources': json<ListSyncSourcesOutput>({ sources: SOURCES })
 		});
 
 		await page.goto('/tools/tickets');
@@ -71,7 +72,7 @@ test.describe('tickets tool', () => {
 				available: true,
 				event_roles: [{ event_id: 'event-volunteers', role: 'volunteer' }]
 			}),
-			'GET /sync/sources': json<SyncSourceStatusDto[]>(SOURCES),
+			'GET /sync/sources': json<ListSyncSourcesOutput>({ sources: SOURCES }),
 			'PUT /tickets/tcloud-event-roles': (route) => {
 				saved = route.request().postDataJSON() as SetTCloudEventRolesInput;
 				return { status: 204 };

@@ -12,14 +12,16 @@ pytestmark = pytest.mark.unit
 
 def test_festival_boundaries_require_an_offset() -> None:
     with pytest.raises(ValidationError) as exc_info:
-        UpdateAppSettingsInput(festival_end=datetime(2026, 8, 23, 20, 0))  # noqa: DTZ001
+        UpdateAppSettingsInput(festival_ends_at=datetime(2026, 8, 23, 20, 0))  # noqa: DTZ001
 
-    assert [error["loc"] for error in exc_info.value.errors()] == [("festival_end",)]
+    assert [error["loc"] for error in exc_info.value.errors()] == [
+        ("festival_ends_at",)
+    ]
 
 
 def test_festival_boundaries_accept_an_aware_instant() -> None:
     aware = datetime(2026, 8, 23, 20, 0, tzinfo=UTC)
 
-    parsed = UpdateAppSettingsInput(festival_end=aware)
+    parsed = UpdateAppSettingsInput(festival_ends_at=aware)
 
-    assert parsed.festival_end == aware
+    assert parsed.festival_ends_at == aware

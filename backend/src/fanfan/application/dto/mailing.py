@@ -12,6 +12,7 @@ class MailingDTO(BaseModel):
     status: MailingStatus
     created_by: UserRefDTO | None
     body: str | None
-    roles: list[UserRole] | None
+    # Empty for a mailing that isn't a broadcast (schedule-change announcements).
+    roles: list[UserRole]
     total_count: int
     created_at: datetime

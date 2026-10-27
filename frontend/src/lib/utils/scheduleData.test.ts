@@ -7,7 +7,7 @@ import { mergeSubscriptions, secondsUntilActs } from './scheduleData';
 
 const schedule: ScheduleDto = {
 	current_event_id: null,
-	schedule: [
+	entries: [
 		{
 			type: 'event',
 			id: 'a',

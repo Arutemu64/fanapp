@@ -12,8 +12,8 @@ from fanfan.core.vo.permission import Permission
 
 
 class GetVotingDashboardOutput(BaseModel):
-    voting_start: datetime | None
-    voting_end: datetime | None
+    voting_starts_at: datetime | None
+    voting_ends_at: datetime | None
     contest_pool_size: int
     nominations: list[NominationContenderDTO]
 
@@ -47,8 +47,8 @@ class GetVotingDashboard:
         contest_pool_size = await self.user_gateway.count_voting_contest_pool()
 
         return GetVotingDashboardOutput(
-            voting_start=settings.voting_start,
-            voting_end=settings.voting_end,
+            voting_starts_at=settings.voting_starts_at,
+            voting_ends_at=settings.voting_ends_at,
             contest_pool_size=contest_pool_size,
             nominations=contenders,
         )

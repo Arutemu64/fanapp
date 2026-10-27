@@ -87,8 +87,8 @@ test('closed voting shows the closed banner', async ({ page, api }) => {
 		'GET /voting/status': json<GetVotingStatusOutput>({
 			can_vote: false,
 			status: 'disabled',
-			voting_start: null,
-			voting_end: null
+			voting_starts_at: null,
+			voting_ends_at: null
 		}),
 		'GET /voting/nominations': json<ListVotingNominationsOutput>({ nominations: [] })
 	});

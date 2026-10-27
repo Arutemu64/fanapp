@@ -19,6 +19,7 @@ from fanfan.application.interactors.tickets.process_ticket_order import (
 from fanfan.presentation.web.festengine.config import FestEngineConfig
 from fanfan.presentation.web.festengine.events import FestEngineEvent, to_action_input
 from fanfan.presentation.web.festengine.signature import verify_signature
+from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ProblemDetails
 
 webhooks_router = APIRouter(tags=["Webhooks"], prefix="/webhooks")
@@ -93,7 +94,10 @@ class FestEngineWebhookResponse(BaseModel):
             "description": "Unknown endpoint, bad signature, or unknown number.",
         },
         422: {"model": ProblemDetails, "description": "Malformed payload."},
-        429: {"model": ProblemDetails, "description": "Announcement cooldown."},
+        429: {
+            **RATE_LIMIT_RESPONSES[status.HTTP_429_TOO_MANY_REQUESTS],
+            "description": "Announcement cooldown.",
+        },
     },
 )
 @inject

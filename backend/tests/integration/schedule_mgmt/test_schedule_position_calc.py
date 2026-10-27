@@ -48,7 +48,7 @@ async def test_position_with_fractional_orders(
         await schedule_gateway.add(entry)
     await uow.commit()
 
-    schedule = (await schedule_gateway.read_schedule()).schedule
+    schedule = (await schedule_gateway.read_schedule()).entries
     by_number = {e.number: e for e in schedule if isinstance(e, ScheduleEventFullDTO)}
 
     assert [e.id for e in schedule] == [

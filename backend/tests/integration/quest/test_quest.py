@@ -83,7 +83,7 @@ async def test_awards_add_up_and_rank_the_player(
 
     assert quest.points == 15
     assert quest.rank == 1
-    assert [entry.player.id for entry in quest.leaderboard] == [visitor.id]
+    assert [entry.player.id for entry in quest.leaderboard_entries] == [visitor.id]
     assert quest.own_entry is None
 
 
@@ -103,7 +103,7 @@ async def test_ties_rank_whoever_reached_the_score_first(
     login(visitor)
     quest = await (await dishka_request.get(GetQuest))()
 
-    assert [(entry.rank, entry.player.id) for entry in quest.leaderboard] == [
+    assert [(entry.rank, entry.player.id) for entry in quest.leaderboard_entries] == [
         (1, visitor.id),
         (2, quest_manager.id),
     ]

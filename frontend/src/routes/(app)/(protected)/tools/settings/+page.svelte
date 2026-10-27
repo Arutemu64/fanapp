@@ -44,11 +44,13 @@
 		}
 	}));
 	let savedFestivalStart = $state(
-		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
+		untrack(() => toEventDateTimeLocal(data.settings.festival_starts_at))
 	);
-	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
-	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
-	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
+	let savedFestivalEnd = $state(
+		untrack(() => toEventDateTimeLocal(data.settings.festival_ends_at))
+	);
+	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_starts_at)));
+	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_ends_at)));
 	let festivalStartError = $state('');
 	let festivalEndError = $state('');
 	let savedQuest = $state(
@@ -158,8 +160,8 @@
 		saveMutation.mutate(
 			{
 				body: {
-					festival_start: fromEventDateTimeLocal(festivalStart),
-					festival_end: fromEventDateTimeLocal(festivalEnd),
+					festival_starts_at: fromEventDateTimeLocal(festivalStart),
+					festival_ends_at: fromEventDateTimeLocal(festivalEnd),
 					quest_enabled: nextQuest.enabled,
 					quest_max_award: nextQuest.max_award,
 					quest_cancel_window_minutes: nextQuest.cancel_window_minutes
@@ -175,8 +177,8 @@
 					toastService.add(m.settings_saved(), 'success');
 				},
 				onError: (error) => {
-					festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
-					festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
+					festivalStartError = getApiFieldError(error, 'festival_starts_at') ?? '';
+					festivalEndError = getApiFieldError(error, 'festival_ends_at') ?? '';
 					questMaxAwardError = getApiFieldError(error, 'quest_max_award') ?? '';
 					questCancelWindowError = getApiFieldError(error, 'quest_cancel_window_minutes') ?? '';
 					const hasFieldError =
@@ -210,7 +212,7 @@
 				<Field.FieldLabel for="festival-start">{m.settings_start_label()}</Field.FieldLabel>
 				<Input
 					id="festival-start"
-					name="festival_start"
+					name="festival_starts_at"
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalStart}
@@ -232,7 +234,7 @@
 				<Field.FieldLabel for="festival-end">{m.settings_end_label()}</Field.FieldLabel>
 				<Input
 					id="festival-end"
-					name="festival_end"
+					name="festival_ends_at"
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalEnd}

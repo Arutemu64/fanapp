@@ -56,8 +56,8 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 					'GET /voting/status': json<GetVotingStatusOutput>({
 						can_vote: true,
 						status: 'open',
-						voting_start: null,
-						voting_end: null
+						voting_starts_at: null,
+						voting_ends_at: null
 					}),
 					'GET /voting/nominations': json<ListVotingNominationsOutput>({
 						nominations: [
@@ -88,8 +88,8 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 					'GET /voting/status': json<GetVotingStatusOutput>({
 						can_vote: true,
 						status: 'open',
-						voting_start: null,
-						voting_end: null
+						voting_starts_at: null,
+						voting_ends_at: null
 					}),
 					'GET /voting/nominations/best-cosplay': json<GetVotingNominationOutput>({
 						id: '01890000-0000-7000-8000-0000000000b1',

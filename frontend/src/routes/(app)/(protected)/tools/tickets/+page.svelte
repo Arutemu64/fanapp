@@ -29,7 +29,11 @@
 	let canOpenUsers = $derived(hasPermission(data.user, 'users:read'));
 	let initialTab = $derived(canManage ? 'list' : 'tcloud');
 
-	const sourcesQuery = createQuery(() => ({ ...listSyncSourcesOptions(), enabled: canSync }));
+	const sourcesQuery = createQuery(() => ({
+		...listSyncSourcesOptions(),
+		select: (output) => output.sources,
+		enabled: canSync
+	}));
 	let sourcesView = $derived(
 		queryView(sourcesQuery, {
 			policy: 'cached',

@@ -178,7 +178,7 @@ const ownQuestEntry: LeaderboardEntryDto = {
 export const questStanding: GetQuestOutput = {
 	points: 120,
 	rank: 4,
-	leaderboard: [
+	leaderboard_entries: [
 		...QUEST_RIVALS.map((rival, index) => questEntry(index + 1, rival.username, rival.points)),
 		ownQuestEntry,
 		...QUEST_CHASERS.map((chaser, index) => questEntry(index + 5, chaser.username, chaser.points))

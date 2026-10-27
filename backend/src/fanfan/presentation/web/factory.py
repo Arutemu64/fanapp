@@ -21,6 +21,8 @@ from fanfan.presentation.web.middlewares import (
 )
 from fanfan.presentation.web.oauth import OAUTH_STATE_TTL_SECONDS
 from fanfan.presentation.web.openapi import (
+    API_CONTACT,
+    API_DESCRIPTION,
     API_TITLE,
     FanfanAPI,
     generate_operation_id,
@@ -43,6 +45,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         debug=config.debug.enabled,
         title=API_TITLE,
+        description=API_DESCRIPTION,
+        contact=API_CONTACT,
         version=APP_VERSION,
         generate_unique_id_function=generate_operation_id,
     )

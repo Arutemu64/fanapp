@@ -61,10 +61,10 @@
 
 	const pwa = getPwaService();
 
-	let festivalStartMs = $derived(new Date(config.festival_start).getTime());
-	let festivalEndMs = $derived(new Date(config.festival_end).getTime());
-	let votingStartMs = $derived(timeOrNaN(votingStatus?.voting_start));
-	let votingEndMs = $derived(timeOrNaN(votingStatus?.voting_end));
+	let festivalStartMs = $derived(new Date(config.festival_starts_at).getTime());
+	let festivalEndMs = $derived(new Date(config.festival_ends_at).getTime());
+	let votingStartMs = $derived(timeOrNaN(votingStatus?.voting_starts_at));
+	let votingEndMs = $derived(timeOrNaN(votingStatus?.voting_ends_at));
 
 	function timeOrNaN(iso: string | null | undefined): number {
 		return iso ? new Date(iso).getTime() : Number.NaN;
@@ -74,7 +74,7 @@
 
 	let phase = $derived(getFestivalPhase(now, festivalStartMs, festivalEndMs));
 	let votingOpen = $derived(isVotingOpenNow(votingStatus, now));
-	let votingEnded = $derived(hasVotingEnded(votingStatus?.voting_end, now));
+	let votingEnded = $derived(hasVotingEnded(votingStatus?.voting_ends_at, now));
 
 	let snapshot = $derived(getStageSnapshot(schedule, config.schedule_changeover_seconds));
 	let hasProgramme = $derived(schedule.length > 0);
@@ -170,7 +170,7 @@
 {/snippet}
 
 {#snippet main()}
-	<HeroCard {phase} festivalStart={config.festival_start} featured={featuredAct} />
+	<HeroCard {phase} festivalStart={config.festival_starts_at} featured={featuredAct} />
 
 	{#if showStaleNotice}
 		<StaleDataNotice message={m.schedule_cached_notice()} cachedAt={scheduleQuery.dataUpdatedAt} />

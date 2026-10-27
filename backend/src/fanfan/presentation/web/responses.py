@@ -22,6 +22,12 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     },
 }
 
+
+def location_header(description: str) -> dict[str, Any]:
+    """OpenAPI doc for a `Location` header; its value is a path from the API root."""
+    return {"Location": {"schema": {"type": "string"}, "description": description}}
+
+
 RATE_LIMIT_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_429_TOO_MANY_REQUESTS: {
         "model": ProblemDetails,

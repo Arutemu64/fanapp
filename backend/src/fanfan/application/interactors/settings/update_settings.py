@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateAppSettingsInput(InputModel):
-    festival_start: AwareDatetime | MISSING = MISSING
-    festival_end: AwareDatetime | MISSING = MISSING
+    festival_starts_at: AwareDatetime | MISSING = MISSING
+    festival_ends_at: AwareDatetime | MISSING = MISSING
     quest_enabled: bool | MISSING = MISSING
     quest_max_award: Annotated[int, Field(ge=1, le=10_000)] | MISSING = MISSING
     quest_cancel_window_minutes: Annotated[int, Field(ge=0, le=1440)] | MISSING = (
@@ -57,11 +57,11 @@ class UpdateSettings:
         update_flag = False
         public_config_changed = False
 
-        festival_start = data_to_update.get("festival_start")
-        festival_end = data_to_update.get("festival_end")
-        if festival_start is not None or festival_end is not None:
-            new_start = festival_start or settings.festival_start
-            new_end = festival_end or settings.festival_end
+        festival_starts_at = data_to_update.get("festival_starts_at")
+        festival_ends_at = data_to_update.get("festival_ends_at")
+        if festival_starts_at is not None or festival_ends_at is not None:
+            new_start = festival_starts_at or settings.festival_starts_at
+            new_end = festival_ends_at or settings.festival_ends_at
             settings.set_festival_schedule(start=new_start, end=new_end)
             update_flag = True
             public_config_changed = True

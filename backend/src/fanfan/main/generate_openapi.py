@@ -5,6 +5,8 @@ from fanfan.common.paths import SHARED_OPENAPI_PATH
 from fanfan.common.version import APP_VERSION
 from fanfan.presentation.web.error_codes import client_facing_error_codes
 from fanfan.presentation.web.openapi import (
+    API_CONTACT,
+    API_DESCRIPTION,
     API_TITLE,
     FanfanAPI,
     generate_operation_id,
@@ -17,6 +19,8 @@ OPENAPI_PATH = SHARED_OPENAPI_PATH
 def build_openapi_schema(version: str = APP_VERSION) -> dict[str, Any]:
     app = FanfanAPI(
         title=API_TITLE,
+        description=API_DESCRIPTION,
+        contact=API_CONTACT,
         version=version,
         generate_unique_id_function=generate_operation_id,
     )

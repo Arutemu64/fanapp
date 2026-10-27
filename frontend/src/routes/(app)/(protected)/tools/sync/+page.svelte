@@ -14,7 +14,10 @@
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 	import SyncSourceCard from '../components/SyncSourceCard.svelte';
 
-	const sourcesQuery = createQuery(() => listSyncSourcesOptions());
+	const sourcesQuery = createQuery(() => ({
+		...listSyncSourcesOptions(),
+		select: (output) => output.sources
+	}));
 	let sourcesView = $derived(
 		queryView(sourcesQuery, {
 			policy: 'cached',

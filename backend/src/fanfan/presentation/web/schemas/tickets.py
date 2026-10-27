@@ -18,4 +18,4 @@ class TicketListQuery(InputModel):
             "the first page.",
         ),
     ] = None
-    search: Annotated[str | None, Field(max_length=100)] = None
+    q: Annotated[str | None, Field(max_length=100, description="Search term.")] = None

@@ -34,7 +34,7 @@
 	const toastService = getToastService();
 
 	const scheduleQuery = createQuery(() => getScheduleOptions());
-	let schedule = $derived(scheduleQuery.data?.schedule ?? []);
+	let schedule = $derived(scheduleQuery.data?.entries ?? []);
 
 	const moveMutation = createMutation(() => ({
 		...updateScheduleEventMutation(),

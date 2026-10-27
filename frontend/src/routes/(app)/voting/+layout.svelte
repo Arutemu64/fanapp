@@ -16,7 +16,10 @@
 	const MAX_TIMEOUT = 2_147_483_647;
 
 	$effect(() => {
-		const bounds = [votingStatusQuery.data?.voting_start, votingStatusQuery.data?.voting_end];
+		const bounds = [
+			votingStatusQuery.data?.voting_starts_at,
+			votingStatusQuery.data?.voting_ends_at
+		];
 		const now = Date.now();
 		const nextBoundary = bounds
 			.filter((iso): iso is string => Boolean(iso))

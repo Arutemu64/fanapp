@@ -2,7 +2,7 @@ import type { ScheduleDto } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 
-const schedule: ScheduleDto['schedule'] = [
+const schedule: ScheduleDto['entries'] = [
 	{ type: 'block_start', id: 'block-1', title: 'Блок 1' },
 	...[1, 2].map((number) => ({
 		type: 'event' as const,
@@ -23,7 +23,7 @@ test.describe('schedule', { tag: '@critical' }, () => {
 	}) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ current_event_id: null, schedule }),
+			'GET /schedule': json({ current_event_id: null, entries: schedule }),
 			'GET /schedule/subscriptions': json({
 				subscriptions: [
 					{
@@ -56,7 +56,7 @@ test.describe('schedule', { tag: '@critical' }, () => {
 		let patched: unknown;
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ current_event_id: null, schedule }),
+			'GET /schedule': json({ current_event_id: null, entries: schedule }),
 			'PATCH /me/settings': (route) => {
 				patched = route.request().postDataJSON() as unknown;
 				return json({});

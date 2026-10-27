@@ -1,6 +1,7 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Response, status
+from pydantic import BaseModel
 
 from fanfan.application.dto.sync import SyncRunDTO, SyncSourceStatusDTO
 from fanfan.application.interactors.sync.get_sync_sources import GetSyncSources
@@ -9,7 +10,7 @@ from fanfan.application.interactors.sync.request_sync import (
     RequestSyncInput,
 )
 from fanfan.core.vo.sync import SyncSource
-from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.responses import AUTH_RESPONSES, location_header
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
@@ -23,6 +24,10 @@ sync_router = APIRouter(
 SYNC_STATUS_PATH = "/sync/sources"
 
 
+class ListSyncSourcesOutput(BaseModel):
+    sources: list[SyncSourceStatusDTO]
+
+
 @sync_router.get(
     "/sources",
     summary="List sync sources with their last run",
@@ -34,8 +39,8 @@ SYNC_STATUS_PATH = "/sync/sources"
 @inject
 async def list_sync_sources(
     interactor: FromDishka[GetSyncSources],
-) -> list[SyncSourceStatusDTO]:
-    return await interactor()
+) -> ListSyncSourcesOutput:
+    return ListSyncSourcesOutput(sources=await interactor())
 
 
 @sync_router.post(
@@ -51,12 +56,7 @@ async def list_sync_sources(
     responses={
         202: {
             "description": "Sync queued; poll GET /sync/sources for its state.",
-            "headers": {
-                "Location": {
-                    "schema": {"type": "string"},
-                    "description": "The status resource to re-read for progress.",
-                }
-            },
+            "headers": location_header("The status resource to re-read for progress."),
         },
         409: {
             "model": ProblemDetails,

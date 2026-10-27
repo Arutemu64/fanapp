@@ -120,6 +120,17 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 - **A `PATCH` body is a JSON Merge Patch** ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396.html)): a missing field is left alone and `null` clears the value. A field that can't be cleared refuses `null` with a 422, so its type is `x?: T`, never `x?: T | null`. On the backend that is `x: T | MISSING = MISSING` (Pydantic's sentinel); `model_dump()` leaves missing fields out. A write that replaces a whole value (the voting window) is a `PUT`.
 - **A value that holds for one row at most is named once at the top**, not flagged on every row: the schedule's `current_event_id`, not a per-event `is_current`. The client derives the per-row flag in its view model (`mergeSubscriptions`).
 
+### Where we differ from the Zalando guidelines
+
+The API follows the [Zalando RESTful API guidelines](https://opensource.zalando.com/restful-api-guidelines/) except where a rule fights the generated client or this app's single first-party consumer:
+
+- **Enum values are lowercase** (rule 240 asks for UPPER_SNAKE), and **enums are closed** (rule 112 asks for `examples`): the closed unions feed the `code`, `Permission` and `SseEventName` drift guards.
+- **Validation errors are 422** (rule 150 prefers 400): RFC 9110 defines 422 for this, and the error copy maps on it.
+- **Pages are `{<items>, next_cursor}`** (rule 248 asks for `items`, `next` links), per ADR-0023; the staff directories keep a `total` (rule 254).
+- **Durations are integers with a unit suffix** (rule 127 asks for ISO 8601).
+- **Request bodies declare `additionalProperties: false`** (rule 111): unknown input fields are refused, as rule 109 asks.
+- **A few routes are actions** (rules 138, 141): auth, the notification read markers, imports, draws, cancels and the push lookups, which keep a bearer capability out of the URL.
+
 ## Mutations & Data Recovery
 
 - **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: listSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge). A local optimistic value can key off the mutation itself instead (a vote counts `+1` while `isPending` and the refetched row doesn't carry it yet).
@@ -129,7 +140,7 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 ### Client-generated IDs for creates without a natural key
 
-A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcasts` sends to everyone again; `POST /tickets/generate` makes a second batch whose barcodes the organizer never saw), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
+A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcasts` sends to everyone again; `POST /ticket-batches` makes a second batch whose barcodes the organizer never saw), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
 
 - **Generate a UUIDv7 with `uuidv7()` from `#lib/utils/uuidv7`** when the form opens. The server rejects any other version with a 422.
 - **Keep it across submits; draw a new one only once the intent is settled**: on success, or on the endpoint's "already exists" 409.

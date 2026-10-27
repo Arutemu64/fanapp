@@ -6,7 +6,7 @@
 
 	import { getApiErrorCode, getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import {
-		generateTicketsMutation,
+		createTicketBatchMutation,
 		listTicketsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import FormError from '#lib/components/FormError.svelte';
@@ -35,7 +35,7 @@
 	// One ID per intent, so a resend after a lost response returns the same batch.
 	let batchId = uuidv7();
 	const generateMutation = createMutation(() => ({
-		...generateTicketsMutation(),
+		...createTicketBatchMutation(),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: listTicketsQueryKey() })
 	}));
 

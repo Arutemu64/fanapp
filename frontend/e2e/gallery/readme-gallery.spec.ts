@@ -30,8 +30,8 @@ const now = GALLERY_NOW.getTime();
 const visitorAtFestival: Handlers = {
 	...loggedInAs({ ticket: null }),
 	'GET /config': json({
-		festival_start: new Date(now - 2 * HOUR_MS).toISOString(),
-		festival_end: new Date(now + 6 * HOUR_MS).toISOString(),
+		festival_starts_at: new Date(now - 2 * HOUR_MS).toISOString(),
+		festival_ends_at: new Date(now + 6 * HOUR_MS).toISOString(),
 		quest_enabled: true,
 		quest_max_award: 100,
 		schedule_changeover_seconds: 30
@@ -40,10 +40,10 @@ const visitorAtFestival: Handlers = {
 	'GET /voting/status': json({
 		can_vote: true,
 		status: 'open',
-		voting_start: new Date(now - HOUR_MS).toISOString(),
-		voting_end: new Date(now + 4 * HOUR_MS).toISOString()
+		voting_starts_at: new Date(now - HOUR_MS).toISOString(),
+		voting_ends_at: new Date(now + 4 * HOUR_MS).toISOString()
 	}),
-	'GET /schedule': json({ current_event_id: currentEventId, schedule: scheduleEntries }),
+	'GET /schedule': json({ current_event_id: currentEventId, entries: scheduleEntries }),
 	'GET /schedule/subscriptions': json({ subscriptions }),
 	'GET /voting/nominations/single': json(singleDefile),
 	'GET /notifications': json({ notifications, next_cursor: null }),

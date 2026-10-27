@@ -30,6 +30,4 @@ type ScheduleEntryDTO = Annotated[
 
 class ScheduleDTO(BaseModel):
     current_event_id: ScheduleEntryId | None
-    schedule: list[ScheduleEntryDTO] = Field(
-        description="Every entry in running order."
-    )
+    entries: list[ScheduleEntryDTO] = Field(description="Every entry in running order.")

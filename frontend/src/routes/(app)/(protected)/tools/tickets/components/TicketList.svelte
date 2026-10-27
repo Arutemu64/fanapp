@@ -31,7 +31,7 @@
 
 	const ticketsQuery = createInfiniteQuery(() => {
 		const query: NonNullable<ListTicketsData['query']> = { limit: TICKETS_PAGE_SIZE };
-		if (search) query.search = search;
+		if (search) query.q = search;
 		return {
 			...listTicketsInfiniteOptions({ query }),
 			initialPageParam: {},

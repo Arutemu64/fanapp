@@ -36,7 +36,7 @@ describe('hasVotingEnded', () => {
 
 describe('isVotingOpenNow', () => {
 	function state(status: GetVotingStatusOutput['status']): GetVotingStatusOutput {
-		return { can_vote: status === 'open', status, voting_start: START, voting_end: END };
+		return { can_vote: status === 'open', status, voting_starts_at: START, voting_ends_at: END };
 	}
 
 	it('trusts the server over a client clock that runs ahead', () => {

@@ -16,8 +16,8 @@ class GetPublicConfig:
     async def __call__(self) -> PublicConfigDTO:
         settings = await self.app_settings_gateway.get()
         return PublicConfigDTO(
-            festival_start=settings.festival_start,
-            festival_end=settings.festival_end,
+            festival_starts_at=settings.festival_starts_at,
+            festival_ends_at=settings.festival_ends_at,
             quest_enabled=settings.quest.enabled,
             quest_max_award=settings.quest.max_award,
             schedule_changeover_seconds=settings.schedule.changeover_seconds,

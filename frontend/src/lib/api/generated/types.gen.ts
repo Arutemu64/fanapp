@@ -34,13 +34,13 @@ export type AddVoteOutput = {
  */
 export type AppSettingsDto = {
 	/**
-	 * Festival Start
+	 * Festival Starts At
 	 */
-	festival_start: string;
+	festival_starts_at: string;
 	/**
-	 * Festival End
+	 * Festival Ends At
 	 */
-	festival_end: string;
+	festival_ends_at: string;
 	/**
 	 * Quest Enabled
 	 */
@@ -434,9 +434,9 @@ export type GetQuestOutput = {
 	 */
 	rank: number | null;
 	/**
-	 * Leaderboard
+	 * Leaderboard Entries
 	 */
-	leaderboard: Array<LeaderboardEntryDto>;
+	leaderboard_entries: Array<LeaderboardEntryDto>;
 	own_entry: LeaderboardEntryDto | null;
 };
 
@@ -445,13 +445,13 @@ export type GetQuestOutput = {
  */
 export type GetVotingDashboardOutput = {
 	/**
-	 * Voting Start
+	 * Voting Starts At
 	 */
-	voting_start: string | null;
+	voting_starts_at: string | null;
 	/**
-	 * Voting End
+	 * Voting Ends At
 	 */
-	voting_end: string | null;
+	voting_ends_at: string | null;
 	/**
 	 * Contest Pool Size
 	 */
@@ -503,13 +503,13 @@ export type GetVotingStatusOutput = {
 	can_vote: boolean;
 	status: VotingStatus;
 	/**
-	 * Voting Start
+	 * Voting Starts At
 	 */
-	voting_start: string | null;
+	voting_starts_at: string | null;
 	/**
-	 * Voting End
+	 * Voting Ends At
 	 */
-	voting_end: string | null;
+	voting_ends_at: string | null;
 };
 
 /**
@@ -706,6 +706,16 @@ export type ListSubscriptionsOutput = {
 };
 
 /**
+ * ListSyncSourcesOutput
+ */
+export type ListSyncSourcesOutput = {
+	/**
+	 * Sources
+	 */
+	sources: Array<SyncSourceStatusDto>;
+};
+
+/**
  * ListTicketsOutput
  */
 export type ListTicketsOutput = {
@@ -796,7 +806,7 @@ export type MailingDto = {
 	/**
 	 * Roles
 	 */
-	roles: Array<UserRole> | null;
+	roles: Array<UserRole>;
 	/**
 	 * Total Count
 	 */
@@ -1108,8 +1118,8 @@ export type ProblemDetails = {
  * Public, unauthenticated projection of AppSettings served at GET /config.
  *
  * Deliberately omits `limits` (ADR-0008 projection tuning is organizer-only).
- * Carries the raw `festival_start` and `festival_end` so the client can run the
- * live countdown and pick its before/during/after phase itself — flipping at
+ * Carries the raw `festival_starts_at` and `festival_ends_at` so the client can
+ * run the live countdown and pick its before/during/after phase itself — flipping at
  * each boundary without provoking a 403 on a guarded endpoint. Voting
  * availability is intentionally not here: the UI reads it per-user from
  * GET /voting/status (which already reflects the time range as a DISABLED
@@ -1118,13 +1128,13 @@ export type ProblemDetails = {
  */
 export type PublicConfigDto = {
 	/**
-	 * Festival Start
+	 * Festival Starts At
 	 */
-	festival_start: string;
+	festival_starts_at: string;
 	/**
-	 * Festival End
+	 * Festival Ends At
 	 */
-	festival_end: string;
+	festival_ends_at: string;
 	/**
 	 * Quest Enabled
 	 */
@@ -1325,11 +1335,11 @@ export type ScheduleDto = {
 	 */
 	current_event_id: string | null;
 	/**
-	 * Schedule
+	 * Entries
 	 *
 	 * Every entry in running order.
 	 */
-	schedule: Array<ScheduleEntryDto>;
+	entries: Array<ScheduleEntryDto>;
 };
 
 export type ScheduleEntryDto =
@@ -1466,13 +1476,13 @@ export type SetUserRoleBody = {
  */
 export type SetVotingTimeRangeInput = {
 	/**
-	 * Voting Start
+	 * Voting Starts At
 	 */
-	voting_start: string | null;
+	voting_starts_at: string | null;
 	/**
-	 * Voting End
+	 * Voting Ends At
 	 */
-	voting_end: string | null;
+	voting_ends_at: string | null;
 };
 
 /**
@@ -1707,13 +1717,13 @@ export type UnreadNotificationsCountOutput = {
  */
 export type UpdateAppSettingsInput = {
 	/**
-	 * Festival Start
+	 * Festival Starts At
 	 */
-	festival_start?: string;
+	festival_starts_at?: string;
 	/**
-	 * Festival End
+	 * Festival Ends At
 	 */
-	festival_end?: string;
+	festival_ends_at?: string;
 	/**
 	 * Quest Enabled
 	 */
@@ -2044,6 +2054,15 @@ export type DebugData = {
 	url: '/debug';
 };
 
+export type DebugErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type DebugError = DebugErrors[keyof DebugErrors];
+
 export type DebugResponses = {
 	/**
 	 * Successful Response
@@ -2059,6 +2078,15 @@ export type HealthCheckData = {
 	query?: never;
 	url: '/debug/health';
 };
+
+export type HealthCheckErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type HealthCheckError = HealthCheckErrors[keyof HealthCheckErrors];
 
 export type HealthCheckResponses = {
 	/**
@@ -2089,6 +2117,10 @@ export type LoginErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type LoginError = LoginErrors[keyof LoginErrors];
@@ -2134,6 +2166,10 @@ export type ConfirmEmailCodeErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ConfirmEmailCodeError = ConfirmEmailCodeErrors[keyof ConfirmEmailCodeErrors];
@@ -2159,6 +2195,10 @@ export type GetCaptchaChallengeErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetCaptchaChallengeError = GetCaptchaChallengeErrors[keyof GetCaptchaChallengeErrors];
@@ -2197,6 +2237,10 @@ export type RequestLoginCodeErrors = {
 	 * The email could not be delivered — the mail service was unreachable or refused the message.
 	 */
 	502: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type RequestLoginCodeError = RequestLoginCodeErrors[keyof RequestLoginCodeErrors];
@@ -2234,6 +2278,10 @@ export type LoginWithCodeErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type LoginWithCodeError = LoginWithCodeErrors[keyof LoginWithCodeErrors];
@@ -2254,6 +2302,15 @@ export type LogoutData = {
 	url: '/auth/logout';
 };
 
+export type LogoutErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type LogoutError = LogoutErrors[keyof LogoutErrors];
+
 export type LogoutResponses = {
 	/**
 	 * Successfully logged out.
@@ -2269,6 +2326,15 @@ export type ListOauthProvidersData = {
 	query?: never;
 	url: '/auth/oauth/providers';
 };
+
+export type ListOauthProvidersErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type ListOauthProvidersError = ListOauthProvidersErrors[keyof ListOauthProvidersErrors];
 
 export type ListOauthProvidersResponses = {
 	/**
@@ -2299,9 +2365,22 @@ export type StartSocialLoginErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type StartSocialLoginError = StartSocialLoginErrors[keyof StartSocialLoginErrors];
+
+export type StartSocialLoginResponses = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type StartSocialLoginResponse = StartSocialLoginResponses[keyof StartSocialLoginResponses];
 
 export type OauthCallbackData = {
 	body?: never;
@@ -2317,9 +2396,22 @@ export type OauthCallbackErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type OauthCallbackError = OauthCallbackErrors[keyof OauthCallbackErrors];
+
+export type OauthCallbackResponses = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type OauthCallbackResponse = OauthCallbackResponses[keyof OauthCallbackResponses];
 
 export type GetPublicConfigData = {
 	body?: never;
@@ -2327,6 +2419,15 @@ export type GetPublicConfigData = {
 	query?: never;
 	url: '/config';
 };
+
+export type GetPublicConfigErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type GetPublicConfigError = GetPublicConfigErrors[keyof GetPublicConfigErrors];
 
 export type GetPublicConfigResponses = {
 	/**
@@ -2353,6 +2454,10 @@ export type GetCurrentUserErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
@@ -2390,6 +2495,10 @@ export type UpdateCurrentUserErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UpdateCurrentUserError = UpdateCurrentUserErrors[keyof UpdateCurrentUserErrors];
@@ -2420,6 +2529,10 @@ export type SuggestUsernameErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SuggestUsernameError = SuggestUsernameErrors[keyof SuggestUsernameErrors];
@@ -2453,6 +2566,10 @@ export type UpdateCurrentUserSettingsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UpdateCurrentUserSettingsError =
@@ -2496,6 +2613,10 @@ export type ChangeCurrentUserPasswordErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ChangeCurrentUserPasswordError =
@@ -2543,6 +2664,10 @@ export type ChangeCurrentUserEmailErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ChangeCurrentUserEmailError =
@@ -2588,6 +2713,10 @@ export type UnlinkSocialAccountErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UnlinkSocialAccountError = UnlinkSocialAccountErrors[keyof UnlinkSocialAccountErrors];
@@ -2624,9 +2753,22 @@ export type StartAccountLinkErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type StartAccountLinkError = StartAccountLinkErrors[keyof StartAccountLinkErrors];
+
+export type StartAccountLinkResponses = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type StartAccountLinkResponse = StartAccountLinkResponses[keyof StartAccountLinkResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;
@@ -2656,6 +2798,10 @@ export type LinkTicketErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type LinkTicketError = LinkTicketErrors[keyof LinkTicketErrors];
@@ -2689,6 +2835,10 @@ export type GetSettingsErrors = {
 	 * Festival settings were not found.
 	 */
 	404: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetSettingsError = GetSettingsErrors[keyof GetSettingsErrors];
@@ -2726,6 +2876,10 @@ export type UpdateSettingsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UpdateSettingsError = UpdateSettingsErrors[keyof UpdateSettingsErrors];
@@ -2746,6 +2900,15 @@ export type StreamEventsData = {
 	url: '/events';
 };
 
+export type StreamEventsErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type StreamEventsError = StreamEventsErrors[keyof StreamEventsErrors];
+
 export type StreamEventsResponses = {
 	/**
 	 * SSE stream established. Returns text/event-stream.
@@ -2759,6 +2922,15 @@ export type GetScheduleData = {
 	query?: never;
 	url: '/schedule';
 };
+
+export type GetScheduleErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type GetScheduleError = GetScheduleErrors[keyof GetScheduleErrors];
 
 export type GetScheduleResponses = {
 	/**
@@ -2793,6 +2965,10 @@ export type ImportScheduleErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ImportScheduleError = ImportScheduleErrors[keyof ImportScheduleErrors];
@@ -2822,6 +2998,10 @@ export type GetScheduleSettingsErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetScheduleSettingsError = GetScheduleSettingsErrors[keyof GetScheduleSettingsErrors];
@@ -2856,6 +3036,10 @@ export type UpdateScheduleSettingsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UpdateScheduleSettingsError =
@@ -2891,6 +3075,10 @@ export type ClearCurrentEventErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ClearCurrentEventError = ClearCurrentEventErrors[keyof ClearCurrentEventErrors];
@@ -2937,6 +3125,10 @@ export type SetCurrentEventErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SetCurrentEventError = SetCurrentEventErrors[keyof SetCurrentEventErrors];
@@ -2989,6 +3181,10 @@ export type UpdateScheduleEventErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UpdateScheduleEventError = UpdateScheduleEventErrors[keyof UpdateScheduleEventErrors];
@@ -3034,6 +3230,10 @@ export type ListScheduleChangesErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListScheduleChangesError = ListScheduleChangesErrors[keyof ListScheduleChangesErrors];
@@ -3079,6 +3279,10 @@ export type UndoScheduleChangeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UndoScheduleChangeError = UndoScheduleChangeErrors[keyof UndoScheduleChangeErrors];
@@ -3109,6 +3313,10 @@ export type ListSubscriptionsErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListSubscriptionsError = ListSubscriptionsErrors[keyof ListSubscriptionsErrors];
@@ -3151,6 +3359,10 @@ export type CreateSubscriptionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CreateSubscriptionError = CreateSubscriptionErrors[keyof CreateSubscriptionErrors];
@@ -3196,6 +3408,10 @@ export type DeleteSubscriptionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type DeleteSubscriptionError = DeleteSubscriptionErrors[keyof DeleteSubscriptionErrors];
@@ -3217,6 +3433,15 @@ export type GetVotingStatusData = {
 	url: '/voting/status';
 };
 
+export type GetVotingStatusErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type GetVotingStatusError = GetVotingStatusErrors[keyof GetVotingStatusErrors];
+
 export type GetVotingStatusResponses = {
 	/**
 	 * Voting status retrieved successfully.
@@ -3232,6 +3457,16 @@ export type ListVotingNominationsData = {
 	query?: never;
 	url: '/voting/nominations';
 };
+
+export type ListVotingNominationsErrors = {
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type ListVotingNominationsError =
+	ListVotingNominationsErrors[keyof ListVotingNominationsErrors];
 
 export type ListVotingNominationsResponses = {
 	/**
@@ -3266,6 +3501,10 @@ export type GetVotingNominationErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetVotingNominationError = GetVotingNominationErrors[keyof GetVotingNominationErrors];
@@ -3308,6 +3547,10 @@ export type AddVoteErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type AddVoteError = AddVoteErrors[keyof AddVoteErrors];
@@ -3352,6 +3595,10 @@ export type CancelVoteErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CancelVoteError = CancelVoteErrors[keyof CancelVoteErrors];
@@ -3381,6 +3628,10 @@ export type GetVotingDashboardErrors = {
 	 * Missing voting:manage.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetVotingDashboardError = GetVotingDashboardErrors[keyof GetVotingDashboardErrors];
@@ -3419,6 +3670,10 @@ export type SetVotingTimeRangeErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SetVotingTimeRangeError = SetVotingTimeRangeErrors[keyof SetVotingTimeRangeErrors];
@@ -3449,6 +3704,10 @@ export type DrawVotingContestWinnerErrors = {
 	 * Missing voting:manage.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type DrawVotingContestWinnerError =
@@ -3489,6 +3748,10 @@ export type ProcessTcloudOrderErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ProcessTcloudOrderError = ProcessTcloudOrderErrors[keyof ProcessTcloudOrderErrors];
@@ -3545,6 +3808,10 @@ export type ProcessFestengineEventErrors = {
 	 * Announcement cooldown.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ProcessFestengineEventError =
@@ -3591,6 +3858,10 @@ export type ListUserNotificationsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListUserNotificationsError =
@@ -3622,6 +3893,10 @@ export type CountUnreadNotificationsErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CountUnreadNotificationsError =
@@ -3653,6 +3928,10 @@ export type MarkAllNotificationsReadErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type MarkAllNotificationsReadError =
@@ -3688,6 +3967,10 @@ export type MarkNotificationsReadErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type MarkNotificationsReadError =
@@ -3723,6 +4006,10 @@ export type SendTestNotificationErrors = {
 	 * Rate limited — too many requests.
 	 */
 	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SendTestNotificationError =
@@ -3769,6 +4056,10 @@ export type ListBroadcastsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListBroadcastsError = ListBroadcastsErrors[keyof ListBroadcastsErrors];
@@ -3806,6 +4097,10 @@ export type SendBroadcastErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SendBroadcastError = SendBroadcastErrors[keyof SendBroadcastErrors];
@@ -3854,6 +4149,10 @@ export type CancelBroadcastErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CancelBroadcastError = CancelBroadcastErrors[keyof CancelBroadcastErrors];
@@ -3871,7 +4170,7 @@ export type CreatePushSubscriptionData = {
 	body: CreatePushSubscriptionInput;
 	path?: never;
 	query?: never;
-	url: '/push';
+	url: '/push-subscriptions';
 };
 
 export type CreatePushSubscriptionErrors = {
@@ -3891,6 +4190,10 @@ export type CreatePushSubscriptionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CreatePushSubscriptionError =
@@ -3910,7 +4213,7 @@ export type CheckPushSubscriptionData = {
 	body: CheckPushSubscriptionInput;
 	path?: never;
 	query?: never;
-	url: '/push/lookup';
+	url: '/push-subscriptions/lookup';
 };
 
 export type CheckPushSubscriptionErrors = {
@@ -3926,6 +4229,10 @@ export type CheckPushSubscriptionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CheckPushSubscriptionError =
@@ -3945,7 +4252,7 @@ export type DeletePushSubscriptionData = {
 	body: DeletePushSubscriptionInput;
 	path?: never;
 	query?: never;
-	url: '/push/remove';
+	url: '/push-subscriptions/remove';
 };
 
 export type DeletePushSubscriptionErrors = {
@@ -3965,6 +4272,10 @@ export type DeletePushSubscriptionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type DeletePushSubscriptionError =
@@ -4011,6 +4322,10 @@ export type ListFeedbackErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListFeedbackError = ListFeedbackErrors[keyof ListFeedbackErrors];
@@ -4044,6 +4359,10 @@ export type SubmitFeedbackErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SubmitFeedbackError = SubmitFeedbackErrors[keyof SubmitFeedbackErrors];
@@ -4072,9 +4391,11 @@ export type ListTicketsData = {
 		 */
 		cursor?: string | null;
 		/**
-		 * Search
+		 * Q
+		 *
+		 * Search term.
 		 */
-		search?: string | null;
+		q?: string | null;
 	};
 	url: '/tickets';
 };
@@ -4092,6 +4413,10 @@ export type ListTicketsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListTicketsError = ListTicketsErrors[keyof ListTicketsErrors];
@@ -4104,43 +4429,6 @@ export type ListTicketsResponses = {
 };
 
 export type ListTicketsResponse = ListTicketsResponses[keyof ListTicketsResponses];
-
-export type GenerateTicketsData = {
-	body: GenerateTicketsInput;
-	path?: never;
-	query?: never;
-	url: '/tickets/generate';
-};
-
-export type GenerateTicketsErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * The batch ID belongs to a different batch.
-	 */
-	409: ProblemDetails;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationProblem;
-};
-
-export type GenerateTicketsError = GenerateTicketsErrors[keyof GenerateTicketsErrors];
-
-export type GenerateTicketsResponses = {
-	/**
-	 * Tickets generated, or an identical batch replayed.
-	 */
-	201: GenerateTicketsOutput;
-};
-
-export type GenerateTicketsResponse = GenerateTicketsResponses[keyof GenerateTicketsResponses];
 
 export type GetTcloudEventRolesData = {
 	body?: never;
@@ -4158,6 +4446,10 @@ export type GetTcloudEventRolesErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetTcloudEventRolesError = GetTcloudEventRolesErrors[keyof GetTcloudEventRolesErrors];
@@ -4192,6 +4484,10 @@ export type SetTcloudEventRolesErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SetTcloudEventRolesError = SetTcloudEventRolesErrors[keyof SetTcloudEventRolesErrors];
@@ -4205,6 +4501,48 @@ export type SetTcloudEventRolesResponses = {
 
 export type SetTcloudEventRolesResponse =
 	SetTcloudEventRolesResponses[keyof SetTcloudEventRolesResponses];
+
+export type CreateTicketBatchData = {
+	body: GenerateTicketsInput;
+	path?: never;
+	query?: never;
+	url: '/ticket-batches';
+};
+
+export type CreateTicketBatchErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * The batch ID belongs to a different batch.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type CreateTicketBatchError = CreateTicketBatchErrors[keyof CreateTicketBatchErrors];
+
+export type CreateTicketBatchResponses = {
+	/**
+	 * Tickets generated, or an identical batch replayed.
+	 */
+	201: GenerateTicketsOutput;
+};
+
+export type CreateTicketBatchResponse =
+	CreateTicketBatchResponses[keyof CreateTicketBatchResponses];
 
 export type ListSyncSourcesData = {
 	body?: never;
@@ -4222,17 +4560,19 @@ export type ListSyncSourcesErrors = {
 	 * Access denied.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListSyncSourcesError = ListSyncSourcesErrors[keyof ListSyncSourcesErrors];
 
 export type ListSyncSourcesResponses = {
 	/**
-	 * Response List Sync Sources
-	 *
 	 * Successful Response
 	 */
-	200: Array<SyncSourceStatusDto>;
+	200: ListSyncSourcesOutput;
 };
 
 export type ListSyncSourcesResponse = ListSyncSourcesResponses[keyof ListSyncSourcesResponses];
@@ -4263,6 +4603,10 @@ export type RequestSyncErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type RequestSyncError = RequestSyncErrors[keyof RequestSyncErrors];
@@ -4291,9 +4635,11 @@ export type ListUsersData = {
 		 */
 		cursor?: string | null;
 		/**
-		 * Search
+		 * Q
+		 *
+		 * Search term.
 		 */
-		search?: string | null;
+		q?: string | null;
 		/**
 		 * Role
 		 */
@@ -4319,6 +4665,10 @@ export type ListUsersErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
@@ -4363,6 +4713,10 @@ export type GetUserErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetUserError = GetUserErrors[keyof GetUserErrors];
@@ -4411,6 +4765,10 @@ export type SetUserRoleErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type SetUserRoleError = SetUserRoleErrors[keyof SetUserRoleErrors];
@@ -4463,6 +4821,10 @@ export type RevokeUserPermissionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type RevokeUserPermissionError =
@@ -4517,6 +4879,10 @@ export type GrantUserPermissionErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GrantUserPermissionError = GrantUserPermissionErrors[keyof GrantUserPermissionErrors];
@@ -4558,6 +4924,10 @@ export type UnlinkUserTicketErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type UnlinkUserTicketError = UnlinkUserTicketErrors[keyof UnlinkUserTicketErrors];
@@ -4587,6 +4957,10 @@ export type GetQuestErrors = {
 	 * The quest is disabled.
 	 */
 	403: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetQuestError = GetQuestErrors[keyof GetQuestErrors];
@@ -4631,6 +5005,10 @@ export type ListQuestHistoryErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListQuestHistoryError = ListQuestHistoryErrors[keyof ListQuestHistoryErrors];
@@ -4649,9 +5027,11 @@ export type FindQuestPlayersData = {
 	path?: never;
 	query: {
 		/**
-		 * Search
+		 * Q
+		 *
+		 * Search term.
 		 */
-		search: string;
+		q: string;
 	};
 	url: '/quest/players';
 };
@@ -4669,6 +5049,10 @@ export type FindQuestPlayersErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type FindQuestPlayersError = FindQuestPlayersErrors[keyof FindQuestPlayersErrors];
@@ -4711,6 +5095,10 @@ export type GetQuestPlayerErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type GetQuestPlayerError = GetQuestPlayerErrors[keyof GetQuestPlayerErrors];
@@ -4755,6 +5143,10 @@ export type ListQuestAwardsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type ListQuestAwardsError = ListQuestAwardsErrors[keyof ListQuestAwardsErrors];
@@ -4796,6 +5188,10 @@ export type AwardQuestPointsErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type AwardQuestPointsError = AwardQuestPointsErrors[keyof AwardQuestPointsErrors];
@@ -4842,6 +5238,10 @@ export type CancelQuestAwardErrors = {
 	 * Request validation error.
 	 */
 	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
 };
 
 export type CancelQuestAwardError = CancelQuestAwardErrors[keyof CancelQuestAwardErrors];

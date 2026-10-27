@@ -16,7 +16,7 @@ export interface QueuedSubscriptionChanges {
 
 const NO_QUEUED_CHANGES: QueuedSubscriptionChanges = { subscribing: [], unsubscribing: [] };
 
-export const EMPTY_SCHEDULE: ScheduleDto = { current_event_id: null, schedule: [] };
+export const EMPTY_SCHEDULE: ScheduleDto = { current_event_id: null, entries: [] };
 
 export function mergeSubscriptions(
 	schedule: ScheduleDto,
@@ -34,7 +34,7 @@ export function mergeSubscriptions(
 		byEventId.set(event_id, { id: null, lead_minutes, queued: true });
 	}
 
-	return schedule.schedule.map((entry) => {
+	return schedule.entries.map((entry) => {
 		if (entry.type === 'block_start') return entry;
 		return {
 			...entry,

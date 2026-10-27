@@ -35,7 +35,7 @@ export function questPlayer(index: number, points: number): QuestPlayerDto {
 export const QUEST: GetQuestOutput = {
 	points: 35,
 	rank: 23,
-	leaderboard: NAMES.map((_, index) => ({
+	leaderboard_entries: NAMES.map((_, index) => ({
 		rank: index + 1,
 		player: questPlayer(index, 240 - index * 15)
 	})),
@@ -121,8 +121,8 @@ export function questConfig(): Handlers {
 	const day = 24 * 60 * 60 * 1000;
 	return {
 		'GET /config': json<PublicConfigDto>({
-			festival_start: new Date(now - day).toISOString(),
-			festival_end: new Date(now + day).toISOString(),
+			festival_starts_at: new Date(now - day).toISOString(),
+			festival_ends_at: new Date(now + day).toISOString(),
 			quest_enabled: true,
 			quest_max_award: 100,
 			schedule_changeover_seconds: 30

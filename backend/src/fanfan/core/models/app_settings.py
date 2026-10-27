@@ -45,11 +45,11 @@ class TicketsConfig:
 
 @dataclass(slots=True, kw_only=True)
 class AppSettings(AggregateRoot):
-    voting_start: datetime | None = None
-    voting_end: datetime | None = None
+    voting_starts_at: datetime | None = None
+    voting_ends_at: datetime | None = None
 
-    festival_start: datetime = DEFAULT_FESTIVAL_START
-    festival_end: datetime = DEFAULT_FESTIVAL_END
+    festival_starts_at: datetime = DEFAULT_FESTIVAL_START
+    festival_ends_at: datetime = DEFAULT_FESTIVAL_END
 
     limits: LimitsConfig = field(default_factory=LimitsConfig)
     quest: QuestConfig = field(default_factory=QuestConfig)
@@ -66,19 +66,19 @@ class AppSettings(AggregateRoot):
             raise InvalidVotingTimeRange
         if start is not None and end is not None and end <= start:
             raise InvalidVotingTimeRange
-        self.voting_start = start
-        self.voting_end = end
+        self.voting_starts_at = start
+        self.voting_ends_at = end
 
     def is_voting_open(self, *, now: datetime) -> bool:
-        if self.voting_start is None or self.voting_end is None:
+        if self.voting_starts_at is None or self.voting_ends_at is None:
             return False
-        return self.voting_start <= now < self.voting_end
+        return self.voting_starts_at <= now < self.voting_ends_at
 
     def set_festival_schedule(self, *, start: datetime, end: datetime) -> None:
         if end <= start:
             raise InvalidFestivalTimeRange
-        self.festival_start = start
-        self.festival_end = end
+        self.festival_starts_at = start
+        self.festival_ends_at = end
 
     def update_limits(
         self,

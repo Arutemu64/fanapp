@@ -13,7 +13,10 @@ from fanfan.presentation.web.routes.schedule import schedule_router
 from fanfan.presentation.web.routes.settings import settings_router
 from fanfan.presentation.web.routes.sse import sse_router
 from fanfan.presentation.web.routes.sync import sync_router
-from fanfan.presentation.web.routes.tickets import tickets_router
+from fanfan.presentation.web.routes.tickets import (
+    ticket_batches_router,
+    tickets_router,
+)
 from fanfan.presentation.web.routes.users import users_router
 from fanfan.presentation.web.routes.voting import voting_router
 from fanfan.presentation.web.routes.webhooks import webhooks_router
@@ -35,6 +38,7 @@ def setup_api_router() -> APIRouter:
     router.include_router(push_router, responses=VALIDATION_RESPONSES)
     router.include_router(feedback_router, responses=VALIDATION_RESPONSES)
     router.include_router(tickets_router, responses=VALIDATION_RESPONSES)
+    router.include_router(ticket_batches_router, responses=VALIDATION_RESPONSES)
     router.include_router(sync_router, responses=VALIDATION_RESPONSES)
     router.include_router(users_router, responses=VALIDATION_RESPONSES)
     router.include_router(quest_router, responses=VALIDATION_RESPONSES)

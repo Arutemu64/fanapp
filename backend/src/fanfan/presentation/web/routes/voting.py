@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, Response
 
 from fanfan.application.interactors.voting.add_vote import (
     AddVote,
@@ -40,7 +40,7 @@ from fanfan.application.interactors.voting.set_voting_time_range import (
 )
 from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.vote import VoteId
-from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.responses import AUTH_RESPONSES, location_header
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
@@ -107,7 +107,10 @@ async def get_voting_nomination(
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
-        201: {"description": "Vote successfully cast."},
+        201: {
+            "description": "Vote successfully cast.",
+            "headers": location_header("The cast vote."),
+        },
         404: {"model": ProblemDetails, "description": "Participant not found."},
         409: {
             "model": ProblemDetails,
@@ -118,9 +121,12 @@ async def get_voting_nomination(
 @inject
 async def add_vote(
     data: AddVoteInput,
+    response: Response,
     interactor: FromDishka[AddVote],
 ) -> AddVoteOutput:
-    return await interactor(data)
+    vote = await interactor(data)
+    response.headers["Location"] = f"/voting/votes/{vote.vote_id}"
+    return vote
 
 
 @voting_router.delete(

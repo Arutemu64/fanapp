@@ -58,7 +58,7 @@ async def list_users(
     data = ListUsersInput(
         pagination=CursorPagination.from_token(limit=query.limit, cursor=query.cursor),
         user_filter=UserListFilter(
-            search=query.search, role=query.role, has_ticket=query.has_ticket
+            search=query.q, role=query.role, has_ticket=query.has_ticket
         ),
     )
     return await interactor(data)

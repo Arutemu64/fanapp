@@ -21,7 +21,7 @@ from fanfan.presentation.web.security import session_security
 
 push_router = APIRouter(
     tags=["Push"],
-    prefix="/push",
+    prefix="/push-subscriptions",
     dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
