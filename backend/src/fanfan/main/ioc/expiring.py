@@ -1,10 +1,16 @@
-from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from collections.abc import AsyncIterable
 
+from dishka import Provider, Scope, provide
+
+from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.db.expiring.cooldown import PostgresCooldown
 from fanfan.adapters.db.expiring.purger import PostgresExpiredStatePurger
 from fanfan.adapters.db.expiring.rate_limiter import PostgresRateLimiter
 from fanfan.adapters.db.expiring.session_store import PostgresSessionStore
+from fanfan.adapters.db.expiring.sessions import (
+    ExpiringSessionFactory,
+    create_expiring_engine,
+)
 from fanfan.adapters.db.expiring.token_registry import PostgresTokenRegistry
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.expired_state import ExpiredStatePurger
@@ -18,9 +24,17 @@ class ExpiringStateProvider(Provider):
     # Request scope lets tests bind the session factory to their own connection.
     scope = Scope.REQUEST
 
+    @provide(scope=Scope.APP)
+    async def get_sessions(
+        self, config: DatabaseConfig
+    ) -> AsyncIterable[ExpiringSessionFactory]:
+        engine = create_expiring_engine(config)
+        yield ExpiringSessionFactory(bind=engine, expire_on_commit=False)
+        await engine.dispose()
+
     @provide
     def get_session_store(
-        self, sessions: async_sessionmaker[AsyncSession], config: WebConfig
+        self, sessions: ExpiringSessionFactory, config: WebConfig
     ) -> SessionStore:
         return PostgresSessionStore(
             sessions=sessions,

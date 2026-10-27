@@ -271,8 +271,8 @@ Consequences:
 * You do **not** need to clean up database rows, and you do not need to
   hand-pick unique ids to avoid collisions between tests.
 * The expiring-state adapters (`adapters/db/expiring/`) run on the same
-  per-test connection: `TestSessionProvider` also overrides the
-  `async_sessionmaker`, binding it to that connection, so their writes see the
+  per-test connection: `TestSessionProvider` also overrides
+  `ExpiringSessionFactory`, binding it to that connection, so their writes see the
   test's rows and roll back with them.
 * Schema and seed data (the `system` user, permissions) are created once per
   session by Alembic migrations and are visible to every test.

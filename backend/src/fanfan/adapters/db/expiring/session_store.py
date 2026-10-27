@@ -4,8 +4,8 @@ from datetime import timedelta
 from typing import override
 
 from sqlalchemy import delete, func, insert, select, update
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import AuthSessionORM
 from fanfan.application.ports.session_store import SessionResolution, SessionStore
 from fanfan.core.vo.user import UserId
@@ -24,7 +24,7 @@ class PostgresSessionStore(SessionStore):
 
     def __init__(
         self,
-        sessions: async_sessionmaker[AsyncSession],
+        sessions: ExpiringSessionFactory,
         ttl_seconds: int,
         touch_threshold_seconds: int,
     ) -> None:

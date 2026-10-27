@@ -49,8 +49,18 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
   removing a user removes their sessions. Every flow creates a session after
   the user is committed. The other tables are keyed by emails, IPs or free-form
   keys and have nothing to reference.
-- **The adapters take the app's `async_sessionmaker`** and open one short
-  session per call. Tests bind the factory to the test's own connection with
+- **The adapters run on their own small pool** (`ExpiringSessionFactory`,
+  3 + 2 overflow connections) and open one short session per call. A login
+  holds its unit-of-work connection while it creates a session. With one
+  shared pool, a rush of logins could hold every connection while each waited
+  for a second. A pool that no request waits on twice rules that out; HikariCP
+  gives the minimum shared-pool size as `threads × (connections held − 1) + 1`,
+  which an async server with no thread cap can't meet
+  ([HikariCP: About Pool Sizing](https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing)).
+  Each statement is a key lookup, and a 1-CPU database runs about two queries
+  at once anyway
+  ([PostgreSQL wiki: Number of Database Connections](https://wiki.postgresql.org/wiki/Number_Of_Database_Connections)).
+  Tests bind the factory to the test's own connection with
   `join_transaction_mode="create_savepoint"`, SQLAlchemy's documented test
   recipe
   ([SQLAlchemy: Joining a Session into an External Transaction](https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites)),
@@ -74,8 +84,9 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
   in the existing Postgres backups.
 - Deploying the migration signs everyone out once: Redis sessions are not
   copied.
-- Each request that carries a session cookie checks out one more pool
-  connection, briefly, to resolve it.
+- Each request that carries a session cookie checks out a connection from the
+  small pool, briefly, to resolve it. Each process opens up to five more
+  Postgres connections, which fits under `max_connections=60`.
 - A `schedule_updated` broadcast now sends every connected client to the
   database at once. ADR-0014 measured about 7 ms per uncached read of 200
   events, so 200 clients cost about 1.4 s of database time spread over the

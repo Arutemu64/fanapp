@@ -6,10 +6,11 @@ import pytest
 import pytest_asyncio
 from dishka import AsyncContainer
 from sqlalchemy import delete, insert, select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.expiring.rate_limiter import PostgresRateLimiter
 from fanfan.adapters.db.expiring.session_store import PostgresSessionStore
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.gateways.users import SqlUserGateway
 from fanfan.adapters.db.models import UserORM
 from fanfan.adapters.db.uow import SqlUnitOfWork
@@ -54,7 +55,7 @@ async def test_session_is_created_while_the_login_holds_the_user_row(
     engine: AsyncEngine, committed_user: UserId
 ) -> None:
     store = PostgresSessionStore(
-        async_sessionmaker(engine), ttl_seconds=60, touch_threshold_seconds=30
+        ExpiringSessionFactory(engine), ttl_seconds=60, touch_threshold_seconds=30
     )
     async with AsyncSession(engine) as login_session:
         gateway = SqlUserGateway(login_session, SqlUnitOfWork(login_session))
@@ -69,7 +70,7 @@ async def test_session_is_created_while_the_login_holds_the_user_row(
 
 
 async def test_hit_survives_the_caller_rolling_back(engine: AsyncEngine) -> None:
-    limiter = PostgresRateLimiter(async_sessionmaker(engine))
+    limiter = PostgresRateLimiter(ExpiringSessionFactory(engine))
     key = f"test-survives-rollback-{uuid7()}"
     try:
         async with AsyncSession(engine) as caller:

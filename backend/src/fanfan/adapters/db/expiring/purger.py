@@ -1,8 +1,8 @@
 from typing import Any, cast, override
 
 from sqlalchemy import CursorResult, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import (
     AuthCodeORM,
     AuthSessionORM,
@@ -15,7 +15,7 @@ _TABLES = (AuthSessionORM, AuthCodeORM, RateLimitORM, CooldownORM)
 
 
 class PostgresExpiredStatePurger(ExpiredStatePurger):
-    def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(self, sessions: ExpiringSessionFactory) -> None:
         self.sessions = sessions
 
     @override

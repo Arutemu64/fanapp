@@ -490,7 +490,8 @@ The shape of it:
 - **Connection pools** are trimmed per service: only the api carries real request
   concurrency, so the workers use small pools. The combined backend count stays
   under `max_connections`, and fewer idle backends means less RAM (each is a
-  process). Host runs (`just backend-dev`) use the `.env` defaults.
+  process). Each backend process also keeps a 3 + 2 pool for sessions, codes,
+  rate limits and cooldowns (`adapters/db/expiring/sessions.py`, ADR-0047). Host runs (`just backend-dev`) use the `.env` defaults.
 
 If you move to a larger host, the levers to raise in order are: the vCPU count
 (the real ceiling under load), then the memory limits, then `shared_buffers` and

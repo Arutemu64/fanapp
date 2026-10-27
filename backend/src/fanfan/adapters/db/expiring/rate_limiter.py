@@ -4,8 +4,8 @@ from typing import override
 
 from sqlalchemy import case, delete, func
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import RateLimitORM
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.core.exceptions.rate_limit import TooManyAttempts
@@ -18,7 +18,7 @@ class PostgresRateLimiter(RateLimiter):
     work rolls back (a wrong password raises after counting).
     """
 
-    def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(self, sessions: ExpiringSessionFactory) -> None:
         self.sessions = sessions
 
     @override

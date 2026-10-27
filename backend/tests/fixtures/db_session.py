@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
+
 
 class TestSessionProvider(Provider):
     """Per-test connection whose outer transaction is always rolled back.
@@ -18,15 +20,17 @@ class TestSessionProvider(Provider):
     back when the test finishes
     (https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites).
     The unit of work's session and the expiring-state adapters' sessions share
-    the connection, so they see each other's rows.
+    the connection, so they see each other's rows. Production gives the
+    adapters their own pool; ``test_expiring_state_isolation.py`` covers that.
 
     This gives complete isolation for free: no test can see another test's
     writes and nothing is persisted, even though interactors commit normally.
     It replaces manual table cleanup and removes the need to hand-pick unique
     ids across tests.
 
-    Registered AFTER ``DbProvider`` so it overrides the production session and
-    session factory (Dishka resolves the last provider registered for a type).
+    Registered AFTER ``DbProvider`` and ``ExpiringStateProvider`` so it
+    overrides the production session and session factories (Dishka resolves
+    the last provider registered for a type).
     """
 
     scope = Scope.REQUEST
@@ -48,6 +52,16 @@ class TestSessionProvider(Provider):
         self, connection: AsyncConnection
     ) -> async_sessionmaker[AsyncSession]:
         return async_sessionmaker(
+            bind=connection,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
+
+    @provide
+    def get_expiring_sessions(
+        self, connection: AsyncConnection
+    ) -> ExpiringSessionFactory:
+        return ExpiringSessionFactory(
             bind=connection,
             expire_on_commit=False,
             join_transaction_mode="create_savepoint",

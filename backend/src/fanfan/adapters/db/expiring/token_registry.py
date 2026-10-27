@@ -7,8 +7,8 @@ from uuid import UUID
 
 from sqlalchemy import delete, func
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
 from fanfan.adapters.db.models import AuthCodeORM
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.token_registry import TokenRegistry
@@ -27,7 +27,7 @@ class PostgresTokenRegistry(TokenRegistry):
 
     def __init__(
         self,
-        sessions: async_sessionmaker[AsyncSession],
+        sessions: ExpiringSessionFactory,
         config: WebConfig,
         rate_limiter: RateLimiter,
     ) -> None:
