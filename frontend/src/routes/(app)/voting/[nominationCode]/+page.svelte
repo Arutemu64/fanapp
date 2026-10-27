@@ -36,8 +36,6 @@
 	);
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
-	// Never shown from the cache offline: voting is a live, online-only surface
-	// (see ../+page.svelte).
 	let nominationView = $derived(
 		queryView(nominationQuery, {
 			policy: 'live',
@@ -101,8 +99,6 @@
 	{#snippet ready()}
 		{#if showVoteHint || nomination?.works_url}
 			<SectionIntro>
-				<!-- Hint on the left, works-preview action on the right. Stacks on narrow
-			screens, sits side by side from sm up. -->
 				<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					{#if showVoteHint}
 						<p class="text-body text-muted-foreground">
@@ -110,7 +106,6 @@
 						</p>
 					{/if}
 					{#if nomination?.works_url}
-						<!-- External gallery of the nominated works; opens in a new tab. -->
 						<Button
 							href={nomination.works_url}
 							rel="external noopener"
@@ -128,8 +123,6 @@
 
 		<VotingStatusAlert votingState={votingStatusQuery.data} class="mb-4" />
 
-		<!-- Above the search on purpose: the voted participant can be filtered out of
-	     the list, and this is where the vote is taken back. -->
 		{#if votedParticipant?.user_vote}
 			<div class="mb-4">
 				<UserVoteNotice
@@ -141,8 +134,6 @@
 			</div>
 		{/if}
 
-		<!-- Search sits straight on the page, as on the schedule, so the two lists read
-	     alike (DESIGN "When not to" use a card). -->
 		<div class="mb-4 flex flex-col gap-2">
 			<SearchInput
 				bind:value={searchQuery}
@@ -151,11 +142,6 @@
 				placeholder={m.voting_participants_search_placeholder()}
 			/>
 
-			<!-- Announce filter result changes to screen readers, which otherwise get no
-		     feedback that the list shrank or grew. Shown only while searching, as on the
-		     schedule: an unfiltered total tells a sighted user nothing. Skipped for an
-		     empty nomination: there is nothing to filter, and the empty state below
-		     already says so. -->
 			{#if participants.length > 0}
 				<p
 					class={['px-1 text-xs text-muted-foreground', !hasSearchQuery && 'sr-only']}
@@ -176,9 +162,6 @@
 				</ul>
 			</div>
 		{:else if hasSearchQuery}
-			<!-- Two distinct states: a search that matched nothing (recoverable —
-		     offer the reset), and a nomination with no participants at all,
-		     where clearing the search would do nothing. -->
 			<EmptyState
 				icon={Users}
 				title={m.common_nothing_found()}

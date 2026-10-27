@@ -21,11 +21,6 @@
 	import QuestHistoryFeed from './components/QuestHistoryFeed.svelte';
 
 	const userQuery = createQuery(() => currentUserOptions());
-	// Other players' awards send this viewer no signal, so an open page polls to keep
-	// the standings current. One query per viewer every 30s is cheap (the ranking
-	// is a ~12 ms aggregate at festival scale), and a broadcast on every award would
-	// make every open client refetch at once instead. TanStack skips the tick while
-	// the app is in the background.
 	const LEADERBOARD_REFRESH_MS = 30_000;
 	const questQuery = createQuery(() => ({
 		...getQuestOptions(),
@@ -35,8 +30,6 @@
 
 	let user = $derived(userQuery.data ?? null);
 	let quest = $derived(questQuery.data);
-	// The code needs no network and shows regardless; only the standings wait on
-	// the server.
 	let questView = $derived(
 		queryView(questQuery, {
 			policy: 'cached',
@@ -53,11 +46,6 @@
 	<title>{m.document_title({ title: m.quest_title() })}</title>
 </svelte:head>
 
-<!-- Tabs, while the map's floor switch is a toggle group: the map's options show
-     one plan at another level, the radio-group "segmented control" job, but these
-     swap in unrelated panels, which is the tabs job.
-     https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ -->
-<!-- Opens on the badge: showing the code is what a player opens the page for. -->
 <Tabs.Root value="badge" class="gap-4">
 	<Tabs.List aria-label={m.quest_tabs_label()} class="w-full sm:w-auto">
 		<Tabs.Trigger value="badge">{m.quest_tab_badge()}</Tabs.Trigger>
@@ -69,10 +57,6 @@
 		{#if user}
 			<QuestBadge {user} {quest} syncedAt={badgeSyncedAt} />
 		{/if}
-		<!-- The badge shows the code without the standings, so a failed load would
-		     only drop its stats; the error and its retry show here too, not just on
-		     the leaderboard tab. Offline with nothing saved, the code still works and
-		     the connection banner already says why the stats are missing. -->
 		<QueryState view={questView}>
 			{#snippet loading()}{/snippet}
 			{#snippet offline()}{/snippet}
@@ -104,8 +88,6 @@
 							{/each}
 						</ol>
 						{#if standings.own_entry}
-							<!-- The places between the top and the player stay hidden: they only tell
-							     someone how far behind they are. The list restarts at their rank. -->
 							<p
 								class="border-t border-dashed border-border py-1 text-center text-sm text-muted-foreground"
 							>

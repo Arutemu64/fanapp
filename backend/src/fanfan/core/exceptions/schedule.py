@@ -27,18 +27,9 @@ class InvalidScheduleFileReason(enum.StrEnum):
     EMPTY_CELL = "EMPTY_CELL"
     INVALID_NUMBER = "INVALID_NUMBER"
     DUPLICATE_NUMBER = "DUPLICATE_NUMBER"
-    # Every act takes stage time, and the wait estimate (ADR-0043) has nothing
-    # to go on for an act of zero seconds.
     DURATION_NOT_POSITIVE = "DURATION_NOT_POSITIVE"
-    # A `type` cell other than blank, `event` or `block`.
     INVALID_TYPE = "INVALID_TYPE"
-    # A block row carries only its title; a number, duration or nomination
-    # beside it is an event typed on the wrong row.
     BLOCK_ROW_WITH_EVENT_DATA = "BLOCK_ROW_WITH_EVENT_DATA"
-    # Caught by the route before the file is even opened, not by the parser —
-    # still travels as an InvalidScheduleFile so the client has one code to
-    # handle for "this upload can't become a schedule" regardless of which
-    # layer rejected it.
     FILE_TOO_LARGE = "FILE_TOO_LARGE"
     UNSUPPORTED_FILE_TYPE = "UNSUPPORTED_FILE_TYPE"
 

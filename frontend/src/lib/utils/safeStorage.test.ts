@@ -32,8 +32,6 @@ describe('safeStorage', () => {
 		expect(readStorage('local', 'k')).toBeNull();
 	});
 
-	// The whole reason this module exists: in-app webviews throw on access.
-	// Failure must degrade to null / false, never propagate.
 	it('returns null when a read throws (storage blocked)', () => {
 		vi.stubGlobal('localStorage', throwingStorage());
 		expect(readStorage('local', 'k')).toBeNull();

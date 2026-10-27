@@ -40,18 +40,13 @@ async def test_hit_raises_once_limit_is_exceeded(
 async def test_hit_self_heals_a_counter_that_lost_its_ttl(
     dishka_request: AsyncContainer,
 ) -> None:
-    # Simulates the regression this plan fixes: a counter that was created by
-    # INCR alone (e.g. a crash between the old INCR and EXPIRE calls) and so
-    # never got a TTL, leaving it to grow forever.
     limiter = await dishka_request.get(RateLimiter)
     redis = await dishka_request.get(Redis)
     key = "test-self-heal-orphaned-counter"
     counter_key = RedisRateLimiter._counter_key(key)
 
-    # redis-py declares one signature for the sync and async clients, so the
-    # async return type is only inferable at the call site, not from the stub.
     await redis.incr(counter_key)  # ty: ignore[invalid-await]
-    assert await redis.ttl(counter_key) == -1  # no expiry set
+    assert await redis.ttl(counter_key) == -1
 
     await limiter.hit(key, limit=5, window_seconds=60)
 

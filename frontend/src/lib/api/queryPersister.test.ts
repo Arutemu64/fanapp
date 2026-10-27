@@ -6,8 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createIdbPersister, QUERY_CACHE_KEY } from './queryPersister';
 
-// Copies on write and read with structuredClone, as IndexedDB does, so a value
-// that only survives JSON (or not at all) shows up here.
 const { store, set } = vi.hoisted(() => {
 	const store = new Map<string, unknown>();
 	return {
@@ -99,7 +97,6 @@ describe('createIdbPersister', () => {
 
 		await persister.persistClient(client(1));
 		vi.advanceTimersByTime(1000);
-		// A fetch starting is a cache event too, but nothing saved has changed.
 		await persister.persistClient(client(1, null, 'fetching'));
 		vi.advanceTimersByTime(1000);
 

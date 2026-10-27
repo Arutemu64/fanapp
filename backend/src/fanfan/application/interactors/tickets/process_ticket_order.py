@@ -32,8 +32,6 @@ class ProcessTicketOrder:
         self.uow = uow
 
     async def __call__(self, data: ProcessTicketOrderInput) -> ProcessTicketOrderOutput:
-        # The webhook body is untrusted, so the source re-fetches the
-        # authoritative order from the authenticated API by id.
         tickets = await self.source.fetch_order_tickets(data.order_id)
         tickets_config = (await self.app_settings_gateway.get()).tickets
         new_tickets_count = 0

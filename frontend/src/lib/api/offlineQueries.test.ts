@@ -8,9 +8,6 @@ import { notificationsFeedOptions, warmOfflineCache } from './offlineQueries';
 vi.mock('$app/env/public', () => ({ PUBLIC_API_URL: 'https://api.test' }));
 vi.mock('#lib/services/reachability.js', () => ({ isReachable: () => true }));
 
-// Answers every request with an empty body, except the feed, which always has a
-// next page, so a refetch would walk as many pages as the cache holds. The feed
-// answers once `feedGate` settles, to hold a fetch in flight.
 function stubApi(feedGate: Promise<unknown> = Promise.resolve()) {
 	const fetchMock = vi.fn<typeof fetch>(async (input) => {
 		const url = new URL(input instanceof Request ? input.url : String(input), 'https://api.test');
@@ -29,8 +26,6 @@ function feedRequests(fetchMock: ReturnType<typeof stubApi>): number {
 	}).length;
 }
 
-// A signed-in viewer whose notifications feed was scrolled three pages deep a
-// while ago, so it is stale now.
 function clientWithDeepFeed(): QueryClient {
 	const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	queryClient.setQueryData(currentUserOptions().queryKey, { id: 'user' } as never);
@@ -69,7 +64,6 @@ describe('warmOfflineCache', () => {
 		await warmOfflineCache(queryClient);
 		await vi.waitFor(() => expect(feedRequests(fetchMock)).toBe(1));
 
-		// The reader arrives while the first-page fetch is still on its way.
 		const shown: number[] = [];
 		const observer = new InfiniteQueryObserver(queryClient, {
 			...notificationsFeedOptions(),

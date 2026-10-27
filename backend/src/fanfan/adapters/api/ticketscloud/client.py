@@ -39,9 +39,6 @@ class TCloudClient(BaseApiClient):
         )
 
     async def get_order(self, order_id: str) -> Order | None:
-        # Fetch a single order by id. Returns None when the order does not
-        # exist (404) so callers don't have to handle HTTP error types.
-        # Other errors (auth, 5xx) still propagate.
         try:
             response = await self._get(f"resources/orders/{order_id}", OrderResponse)
         except httpx2.HTTPStatusError as error:

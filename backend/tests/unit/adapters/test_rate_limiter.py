@@ -21,7 +21,6 @@ async def test_concurrent_callers_are_spaced_by_the_rate() -> None:
 
     started.sort()
     gaps = [later - earlier for earlier, later in itertools.pairwise(started)]
-    # 1/50 s apart, allowing for timer slack on a busy runner.
     assert all(gap >= 0.015 for gap in gaps)
 
 

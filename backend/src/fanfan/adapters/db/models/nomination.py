@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import (
     Mapped,
@@ -33,5 +35,6 @@ class NominationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
             deferred=True,
         )
 
+    @override
     def __str__(self) -> str:
         return self.title

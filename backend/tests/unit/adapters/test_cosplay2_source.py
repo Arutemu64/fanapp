@@ -1,3 +1,5 @@
+from typing import override
+
 import pytest
 
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
@@ -24,9 +26,11 @@ class FakeCosplay2Client(Cosplay2Client):
         self._topics = topics
         self._requests = requests
 
+    @override
     async def get_topics_list(self) -> list[Topic]:
         return self._topics
 
+    @override
     async def get_all_requests(self) -> list[Request]:
         return self._requests
 
@@ -68,10 +72,10 @@ async def test_fetch_participants_keeps_only_approved_with_voting_title() -> Non
         FakeCosplay2Client(
             topics=[],
             requests=[
-                _request(1),  # approved + title -> kept
-                _request(2, status=RequestStatus.PENDING),  # not approved -> dropped
-                _request(3, voting_title=None),  # no voting title -> dropped
-                _request(4, voting_title=""),  # empty title is falsy -> dropped
+                _request(1),
+                _request(2, status=RequestStatus.PENDING),
+                _request(3, voting_title=None),
+                _request(4, voting_title=""),
             ],
         )
     )

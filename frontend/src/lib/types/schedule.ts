@@ -1,22 +1,11 @@
 import type { ScheduleBlockStartDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
-/**
- * The viewer's subscription to a single event (id + reminder lead time).
- * `queued` marks one still waiting to be sent, which has no ID yet.
- */
 export type EventSubscription =
 	| { id: string; lead_minutes: number; queued: false }
 	| { id: null; lead_minutes: number; queued: true };
 
-/**
- * Schedule row as the page renders it: the universal event plus the viewer's
- * own subscription. The schedule and subscriptions arrive from two separate
- * endpoints (so each caches independently) and are merged client-side by event
- * id, reproducing the embedded `user_subscription` the components expect.
- */
 export type ScheduleEventWithSubscription = ScheduleEventFullDto & {
 	user_subscription: EventSubscription | null;
 };
 
-/** One entry of the merged programme: an event, or the start of a block. */
 export type ScheduleEntryWithSubscription = ScheduleEventWithSubscription | ScheduleBlockStartDto;

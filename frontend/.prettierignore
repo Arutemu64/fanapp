@@ -1,28 +1,19 @@
-# Package Managers
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
 
-# Miscellaneous
 /static/
 
-# Svelte
 .svelte-kit/
 build/
 
-# Generated API client (just frontend-generate-api) is emitted through
-# Prettier by @hey-api/openapi-ts, so it stays formatted — kept OUT of this
-# ignore list on purpose so the format gate and drift check see the same bytes.
-
-# Playwright artifacts
 /playwright-report/
 /test-results/
 /blob-report/
 
 /src/lib/paraglide/
 
-# inlang writes these on compile; the .gitignore it also writes is not there yet on a fresh CI checkout
 /project.inlang/*
 !/project.inlang/settings.json

@@ -11,7 +11,6 @@ const DEFAULT_SETTINGS: UserSettingsDto = {
 	receive_vk_notifications: true
 };
 
-/** Build a valid CurrentUserDTO; override any field per test. */
 function user(overrides: Partial<User> = {}): User {
 	return {
 		id: '01890000-0000-7000-8000-000000000001',
@@ -29,12 +28,10 @@ function user(overrides: Partial<User> = {}): User {
 	};
 }
 
-/** Handlers that log the given user in (replaces the guest `GET /me`). */
 export function loggedInAs(overrides: Partial<User> = {}): Handlers {
 	return { 'GET /me': json<User>(user(overrides)) };
 }
 
-/** An organizer with full permissions — for tools/ and other gated surfaces. */
 export function organizer(overrides: Partial<User> = {}): Handlers {
 	return loggedInAs({
 		role: 'organizer',

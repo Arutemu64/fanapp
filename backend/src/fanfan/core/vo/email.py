@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import override
 
 from fanfan.core.exceptions.users import InvalidEmail
 from fanfan.core.utils.email import normalize_email
@@ -20,8 +21,8 @@ class Email:
         local, _, domain = normalized.partition("@")
         if not local or not domain:
             raise InvalidEmail
-        # Frozen dataclass: store the normalized form via object.__setattr__.
         object.__setattr__(self, "value", normalized)
 
+    @override
     def __str__(self) -> str:
         return self.value

@@ -1,5 +1,3 @@
-{# Gated on the title, not the number: an event without a public number (a
-   break) still gets announced, it just loses the №001 prefix. #}
 {% if current_event_title -%}
 <b>Сейчас:</b> {% if current_event_number is not none %}№{{ '%03d' % current_event_number }} {% endif %}<b>{{ current_event_title }}</b>
 {% endif %}

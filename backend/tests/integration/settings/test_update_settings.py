@@ -31,13 +31,10 @@ async def test_public_field_change_broadcasts_config_updated(
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(settings_editor)
 
-    # Derived from the shipped default so it stays after the default start and
-    # differs from the stored end whichever year the defaults are moved to.
     new_end = DEFAULT_FESTIVAL_END + timedelta(hours=1)
     await interactor(UpdateAppSettingsInput(festival_end=new_end))
 
     assert (await settings_gateway.get()).festival_end == new_end
-    # A single broadcast (user_id=None) so every open home page refetches /config.
     assert [
         (user_id, message.event_name) for user_id, message in realtime.published
     ] == [(None, SSEEventName.CONFIG_UPDATED)]
@@ -52,13 +49,10 @@ async def test_festival_end_before_start_is_rejected(
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     login(settings_editor)
 
-    # Partial update touching only the end: it must be validated against the
-    # persisted start, not accepted in isolation.
     original_end = (await settings_gateway.get()).festival_end
     before_start = datetime(2020, 1, 1, tzinfo=UTC)
 
     with pytest.raises(InvalidFestivalTimeRange):
         await interactor(UpdateAppSettingsInput(festival_end=before_start))
 
-    # The rejected write leaves the stored range untouched.
     assert (await settings_gateway.get()).festival_end == original_end

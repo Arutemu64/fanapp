@@ -24,7 +24,6 @@ import os
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "7c1e5a9b3d20"
 down_revision = "3fd0d71c9a0f"
 branch_labels = None
@@ -33,7 +32,6 @@ depends_on = None
 logger = logging.getLogger(f"alembic.runtime.migration.{revision}")
 
 _ENV_VAR = "TCLOUD__EVENT_IDS_MAP"
-# UserRole values, frozen here: a migration must not track the live enum.
 _ROLES = {"visitor", "participant", "volunteer", "organizer"}
 
 
@@ -45,8 +43,6 @@ def _event_roles_from_env() -> dict[str, str]:
     event_roles: dict[str, str] = {}
     for event_id, role in parsed.items():
         if role not in _ROLES:
-            # Fail loudly: the old config refused to boot on a bad role too, so
-            # this value never worked, and dropping it quietly would hide that.
             msg = f"{_ENV_VAR}: unknown role {role!r} for event {event_id!r}"
             raise ValueError(msg)
         event_roles[str(event_id).strip()] = role
@@ -73,6 +69,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # The older code reads the mapping from the env var again; the key would
-    # only be a stale copy it never looks at.
     op.execute("UPDATE app_settings SET config = config - 'tickets'")

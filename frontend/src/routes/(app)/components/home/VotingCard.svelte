@@ -19,8 +19,6 @@
 		href: string;
 	}
 
-	// The page never shows the card for 'disabled' (isVotingOpenNow), so the
-	// default is 'open'.
 	let action = $derived.by<VotingAction>(() => {
 		switch (status) {
 			case 'not_authenticated':
@@ -45,9 +43,6 @@
 	});
 </script>
 
-<!-- Sized by its own width (a container query), not the viewport's: on wide
-     screens it can sit in the narrow side column, where a viewport breakpoint
-     would squeeze text and button onto one row. -->
 <section
 	aria-labelledby="voting-heading"
 	class="@container rounded-2xl border border-primary-200 bg-primary-50 p-4 shadow-sm sm:p-5 dark:border-primary-800/50 dark:bg-primary-900/20"

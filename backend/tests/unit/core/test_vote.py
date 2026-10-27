@@ -17,8 +17,6 @@ def test_create_records_no_events() -> None:
 
     assert vote.user_id == user_id
     assert vote.participant_id == participant_id
-    # Nothing consumes vote events, and an event with no subscriber has no
-    # JetStream subject to land on, so the outbox relay could never deliver it.
     assert vote.pull_events() == []
 
 

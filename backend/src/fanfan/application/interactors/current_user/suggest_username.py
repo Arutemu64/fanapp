@@ -13,8 +13,6 @@ class SuggestUsername:
         self.user_service = user_service
 
     async def __call__(self) -> UsernameSuggestionDTO:
-        # Only a signed-in user has a name to replace, and each call costs a few
-        # username lookups.
         await self.current_user_provider.require_user_id()
         username = await self.user_service.generate_username()
         return UsernameSuggestionDTO(username=username)

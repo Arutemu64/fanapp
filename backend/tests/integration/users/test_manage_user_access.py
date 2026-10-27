@@ -79,7 +79,7 @@ async def test_superuser_grants_and_revokes(
     perm_gateway = await dishka_request.get(UserPermissionGateway)
     login(superuser)
 
-    for _ in range(2):  # idempotent
+    for _ in range(2):
         await interactor(
             SetUserPermissionInput(
                 user_id=visitor.id, permission=Permission.FEEDBACK_READ, granted=True

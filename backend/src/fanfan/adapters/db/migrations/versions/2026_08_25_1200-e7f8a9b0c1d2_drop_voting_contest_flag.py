@@ -18,7 +18,6 @@ Create Date: 2026-08-25 12:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "e7f8a9b0c1d2"
 down_revision = "0c1c3b98ba5e"
 branch_labels = None
@@ -31,8 +30,6 @@ _PREVIOUS = ("voting_contest",)
 
 
 def upgrade() -> None:
-    # The flag is meaningless now; drop the rows so the tightened constraint,
-    # which rejects every value, can be applied.
     op.execute(sa.text("DELETE FROM user_flags WHERE name = 'voting_contest'"))
     op.drop_constraint(op.f(_CONSTRAINT), _TABLE, type_="check")
     op.create_check_constraint(
@@ -43,8 +40,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Deleted voting_contest rows are not restored — the flag is derivable from
-    # votes, so re-materialising it is out of scope for a schema downgrade.
     op.drop_constraint(op.f(_CONSTRAINT), _TABLE, type_="check")
     op.create_check_constraint(
         op.f(_CONSTRAINT),

@@ -68,8 +68,6 @@ async def list_users(
     return await interactor(data)
 
 
-# Declared before /{user_id} so the literal path wins over the UUID path param,
-# which would otherwise try to parse "online-count" as a user id.
 @users_router.get(
     "/online-count",
     summary="Count online users",

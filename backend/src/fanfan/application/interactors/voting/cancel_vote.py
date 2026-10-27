@@ -34,16 +34,10 @@ class CancelVote:
 
     async def __call__(self, data: CancelVoteInput) -> None:
         current_user = await self.current_user_provider.require_user()
-        # Same gate as AddVote: once voting closes the ballot is final, so a
-        # cancel cannot rewrite the tally or the prize-draw pool after the fact.
-        # Checked before the vote lookup so the response says nothing about
-        # whether the vote exists.
         ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         await self.vote_service.ensure_user_can_vote(user=current_user, ticket=ticket)
 
         vote = await self.vote_gateway.get(data.vote_id)
-        # Treat a vote owned by someone else as missing so we don't leak its
-        # existence to other users.
         if vote is None or vote.user_id != current_user.id:
             raise VoteNotFound
         await self.vote_gateway.delete(vote)

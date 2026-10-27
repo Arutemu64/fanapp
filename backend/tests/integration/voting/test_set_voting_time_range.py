@@ -52,8 +52,6 @@ async def test_no_op_when_range_unchanged_does_not_broadcast(
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(voting_manager)
 
-    # Both start and end default to None; setting them to None again is a no-op
-    # that must neither write nor broadcast.
     await interactor(SetVotingTimeRangeInput(voting_start=None, voting_end=None))
 
     assert realtime.published == []

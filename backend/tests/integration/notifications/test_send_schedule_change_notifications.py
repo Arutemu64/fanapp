@@ -135,8 +135,6 @@ async def test_reminder_goes_out_once_when_due(
     await _subscribe(dishka_request, not_due.id, events[4])
     await uow.commit()
 
-    # Re-marking the current act current changes nothing on stage but runs the
-    # fan-out against the schedule as it stands.
     await _process(
         dishka_request,
         uow,
@@ -153,7 +151,6 @@ async def test_reminder_goes_out_once_when_due(
     assert set(reminded) == {by_lead_order.id, by_clock.id}
     assert reminded[by_lead_order.id].event_id == events[2].id
     assert "2 выступления" in reminded[by_lead_order.id].body
-    # Shown rounded up to 5 minutes, as on the schedule screen.
     assert "25 минут" in reminded[by_lead_order.id].body
     assert "35 минут" in reminded[by_clock.id].body
     assert all(n.type is NotificationType.SCHEDULE_SUBSCRIPTION for n in delivered)
@@ -227,7 +224,6 @@ async def test_own_act_moving_is_announced_and_its_start_too(
         ),
     )
 
-    # C went on stage, which brings D to the next place and its reminder due.
     by_user = {
         n.user_id: n for n in (await delivered_notifications(dishka_request))[1:]
     }
@@ -358,8 +354,6 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     await interactor(data)
 
     delivered = await delivered_notifications(dishka_request)
-    # Both runs target the one in-window subscriber; the id is identical, so the
-    # second insert no-ops instead of duplicating it.
     assert len(delivered) == 2
     assert delivered[0].id == delivered[1].id
 
@@ -390,7 +384,6 @@ async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
     await schedule_gateway.add(event_c)
     await uow.commit()
 
-    # An in-window subscriber who would be notified if the change were fresh.
     await subscription_gateway.add(
         Subscription(
             id=generate_subscription_id(),
@@ -455,7 +448,6 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
         role=UserRole.ORGANIZER,
     )
     await user_gateway.add(editor)
-    # The stage announcement is opt-in, off by default.
     await user_gateway.add(
         User(
             id=UserId(uuid7()),
@@ -503,7 +495,6 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
         "На сцене",
         "Изменение программы",
     ]
-    # Collapse runs of one kind: what is left is the order the kinds went out.
     kinds: list[str] = []
     for title in titles:
         if not kinds or kinds[-1] != title:

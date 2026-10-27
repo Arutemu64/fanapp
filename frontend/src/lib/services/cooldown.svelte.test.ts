@@ -2,9 +2,7 @@ import type * as Svelte from 'svelte';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// useInterval registers onDestroy, which throws outside component initialization.
-// Capture the callbacks so a test can simulate the component being destroyed.
-const destroyCallbacks = vi.hoisted(() => [] as Array<() => void>);
+const destroyCallbacks = vi.hoisted(() => [] as (() => void)[]);
 
 vi.mock('svelte', async (importOriginal) => ({
 	...(await importOriginal<typeof Svelte>()),
@@ -79,8 +77,6 @@ describe('ResendCooldown', () => {
 		expect(cooldown.remaining).toBe(5);
 	});
 
-	// A send awaited in the change-email form can settle after the dialog closed
-	// and call start() on a destroyed component.
 	it('ignores start() after the owning component is destroyed', () => {
 		const cooldown = new ResendCooldown(5);
 		destroyCallbacks.forEach((fn) => fn());

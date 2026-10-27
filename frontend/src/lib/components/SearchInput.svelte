@@ -7,12 +7,10 @@
 
 	interface Props {
 		value: string;
-		/** Accessible name; the field has no visible label. */
 		label: string;
 		placeholder: string;
 		name?: string;
 		oninput?: () => void;
-		/** Runs after the clear button has emptied the field. */
 		onclear?: () => void;
 	}
 
@@ -22,16 +20,11 @@
 
 	function clear() {
 		value = '';
-		// The button unmounts with the text, so focus goes back to the field
-		// instead of dropping to the page.
 		input?.focus();
 		onclear?.();
 	}
 </script>
 
-<!-- type="search" for the phone keyboard's search key; WebKit's own cancel button is
-	hidden because the clear button below is the one with a 44px target and a
-	Russian name. -->
 <InputGroup.Root>
 	<InputGroup.Addon>
 		<SearchIcon aria-hidden="true" />

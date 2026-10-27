@@ -33,7 +33,6 @@ async def test_second_claim_within_the_window_is_rejected(
 async def test_concurrent_claim_fails_fast_while_the_first_runs(
     dishka_request: AsyncContainer,
 ) -> None:
-    # A second request during an in-flight send must not queue behind it.
     cooldown = await dishka_request.get(Cooldown)
 
     async with cooldown.claim("test-in-flight", 60):
@@ -58,8 +57,6 @@ async def test_failed_block_gives_the_claim_back(
 async def test_failed_block_leaves_a_newer_claim_alone(
     dishka_request: AsyncContainer,
 ) -> None:
-    # The block outlived its window and another caller claimed the key; the
-    # failing block must not delete that newer claim on its way out.
     cooldown = await dishka_request.get(Cooldown)
     redis = await dishka_request.get(Redis)
     redis_key = RedisCooldown._redis_key("test-reclaimed")

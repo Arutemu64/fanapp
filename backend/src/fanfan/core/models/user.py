@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Self
+from typing import Self, override
 
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.email import Email
@@ -71,9 +71,6 @@ class User(AggregateRoot):
         receive_telegram_notifications: bool | None = None,
         receive_vk_notifications: bool | None = None,
     ) -> None:
-        # Only the fields that were explicitly passed get changed; None means
-        # "leave as is". Mutation goes through the aggregate root so callers
-        # never reach into the settings object directly.
         if receive_all_announcements is not None:
             self.settings.receive_all_announcements = receive_all_announcements
         if receive_telegram_notifications is not None:
@@ -89,8 +86,10 @@ class User(AggregateRoot):
     def set_password_hash(self, hashed_password: str) -> None:
         self.hashed_password = hashed_password
 
+    @override
     def __eq__(self, other: object) -> bool:
         return isinstance(other, User) and self.id == other.id
 
+    @override
     def __hash__(self) -> int:
         return hash(self.id)

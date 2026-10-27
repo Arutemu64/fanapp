@@ -18,7 +18,6 @@
 
 	let { snapshot }: Props = $props();
 
-	// The hero shows the act on stage; this card is what follows it.
 	let isLastAct = $derived(snapshot.featured?.live === true && snapshot.upNext.length === 0);
 
 	function untilLabel(event: ScheduleEventWithSubscription): string | null {
@@ -28,8 +27,6 @@
 	}
 </script>
 
-<!-- The acts up next are consecutive, so their order already says how far off
-     each one is; only the subscribed act further down the programme gets a distance. -->
 {#snippet eventRow(event: ScheduleEventWithSubscription, showUntil: boolean)}
 	{const number = $derived(formatEventNumber(event.number))}
 	{const until = $derived(showUntil ? untilLabel(event) : null)}
@@ -37,7 +34,6 @@
 		{#if number !== null}
 			<NumberBadge {number} />
 		{:else}
-			<!-- Numberless rows (breaks) keep the badge's width so titles share one column. -->
 			<div class="w-12 shrink-0" aria-hidden="true"></div>
 		{/if}
 		<div class="min-w-0 flex-1">

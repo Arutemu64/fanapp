@@ -24,7 +24,6 @@
 	class={['flex items-center gap-3 px-3 py-2.5 sm:px-4', isOwn && 'bg-primary/10']}
 	aria-current={isOwn ? 'true' : undefined}
 >
-	<!-- min-w, not a fixed size: a four-digit rank still fits the pill. -->
 	<span
 		class={[
 			'inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-1 text-sm font-semibold tabular-nums',
@@ -36,8 +35,6 @@
 		{entry.rank}
 	</span>
 	<UserAvatar seed={entry.player.avatar_seed} class="size-8" />
-	<!-- Inline flow, not flex: the name wraps at its seams and «(ты)», which marks the
-	     row besides its tint, follows it whole instead of squeezing it into a sliver. -->
 	<span class="min-w-0 flex-1 text-base">
 		<Username username={entry.player.username} class="text-foreground" />
 		{#if isOwn}

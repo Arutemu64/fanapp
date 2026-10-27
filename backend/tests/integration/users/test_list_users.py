@@ -152,8 +152,6 @@ async def test_pages_newest_first_by_cursor(
     interactor = await dishka_request.get(ListUsers)
     login(users_reader)
 
-    # Search-scoped usernames so the pages hold only these rows, whatever else
-    # the shared test DB holds.
     for name in ("page_a", "page_b", "page_c"):
         await _add_user(user_gateway, username=name)
     await uow.commit()

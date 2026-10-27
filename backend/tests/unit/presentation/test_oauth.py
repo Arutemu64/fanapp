@@ -27,8 +27,6 @@ from fanfan.presentation.web.routes.auth.oauth import build_login_redirect
 pytestmark = pytest.mark.unit
 
 ISSUER = "https://oauth.telegram.org"
-# Telegram's own sample token pairs these — deliberately different values, so a
-# test that confused the two would fail rather than pass by coincidence.
 SUBJECT = "1234123412341234123"
 TELEGRAM_USER_ID = 987654321
 
@@ -104,7 +102,6 @@ def test_every_other_failure_collapses_to_failed(error_code: str | None) -> None
 def test_claims_are_read_from_the_parsed_id_token() -> None:
     claims = read_telegram_claims(VALID_TOKEN)
 
-    # The subject is the identity; the Bot API id is only a delivery address.
     assert claims.sub == SUBJECT
     assert claims.id == TELEGRAM_USER_ID
     assert claims.name == "John Doe"
@@ -120,18 +117,12 @@ def test_token_without_a_subject_is_rejected() -> None:
         read_telegram_claims({"userinfo": {"id": TELEGRAM_USER_ID}})
 
 
-# A bot signing with EdDSA or ES256K gets the `profile` scope rejected by
-# Telegram, so the ID token verifies but carries no `id`. The app requires the
-# notification address on every identity, so such a token is refused rather than
-# producing an unreachable account.
 def test_token_without_an_id_is_rejected() -> None:
     with pytest.raises(InvalidTelegramAuthPayload):
         read_telegram_claims({"userinfo": {"sub": SUBJECT}})
 
 
 async def _fetch_claims(app: FakeTelegramApp) -> TelegramClaims:
-    # fetch_telegram_claims only forwards the request to Authlib, so a sentinel
-    # stands in for the real one.
     return await fetch_telegram_claims(cast("Any", app), cast("Any", object()))
 
 
@@ -151,11 +142,6 @@ async def test_declining_on_telegram_survives_as_cancelled() -> None:
     assert failure.value.error_code == OAUTH_ERROR_CANCELLED
 
 
-# Every one of these escapes an `except OAuthError` clause: httpx errors come out
-# of the token exchange and the JWKS fetch, joserfc errors out of ID token
-# validation, and OAuth2Error is a sibling of OAuthError rather than a subclass.
-# Uncaught, they reach the JSON exception handlers and the user — mid-navigation
-# — reads `{"code": "INTERNAL_ERROR"}` as the page.
 @pytest.mark.parametrize(
     "error",
     [
@@ -222,9 +208,6 @@ async def test_link_state_carries_the_initiator() -> None:
     assert str(flow_state.initiator_user_id) == initiator
 
 
-# The intent decides whether the callback issues a session or attaches an
-# identity, so a callback that cannot produce a trustworthy one must run neither
-# branch.
 @pytest.mark.parametrize(
     ("state", "state_data"),
     [
@@ -247,10 +230,6 @@ async def test_untrustworthy_state_is_refused(
     assert failure.value.error_code == OAUTH_ERROR_FAILED
 
 
-# RFC 9700 §4.4.2.1: a response whose issuer is not the one the request went to
-# must abort the interaction. Telegram does not support the RFC 9207 `iss`
-# response parameter, so this comparison against the stored issuer, plus the
-# per-provider callback URI, is the whole mix-up defence.
 async def test_an_issuer_that_moved_mid_flow_is_refused() -> None:
     app = FakeTelegramApp(
         state_data=_login_state(issuer="https://evil.example"), issuer=ISSUER
@@ -269,8 +248,6 @@ def test_an_in_app_path_is_kept_as_the_return_path(path: str) -> None:
     assert sanitize_return_path(path) == path
 
 
-# Each of these would leave the site once a browser resolves it: the backslash
-# and control-character forms normalize to the protocol-relative `//evil.com`.
 @pytest.mark.parametrize(
     "raw",
     [
@@ -298,8 +275,6 @@ async def test_login_state_carries_the_return_path() -> None:
     assert flow_state.return_path == "/profile"
 
 
-# Re-validated on the way out, so a state written before the start route
-# sanitized (or by anything else) still cannot redirect off-site.
 async def test_an_off_site_return_path_in_state_is_dropped() -> None:
     app = FakeTelegramApp(state_data=_login_state(return_path="//evil.com"))
 

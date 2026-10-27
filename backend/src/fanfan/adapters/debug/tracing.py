@@ -1,6 +1,5 @@
 import sentry_sdk
 
-# The headers Sentry propagates a trace with; the names are Sentry's contract.
 SENTRY_TRACE_HEADER = "sentry-trace"
 BAGGAGE_HEADER = "baggage"
 

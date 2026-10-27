@@ -11,9 +11,6 @@ from fanfan.core.vo.vote import VotingStatus
 class GetVotingStatusOutput(BaseModel):
     can_vote: bool
     status: VotingStatus
-    # The configured voting window, so the client can flip its banner exactly when
-    # the clock crosses a boundary. Returned to everyone, guests included — the
-    # schedule is public info and lets a signed-out visitor see when voting runs.
     voting_start: datetime | None
     voting_end: datetime | None
 

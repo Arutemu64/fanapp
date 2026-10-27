@@ -17,21 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class TCloudEventRolesOutput(BaseModel):
-    # False when this deployment has no TicketsCloud credentials: the mapping
-    # is kept, but nothing imports tickets to apply it to.
     available: bool
     event_roles: list[TCloudEventRoleDTO]
 
 
 class SetTCloudEventRolesInput(BaseModel):
-    # A list rather than an object keyed by event id, so the form's row order
-    # survives the round trip. A repeated event id keeps its last role.
     event_roles: list[TCloudEventRoleDTO] = Field(max_length=100)
 
 
-# Guarded by tickets:manage, not settings:manage, the way the voting time range
-# lives in AppSettings but is managed under voting:manage: the mapping decides
-# which role a bought ticket grants, the same power as generating one.
 class GetTCloudEventRoles:
     def __init__(
         self,
@@ -86,8 +79,6 @@ class SetTCloudEventRoles:
         )
         await self.app_settings_gateway.save(settings)
         await self.uow.commit()
-        # Applies to tickets imported from now on; tickets already stored keep
-        # the role they were imported with.
         logger.info(
             "TicketsCloud event roles updated",
             extra={

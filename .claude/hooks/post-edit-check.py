@@ -35,19 +35,13 @@ from pathlib import Path
 
 TIMEOUT_SECONDS = 30
 
-# Attributes whose value a user actually reads. `title` doubles as a non-visible
-# SVG label, which is still user-facing to a screen reader.
 USER_FACING_ATTRS = ("placeholder", "title", "alt", "aria-label")
 
 CYRILLIC = re.compile(r"[Ѐ-ӿ]")
 LATIN_WORD = re.compile(r"[A-Za-z]{4,}")
 
-# A token carrying @ _ . or a digit is an identifier, address or URL, not prose:
-# name@example.com, nomination_title, PUBLIC_API_URL, Arutemu64.
 IDENTIFIERISH = re.compile(r"[A-Za-z][A-Za-z0-9]*[@_.0-9]")
 
-# Proper nouns that stay Latin in Russian copy — brand and technology names, and
-# the festival's own latinised name.
 COPY_ALLOWLIST = frozenset(
     {
         "fan",
@@ -78,11 +72,7 @@ def run(cmd: list[str], cwd: Path) -> tuple[int, str]:
             check=False,
         )
     except (OSError, subprocess.SubprocessError) as exc:
-        # A missing toolchain must never nag the agent about its own edit.
         return 0, f"(skipped: {exc})"
-    # Diagnostics go to stdout; stderr is the fallback for a tool that failed
-    # before it could report. Preferring stdout keeps unrelated runtime chatter
-    # (uv's own deprecation warnings, for one) out of the agent's context.
     return proc.returncode, (proc.stdout.strip() or proc.stderr.strip())
 
 
@@ -97,8 +87,6 @@ def check_prettier(path: Path, repo: Path) -> str | None:
     code, _ = run(["pnpm", "exec", "prettier", "--check", str(rel)], repo / "frontend")
     if code == 0:
         return None
-    # prettier --check only names the file; say what to do about it instead of
-    # forwarding its output, which carries no diagnostic beyond pass/fail.
     return (
         "Not formatted to Prettier style. Fix with:\n"
         f"  cd frontend && pnpm exec prettier --write {rel}"
@@ -131,7 +119,7 @@ def check_tailwind(path: Path, repo: Path) -> str | None:
     try:
         results = json.loads(out)
     except ValueError:
-        return None  # eslint itself failed; the full lint in pre-commit reports it
+        return None
     lines = [
         f"  line {message['line']}: {message['message']}"
         for result in results
@@ -154,15 +142,11 @@ def strip_non_markup(source: str) -> str:
     source = re.sub(r"<style[^>]*>.*?</style>", " ", source, flags=re.DOTALL)
     source = re.sub(r"<!--.*?-->", " ", source, flags=re.DOTALL)
 
-    # Monospace content is an identifier the user must type verbatim (a
-    # spreadsheet column, an env var), not copy to translate.
     source = re.sub(r"<(code|kbd|pre)\b[^>]*>.*?</\1>", " ", source, flags=re.DOTALL)
     source = re.sub(
         r"<(\w+)[^>]*\bfont-mono\b[^>]*>.*?</\1>", " ", source, flags=re.DOTALL
     )
 
-    # Svelte expressions nest — {#snippet child({ props })} — so one non-greedy
-    # pass leaves the outer braces behind. Peel innermost-first until stable.
     while True:
         stripped = re.sub(r"\{[^{}]*\}", " ", source)
         if stripped == source:
@@ -253,7 +237,6 @@ def main() -> int:
     if not found:
         return 0
 
-    # stdout is the hook's output channel, not logging.
     print(  # noqa: T201
         json.dumps(
             {

@@ -9,9 +9,6 @@ class NotificationNotFound(NotificationException):
     code = "NOTIFICATION_NOT_FOUND"
 
 
-# Markers first so they win MRO precedence: these three are raised from the
-# CancelMailing HTTP command (as well as the NATS consumers), so they must
-# resolve to real 4xx statuses rather than the internal-only 500.
 class MailingNotFound(NotFound, NotificationException):
     code = "MAILING_NOT_FOUND"
 
@@ -21,8 +18,6 @@ class MailingAlreadyCancelled(Conflict, NotificationException):
 
 
 class MailingAlreadyExists(Conflict, NotificationException):
-    # The client-chosen mailing ID is taken by a different broadcast: another
-    # author, text or audience. A replay of the same broadcast is not an error.
     code = "MAILING_ALREADY_EXISTS"
 
 
@@ -38,22 +33,14 @@ class UserNotReachable(NotificationException):
 
 
 class NotificationChannelUnavailable(NotificationException):
-    # A whole delivery channel is misconfigured (e.g. missing/invalid VAPID
-    # keys), as opposed to a single user being unreachable. Consumers should
-    # drop the message rather than retry — retrying can't fix a config error.
     code = "NOTIFICATION_CHANNEL_UNAVAILABLE"
 
 
 class NotificationExpired(NotificationException):
-    # A schedule notification outlived SCHEDULE_NOTIFICATION_LIFETIME before a
-    # channel got to it; its text no longer matches the stage, so it is dropped.
     code = "NOTIFICATION_EXPIRED"
 
 
 class NotificationSuperseded(NotificationException):
-    # A newer schedule notification of the same kind already reached this user's
-    # channels. Sending the older one after it (parallel senders do not keep
-    # order) would leave the stale text on top, so it is dropped.
     code = "NOTIFICATION_SUPERSEDED"
 
 

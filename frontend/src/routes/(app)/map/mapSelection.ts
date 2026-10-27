@@ -7,10 +7,6 @@ export interface MapSelection {
 
 const defaultFloorId = maps[0]?.id ?? '';
 
-// The floor and the picked place live in the URL so a link can point at a place
-// (`/map?floor=floor-2-3&place=14`), and so they survive a reload, the back button and
-// a return by the Карта tab. An unknown floor or a place that isn't on it reads as
-// nothing picked: a stale link still opens the map.
 export function parseMapSelection(params: Pick<URLSearchParams, 'get'>): MapSelection {
 	const floor = maps.find((entry) => entry.id === params.get('floor')) ?? maps[0];
 	if (!floor) return { floorId: '', placeNumber: null };
@@ -22,7 +18,6 @@ export function parseMapSelection(params: Pick<URLSearchParams, 'get'>): MapSele
 
 export function buildMapSelectionQuery(selection: MapSelection): string {
 	const params = new URLSearchParams();
-	// The first floor is what a bare /map shows, so it stays out of the URL.
 	if (selection.floorId !== defaultFloorId) {
 		params.set('floor', selection.floorId);
 	}

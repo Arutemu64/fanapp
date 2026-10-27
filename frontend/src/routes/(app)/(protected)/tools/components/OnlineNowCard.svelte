@@ -5,23 +5,14 @@
 	import { countOnlineUsersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { m } from '#lib/paraglide/messages.js';
 
-	// Coarse on purpose: the figure is a rough "how many are here now", and a
-	// user's presence marker ages out server-side within ~45s, so a tighter poll
-	// would add load without adding meaning.
 	const REFRESH_MS = 20_000;
 
-	// TanStack's interval skips its tick while the window is in the background
-	// (refetchIntervalInBackground is off), and a failed poll keeps the last count
-	// standing: this is a glanceable stat, not critical data. A copy older than one
-	// poll refetches on mount instead of waiting out the client's 60s staleTime.
 	const onlineQuery = createQuery(() => ({
 		...countOnlineUsersOptions(),
 		refetchInterval: REFRESH_MS,
 		staleTime: REFRESH_MS,
 		meta: { quietRefetchErrors: true }
 	}));
-	// Undefined until the first response lands, so the card shows a placeholder
-	// instead of a misleading "0" while loading.
 	let count = $derived(onlineQuery.data?.count);
 </script>
 

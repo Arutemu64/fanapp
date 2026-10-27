@@ -31,7 +31,6 @@ def write_vapid_keys(secrets_dir: Path) -> str:
     private_key_path.write_bytes(private_pem)
     (secrets_dir / PUBLIC_KEY_NAME).write_bytes(public_pem)
 
-    # Private key is a secret — restrict to owner read/write (best-effort on Windows).
     private_key_path.chmod(0o600)
 
     return application_server_key

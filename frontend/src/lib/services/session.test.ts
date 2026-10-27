@@ -38,9 +38,6 @@ function setup({ reachable = true } = {}) {
 		unsubscribePush
 	});
 	const userKey = currentUserOptions().queryKey;
-	// The root layout always observes the user query, so forgetting inactive
-	// queries never removes it.
-	// Seeded and fresh, so subscribing doesn't fetch over what a test sets.
 	queryClient.setQueryData(userKey, null);
 	new QueryObserver(queryClient, { ...currentUserOptions(), staleTime: Infinity }).subscribe(
 		() => {}
@@ -137,7 +134,6 @@ describe('Session.logOut', () => {
 		expect(isLogoutPending()).toBe(true);
 		expect(queryClient.getQueryData(userKey)).toBeNull();
 		expect(events.restart).toHaveBeenCalledOnce();
-		// unsubscribe() is local and works offline, so it doesn't wait for the revoke.
 		expect(unsubscribePush).toHaveBeenCalledOnce();
 	});
 });
@@ -187,8 +183,6 @@ describe('Session.settlePendingLogout', () => {
 	});
 
 	it('gives up on a stalled revoke and keeps the intent, so the user can retry', async () => {
-		// The generated client never rejects: a timed-out request resolves with the
-		// error and no response.
 		logoutUser.mockResolvedValue({
 			error: new DOMException('signal timed out', 'TimeoutError'),
 			response: undefined

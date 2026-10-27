@@ -15,10 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class SetVotingTimeRangeInput(BaseModel):
-    # Require an offset: the stored range is later compared against an aware clock
-    # in AppSettings.is_voting_open(now), so a persisted naive bound would raise
-    # TypeError on every voting-status check, not just here. The dashboard form
-    # always sends an instant.
     voting_start: AwareDatetime | None
     voting_end: AwareDatetime | None
 
@@ -68,7 +64,4 @@ class SetVotingTimeRange:
             extra={"actor_id": str(current_user.id)},
         )
 
-        # Published after commit, best-effort: voting availability rides the same
-        # CONFIG_UPDATED signal the home page listens for, so a missed event
-        # self-heals on the next /config load (reconnect, navigation, resume).
         await self.realtime.publish(SSEMessage(SSEEventName.CONFIG_UPDATED))

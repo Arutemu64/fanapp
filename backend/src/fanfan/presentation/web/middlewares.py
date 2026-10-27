@@ -25,20 +25,21 @@ from fanfan.presentation.web.exceptions import (
 )
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 
-# Standard header used by proxies/clients to carry a request id; we reuse it
-# when present so logs can be correlated across services, and generate one
-# otherwise.
 _REQUEST_ID_HEADER = "X-Request-ID"
 
-# Any client can send the header, and its value lands in every log line of the
-# request (CWE-117), so a reused id must look like one: room for a UUID or a
-# proxy's own format, nothing that could pose as another field or record.
 _REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
-# Matches the reverse proxy's own cap (Caddyfile.example's request_body
-# max_size). Generous: the largest legitimate body today is a schedule
-# spreadsheet, capped at 5MB in the import route itself.
 _MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024
+
+
+def _append_session_cookie(
+    headers: MutableHeaders, session_id: str, web_config: WebConfig
+) -> None:
+    carrier = Response()
+    set_auth_cookie(carrier, session_id, web_config)
+    for name, value in carrier.raw_headers:
+        if name == b"set-cookie":
+            headers.append("set-cookie", value.decode("latin-1"))
 
 
 class RefreshSessionCookieMiddleware:
@@ -59,18 +60,11 @@ class RefreshSessionCookieMiddleware:
 
         async def send_with_cookie(message: Message) -> None:
             if message["type"] == "http.response.start":
-                # `request.state` is a view over scope["state"], so the flag a
-                # handler set (WebIdProvider) is visible here.
                 session_id = scope.get("state", {}).get("renew_session_id")
                 if session_id:
-                    # Render the cookie through set_auth_cookie on a scratch
-                    # Response so its flags stay defined in one place.
-                    carrier = Response()
-                    set_auth_cookie(carrier, session_id, self.web_config)
-                    headers = MutableHeaders(scope=message)
-                    for name, value in carrier.raw_headers:
-                        if name == b"set-cookie":
-                            headers.append("set-cookie", value.decode("latin-1"))
+                    _append_session_cookie(
+                        MutableHeaders(scope=message), session_id, self.web_config
+                    )
             await send(message)
 
         await self.app(scope, receive, send_with_cookie)
@@ -108,8 +102,6 @@ class CatchUnexpectedErrorsMiddleware:
         try:
             await self.app(scope, receive, tracking_send)
         except Exception as exc:
-            # Once headers are on the wire (a stream that failed midway) a 500
-            # can no longer be sent; let the server close the connection.
             if response_started:
                 raise
             await internal_error_response(exc)(scope, receive, send)

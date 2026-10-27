@@ -195,8 +195,6 @@ from fanfan.application.interactors.voting.set_voting_time_range import (
 class InteractorsProvider(Provider):
     scope = Scope.REQUEST
 
-    # Tuning slices consumed only by the interactors below (outbox relay/purge,
-    # notification purge), unpacked here so they live with their consumers.
     @provide(scope=Scope.APP)
     def get_outbox_config(self, config: EnvConfig) -> OutboxConfig:
         return config.outbox
@@ -205,8 +203,6 @@ class InteractorsProvider(Provider):
     def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
         return config.notification
 
-    # Every interactor is request-scoped and provides itself, so one
-    # provide_all keeps the roster flat instead of one binding line each.
     interactors = provide_all(
         GetSchedule,
         PublishScheduleUpdated,

@@ -13,14 +13,10 @@
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 
-	// Staff-only operational feed: it renders whatever is cached and refetches, but
-	// is not meant for offline use.
 	const changesQuery = createInfiniteQuery(() => ({
 		...listScheduleChangesInfiniteOptions({
 			query: { limit: SCHEDULE_CHANGES_PAGE_SIZE }
 		}),
-		// An object page param is request overrides to hey-api, a string the cursor:
-		// an empty object asks for the first page.
 		initialPageParam: {},
 		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));

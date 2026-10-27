@@ -10,8 +10,6 @@
 	let {
 		class: className,
 		role = 'status',
-		// we add name, color, and stroke for compatibility with different icon libraries props.
-		// only forward them when set, otherwise `stroke: undefined` overrides the icon's `currentColor`
 		name,
 		color,
 		stroke,

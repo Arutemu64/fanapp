@@ -1,3 +1,5 @@
+from typing import override
+
 import sentry_sdk
 from fastapi import Request
 
@@ -16,6 +18,7 @@ class WebIdProvider(IdProvider):
         self.request = request
         self.session_store = session_store
 
+    @override
     async def get_current_user_id(self) -> UserId | None:
         session_id = self.request.cookies.get(SESSION_COOKIE_NAME)
         if session_id is None:
@@ -24,7 +27,6 @@ class WebIdProvider(IdProvider):
 
         resolution = await self.session_store.resolve_session(session_id)
         if resolution.touched:
-            # Mark session for cookie TTL refresh in HTTP middleware.
             self.request.state.renew_session_id = session_id
 
         if resolution.user_id is not None:

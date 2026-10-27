@@ -58,8 +58,6 @@ async def _add_voter(
     username: str,
     participants: list[Participant],
 ) -> User:
-    # A voter is in the prize-draw pool once they have voted in every votable
-    # nomination — one vote per participant listed here.
     user = User(
         id=UserId(uuid7()),
         username=Username(username),
@@ -101,7 +99,6 @@ async def test_draws_a_winner_from_the_pool(
 
     first = await _add_voter(user_gateway, vote_gateway, "draw_a", every_nomination)
     second = await _add_voter(user_gateway, vote_gateway, "draw_b", every_nomination)
-    # Voted in only one of the two nominations — not eligible for the draw.
     await _add_voter(user_gateway, vote_gateway, "draw_partial", [first_nom])
     await uow.commit()
 

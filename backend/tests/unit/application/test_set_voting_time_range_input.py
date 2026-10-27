@@ -11,9 +11,6 @@ pytestmark = pytest.mark.unit
 
 
 def test_voting_boundaries_require_an_offset() -> None:
-    # A naive bound must be rejected here: once persisted it is compared against an
-    # aware clock in AppSettings.is_voting_open(now), which would raise TypeError
-    # on every voting-status check.
     with pytest.raises(ValidationError) as exc_info:
         SetVotingTimeRangeInput(
             voting_start=datetime(2026, 8, 22, 12, 0),  # noqa: DTZ001
@@ -37,7 +34,6 @@ def test_voting_boundaries_accept_aware_instants() -> None:
 
 
 def test_voting_range_can_be_cleared_with_nulls() -> None:
-    # Closing the vote sends both bounds null; that must stay valid.
     parsed = SetVotingTimeRangeInput(voting_start=None, voting_end=None)
 
     assert parsed.voting_start is None

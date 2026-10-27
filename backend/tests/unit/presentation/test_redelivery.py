@@ -33,15 +33,12 @@ class _FakeClient:
 
 def _delivery(deliveries: int) -> tuple[Msg, _FakeClient]:
     client = _FakeClient()
-    # JetStream v1 ack subject: stream, consumer, delivered, stream seq,
-    # consumer seq, timestamp, pending.
     reply = f"$JS.ACK.stream.durable.{deliveries}.7.7.1695456000000000000.0"
     msg = Msg(_client=cast("Any", client), subject="probe", reply=reply)
     return msg, client
 
 
 async def _fail(msg: Msg, error: BaseException) -> None:
-    # The middleware never reads its FastStream context.
     middleware = RedeliveryMiddleware(msg, context=cast("Any", None))
     await middleware.after_processed(type(error), error, None)
 
@@ -52,8 +49,6 @@ async def test_failure_is_redelivered_after_a_delay() -> None:
 
     await _fail(msg, RuntimeError("boom"))
 
-    # A delayed nak ("-NAK" plus a delay body), never the immediate plain nak
-    # that would retry a transient failure in a hot loop.
     [frame] = client.sent
     assert frame.startswith(b"-NAK {")
 
@@ -79,7 +74,6 @@ def test_is_last_delivery_matches_when_the_middleware_terms(
 
 
 def test_core_nats_message_is_never_a_last_delivery() -> None:
-    # Only a JetStream delivery is redelivered, so only it can run out.
     msg = Msg(_client=cast("Any", _FakeClient()), subject="probe", reply="inbox")
 
     assert not is_last_delivery(msg)
@@ -111,11 +105,8 @@ def test_every_durable_consumer_is_bounded_and_redelivers() -> None:
     for subscriber in broker.subscribers:
         config = getattr(subscriber, "config", None)
         name = config.durable_name if config else subscriber
-        # Unbounded MaxDeliver lets a poison message loop forever.
         assert config is not None
         assert config.max_deliver == MAX_DELIVER, name
-        # FastStream's NATS default terminates a message on the first error,
-        # losing the event; every consumer must redeliver or ack by hand.
         ack_policy = getattr(subscriber, "ack_policy", None)
         assert ack_policy is not AckPolicy.REJECT_ON_ERROR, name
 
@@ -136,20 +127,15 @@ async def test_heartbeat_extends_ack_wait_until_the_handler_returns() -> None:
     msg = _ProgressRecorder()
 
     async with in_progress_heartbeat(cast("Any", msg), interval=0.01):
-        # Wait for the beats instead of a fixed sleep: the timeout is only a
-        # backstop, so a slow runner delays the test rather than failing it.
         await asyncio.wait_for(msg.two_beats.wait(), timeout=5)
     beats_while_running = msg.beats
     await asyncio.sleep(0.03)
 
     assert beats_while_running >= 2
-    # Stops with the handler: a finished message must not keep being extended.
     assert msg.beats == beats_while_running
 
 
 def test_config_diff_names_only_the_declared_fields_that_differ() -> None:
-    # The server fills in defaults the declaration leaves unset (None); those
-    # must not read as changes, or every startup would log a spurious update.
     server = ConsumerConfig(
         durable_name="d", ack_wait=30.0, max_deliver=-1, max_ack_pending=1000
     )

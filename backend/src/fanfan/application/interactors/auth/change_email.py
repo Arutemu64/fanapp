@@ -46,11 +46,6 @@ class ChangeEmail:
         )
         try:
             async with claim:
-                # Send the confirmation code synchronously inside the claim so a
-                # delivery failure surfaces to the caller instead of failing
-                # silently after the UI has already claimed the code was sent.
-                # A failed send gives the claim back, leaving the cooldown
-                # unspent so the user can retry at once.
                 await self.send_email_confirmation_code(
                     SendEmailConfirmationCodeInput(
                         user_id=current_user.id,

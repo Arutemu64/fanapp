@@ -17,20 +17,16 @@
 		hasPassword: boolean;
 		email: string | null;
 		pending: boolean;
-		/** Changes the password; rejects with the API error body. */
 		onSave: (body: ChangePasswordInput) => Promise<void>;
 	}
 
 	let { hasPassword, email, pending, onSave }: Props = $props();
 
-	// Mounted fresh on every open (inside Dialog.Content), so no typed password
-	// survives a close.
 	let oldPassword = $state('');
 	let newPassword = $state('');
 	let formError = $state('');
 	let newPasswordError = $state('');
 
-	// Password rules mirror the backend PASSWORD_FIELD (10-128 chars, no complexity rule).
 	const MIN_PASSWORD_LENGTH = 10;
 	const MAX_PASSWORD_LENGTH = 128;
 
@@ -63,9 +59,6 @@
 </script>
 
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
-	<!-- Password managers pair a saved password with the username field in the
-		same form. Visually hidden rather than display:none, which managers may
-		skip. https://web.dev/articles/sign-in-form-best-practices -->
 	{#if email}
 		<input
 			type="text"
@@ -113,7 +106,6 @@
 				<Field.FieldError>{newPasswordError}</Field.FieldError>
 			{/if}
 
-			<!-- Live password requirements; reflects the backend PASSWORD_FIELD rules. -->
 			<ul class="mt-1 flex flex-col gap-1">
 				<li
 					class="flex items-center gap-2 text-sm {hasMinLength

@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 class LoginWithCodeInput(BaseModel):
     email: EmailStr
-    # repr=False keeps the one-time code out of error reports (core/vo/fields.py).
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$", repr=False)
 
 
@@ -52,7 +51,6 @@ class LoginWithCode:
         if user is None:
             raise UserNotFound
 
-        # The one-time email code proves mailbox ownership for this login.
         if user.email is None or user.email != target_email:
             logger.warning(
                 "Email code login failed",

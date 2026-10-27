@@ -24,7 +24,6 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
 revision = "3f7a1c9e2b04"
 down_revision = "393ea9d41058"
 branch_labels = None
@@ -44,7 +43,6 @@ _EXISTING = [
 ]
 _NEW = "demo:seed"
 
-# Seeded in b0fbcd2bb975; acts as the current user for CLI/scheduler/NATS work.
 SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
 
 user_permissions_table = sa.table(
@@ -70,8 +68,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop the grant before restoring the constraint, or the old CHECK would
-    # reject the still-present row.
     op.execute(
         sa.delete(user_permissions_table).where(
             user_permissions_table.c.user_id == SYSTEM_USER_ID,

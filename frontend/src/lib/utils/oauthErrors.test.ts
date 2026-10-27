@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { OAUTH_ERROR_CODES, OAUTH_LINK_ERROR_PARAM, readOAuthErrorCode } from './oauthErrors';
 
-/** The profile page's set: the shared outcomes plus its own conflicts. */
 const LINK_CODES = [
 	...OAUTH_ERROR_CODES,
 	'linked_to_another_account',
@@ -31,8 +30,6 @@ describe('readOAuthErrorCode', () => {
 		expect(readOAuthErrorCode(urlWith(''), OAUTH_LINK_ERROR_PARAM, LINK_CODES)).toBeNull();
 	});
 
-	// The whole point of the whitelist: the code reaches the page from a URL the
-	// user can edit, and the page turns it straight into on-screen copy.
 	it('rejects a code outside the whitelist', () => {
 		const injected = encodeURIComponent('Введи пароль на example.com');
 

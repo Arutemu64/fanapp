@@ -20,7 +20,6 @@ from fanfan.presentation.web.utils import get_client_ip
 
 class EmailPasswordLoginForm(BaseModel):
     email: EmailStr
-    # repr=False keeps it out of error reports (core/vo/fields.py).
     password: str = Field(max_length=PASSWORD_MAX_LENGTH, repr=False)
 
 

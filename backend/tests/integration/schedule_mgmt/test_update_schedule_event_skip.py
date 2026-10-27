@@ -70,8 +70,6 @@ async def test_skip_marks_event_and_records_change(
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
 
-    # "second" is the next event after the current one; skipping it moves the
-    # next event on to "third", so next_event_changed must be True.
     current = _schedule_event(1, 1, is_current=True)
     second = _schedule_event(2, 2)
     third = _schedule_event(3, 3)
@@ -120,7 +118,6 @@ async def test_unskip_marks_event_and_records_change(
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
-    # No current event, so get_next() sees nothing: the queue does not move.
     event = _schedule_event(1, 1, is_skipped=True)
     await schedule_gateway.add(event)
     await uow.commit()
@@ -160,7 +157,6 @@ async def test_skip_current_event_raises_and_records_nothing(
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
-    # The event on stage cannot be skipped while it is current.
     current = _schedule_event(1, 1, is_current=True)
     await schedule_gateway.add(current)
     await uow.commit()
@@ -221,7 +217,6 @@ async def test_skip_without_permission_raises_access_denied(
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
 
     event = _schedule_event(1, 1)
@@ -263,16 +258,12 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     await schedule_gateway.add(second)
     await uow.commit()
 
-    # The same announcement cooldown as set_current applies, so a second skip
-    # within the window is rejected.
     await interactor(UpdateScheduleEventSkipInput(event_id=first.id, is_skipped=True))
     with pytest.raises(ScheduleEditTooFast):
         await interactor(
             UpdateScheduleEventSkipInput(event_id=second.id, is_skipped=True)
         )
 
-    # The second skip is rejected before writing: "second" is untouched and
-    # only the first change is recorded.
     saved_second = await schedule_gateway.get_event(second.id)
     assert saved_second is not None
     assert saved_second.is_skipped is False

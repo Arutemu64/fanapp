@@ -1,3 +1,5 @@
+from typing import override
+
 from fanfan.application.ports.notifier import (
     PushNotifierPort,
     TelegramNotifierPort,
@@ -12,6 +14,7 @@ class FakeTelegramNotifier(TelegramNotifierPort):
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
 
+    @override
     async def send_notification(self, notification: Notification) -> None:
         self.sent_notifications.append(notification)
 
@@ -22,6 +25,7 @@ class FakePushNotifier(PushNotifierPort):
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
 
+    @override
     async def send_notification(self, notification: Notification) -> None:
         self.sent_notifications.append(notification)
 
@@ -32,5 +36,6 @@ class FakeVkNotifier(VkNotifierPort):
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
 
+    @override
     async def send_notification(self, notification: Notification) -> None:
         self.sent_notifications.append(notification)

@@ -48,9 +48,6 @@
 		user?.ticket ? m.ticket_status_linked() : m.ticket_status_not_linked()
 	);
 
-	// The row's "current value", like a settings screen's: whether any channel
-	// reaches this user (see notificationsStatus). Device push is read from the
-	// browser after mount; until then the social channels speak alone.
 	let devicePush = $state<DevicePushState>('unknown');
 	let notificationsValue = $derived(user ? notificationsStatus(devicePush, user) : undefined);
 
@@ -60,9 +57,6 @@
 		});
 	});
 
-	// "Инструменты" is the staff toolbox: a single link to the /tools dashboard
-	// rather than a row per tool, so the hub stays short as the tool list grows.
-	// The dashboard lists only held tools, so the link waits for the first one.
 	const configQuery = createQuery(() => getPublicConfigOptions());
 	let questEnabled = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_enabled);
 	let showTools = $derived(
@@ -83,20 +77,11 @@
 	const pwa = getPwaService();
 	const appUpdate = getAppUpdateService();
 
-	// Return here after logging in: the guest opened the Profile tab, so that is
-	// where they expect to land.
 	const loginHref = resolve(`login?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`);
 
-	// Both baked in at build time (vite.config.ts `define`). The release number is
-	// what an attendee can read out in a bug report ("у меня всё сломалось"); the
-	// short SHA pins the exact bundle, since every build between two releases
-	// carries the same number. A build without a release number (on the host,
-	// outside Docker) hides the line rather than showing a blank one.
 	const appVersion = __APP_VERSION__;
 	const buildId = __APP_BUILD__.slice(0, 7);
 
-	// Five taps on the version line open the diagnostics sheet: out of the way of
-	// an attendee who never needs it, easy to talk someone through at the info desk.
 	const DIAGNOSTICS_TAPS = 5;
 	const DIAGNOSTICS_TAP_WINDOW_MS = 2000;
 	let versionTaps: number[] = [];
@@ -116,19 +101,9 @@
 	<title>{m.document_title({ title: m.nav_profile() })}</title>
 </svelte:head>
 
-<!-- data-fill-column lets this grow to fill the (app) shell's content column, so on a page
-	shorter than the screen mt-auto drops the footer to the bottom instead of leaving it
-	mid-screen. -->
 <div data-fill-column class="flex grow flex-col">
-	<!-- Capped like a settings column: on a desktop the rows would otherwise stretch the
-	     full content width and push each value and chevron far from its label. Centred,
-	     because the shell centres its content column and a narrower block hugging that
-	     column's left edge reads as lopsided. -->
 	<div class="mx-auto flex w-full max-w-2xl flex-col gap-4 sm:gap-5">
 		{#if appUpdate.available}
-			<!-- First on the page: the dot on the Profile tab leads here. Optional all
-			     the same, since the next page change applies the update anyway (see the
-			     root layout's beforeNavigate). -->
 			<MenuGroup>
 				<MenuRow
 					onclick={() => appUpdate.apply()}
@@ -194,8 +169,6 @@
 				{/if}
 			</MenuGroup>
 		{:else}
-			<!-- Takes the account row's slot and shape, so logging in fills the row in
-			     rather than swapping the screen's layout. -->
 			<MenuGroup>
 				<Item.Root class="rounded-none">
 					{#snippet child({ props })}
@@ -224,8 +197,6 @@
 
 		<MenuGroup>
 			{#if pwa.canInstall}
-				<!-- Opens the @khmyznikov/pwa-install dialog, which renders its own
-			     platform-specific instructions (Chromium prompt, iOS "На экран Домой"). -->
 				<MenuRow
 					onclick={() => pwa.showInstallDialog()}
 					label={m.install_title()}
@@ -233,8 +204,6 @@
 					icon={Download}
 				/>
 			{/if}
-			<!-- An icon like every other hub row: the install row above shares this card,
-			     and a list that gives icons to only some rows reads as two layouts. -->
 			<Item.Root class="rounded-none">
 				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
 					<Palette class="size-5" aria-hidden="true" />
@@ -274,9 +243,6 @@
 			<Heart class="inline size-3.5 text-red-400" />
 		</p>
 		{#if appVersion}
-			<!-- A button so a keyboard reaches the diagnostics too, styled as the plain
-			     line it was so the gesture stays out of sight. Still 24px tall, the
-			     WCAG 2.5.8 floor, so a thumb can hit it apart from the link above. -->
 			<button
 				type="button"
 				class="inline-flex min-h-6 cursor-default items-center select-none"

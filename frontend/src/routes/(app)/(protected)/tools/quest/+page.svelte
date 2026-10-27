@@ -23,10 +23,8 @@
 	let maxAward = $derived((configQuery.data ?? FALLBACK_CONFIG).quest_max_award);
 
 	let player = $state.raw<AwardTarget | null>(null);
-	// Kept across players: a station awards the same task over and over.
 	let amount = $state('');
 	let message = $state('');
-	// Only a return from the form moves focus; the first visit leaves it alone.
 	let returnedFromForm = $state(false);
 
 	function handlePick(picked: AwardTarget) {
@@ -49,7 +47,6 @@
 
 		<ToolSection>
 			{#if player}
-				<!-- Keyed so a second player gets a fresh award ID and cleared errors. -->
 				{#key player.number}
 					<AwardForm {player} {maxAward} bind:amount bind:message onDone={handleDone} />
 				{/key}

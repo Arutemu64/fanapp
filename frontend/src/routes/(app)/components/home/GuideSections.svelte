@@ -17,7 +17,6 @@
 	const importantArticles = guideArticles.filter((article) => article.section === 'important');
 	const activityArticles = guideArticles.filter((article) => article.section === 'activities');
 
-	// Once the festival runs, a ticket is something a guest already holds, not something to buy.
 	let showTickets = $derived(phase === 'before');
 </script>
 
@@ -32,12 +31,6 @@
 	{/each}
 {/snippet}
 
-<!-- The festival guide under Home's live cards: grouped rows that each lead somewhere,
-     the phone-settings shape for "drill in"
-     (https://developer.apple.com/design/human-interface-guidelines/lists-and-tables),
-     so every target is a full-width tap. Each head sits over three times nearer its list than the block before it, so it
-     reads as that list's title (https://practicaltypography.com/space-above-and-below.html).
-     The date, times and address are the hero's, so they aren't repeated here. -->
 <div class="flex flex-col gap-10">
 	<section aria-labelledby="guide-important" class="flex flex-col gap-3">
 		<h2 id="guide-important" class="px-1 text-section text-foreground">

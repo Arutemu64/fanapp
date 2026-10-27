@@ -2,9 +2,6 @@ from dataclasses import dataclass
 from typing import Protocol
 
 
-# external_id is the port's neutral vocabulary for "the id in the source system".
-# The adapter maps the vendor id onto it; the interactor maps it onto the domain
-# model's existing `cosplay2_id` field. Domain/DB names stay vendor-specific.
 @dataclass(slots=True, frozen=True)
 class ExternalNomination:
     external_id: int
@@ -14,10 +11,10 @@ class ExternalNomination:
 
 @dataclass(slots=True, frozen=True)
 class ExternalParticipant:
-    external_id: int  # source request id
-    nomination_external_id: int  # matches an ExternalNomination.external_id
+    external_id: int
+    nomination_external_id: int
     voting_number: int | None
-    voting_title: str  # guaranteed present; the source filters out the None case
+    voting_title: str
 
 
 class CosplaySource(Protocol):

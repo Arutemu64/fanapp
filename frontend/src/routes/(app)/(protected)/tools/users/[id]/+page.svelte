@@ -19,8 +19,6 @@
 	import UserAccessCard from './components/UserAccessCard.svelte';
 
 	let { data }: PageProps = $props();
-	// Live from the query, so a role or permission change shows once its refetch
-	// lands; the load's copy covers the first paint.
 	const profileQuery = createQuery(() => getUserOptions({ path: { user_id: data.profile.id } }));
 	let profile = $derived(profileQuery.data ?? data.profile);
 </script>
@@ -90,8 +88,6 @@
 							</p>
 						</div>
 						{#if url}
-							<!-- rel="external": account deep link (vk.com / tg://), not an
-							     internal route — resolve() is only for app pathnames. -->
 							<a
 								href={url}
 								target="_blank"

@@ -66,8 +66,6 @@ async def test_link_ticket_prefers_exact_vendor_spelling(
     interactor = await dishka_request.get(LinkTicket)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
-    # A vendor barcode that happens to look like an organizer-issued code, next to the
-    # organizer-issued ticket its folded form would match: the exact spelling must win.
     vendor = Ticket(
         id=generate_ticket_id(),
         barcode="FAN-o0",
@@ -161,7 +159,7 @@ async def test_link_ticket_raises_already_used(
         id=generate_ticket_id(),
         barcode="123456",
         role=UserRole.PARTICIPANT,
-        used_by_user_id=schedule_editor.id,  # Used by other user
+        used_by_user_id=schedule_editor.id,
         issued_by_user_id=None,
         ticketscloud_ticket_id=None,
     )
@@ -183,7 +181,6 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
     interactor = await dishka_request.get(LinkTicket)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
-    # New ticket to link
     ticket = Ticket(
         id=generate_ticket_id(),
         barcode="123456",

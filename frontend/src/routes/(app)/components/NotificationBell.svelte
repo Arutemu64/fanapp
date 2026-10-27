@@ -15,52 +15,25 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
 
-	// The bell is a link to the notifications page on every screen size. A desktop
-	// dropdown preview was dropped: the audience is almost always on a phone, and a
-	// second list with its own read rules drifted from the page (its dots cleared
-	// on open, it had its own mark-all), which is the bell/page mismatch that makes
-	// users miss notifications.
-
-	// The badge is the server's unread total, one query shared with the
-	// notifications page (which clears it on open). It refetches on every
-	// notification_created event and mark-read; there is deliberately no local
-	// +1, since a delta can't be ordered against the authoritative total.
 	const unreadQuery = createQuery(() => countUnreadNotificationsOptions());
 	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
 	let badgeLabel = $derived(
 		unreadCount > NOTIFICATION_BADGE_MAX ? `${NOTIFICATION_BADGE_MAX}+` : unreadCount
 	);
-	// Announce the count to screen readers so the unread state isn't conveyed by
-	// the badge color alone.
 	let bellLabel = $derived(
 		unreadCount > 0 ? m.bell_label_unread({ count: unreadCount }) : m.bell_label()
 	);
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
 
-	// Mirror the unread count onto the installed app's icon (Badging API). This
-	// also replaces the count-less "flag" badge the service worker sets on push
-	// with the exact number once the app opens. The bell unmounts on every session
-	// end — explicit logout AND a passive 401 expiry — so the icon badge is cleared
-	// in the onMount teardown below, the one surface the query cache can't reach.
 	$effect(() => {
 		setAppBadgeCount(unreadCount);
 	});
 
-	// The bell unmounts on every session end, so a check still in flight then
-	// belongs to the previous account and must not toast its notification.
 	let sessionEnded = false;
 
 	function handleNewNotification(notification: NotificationDto) {
-		// On the notifications page the item already appears at the top of the
-		// list, so a toast would only repeat it — Apple's HIG: in the foreground,
-		// insert new data into the current view rather than notify:
-		// https://developer.apple.com/design/human-interface-guidelines/notifications
 		if (page.route.id === '/(app)/(protected)/notifications') return;
-		// Where the browser shows pushes itself (Declarative Web Push on iOS), the
-		// OS notification appears over the open app too and nothing can stop it,
-		// so the toast would repeat it. Checked per event because push can be
-		// switched on or off while the bell stays mounted.
 		void pushShowsOverOpenApp().then((osShowsIt) => {
 			if (!osShowsIt && !sessionEnded) {
 				toastService.push(notification);
@@ -74,9 +47,6 @@
 		return () => {
 			sessionEnded = true;
 			eventsClient.off('notification_created', handleNewNotification);
-			// Session ended (the bell only renders while logged in): drop the OS icon
-			// badge so the previous user's count can't linger on a shared or installed
-			// device. Covers passive 401 expiry too, which never runs LogoutButton.
 			setAppBadgeCount(0);
 		};
 	});
@@ -89,8 +59,6 @@
 >
 	<Bell class="size-5" aria-hidden="true" />
 	{#if unreadCount > 0}
-		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
-			not red — red reads as an error). The label is announced via aria-label. -->
 		<span
 			class="absolute top-0.5 right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-background bg-primary px-1 text-3xs leading-none font-semibold text-primary-foreground"
 			aria-hidden="true"

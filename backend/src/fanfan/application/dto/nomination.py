@@ -26,5 +26,4 @@ class NominationVotingDTO(NominationBaseDTO):
 
     participants_count: int
 
-    # User-specific values
     user_vote: NominationVoteDTO | None

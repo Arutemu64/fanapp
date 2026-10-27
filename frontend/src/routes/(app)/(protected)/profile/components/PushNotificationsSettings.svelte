@@ -52,33 +52,20 @@
 	}));
 	const testMutation = createMutation(() => sendTestNotificationMutation());
 
-	// Every control here writes to the server (push subscribe/unsubscribe, settings
-	// PATCH, test send) — online only. The current toggle states still render.
 	const offlineGate = offlineWriteGate();
 
 	const toastService = getToastService();
 	let hasVkAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
-	// Writable derived: the toggle overrides it optimistically, and it snaps back
-	// to the server copy whenever `user` refreshes (Svelte "Overriding derived values").
 	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
 	let vkDescription = $derived(
 		hasVkAccount ? m.vk_notifications_on_description() : m.vk_notifications_connect_first()
 	);
 	const pwa = getPwaService();
 	let showVkModal = $state(false);
-	// Link to the group's chat where the user grants "allow messages". Built from
-	// the build-time group id, so it may be empty if VK notifications were not
-	// configured for this deployment — the modal hides the button then.
 	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
 
-	// Where a denied permission is lifted depends on how the app is open. An
-	// installed app has no address bar: iOS keeps a Home Screen app's permission
-	// in the system Notifications settings, "just like any other app"
-	// (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/),
-	// and an Android WebAPK in its app settings. Only a browser tab has the site
-	// settings behind the address-bar icon.
 	let blockedHint = $derived.by(() => {
 		if (!pwa.isInstalled) {
 			return m.push_blocked_browser();
@@ -133,9 +120,6 @@
 	}
 
 	function updateSettings(nextSettings: Partial<UpdateUserSettingsInput>, rollback: () => void) {
-		// No success toast: the switch already sits in its new position, and a
-		// switch is expected to take effect on its own
-		// (https://www.nngroup.com/articles/toggle-switch-guidelines/).
 		settingsMutation.mutate(
 			{ body: nextSettings },
 			{
@@ -154,10 +138,6 @@
 				receive_vk_notifications: receiveVk
 			},
 			() => {
-				// Roll back to the effective state, not the raw flag: if VK was
-				// unlinked while the request was in flight, restoring the raw `true`
-				// would force the disabled toggle back ON — the misleading state this
-				// card avoids. Mirrors the receiveVk derived above.
 				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
 			}
 		);

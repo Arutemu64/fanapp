@@ -14,7 +14,6 @@ from fanfan.core.vo.permission import Permission
 class GetVotingDashboardOutput(BaseModel):
     voting_start: datetime | None
     voting_end: datetime | None
-    # Users who have voted in every votable nomination — the prize-draw pool.
     contest_pool_size: int
     nominations: list[NominationContenderDTO]
 

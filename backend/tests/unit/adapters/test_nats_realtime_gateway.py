@@ -54,8 +54,6 @@ def _gateway(nc: StubNatsClient) -> NatsRealtimeGateway:
 def _subscribe(
     gateway: NatsRealtimeGateway, user_id: UserId | None = None
 ) -> AsyncGenerator[SSEMessage]:
-    # The port promises an AsyncIterator; the adapter returns an async
-    # generator, which the tests close explicitly.
     return cast("AsyncGenerator[SSEMessage]", gateway.subscribe(user_id=user_id))
 
 
@@ -69,8 +67,6 @@ async def test_broadcast_reaches_every_stream_through_one_subscription() -> None
     first = _subscribe(gateway)
     second = _subscribe(gateway, UserId(uuid4()))
 
-    # Iteration starts lazily, so pull once to attach each stream; deliver the
-    # first message only after both are attached.
     first_pending = asyncio.ensure_future(_next(first))
     second_pending = asyncio.ensure_future(_next(second))
     await asyncio.sleep(0)
@@ -102,8 +98,6 @@ async def test_closed_stream_stops_receiving_and_drops_its_user_subscription() -
     await stream.aclose()
 
     assert f"sse.user.{user_id}.*" not in nc.handlers
-    # The shared broadcast subscription outlives the stream but no longer
-    # feeds it.
     assert "sse.broadcast.*" in nc.handlers
     await nc.deliver(
         "sse.broadcast.*", SSEMessage(event_name=SSEEventName.SCHEDULE_UPDATED)

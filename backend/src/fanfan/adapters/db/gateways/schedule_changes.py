@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -89,15 +91,14 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         self.session = session
         self.uow = uow
 
+    @override
     async def add(self, change: ScheduleChange) -> None:
         change_orm = _from_model(change)
-        # Insert time, not the column's now() default: now() is the transaction
-        # start, which precedes the lock_for_edit wait, so it would backdate the
-        # change and shorten the announcement cooldown measured from it.
         change_orm.created_at = func.clock_timestamp()
         self.session.add(change_orm)
         self.uow.register(change)
 
+    @override
     async def get_by_id(self, change_id: ScheduleChangeId) -> ScheduleChange | None:
         stmt = (
             select(ScheduleChangeORM)
@@ -111,11 +112,13 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         self.uow.register(change)
         return change
 
+    @override
     async def delete(self, change: ScheduleChange) -> None:
         await self.session.execute(
             delete(ScheduleChangeORM).where(ScheduleChangeORM.id == change.id)
         )
 
+    @override
     async def read_schedule_change(
         self, change_id: ScheduleChangeId
     ) -> ScheduleChangeFullDTO | None:
@@ -131,15 +134,12 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         result = await self.session.scalar(stmt)
         return _parse_full_dto(result) if result else None
 
+    @override
     async def read_list_schedule_changes(
         self, pagination: CursorPagination
     ) -> list[ScheduleChangeFullDTO]:
         stmt = (
             select(ScheduleChangeORM)
-            # id (uuid7, time-ordered) breaks created_at ties so the page cursor
-            # names one row — a bulk schedule edit inserts many change rows in one
-            # transaction sharing created_at, which would otherwise leave the
-            # cursor ambiguous and let a change slip through unseen.
             .order_by(ScheduleChangeORM.created_at.desc(), ScheduleChangeORM.id.desc())
             .options(
                 joinedload(ScheduleChangeORM.changed_event),
@@ -157,10 +157,8 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         result = (await self.session.scalars(stmt)).unique()
         return [_parse_full_dto(s) for s in result]
 
+    @override
     async def read_seconds_since_last_change(self) -> float | None:
-        # clock_timestamp(), not now(): now() is frozen at the start of this
-        # transaction, which may predate the lock wait behind the edit whose
-        # row we are measuring from.
         elapsed = func.extract(
             "epoch", func.clock_timestamp() - func.max(ScheduleChangeORM.created_at)
         )

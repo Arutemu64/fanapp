@@ -1,3 +1,5 @@
+from typing import override
+
 import pytest
 
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
@@ -55,6 +57,7 @@ class FakeTCloudClient(TCloudClient):
         self.order_statuses: list[OrderStatus] = []
         self.refund_statuses: list[RefundStatus] = []
 
+    @override
     async def get_orders(
         self, status: OrderStatus, page: int = 1, page_size: int = 200
     ) -> OrdersResponse:
@@ -67,9 +70,11 @@ class FakeTCloudClient(TCloudClient):
             ),
         )
 
+    @override
     async def get_order(self, order_id: str) -> Order | None:
         return self._orders_by_id.get(order_id)
 
+    @override
     async def get_refunds(
         self, status: RefundStatus, page: int = 1, page_size: int = 200
     ) -> RefundsResponse:
@@ -86,8 +91,8 @@ async def test_fetch_order_tickets_filters_and_keeps_event() -> None:
     order = _order(
         "o1",
         tickets=[
-            _ticket("t1", barcode="B1"),  # kept
-            _ticket("t2", barcode=None),  # no barcode -> dropped
+            _ticket("t1", barcode="B1"),
+            _ticket("t2", barcode=None),
         ],
     )
     source = TCloudSource(FakeTCloudClient(pages=[[]], orders_by_id={"o1": order}))
@@ -131,7 +136,6 @@ async def test_fetch_all_tickets_paginates_and_streams() -> None:
 
     collected = [ticket async for ticket in source.fetch_all_tickets()]
 
-    # t3 dropped (order not DONE); t1 and t2 streamed across both pages.
     assert [t.external_id for t in collected] == ["t1", "t2"]
     assert client.order_statuses == [OrderStatus.DONE, OrderStatus.DONE]
 

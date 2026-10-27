@@ -22,8 +22,6 @@ from fanfan.presentation.web.routes.webhooks import webhooks_router
 def setup_api_router() -> APIRouter:
     router = APIRouter()
 
-    # 401/403 are not global: routes that need a session declare the SessionCookie
-    # security marker and AUTH_RESPONSES themselves, so public routes stay clean.
     router.include_router(debug_router, responses=VALIDATION_RESPONSES)
     router.include_router(auth_router, responses=VALIDATION_RESPONSES)
     router.include_router(config_router, responses=VALIDATION_RESPONSES)

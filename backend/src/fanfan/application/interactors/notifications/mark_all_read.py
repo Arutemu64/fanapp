@@ -18,8 +18,6 @@ class MarkAllRead:
 
     async def __call__(self) -> None:
         current_user_id = await self.current_user_provider.require_user_id()
-        # seen_at is a timestamptz column, so the stored instant is identical
-        # regardless of tzinfo; use UTC to match every other interactor.
         timestamp = datetime.now(UTC)
         await self.notifications_gateway.mark_all_read_for_user(
             user_id=current_user_id,

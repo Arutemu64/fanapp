@@ -14,17 +14,6 @@
 
 	type Variant = 'fullscreen' | 'inline';
 
-	// `fullscreen` takes over the whole viewport (root errors: 404, auth, root load
-	// failures). `inline` fills the content area only, so the app shell — navbar,
-	// sidebar, bottom nav — stays visible and navigable around it.
-	// `error` is the boundary's own error, which +error.svelte receives for a
-	// rendering error. Prefer it to `page.error`: every failing boundary — the
-	// navbar's bell included — writes its error there, so a later failure
-	// elsewhere could replace this page's message and «Код ошибки».
-	// A page showing a failed query passes one too (via QueryState), with no
-	// status: the client rethrows the API body without it, and `page.status` is
-	// the page's own 200, so no «Ошибка 500» label is made up for it. It also
-	// passes `onRetry`, which refetches that query instead of reloading the app.
 	let {
 		variant = 'fullscreen',
 		error,
@@ -40,21 +29,12 @@
 	let errorMessage = $derived(shownError?.message);
 	let errorId = $derived(shownError?.errorId);
 
-	// Most load failures while offline surface here as a 500/503. Detect the real
-	// cause (backend unreachable) and show a calm connectivity page instead of a
-	// scary server-error screen.
 	let online = $derived(reachability.current);
-	// A genuine 403/404 is a real server answer — never reframe it as offline.
 	let offline = $derived(!online && status !== 403 && status !== 404);
 	let canRetry = $derived(
 		offline || onRetry !== undefined || (status !== undefined && status >= 500)
 	);
 
-	// Within an offline state, tell the two causes apart so we never blame the
-	// user's internet for a server outage. `navigator.onLine === false` is a
-	// trustworthy negative — the device really has no connection; otherwise the
-	// device is online but the server can't be reached (API down, captive portal,
-	// dead VPN), for which "нет связи с сервером" is the honest, non-blaming framing.
 	let deviceOffline = $derived(!reachability.deviceOnline);
 
 	let title = $derived.by(() => {
@@ -62,9 +42,6 @@
 		return deviceOffline ? m.connection_no_internet() : m.connection_no_server();
 	});
 
-	// A genuine 403 gets the lock icon; everything else (including offline, which
-	// is never a 403) gets the generic alert icon. Offline is the only yellow
-	// state; all others are red.
 	let StatusIcon = $derived(status === 403 ? Lock : CircleAlert);
 	let iconColorClass = $derived(
 		offline ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive'
@@ -79,7 +56,6 @@
 		return m.error_state_unexpected();
 	});
 
-	// Fullscreen owns the viewport background; inline inherits the shell's surface.
 	let wrapperClass = $derived(
 		variant === 'fullscreen'
 			? 'flex min-h-svh items-center justify-center bg-background px-4 py-6 sm:py-10'
@@ -92,9 +68,6 @@
 
 	function handleRetry() {
 		if (onRetry) {
-			// While the app counts the server as unreachable, TanStack pauses the
-			// refetch, and the background recovery poll can be up to 30s away. Checking
-			// now lets a tap resume every paused query the moment the server answers.
 			if (!online) void probeReachability();
 			onRetry();
 			return;
@@ -129,8 +102,6 @@
 			</p>
 
 			{#if errorId}
-				<!-- Something a user can quote in feedback; matches the error_id tag on the
-				     GlitchTip event (see handleError in hooks.client.ts). -->
 				<p class="-mt-4 mb-6 text-xs text-muted-foreground">
 					{m.error_state_code_label()} <span class="font-mono select-all">{errorId}</span>
 				</p>

@@ -16,9 +16,6 @@ class Notifier(Protocol):
         raise NotImplementedError
 
 
-# Distinct Protocol types so Dishka resolves them as separate DI keys.
-# Dishka strips plain Annotated metadata, so only actual types work here.
-# Add a new Protocol subclass when introducing a new notification destination.
 class TelegramNotifierPort(Notifier, Protocol):
     pass
 

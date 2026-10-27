@@ -17,7 +17,6 @@ from fanfan.presentation.cli.commands.users import create_user_command
 @click.group()
 @click.pass_context
 def cli(context: click.Context) -> None:
-    # No setup_dishka in there because it doesn't support async containers
     context.meta[CONTAINER_NAME] = create_system_container()
 
 

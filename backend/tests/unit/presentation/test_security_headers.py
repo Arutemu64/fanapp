@@ -25,8 +25,6 @@ def test_security_headers_are_set() -> None:
 
 
 def test_hsts_is_left_to_the_tls_terminator() -> None:
-    # The app is behind a TLS-terminating proxy and cannot tell HTTPS from HTTP,
-    # so it must never emit HSTS itself.
     response = _client().get("/")
 
     assert "Strict-Transport-Security" not in response.headers

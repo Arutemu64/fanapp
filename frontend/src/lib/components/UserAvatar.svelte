@@ -10,7 +10,6 @@
 	let { seed, class: className }: Props = $props();
 </script>
 
-<!-- Decorative: the username always sits next to it. Size comes from the caller. -->
 <img
 	src={getAvatarDataUri(seed)}
 	alt=""

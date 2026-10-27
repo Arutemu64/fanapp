@@ -12,8 +12,6 @@ from fanfan.application.services.tickets_import import TicketImportService
 
 logger = logging.getLogger(__name__)
 
-# Commit periodically during a full sync so a large run is not held in one giant
-# transaction and progress is persisted incrementally.
 COMMIT_BATCH_SIZE = 200
 
 
@@ -36,13 +34,8 @@ class SyncTickets:
         self.uow = uow
 
     async def __call__(self) -> SyncTicketsOutput:
-        # Read once: the sweep commits in batches, and every batch should grant
-        # roles from the same mapping.
         tickets_config = (await self.app_settings_gateway.get()).tickets
 
-        # Refunds are read before any ticket is committed, so a sale refunded
-        # before its first import is stored already revoked and never sits
-        # linkable between the import and revocation passes.
         refunded = {revoked async for revoked in self.source.fetch_revoked_tickets()}
 
         new_tickets_count = 0
@@ -72,8 +65,6 @@ class SyncTickets:
                 )
         await self.uow.commit()
 
-        # Revoke after importing: the import pass fills in the order id on rows
-        # stored before it was tracked, so revocation can match them exactly.
         for revoked in refunded:
             if await self.ticket_import_service.revoke_ticket(revoked):
                 revoked_tickets_count += 1

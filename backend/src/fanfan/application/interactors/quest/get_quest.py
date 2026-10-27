@@ -5,17 +5,13 @@ from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.quest_awards import QuestAwardGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 
-# Top places shown to every player; the board is short on purpose, since a
-# long tail mostly tells people how far behind they are.
 LEADERBOARD_SIZE = 10
 
 
 class GetQuestOutput(BaseModel):
     points: int
-    # None until the player has earned anything.
     rank: int | None
     leaderboard: list[LeaderboardEntryDTO]
-    # The player's own row, set when they rank below the shown top places.
     own_entry: LeaderboardEntryDTO | None
 
 

@@ -68,10 +68,6 @@ async def _add_votes(
     participant: Participant,
     count: int,
 ) -> None:
-    # Each vote needs a distinct real voter (votes FK users, and the unique
-    # (user_id, participant_id) forbids one voter counting twice). Key the username
-    # off the full id — uuid7's leading bits are the shared millisecond timestamp,
-    # so a short prefix collides for voters created in the same tick.
     for _ in range(count):
         voter_id = UserId(uuid7())
         voter = User(
@@ -135,7 +131,6 @@ async def test_nomination_without_votes_has_no_leader(
     login(voting_manager)
 
     nomination = await _add_nomination(nomination_gateway, cosplay2_id=4010)
-    # A participant exists, but nobody has voted — there is no honest leader.
     await _add_participant(
         participant_gateway, nomination, cosplay2_id=4011, voting_number=1
     )
@@ -190,7 +185,6 @@ async def test_reports_contest_pool_size(
         participant_gateway, second_nom, cosplay2_id=4033, voting_number=1
     )
 
-    # Two members who each voted in every votable nomination form the pool.
     for i in range(2):
         member = User(
             id=UserId(uuid7()),

@@ -7,24 +7,14 @@ from fanfan.presentation.web.error_codes import (
 
 pytestmark = pytest.mark.unit
 
-# Concrete exceptions that intentionally resolve to HTTP 500 (no 4xx marker):
-# they are raised in non-HTTP contexts (Telegram/NATS/scheduler), caught and
-# re-raised as a flow-specific error, or signal a server misconfiguration. If
-# one of these ever needs to surface to an HTTP client, give it a semantic
-# marker instead of adding it here.
 INTERNAL_ONLY: set[str] = {
-    # Notification delivery — handled inside the NATS consumer, never HTTP.
-    # MAILING_NOT_FOUND / MAILING_CANCELLED are NOT here: they also surface from
-    # the CancelMailing HTTP command, so they carry 404/409 markers.
     "NOTIFICATION_NOT_FOUND",
     "USER_NOT_REACHABLE",
     "NOTIFICATION_CHANNEL_UNAVAILABLE",
     "NOTIFICATION_RETRY_AFTER",
     "NOTIFICATION_EXPIRED",
     "NOTIFICATION_SUPERSEDED",
-    # Rate-limit guards — caught and re-raised as a flow-specific RateLimited.
     "COOLDOWN_ACTIVE",
-    # Missing vendor integration config — a server misconfiguration (500).
     "COSPLAY2_CONFIG_NOT_PROVIDED",
     "TCLOUD_CONFIG_NOT_PROVIDED",
 }

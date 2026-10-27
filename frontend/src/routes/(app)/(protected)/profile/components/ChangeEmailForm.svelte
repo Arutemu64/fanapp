@@ -21,9 +21,7 @@
 		currentEmail?: string | null;
 		sending: boolean;
 		confirming: boolean;
-		/** Sends a code to the new address; rejects with the API error body. */
 		onSendCode: (body: ChangeEmailInput) => Promise<void>;
-		/** Confirms the code; rejects with the API error body. */
 		onConfirm: (code: string) => Promise<void>;
 	}
 
@@ -32,9 +30,6 @@
 
 	let isBusy = $derived(sending || confirming);
 
-	// Two-step flow: 'email' collects and sends the OTP, 'verify' confirms it.
-	// Mounted fresh on every open (inside Dialog.Content), so each open starts at
-	// the email step with an idle cooldown (its interval clears itself on unmount).
 	let step = $state<'email' | 'verify'>('email');
 	let newEmail = $state('');
 	let emailError = $state('');
@@ -129,8 +124,6 @@
 </script>
 
 {#if step === 'email'}
-	<!-- novalidate: the browser's own type="email" bubble would pre-empt the
-	     field error handleSubmit shows. -->
 	<form onsubmit={handleSubmit} novalidate class="flex flex-col gap-4">
 		<FormError message={formError} />
 

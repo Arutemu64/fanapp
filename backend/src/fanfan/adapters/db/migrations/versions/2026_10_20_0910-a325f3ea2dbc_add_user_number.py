@@ -9,7 +9,6 @@ Create Date: 2026-10-20 09:10:13.781016
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "a325f3ea2dbc"
 down_revision = "f7bfa0725510"
 branch_labels = None
@@ -17,12 +16,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Nullable first: existing users have no number until the backfill below.
     op.add_column("users", sa.Column("number", sa.Integer(), nullable=True))
-    # Deal every existing user a distinct number from a shuffled pool of all
-    # six-digit ones, so the backfill can never collide with itself. The bounds
-    # are spelled out rather than imported: a migration must not change when
-    # the code it was written against does.
     op.execute(
         """
         WITH pool AS (

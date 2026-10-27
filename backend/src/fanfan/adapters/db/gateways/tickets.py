@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 
 from sqlalchemy import Select, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,23 +66,25 @@ class SqlTicketGateway(TicketGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, ticket: Ticket) -> None:
         ticket_orm = _from_model(ticket)
         self.session.add(ticket_orm)
 
+    @override
     async def add_all(self, tickets: list[Ticket]) -> None:
         ticket_orms = [_from_model(ticket) for ticket in tickets]
         self.session.add_all(ticket_orms)
-        # Flush here so a duplicate barcode surfaces as a domain exception at the
-        # gateway (not later at uow.commit()); the caller regenerates and retries.
         with translate_integrity_error({"uq_tickets_barcode": TicketBarcodeCollision}):
             await self.session.flush()
 
+    @override
     async def get_by_barcode(self, barcode: str) -> Ticket | None:
         stmt = select(TicketORM).where(TicketORM.barcode == barcode).with_for_update()
         ticket_orm = await self.session.scalar(stmt)
         return _to_model(ticket_orm) if ticket_orm else None
 
+    @override
     async def get_by_ticketscloud_sale(
         self, order_id: str, ticket_id: str
     ) -> Ticket | None:
@@ -97,11 +99,10 @@ class SqlTicketGateway(TicketGateway):
         ticket_orm = await self.session.scalar(stmt)
         return _to_model(ticket_orm) if ticket_orm else None
 
+    @override
     async def get_legacy_by_ticketscloud_ticket_id(
         self, ticket_id: str
     ) -> Ticket | None:
-        # Rows imported before the order id was stored. The ticket id used to be
-        # unique, so at most one such row exists per ticket id.
         stmt = (
             select(TicketORM)
             .where(
@@ -113,6 +114,7 @@ class SqlTicketGateway(TicketGateway):
         ticket_orm = await self.session.scalar(stmt)
         return _to_model(ticket_orm) if ticket_orm else None
 
+    @override
     async def get_by_user_id(self, user_id: UserId) -> Ticket | None:
         stmt = (
             select(TicketORM)
@@ -122,6 +124,7 @@ class SqlTicketGateway(TicketGateway):
         ticket_orm = await self.session.scalar(stmt)
         return _to_model(ticket_orm) if ticket_orm else None
 
+    @override
     async def save(self, ticket: Ticket) -> None:
         with translate_integrity_error(
             {
@@ -131,9 +134,11 @@ class SqlTicketGateway(TicketGateway):
             await self.session.merge(_from_model(ticket))
             await self.session.flush()
 
+    @override
     async def delete(self, ticket: Ticket) -> None:
         await self.session.execute(delete(TicketORM).where(TicketORM.id == ticket.id))
 
+    @override
     async def read_tickets_page(
         self, *, pagination: CursorPagination, ticket_filter: TicketListFilter
     ) -> list[TicketListItemDTO]:
@@ -149,6 +154,7 @@ class SqlTicketGateway(TicketGateway):
         tickets_orm = await self.session.scalars(stmt)
         return [_to_list_item_dto(ticket) for ticket in tickets_orm]
 
+    @override
     async def count_tickets(self, *, ticket_filter: TicketListFilter) -> int:
         stmt = select(func.count(TicketORM.id))
         stmt = self._apply_ticket_filter(stmt, ticket_filter)
@@ -158,8 +164,6 @@ class SqlTicketGateway(TicketGateway):
     def _apply_ticket_filter[SelectT: Select[Any]](
         stmt: SelectT, ticket_filter: TicketListFilter
     ) -> SelectT:
-        # Same escaping as the user directory search: %/_ in the term match
-        # themselves instead of acting as wildcards.
         search = ticket_filter.search
         if not search or not search.strip():
             return stmt

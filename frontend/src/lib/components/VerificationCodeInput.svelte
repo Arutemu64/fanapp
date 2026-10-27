@@ -8,10 +8,8 @@
 	interface Props {
 		value: string;
 		id: string;
-		/** Shown under the boxes while there is no error. */
 		hint: string;
 		error?: string;
-		/** A check or a resend is in flight. */
 		busy?: boolean;
 		onValueChange?: () => void;
 		onComplete?: () => void;
@@ -32,8 +30,6 @@
 
 <div class="flex flex-col items-center gap-2">
 	<Label for={id}>{m.verification_code_label()}</Label>
-	<!-- Read-only, not disabled, while busy so focus and the phone keyboard stay
-		put; digits-only so a stray letter can't auto-submit a doomed code. -->
 	<InputOTP.Root
 		inputId={id}
 		maxlength={6}

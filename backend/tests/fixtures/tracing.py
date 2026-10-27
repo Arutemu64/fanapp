@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from typing import override
 
 import pytest
 import sentry_sdk
@@ -7,6 +8,7 @@ from sentry_sdk.transport import Transport
 
 
 class _DropTransport(Transport):
+    @override
     def capture_envelope(self, envelope: Envelope) -> None: ...
 
 
@@ -24,4 +26,4 @@ def tracing() -> Iterator[None]:
         default_integrations=False,
     )
     yield
-    sentry_sdk.init()  # back to an inactive client for the rest of the suite
+    sentry_sdk.init()

@@ -14,10 +14,6 @@ class QuestConfigDTO(BaseModel):
 class AppSettingsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    # Voting time range is managed separately, under voting:manage — see the
-    # voting dashboard (GET/PATCH /voting/dashboard) — and the announcement
-    # cooldown and changeover under schedule:setup (GET/PATCH /schedule/settings).
-    # They are deliberately not here.
     festival_start: datetime
     festival_end: datetime
     quest: QuestConfigDTO
@@ -40,11 +36,6 @@ class PublicConfigDTO(BaseModel):
 
     festival_start: datetime
     festival_end: datetime
-    # Shows or hides the quest card and tool; the quest endpoints enforce it too.
     quest_enabled: bool
-    # Lets the volunteer's award form validate before sending; volunteers cannot
-    # read the organizer settings.
     quest_max_award: int
-    # Added per act to the wait estimate the schedule shows, the same one the
-    # subscription reminder fires on (ADR-0043).
     schedule_changeover_seconds: int

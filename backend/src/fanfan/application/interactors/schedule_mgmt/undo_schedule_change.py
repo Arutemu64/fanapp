@@ -54,7 +54,6 @@ class UndoScheduleChange:
             await self.schedule_gateway.save(changed_event)
 
         if previous_event:
-            # Undo puts the previously-current event back on stage.
             previous_event.set_current()
             await self.schedule_gateway.save(previous_event)
 
@@ -72,8 +71,6 @@ class UndoScheduleChange:
             else:
                 changed_event.place_after(place_after_event, None)
         else:
-            # The very first entry, not the first event: the move started ahead
-            # of everything, so the event must land ahead of any block start too.
             first_entry = await self.schedule_gateway.get_first()
             changed_event.place_before_first(first_entry)
 
@@ -84,9 +81,6 @@ class UndoScheduleChange:
         load: Callable[[ScheduleEntryId], Awaitable[T | None]],
         entry_id: ScheduleEntryId | None,
     ) -> T | None:
-        # A null id means the change simply had no entry in that slot. A non-null
-        # id that resolves to nothing is an inconsistent state, so fail loud
-        # instead of silently skipping the revert below.
         if entry_id is None:
             return None
         entry = await load(entry_id)
@@ -106,8 +100,6 @@ class UndoScheduleChange:
                 self.schedule_gateway.get_event, schedule_change.changed_event_id
             )
 
-            # The argument is the previously current event for SET_AS_CURRENT,
-            # but any entry for MOVED: the one the event landed after.
             if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
                 previous_event = await self._require(
                     self.schedule_gateway.get_event, schedule_change.related_entry_id

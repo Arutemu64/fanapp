@@ -2,14 +2,6 @@ import type { CurrentUserDto, Permission } from '#lib/api/generated/index.js';
 
 import { m } from '#lib/paraglide/messages.js';
 
-// Permission identifiers, from the backend `Permission` enum via the OpenAPI
-// spec (just frontend-generate-api). Typing each literal as Permission is the
-// drift guard: if the backend renames or removes a permission, its literal stops
-// being assignable to this union and `pnpm check` fails here — instead of
-// silently shipping a stale string that fails every permission check at runtime.
-
-// Superuser grant: a holder passes every permission check. Kept in sync with the
-// backend Permission enum through the generated union above.
 const WILDCARD: Permission = '*';
 
 export function hasPermission(user: CurrentUserDto | null, permission: Permission): boolean {
@@ -25,9 +17,6 @@ export function isOrganizer(user: CurrentUserDto | null): boolean {
 	return user?.role === 'organizer';
 }
 
-// The toolbox is a staff surface: volunteers and organizers reach it. Access to
-// each tool inside stays permission-based, so this gate governs visibility of the
-// section, never the actions.
 export function isStaff(user: CurrentUserDto | null): boolean {
 	return user?.role === 'organizer' || user?.role === 'volunteer';
 }
@@ -48,14 +37,10 @@ export function canManageQuest(user: CurrentUserDto | null): boolean {
 	return hasPermission(user, 'quest:manage');
 }
 
-// Handing out permissions takes the superuser grant itself: whoever may grant
-// them can give any of them to a second account of their own.
 export function canManagePermissions(user: CurrentUserDto | null): boolean {
 	return hasPermission(user, WILDCARD);
 }
 
-// A Record over the generated union, so a permission the backend adds fails
-// `pnpm check` here until it has a label. Insertion order is display order.
 export const PERMISSION_LABELS: Record<Permission, () => string> = {
 	'*': m.permission_all,
 	'schedule:manage': m.permission_schedule_manage,

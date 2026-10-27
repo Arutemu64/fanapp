@@ -17,7 +17,6 @@
 
 	interface Props {
 		email: string;
-		// Return to the email step, which signs in with a code instead.
 		onCodeLogin?: () => void;
 	}
 
@@ -31,8 +30,6 @@
 	const session = getSession();
 	const toastService = getToastService();
 
-	// Pending until session.loggedIn has loaded the new identity and navigated, so
-	// the form stays busy until the app moves on.
 	const passwordLoginMutation = createMutation(() => ({
 		...loginMutation(),
 		onSuccess: async () => {
@@ -111,8 +108,6 @@
 <form novalidate onsubmit={handlePasswordSubmit} class="flex flex-col gap-4">
 	<FormError message={formError} />
 
-	<!-- Errors appear on submit only, and the inputs go read-only rather than
-		disabled while signing in — see CodeLoginForm for why. -->
 	<Field.FieldGroup class="gap-4">
 		<Field.Field data-invalid={emailError ? true : undefined}>
 			<Field.FieldLabel for="password-email">{m.email_label()}</Field.FieldLabel>
@@ -170,7 +165,6 @@
 		{/if}
 	</Button>
 
-	<!-- The way out for a forgotten password: a code needs only the inbox. -->
 	<div class="text-center">
 		<button
 			type="button"

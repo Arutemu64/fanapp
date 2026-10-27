@@ -21,17 +21,12 @@
 	interface Props {
 		user: CurrentUserDto;
 		pending: boolean;
-		/** Saves the changes; rejects with the API error body. */
 		onSave: (body: UpdateCurrentUserInput) => Promise<void>;
-		/** Closes the dialog when there is nothing to save. */
 		onClose: () => void;
 	}
 
 	let { user, pending, onSave, onClose }: Props = $props();
 
-	// Mounted fresh on every open (inside Dialog.Content), so each open starts from
-	// the profile as it is then. `untrack` takes a one-off snapshot on purpose: a
-	// background refetch of the user must not overwrite what is being typed.
 	let username = $state(untrack(() => user.username));
 	let avatarSeed = $state(untrack(() => user.avatar_seed));
 
@@ -41,7 +36,6 @@
 
 	const queryClient = useQueryClient();
 
-	// Validation patterns (must match backend)
 	const USERNAME_MIN_LENGTH = 3;
 	const USERNAME_MAX_LENGTH = 25;
 	const USERNAME_PATTERN = /^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9_]{2,24}$/;
@@ -66,10 +60,6 @@
 		return '';
 	}
 
-	// Validate when the field is left, not on every keystroke: "Минимум 3 символа"
-	// after the first letter scolds someone who is still typing
-	// (https://www.nngroup.com/articles/errors-forms-design-guidelines/). Once an
-	// error is showing, re-check as they type so it clears the moment it's fixed.
 	function handleUsernameInput(event: Event & { currentTarget: HTMLInputElement }) {
 		formError = '';
 		if (usernameError) {
@@ -81,15 +71,11 @@
 		usernameError = validateUsername(username);
 	}
 
-	// The server generates the name: it checks the name is free, and keeps the
-	// curated word lists in one place.
 	async function suggestUsername() {
 		suggestingUsername = true;
 		formError = '';
 		const usernameBeforeRequest = username;
 		try {
-			// A new name on every tap, so never served from the cache. `always` fails
-			// at once offline instead of pausing the spinner until the network returns.
 			const suggestion = await queryClient.query({
 				...suggestUsernameOptions(),
 				staleTime: 0,
@@ -97,8 +83,6 @@
 				retry: false,
 				networkMode: 'always'
 			});
-			// On slow venue wifi the field stays editable meanwhile; a name typed after
-			// the tap wins over a suggestion that arrives late.
 			if (username === usernameBeforeRequest) {
 				username = suggestion.username;
 				usernameError = '';
@@ -128,7 +112,6 @@
 		}
 
 		if (!hasChanges()) {
-			// Nothing to save — close silently instead of nagging with a toast.
 			onClose();
 			return;
 		}
@@ -153,7 +136,6 @@
 <form onsubmit={handleSubmit} class="flex flex-col gap-4">
 	<FormError message={formError} />
 
-	<!-- A new face is only previewed here; it is saved with the form, so closing keeps the old one. -->
 	<div class="relative mx-auto">
 		<UserAvatar seed={avatarSeed} class="size-32 sm:size-36" />
 		<Button

@@ -20,9 +20,6 @@ class OutboxSignal(Protocol):
         lost between the drain and the wait."""
         ...
 
-    # ASYNC109 is suppressed below: the timeout is part of this primitive's
-    # contract — wait for a signal, but no longer than the backstop interval —
-    # so the wait owns it rather than each caller wrapping the call in a block.
     async def wait(self, timeout: float) -> None:  # noqa: ASYNC109
         """Return as soon as an enqueue has been signalled since the last
         ``arm``, or after ``timeout`` seconds — whichever comes first."""

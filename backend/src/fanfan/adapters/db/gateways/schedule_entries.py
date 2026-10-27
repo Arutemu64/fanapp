@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import Select, and_, delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
@@ -25,8 +27,6 @@ SCHEDULE_EDIT_LOCK_KEY = "schedule:edit"
 
 def _from_model(model: ScheduleEntry) -> ScheduleEntryORM:
     if isinstance(model, ScheduleBlockStart):
-        # The event columns are written out rather than left to their server
-        # defaults, so a merge onto an existing row cannot keep stale values.
         return ScheduleBlockStartORM(
             id=model.id,
             title=model.title,
@@ -75,9 +75,6 @@ def _parse_event_dto(
     *,
     position: int | None,
 ) -> ScheduleEventFullDTO:
-    # position is passed in explicitly: single-row reads supply the undeferred
-    # column_property value, while the list query supplies it from its single
-    # joined ranking subquery.
     return ScheduleEventFullDTO(
         type=ScheduleEntryType.EVENT,
         id=ScheduleEntryId(event_orm.id),
@@ -117,19 +114,19 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def lock_for_edit(self) -> None:
-        # Transaction-level, so commit or rollback releases it and a pooled
-        # connection never carries it into another request
-        # (https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS).
         await self.session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
             {"key": SCHEDULE_EDIT_LOCK_KEY},
         )
 
+    @override
     async def add(self, entry: ScheduleEntry) -> None:
         entry_orm = _from_model(entry)
         self.session.add(entry_orm)
 
+    @override
     async def get_entry(self, entry_id: ScheduleEntryId) -> ScheduleEntry | None:
         stmt = (
             select(ScheduleEntryORM)
@@ -139,6 +136,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         entry_orm = await self.session.scalar(stmt)
         return _to_model(entry_orm) if entry_orm else None
 
+    @override
     async def get_event(self, event_id: ScheduleEntryId) -> ScheduleEvent | None:
         stmt = (
             select(ScheduleEventORM)
@@ -148,6 +146,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         event_orm = await self.session.scalar(stmt)
         return _event_to_model(event_orm) if event_orm else None
 
+    @override
     async def get_first(self) -> ScheduleEntry | None:
         stmt = (
             select(ScheduleEntryORM)
@@ -158,6 +157,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         entry_orm = await self.session.scalar(stmt)
         return _to_model(entry_orm) if entry_orm else None
 
+    @override
     async def get_current(self) -> ScheduleEvent | None:
         stmt = (
             select(ScheduleEventORM)
@@ -167,6 +167,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         event_orm = await self.session.scalar(stmt)
         return _event_to_model(event_orm) if event_orm else None
 
+    @override
     async def get_next(self) -> ScheduleEvent | None:
         current_event_order = (
             select(ScheduleEventORM.order)
@@ -188,15 +189,15 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         event_orm = await self.session.scalar(stmt)
         return _event_to_model(event_orm) if event_orm else None
 
+    @override
     async def list_all(self) -> list[ScheduleEntry]:
-        # In order, so the import matches a repeated block title to the same
-        # block start on every run instead of whichever row Postgres returns.
         stmt = (
             select(ScheduleEntryORM).order_by(ScheduleEntryORM.order).with_for_update()
         )
         entry_orms = await self.session.scalars(stmt)
         return [_to_model(e) for e in entry_orms]
 
+    @override
     async def get_next_by_order(self, order: float) -> ScheduleEntry | None:
         stmt = (
             select(ScheduleEntryORM)
@@ -208,6 +209,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         entry_orm = await self.session.scalar(stmt)
         return _to_model(entry_orm) if entry_orm else None
 
+    @override
     async def get_previous_by_order(self, order: float) -> ScheduleEntry | None:
         stmt = (
             select(ScheduleEntryORM)
@@ -219,15 +221,18 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         entry_orm = await self.session.scalar(stmt)
         return _to_model(entry_orm) if entry_orm else None
 
+    @override
     async def save(self, entry: ScheduleEntry) -> None:
         await self.session.merge(_from_model(entry))
         await self.session.flush()
 
+    @override
     async def delete(self, entry: ScheduleEntry) -> None:
         await self.session.execute(
             delete(ScheduleEntryORM).where(ScheduleEntryORM.id == entry.id)
         )
 
+    @override
     async def read_next_event(self) -> ScheduleEventFullDTO | None:
         current_event_order = (
             select(ScheduleEventORM.order)
@@ -250,6 +255,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
             return _parse_event_dto(event_orm, position=event_orm.position)
         return None
 
+    @override
     async def read_current_event(self) -> ScheduleEventFullDTO | None:
         stmt = _select_schedule_event_full_dto().where(
             ScheduleEventORM.is_current.is_(True)
@@ -259,11 +265,8 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
             return _parse_event_dto(event_orm, position=event_orm.position)
         return None
 
+    @override
     async def read_list_schedule(self) -> list[ScheduleEntryDTO]:
-        # The whole schedule is read at once, so position comes from a single
-        # ranking subquery joined once here, rather than the per-row correlated
-        # column_property (which would re-run the window for every one of the
-        # ~hundreds of rows).
         ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
             select(ScheduleEntryORM, ranked.c.position)

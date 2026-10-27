@@ -9,15 +9,10 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { resolvePath } from '#lib/utils/paths.js';
 
-	// One row shape for every grouped menu (the /profile and Гид hubs, the toolbox,
-	// Home's get-ready list), so a row leads somewhere or does something the same
-	// way wherever it sits. The target is one of three, never a mix.
 	type Target =
 		| { href: Path; externalHref?: never; onclick?: never }
 		| {
-				/** A URL outside the app (a web page, mailto:). */
 				externalHref: string;
-				/** Opens a new tab, marked with an external-link icon; mailto: stays put. */
 				newTab: boolean;
 				href?: never;
 				onclick?: never;
@@ -26,19 +21,11 @@
 
 	type Props = Target & {
 		label: string;
-		/** A line under the label, for rows whose title alone doesn't say what is behind them. */
 		description?: string;
-		/** Shows the whole description instead of clamping it to two lines. */
 		fullDescription?: boolean;
 		icon: Component;
-		/** 'primary' tints the icon tile for a row that asks to be acted on. */
 		tone?: 'muted' | 'primary';
-		/** Current state shown before the chevron, so it reads without opening the page. */
 		value?: string;
-		/**
-		 * The drill-in chevron. On by default for an in-app link; an action row
-		 * takes it only when it sits among link rows that all carry one.
-		 */
 		chevron?: boolean;
 	};
 

@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from typing import override
 
 from fanfan.application.ports.sources.tickets import (
     ExternalTicket,
@@ -22,6 +23,7 @@ class FakeTicketsSource(TicketsSource):
         self.order_tickets: dict[str, list[ExternalTicket]] = {}
         self.fetched_order_ids: list[str] = []
 
+    @override
     def fetch_all_tickets(self) -> AsyncIterator[ExternalTicket]:
         return self._iter_tickets()
 
@@ -29,6 +31,7 @@ class FakeTicketsSource(TicketsSource):
         for ticket in self.tickets:
             yield ticket
 
+    @override
     def fetch_revoked_tickets(self) -> AsyncIterator[RevokedExternalTicket]:
         return self._iter_revoked()
 
@@ -36,6 +39,7 @@ class FakeTicketsSource(TicketsSource):
         for revoked in self.revoked:
             yield revoked
 
+    @override
     async def fetch_order_tickets(self, order_id: str) -> list[ExternalTicket]:
         self.fetched_order_ids.append(order_id)
         return self.order_tickets.get(order_id, [])

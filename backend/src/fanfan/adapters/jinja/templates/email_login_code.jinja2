@@ -1,4 +1,3 @@
-{# HTML email with a one-time code for signing in. #}
 {% extends "_email_layout.jinja2" %}
 
 {% set title = "Вход в ФАН ФАН" %}
@@ -13,9 +12,6 @@
   Введи этот код на экране входа, чтобы войти в приложение ФАН ФАН.
 </p>
 
-{# Neutral surface and ink digits, echoing the app's OTP input. The code is the only
-   thing to act on, so nothing colours or competes with it; letter-spacing is pulled
-   back on the right so the tracked digits stay optically centred. #}
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
   style="border-collapse:collapse; margin:0 0 24px;">
   <tr>

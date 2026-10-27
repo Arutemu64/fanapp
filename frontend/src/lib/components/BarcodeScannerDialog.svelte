@@ -14,14 +14,11 @@
 		title: string;
 		description: string;
 		formats: readonly BarcodeFormat[];
-		// Called once with the decoded text; the dialog then closes itself.
 		onDetect: (text: string) => void;
 	}
 
 	let { open = $bindable(false), title, description, formats, onDetect }: Props = $props();
 
-	// The camera keeps reading through the close animation, and an image picked
-	// just before may finish decoding after it: only the first code counts.
 	function handleDetect(text: string) {
 		if (!open) return;
 		open = false;
@@ -30,8 +27,6 @@
 </script>
 
 <Dialog.Root bind:open>
-	<!-- From sm up the dialog is centred with no height cap of its own, and the
-	     camera view makes this one taller than a landscape phone. -->
 	<Dialog.Content class="sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
@@ -41,8 +36,6 @@
 			<Dialog.Description>{description}</Dialog.Description>
 		</Dialog.Header>
 
-		<!-- Inside Content, so bits-ui unmounts it on close: the camera stops and
-		     every open starts from a fresh scanner state. -->
 		<BarcodeScanner {formats} onDetect={handleDetect} />
 
 		<Dialog.Footer>

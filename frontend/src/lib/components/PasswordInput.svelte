@@ -11,7 +11,6 @@
 		id: string;
 		name: string;
 		autocomplete: 'current-password' | 'new-password';
-		// Noun used in the toggle's aria-label, e.g. "Показать {revealLabel}".
 		revealLabel?: string;
 		placeholder?: string;
 		required?: boolean;
@@ -19,7 +18,6 @@
 		readonly?: boolean;
 		maxlength?: number;
 		color?: 'red' | undefined;
-		// Id of the error or hint that describes the field (aria-describedby).
 		describedby?: string;
 		oninput?: () => void;
 	}

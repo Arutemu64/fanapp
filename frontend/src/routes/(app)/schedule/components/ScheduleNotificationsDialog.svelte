@@ -30,18 +30,12 @@
 		...updateCurrentUserSettingsMutation(),
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() })
 	}));
-	// A settings PATCH: online only. The current state still renders.
 	const offlineGate = offlineWriteGate();
 
-	// Writable derived: the toggle overrides it optimistically, and it snaps back to
-	// the server copy whenever `user` refreshes (Svelte "Overriding derived values").
 	let receiveAll = $derived(user.settings.receive_all_announcements);
 
 	function toggleReceiveAll(checked: boolean) {
 		receiveAll = checked;
-		// No success toast: the switch already sits in its new position, and a
-		// switch is expected to take effect on its own
-		// (https://www.nngroup.com/articles/toggle-switch-guidelines/).
 		settingsMutation.mutate(
 			{ body: { receive_all_announcements: checked } },
 			{
@@ -72,8 +66,6 @@
 			/>
 		</MenuGroup>
 
-		<!-- The switch only picks what is sent; whether it arrives depends on the channels,
-		     which stay in the profile with the rest of the delivery setup. -->
 		<p class="text-sm leading-relaxed text-muted-foreground">
 			<ParaglideMessage message={m.schedule_notifications_channels}>
 				{#snippet link({ children }: MessageTagProps)}

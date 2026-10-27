@@ -7,8 +7,6 @@ from fanfan.core.exceptions.rate_limit import CooldownActive
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 
-# Each test fans out to every connected channel, VK included, so repeated taps
-# would send a burst of identical messages through each one.
 TEST_NOTIFICATION_COOLDOWN_SECONDS = 60
 
 
@@ -31,8 +29,6 @@ class SendTestNotification:
         )
         try:
             async with claim:
-                # Tests all user notification channels with a single shared
-                # notification.
                 await self.events_broker.publish(
                     CreateNotificationCommand(
                         notification=NewNotification(
@@ -43,8 +39,6 @@ class SendTestNotification:
                                 "Проверка каналов уведомлений.\n"
                                 "Если канал подключён, ты получишь это сообщение."
                             ),
-                            # Test pushes only verify delivery; root is a safe
-                            # landing.
                             path="/",
                             type=NotificationType.TEST,
                             mailing_id=None,

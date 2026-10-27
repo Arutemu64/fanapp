@@ -25,10 +25,6 @@ from fanfan.core.vo.permission import Permission
 
 logger = logging.getLogger(__name__)
 
-# Demo rows carry cosplay2_id values in a high, reserved band so the voting seed
-# upserts its own records by natural key on every run and never collides with a
-# real Cosplay2 sync (the vendor's ids are far smaller). Nominations occupy the
-# base band; participants the +1000 band, both offset by list position.
 _DEMO_NOMINATION_ID_BASE = 900_000
 _DEMO_PARTICIPANT_ID_BASE = 901_000
 
@@ -46,8 +42,6 @@ class _DemoNomination:
     participants: tuple[_DemoParticipant, ...]
 
 
-# Three votable nominations with a handful of entries each — enough to exercise
-# the voting UI (list, single-nomination view, casting and cancelling a vote).
 DEMO_NOMINATIONS: tuple[_DemoNomination, ...] = (
     _DemoNomination(
         code="demo-solo",
@@ -88,8 +82,6 @@ DEMO_NOMINATIONS: tuple[_DemoNomination, ...] = (
     ),
 )
 
-# A short festival day: an opening, the two defile blocks whose entries mirror
-# the votable nominations above, a concert block and a closing ceremony.
 DEMO_SCHEDULE: tuple[ScheduleRow, ...] = (
     ScheduleBlockRow(title="Открытие"),
     ScheduleEventRow(
@@ -193,10 +185,6 @@ class SeedDemoData:
         self.perm_service = perm_service
 
     async def _seed_schedule(self) -> None:
-        # The schedule has no natural key per row and its `order` column is
-        # unique, so re-seeding onto an existing programme would either collide
-        # on order or clobber an organizer's real events. Only seed a blank one;
-        # leave any existing programme untouched.
         if await self.schedule_gateway.list_all():
             logger.info("Schedule already has events, skipping demo programme")
             return
@@ -207,9 +195,6 @@ class SeedDemoData:
         logger.info("Demo programme seeded", extra={"entries": len(DEMO_SCHEDULE)})
 
     async def _seed_voting(self) -> None:
-        # Upsert by the reserved cosplay2_id so a re-run refreshes the demo rows
-        # in place instead of duplicating them, exactly as SyncCosplay does for
-        # real vendor records.
         for nomination_index, demo_nomination in enumerate(DEMO_NOMINATIONS):
             cosplay2_id = _DEMO_NOMINATION_ID_BASE + nomination_index
             nomination = await self.nomination_gateway.get_by_cosplay2_id(cosplay2_id)
@@ -242,8 +227,6 @@ class SeedDemoData:
         for participant_index, demo_participant in enumerate(
             demo_nomination.participants
         ):
-            # Stable within a nomination: index the band by nomination so two
-            # nominations' participants never share a reserved cosplay2_id.
             cosplay2_id = (
                 _DEMO_PARTICIPANT_ID_BASE + nomination_index * 100 + participant_index
             )
@@ -267,17 +250,12 @@ class SeedDemoData:
                 await self.participant_gateway.add(participant)
 
     async def _enable_voting(self) -> None:
-        # Voting entries are invisible until the time range includes "now", so
-        # open a wide window — the whole point of the seed is a voting flow
-        # that works out of the box.
         settings = await self.settings_gateway.get_for_update()
         now = datetime.now(UTC)
         settings.set_voting_time_range(start=now, end=now + timedelta(days=1))
         await self.settings_gateway.save(settings)
 
     async def __call__(self) -> None:
-        # Runs as the seeded system user under the CLI, granted demo:seed by
-        # migration — the check is real, like every other unattended interactor.
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.DEMO_SEED

@@ -19,23 +19,11 @@
 
 	let { user }: Props = $props();
 
-	// Editing the profile is a mutation — online only. Cached identity still renders.
 	const offlineGate = offlineWriteGate();
 
 	let editProfileModalOpen = $state(false);
 </script>
 
-<!--
-	Identity header. Deliberately not a SettingsSection: it leads with the avatar + name, so it
-	reads as "who you are" and anchors the page above the sign-in settings rather than looking
-	like another settings group. No Card either — a frame around one line of identity groups
-	nothing.
--->
-<!--
-	Mobile: centered vertical stack (avatar / name / role / edit) so the full username gets
-	the page's width and never clips. sm+: the horizontal banner — avatar left, name + role
-	in the middle, edit action on the right.
--->
 <div class="flex flex-col items-center gap-3 text-center sm:flex-row sm:gap-5 sm:text-left">
 	<UserAvatar seed={user.avatar_seed} class="size-16" />
 

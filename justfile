@@ -1,16 +1,6 @@
-# =========================
-# Monorepo helper commands
-# =========================
-# No workspaces: frontend and backend keep isolated dependency trees.
-
-# ---- Setup ----
-# One-command local setup: create .env from the template, fill generated
-# secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
-# Idempotent — re-run anytime; it never overwrites values you've already set.
 bootstrap:
     cd backend && uv run python scripts/bootstrap.py
 
-# ---- Frontend (SvelteKit + pnpm) ----
 frontend-install:
     cd frontend && pnpm install
 
@@ -26,109 +16,60 @@ frontend-lint:
 frontend-build:
     cd frontend && pnpm build
 
-# Vitest unit tests for plain-TypeScript modules under src/lib (docs/testing.md)
 frontend-test:
     cd frontend && pnpm test
 
-# Dead-code sweep (knip): unused files, exports, types and dependencies. A manual
-# aid, NOT a gate — deliberately out of `frontend-lint` and CI. Config in
-# frontend/knip.json ignores the vendored shadcn-svelte ui/. Findings are for a
-# human to judge, not blindly delete. See docs/frontend.md.
 frontend-deadcode:
     cd frontend && pnpm deadcode
 
-# Playwright E2E against a production build with the backend mocked (docs/testing.md,
-# frontend/e2e/README.md). A web session's start hook installs the matching Chromium;
-# locally, first run `pnpm --dir frontend exec playwright install chromium`.
-# The iOS-Safari `mobile-webkit` project joins automatically once WebKit is installed.
 frontend-e2e:
     cd frontend && pnpm e2e
 
-# Install Playwright's WebKit (plus its OS libraries on Linux — may prompt for sudo) so
-# `frontend-e2e` also runs the iOS-Safari project locally. Re-run after a Playwright bump:
-# each version expects its own WebKit build.
 frontend-e2e-install-webkit:
     cd frontend && pnpm exec playwright install --with-deps webkit
 
-# Only the iOS-Safari project, while iterating on a WebKit-specific issue.
 frontend-e2e-webkit:
     cd frontend && pnpm e2e --project=mobile-webkit
 
-# Same, with the Playwright UI for debugging a spec (local, headed).
 frontend-e2e-ui:
     cd frontend && pnpm e2e:ui
 
-# Re-capture the README screenshot gallery (docs/assets/readme-gallery/*.webp) and the
-# hero (docs/assets/readme-header.webp) from a production build with the backend mocked
-# (frontend/e2e/gallery/). Review the image diff before committing.
 readme-gallery:
     cd frontend && pnpm exec playwright test -c playwright.gallery.config.ts
 
 frontend-generate-api: backend-generate-openapi
     cd frontend && pnpm generate-api
 
-# Second half of the contract chain. The first half — the spec vs. the routers
-# and DTOs — is a backend test (tests/unit/presentation/test_openapi_spec.py),
-# so it runs with `just backend-test`.
-
-# Fail if the generated API client has drifted from the committed OpenAPI spec
 frontend-check-api:
     cd frontend && pnpm generate-api:check
 
-# ---- Backend (FastAPI + uv) ----
 backend-install:
     cd backend && uv sync --all-groups
 
-# Install the git hooks. `default_install_hook_types` in .pre-commit-config.yaml
-# makes this install both the pre-commit and pre-push stages. Anyone who ran
-# this before the pre-push hooks (ty, svelte-check) were added must re-run it,
-# or those checks are silently skipped locally until they do — CI still runs
-# them on every PR either way. --force replaces the shims an earlier
-# `pre-commit install` left: without it prek keeps them as `.legacy` hooks and
-# runs them too, and they fail now that pre-commit is not installed (ADR-0045).
 backend-setup-hooks:
     cd backend && uv run prek install --force
 
 backend-dev:
     cd backend && uv run python -m fanfan.main.web
 
-# FastStream consumer on the host (pair with `just run-infra`). Without it,
-# published domain events are never handled — email codes, broadcasts and
-# notifications silently do nothing. --reload restarts the app on file changes
-# (watchfiles ships via faststream[cli]), mirroring the api's UVICORN_RELOAD.
-# --port moves its health route off 8000, where `just backend-dev` listens.
 backend-worker:
     cd backend && uv run faststream run --factory --reload --port 8001 fanfan.main.worker:create_app
 
 backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
 
-# Generate a VAPID keypair into secrets/ (overwrites existing keys)
 backend-generate-vapid:
     cd backend && uv run generate-vapid
 
 backend-format:
     cd backend && uv run ruff format src/fanfan tests scripts --respect-gitignore
 
-# Safe fixes only. `--unsafe-fixes` is deliberately NOT here: ruff marks a fix
-# unsafe when it can change behaviour or discard a comment, and a gate that
-# applies those rewrites the code of whoever ran it to *check* their work. Add
-# the flag by hand for a deliberate bulk pass, and read the diff. CI stays
-# check-only either way (ci.yml).
 backend-check:
     cd backend && uv run ruff check src/fanfan tests scripts --respect-gitignore --fix
 
-# Unit tier only: no Docker, seconds. The integration tier is
-# `backend-test-integration`; `backend-test-cov` runs both.
 backend-test:
     cd backend && uv run pytest tests -m unit
 
-# Whole suite (unit + integration) under coverage, printing a term-missing
-# report. Coverage is only honest measured over the full run: interactor
-# behavior lives in the integration tests (docs/testing.md), so a unit-only
-# number would report the whole application layer as uncovered. Config is
-# [tool.coverage.*] in backend/pyproject.toml. Needs a Docker daemon, like
-# backend-test-integration. CI renders the same run to its job summary.
 backend-test-cov:
     cd backend && uv run pytest tests --cov --cov-report=term-missing
 
@@ -138,27 +79,18 @@ backend-test-integration:
 backend-sync TARGET:
     cd backend && uv run python -m fanfan.main.cli sync {{ TARGET }}
 
-# Fill an empty environment with a demo programme and voting (idempotent).
 backend-seed-demo:
     cd backend && uv run python -m fanfan.main.cli demo seed
 
 backend-typecheck:
     cd backend && uv run ty check
 
-# Dead-code sweep (vulture): globally-unused code that ruff's local F401/F841
-# can't see. A manual aid, NOT a gate — deliberately out of `backend-lint` and
-# CI. Config in [tool.vulture] (pyproject.toml) quiets DI/route/DTO framework
-# false positives; genuine ones a rule can't express go in vulture_whitelist.py.
-# Findings are for a human to judge, not blindly delete. See docs/backend.md.
 backend-deadcode:
     cd backend && uv run vulture
 
 backend-import-lint:
     cd backend && uv run lint-imports
 
-# Sort the dependency tables in backend/pyproject.toml alphabetically. uv has no
-# native sort and `uv add` appends to the end (pnpm keeps the frontend sorted on
-# its own), so this keeps the list canonical and cuts Renovate merge conflicts.
 backend-sort-deps:
     cd backend && uv run uv-sort
 
@@ -170,75 +102,34 @@ backend-migrate:
 backend-generate MIGRATION_NAME:
     cd backend && uv run alembic revision --autogenerate -m "{{ MIGRATION_NAME }}"
 
-# Autogenerate a migration against a throwaway Postgres 18 (matches prod + CI).
-# Needs Docker; use where no app database is running (e.g. Claude Code on the
-# web). Always REVIEW the result — autogenerate misses renames. See script.
 backend-generate-auto MIGRATION_NAME:
     cd backend && uv run python scripts/generate_migration.py "{{ MIGRATION_NAME }}"
 
-# Rebuild frontend/static/schedule-template.xlsx, the example file offered for
-# download on the schedule-import screen. Run after changing the columns the
-# parser requires; a parser test fails if the committed file drifts.
 backend-generate-schedule-template:
     cd backend && uv run python scripts/generate_schedule_template.py
 
-# Fail if ORM models drift from migrations or a downgrade() is broken (spins a
-# throwaway Postgres via testcontainers)
 backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
 
-# ---- Dockerfiles (hadolint) ----
-# Lint both Dockerfiles with hadolint (installed via mise; reads .hadolint.yaml
-# from the repo root). Same check as the pre-commit hadolint hook and the CI
-# hadolint job.
 dockerfile-lint:
     hadolint backend/Dockerfile frontend/Dockerfile
 
-# ---- Docker infra helpers ----
-# For the hybrid loop: infra in Docker, the host processes (`just backend-dev`,
-# `just backend-worker`, `just frontend-dev`) reaching
-# the containers through their published 127.0.0.1 ports. Naming the
-# services explicitly is enough — Compose starts a service targeted on the
-# command line even when its profile ("core") isn't enabled. Migrations are NOT
-# run here: the `migration` service belongs to the containerised path, so follow
-# up with `just backend-migrate` on the host.
-
-# Start the backing services alone (Postgres, Redis, NATS), detached
 run-infra:
     docker compose up -d db redis nats
 
-# Stop the backing services (keeps the volumes, so data survives)
 stop-infra:
     docker compose stop db redis nats
 
-# Dev: Compose auto-builds any image that doesn't exist yet, and `--watch`
-# live-syncs source + rebuilds only when package.json/pnpm-lock/uv.lock change —
-# so no forced rebuild is needed per start (that just slows startup). Pass
-# build="--build" to force a rebuild (e.g. after editing a Dockerfile).
 run-dev build="":
     docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up {{build}} --watch
 
-# Pass build="" to skip image rebuild (default rebuilds). APP_VERSION labels the
-# frontend build with the release from backend/pyproject.toml; no APP_BUILD, since
-# a build from a working tree has no commit it can honestly claim.
 run-prod build="--build": _backups-dir
     APP_VERSION="$(cd backend && uv version --short)" docker compose -f docker-compose.yml --profile core --profile ops up {{build}}
 
-# Pulls prebuilt GHCR images (docker-compose.prod.yml), builds nothing on the host.
-# Requires `docker login ghcr.io` first. Pin a build via IMAGE_TAG in .env.
-
-# Server deploy: pull prebuilt images and (re)start
 deploy: _backups-dir
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
-    # --wait fails the deploy if a service never turns healthy (the finished
-    # migration container counts as done, via service_completed_successfully);
-    # the timeout covers pgbackup's on-start dump. --remove-orphans drops
-    # containers of services the Compose files no longer define.
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d --wait --wait-timeout 300 --remove-orphans
 
-# pgbackup's bind mount, kept owner-only: left to Docker it is created root-owned
-# and world-readable, and the dumps hold attendees' personal data. chmod rather
-# than `mkdir -m` so a folder that already exists is tightened too.
 _backups-dir:
     mkdir -p backups
     chmod 700 backups

@@ -22,7 +22,6 @@ pytestmark = pytest.mark.unit
 
 
 async def _reason_msg(change: ScheduleChangeFullDTO) -> str | None:
-    # Only the renderer is touched; the gateways are never read.
     unused = cast("Any", object())
     interactor = SendScheduleChangeNotifications(
         JinjaTemplateRenderer(create_jinja_env()),
@@ -95,8 +94,6 @@ async def test_numbered_event_is_named_by_its_padded_number(
 async def test_numberless_event_is_named_by_its_title(
     change_type: ScheduleChangeType, expected: str
 ) -> None:
-    # A break has no number to print; formatting one anyway would crash the
-    # whole notification fan-out on `f"{None:03d}"`.
     change = _change(change_type, changed_event=_event(None, "Перерыв"))
 
     assert await _reason_msg(change) == expected

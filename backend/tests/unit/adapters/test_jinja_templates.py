@@ -19,8 +19,6 @@ def test_plural_filter_picks_the_russian_form(count: int, expected: str) -> None
 
 
 async def test_editor_notification_escapes_the_reason() -> None:
-    # The reason is plain text (it is also the mailing summary), so an event title
-    # carrying markup must reach the HTML body escaped, not as tags.
     renderer = JinjaTemplateRenderer(create_jinja_env())
 
     body = await renderer.render(

@@ -31,9 +31,6 @@
 		filters.search !== '' || filters.role !== null || filters.hasTicket !== null
 	);
 
-	// Local, editable mirror of the URL search term so the input stays responsive
-	// while the request waits for a short debounce (below). Seeded once (untrack);
-	// typing then drives navigation.
 	let searchValue = $state(untrack(() => filters.search));
 
 	const usersQuery = createInfiniteQuery(() => {
@@ -43,12 +40,8 @@
 		if (filters.hasTicket !== null) query.has_ticket = filters.hasTicket;
 		return {
 			...listUsersInfiniteOptions({ query }),
-			// An object page param is request overrides to hey-api, a string the
-			// cursor: an empty object asks for the first page.
 			initialPageParam: {},
 			getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
-			// Keep the current list on screen while a new filter loads, instead of
-			// flashing a spinner on every keystroke.
 			placeholderData: keepPreviousData
 		};
 	});
@@ -65,9 +58,6 @@
 	let resultsSummary = $derived(m.users_count({ count: total }));
 
 	function applyFilters(next: UserFilters) {
-		// `replace` keeps the history stack from filling with every intermediate
-		// filter; `reset: false` leaves scroll and focus alone, so the keyboard stays
-		// open on the search field.
 		void goto(`${resolve('tools/users')}${buildUserFiltersQuery(next)}`, {
 			replace: true,
 			reset: false
@@ -78,7 +68,6 @@
 
 	function onSearchInput(value: string) {
 		clearTimeout(searchTimer);
-		// Debounce so a request fires once the user pauses, not on every keystroke.
 		searchTimer = setTimeout(() => applyFilters({ ...filters, search: value }), 300);
 	}
 
@@ -142,9 +131,6 @@
 			onclear={clearSearch}
 		/>
 
-		<!-- Two selects side by side rather than rows of chips: four roles and three
-		     ticket states fit one line on a phone, and the current choice stays
-		     readable on the trigger. -->
 		<div class="grid grid-cols-2 gap-2">
 			<Select.Root type="single" value={roleValue} onValueChange={onRoleChange}>
 				<Select.Trigger class="w-full" aria-label={m.common_role()}>{roleLabel}</Select.Trigger>

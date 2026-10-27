@@ -23,8 +23,6 @@ class HealthCheckOutput(BaseModel):
 @debug_router.get("")
 @inject
 async def debug(request: Request, config: FromDishka[DebugConfig]) -> DebugOutput:
-    # Echoes request headers (incl. cookies and proxy internals), so keep it to
-    # debug builds. In production it must be indistinguishable from a missing route.
     if not config.enabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return DebugOutput(

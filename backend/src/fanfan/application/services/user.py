@@ -3,21 +3,6 @@ from secrets import randbelow
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.core.vo.user import Username
 
-# Each name keeps one grammatical gender throughout, so the adjective agrees
-# with its noun (the words are concatenated, e.g. "ЛунныйЛис07", "ЛуннаяЛиса07").
-# The gender belongs to the words, not the user: the app never asks for one, and
-# the profile's reroll button lets anyone swap a name they don't like. The tone
-# is playful and lightly themed (night, fantasy, samurai, anime food) without
-# fandom slang like "кун", "тян" or "отаку" — the audience is casual con-goers.
-# Words stay short so the trailing digits, which tell two namesakes apart,
-# survive the narrow rows on a phone. No "ё": phones hide it behind a
-# long-press and lower() does not fold it to "е", so a volunteer typing the name
-# into the quest player search would never find the player.
-# Left out on purpose: slang double meanings ("Синий" = drunk, "Голубой",
-# "Кекс", "Выдра", "Креветка", "Вафля", "Белка", "Ночная фея"), "Радужный",
-# which reads as an LGBT symbol in Russia, and nouns that repeat an adjective's
-# root ("Луна", "Мята").
-# (masculine, feminine) forms of each adjective.
 RUSSIAN_ADJECTIVES: tuple[tuple[str, str], ...] = (
     ("Алый", "Алая"),
     ("Бодрый", "Бодрая"),

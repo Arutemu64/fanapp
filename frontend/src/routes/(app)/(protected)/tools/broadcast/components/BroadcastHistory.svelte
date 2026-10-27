@@ -25,14 +25,10 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	// Toasts live on the mutation, not on each `mutate` call: a second row can be
-	// cancelled before the first answers, and `mutate` only calls back for the latest.
 	const cancelMutation = createMutation(() => ({
 		...cancelMailingMutation(),
 		onSuccess: () => toastService.add(m.broadcast_cancelled(), 'success'),
 		onError: (error) => toastService.error(error, m.broadcast_cancel_failed()),
-		// Refresh from the server whether it succeeded or raced with another
-		// change, so the row reflects the real state.
 		onSettled: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })
 	}));
 	let cancellingId = $derived(
@@ -41,8 +37,6 @@
 
 	const mailingsQuery = createInfiniteQuery(() => ({
 		...listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_SIZE } }),
-		// An object page param is request overrides to hey-api, a string the cursor:
-		// an empty object asks for the first page.
 		initialPageParam: {},
 		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
@@ -70,8 +64,6 @@
 		organizer: m.audience_organizers()
 	};
 
-	// FINISHED means stored, not delivered: Telegram and VK can still be sending,
-	// so a finished or failed broadcast can be recalled too (ADR-0042).
 	function isCancellable(status: MailingStatus): boolean {
 		return status !== 'cancelled';
 	}
@@ -81,8 +73,6 @@
 		return roles.map((role) => ROLE_LABELS[role]).join(', ');
 	}
 
-	// Confirmed first: a recall cannot take back what Telegram, VK or push
-	// already delivered, and the button sits on every row.
 	let recallOpen = $state(false);
 	let mailingToRecall = $state.raw<MailingDto | null>(null);
 
@@ -96,7 +86,6 @@
 			return;
 		}
 		cancelMutation.mutate({ path: { mailing_id: mailingToRecall.id } });
-		// bits-ui's AlertDialog.Action does not close the dialog by itself.
 		recallOpen = false;
 	}
 
@@ -109,8 +98,6 @@
 	</h2>
 
 	{#if mailingsQuery.data === undefined}
-		<!-- Best-effort: a history that fails to load must not block the composer
-		     above it, so it degrades to a line rather than an error page. -->
 		{#if mailingsQuery.isError}
 			<EmptyState message={m.broadcast_history_load_failed()} />
 		{:else}
@@ -119,8 +106,6 @@
 	{:else if mailings.length === 0}
 		<EmptyState message={m.broadcast_history_empty()} />
 	{:else}
-		<!-- One divided list, not a card per mailing: the entries are all the same
-		     shape, so a list scans faster and fits more on a phone screen. -->
 		<MenuGroup class="divide-y divide-border" bind:ref={listElement}>
 			{#each mailings as mailing (mailing.id)}
 				<div class="p-4">

@@ -30,10 +30,6 @@ async def _add_feedback(
         Feedback(id=generate_feedback_id(), user_id=author.id, text=text)
     )
     await uow.commit()
-    # Newest-first order is deterministic to assert via the id (uuid7) tiebreaker:
-    # the test runs in one wrapping transaction, so created_at (server-side
-    # func.now(), the transaction clock) is identical across these rows, and the
-    # later-generated id sorts first under the gateway's id.desc() secondary sort.
 
 
 async def test_list_feedback_returns_newest_first_with_author(

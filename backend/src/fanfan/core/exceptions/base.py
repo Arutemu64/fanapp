@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, ClassVar
+from typing import Any, ClassVar, override
 
 
 class AppException(Exception):
@@ -13,21 +13,9 @@ class AppException(Exception):
         self.details = dict(details or {})
         super().__init__(self.code)
 
+    @override
     def __str__(self) -> str:
         return self.code
-
-
-# --- Semantic markers --------------------------------------------------------
-# These carry no HTTP knowledge, so core stays framework-agnostic. The
-# presentation layer maps each marker to an HTTP status (EXCEPTION_STATUS_MAP in
-# web/exceptions.py), and status resolution walks the MRO, so a concrete
-# exception gets its status from the marker it inherits. To add an exception,
-# inherit the marker that fits its meaning instead of editing the status map.
-#
-# Convention: list the marker FIRST in the bases so it wins MRO precedence over
-# the feature-grouping base, e.g. `class UserNotFound(NotFound, UserException)`.
-# A completeness test (tests for the status map) fails if a concrete exception
-# ends up with no marker and is not explicitly flagged as internal-only.
 
 
 class ConstraintViolation(AppException):
@@ -57,6 +45,4 @@ class UpstreamServiceError(AppException):
 
 
 class AccessDenied(AppException):
-    # Doubles as the "forbidden" marker (403) and a concrete exception raised
-    # directly with a `reason` detail.
     code = "ACCESS_DENIED"

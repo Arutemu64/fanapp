@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 from sqlalchemy import Index, func, text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -22,25 +22,11 @@ if TYPE_CHECKING:
 class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "users"
 
-    # Uniqueness is enforced case-insensitively via ix_users_username_lower
-    # (see __table_args__) so lookups by lower(username) hit an index and
-    # "Alice" / "alice" can never coexist.
     username: Mapped[str] = mapped_column()
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
-    # Input to the client-side DiceBear avatar generator; see generate_avatar_seed.
     avatar_seed: Mapped[str] = mapped_column()
-    # The short number staff look a user up by; see generate_user_number.
     number: Mapped[int] = mapped_column(unique=True)
-    # Notification preferences live in columns (not the settings JSON) so they
-    # can be filtered on directly — see read_ids_receiving_all_announcements.
-    # Deliberately NOT indexed: accounts created before the default turned
-    # false still hold true, so the fan-out query matches most rows and the
-    # planner seq-scans regardless. A partial index on the same column it
-    # filters by also stores no information — the predicate already pins the
-    # value — so it was pure write overhead.
-    # Off by default: it pushes every act on stage, about one a minute during
-    # single defiles, so only someone who asked for it should get it.
     receive_all_announcements: Mapped[bool] = mapped_column(
         server_default=text("false")
     )
@@ -48,15 +34,8 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         server_default=text("true")
     )
     receive_vk_notifications: Mapped[bool] = mapped_column(server_default=text("true"))
-    # Bag for non-queryable user preferences. Currently empty; kept as an
-    # extension point so new prefs need no schema migration.
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
-    # Indexed for the broadcast fan-out (read_ids_by_roles): the organizer and
-    # volunteer roles are a tiny slice of a table dominated by visitors, so
-    # targeting them was a full scan. The planner still ignores the index when a
-    # broadcast includes VISITOR, which is correct — that really is most of the
-    # table.
     role: Mapped[UserRole] = str_enum_column(
         UserRole,
         name="userrole",
@@ -76,10 +55,9 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     social_identities: Mapped[list[SocialIdentityORM]] = relationship(lazy="raise")
 
     __table_args__ = (
-        # Case-insensitive uniqueness; get_by_username compares lower(username),
-        # so this expression index is also what makes login lookups indexed.
         Index("ix_users_username_lower", func.lower(username), unique=True),
     )
 
+    @override
     def __str__(self) -> str:
         return f"{self.username} ({self.id})"

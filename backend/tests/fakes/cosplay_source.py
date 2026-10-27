@@ -1,3 +1,5 @@
+from typing import override
+
 from fanfan.application.ports.sources.cosplay import (
     CosplaySource,
     ExternalNomination,
@@ -18,11 +20,13 @@ class FakeCosplaySource(CosplaySource):
         self.participants: list[ExternalParticipant] = []
         self.raises: Exception | None = None
 
+    @override
     async def fetch_nominations(self) -> list[ExternalNomination]:
         if self.raises is not None:
             raise self.raises
         return self.nominations
 
+    @override
     async def fetch_participants(self) -> list[ExternalParticipant]:
         if self.raises is not None:
             raise self.raises

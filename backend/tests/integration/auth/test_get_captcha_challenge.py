@@ -25,5 +25,4 @@ async def test_get_captcha_challenge_caps_requests_per_ip(
     with pytest.raises(TooManyLoginCodeRequests):
         await interactor(GetCaptchaChallengeInput(client_ip="203.0.113.9"))
 
-    # Another address behind its own IP is unaffected.
     await interactor(GetCaptchaChallengeInput(client_ip="203.0.113.10"))

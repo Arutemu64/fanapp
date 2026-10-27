@@ -11,16 +11,8 @@ class Mailing(AggregateRoot):
     id: MailingId
     status: MailingStatus
     by_user_id: UserId | None
-    # Kept so a mailing survives its own fan-out: the per-user notifications get
-    # deleted on cancel and purged by retention, so the mailing row is the only
-    # durable record of what was sent. `body` is the exact broadcast text, None
-    # for a change announcement (/schedule/changes records the change itself).
-    # `roles` is None for a change announcement — that is not a role-targeted
-    # broadcast (recipients are derived: editors, announcement opt-ins, event
-    # subscribers) — so it distinguishes the two mailing kinds.
     body: str | None
     roles: list[UserRole] | None
-    # Recipients the fan-out stored notifications for; set when it finishes.
     total_count: int
 
     @classmethod
@@ -37,8 +29,6 @@ class Mailing(AggregateRoot):
         )
 
     def queue_broadcast(self, body: str, roles: list[UserRole]) -> None:
-        # Persist what was sent on the mailing itself; the interactor enqueues
-        # the fan-out command in the same transaction.
         self.body = body
         self.roles = roles
 
@@ -68,19 +58,11 @@ class Mailing(AggregateRoot):
         self.status = MailingStatus.FINISHED
 
     def mark_failed(self) -> None:
-        # Only a fan-out that never finished can fail. A partly stored mailing is
-        # still PENDING, so it fails too: its delivery did not complete. A
-        # finished or cancelled mailing is already settled.
         if self.status is not MailingStatus.PENDING:
             return
         self.status = MailingStatus.FAILED
 
     def cancel(self) -> None:
-        # Any status but CANCELLED can be cancelled, a finished mailing included:
-        # FINISHED means stored, not delivered, so the channel sends may still be
-        # draining. Cancelling stops those (senders check ensure_active) and
-        # removes the notifications from the feeds; a message a channel already
-        # delivered cannot be recalled.
         if self.status is MailingStatus.CANCELLED:
             raise MailingAlreadyCancelled
         self.status = MailingStatus.CANCELLED

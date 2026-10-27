@@ -47,8 +47,6 @@
 
 	let lastRun = $derived(source.last_run);
 	let active = $derived(lastRun?.status === 'pending' || lastRun?.status === 'running');
-	// The mutation covers the gap before the first SSE update reports the run
-	// (sync_run_updated, see the root layout).
 	let busy = $derived(syncMutation.isPending || active);
 
 	function formatTimestamp(value: string | null | undefined): string {

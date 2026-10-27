@@ -16,7 +16,7 @@ import {
 const CONNECTION_FAILED = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 
 function validationError(
-	errors: Array<{ loc: Array<string | number>; type: string; ctx?: Record<string, unknown> }>
+	errors: { loc: (string | number)[]; type: string; ctx?: Record<string, unknown> }[]
 ) {
 	return { code: 'VALIDATION_ERROR', errors };
 }
@@ -133,9 +133,6 @@ describe('isUnexpectedRequestError', () => {
 describe('fetchRecordingConnectionFailures', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
-	// What `fetch` resolves with when the connection drops after the headers: a
-	// body whose stream errors the way the browser's does (Chromium rejects the
-	// read with "TypeError: Failed to fetch").
 	function stubDroppedBody() {
 		const body = new ReadableStream({
 			pull(controller) {
@@ -177,7 +174,6 @@ describe('fetchRecordingConnectionFailures', () => {
 
 	it('times out a request that never answers, as a connection failure', async () => {
 		vi.useFakeTimers();
-		// The native timeout runs on Node's own timer, which fake timers don't reach.
 		vi.spyOn(AbortSignal, 'timeout').mockImplementation((ms) => {
 			const controller = new AbortController();
 			setTimeout(() => controller.abort(new DOMException('signal timed out', 'TimeoutError')), ms);

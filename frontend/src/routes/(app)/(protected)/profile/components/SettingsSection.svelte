@@ -2,10 +2,6 @@
 	import type { Snippet } from 'svelte';
 
 	interface Props {
-		/**
-		 * Omit on a section that leads the page: the top bar already shows the page
-		 * title, so a heading here would repeat it. The description then leads alone.
-		 */
 		title?: string;
 		description?: string;
 		children: Snippet;
@@ -14,9 +10,6 @@
 	let { title, description, children }: Props = $props();
 </script>
 
-<!-- Deliberately not a Card: these settings pages are one task each, so a frame
-     around the whole page groups nothing and costs a phone its side padding. The
-     row groups inside (MenuGroup) are the only bordered surface. -->
 <section class="flex flex-col gap-3">
 	{#if title}
 		<div class="flex flex-col gap-1">

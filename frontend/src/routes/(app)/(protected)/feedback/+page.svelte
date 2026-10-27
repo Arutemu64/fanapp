@@ -22,8 +22,6 @@
 	let feedbackError = $state('');
 	let submitError = $state('');
 
-	// Queued (ADR-0038): written offline, a message waits for the connection
-	// instead of being lost with the draft.
 	const feedbackMutation = createMutation(() => queuedFeedbackOptions());
 	handOffWhenQueued(feedbackMutation, () => {
 		toastService.add(m.feedback_queued(), 'info');

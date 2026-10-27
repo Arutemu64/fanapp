@@ -4,16 +4,9 @@ from uuid import UUID, uuid7
 
 TicketId = NewType("TicketId", UUID)
 
-# Human-friendly Crockford Base32 alphabet: the digits 0-9 plus the 22 letters
-# that remain after excluding I, L, O (confusable with 1/0) and U (avoids
-# accidental obscenity). Codes are read aloud, typed and copied by a non-tech
-# audience, so an unambiguous, case-insensitive alphabet matters more than the
-# extra couple of symbols a full Base32 would add.
-# See http://www.crockford.com/base32.html
 _CROCKFORD_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 _BARCODE_PREFIX = "FAN-"
 _BARCODE_BODY_LENGTH = 6
-# Crockford decoding reads the excluded look-alikes as the digits they resemble.
 _CROCKFORD_CONFUSABLES = str.maketrans({"I": "1", "L": "1", "O": "0"})
 
 

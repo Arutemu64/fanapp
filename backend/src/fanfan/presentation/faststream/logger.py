@@ -21,8 +21,6 @@ def get_stream_logger() -> logging.Logger:
     pre-chain surfaces it, so that context is not lost.
     """
     logger = logging.getLogger("faststream")
-    # Drop the colorized stderr handler FastStream attaches at import time so
-    # records are formatted exactly once, by the root structlog handler.
     logger.handlers.clear()
     logger.propagate = True
     return logger

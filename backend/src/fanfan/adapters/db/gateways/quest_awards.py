@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 from uuid import UUID
 
 from sqlalchemy import Row, Select, func, or_, select
@@ -85,25 +85,45 @@ def _escape_like(term: str) -> str:
     return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
+def _players_stmt() -> Select[UUID, int, str, str, Any]:
+    live_points = (
+        select(
+            QuestAwardORM.user_id,
+            func.sum(QuestAwardORM.amount).label("points"),
+        )
+        .where(QuestAwardORM.cancelled_at.is_(None))
+        .group_by(QuestAwardORM.user_id)
+        .subquery()
+    )
+    return select(
+        UserORM.id,
+        UserORM.number,
+        UserORM.username,
+        UserORM.avatar_seed,
+        func.coalesce(live_points.c.points, 0).label("points"),
+    ).outerjoin(live_points, live_points.c.user_id == UserORM.id)
+
+
 class SqlQuestAwardGateway(QuestAwardGateway):
     def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
         self.uow = uow
 
+    @override
     async def add(self, award: QuestAward) -> None:
-        # Two concurrent requests with one client ID can both pass the
-        # interactor's lookup; the second one lands here (docs/adr/0034).
         with translate_integrity_error({"pk_quest_awards": QuestAwardAlreadyExists}):
             self.session.add(_from_model(award))
             await self.session.flush()
         self.uow.register(award)
 
+    @override
     async def get(self, award_id: QuestAwardId) -> QuestAward | None:
         orm = await self.session.get(QuestAwardORM, award_id)
         if orm is None:
             return None
         return _to_model(orm)
 
+    @override
     async def get_for_update(self, award_id: QuestAwardId) -> QuestAward | None:
         stmt = (
             select(QuestAwardORM).where(QuestAwardORM.id == award_id).with_for_update()
@@ -115,51 +135,30 @@ class SqlQuestAwardGateway(QuestAwardGateway):
         self.uow.register(award)
         return award
 
+    @override
     async def save(self, award: QuestAward) -> None:
         await self.session.merge(_from_model(award))
         await self.session.flush()
 
-    # Read projections (return DTOs, not aggregates)
-
-    def _players_stmt(self) -> Select[UUID, int, str, str, Any]:
-        live_points = (
-            select(
-                QuestAwardORM.user_id,
-                func.sum(QuestAwardORM.amount).label("points"),
-            )
-            .where(QuestAwardORM.cancelled_at.is_(None))
-            .group_by(QuestAwardORM.user_id)
-            .subquery()
-        )
-        return select(
-            UserORM.id,
-            UserORM.number,
-            UserORM.username,
-            UserORM.avatar_seed,
-            func.coalesce(live_points.c.points, 0).label("points"),
-        ).outerjoin(live_points, live_points.c.user_id == UserORM.id)
-
+    @override
     async def read_player(self, number: UserNumber) -> QuestPlayerDTO | None:
-        stmt = self._players_stmt().where(UserORM.number == number)
+        stmt = _players_stmt().where(UserORM.number == number)
         row = (await self.session.execute(stmt)).one_or_none()
         if row is None:
             return None
         return _parse_player_dto(row)
 
+    @override
     async def read_players_by_search(
         self, search: str, limit: int
     ) -> list[QuestPlayerDTO]:
-        # Prefix, case-insensitive: a volunteer types the start of the name the
-        # player reads out. %/_ are escaped so they match literally.
         term = search.strip()
         pattern = f"{_escape_like(term.lower())}%"
         matches = func.lower(UserORM.username).like(pattern)
-        # A whole number is a lookup by it as well: usernames can be digits too,
-        # so it widens the match instead of replacing it.
         if term.isdecimal() and USER_NUMBER_MIN <= int(term) <= USER_NUMBER_MAX:
             matches = or_(matches, UserORM.number == int(term))
         stmt = (
-            self._players_stmt()
+            _players_stmt()
             .where(matches)
             .order_by(func.lower(UserORM.username))
             .limit(limit)
@@ -167,6 +166,7 @@ class SqlQuestAwardGateway(QuestAwardGateway):
         rows = await self.session.execute(stmt)
         return [_parse_player_dto(row) for row in rows]
 
+    @override
     async def read_leaderboard(
         self, *, limit: int, user_id: UserId
     ) -> tuple[list[LeaderboardEntryDTO], LeaderboardEntryDTO | None]:
@@ -180,9 +180,6 @@ class SqlQuestAwardGateway(QuestAwardGateway):
             .group_by(QuestAwardORM.user_id)
             .subquery()
         )
-        # Merch goes to the top places, so ties must not share a rank: of two
-        # players on the same score, whoever reached it first ranks higher.
-        # The user id is only a last resort to keep the order stable.
         rank = (
             func.row_number()
             .over(
@@ -224,6 +221,7 @@ class SqlQuestAwardGateway(QuestAwardGateway):
                 own = entry
         return top, own
 
+    @override
     async def read_awards_page(
         self,
         *,

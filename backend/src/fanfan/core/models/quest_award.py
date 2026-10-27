@@ -36,7 +36,6 @@ class QuestAward(AggregateRoot):
     user_id: UserId
     amount: int
     message: str
-    # None once the staff account that gave the award is deleted.
     awarded_by: UserId | None
     created_at: datetime
     cancelled_at: datetime | None = None
@@ -143,9 +142,6 @@ def cancel_refusal(  # noqa: PLR0913
     """
     if cancelled_at is not None:
         return QuestAwardAlreadyCancelled()
-    # Organizers settle disputes at any time; a volunteer may only undo their
-    # own slip shortly after making it, so points a player has already counted
-    # on do not vanish hours later.
     if can_manage:
         return None
     if by_user_id != awarded_by:

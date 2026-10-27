@@ -2,50 +2,17 @@
 <html lang="ru">
 	<head>
 		<meta charset="utf-8" />
-		<!-- viewport-fit=cover opts into edge-to-edge: without it iOS letterboxes the page
-			inside the safe area and Chrome 135+ on Android draws a "chin" over the gesture
-			bar, so every env(safe-area-inset-*) in the shell resolves to 0.
-			https://developer.chrome.com/docs/css-ui/edge-to-edge
-			No interactive-widget=resizes-content: it would lift the fixed bottom nav onto the
-			keyboard, and WebKit logs the unknown key as a console error. -->
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<!-- Static shell title. Pages set their own via <svelte:head> once the client
-			router mounts; this is what a no-JS reader (a crawler, view-source) sees. -->
 		<title>ФАН ФАН</title>
 		<link rel="manifest" href="/manifest.json" />
-		<!-- SVG for browsers that support it (Chrome/Firefox/Edge); ICO as the fallback
-			(Safari, plus browsers that only ever probe /favicon.ico by convention). -->
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		<link rel="alternate icon" href="/favicon.ico" />
-		<!-- iOS reads this for the home-screen icon (it ignores manifest icons). -->
 		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-		<!-- Run standalone (no Safari chrome) when launched from the iOS home screen.
-			Modern iOS also honors the manifest's display:standalone, but these legacy
-			Apple metas are still required for the status-bar style and app title. -->
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 		<meta name="apple-mobile-web-app-title" content="ФАН ФАН" />
-		<!-- Tints the mobile browser UI. A single media-less tag (not the media-scoped
-			pair) so it can follow the *app* theme, not the OS: the boot script below and
-			theme.svelte.ts rewrite content to match the resolved theme, which the manual
-			toggle can override away from the system scheme. Default is the light tint;
-			the boot script corrects it to the dark shell before paint when needed.
-			Each value is the top bar's surface (--background), not the brand crimson, so
-			the status bar and the bar under it read as one band. iOS 26 Safari ignores
-			this tag and samples the sticky top bar itself, which lands on the same colour:
-			https://bugs.webkit.org/show_bug.cgi?id=301756 -->
 		<meta name="theme-color" content="#ffffff" />
-		<!-- Social share preview (Open Graph + Twitter Card). This app is a
-			client-rendered SPA (ssr = false), and social crawlers (Telegram, VK,
-			WhatsApp, Facebook, X) don't run JS — they read only this static shell,
-			never anything a page adds via <svelte:head>. So the preview must live
-			here, baked into the shell NGINX serves (200.html) for every route.
-			og:url and og:image MUST be absolute HTTPS: Telegram (the primary sharing
-			channel) silently drops a relative og:image. The origin is baked at build
-			time from PUBLIC_SITE_URL — %sveltekit.env% only substitutes PUBLIC_-prefixed
-			vars, and an unset value degrades to a relative URL rather than failing the
-			build. Copy mirrors manifest.json (name + description); keep them in sync. -->
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="ФАН ФАН" />
 		<meta property="og:title" content="ФАН ФАН" />
@@ -55,10 +22,6 @@
 		/>
 		<meta property="og:locale" content="ru_RU" />
 		<meta property="og:url" content="%sveltekit.env.PUBLIC_SITE_URL%/" />
-		<!-- Placeholder card: static/og-image.png is currently the 512×512 app icon so
-			previews render today. Replace that file with a 1200×630 (1.91:1) branded
-			card and update the width/height below — keep the filename, these tags
-			point at it. -->
 		<meta property="og:image" content="%sveltekit.env.PUBLIC_SITE_URL%/og-image.png" />
 		<meta property="og:image:type" content="image/png" />
 		<meta property="og:image:width" content="512" />
@@ -74,8 +37,6 @@
 		<meta name="twitter:image:alt" content="ФАН ФАН — приложение-компаньон фестиваля" />
 		<script>
 			(function () {
-				// In-app browsers (notably Telegram's Android webview) can block
-				// storage, making localStorage throw; fall back to system preference.
 				var m = null;
 				try {
 					m = localStorage.getItem('theme-mode');
@@ -83,29 +44,14 @@
 				var isDark =
 					m === 'dark' ||
 					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-				// Declare the resolved scheme before first paint so Chromium's Auto Dark
-				// Theme (Android Chrome/Brave) won't force-darken a light app under a dark
-				// OS and drag the shell tint dark with it. theme.svelte.ts keeps it in sync
-				// afterwards. https://developer.chrome.com/blog/auto-dark-theme
 				document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 				if (isDark) {
 					document.documentElement.classList.add('dark');
-					// Seed the shell tint to match the resolved theme before first paint,
-					// so an overriding toggle doesn't flash the light tint. theme.svelte.ts
-					// keeps it in sync afterwards. Value mirrors THEME_COLOR_DARK there,
-					// which matches app.css's dark --background (oklch(0.145 0 0) = #0a0a0a).
 					var meta = document.querySelector('meta[name="theme-color"]');
 					if (meta) meta.setAttribute('content', '#0a0a0a');
 				}
 			})();
 		</script>
-		<!--
-			SPA boot splash. As a client-rendered app nothing is painted until the JS
-			bundle loads and the root layout resolves /me/, and until then no route
-			knows which screen it will show, so a layout skeleton here would be a guess.
-			This static overlay holds the brand mark instead; the root layout removes it
-			on mount. Plain CSS (no JS/Svelte) so it renders before the bundle arrives.
-		-->
 		<style>
 			#app-splash {
 				position: fixed;
@@ -114,15 +60,8 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				/* Reads app.css's --background custom property (light/dark set on
-					documentElement) so the splash always matches the app shell instead
-					of drifting from a second hardcoded value. app.css is a render-blocking
-					<link> in the built shell, so the fallback is only a safety net. */
 				background: var(--background, #ffffff);
 			}
-			/* Hidden for the first 400ms: a warm start mounts within that, and an
-				indicator that shows for a split second reads as flicker. Waits under a
-				second need none: https://www.nngroup.com/articles/skeleton-screens/ */
 			.app-splash__mark {
 				width: 4rem;
 				height: 4rem;
@@ -163,17 +102,11 @@
 	</head>
 
 	<body class="bg-background" data-sveltekit-preload-data="hover">
-		<!-- aria-live duplicates the role's implicit politeness for older screen readers. -->
 		<div id="app-splash" role="status" aria-live="polite">
-			<!-- favicon.svg is in the service-worker precache, so the mark shows offline too. -->
 			<img class="app-splash__mark" src="/favicon.svg" alt="" width="64" height="64" />
 			<span class="app-splash__label"></span>
 		</div>
 		<script>
-			// Screen readers announce changes to a live region, not the text it loads
-			// with, so the label starts empty and is filled once the region is exposed.
-			// Same 400ms as the mark's fade-in: a warm start stays silent too.
-			// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Guides/Live_regions
 			setTimeout(function () {
 				var label = document.querySelector('#app-splash .app-splash__label');
 				if (label) label.textContent = 'Загружаем…';

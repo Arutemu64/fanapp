@@ -20,7 +20,4 @@ class NominationContenderDTO(BaseModel):
     title: str
     total_votes: int
 
-    # The participant leading this nomination, or None while nobody has voted yet
-    # (no participants, or every participant on zero votes — there is no honest
-    # "leader" to name).
     leader: ContenderDTO | None

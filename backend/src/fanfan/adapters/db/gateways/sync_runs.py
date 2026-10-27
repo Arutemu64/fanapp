@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import override
 
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import distinct_on
@@ -58,17 +59,15 @@ class SqlSyncRunGateway(SyncRunGateway):
         self.session = session
         self.uow = uow
 
+    @override
     async def add(self, run: SyncRun) -> None:
         run_orm = _from_model(run)
-        # Let the partial unique index decide whether another run is active
-        # rather than pre-SELECTing, so two concurrent triggers can't both pass
-        # the check and start duplicate sweeps.
         with translate_integrity_error({"uq_sync_runs_active": SyncAlreadyRunning}):
             self.session.add(run_orm)
             await self.session.flush()
-        # Register so any event recorded on the run lands in the outbox on commit.
         self.uow.register(run)
 
+    @override
     async def get(self, run_id: SyncRunId) -> SyncRun | None:
         stmt = select(SyncRunORM).where(SyncRunORM.id == run_id).with_for_update()
         run_orm = await self.session.scalar(stmt)
@@ -78,10 +77,12 @@ class SqlSyncRunGateway(SyncRunGateway):
         self.uow.register(run)
         return run
 
+    @override
     async def save(self, run: SyncRun) -> None:
         run_orm = _from_model(run)
         await self.session.merge(run_orm)
 
+    @override
     async def get_active(self, source: SyncSource) -> SyncRun | None:
         stmt = (
             select(SyncRunORM)
@@ -98,12 +99,10 @@ class SqlSyncRunGateway(SyncRunGateway):
         self.uow.register(run)
         return run
 
+    @override
     async def fail_stale(
         self, source: SyncSource, *, older_than: datetime, error: str
     ) -> int:
-        # Age is measured from created_at, not started_at: a run that was
-        # requested but never picked up (broker outage) has no started_at and
-        # would otherwise wedge the index forever.
         stmt = (
             update(SyncRunORM)
             .where(
@@ -113,9 +112,6 @@ class SqlSyncRunGateway(SyncRunGateway):
             )
             .values(
                 status=SyncRunStatus.FAILED,
-                # DB clock: this is a bulk UPDATE with no domain logic, and the
-                # moment we noticed is the best "finished" time available — when
-                # the worker actually died is unknowable.
                 finished_at=func.now(),
                 error=error,
             )
@@ -124,6 +120,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         reaped = await self.session.scalars(stmt)
         return len(reaped.all())
 
+    @override
     async def read_latest_by_source(self) -> dict[SyncSource, SyncRunDTO]:
         stmt = (
             select(SyncRunORM)

@@ -47,9 +47,7 @@ async def test_cancel_mailing_marks_cancelled_and_enqueues_command(
 
     stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
-    # Flipped synchronously so ensure_active() rejects in-flight sends at once.
     assert stored.status is MailingStatus.CANCELLED
-    # The command drives the consumer that deletes the undelivered notifications.
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(CancelMailingCommand(mailing_id=mailing.id))

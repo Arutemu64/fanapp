@@ -1,4 +1,5 @@
 import logging
+from typing import override
 
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
 from fanfan.adapters.api.cosplay2.dto.requests import RequestStatus
@@ -22,6 +23,7 @@ class Cosplay2Source(CosplaySource):
     def __init__(self, client: Cosplay2Client) -> None:
         self.client = client
 
+    @override
     async def fetch_nominations(self) -> list[ExternalNomination]:
         topics = await self.client.get_topics_list()
         return [
@@ -33,14 +35,12 @@ class Cosplay2Source(CosplaySource):
             for topic in topics
         ]
 
+    @override
     async def fetch_participants(self) -> list[ExternalParticipant]:
         requests = await self.client.get_all_requests()
 
         participants: list[ExternalParticipant] = []
         for request in requests:
-            # Only approved requests that still carry a voting title can be
-            # represented as participants; everything else is not a participant
-            # the domain recognizes, so it is dropped at the boundary.
             if request.status != RequestStatus.APPROVED or not request.voting_title:
                 continue
             participants.append(

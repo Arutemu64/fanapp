@@ -17,9 +17,6 @@ class SyncProvider(Provider):
     request_sync = provide(RequestSync)
     get_sync_sources = provide(GetSyncSources)
 
-    # One interactor per vendor rather than one that dispatches on source:
-    # resolving either would otherwise pull in *both* vendor configs, and each
-    # raises when its vendor is unset — breaking single-vendor deployments.
     execute_syncs = provide_all(ExecuteCosplaySync, ExecuteTicketsSync)
 
     @provide(scope=Scope.APP)

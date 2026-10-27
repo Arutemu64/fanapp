@@ -10,8 +10,6 @@ from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 class AppSettingsORM(UpdatedAtMixin, BaseORM):
     __tablename__ = "app_settings"
-    # Singleton table: the app reads/writes the one row with id=1, so make it
-    # impossible to insert a second row that would then be silently ignored.
     __table_args__ = (CheckConstraint("id = 1", name="single_row"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, server_default="1")

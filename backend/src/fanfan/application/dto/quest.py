@@ -31,7 +31,6 @@ class QuestAwardDTO(BaseModel):
 
 
 class QuestHistoryItemDTO(BaseModel):
-    # A player's own view of an award: who gave it stays with the staff.
     id: QuestAwardId
     amount: int
     message: str
@@ -40,6 +39,4 @@ class QuestHistoryItemDTO(BaseModel):
 
 
 class QuestAwardItemDTO(QuestAwardDTO):
-    # Whether the viewer may cancel this award right now, so the list offers
-    # the button only when the server would accept it.
     can_cancel: bool

@@ -32,8 +32,6 @@
 	const session = getSession();
 	const toastService = getToastService();
 
-	// Pending until session.loggedIn has loaded the new identity and navigated, so
-	// the form stays busy until the app moves on.
 	const loginMutation = createMutation(() => ({
 		...loginWithCodeMutation(),
 		onSuccess: async () => {
@@ -49,14 +47,9 @@
 
 	const cooldown = new ResendCooldown();
 
-	// Captcha for the "resend code" request (same endpoint as the first one). Not
-	// prefetched: resending is rare, and a token solved now would mostly expire
-	// unused.
 	const captcha = new Captcha();
 
-	// Resend is in flight while its captcha solves or its request runs.
 	let isResending = $derived(resendMutation.isPending || captcha.solving);
-	// Any in-flight work in this form (verifying the code, or resending it).
 	let busy = $derived(loginMutation.isPending || isResending);
 
 	onMount(() => {
@@ -94,8 +87,6 @@
 			{ body: { email, code: loginCode } },
 			{
 				onError: (error) => {
-					// A rejected code is cleared so the next attempt starts from the first
-					// box; focus never left the input, so typing can resume at once.
 					const codeFieldError = getApiFieldError(error, 'code');
 					if (codeFieldError) {
 						loginCode = '';

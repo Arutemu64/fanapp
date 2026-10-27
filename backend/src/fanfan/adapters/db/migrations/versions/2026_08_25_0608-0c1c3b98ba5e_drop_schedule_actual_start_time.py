@@ -10,7 +10,6 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
 revision = "0c1c3b98ba5e"
 down_revision = "f3a4b5c6d7e8"
 branch_labels = None
@@ -18,8 +17,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Dropped with the request-time schedule timing it anchored (ADR-0014
-    # supersedes ADR-0008): with no expected-start projection, nothing reads it.
     op.drop_column("schedule_events", "actual_start_time")
 
 

@@ -68,7 +68,6 @@ describe('write queue', () => {
 	it('pauses a write that got no answer instead of failing it', async () => {
 		newSubscription.mockRejectedValueOnce(await droppedConnectionError());
 		const sent = subscribeObserver(queryClient).mutate(SUBSCRIBE);
-		// The failed attempt's probe would take the app offline; stand in for it.
 		await vi.waitFor(() => expect(newSubscription).toHaveBeenCalledOnce());
 		onlineManager.setOnline(false);
 
@@ -151,7 +150,6 @@ describe('write queue', () => {
 			await vi.advanceTimersByTimeAsync(0);
 			expect(newSubscription).toHaveBeenCalledOnce();
 			onlineManager.setOnline(false);
-			// The retry notices the lost connection only once its delay (1s) is up.
 			await vi.advanceTimersByTimeAsync(1000);
 			expect(pendingWrites(queryClient)[0]?.state.isPaused).toBe(true);
 

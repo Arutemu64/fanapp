@@ -24,13 +24,7 @@
 		event: ScheduleEventWithSubscription;
 		currentEvent: ScheduleEventWithSubscription | null;
 		user: CurrentUserDto | null;
-		/** Estimated seconds until this act starts; null when it isn't ahead of the stage. */
 		secondsAhead?: number | null;
-		// 'interlude' for a block-less row (a break, the opening, the closing):
-		// drops the number column, since these stand alone rather than in the
-		// numbered list. Everything else — the bell, staff actions, the live
-		// highlight — stays, so an interlude can still be subscribed to or marked
-		// current.
 		variant?: 'default' | 'interlude';
 	}
 
@@ -42,22 +36,15 @@
 
 	let eventNumber = $derived(formatEventNumber(event.number));
 
-	// Optimistic skip flag: the row reflects the toggle instantly instead of waiting
-	// for the schedule refetch to round-trip (a flaky connection can delay it for
-	// seconds). null = trust the server-loaded prop; otherwise show our pending guess.
 	let optimisticSkipped = $state<boolean | null>(null);
 	let isSkipped = $derived(optimisticSkipped ?? event.is_skipped);
 
-	// Once the reloaded schedule confirms our guess, drop the override so external
-	// changes (another staffer skipping the same event) flow through again.
 	$effect(() => {
 		if (optimisticSkipped !== null && event.is_skipped === optimisticSkipped) {
 			optimisticSkipped = null;
 		}
 	});
 
-	// How far ahead this event is compared to the one on stage now.
-	// Returns null if either value is missing or the event has already passed.
 	function aheadOf(value: number | null, currentValue: number | null): number | null {
 		if (value === null || currentValue === null) return null;
 		const diff = value - currentValue;
@@ -66,10 +53,6 @@
 
 	let actsAhead = $derived(currentEvent ? aheadOf(event.position, currentEvent.position) : null);
 
-	// A relative estimate from planned durations, not a clock time: the schedule
-	// payload stays free of anything time-dependent (ADR-0014), and the label
-	// recomputes as the current-event pointer advances (one set-current SSE per act
-	// reloads the schedule).
 	let untilLabel = $derived.by(() => {
 		if (actsAhead === null || actsAhead <= 0) return null;
 		return formatUntil(actsAhead, secondsAhead ?? 0);
@@ -95,16 +78,10 @@
 		isSkipped && !event.is_current && 'bg-muted/50'
 	]}
 >
-	<!-- Interludes stand alone, not in the numbered list, so they drop the number
-		column entirely rather than reserving its width. -->
 	{#if variant === 'default'}
-		<!-- Keep the public number visible so the list stays easy to scan on mobile. -->
 		{#if eventNumber !== null}
 			<NumberBadge number={eventNumber} highlighted={event.is_current} />
 		{:else}
-			<!-- Numberless rows (breaks) keep the badge's width as empty space: dropping
-				it would pull their title out of the column every other row shares, and
-				the ragged left edge reads as a broken list while scrolling. -->
 			<div class="w-12 shrink-0" aria-hidden="true"></div>
 		{/if}
 	{/if}
@@ -121,7 +98,6 @@
 					{event.title}
 				</h3>
 
-				<!-- Colored state badges get their own row so they read as a distinct tier above the quiet meta, and wrap predictably on narrow screens. Rendered only when a state is present, so the common no-badge row stays single-line. -->
 				{#if event.is_current || isSkipped}
 					<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
 						{#if event.is_current}
@@ -129,9 +105,6 @@
 								variant="outline"
 								class="inline-flex items-center gap-1.5 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
 							>
-								<!-- Live dot reads as "on stage now" at a glance. The ping runs three
-									     times and stops (WCAG 2.2.2, see --animate-ping-brief); reduced motion
-									     mutes it via global CSS. -->
 								<span class="relative flex size-2" aria-hidden="true">
 									<span
 										class="absolute inline-flex size-full animate-ping-brief rounded-full bg-success opacity-75"
@@ -154,10 +127,6 @@
 					</div>
 				{/if}
 
-				<!-- Quiet meta row: duration, countdown, subscription — muted text, no colored chip.
-				     Every chip aligns its icon to the first line (items-start + mt-px on the icon),
-				     not the centre: any chip can wrap to two lines on a narrow phone, and a centred
-				     icon would then float in the gap beside the first line. -->
 				<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
 					<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 						<Clock class="mt-px size-3.5 shrink-0" />
@@ -172,13 +141,10 @@
 					{/if}
 
 					{#if event.user_subscription}
-						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
 						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 							<BellRing class="mt-px size-3.5 shrink-0" />
 							{m.subscribe_reminder({ count: event.user_subscription.lead_minutes })}
 						</span>
-						<!-- Subscribing works offline (ADR-0038): until it is sent, say so beside the
-						     threshold rather than pretend the reminder is already set up. -->
 						{#if event.user_subscription.queued}
 							<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
 								<CloudOff class="mt-px size-3.5 shrink-0" />
@@ -189,9 +155,7 @@
 				</div>
 			</div>
 
-			<!-- The bell stays top-right for every user; staff get the ⋯ management menu beside it. -->
 			<div class="ml-auto flex shrink-0 items-start">
-				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
 					type="button"
 					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
@@ -219,9 +183,6 @@
 	</div>
 </div>
 
-<!-- Mounted only while open. This card renders once per schedule row, so
-	always-mounted dialogs cost component instances per row for something almost
-	never opened. -->
 {#if subscribeModal}
 	<SubscribeModal bind:open={subscribeModal} {event} />
 {/if}

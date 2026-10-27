@@ -30,8 +30,6 @@ async def _add_broadcast(
     mailing.queue_broadcast(body, [UserRole.VISITOR])
     await mailing_gateway.add(mailing)
     await uow.commit()
-    # Newest-first order is asserted through the id (uuid7) tiebreaker: the test
-    # runs in one wrapping transaction, so created_at is identical across rows.
 
 
 async def test_list_broadcasts_pages_newest_first(
@@ -71,8 +69,6 @@ async def test_list_broadcasts_excludes_schedule_fan_outs(
 ) -> None:
     broadcaster = await make_broadcaster(dishka_request, uow)
     await _add_broadcast(dishka_request, uow, broadcaster, "Рассылка")
-    # A schedule-change fan-out keeps roles NULL, which is what tells it apart
-    # from a role-targeted broadcast.
     mailing_gateway = await dishka_request.get(MailingGateway)
     fan_out = Mailing.create(by_user_id=broadcaster.id)
     await mailing_gateway.add(fan_out)

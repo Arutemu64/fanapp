@@ -25,7 +25,6 @@ function kindOf(query: QuerySnapshot<string>, policy: QueryPolicy, reachable: bo
 
 describe('queryView', () => {
 	it.each([
-		// [case, query, policy, reachable, expected]
 		['cold miss offline', snapshot(), 'cached', false, 'offline'],
 		['cold miss offline, live', snapshot(), 'live', false, 'offline'],
 		['loading', snapshot({ fetchStatus: 'fetching' }), 'cached', true, 'loading'],

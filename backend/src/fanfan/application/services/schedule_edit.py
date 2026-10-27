@@ -43,7 +43,7 @@ class ScheduleEditService:
     announcement cooldown ordering, and the cache invalidation of ADR-0014.
     """
 
-    def __init__(  # noqa: PLR0913, PLR0917 — one parameter per port, injected by Dishka
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
@@ -89,8 +89,6 @@ class ScheduleEditService:
             return user
         await self._ensure_announcement_cooldown(settings.limits.announcement_timeout)
 
-        # Snapshot the next event before and after the change so the
-        # mailing can tell subscribers whether their next event moved.
         next_event_before = await self.schedule_gateway.get_next()
         build_change = await mutate(user)
         next_event_after = await self.schedule_gateway.get_next()
@@ -132,9 +130,6 @@ class ScheduleEditService:
     async def _commit_and_invalidate(self) -> None:
         await self.uow.commit()
 
-        # Invalidate after commit so the operator's read-your-writes
-        # refetch (and every SSE-driven refetch) recomputes from the
-        # committed state instead of serving the pre-edit cache (ADR-0014).
         await self.schedule_cache.invalidate()
 
     async def _ensure_announcement_cooldown(self, cooldown_seconds: int) -> None:
@@ -150,5 +145,4 @@ class ScheduleEditService:
         elapsed = await self.changes_gateway.read_seconds_since_last_change()
         if elapsed is None or elapsed >= cooldown_seconds:
             return
-        # Round up: Retry-After must not invite a retry that is still too early.
         raise ScheduleEditTooFast(retry_after=math.ceil(cooldown_seconds - elapsed))

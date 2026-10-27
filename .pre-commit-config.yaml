@@ -1,28 +1,12 @@
-# Run by prek (https://prek.j178.dev), a drop-in pre-commit replacement that
-# reads this file unchanged (ADR-0045).
 exclude: '^(\.agent|\.agents|\.claude)/'
 
-# ty and svelte-check scan the whole project on any file change (both are
-# pass_filenames: false), which is seconds per commit — too slow for the
-# commit path, so they run at pre-push while the fast formatters/linters stay
-# on pre-commit. `just backend-setup-hooks` runs a plain `prek install`,
-# which installs every hook type listed here.
 default_install_hook_types: [pre-commit, pre-push]
 
 repos:
-  # prek's Rust-native ports of the pre-commit/pre-commit-hooks hooks: no rev to
-  # pin, no Python env to build. Renovate's pre-commit manager skips a repo with
-  # no `rev`, so this entry is invisible to it (ADR-0045).
   - repo: builtin
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      # prek's check-yaml accepts unknown tags by default, unlike upstream's.
-      # Rejecting them everywhere except the Compose files keeps a typo'd or
-      # stray tag in a workflow a failure, while Compose still loads fully with
-      # its own merge tags (!reset / !override) instead of the syntax-only
-      # --unsafe parse. Multi-document files are valid YAML and pnpm writes its
-      # lockfile as two documents.
       - id: check-yaml
         args: [--disallow-unknown-tags, --allow-multiple-documents]
         exclude: '^docker-compose(\.[a-z0-9]+)?\.ya?ml$'
@@ -31,19 +15,11 @@ repos:
         files: '^docker-compose(\.[a-z0-9]+)?\.ya?ml$'
       - id: check-added-large-files
 
-  # Scan staged content for hardcoded secrets before it can be committed. The
-  # golang hook self-installs the gitleaks binary (no Docker daemon at commit
-  # time), scans only what is staged, and redacts any match in its output.
-  # Renovate's :enablePreCommit manager keeps this rev current.
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
     hooks:
       - id: gitleaks
 
-  # Lint Dockerfiles with hadolint. Uses the system binary (installed via mise,
-  # see mise.toml) — no Docker daemon needed at commit time. Reads .hadolint.yaml
-  # from the repo root, matching `just dockerfile-lint` and the CI hadolint job.
-  # Keep this rev in sync with the hadolint pin in mise.toml.
   - repo: https://github.com/hadolint/hadolint
     rev: v2.15.1
     hooks:
@@ -51,12 +27,6 @@ repos:
 
   - repo: local
     hooks:
-      # Ruff runs as a local hook (not the astral-sh/ruff-pre-commit mirror) so
-      # its version has a single source of truth: backend/uv.lock. This avoids
-      # drift between a mirror `rev` and the pinned ruff. Same targets as CI and
-      # `just backend-lint` (src/fanfan tests scripts); pass_filenames is off
-      # because `uv run --directory backend` changes cwd, which would break
-      # repo-root-relative file args.
       - id: ruff-check
         name: ruff check
         entry: uv run --directory backend ruff check --fix src/fanfan tests scripts
@@ -73,14 +43,6 @@ repos:
         types: [ python ]
         pass_filenames: false
 
-      # Keep backend/pyproject.toml's dependency tables alphabetical. Local hook
-      # (not the ninoseki/uv-sort mirror) for the same single-source-of-truth
-      # reason as ruff/ty above: the version comes from backend/uv.lock, so a
-      # mirror `rev` can't drift from the pinned tool. uv has no native sort and
-      # `uv add` appends to the end, so without this the list rots out of order;
-      # pnpm already keeps the frontend sorted on its own, so only the backend
-      # needs a hook. pass_filenames is off because `--directory backend` moves
-      # cwd, where uv-sort finds pyproject.toml on its own.
       - id: uv-sort
         name: uv-sort
         entry: uv run --directory backend uv-sort
@@ -88,9 +50,6 @@ repos:
         files: ^backend/pyproject\.toml$
         pass_filenames: false
 
-      # Whole-project type check: too slow for every commit (it re-checks every
-      # path in [tool.ty.src] — src/fanfan, tests and scripts — regardless of
-      # what changed), so it runs at pre-push. CI runs the same check on every PR.
       - id: ty
         name: ty
         entry: uv run --directory backend ty check
@@ -113,9 +72,6 @@ repos:
         files: ^frontend/
         types_or: [ svelte, ts, javascript ]
 
-      # svelte-check types the whole frontend on any .svelte/.ts change, which is
-      # seconds — too slow for the commit path, so it runs at pre-push. CI runs
-      # `pnpm check` on every PR.
       - id: frontend-check
         name: frontend svelte-check
         entry: bash -c 'cd frontend && pnpm check'

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 from uuid import UUID
 
 from sqlalchemy import ForeignKey, UniqueConstraint, func, select
@@ -25,8 +25,6 @@ class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __table_args__ = (UniqueConstraint("nomination_id", "voting_number"),)
 
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
-    # Not indexed: nothing filters or sorts on title. Reads go by id, cosplay2_id
-    # or nomination_id.
     title: Mapped[str] = mapped_column()
     voting_number: Mapped[int | None] = mapped_column()
     nomination_id: Mapped[UUID] = mapped_column(
@@ -46,5 +44,6 @@ class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
             deferred=True,
         )
 
+    @override
     def __str__(self) -> str:
         return self.title

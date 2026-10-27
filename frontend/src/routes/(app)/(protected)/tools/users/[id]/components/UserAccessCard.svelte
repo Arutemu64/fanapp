@@ -42,13 +42,10 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	// The backend refuses changes to one's own access; the controls say so up
-	// front instead of failing on tap.
 	let isSelf = $derived(currentUser?.id === profile.id);
 	let canEditRole = $derived(canManageUsers(currentUser) && !isSelf);
 	let canEditPermissions = $derived(canManagePermissions(currentUser) && !isSelf);
 
-	// "*" is granted from the server CLI only, so it never gets a switch.
 	const ASSIGNABLE_PERMISSIONS = (Object.keys(PERMISSION_LABELS) as Permission[]).filter(
 		(permission) => permission !== '*'
 	);
@@ -101,8 +98,6 @@
 		onSuccess: invalidateUser
 	}));
 
-	// Switches toggle independently and their requests can overlap, so each call
-	// awaits its own promise (mutate only runs the callbacks of the latest call).
 	let pendingPermissions = $state<Permission[]>([]);
 
 	async function setPermission(permission: Permission, granted: boolean) {
@@ -176,8 +171,6 @@
 					<li class="flex min-h-11 items-center justify-between gap-3 py-2">
 						<label for={id} class="text-sm text-foreground">{PERMISSION_LABELS[permission]()}</label
 						>
-						<!-- Controlled: the switch shows the server's state, so a refused or
-						     failed change never leaves it flipped. -->
 						<Switch
 							{id}
 							bind:checked={

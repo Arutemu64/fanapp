@@ -33,8 +33,7 @@ def pytest_collection_modifyitems(
 
 
 if sys.platform == "win32":
-    # psycopg's async mode cannot run on Windows' default ProactorEventLoop;
-    # same constraint as fanfan/adapters/db/event_loop.py.
+
     def pytest_asyncio_loop_factories(
         config: pytest.Config,
         item: pytest.Item,

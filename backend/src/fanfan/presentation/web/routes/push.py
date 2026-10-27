@@ -69,9 +69,6 @@ async def check_push_subscription(
     return await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
 
 
-# The endpoint travels in the query, as on the GET above: a DELETE body has no
-# defined semantics (RFC 9110 §9.3.5) and some servers and proxies reject or
-# drop one.
 @push_router.delete(
     "",
     summary="Unsubscribe from push notifications",

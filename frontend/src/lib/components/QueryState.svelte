@@ -6,10 +6,6 @@
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 
-	// Renders the three non-ready branches of a `queryView`, so a page writes only
-	// its skeleton and its content. A cached screen passes `offline` to promise
-	// something different from the online-only default: it will work offline once
-	// it has loaded (docs/offline.md).
 	let {
 		view,
 		loading,

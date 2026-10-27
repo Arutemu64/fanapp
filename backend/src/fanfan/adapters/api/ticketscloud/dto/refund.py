@@ -15,7 +15,7 @@ class RefundStatus(StrEnum):
 class Refund:
     id: str
     order: str
-    tickets: list[str]  # list of ticket ids
+    tickets: list[str]
 
 
 @dataclass(slots=True, frozen=True)

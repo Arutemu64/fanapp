@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, override
 
 from fanfan.application.commands.base import Command
 from fanfan.core.models.notification import NewNotification
@@ -11,9 +11,8 @@ class CreateNotificationCommand(Command):
 
     notification: NewNotification
 
+    @override
     def dedup_id(self) -> str | None:
-        # Unique per notification, and deterministic per recipient in the
-        # fan-outs, so a rerun fan-out republishes the same id.
         return str(self.notification.id)
 
 

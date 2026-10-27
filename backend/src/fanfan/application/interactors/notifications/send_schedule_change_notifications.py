@@ -12,6 +12,7 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
 )
+from fanfan.application.dto.subscription import SubscriptionFullDTO
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
@@ -40,11 +41,6 @@ from fanfan.core.vo.subscription import SubscriptionId
 logger = logging.getLogger(__name__)
 
 
-# The notifications describe the schedule as it is when they are built (current
-# and next event are read now, not at change time), so a change processed long
-# after it was made announces the wrong event. Past the lifetime it is dropped:
-# delivery is only this late after an outage (relay retries, NATS or consumer
-# down), and a stale "event started" push is worse than none.
 def _is_stale(occurred_at: datetime) -> bool:
     return datetime.now(UTC) - occurred_at > SCHEDULE_NOTIFICATION_LIFETIME
 
@@ -81,9 +77,6 @@ def _seconds_ahead_by_position(
     return seconds_ahead
 
 
-# Past this wait the minutes are rounded up to whole steps, as on the schedule
-# screen (frontend formatUntil), so a notice and the screen it opens name the
-# same wait.
 _WAIT_ROUNDING_FROM_MINUTES = 10
 _WAIT_ROUNDING_STEP_MINUTES = 5
 
@@ -99,9 +92,33 @@ def _rounded_wait_minutes(seconds: int) -> int:
 @dataclass(slots=True)
 class _SubscriptionNotices:
     notifications: list[NewNotification] = field(default_factory=list)
-    # Subscriptions this change reminds, and those it re-arms.
     reminded: list[SubscriptionId] = field(default_factory=list)
     rearmed: list[SubscriptionId] = field(default_factory=list)
+
+
+def _classify_subscription(
+    subscription: SubscriptionFullDTO,
+    schedule_change: ScheduleChangeFullDTO,
+    changed_event: ScheduleChangeEntryDTO,
+    reminder_due: bool,  # noqa: FBT001
+    notices: _SubscriptionNotices,
+) -> str | None:
+    is_own_change = subscription.event.id == changed_event.id
+    if is_own_change and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
+        return "started"
+    if is_own_change:
+        if reminder_due:
+            notices.reminded.append(subscription.id)
+        else:
+            notices.rearmed.append(subscription.id)
+        return "changed"
+    if reminder_due and subscription.reminded_by_change_id in {
+        None,
+        schedule_change.id,
+    }:
+        notices.reminded.append(subscription.id)
+        return "soon"
+    return None
 
 
 _SUBSCRIPTION_TITLES = {
@@ -113,7 +130,6 @@ _SUBSCRIPTION_TITLES = {
 
 class SendScheduleChangeNotificationsInput(BaseModel):
     schedule_change_id: ScheduleChangeId
-    # When the change was committed.
     occurred_at: datetime
 
 
@@ -145,8 +161,6 @@ class SendScheduleChangeNotifications:
     ) -> str | None:
         changed_event = schedule_change.changed_event
         event = changed_event
-        # Unchecking the current event leaves no new current event; the reason
-        # then names the event that left the stage.
         if event is None and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
             event = schedule_change.related_entry
         if event is None:
@@ -238,13 +252,9 @@ class SendScheduleChangeNotifications:
         reminder once it is due; acts passing by in between say nothing.
         """
         notices = _SubscriptionNotices()
-        # Before the first act is marked current there is no stage to measure
-        # from: no waits and no reminders, but an act moved or removed is still
-        # news to its subscribers.
         current_event_position: int | None = None
         seconds_ahead: dict[int, int | None] = {}
         if current_event is not None:
-            # Queue always exists for the (non-skipped) current event.
             current_event_position = cast("int", current_event.position)
             settings = await self.app_settings_gateway.get()
             seconds_ahead = _seconds_ahead_by_position(
@@ -271,28 +281,10 @@ class SendScheduleChangeNotifications:
                     seconds_ahead=event_seconds_ahead,
                 )
 
-            is_own_change = s.event.id == changed_event.id
-            if (
-                is_own_change
-                and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT
-            ):
-                kind = "started"
-            elif is_own_change:
-                kind = "changed"
-                # The act moved, left or came back, so whatever reminder it had
-                # was about its old place: this notice is the reminder when the
-                # act is already close, otherwise one is due again later.
-                if reminder_due:
-                    notices.reminded.append(s.id)
-                else:
-                    notices.rearmed.append(s.id)
-            elif reminder_due and s.reminded_by_change_id in {
-                None,
-                schedule_change.id,
-            }:
-                kind = "soon"
-                notices.reminded.append(s.id)
-            else:
+            kind = _classify_subscription(
+                s, schedule_change, changed_event, reminder_due, notices
+            )
+            if kind is None:
                 continue
 
             body = await self.template_renderer.render(
@@ -328,16 +320,12 @@ class SendScheduleChangeNotifications:
         mailing = await self.mailing_gateway.get(schedule_change.mailing_id)
         if mailing is None:
             return
-        # Settle the mailing so it does not stay PENDING forever. A first
-        # attempt may have stored some notifications before failing; the
-        # mailing still fails, since its fan-out never finished.
         mailing.mark_failed()
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
     async def abandon(self, schedule_change_id: ScheduleChangeId) -> None:
         """Fail the change's mailing when its fan-out will not be retried again."""
-        # The failed run can leave the transaction aborted.
         await self.uow.rollback()
         schedule_change = await self.changes_gateway.read_schedule_change(
             schedule_change_id
@@ -364,11 +352,6 @@ class SendScheduleChangeNotifications:
         changed_event = schedule_change.changed_event
         reason_msg = await self._render_reason_msg(schedule_change)
 
-        # Built in delivery order: the fan-out stores and sends in chunks, so
-        # whoever comes first is notified first. A subscriber's own act moving
-        # is the most time-critical news; the stage announcement goes to every
-        # opt-in and can be large; the handful of editors made the change and
-        # watch it live.
         notifications: list[NewNotification] = []
         if changed_event:
             subscription_notices = await self._build_subscription_notices(
@@ -377,9 +360,6 @@ class SendScheduleChangeNotifications:
                 changed_event=changed_event,
                 reason_msg=reason_msg,
             )
-            # Recorded before the fan-out, not after: a fan-out that fails
-            # midway is redelivered, and the reminder is keyed by this change,
-            # so the rerun rebuilds the same notices rather than losing them.
             await self.subscription_gateway.set_reminded_by(
                 subscription_notices.reminded, schedule_change.id
             )
@@ -403,8 +383,6 @@ class SendScheduleChangeNotifications:
         try:
             await self.fan_out(notifications, mailing_id=schedule_change.mailing_id)
         except MailingAlreadyCancelled:
-            # Undone before or during the fan-out; the cancellation removes
-            # what was stored.
             logger.info(
                 "Schedule change undone before its fan-out finished",
                 extra={"schedule_change_id": str(schedule_change.id)},

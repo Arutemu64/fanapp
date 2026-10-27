@@ -63,9 +63,6 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 @pytest_asyncio.fixture(scope="session")
 async def dishka() -> AsyncGenerator[AsyncContainer]:
-    # Fakes for ports that would otherwise reach external systems
-    # (NATS, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so each test
-    # gets a fresh instance and the interactor under test shares it with the test.
     fakes_provider = Provider(scope=Scope.REQUEST)
     fakes_provider.provide(
         FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker]
@@ -97,11 +94,9 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         FakeCaptchaVerifier, provides=AnyOf[CaptchaVerifier, FakeCaptchaVerifier]
     )
     container = make_async_container(
-        # Test providers
         fakes_provider,
         TestDbProvider(),
         TestConfigProvider(),
-        # Real providers
         InteractorsProvider(),
         DbProvider(),
         RedisProvider(),
@@ -111,21 +106,10 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         SecurityProvider(),
         SerializationProvider(),
         JinjaProvider(),
-        # Real word-list filter — pure and offline, so no fake is needed.
         ProfanityProvider(),
-        # Real HTML sanitizer (nh3) — pure and offline, same reasoning.
         HtmlProvider(),
-        # Override DbProvider's session with the rollback-per-test session.
-        # Must come after DbProvider so it wins the AsyncSession key.
         TestSessionProvider(),
-        # Same trick: must come after SyncProvider to win AvailableSyncSources,
-        # whose real factory reads the EnvConfig tests never build.
         TestSyncProvider(),
-        # External integrations (NATS broker, Telegram bot, SMTP, OAuth,
-        # Cosplay2 HTTP client) are intentionally NOT wired. Interactors that
-        # need them are not yet testable here; everything else resolves, so we
-        # skip eager dependency validation. (TicketsCloud now has a port + fake,
-        # so ticket-sync interactors are testable — see FakeTicketsSource.)
         skip_validation=True,
     )
     yield container
@@ -136,15 +120,6 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
 async def dishka_request(dishka: AsyncContainer) -> AsyncGenerator[AsyncContainer]:
     async with dishka() as request_container:
         yield request_container
-
-
-# --- Shared plumbing fixtures ---------------------------------------------
-# Almost every integration test resolves the same request-scoped plumbing:
-# the outbox it asserts enqueued events on, the UnitOfWork it commits setup
-# with, and the acting user. Expose them as fixtures so each test body only
-# spells out the interactor under test and the repositories/queries it checks.
-# The feature-specific dependencies stay explicit via `dishka_request.get()`
-# so a reader can see at a glance what each test exercises.
 
 
 @pytest_asyncio.fixture
@@ -187,8 +162,6 @@ def as_outbox(*messages: Message) -> list[tuple[str, dict[str, Any]]]:
 
 @pytest_asyncio.fixture
 async def outbox(dishka_request: AsyncContainer) -> OutboxGateway:
-    # Read post-run like events_broker: the UnitOfWork writes events to the same
-    # session the test rolls back, so fetch_unpublished returns what was enqueued.
     return await dishka_request.get(OutboxGateway)
 
 
@@ -204,12 +177,9 @@ async def login(dishka_request: AsyncContainer) -> Callable[[User], None]:
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def reset_redis(dishka_request: AsyncContainer) -> AsyncGenerator[None]:
-    # Redis is not transactional, so (unlike the database, which rolls back
-    # via TestSessionProvider) it has to be wiped between tests by hand.
+async def reset_redis(dishka_request: AsyncContainer) -> None:
     redis = await dishka_request.get(Redis)
     await redis.flushdb()
-    yield
 
 
 @pytest_asyncio.fixture(scope="session")

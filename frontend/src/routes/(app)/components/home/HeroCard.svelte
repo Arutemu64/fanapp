@@ -17,7 +17,6 @@
 	interface Props {
 		phase: FestivalPhase;
 		festivalStart: string;
-		/** During the festival: the act on stage, or the opening act before it starts. */
 		featured: FeaturedAct | null;
 	}
 
@@ -26,21 +25,14 @@
 	let featuredLabel = $derived(featured?.live ? m.home_on_stage() : m.home_starting_soon());
 	let featuredNumber = $derived(formatEventNumber(featured?.event.number));
 
-	// Program start, on the venue clock. Configurable via GET /config and passed in
-	// by the page so the hero renders for guests and on a cold/offline load.
 	let startMs = $derived(new Date(festivalStart).getTime());
 	let festivalDate = $derived(formatFestivalDate(festivalStart));
-	// The doors time isn't in the config, so it is written into the message.
 	let festivalTimes = $derived(m.home_festival_times({ time: formatFestivalTime(festivalStart) }));
 
-	// A text search, so there are no coordinates to keep in step with the venue.
-	// https://yandex.com/dev/yandex-apps-launch-maps/doc/en/concepts/yandexmaps-web
 	const yandexMapsUrl = `https://yandex.ru/maps/?text=${encodeURIComponent('Нижний Новгород, ДК ГАЗ')}`;
 
 	let now = $state(Date.now());
 
-	// Key art can fail to load on flaky con-venue wifi; drop it to bare the branded
-	// bed instead of showing the browser's broken-image icon.
 	let imageFailed = $state(false);
 
 	let remaining = $derived(Math.max(0, startMs - now));
@@ -66,14 +58,6 @@
 		return value.toString().padStart(2, '0');
 	}
 
-	// The 1s ticker drives the visible countdown, so it only needs to run while we
-	// are counting down to the start and the tab is in front — paused when hidden
-	// because background timers aren't reliably throttled (an open SSE stream can
-	// keep the tab awake). Svelte's guidance is to own timers in an $effect and
-	// return their teardown; the interval is then cleared automatically when the
-	// phase leaves 'before', the tab hides, or the component unmounts. Resyncing on
-	// (re)entry keeps a return-from-hidden from painting a stale second. The phase
-	// itself is the page's: it flips 'before' → 'during' on its own boundary timer.
 	$effect(() => {
 		if (phase !== 'before' || !documentVisibility.current) return;
 		now = Date.now();
@@ -82,29 +66,11 @@
 	});
 </script>
 
-<!-- One card through all three phases: the countdown before, the act on stage
-	 during, thanks and feedback after. The key art carries the festival's look;
-	 what sits on it is always the most useful thing for that moment. -->
 <section
 	aria-labelledby="hero-heading"
 	class="relative isolate overflow-hidden rounded-2xl bg-linear-to-br from-primary-900 via-gray-900 to-secondary-900 text-white shadow-sm"
 >
-	<!-- Key art as a backdrop. Decorative now that it carries no message of its
-		 own, so alt="" — the dark brand bed underneath keeps the card readable while
-		 the image streams in on weak con-venue wifi or if it fails to load at all. -->
 	{#if !imageFailed}
-		<!-- Static src, not a ?enhanced import: only the static-path form feeds
-			 `sizes` back into the build, so it emits the full resized ladder — an
-			 imported Picture would ship just 1x/2x widths. Output is still
-			 content-hashed into `build`, which the service worker precaches, so
-			 swapping the art busts every cache with no stale copy. LCP element:
-			 eager + fetchpriority="high", never lazy.
-			 `sizes` states the *cover* width, not the box width: `object-cover` scales
-			 the 16/9 art to fill the box. The box fits its content, which keeps the
-			 cover width within 100vw from a 360px phone up; only the after-festival
-			 panel on a 320px phone runs taller (about 110vw), a slight upscale the dark
-			 scrim hides, which isn't worth fetching a bigger file on every phone. From
-			 lg the card is capped by the page column (max-w-5xl). -->
 		<enhanced:img
 			src="./main.webp"
 			alt=""
@@ -116,12 +82,6 @@
 			class="absolute inset-0 -z-10 size-full object-cover"
 		/>
 	{/if}
-	<!-- Scrim: the photo is busy and bright in places, so white text needs a dark
-		 layer under it to hold contrast wherever the crop lands. The card fits its
-		 content, so text runs right up to the top edge, and the scrim stays dark
-		 there too. Against the brightest pixel behind each line, from 360 to 1440px
-		 wide in all three phases, the 12px `white/85` labels measured at least
-		 4.79:1. The phase label sits nearest the top and stays solid white. -->
 	<div
 		aria-hidden="true"
 		class="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/70 to-black/60"
@@ -132,7 +92,6 @@
 			<h2 id="hero-heading" class="text-xs font-semibold tracking-wide text-white uppercase">
 				{m.home_before_festival()}
 			</h2>
-			<!-- Hide the live-ticking grid from screen readers; the date below conveys it -->
 			<div class="grid max-w-md grid-cols-4 gap-2" aria-hidden="true">
 				{#each units as unit, index (unit.id)}
 					<div
@@ -143,7 +102,6 @@
 						style:--enter-delay="{index * 80}ms"
 					>
 						{#if prefersReducedMotion.current || unit.id === 'seconds'}
-							<!-- Seconds change every tick; flipping them constantly is distracting -->
 							<span class="font-display text-xl leading-none font-bold tabular-nums sm:text-2xl">
 								{pad(unit.value)}
 							</span>
@@ -162,13 +120,9 @@
 					</div>
 				{/each}
 			</div>
-			<!-- The answer to "when and where" for anyone planning the trip, so it sits
-				 in the hero rather than in a list further down. -->
 			<div>
 				<p class="text-base leading-snug font-semibold">{festivalDate}</p>
 				<p class="mt-0.5 text-sm text-white/85">{festivalTimes}</p>
-				<!-- min-h-11 gives the link a 44px tap height without a visible box
-					 (https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls). -->
 				<a
 					href={yandexMapsUrl}
 					target="_blank"
@@ -187,9 +141,6 @@
 				class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white uppercase"
 			>
 				{#if featured.live}
-					<!-- Live dot, as on the schedule's current row. The ping runs three
-					     times and stops (WCAG 2.2.2, see --animate-ping-brief); reduced motion
-					     mutes it via global CSS. -->
 					<span class="relative flex size-2" aria-hidden="true">
 						<span
 							class="absolute inline-flex size-full animate-ping-brief rounded-full bg-success opacity-75"
@@ -201,7 +152,6 @@
 			</h2>
 			<div class="flex items-center gap-3">
 				{#if featuredNumber !== null}
-					<!-- The schedule's number badge, restyled for the dark art. -->
 					<div
 						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 p-1.5 text-center"
 					>
@@ -225,8 +175,6 @@
 			<p class="max-w-prose text-body leading-relaxed text-white/85">
 				{m.home_festival_farewell()}
 			</p>
-			<!-- Guests land on the auth-gated feedback page, which bounces them to
-				 login and returns them here after (LOGIN_NEXT_PARAM). -->
 			<Button href="/feedback" size="sm" class="self-start">{m.home_leave_feedback()}</Button>
 		{/if}
 	</div>

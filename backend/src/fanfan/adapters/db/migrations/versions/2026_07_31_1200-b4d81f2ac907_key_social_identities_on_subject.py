@@ -32,7 +32,6 @@ Create Date: 2026-07-31 12:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "b4d81f2ac907"
 down_revision = "c6ebdce7e2cc"
 branch_labels = None
@@ -44,12 +43,8 @@ _PROVIDERS = ["telegram"]
 
 
 def upgrade() -> None:
-    # No row can be migrated (see the module docstring), and the unique
-    # constraint below would otherwise be enforced against stale values.
     op.execute(sa.table(_TABLE).delete())
 
-    # Renamed, not dropped and recreated: autogenerate emits renames as
-    # drop+create, which would lose the column outright.
     op.alter_column(_TABLE, "provider_id", new_column_name="subject")
 
     op.add_column(_TABLE, sa.Column("provider_user_id", sa.BigInteger(), nullable=True))

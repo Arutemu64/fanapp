@@ -23,13 +23,9 @@
 	const toastService = getToastService();
 	let confirmOpen = $state(false);
 
-	// Toasts sit on the mutation, not on the mutate() call: the refetch drops the
-	// ticket and with it this button, and call-level callbacks are skipped once
-	// their component has unmounted (docs/api.md).
 	const unlinkMutation = createMutation(() => ({
 		...unlinkUserTicketMutation(),
 		onSuccess: () => {
-			// The backend leaves the role alone, so the organizer is told to change it.
 			toastService.add(m.ticket_unlinked_toast(), 'success');
 			return Promise.all([
 				queryClient.invalidateQueries({ queryKey: getUserQueryKey({ path: { user_id: userId } }) }),
@@ -50,8 +46,6 @@
 	{m.ticket_unlink_action()}
 </Button>
 
-<!-- AlertDialog per the confirmation convention (docs/frontend.md §7): Cancel comes
-     first so the safe choice takes focus. -->
 <AlertDialog.Root bind:open={confirmOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>

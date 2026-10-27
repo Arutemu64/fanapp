@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// The module keeps its verdict in module state, so each test imports a fresh copy.
 async function loadReachability() {
 	vi.resetModules();
 	return import('./reachability');
@@ -21,9 +20,6 @@ afterEach(() => {
 });
 
 describe('probeReachability', () => {
-	// The rule that must not regress silently: on mobile, the first probe after
-	// foregrounding often fails while the radio wakes. Alarming on it flashes the
-	// offline banner for a connection that is about to work.
 	it('stays online when a retry inside the confirm window succeeds', async () => {
 		const fetchMock = vi
 			.fn<typeof fetch>()
@@ -88,7 +84,6 @@ describe('probeReachability', () => {
 		const { isReachable, markReachable, probeReachability } = await loadReachability();
 
 		const probe = probeReachability();
-		// Mid-window, an API call gets an answer: the state was already "reachable".
 		await vi.advanceTimersByTimeAsync(600);
 		markReachable(true);
 		await vi.advanceTimersByTimeAsync(6000);
@@ -107,7 +102,6 @@ describe('probeReachability', () => {
 		markReachable(false);
 
 		const probe = probeReachability();
-		// An API response proves the server reachable before the slow ping fails.
 		markReachable(true);
 		failPing(new TypeError('Failed'));
 

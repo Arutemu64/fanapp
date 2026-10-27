@@ -11,8 +11,6 @@ export const load: PageLoad = async ({ parent }) => {
 
 	requireTool('sync', user, toolConfig);
 
-	// Start the fetch as early as SvelteKit preloads the route (on hover/tap); the
-	// page subscribes to the same query.
 	void queryClient.query(getSyncSourcesOptions()).catch(() => {});
 
 	return {

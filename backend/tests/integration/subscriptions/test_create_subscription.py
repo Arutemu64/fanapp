@@ -99,7 +99,6 @@ async def test_create_subscription_rejects_a_block_start(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # The FK would accept it, but a block start has no position to remind about.
     interactor = await dishka_request.get(CreateSubscription)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(visitor)

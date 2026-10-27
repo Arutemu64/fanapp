@@ -31,9 +31,6 @@
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })
 	}));
 
-	// One ID per broadcast, kept across submits: if a send's response is lost,
-	// pressing again replays it on the server instead of mailing everyone twice
-	// (docs/adr/0034). A fresh one is drawn only once this broadcast is settled.
 	let mailingId = uuidv7();
 
 	let bodyText = $state('');
@@ -86,8 +83,6 @@
 		handleRoleChange();
 	}
 
-	// A connection that drops mid-form keeps what was typed; the submit explains
-	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
@@ -121,9 +116,6 @@
 					if (bodyError || rolesError) {
 						return;
 					}
-					// An earlier press went through but its response was lost, and the
-					// text changed since. That broadcast is out; the next press sends
-					// the edited text as a new one.
 					if (getApiErrorCode(error) === 'MAILING_ALREADY_EXISTS') {
 						mailingId = uuidv7();
 						void queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() });

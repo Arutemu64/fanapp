@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import override
 
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
@@ -17,9 +18,11 @@ class BaseScheduleEntry(AggregateRoot):
     title: str
     order: float
 
+    @override
     def __eq__(self, other: object) -> bool:
         return isinstance(other, BaseScheduleEntry) and self.id == other.id
 
+    @override
     def __hash__(self) -> int:
         return hash(self.id)
 
@@ -36,19 +39,13 @@ class ScheduleBlockStart(BaseScheduleEntry):
 
 @dataclass(slots=True, kw_only=True, eq=False)
 class ScheduleEvent(BaseScheduleEntry):
-    # The public number printed in the programme. Optional because not every row
-    # on stage gets one — breaks and other filler are announced by title alone.
     number: int | None
-    # Planned stage time in seconds. Seconds rather than minutes because acts
-    # shorter than a minute are real, and rounding a per-event duration would
-    # accumulate error across the programme.
     duration: int
     is_current: bool
     is_skipped: bool
     nomination_title: str | None
 
     def set_current(self) -> None:
-        # A skipped event cannot be announced as currently on stage.
         if self.is_skipped:
             raise SkippedEventNotAllowed
         self.is_current = True
@@ -57,7 +54,6 @@ class ScheduleEvent(BaseScheduleEntry):
         self.is_current = False
 
     def skip(self) -> None:
-        # The current stage event must be unset before it can be skipped.
         if self.is_current:
             raise CurrentEventNotAllowed
         self.is_skipped = True

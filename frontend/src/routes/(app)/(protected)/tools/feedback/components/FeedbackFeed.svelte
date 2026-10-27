@@ -16,8 +16,6 @@
 
 	const feedbackQuery = createInfiniteQuery(() => ({
 		...listFeedbackInfiniteOptions({ query: { limit: FEEDBACK_PAGE_SIZE } }),
-		// An object page param is request overrides to hey-api, a string the cursor:
-		// an empty object asks for the first page.
 		initialPageParam: {},
 		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
@@ -43,8 +41,6 @@
 		{#if feedback.length === 0}
 			<EmptyState message={m.feedback_empty()} />
 		{:else}
-			<!-- One divided list, not a card per item: the entries are all the same shape,
-	     so a list scans faster and fits more on a phone screen. -->
 			<MenuGroup class="divide-y divide-border" bind:ref={listElement}>
 				{#each feedback as item (item.id)}
 					<FeedbackItem feedback={item} />

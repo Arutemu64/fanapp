@@ -9,9 +9,6 @@ from fanfan.adapters.tgbot.config import TelegramConfig
 from fanfan.adapters.tgbot.notifier import TelegramNotifier, TelegramRateLimiter
 from fanfan.application.ports.notifier import TelegramNotifierPort
 
-# Same budget as VK (main/ioc/vk.py): sends run on the background notification
-# consumer, so a generous read with a short connect. Must stay under the
-# consumer's AckWait (presentation/faststream/routes/notifications.py).
 TELEGRAM_TIMEOUT = httpx2.Timeout(30.0, connect=10.0)
 
 
@@ -29,7 +26,6 @@ class TelegramProvider(Provider):
         async with httpx2.AsyncClient(timeout=TELEGRAM_TIMEOUT) as client:
             yield TelegramApiClient(client=client, config=config)
 
-    # APP scope: one quota for every concurrent send in the process.
     rate_limiter = provide(TelegramRateLimiter)
 
     telegram_notifier = provide(

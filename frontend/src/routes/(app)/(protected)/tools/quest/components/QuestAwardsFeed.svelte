@@ -34,8 +34,6 @@
 
 	const awardsQuery = createInfiniteQuery(() => ({
 		...listQuestAwardsInfiniteOptions({ query: { limit: PAGE_SIZE } }),
-		// An object page param is request overrides to hey-api, a string the cursor:
-		// an empty object asks for the first page.
 		initialPageParam: {},
 		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
@@ -49,21 +47,15 @@
 		})
 	);
 
-	// One dialog for the whole list rather than one per row. The award stays set
-	// after closing so the text doesn't blank out during the exit animation.
 	let confirmOpen = $state(false);
 	let awardToCancel = $state.raw<QuestAwardItemDto | null>(null);
 	let pointsToCancel = $derived(m.quest_points({ count: awardToCancel?.amount ?? 0 }));
 
-	// The toasts live here, not in mutate(): the list shares this one mutation, and
-	// a later mutate() replaces an earlier call's callbacks.
 	const cancelMutation = createMutation(() => ({
 		...cancelQuestAwardMutation(),
 		onSuccess: () => toastService.add(m.quest_tool_cancelled(), 'success'),
 		onError: (error) =>
 			toastService.add(getApiErrorDetail(error) ?? m.quest_tool_cancel_failed(), 'error'),
-		// Refetch whichever way it went: a refusal (window expired, cancelled
-		// elsewhere) also means this row's button is out of date.
 		onSettled: () => queryClient.invalidateQueries({ queryKey: listQuestAwardsQueryKey() })
 	}));
 
@@ -127,8 +119,6 @@
 			{/if}
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<!-- Not the usual «Отмена»: next to «Отменить начисление» it reads as the
-			     same action, so the safe button says what it keeps. -->
 			<AlertDialog.Cancel>{m.quest_tool_cancel_keep()}</AlertDialog.Cancel>
 			<AlertDialog.Action variant="destructive" onclick={handleConfirmCancel}>
 				{m.quest_tool_cancel_confirm()}

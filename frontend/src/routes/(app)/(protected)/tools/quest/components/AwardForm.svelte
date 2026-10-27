@@ -23,7 +23,6 @@
 	interface Props {
 		player: AwardTarget;
 		maxAward: number;
-		/** Owned by the page so a station's next player starts from the same award. */
 		amount: string;
 		message: string;
 		onDone: () => void;
@@ -35,7 +34,6 @@
 	const AMOUNT_PRESETS = [5, 10, 20, 50];
 	const WHOLE_NUMBER = /^\d+$/;
 
-	// Null for a player picked by code alone, whose name and balance are unknown.
 	let verifiedPlayer = $derived(isUnverified(player) ? null : player);
 
 	let presets = $derived(AMOUNT_PRESETS.filter((preset) => preset <= maxAward));
@@ -43,9 +41,6 @@
 	let amountInput = $state<HTMLInputElement | null>(null);
 	let messageInput = $state<HTMLInputElement | null>(null);
 
-	// The picker that held focus is gone; land on the player so a screen reader
-	// hears who the form is for. The heading, not the amount field, so a phone
-	// doesn't throw up its keyboard over the presets.
 	function focusOnMount(node: HTMLElement) {
 		node.focus();
 	}
@@ -53,17 +48,12 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	// Queued (ADR-0038): a station that loses the connection keeps awarding, and
-	// each award goes out when it returns. The award ID makes a resend safe.
 	const awardMutation = createMutation(() => queuedAwardOptions());
 	handOffWhenQueued(awardMutation, () => {
 		toastService.add(m.quest_tool_award_queued(), 'info');
 		onDone();
 	});
 
-	// One ID per award, kept across submits: if the response is lost on the
-	// festival Wi-Fi, pressing again replays the award instead of paying the
-	// player twice (docs/adr/0034).
 	let awardId = uuidv7();
 
 	let amountError = $state('');
@@ -94,7 +84,6 @@
 		return valid;
 	}
 
-	// Re-validate live only after a field has already shown an error once.
 	function handleAmountInput() {
 		if (amountError) {
 			validateAmount();
@@ -112,8 +101,6 @@
 		handleAmountInput();
 	}
 
-	// After tick(), so the field's aria-describedby already names the error when it
-	// takes focus.
 	async function focusFirstError() {
 		await tick();
 		if (amountError) {
@@ -145,7 +132,6 @@
 			},
 			{
 				onSuccess: () => {
-					// A player picked by code alone has no name to show yet.
 					const done = verifiedPlayer
 						? m.quest_tool_awarded({
 								username: verifiedPlayer.username,
@@ -162,8 +148,6 @@
 						void focusFirstError();
 						return;
 					}
-					// An earlier press went through but its response was lost, and the
-					// form changed since. That award stands; the next press is a new one.
 					if (getApiErrorCode(error) === 'QUEST_AWARD_ALREADY_EXISTS') {
 						awardId = uuidv7();
 						void queryClient.invalidateQueries({ queryKey: listQuestAwardsQueryKey() });
@@ -175,11 +159,7 @@
 	}
 </script>
 
-<!-- novalidate: a browser bubble would pre-empt the Russian field errors with
-     English text; validateAmount and validateMessage own every rule. -->
 <form novalidate class="flex flex-col gap-4" onsubmit={handleSubmit}>
-	<!-- flex-wrap + min-w-32: on a narrow phone the button drops to its own line
-	     rather than leaving the volunteer a name too cramped to check. -->
 	<div class="flex flex-wrap items-center gap-3">
 		{#if verifiedPlayer}
 			<UserAvatar seed={verifiedPlayer.avatar_seed} class="size-12" />
@@ -211,16 +191,9 @@
 
 	<FormError message={submitError} />
 
-	<!-- The text fields go readonly, not disabled, while an award is in flight: a
-	     field the server refuses takes focus in onError, and TanStack only reports
-	     isPending false to the component a macrotask later. A disabled field can't
-	     be focused. -->
 	<Field.FieldGroup class="gap-4">
 		<Field.Field data-invalid={amountError ? true : undefined}>
 			<Field.FieldLabel for="quest-amount">{m.quest_tool_amount_label()}</Field.FieldLabel>
-			<!-- Text, not type="number": a scroll wheel or arrow key would quietly change
-			     the points, and the native number field gives no feedback on bad input.
-			     https://design-system.service.gov.uk/components/text-input/ -->
 			<Input
 				bind:ref={amountInput}
 				id="quest-amount"

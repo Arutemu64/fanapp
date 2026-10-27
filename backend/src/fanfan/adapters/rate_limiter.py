@@ -17,8 +17,6 @@ class RateLimiter:
         self._next_slot = 0.0
 
     async def wait(self) -> None:
-        # No await between reading and advancing the slot, so concurrent
-        # callers on one event loop never claim the same slot.
         now = asyncio.get_running_loop().time()
         slot = max(now, self._next_slot)
         self._next_slot = slot + self._interval

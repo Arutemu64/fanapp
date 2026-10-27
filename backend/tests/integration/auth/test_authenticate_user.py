@@ -102,8 +102,6 @@ async def test_authenticate_user_without_password_raises_invalid_credentials(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
 ) -> None:
-    # A social-only account has no password hash; a password login must fail
-    # cleanly rather than crash on verification.
     interactor = await dishka_request.get(AuthenticateUser)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -130,8 +128,6 @@ async def test_authenticate_user_locks_out_after_too_many_attempts(
         user_gateway, password_hasher, uow, "login.user@example.com", PASSWORD
     )
 
-    # The per-email counter allows LOGIN_EMAIL_MAX_ATTEMPTS wrong tries; each is
-    # a normal invalid-credentials failure.
     for _ in range(LOGIN_EMAIL_MAX_ATTEMPTS):
         with pytest.raises(InvalidCredentials):
             await interactor(
@@ -140,8 +136,6 @@ async def test_authenticate_user_locks_out_after_too_many_attempts(
                 )
             )
 
-    # The next attempt is blocked before the password is even checked, so even
-    # the correct password is rejected while locked out.
     with pytest.raises(TooManyLoginAttempts):
         await interactor(
             AuthenticateUserInput(email="login.user@example.com", password=PASSWORD)
@@ -152,8 +146,6 @@ async def test_authenticate_user_success_resets_attempt_counter(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
 ) -> None:
-    # A few typos followed by a correct password must not leave the account near
-    # lockout: a successful login clears the counters.
     interactor = await dishka_request.get(AuthenticateUser)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -170,12 +162,10 @@ async def test_authenticate_user_success_resets_attempt_counter(
                 )
             )
 
-    # Correct password resets the counter...
     await interactor(
         AuthenticateUserInput(email="login.user@example.com", password=PASSWORD)
     )
 
-    # ...so a fresh run of wrong attempts is again allowed without an early lockout.
     for _ in range(LOGIN_EMAIL_MAX_ATTEMPTS):
         with pytest.raises(InvalidCredentials):
             await interactor(

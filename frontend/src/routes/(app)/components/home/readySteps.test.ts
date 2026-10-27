@@ -4,7 +4,6 @@ import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 import { getNotificationsOn, getReadySteps, type ReadyStepsInput } from './readySteps';
 
-// A signed-in viewer with every step done: each test opens exactly the steps it checks.
 const DONE: ReadyStepsInput = {
 	signedIn: true,
 	hasTicket: true,

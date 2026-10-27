@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import Select, and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
@@ -68,11 +70,13 @@ class SqlParticipantGateway(ParticipantGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, participant: Participant) -> None:
         participant_orm = _from_model(participant)
         self.session.add(participant_orm)
         await self.session.flush()
 
+    @override
     async def get(self, participant_id: ParticipantId) -> Participant | None:
         stmt = (
             select(ParticipantORM)
@@ -82,6 +86,7 @@ class SqlParticipantGateway(ParticipantGateway):
         participant_orm = await self.session.scalar(stmt)
         return _to_model(participant_orm) if participant_orm else None
 
+    @override
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Participant | None:
         stmt = (
             select(ParticipantORM)
@@ -91,27 +96,22 @@ class SqlParticipantGateway(ParticipantGateway):
         participant_orm = await self.session.scalar(stmt)
         return _to_model(participant_orm) if participant_orm else None
 
+    @override
     async def save(self, participant: Participant) -> None:
         await self.session.merge(_from_model(participant))
         await self.session.flush()
-        # Cosplay sync can reassign a participant to a different nomination
-        # after votes for it exist. votes.nomination_id is a denormalised
-        # copy backing uq_votes_user_nomination (a unique constraint can't
-        # span the participants join), so it must be kept in lockstep here
-        # or the constraint enforces the *old* nomination and a user could
-        # cast a second effective vote in the participant's new one. If the
-        # user already holds a vote in that nomination, this correctly
-        # raises an IntegrityError instead of silently allowing a duplicate.
         await self.session.execute(
             update(VoteORM)
             .where(VoteORM.participant_id == participant.id)
             .values(nomination_id=participant.nomination_id)
         )
 
+    @override
     async def list_cosplay2_ids(self) -> list[int]:
         stmt = select(ParticipantORM.cosplay2_id)
         return list((await self.session.scalars(stmt)).all())
 
+    @override
     async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
         if not cosplay2_ids:
             return
@@ -119,11 +119,13 @@ class SqlParticipantGateway(ParticipantGateway):
             delete(ParticipantORM).where(ParticipantORM.cosplay2_id.in_(cosplay2_ids))
         )
 
+    @override
     async def delete(self, participant: Participant) -> None:
         await self.session.execute(
             delete(ParticipantORM).where(ParticipantORM.id == participant.id)
         )
 
+    @override
     async def read_list_participants(
         self,
         user_id: UserId | None = None,

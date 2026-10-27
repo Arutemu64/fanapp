@@ -27,16 +27,9 @@ from fanfan.presentation.web.schemas.error import (
 
 logger = logging.getLogger(__name__)
 
-# Codes the handlers synthesize (not tied to a domain exception). Exposed here so
-# the OpenAPI code-enum builder can include them in the client-facing union.
 HTTP_ERROR_CODE = "HTTP_ERROR"
 INTERNAL_ERROR_CODE = "INTERNAL_ERROR"
 
-# Keyed on semantic marker base classes (defined in core), not on individual
-# leaf exceptions. Each concrete exception inherits the marker that fits its
-# meaning, and _resolve_status_code() walks the MRO to find it. Adding an
-# exception means picking the right marker, not editing this map; a completeness
-# test (tests/.../test_exception_status_map.py) fails if anything slips through.
 EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     ConstraintViolation: status.HTTP_400_BAD_REQUEST,
     AuthenticationError: status.HTTP_401_UNAUTHORIZED,
@@ -91,7 +84,6 @@ def problem_response(
 ) -> JSONResponse:
     """An RFC 9457 problem details response for an error `code`."""
     content: dict[str, Any] = dict(extensions or {})
-    # The standard members go last so an extension can never overwrite them.
     content.update(
         type=problem_type(code),
         title=HTTPStatus(status_code).phrase,
@@ -113,8 +105,6 @@ def internal_error_response(exc: Exception) -> JSONResponse:
     anything the client can act on. The ERROR log is what reaches Sentry (its
     logging integration), with the request id bound by `BindRequestContextMiddleware`.
     """
-    # Not `.exception()`: a handler runs outside the `except` block, so it would
-    # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
     logger.error("Unhandled exception while handling request", exc_info=exc)
 
     return problem_response(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_CODE)
@@ -124,8 +114,6 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     _ = request
 
     status_code = _resolve_status_code(exc)
-    # A domain exception with no marker is internal-only (see the status-map
-    # test): reaching a client means a bug, so it is handled like any other.
     if status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
         return internal_error_response(exc)
 
@@ -138,7 +126,6 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 
 
 def _scalar_context(ctx: Mapping[str, object]) -> dict[str, ValidationContextValue]:
-    # The input itself never goes back (`input` is dropped): it may be a password.
     return {
         key: value
         for key, value in ctx.items()
@@ -198,15 +185,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 def add_exception_handlers(app: FastAPI) -> None:
-    # Handlers narrow `exc` to a concrete exception subtype, which Starlette's
-    # broad `ExceptionHandler` signature doesn't model — a known false positive.
     app.add_exception_handler(AppException, app_exception_handler)  # ty: ignore[invalid-argument-type]
-    # Starlette's HTTPException, not FastAPI's subclass: the router raises the
-    # Starlette one for an unknown path (404) or method (405), and only a handler
-    # on the base class answers those as problem details too.
-    # https://fastapi.tiangolo.com/tutorial/handling-errors/
     app.add_exception_handler(HTTPException, http_exception_handler)  # ty: ignore[invalid-argument-type]
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # ty: ignore[invalid-argument-type]
-    # Last resort for an error raised outside `CatchUnexpectedErrorsMiddleware` (in an
-    # outer middleware), so even that response stays problem details.
     app.add_exception_handler(Exception, unhandled_exception_handler)

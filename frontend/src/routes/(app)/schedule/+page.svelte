@@ -68,7 +68,6 @@
 	}));
 
 	const queuedSubscriptions = useQueuedSubscriptionChanges();
-	// A guest has no subscriptions, whatever an earlier session left cached.
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
 	let entries: ScheduleEntryWithSubscription[] = $derived(
 		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
@@ -90,14 +89,8 @@
 	let filters = $derived(parseScheduleFilters(page.url.searchParams));
 	let showOnlySubscribed = $derived(filters.onlySubscribed);
 
-	// Local, editable mirror of the URL search term, so the list filters on every
-	// keystroke while the URL catches up after a short debounce. Seeded once (untrack);
-	// afterNavigate below re-seeds it when a navigation from elsewhere changes `q`.
 	let searchQuery = $state(untrack(() => filters.search));
 
-	// `replace` keeps the history stack from filling with every intermediate filter;
-	// `reset: false` leaves scroll and focus alone, so the keyboard stays open on the
-	// search field.
 	function applyFilters(next: ScheduleFilters) {
 		return goto(`${resolve('schedule')}${buildScheduleFiltersQuery(next)}`, {
 			replace: true,
@@ -112,8 +105,6 @@
 		searchTimer = undefined;
 	}
 
-	// Debounced, as replaceState is rate-limited: Safari throws a SecurityError past
-	// 100 calls in a window (https://azukiazusa.dev/blog/history-replacestate-rate-limit).
 	function writeSearchSoon() {
 		cancelSearchWrite();
 		searchTimer = setTimeout(() => {
@@ -122,40 +113,27 @@
 		}, SEARCH_WRITE_DELAY_MS);
 	}
 
-	// A timer left running would fire after the user has moved on and navigate them
-	// back here.
 	onDestroy(cancelSearchWrite);
 
 	afterNavigate(() => {
-		// While a write is pending the URL lags behind the field on purpose.
 		if (searchTimer !== undefined) return;
 		if (filters.search !== searchQuery.trim()) {
 			searchQuery = filters.search;
 		}
 	});
 
-	// A single-select toggle group clears its value when the pressed item is tapped
-	// again. The function binding below keeps the group fully controlled
-	// (https://bits-ui.com/docs/components/toggle-group): the setter ignores the
-	// clear, and the getter hands the real scope back, so one scope always stays
-	// selected, like a segmented control. A one-way `value` would let the group's
-	// own state drift from the filter.
 	function getScope() {
 		return showOnlySubscribed ? 'subscribed' : 'all';
 	}
 
 	function setScope(value: string) {
 		if (value === '') return;
-		// Carries a search still waiting on its debounce along with it.
 		cancelSearchWrite();
 		void applyFilters({ search: searchQuery, onlySubscribed: value === 'subscribed' });
 	}
 
-	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 
-	// Rebuilt only when the schedule reloads, so a keystroke re-runs token
-	// comparisons instead of re-normalizing every field of every row.
 	let searchIndex = $derived.by(() => {
 		const blockTitles = blockTitleByEventId(entries);
 		return createSearchIndex(schedule, (event) => [
@@ -172,15 +150,10 @@
 			.filter((event) => !showOnlySubscribed || event.user_subscription !== null)
 	);
 
-	// The current event's row can be filtered out while the event is still on stage.
 	let isCurrentEventFiltered = $derived(
 		currentEvent !== null && !filtered.some((event) => event.id === currentEvent.id)
 	);
 
-	// Group rows into block and nomination sections so we can make headers sticky.
-	// Built off the unfiltered schedule (recomputes only on reload); the filter
-	// pass below reuses these groups so a keystroke never re-groups. See
-	// scheduleGrouping.ts for the keying contract that keeps rows stable.
 	let allGroups = $derived(buildScheduleGroups(entries));
 	let groupedSchedule = $derived(filterScheduleGroups(allGroups, filtered));
 
@@ -192,8 +165,6 @@
 
 	let hasActiveFilters = $derived(showOnlySubscribed || searchQuery.trim().length > 0);
 
-	// Recovery for the no-results state: clear search + subscription filter in one tap
-	// so a user mid-event isn't stuck hunting back to two separate controls.
 	function resetFilters() {
 		cancelSearchWrite();
 		searchQuery = '';
@@ -220,25 +191,17 @@
 	async function scrollToCurrentEvent() {
 		if (!currentEvent) return;
 
-		// The bar stays up while a filter hides the row, so tapping it clears the
-		// filters first and waits for the row to render.
 		if (isCurrentEventFiltered) {
 			await resetFilters();
 			await tick();
 		}
 
-		// An explicit 'smooth' animates even for users who opted out of motion, so it
-		// follows the preference (https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView).
 		findEventRow(currentEvent.id)?.scrollIntoView({
 			block: 'center',
 			behavior: prefersReducedMotion.current ? 'instant' : 'smooth'
 		});
 	}
 
-	// Watches the current row against the viewport, so the bar steps aside while
-	// the row it points at is already visible. An observer rather than a scroll
-	// listener: no layout reads on every scroll frame. Re-runs when the current event,
-	// the filters (which mount and unmount rows) or the page root change.
 	$effect(() => {
 		const eventId = currentEvent?.id;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- read only to track the filters
@@ -269,8 +232,6 @@
 		<ScheduleSkeleton />
 	{/snippet}
 
-	<!-- Nothing saved yet and no way to fetch it: a calm inline state that keeps the
-	     app shell usable, and promises the programme works offline once loaded. -->
 	{#snippet offline()}
 		<EmptyState title={m.schedule_offline_title()} message={m.schedule_offline_message()} />
 	{/snippet}
@@ -281,10 +242,6 @@
 				<StaleDataNotice message={m.schedule_cached_notice()} {cachedAt} />
 			{/if}
 
-			<!-- Controls sit straight on the page, not in a card: DESIGN "When not to" use a
-	     card. Search plus a scope switch under it is the iOS search-field + scope-bar
-	     pattern (https://developer.apple.com/design/human-interface-guidelines/search-fields).
-	     Kept static so the schedule's block headers can be the sticky ones. -->
 			<div class="flex flex-col gap-3">
 				<SearchInput
 					bind:value={searchQuery}
@@ -307,8 +264,6 @@
 						<ToggleGroup.Item value="subscribed">{m.schedule_my_subscriptions()}</ToggleGroup.Item>
 					</ToggleGroup.Root>
 
-					<!-- Always mounted so screen readers hear the list shrink and grow, but shown
-			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
 					<div class="flex items-center gap-2">
 						<p
 							class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
@@ -317,8 +272,6 @@
 						>
 							{resultsSummary}
 						</p>
-						<!-- Here rather than only in the profile: whether to hear about every act is
-						     decided while looking at the stage. Needs an account to save the choice. -->
 						{#if user}
 							<Button
 								variant="ghost"
@@ -336,9 +289,6 @@
 			<div class="flex flex-col gap-6">
 				{#each groupedSchedule as node (node.key)}
 					{#if node.kind === 'interlude'}
-						<!-- A row above the first block (the opening) sits outside the block sections
-				     as a lighter, dashed row so it reads as an interlude, not a block card.
-				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
 						<div
 							data-event-id={node.event.id}
 							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
@@ -356,7 +306,6 @@
 					{/if}
 				{:else}
 					{#if hasActiveFilters}
-						<!-- No-results recovery: one tap clears every active filter. -->
 						<EmptyState title={m.common_nothing_found()} message={m.schedule_try_other_filters()}>
 							<Button variant="outline" size="sm" onclick={resetFilters}>
 								<X data-icon="inline-start" />
@@ -384,26 +333,14 @@
 	<ScheduleNotificationsDialog bind:open={showNotificationsDialog} {user} />
 {/if}
 
-<!-- A block section: sticky block header + its nomination cards. Taken as a
-	snippet so the {#each} above narrows a node to a concrete ScheduleBlockGroup
-	before rendering, keeping the union out of this markup. -->
 {#snippet blockSection(block: ScheduleBlockGroup)}
 	<section class="flex flex-col gap-2">
-		<!-- Keep the active block visible while the user scrolls through dense rows. -->
-		<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. -->
-		<!-- A plain heading on the page background, not a card: the nomination cards under it
-		     already group the rows, so a framed header would be a box stacked on boxes
-		     (DESIGN "No boxes in boxes"). Size/weight carry the hierarchy; the count stays
-		     gray because it is not a state (Color-Earns-Its-Place). -->
-		<!-- top / transition come from the (app) layout's <main> (--sticky-top): a bare top-0
-			would tuck the header under the top bar. See the note there. -->
 		<div
 			class="sticky z-20 bg-background/95 backdrop-blur-sm transition-[top] motion-reduce:transition-none reduced-transparency:bg-background"
 			style:top="var(--sticky-top, 0px)"
 			style:transition-duration="var(--sticky-top-duration, 0ms)"
 			style:transition-timing-function="var(--sticky-top-easing, ease-out)"
 		>
-			<!-- min-h-11 is load-bearing: the nomination header sticks 2.75rem below this one. -->
 			<div class="flex min-h-11 items-center justify-between gap-3 px-1">
 				<h2 class="truncate font-sans text-section tracking-tight text-foreground">
 					{block.title}
@@ -415,13 +352,8 @@
 		</div>
 
 		{#each block.nominations as nomination (nomination.key)}
-			<!-- Clip the card edges without creating a new scroll container, so sticky headers keep working. -->
 			<div class="relative overflow-clip rounded-xl border border-border bg-card">
-				<!-- Stick the nomination header below the block header for better context.
-				     Skipped when a block's rows carry no nomination — there is nothing to label. -->
 				{#if nomination.title !== null}
-					<!-- Stacks 2.75rem below the block header (its min-h-11), sharing the layout's
-						--sticky-top offset so both track the top bar together. -->
 					<div
 						class="sticky z-10 rounded-t-xl border-b border-border bg-card/95 px-3 py-2 backdrop-blur-sm transition-[top] motion-reduce:transition-none"
 						style:top="calc(var(--sticky-top, 0px) + 2.75rem)"
@@ -441,8 +373,6 @@
 
 				<div class="divide-y divide-border">
 					{#each nomination.events as event (event.id)}
-						<!-- The margin reaches every descendant too: keyboard focus scrolls the focused
-							control into view, not its row, and it must clear the sticky headers. -->
 						<div data-event-id={event.id} class="scroll-mt-28 **:scroll-mt-28">
 							<EventCard
 								{event}

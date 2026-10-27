@@ -96,9 +96,6 @@ async def test_login_with_code_email_mismatch_raises_invalid_otp(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
 ) -> None:
-    # The code is keyed by the target email but stores the user id. If that user's
-    # own email no longer matches the target, the code must not authenticate them
-    # (defends against a stale/hijacked code proving ownership of a mailbox).
     interactor = await dishka_request.get(LoginWithCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -119,7 +116,6 @@ async def test_login_with_code_email_mismatch_raises_invalid_otp(
 async def test_login_with_code_unknown_user_raises_user_not_found(
     dishka_request: AsyncContainer,
 ) -> None:
-    # A code that resolves to a user id with no matching account.
     interactor = await dishka_request.get(LoginWithCode)
     token_registry = await dishka_request.get(TokenRegistry)
 
@@ -151,11 +147,9 @@ async def test_login_with_code_locks_out_after_too_many_wrong_codes(
         ttl_seconds=EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
     )
 
-    # Exhaust the allowed wrong guesses; each is reported as an invalid code.
     for _ in range(EMAIL_OTP_MAX_ATTEMPTS):
         with pytest.raises(InvalidOtpCode):
             await interactor(LoginWithCodeInput(email=USER_EMAIL, code=WRONG_CODE))
 
-    # The next attempt — even with the correct code — is locked out.
     with pytest.raises(TooManyOtpAttempts):
         await interactor(LoginWithCodeInput(email=USER_EMAIL, code=VALID_CODE))

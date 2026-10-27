@@ -7,10 +7,6 @@ from fanfan.application.services.permissions import PermissionService
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.sync import SyncSource
 
-# Which vendors this deployment has credentials for. Both integrations are
-# independently optional, so the set is computed once in the composition root
-# (main/ioc/sync.py) from EnvConfig and injected as a plain value: the vendor
-# config models live in adapters/, which the application layer may not import.
 AvailableSyncSources = NewType("AvailableSyncSources", frozenset[SyncSource])
 
 

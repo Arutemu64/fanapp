@@ -15,8 +15,6 @@ OPENAPI_PATH = SHARED_OPENAPI_PATH
 
 
 def build_openapi_schema(version: str = APP_VERSION) -> dict[str, Any]:
-    # Mirror the runtime app's title, version, operationId scheme and schema
-    # post-processing so the committed spec matches what create_app() serves.
     app = FanfanAPI(
         title=API_TITLE,
         version=version,

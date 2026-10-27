@@ -34,11 +34,7 @@
 	const undoMutation = createMutation(() => ({
 		...undoScheduleChangeMutation(),
 		onSuccess: () => {
-			// Toasted here, not in a `mutate` callback: the refetched feed can drop or
-			// re-key this card, and TanStack skips a call's callbacks once it unmounts.
 			toastService.add(m.schedule_change_reverted(), 'success');
-			// Read-your-writes, without waiting for the schedule_updated echo (see
-			// EventStaffActions' reloadSchedule).
 			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 			return queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });
 		}
@@ -62,12 +58,9 @@
 		set_as_current: 'border-success/30 bg-success/10 text-success',
 		moved: 'border-info/30 bg-info/10 text-info',
 		skipped: 'border-warning/30 bg-warning/10 text-warning',
-		// "Восстановлено" = back to normal, a neutral reset rather than a semantic state.
 		unskipped: 'border-border bg-muted text-muted-foreground'
 	};
 
-	// A move records where the event stood before it, for undo: the entry it sat
-	// right after, which is a block start when the event opened its block.
 	let relatedLabel = $derived.by(() => {
 		if (change.type !== 'moved') return m.change_related_event();
 		if (change.related_entry?.type === 'block_start') return m.change_was_block_start();
@@ -76,7 +69,6 @@
 
 	function formatEvent(event: ScheduleChangeEntryDto | null | undefined): string {
 		if (!event) return '';
-		// Breaks carry no public number — the title is all there is to show.
 		if (event.number === null) return event.title;
 		return `#${event.number} ${event.title}`;
 	}

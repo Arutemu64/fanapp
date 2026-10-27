@@ -58,7 +58,6 @@ async def test_create_notification_redelivery_is_a_single_row(
     stored = await notification_gateway.get(notification.id)
     assert stored is not None
     assert stored.body == notification.body
-    # Both runs hand it over; JetStream's dedup id absorbs the repeat.
     assert len(broker.published_events) == 2
 
 
@@ -118,7 +117,6 @@ async def test_create_notification_pushes_it_to_its_user_in_realtime(
     user_id, message = realtime.published[0]
     assert user_id == visitor.id
     assert message.event_name is SSEEventName.NOTIFICATION_CREATED
-    # The payload is the stored row, so it carries what only the DB fills in.
     assert message.data["id"] == str(notification_id)
     assert message.data["created_at"] is not None
 

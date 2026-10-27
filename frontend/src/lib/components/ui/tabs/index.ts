@@ -7,7 +7,6 @@ export {
 	Content,
 	List,
 	Root,
-	//
 	Root as Tabs,
 	Content as TabsContent,
 	List as TabsList,

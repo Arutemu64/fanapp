@@ -10,42 +10,26 @@
 
 	import NotificationBell from './NotificationBell.svelte';
 
-	// Pages expose their heading through `load` -> `page.data.title`.
 	let pageTitle = $derived(page.data.title);
-	// Nested pages name their parent the same way; tab roots set none.
 	let back = $derived(page.data.back);
 	let actions = $derived(page.data.actions ?? []);
 
 	interface Props {
 		user: CurrentUserDto | null;
 		contentScrolled: boolean;
-		/** Each tab's last query string, keyed by resolved root (see `tabHref`). */
 		lastSearches: Readonly<Record<string, string>>;
 	}
 
 	let { user, contentScrolled, lastSearches }: Props = $props();
 </script>
 
-<!-- Full width so the bell pins to the right edge. Account actions (login, logout)
-	live on the Profile tab, not here, so the bar is identical on phones and desktop.
-	Positioning (overlay, z-index, hide-on-scroll) and the backdrop blur are owned by the
-	(app) layout's chrome wrapper; this bar supplies only the translucent tint. -->
-<!-- The hairline is always 1px and only its colour changes, so the bar's height (and
-	<main>'s top padding, bound to it) never shifts as it appears. -->
 <header
 	class={[
 		'flex items-center justify-between gap-2 border-b bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] transition-colors duration-300 select-none [-webkit-touch-callout:none] sm:px-6 reduced-transparency:bg-background',
 		contentScrolled ? 'border-border/50' : 'border-transparent'
 	]}
 >
-	<!-- Page title comes from each page's `load` via `page.data.title`; render it
-		as the single page <h1>. The row is held at least at the bell's h-11 so the bar
-		keeps one height whether or not the bell renders (guests have none). -->
 	<div class="flex min-h-11 min-w-0 flex-1 items-center gap-1">
-		<!-- Leading back arrow, the top-app-bar convention: an installed iOS PWA has no
-			system back button, and unlike an in-content link this one returns with the
-			bar on any upward scroll. Going up to a tab root reopens it as it was left, the
-			same as its tab link. -ml-2 lines the arrow glyph up with the page edge. -->
 		{#if back}
 			<Button
 				href={tabHref(back.href, lastSearches)}
@@ -58,12 +42,6 @@
 			</Button>
 		{/if}
 		{#if pageTitle}
-			<!-- Long titles («Настройки уведомлений», and nomination names, which are
-				organiser data) overflow a 360px phone beside the back arrow and bell, so
-				they wrap to a second line instead of truncating: a clipped page title
-				loses the word that names the page. The layout measures the bar, so <main>'s
-				offset follows the taller row. Keep the role's 1.375 line height, not
-				leading-tight: line-clamp clips, and Cyrillic descenders (у, д) need the room. -->
 			<h1 class="line-clamp-2 text-headline wrap-break-word text-foreground">
 				{pageTitle}
 			</h1>
@@ -77,11 +55,6 @@
 	{/each}
 
 	{#if user}
-		<!-- The bell lives in the (app) layout, above the route's error boundary, so
-		     a render error in it would otherwise take the whole shell down to the
-		     root error page. Render nothing in its place instead. No onerror: every
-		     boundary already runs SvelteKit's transformError, so handleError has
-		     reported it. -->
 		<svelte:boundary>
 			<NotificationBell />
 			{#snippet failed()}{/snippet}

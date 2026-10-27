@@ -20,15 +20,11 @@
 
 	interface Props {
 		notification: NotificationDto;
-		// Decided by the feed: an item stays "new" for the whole visit, even after a
-		// refetch brings it back with the seen_at the visit itself recorded.
 		isNew: boolean;
 	}
 
 	let { notification, isNew }: Props = $props();
 
-	// Typed as possibly missing a key, though `satisfies` keeps it exhaustive: a tab
-	// opened before a deploy can receive a type over SSE that its bundle predates.
 	const TYPE_ICONS: Partial<Record<string, Component<{ class?: string }>>> = {
 		default: Bell,
 		test: Bell,
@@ -42,9 +38,6 @@
 	let Icon = $derived(TYPE_ICONS[notification.type] ?? Bell);
 	let createdAt = $derived(formatRelativeTime(notification.created_at, minuteClock.now));
 
-	// Backend-provided in-app deep-link (e.g. "/schedule"). Without one the item is
-	// not clickable — and neither is one pointing at the screen already open
-	// (organizer mailings link to the feed itself), where a tap would do nothing.
 	let href = $derived.by(() => {
 		if (!notification.path) return undefined;
 		const target = resolvePath(toAppPath(notification.path));
@@ -53,11 +46,6 @@
 	});
 </script>
 
-<!-- The title carries the link and its ::after stretches over the whole item
-	(Inclusive Components "Cards"), instead of wrapping the item in an <a>: the
-	body is organizer HTML that may contain its own links, and a link inside a
-	link is invalid HTML. Body links sit above the stretched area via `relative`,
-	since they come later in source order. -->
 <div
 	class={[
 		'relative flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm',
@@ -108,7 +96,6 @@
 </div>
 
 {#snippet title()}
-	<!-- The unseen dot is visual only; this gives screen readers the same cue. -->
 	{#if isNew}
 		<span class="sr-only">{m.notification_new_label()}</span>
 	{/if}

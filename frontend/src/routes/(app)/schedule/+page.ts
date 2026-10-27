@@ -11,13 +11,8 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {
 	const { queryClient } = await parent();
-	// Start the fetch as early as SvelteKit preloads the route (on hover/tap); the
-	// page subscribes to the same query and renders the cached copy meanwhile.
 	void queryClient.query(getScheduleOptions()).catch(() => {});
 
-	// The operator's change log lives with the schedule it tracks, not in the tools
-	// section, so it is one tap from here. Gated by the same permission the changes
-	// page enforces.
 	const user = queryClient.getQueryData(currentUserOptions().queryKey) ?? null;
 	const actions: NavbarAction[] = [];
 	if (canManageSchedule(user)) {

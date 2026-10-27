@@ -21,8 +21,6 @@ class ParticipantVoteDTO(BaseModel):
 class ParticipantFullDTO(ParticipantBaseDTO):
     model_config = ConfigDict(from_attributes=True)
 
-    # Calculated values
     votes_count: int
 
-    # User-specific values
     user_vote: ParticipantVoteDTO | None

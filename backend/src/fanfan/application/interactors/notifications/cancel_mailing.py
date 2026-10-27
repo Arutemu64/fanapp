@@ -37,16 +37,10 @@ class CancelMailing:
             user=current_user, permission=Permission.NOTIFICATIONS_SEND
         )
 
-        # get() locks the row, so the status flip and the enqueued
-        # CancelMailingCommand land in one transaction via the outbox. cancel()
-        # raises only if the mailing is already cancelled.
         mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
         mailing.cancel()
-        # Flip the status synchronously (get() returns a detached domain object,
-        # so the transition is not otherwise persisted): this stops in-flight
-        # sends via ensure_active() without waiting for the async event consumer.
         await self.mailing_gateway.save(mailing)
         self.uow.enqueue(CancelMailingCommand(mailing_id=mailing.id))
         await self.uow.commit()

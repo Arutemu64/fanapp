@@ -11,8 +11,6 @@ import type {
 import { expect, json, loggedInAs, problem, test } from '../fixtures';
 import { QUEST, QUEST_AWARDS, QUEST_HISTORY, questConfig, questPlayer } from '../mocks/quest';
 
-// The QR a player's badge shows for user number 482913, drawn with the app's own
-// encoder (uqr). The scanner's image picker reads it, so no camera is needed.
 const QUEST_QR = readFileSync(new URL('../media/quest-qr.png', import.meta.url));
 const SCANNED_PLAYER: QuestPlayerDto = { ...questPlayer(0, 240), number: 482913 };
 
@@ -47,7 +45,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 
 		await page.getByRole('tab', { name: 'Лидеры' }).click();
 		await expect(page.getByRole('img', { name: 'QR-код игрока @ЛунныйЛис07' })).toHaveCount(0);
-		// The top ten, then the player's own row below the gap.
 		await expect(page.getByRole('listitem')).toHaveCount(11);
 		await expect(page.locator('li[aria-current="true"]')).toContainText('@ЛунныйЛис07');
 	});
@@ -78,8 +75,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 		const badge = page.getByRole('tabpanel', { name: 'Бейдж' });
 		await expect(badge.locator('dl')).toContainText(/Баллы\s*35/);
 
-		// Dispatched by hand, as in offline.spec.ts: context.setOffline would also fail
-		// the build's chunk loads, and the aborted health check keeps the probes down.
 		api.use({ 'GET /debug/health': (route) => route.abort() });
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
@@ -88,8 +83,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 
 		await page.getByRole('tab', { name: 'Лидеры' }).click();
 		const leaderboard = page.getByRole('tabpanel', { name: 'Лидеры' });
-		// A fresh copy gets a quiet line; past half an hour the standings have likely
-		// moved, and the notice turns into the warning.
 		await expect(leaderboard.getByText(/Обновлено сегодня/)).toBeVisible();
 		await expect(leaderboard.getByText('Показаны сохранённые баллы и места.')).toHaveCount(0);
 		await page.clock.fastForward('31:00');
@@ -141,7 +134,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 		});
 
 		await page.goto('/tools');
-		// A volunteer sees only the tools they hold.
 		await expect(page.getByRole('link', { name: /Квест/ })).toBeVisible();
 		await expect(page.getByRole('link', { name: /Пользователи/ })).toHaveCount(0);
 
@@ -155,8 +147,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.getByText('@РыжийКот09: +15 баллов')).toBeVisible();
 		expect(awarded).toMatchObject({ user_number: player.number, amount: 15, message: 'Викторина' });
 
-		// Back at the picker with focus on the scan button, and the next player starts
-		// from the same award: a station hands out one task over and over.
 		await expect(page.getByRole('button', { name: 'Сканировать код игрока' })).toBeFocused();
 		await page.getByLabel('Или найди по имени пользователя').fill('Рыж');
 		await page.getByRole('button', { name: /@РыжийКот09/ }).click();
@@ -186,8 +176,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 			...volunteer(),
 			'GET /quest/awards': json(QUEST_AWARDS)
 		});
-		// Let the signed-in warm-up land first: a response handled after the
-		// `offline` event would mark the backend reachable again (offline.spec.ts).
 		const warmedUp = Promise.all(
 			['/quest', '/quest/history'].map((path) =>
 				page.waitForResponse((response) => new URL(response.url()).pathname.endsWith(path))
@@ -197,10 +185,6 @@ test.describe('quest', { tag: '@critical' }, () => {
 		await expect(page.getByRole('button', { name: 'Сканировать код игрока' })).toBeVisible();
 		await warmedUp;
 
-		// The lookup fails like the rest, not just the health check: under load WebKit
-		// can handle a warm-up response after the `offline` event, which marks the
-		// backend reachable again, so the scan may still try the network. Either way
-		// the picker must fall back to the bare number.
 		api.use({
 			'GET /debug/health': (route) => route.abort(),
 			'GET /quest/players/482913': (route) => route.abort(),

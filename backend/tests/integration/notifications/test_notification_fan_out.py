@@ -83,9 +83,7 @@ async def test_fan_out_stores_every_chunk_and_finishes_the_mailing(
 
     delivered = await delivered_notifications(dishka_request)
     assert {n.user_id for n in delivered} == {u.id for u in users}
-    # Sanitized once, on the way in, for every channel.
     assert all("<script>" not in n.body for n in delivered)
-    # Every recipient gets the live toast.
     assert {user_id for user_id, _ in realtime.published} == {u.id for u in users}
     stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
@@ -126,7 +124,6 @@ async def test_fan_out_refuses_notifications_of_several_mailings(
     visitor: User,
     uow: UnitOfWork,
 ) -> None:
-    # One mailing per call is what lets a chunk lock a single mailing row.
     fan_out = await dishka_request.get(NotificationFanOut)
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(visitor)

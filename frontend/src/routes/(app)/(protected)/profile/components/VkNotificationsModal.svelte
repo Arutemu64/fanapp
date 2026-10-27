@@ -11,11 +11,6 @@
 
 	interface Props {
 		open: boolean;
-		/**
-		 * Deep link to the community chat where the user grants «разрешить
-		 * сообщения». Null when VK notifications were not configured for this
-		 * deployment — the modal hides the button then.
-		 */
 		vkGroupUrl: string | null;
 	}
 

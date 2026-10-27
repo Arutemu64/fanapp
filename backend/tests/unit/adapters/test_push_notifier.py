@@ -3,7 +3,7 @@ import re
 from base64 import urlsafe_b64encode
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 from uuid import uuid7
 
 import httpx2
@@ -44,7 +44,6 @@ WEB_CONFIG = WebConfig(
 
 
 def _b64url(raw: bytes) -> str:
-    # Browsers send the keys base64url-encoded without padding.
     return urlsafe_b64encode(raw).rstrip(b"=").decode()
 
 
@@ -93,9 +92,6 @@ def _message_data() -> MessageData:
     }
 
 
-# --- WebPushClient.send: the flat domain model → nested library shape ----------
-
-
 async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     endpoint = "https://push.example/send/abc"
     requests: list[httpx2.Request] = []
@@ -114,22 +110,15 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
         topic="schedule",
     )
 
-    # A malformed subscription (a flat dict instead of the nested shape) would
-    # raise inside the library before any request went out; reaching the
-    # endpoint at all is the regression guard.
     assert response.status_code == 201
     assert len(requests) == 1
     sent = requests[0]
     assert str(sent.url) == endpoint
     assert sent.headers["content-encoding"] == "aes128gcm"
     assert sent.headers["authorization"].startswith("vapid ")
-    # RFC 8030 §5.2-5.4: the library sets only TTL; Urgency and Topic are ours.
     assert sent.headers["ttl"] == "600"
     assert sent.headers["urgency"] == "high"
     assert sent.headers["topic"] == "schedule"
-    # The payload is encrypted, so it must not carry the plaintext body. Match
-    # the whole encoded body: a short byte sequence also turns up in random
-    # ciphertext by chance (a 2-byte one failed ~0.5% of runs).
     assert _message_data()["notification"]["body"].encode() not in sent.content
 
 
@@ -144,14 +133,8 @@ async def test_send_returns_response_with_status(tmp_path: Path) -> None:
         topic=None,
     )
 
-    # The notifier reads the whole response (status + headers), so send returns
-    # it rather than the bare status code.
     assert response.status_code == 410
-    # Without a topic nothing may replace this message at the push service.
     assert "topic" not in response.request.headers
-
-
-# --- PushNotifier: message shaping and pruning of dead subscriptions -----------
 
 
 class _RecordingClient(WebPushClient):
@@ -175,9 +158,11 @@ class _RecordingClient(WebPushClient):
         self._fail_endpoints = fail_endpoints
         self.calls: list[dict[str, Any]] = []
 
+    @override
     def ensure_available(self) -> None:
         pass
 
+    @override
     async def send(
         self,
         *,
@@ -207,12 +192,14 @@ class _StubGateway(PushSubscriptionGateway):
         self._subs = subs
         self.deleted: list[PushSubscription] = []
 
+    @override
     async def list_by_user(
         self,
-        user_id: UserId,  # noqa: ARG002  # part of the port contract
+        user_id: UserId,
     ) -> list[PushSubscription]:
         return self._subs
 
+    @override
     async def delete(self, model: PushSubscription) -> None:
         self.deleted.append(model)
 
@@ -221,6 +208,7 @@ class _StubUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
+    @override
     async def commit(self) -> None:
         self.commits += 1
 
@@ -258,16 +246,12 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
 
     assert len(client.calls) == 1
     call = client.calls[0]
-    # The unmapped domain aggregate is handed straight to the client.
     assert call["subscription"] is sub
     data = call["message_data"]["notification"]
-    # HTML is flattened to plain text; <br> becomes a newline.
     assert "<b>" not in data["body"]
     assert data["body"] == "Тело уведомления\nвторая строка"
-    # Declarative pushes need an absolute URL, built from the public origin.
     assert data["navigate"] == "https://fanfan.example/schedule"
     assert data["data"] == {"test": False}
-    # An ungrouped type keeps a unique per-notification tag and does not re-alert.
     assert data["tag"] not in {"schedule", "subscription", "broadcast"}
     assert data["renotify"] is False
 
@@ -322,7 +306,6 @@ async def test_notifier_gives_each_subscribed_act_its_own_lane() -> None:
     tags = [call["message_data"]["notification"]["tag"] for call in client.calls]
     assert topics == tags
     assert topics[0] == topics[2] != topics[1]
-    # RFC 8030 §5.4: at most 32 characters from the base64url alphabet.
     assert all(len(topic) <= 32 for topic in topics)
     assert all(re.fullmatch(r"[A-Za-z0-9_-]+", topic) for topic in topics)
 
@@ -333,7 +316,6 @@ async def test_notifier_prunes_gone_subscription() -> None:
     gateway = _StubGateway([live, dead])
     uow = _StubUow()
 
-    # 410 Gone for every send: both endpoints report themselves retired.
     notifier = PushNotifier(
         push_sub_gateway=gateway,
         uow=uow,
@@ -344,7 +326,6 @@ async def test_notifier_prunes_gone_subscription() -> None:
     await notifier.send_notification(_notification())
 
     assert gateway.deleted == [live, dead]
-    # One to end the read before the sends, one per pruned subscription.
     assert uow.commits == 3
 
 
@@ -361,7 +342,6 @@ async def test_notifier_ends_read_transaction_before_sending() -> None:
 
     await notifier.send_notification(_notification())
 
-    # A send can take seconds; the pooled connection must not be held for it.
     assert uow.commits == 1
 
 
@@ -415,7 +395,6 @@ async def test_notifier_gives_a_late_schedule_push_only_its_remaining_lifetime()
         _notification(NotificationType.SCHEDULE_CHANGE, created_at=created_at)
     )
 
-    # Seconds tick between building the notification and sending it.
     assert 355 <= client.calls[0]["ttl_seconds"] <= 360
 
 
@@ -475,8 +454,6 @@ async def test_notifier_sends_to_every_device_before_raising_a_send_error() -> N
         web_config=WEB_CONFIG,
     )
 
-    # The unreachable device is retried through redelivery; the other device's
-    # outcome is still acted on in this pass.
     with pytest.raises(httpx2.ConnectError):
         await notifier.send_notification(_notification())
     assert len(client.calls) == 2
@@ -506,8 +483,6 @@ async def test_notifier_decodes_html_entities_to_plain_text() -> None:
     await notifier.send_notification(notification)
 
     data = client.calls[0]["message_data"]["notification"]
-    # nh3 leaves entities encoded; the notifier decodes them so the OS
-    # notification shows real characters, not "&amp;"/"&lt;".
     assert data["body"] == "Скидка 5 < 10 & выше"
     assert data["title"] == "Кафе «U & I»"
     assert data["navigate"] == "https://fanfan.example/"
@@ -523,8 +498,6 @@ async def test_notifier_raises_channel_unavailable_on_auth_failure() -> None:
         web_config=WEB_CONFIG,
     )
 
-    # 401 is a VAPID/auth failure: a channel-wide misconfiguration the consumer
-    # must drop, not a per-subscription problem, so the endpoint is not pruned.
     with pytest.raises(NotificationChannelUnavailable):
         await notifier.send_notification(_notification())
     assert gateway.deleted == []
@@ -542,7 +515,6 @@ async def test_notifier_retries_on_throttle_with_default_backoff() -> None:
 
     with pytest.raises(NotificationRetryAfter) as exc:
         await notifier.send_notification(_notification())
-    # No Retry-After header → the fixed fallback interval.
     assert exc.value.retry_after == 5
 
 
@@ -612,6 +584,4 @@ async def test_notifier_sends_declarative_web_push_message() -> None:
 
 
 def test_message_data_round_trips_as_json() -> None:
-    # The library serializes the payload with json.dumps; every value must be
-    # JSON-native, which is the contract the TypedDict encodes.
     assert json.loads(json.dumps(_message_data())) == _message_data()

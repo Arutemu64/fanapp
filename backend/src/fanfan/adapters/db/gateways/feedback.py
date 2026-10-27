@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -33,17 +35,16 @@ class SqlFeedbackGateway(FeedbackGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, feedback: Feedback) -> None:
         feedback_orm = _from_model(feedback)
         self.session.add(feedback_orm)
         await self.session.flush()
 
+    @override
     async def read_list_feedback(
         self, pagination: CursorPagination
     ) -> list[FeedbackDTO]:
-        # id (uuid7, time-ordered) is the tiebreaker so rows sharing a created_at
-        # — feedback submitted within the same clock tick — keep a stable,
-        # newest-first order the page cursor can point into.
         stmt = (
             select(FeedbackORM)
             .order_by(FeedbackORM.created_at.desc(), FeedbackORM.id.desc())

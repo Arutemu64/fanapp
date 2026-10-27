@@ -32,9 +32,6 @@ schedule_router = NatsRouter()
     stream=stream,
     pull_sub=PullSub(),
     durable="process_schedule_change",
-    # Redeliver on failure: FastStream's default for NATS, REJECT_ON_ERROR,
-    # terminates the message, so one transient error would lose the event the
-    # outbox delivered. Redelivery is bounded and delayed (redelivery.py).
     ack_policy=AckPolicy.NACK_ON_ERROR,
     config=consumer_config(),
 )
@@ -45,16 +42,8 @@ async def process_schedule_change(
     publish_schedule_updated: FromDishka[PublishScheduleUpdated],
     msg: NatsMessage,
 ) -> None:
-    # A large fan-out can outlast AckWait while NATS is slow to ack; the
-    # heartbeat keeps a live run from being redelivered on top of itself. It
-    # covers the live update too, whose cache warm-up waits on the edit lock.
     async with in_progress_heartbeat(msg):
         try:
-            # Live update before the notification fan-out: the screen should not
-            # wait on building a notification per subscriber, nor on a fan-out
-            # failure that redelivers this message. A redelivery repeats the
-            # live update, which is harmless — clients revalidate and get a 304
-            # for a schedule they already hold.
             await publish_schedule_updated()
             await interactor(
                 SendScheduleChangeNotificationsInput(
@@ -63,10 +52,6 @@ async def process_schedule_change(
                 )
             )
         except Exception:
-            # Out of redeliveries: nothing retries the fan-out after this, so
-            # the change's mailing would otherwise stay PENDING for good. The
-            # whole body is guarded, since a failed live update ends the
-            # message too.
             if is_last_delivery(msg.raw_message):
                 await interactor.abandon(data.schedule_change_id)
             raise
@@ -77,9 +62,6 @@ async def process_schedule_change(
     stream=stream,
     pull_sub=PullSub(),
     durable="undo_schedule_change",
-    # Redeliver on failure: FastStream's default for NATS, REJECT_ON_ERROR,
-    # terminates the message, so one transient error would lose the event the
-    # outbox delivered. Redelivery is bounded and delayed (redelivery.py).
     ack_policy=AckPolicy.NACK_ON_ERROR,
     config=consumer_config(),
 )
@@ -89,9 +71,6 @@ async def undo_schedule_change(
     events_broker: FromDishka[EventBroker],
     publish_schedule_updated: FromDishka[PublishScheduleUpdated],
 ) -> None:
-    # Cancel first: until it lands, notifications queued for the undone change
-    # can still go out, so it must not wait on the cache warm-up or fail with
-    # the live update.
     if data.mailing_id:
         await events_broker.publish(CancelMailingCommand(mailing_id=data.mailing_id))
     await publish_schedule_updated()

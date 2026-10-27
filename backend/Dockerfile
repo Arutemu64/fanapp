@@ -1,26 +1,15 @@
 # syntax=docker/dockerfile:1
-# Multistage build after astral-sh/uv-docker-example (standalone.Dockerfile).
 
-# First, build the application in the `/app` directory
 FROM ghcr.io/astral-sh/uv:0.13.0-trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 ENV UV_NO_DEV=1
 
-# A uv-managed interpreter at a fixed path: the final stage has no Python of its
-# own and copies /python to the same path, which the venv's interpreter links
-# point at.
 ENV UV_PYTHON_INSTALL_DIR=/python
 ENV UV_PYTHON_PREFERENCE=only-managed
 
 WORKDIR /app
 
-# Install Python before the project for caching. The exact version is read from
-# .python-version — the single source Renovate's `python` group already bumps —
-# so the image tracks the project pin automatically instead of hard-coding the
-# patch here, where Renovate cannot see it and it drifts silently. It must
-# still be a version this uv release ships (`uv python list --managed-python`);
-# a Python bump that outruns the pinned uv needs the uv bump alongside it.
 COPY .python-version .
 RUN uv python install
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -31,19 +20,14 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-# Then, use a final image without uv
 FROM debian:trixie-slim
 
-# ca-certificates are necessary for web pushes. Deliberately left unpinned: we
-# want the newest CA bundle on every rebuild, so pinning a version (DL3008)
-# would freeze the trust store and defeat the point.
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# uid/gid 999 is relied on by docs/deployment.md, which chowns secrets/*.pem to it.
 RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home nonroot
 
@@ -52,16 +36,8 @@ COPY --from=builder --chown=nonroot:nonroot /app /app
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Without a TTY, Python block-buffers stdout, so print() diagnostics can lag or
-# vanish on crash; unbuffered output reaches the container log immediately.
 ENV PYTHONUNBUFFERED=1
 
-# Commit SHA of this build, read back by common/version.py and reported as the
-# Sentry release. Written to a file, not ENV: Compose `env_file` values override
-# image ENV, so a stray `APP_BUILD=` line in a server's .env would silently erase
-# the baked-in id. Declared this late on purpose: it changes on every commit, and
-# only the layers below it are invalidated when it does. Empty for a local build
-# from source — the app treats that as "unknown build".
 ARG APP_BUILD
 RUN printf '%s' "$APP_BUILD" > /app/BUILD_ID
 

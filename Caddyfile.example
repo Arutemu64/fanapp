@@ -1,33 +1,10 @@
 {
 	servers {
-        # Set trusted proxies so passing HTTPS handled correctly
 		trusted_proxies static 100.64.0.0/10
 	}
 }
 
-# The upstream ports below must match the host ports Compose publishes
-# (API_PORT / FRONTEND_PORT in .env, default 8000 / 3000). If you override
-# either var, update the matching reverse_proxy target here.
-#
-# These 127.0.0.1 targets assume Caddy runs ON THE HOST. If you run Caddy as its
-# own container (one global proxy fronting several stacks), the container's
-# loopback is not the host's and these get "connection refused" — route over the
-# shared `proxy` network to fanapp-api:8000 / fanapp-frontend:80 instead. See
-# docs/deployment.md "Caddy as its own container (shared `proxy` network)".
 :80 {
-    # Security headers for every response on the single origin — the SPA
-    # document (which the backend never serves) as well as the API. Values
-    # follow the OWASP Secure Headers Project. frame-ancestors 'none' plus the
-    # legacy X-Frame-Options block clickjacking on old and new browsers; only
-    # frame-ancestors is set (not a full CSP) so nothing here has to track the
-    # SPA's own script/style sources. The backend also sets these itself, so
-    # the API stays hardened behind a different proxy; Caddy re-stamping the
-    # same values is a harmless overwrite.
-    #
-    # Strict-Transport-Security is intentionally omitted from this :80 example:
-    # a browser only honours HSTS received over HTTPS. When you switch this to
-    # an HTTPS `example.com { … }` block (auto-TLS), add it there:
-    #   header Strict-Transport-Security "max-age=63072000; includeSubDomains"
     header {
         X-Content-Type-Options nosniff
         X-Frame-Options DENY
@@ -35,38 +12,18 @@
         Referrer-Policy strict-origin-when-cross-origin
     }
 
-    # Compress API JSON and the SPA's assets. GET /schedule/ is unpaginated
-    # (~90 KiB for 250 events) and every client refetches it on each
-    # schedule_updated SSE event, so it dominates venue-wifi traffic; gzip
-    # takes ~88% off it. The frontend container serves its assets
-    # uncompressed (nginx.conf) so this is the one place they are encoded —
-    # Caddy skips any response that already carries a Content-Encoding.
-    #
-    # Exclude the SSE stream. encode withholds the response headers until
-    # the first body bytes and buffers each chunk, which delays the
-    # EventSource handshake and can truncate the last event
-    # (caddyserver/caddy#6293). The header-flush fix (#7905) is on master
-    # but not in a stable release, and compressing small, frequent frames
-    # buys little even once it ships — so keep the exclusion either way.
-    # encode is ordered before handle_path, so this matches the unstripped
-    # path the browser requests, not the /events the backend sees.
 	@compressible {
 		not path /api/events*
 	}
 	encode @compressible zstd gzip
 
-    # Route all requests starting with /api to FastAPI
 	handle_path /api* {
-		# Bound incoming request bodies before reverse-proxying. The schedule-import
-		# endpoint buffers the multipart body in memory, so a proxy-level cap sheds
-		# hostile payloads before they reach FastAPI.
 		request_body {
 			max_size 10MB
 		}
 		reverse_proxy http://127.0.0.1:8000
 	}
 
-    # Route everything else to Svelte/Vite
 	handle {
 		reverse_proxy http://127.0.0.1:3000
 	}

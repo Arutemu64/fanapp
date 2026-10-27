@@ -101,8 +101,6 @@ async def test_request_sync_reaps_a_wedged_run_instead_of_blocking_forever(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A worker killed mid-run leaves an active row behind. Without reaping, the
-    # partial unique index would reject every future run for that source.
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
     wedged = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
@@ -126,8 +124,6 @@ async def test_request_sync_spares_an_old_run_whose_worker_is_alive(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A slow sweep past the stale timeout is still running: reaping it would
-    # let this request start a second sweep of the same source alongside it.
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
     running = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
@@ -145,7 +141,6 @@ async def test_request_sync_spares_an_old_run_whose_worker_is_alive(
     finally:
         await live_worker.release()
 
-    # The rejected INSERT left the session needing a rollback before any read.
     await uow.rollback()
     untouched = await gateway.get(running.id)
     assert untouched is not None

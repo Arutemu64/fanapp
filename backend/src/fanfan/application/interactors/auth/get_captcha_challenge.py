@@ -12,16 +12,11 @@ from fanfan.core.exceptions.rate_limit import (
 
 logger = logging.getLogger(__name__)
 
-# ALTCHA asks custom integrations to rate-limit challenge generation as well as
-# verification (https://altcha.org/docs/integration/security-recommendations/).
-# Looser than the login-code cap: the email form fetches one on every visit to
-# the step and again after each failed attempt.
 CAPTCHA_CHALLENGE_IP_MAX_REQUESTS = 60
 CAPTCHA_CHALLENGE_IP_WINDOW_SECONDS = 600
 
 
 class GetCaptchaChallengeInput(BaseModel):
-    # Caller (web route) fills this in; the interactor stays framework-agnostic.
     client_ip: str | None = None
 
 
@@ -50,6 +45,4 @@ class GetCaptchaChallenge:
                 "Captcha challenge blocked: too many requests",
                 extra={"client_ip": client_ip},
             )
-            # Same code as the login-code cap: fetching a challenge is the first
-            # half of requesting a code, and the user-facing advice is the same.
             raise TooManyLoginCodeRequests(retry_after=e.details["retry_after"]) from e

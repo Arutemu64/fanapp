@@ -6,9 +6,7 @@ describe('qrPath', () => {
 	it('draws a version 1 code inside a four-module quiet zone', () => {
 		const { size, d } = qrPath('fanfan');
 
-		// Version 1 is 21 modules wide, plus four on each side.
 		expect(size).toBe(29);
-		// The top-left finder pattern starts right after the quiet zone.
 		expect(d.startsWith('M4 4h1v1h-1z')).toBe(true);
 	});
 

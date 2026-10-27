@@ -9,7 +9,6 @@ Create Date: 2026-07-14 12:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "c9d4e1f83a27"
 down_revision = "b7c3e9d24a10"
 branch_labels = None
@@ -17,10 +16,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 1. Case-insensitive username uniqueness. get_by_username compares
-    # lower(username), which the old plain index could not serve (seq scan) and
-    # which allowed "Alice" and "alice" to coexist. Fails loudly if existing
-    # rows already collide case-insensitively — resolve those by hand first.
     op.drop_index(op.f("ix_users_username"), table_name="users")
     op.create_index(
         "ix_users_username_lower",
@@ -29,8 +24,6 @@ def upgrade() -> None:
         unique=True,
     )
 
-    # 2. Tickets must survive account deletion: the barcode is freed for
-    # re-linking instead of the whole ticket row being cascaded away.
     op.drop_constraint(
         op.f("fk_tickets_used_by_user_id_users"), "tickets", type_="foreignkey"
     )
@@ -43,8 +36,6 @@ def upgrade() -> None:
         ondelete="SET NULL",
     )
 
-    # 3. Delivered notifications must survive a hard delete of their mailing;
-    # cancellation already deletes undelivered ones explicitly in the app.
     op.drop_constraint(
         op.f("fk_notifications_mailing_id_mailings"),
         "notifications",
@@ -59,15 +50,12 @@ def upgrade() -> None:
         ondelete="SET NULL",
     )
 
-    # 4. app_settings is a singleton table (the app only ever touches id=1).
     op.create_check_constraint(
         op.f("ck_app_settings_single_row"),
         "app_settings",
         "id = 1",
     )
 
-    # 5. One identity per provider per user. The (user_id, provider) unique
-    # also covers user_id lookups, so the standalone user_id index goes away.
     op.create_unique_constraint(
         op.f("uq_social_identities_user_id"),
         "social_identities",
@@ -75,7 +63,6 @@ def upgrade() -> None:
     )
     op.drop_index(op.f("ix_social_identities_user_id"), table_name="social_identities")
 
-    # 6. Participant values are no longer used by the app; drop the EAV table.
     op.drop_index(
         op.f("ix_participant_values_participant_id"), table_name="participant_values"
     )

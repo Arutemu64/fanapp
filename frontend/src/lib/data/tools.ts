@@ -34,20 +34,14 @@ interface Tool {
 	description: () => string;
 	icon: Component;
 	href: Path;
-	/** Holding any one of these opens the tool. Typed as `Permission` so a backend rename fails `pnpm check`. */
 	anyOf: Permission[];
-	/** The tool is also off while the festival quest is. */
 	requiresQuest?: boolean;
-	/** Opens offline: its writes wait in the queue (ADR-0038). Every other tool is online-only. */
 	worksOffline?: boolean;
-	/** Copy for the 403 a direct visit gets. */
 	forbidden: () => string;
 }
 
 export type ToolConfig = Pick<PublicConfigDto, 'quest_enabled'>;
 
-// Display order of the dashboard. Mirrors the backend permission each tool's
-// endpoints enforce, so a page is never shown to someone its requests would reject.
 const TOOLS: Tool[] = [
 	{
 		key: 'settings',
@@ -86,8 +80,6 @@ const TOOLS: Tool[] = [
 		forbidden: m.broadcast_forbidden
 	},
 	{
-		// tickets:manage lists, issues and maps tickets; sync:run alone still
-		// opens it for the TicketsCloud sync, which lives here.
 		key: 'tickets',
 		title: m.tool_tickets,
 		description: m.tool_tickets_description,
@@ -124,7 +116,6 @@ const TOOLS: Tool[] = [
 		forbidden: m.users_forbidden
 	},
 	{
-		// quest:award gives points; quest:manage reviews and cancels every award.
 		key: 'quest',
 		title: m.tool_quest,
 		description: m.tool_quest_description,
@@ -144,7 +135,6 @@ function holds(tool: Tool, user: CurrentUserDto | null, config: ToolConfig): boo
 	return tool.anyOf.some((permission) => hasPermission(user, permission));
 }
 
-/** The tools this user may open, in dashboard order. */
 export function toolsFor(user: CurrentUserDto | null, config: ToolConfig) {
 	return TOOLS.filter((tool) => holds(tool, user, config)).map((tool) => ({
 		key: tool.key,
@@ -156,12 +146,10 @@ export function toolsFor(user: CurrentUserDto | null, config: ToolConfig) {
 	}));
 }
 
-/** The tool pages that open offline, for the toolbox's offline redirect. */
 export const OFFLINE_TOOL_HREFS: Path[] = TOOLS.filter((tool) => tool.worksOffline).map(
 	(tool) => tool.href
 );
 
-/** Page guard: throws the tool's own 403 unless this user may open it. */
 export function requireTool(key: ToolKey, user: CurrentUserDto | null, config: ToolConfig): void {
 	const tool = TOOLS.find((candidate) => candidate.key === key);
 	if (!tool || !holds(tool, user, config)) {

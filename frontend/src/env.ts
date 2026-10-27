@@ -8,6 +8,5 @@ export const variables = defineEnvVars({
 	PUBLIC_VAPID_KEY: { public: true, static: true },
 	PUBLIC_VK_GROUP_ID: { public: true, static: true },
 	PUBLIC_TIMEZONE: { public: true, static: true },
-	// Only read by the %sveltekit.env.PUBLIC_SITE_URL% placeholders in app.html.
 	PUBLIC_SITE_URL: { public: true, static: true }
 });

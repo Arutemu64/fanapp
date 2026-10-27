@@ -19,9 +19,6 @@ import {
 	subscriptions
 } from './data';
 
-// One test per README image: the gallery, then the hero. Run with
-// `just readme-gallery`, then review the image diff in docs/assets/ before committing.
-
 const OUT_DIR = new URL('../../../docs/assets/readme-gallery/', import.meta.url);
 const HEADER_OUT = new URL('../../../docs/assets/readme-header.webp', import.meta.url);
 const WEBP_QUALITY = 0.85;
@@ -29,10 +26,6 @@ const WEBP_QUALITY = 0.85;
 const HOUR_MS = 3_600_000;
 const now = GALLERY_NOW.getTime();
 
-// A logged-in visitor during the festival, with voting open and two unread
-// notifications for the bell badge. The quest is on, so every signed-in boot
-// also saves the score and history for offline (warmOfflineCache): those two
-// answer on every screen, not just the quest's.
 const visitorAtFestival: Handlers = {
 	...loggedInAs({ ticket: null }),
 	'GET /config': json({
@@ -57,9 +50,6 @@ const visitorAtFestival: Handlers = {
 	'GET /quest/history': json<ListQuestHistoryOutput>({ awards: [], next_cursor: null })
 };
 
-// Playwright only writes PNG or JPEG, so the browser that took the shot re-encodes
-// it: Chromium's canvas encodes WebP (alpha included), which keeps this free of an
-// image library.
 async function writeWebp(page: Page, png: Buffer, out: URL): Promise<void> {
 	const webpBase64 = await page.evaluate(
 		async ({ pngBase64, quality }) => {
@@ -111,8 +101,6 @@ test('voting', async ({ page }) => {
 });
 
 test('notifications', async ({ page, api }) => {
-	// Opening the page reads everything, so its own bell shows no badge; the
-	// items it just read stay flagged new for this visit.
 	api.use({
 		'GET /notifications/unread-count': json({ count: 0 }),
 		'POST /notifications/mark-read': json({})
@@ -131,8 +119,6 @@ test('map', async ({ page }) => {
 });
 
 test('profile', async ({ page, api }) => {
-	// A linked ticket and Telegram fill the hub's values: «Привязан», «Включены»;
-	// the quest row shows a balance mid-festival.
 	api.use({
 		...loggedInAs({
 			username: 'ПушистыйПингвин42',
@@ -156,30 +142,20 @@ test('quest', async ({ page, api }) => {
 	await saveWebp(page, 'quest');
 });
 
-// The README hero (docs/assets/readme-header.webp): Home on a laptop and an iPhone,
-// framed by device-frames.html. Each device gets its own mocked context, since the
-// test's `page` is the gallery's 390px phone. Every option is spelled out because
-// browser.newContext() inside a test inherits the project's `use` (isMobile, 1.5×).
 const LAPTOP: BrowserContextOptions = {
 	viewport: { width: 1280, height: 720 },
 	deviceScaleFactor: 1,
 	isMobile: false,
 	hasTouch: false
 };
-// iPhone 16 (393×852 pt). 2× rather than its native 3×: the frame shows the phone at
-// under 400px wide, so 3× would only add weight.
 const IPHONE: BrowserContextOptions = {
 	viewport: { width: 393, height: 852 },
 	deviceScaleFactor: 2,
 	isMobile: true,
 	hasTouch: true
 };
-// Chromium leaves env(safe-area-inset-*) at 0, which would put the navbar under the
-// status bar and the nav pill on the home indicator; the CDP override gives the app
-// the iPhone 16's real insets. https://useyourloaf.com/blog/iphone-16-screen-sizes/
 const IPHONE_INSETS = { top: 59, bottom: 34 };
 
-// The page API device-frames.html defines.
 interface DeviceFramesWindow {
 	frameScreens(screens: { desktop?: string; phone?: string; title?: string }): Promise<void>;
 }

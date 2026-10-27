@@ -7,13 +7,12 @@ import pytest
 
 from fanfan.common.paths import BACKEND_DIR, SHARED_OPENAPI_PATH
 from fanfan.main.generate_openapi import render_openapi_document
+from fanfan.presentation.web.openapi import iter_responses
 
 pytestmark = pytest.mark.unit
 
 PYPROJECT_PATH = BACKEND_DIR / "pyproject.toml"
 
-# A full diff of a spec this size buries the signal; the first hunks are enough
-# to name the endpoint or schema that moved.
 MAX_DIFF_LINES = 40
 
 DRIFT_MESSAGE = """\
@@ -109,11 +108,9 @@ def _referenced_schema_names(node: object) -> set[str]:
 def _success_response_schema_names(spec: dict[str, Any]) -> set[str]:
     schemas = spec["components"]["schemas"]
     pending: set[str] = set()
-    for path_item in spec["paths"].values():
-        for operation in path_item.values():
-            for status_code, response in operation["responses"].items():
-                if status_code.startswith("2"):
-                    pending |= _referenced_schema_names(response.get("content", {}))
+    for status_code, response in iter_responses(spec):
+        if status_code.startswith("2"):
+            pending |= _referenced_schema_names(response.get("content", {}))
 
     seen: set[str] = set()
     while pending:

@@ -14,7 +14,6 @@
 	import SectionSpinner from '../../../components/SectionSpinner.svelte';
 	import SyncSourceCard from '../components/SyncSourceCard.svelte';
 
-	// Kept live by sync_run_updated events (see the root layout).
 	const sourcesQuery = createQuery(() => getSyncSourcesOptions());
 	let sourcesView = $derived(
 		queryView(sourcesQuery, {
@@ -38,7 +37,6 @@
 
 	{#snippet ready({ data: sources }: ReadyView<SyncSourceStatusDto[]>)}
 		<div class="mx-auto flex w-full max-w-2xl flex-col gap-4">
-			<!-- TicketsCloud syncs from the tickets tool, next to the event roles it applies. -->
 			{#each sources.filter((source) => source.source !== 'tcloud') as source (source.source)}
 				<SyncSourceCard {source} />
 			{/each}

@@ -16,9 +16,7 @@
 
 	interface Props {
 		email: string;
-		// Move on to the verify step for the address the code went to.
 		onCodeSent: (sentTo: string) => void;
-		// Switch to the password form (a factor under this same email identity).
 		onPasswordLogin?: () => void;
 	}
 
@@ -30,11 +28,8 @@
 
 	const captcha = new Captcha();
 
-	// In flight from the user's point of view: the captcha is still solving, or
-	// the request is running.
 	let isRequesting = $derived(requestCodeMutation.isPending || captcha.solving);
 
-	// Solve while the user types the address, so the submit rarely waits on it.
 	onMount(() => {
 		captcha.prefetch();
 		return () => captcha.dispose();
@@ -72,15 +67,12 @@
 			return;
 		}
 
-		// Captured before the await: the input is read-only while the captcha
-		// solves, but the request must go to the address that was validated.
 		const trimmedEmail = normalizedEmail;
 		let captchaToken: string | null;
 		try {
 			captchaToken = await captcha.take();
 		} catch (error) {
 			formError = getApiErrorDetail(error) ?? m.captcha_failed();
-			// Solve the next one in the background for the retry.
 			captcha.prefetch();
 			return;
 		}
@@ -88,10 +80,6 @@
 		requestCodeMutation.mutate(
 			{ body: { email: trimmedEmail, captcha_token: captchaToken } },
 			{
-				// A `mutate` callback on purpose: TanStack drops it once this step
-				// unmounts. The user can leave (back gesture or «Назад») while the
-				// request runs, and a code that lands afterwards must not pull them back
-				// into the flow they just left.
 				onSuccess: () => onCodeSent(trimmedEmail),
 				onError: (error) => {
 					const emailFieldError = getApiFieldError(error, 'email');
@@ -100,8 +88,6 @@
 					} else {
 						formError = getApiErrorDetail(error) ?? m.login_code_send_failed();
 					}
-					// The token is spent, so solve a fresh one in the background for the
-					// retry.
 					captcha.prefetch();
 				}
 			}
@@ -117,22 +103,12 @@
 <form novalidate onsubmit={handleSubmit} class="flex flex-col gap-4">
 	<FormError message={formError} />
 
-	<!-- Errors appear on submit only, never while typing: a half-typed address is
-		not a mistake yet, and FieldError's role="alert" would announce it mid-word.
-		`novalidate` on the form hands that check to us — the browser's own bubble
-		would block the submit in the browser's language, not Russian.
-		https://design-system.service.gov.uk/patterns/validation/ -->
 	<Field.Field data-invalid={emailError ? true : undefined}>
 		<Field.FieldLabel for="code-email">{m.email_label()}</Field.FieldLabel>
 		<InputGroup.Root>
 			<InputGroup.Addon>
 				<Mail aria-hidden="true" />
 			</InputGroup.Addon>
-			<!-- Read-only, not disabled, while sending: disabling a focused input
-				drops focus to <body> and closes the phone keyboard. `username`, not
-				`email`: password managers offer saved sign-ins on that token, so an
-				account with a password autofills its address here too.
-				https://web.dev/articles/sign-in-form-best-practices -->
 			<InputGroup.Input
 				id="code-email"
 				name="email"
@@ -168,7 +144,6 @@
 		{/if}
 	</Button>
 
-	<!-- Password login is the minority path, so it's a quiet link, not a second button. -->
 	<div class="text-center">
 		<button
 			type="button"

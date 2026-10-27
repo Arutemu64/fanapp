@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 from urllib.parse import parse_qs
 from uuid import uuid7
 
@@ -33,8 +33,6 @@ VK_USER_ID = 555
 
 
 def _make_user() -> User:
-    # Only supplies an id for the notification and social identity — the VK
-    # notifier does not load the user (channel opt-out is the interactor's job).
     return User(
         id=UserId(uuid7()),
         username=Username("tester"),
@@ -83,9 +81,6 @@ def _identity_for(user: User) -> SocialIdentity:
     )
 
 
-# --- VkApiClient: the HTTP call and VK's answer shape --------------------------
-
-
 class _VkTransport:
     """MockTransport handler standing in for the VK messages.send endpoint.
 
@@ -105,13 +100,10 @@ class _VkTransport:
                 "error": {"error_code": self._error_code, "error_msg": "boom"}
             }
         else:
-            # For a single peer_id, messages.send answers with the bare integer
-            # message id; messages.delete answers with a truthy value we ignore.
             body = {"response": 1}
         return httpx2.Response(200, json=body)
 
     def form_body(self, index: int = 0) -> dict[str, str]:
-        # httpx sends the client's `data=` dict as a urlencoded form body.
         content = self.requests[index].content.decode()
         return {key: values[0] for key, values in parse_qs(content).items()}
 
@@ -127,15 +119,12 @@ async def test_client_posts_token_version_and_message() -> None:
 
     message_id = await client.send_message(peer_id=VK_USER_ID, message="привет")
 
-    # For a single peer_id VK returns the bare integer id of the sent message.
     assert message_id == 1
     sent = transport.form_body()
     assert sent["peer_id"] == str(VK_USER_ID)
     assert sent["message"] == "привет"
-    # The group token and pinned API version travel in the POST body.
     assert sent["access_token"] == "group-token"
     assert sent["v"] == "5.199"
-    # random_id 0 keeps VK from deduplicating distinct notifications.
     assert sent["random_id"] == "0"
 
 
@@ -147,8 +136,6 @@ async def test_client_deletes_message_only_on_group_side() -> None:
 
     sent = transport.form_body()
     assert sent["message_ids"] == "42"
-    # delete_for_all=0 removes the message from the group's side only, keeping it
-    # in the user's inbox; the token and version still travel in the body.
     assert sent["delete_for_all"] == "0"
     assert sent["access_token"] == "group-token"
     assert sent["v"] == "5.199"
@@ -162,17 +149,15 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
     assert exc.value.code == 901
 
 
-# --- VkNotifier: gateway guards and error-code translation --------------------
-
-
 class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
+    @override
     async def get_by_provider(
         self,
-        user_id: UserId,  # noqa: ARG002  # part of the port contract
-        provider: SocialProvider,  # noqa: ARG002  # part of the port contract
+        user_id: UserId,
+        provider: SocialProvider,
     ) -> SocialIdentity | None:
         return self._identity
 
@@ -199,12 +184,14 @@ class _StubVkClient(VkApiClient):
         self.calls: list[dict[str, Any]] = []
         self.deleted: list[int] = []
 
+    @override
     async def send_message(self, *, peer_id: int, message: str) -> int:
         self.calls.append({"peer_id": peer_id, "message": message})
         if self._error is not None:
             raise self._error
         return _SENT_MESSAGE_ID
 
+    @override
     async def delete_message(self, *, message_id: int) -> None:
         self.deleted.append(message_id)
         if self._delete_error is not None:
@@ -215,6 +202,7 @@ class _StubUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
+    @override
     async def commit(self) -> None:
         self.commits += 1
 
@@ -241,8 +229,6 @@ async def test_ends_lookup_transaction_before_sending() -> None:
 
     await notifier.send_notification(_make_notification(user.id))
 
-    # Send and delete can take up to a minute together; the pooled connection
-    # (and the identity's row lock) must not be held through them.
     assert uow.commits == 1
     assert len(client.calls) == 1
 
@@ -257,19 +243,14 @@ async def test_sends_plain_text_to_linked_user() -> None:
     assert len(client.calls) == 1
     sent = client.calls[0]
     assert sent["peer_id"] == VK_USER_ID
-    # The stored HTML body is flattened to plain text for VK.
     assert "<b>" not in sent["message"]
     assert "уведомления" in sent["message"]
-    # The deep-link is appended as a bare, auto-linked URL.
     assert "https://app.example/schedule" in sent["message"]
-    # The group's own copy is deleted so it doesn't clutter the community inbox.
     assert client.deleted == [_SENT_MESSAGE_ID]
 
 
 async def test_delete_failure_does_not_fail_delivery() -> None:
     user = _make_user()
-    # The message was delivered; a failing cleanup must not surface as an error,
-    # or the consumer would redeliver and re-send a duplicate to the user.
     client = _StubVkClient(delete_error=VkApiError(code=100500, message="boom"))
     notifier = _notifier(identity=_identity_for(user), client=client)
 
@@ -286,7 +267,6 @@ async def test_delete_skipped_when_send_fails() -> None:
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
-    # No message id to delete when the send itself never went through.
     assert client.deleted == []
 
 
@@ -302,7 +282,6 @@ async def test_unlinked_user_is_unreachable() -> None:
 
 async def test_messages_not_allowed_is_unreachable() -> None:
     user = _make_user()
-    # 901: the user never allowed the group to message them.
     client = _StubVkClient(VkApiError(code=901, message="not allowed"))
     notifier = _notifier(identity=_identity_for(user), client=client)
 
@@ -312,7 +291,6 @@ async def test_messages_not_allowed_is_unreachable() -> None:
 
 async def test_flood_control_asks_to_retry() -> None:
     user = _make_user()
-    # 6: too many requests — a transient condition worth retrying.
     client = _StubVkClient(VkApiError(code=6, message="too many requests"))
     notifier = _notifier(identity=_identity_for(user), client=client)
 
@@ -322,8 +300,6 @@ async def test_flood_control_asks_to_retry() -> None:
 
 async def test_invalid_token_is_channel_unavailable() -> None:
     user = _make_user()
-    # 5: authorization failed — a channel-wide misconfiguration. The consumer
-    # drops the message rather than redelivering forever against a bad token.
     client = _StubVkClient(VkApiError(code=5, message="auth failed"))
     notifier = _notifier(identity=_identity_for(user), client=client)
 

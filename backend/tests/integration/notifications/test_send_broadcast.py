@@ -48,8 +48,6 @@ async def test_send_broadcast_creates_mailing_and_enqueues_event(
     mailing = await mailing_gateway.get(result.mailing_id)
     assert mailing is not None
     assert mailing.by_user_id == broadcaster.id
-    # The sent text and targeted roles are preserved on the mailing itself, so it
-    # outlives the notifications it fans out.
     assert mailing.body == "Всем привет!"
     assert mailing.roles == roles
 
@@ -91,7 +89,6 @@ async def test_send_broadcast_replay_returns_the_mailing_without_resending(
     data = _broadcast("Всем привет!", [UserRole.VISITOR])
 
     first = await interactor(data)
-    # The response to the first call was lost; the client sends it again.
     second = await interactor(data)
 
     assert second.mailing_id == first.mailing_id == data.mailing_id
@@ -132,8 +129,6 @@ async def test_overlapping_send_loses_the_insert_race_with_already_exists(
     data = _broadcast("Всем привет!", [UserRole.VISITOR])
     first = await interactor(data)
 
-    # The overlapping request missed the interactor's lookup before the first
-    # committed, so its INSERT is what meets the taken ID.
     racer = Mailing.create(by_user_id=broadcaster.id, mailing_id=data.mailing_id)
     racer.queue_broadcast(body=data.body, roles=data.roles)
     with pytest.raises(MailingAlreadyExists):

@@ -20,11 +20,8 @@ logger = logging.getLogger(__name__)
 
 class LinkSocialAccountInput(BaseModel):
     provider: SocialProvider
-    # The OIDC `sub` — the identity key, not the native account id.
     subject: str
     provider_user_id: int
-    # Who started the flow, carried through the OAuth state. Guards against the
-    # browser signing in as somebody else between the redirect and the callback.
     initiator_user_id: UserId
 
 

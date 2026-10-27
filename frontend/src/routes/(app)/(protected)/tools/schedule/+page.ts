@@ -13,8 +13,6 @@ export const load: PageLoad = async ({ parent }) => {
 
 	requireTool('schedule', user, toolConfig);
 
-	// The timings form is seeded once from this, so it waits for a fresh copy
-	// rather than a cached one an edit would then overwrite.
 	const timings = await queryForLoad(queryClient, {
 		...getScheduleSettingsOptions(),
 		staleTime: 0

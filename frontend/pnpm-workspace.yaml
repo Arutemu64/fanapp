@@ -1,17 +1,6 @@
 allowBuilds:
-  # Matches the pre-pnpm-11 default: its build script (downloading the
-  # sentry-cli binary) was already an ignored/unapproved postinstall, so this
-  # keeps behavior unchanged rather than opting in to running it.
   '@sentry/cli': false
   esbuild: true
-  # @sveltejs/enhanced-img runs sharp at build to generate the map gallery's
-  # AVIF/WebP + resized variants; its postinstall links the native libvips.
   sharp: true
 
-# Supply-chain cooldown: refuse versions published less than 7 days ago (value is
-# in minutes; 7 days = 10080). Matches Renovate's `minimumReleaseAge` (renovate.jsonc)
-# and the backend's uv `exclude-newer` (backend/pyproject.toml) so all three
-# resolution layers share one window. pnpm enforces this on every resolution,
-# including the ones Renovate runs to update the lockfile, so nothing younger than
-# the cutoff can enter pnpm-lock.yaml. Keep the three in sync.
 minimumReleaseAge: 10080

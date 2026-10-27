@@ -18,8 +18,6 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
-# Entries start at 100 and step by 100 so an organizer can later drop rows between
-# them without renumbering (order is a float column). The demo seed reuses these.
 ORDER_INIT = 100.0
 ORDER_STEP = 100.0
 
@@ -27,20 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduleEventRow(BaseModel):
-    # None for rows the organizer left numberless (breaks and other filler).
     number: int | None
     title: str
-    # Seconds, as read from the spreadsheet — see REQUIRED_COLUMNS in
-    # adapters/parsers/schedule.py. Sub-minute acts are expected, so this is
-    # never rounded to whole minutes anywhere along the way.
     duration: int
-    # None for rows with no competition nomination — breaks, the opening and
-    # the closing. See _read_optional_text in the parser.
     nomination_title: str | None
 
 
 class ScheduleBlockRow(BaseModel):
-    # Starts a block: every row after it, up to the next block row, is in it.
     title: str
 
 
@@ -135,8 +126,6 @@ class ImportSchedule:
                         },
                     )
                 else:
-                    # Matching pairs an event row only with an event and a
-                    # block row only with a block start, whose title matched.
                     if isinstance(existing_entry, ScheduleBlockStart):
                         existing_entry.order = order
                     elif isinstance(row, ScheduleEventRow):
@@ -168,11 +157,4 @@ class ImportSchedule:
 
         await self.schedule_edit.edit(Permission.SCHEDULE_SETUP, mutate)
 
-        # Import rewrites the whole schedule but deliberately records no
-        # ScheduleChange, so nothing reaches the outbox → NATS → SSE path the
-        # schedule_mgmt interactors rely on. Broadcast here instead, or every
-        # other connected client keeps a stale schedule until it reconnects.
-        # Published after commit: SSE carries no committed state, and a
-        # live update for a rolled-back import would send clients to refetch
-        # a schedule that never changed.
         await self.publish_schedule_updated()

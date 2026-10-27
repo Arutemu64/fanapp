@@ -19,8 +19,6 @@ const schedule: GetScheduleOutput['schedule'] = [
 ];
 
 test.describe('schedule', { tag: '@critical' }, () => {
-	// A single-select toggle group clears its value when the pressed item is tapped
-	// again; the page must keep one scope selected and the list filtered to match.
 	test('keeps the scope selected when the pressed option is tapped again', async ({
 		page,
 		api
@@ -69,7 +67,6 @@ test.describe('schedule', { tag: '@critical' }, () => {
 		await page.goto('/schedule');
 		await page.getByRole('button', { name: 'Настроить уведомления' }).click();
 
-		// The switch is named by its visible title alone (WCAG 2.5.3).
 		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
 		await expect(allAnnouncements).toBeChecked();
 

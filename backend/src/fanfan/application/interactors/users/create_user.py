@@ -44,8 +44,6 @@ class CreateUser:
         self.uow = uow
 
     async def __call__(self, data: CreateUserInput) -> User:
-        # Usernames are public, so reject profanity — same rule the self-service
-        # username change enforces (UpdateCurrentUser).
         if self.profanity_filter.contains_profanity(data.username):
             raise UsernameProfanity
 
@@ -56,9 +54,6 @@ class CreateUser:
             hashed_password=hashed_password,
             role=data.role,
         )
-        # A taken username surfaces as UserAlreadyExists from the gateway's unique
-        # constraint translation — no pre-check, so a concurrent insert can't slip
-        # between a check and the write.
         await self.user_gateway.add(user)
         await self.uow.commit()
         logger.info(

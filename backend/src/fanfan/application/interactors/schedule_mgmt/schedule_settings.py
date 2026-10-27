@@ -14,21 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduleSettingsDTO(BaseModel):
-    # Seconds an operator waits between two announced schedule edits.
     announcement_timeout: int = Field(ge=1)
     changeover_seconds: int = Field(ge=0, le=600)
 
 
 class UpdateScheduleSettingsInput(BaseModel):
-    # Partial, like UpdateAppSettingsInput: an omitted field is left as is, so
-    # an older client that doesn't know a newer field can't reset it.
     announcement_timeout: int | None = Field(default=None, ge=1)
     changeover_seconds: int | None = Field(default=None, ge=0, le=600)
 
 
-# Guarded by schedule:setup, not settings:manage, the way the voting time range
-# lives in AppSettings but is managed under voting:manage: the schedule tool
-# holds everything that shapes the programme, so one grant opens all of it.
 class GetScheduleSettings:
     def __init__(
         self,
@@ -88,8 +82,5 @@ class UpdateScheduleSettings:
             extra={"actor_id": str(current_user.id)},
         )
 
-        # The changeover is in GET /config (the wait estimates use it); the
-        # cooldown is not, so only a changeover edit sends clients to refetch.
-        # Published after commit, best-effort, like UpdateSettings.
         if changeover_changed:
             await self.realtime.publish(SSEMessage(SSEEventName.CONFIG_UPDATED))

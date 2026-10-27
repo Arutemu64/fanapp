@@ -25,56 +25,37 @@
 
 	interface Props {
 		user: CurrentUserDto;
-		/** Providers this deployment offers for linking (see /auth/oauth/providers). */
 		enabledProviders: SocialProvider[];
 	}
 
 	let { user, enabledProviders }: Props = $props();
 	const queryClient = useQueryClient();
 
-	// Email/password/unlink are all mutations — online only. The current state
-	// (which methods are set) still renders from the cached user.
 	const offlineGate = offlineWriteGate();
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	const toastService = getToastService();
-	// Each row's second line is its current state, not a description of the setting
-	// (Android settings guidance: "Secondary text below the setting label reflects
-	// the current selection"), so a phone shows the whole group without scrolling.
 	let emailStatus = $derived(user.email ?? m.signin_email_missing());
 	let passwordStatus = $derived(user.has_password ? m.signin_password_set() : m.status_not_set());
-	// Colour goes to the action the user is missing, not to a state that is fine
-	// (DESIGN.md "Color-Earns-Its-Place"): a missing email is the one to fix.
 	let emailButtonVariant = $derived<'outline' | 'default'>(user.email ? 'outline' : 'default');
 
 	let linkedProviders = $derived(user.social_identities.map((si) => si.provider));
 
-	// Rows are the enabled providers (in the backend's display order) plus any the
-	// user already linked that are no longer enabled — those must stay visible so a
-	// linked account can always be unlinked, even after its provider is turned off.
-	// A non-enabled row is therefore always connected, so it shows unlink and no
-	// connect; SocialConnectionRow needs no notion of "enabled" for that to hold.
 	let connectionRows = $derived([
 		...enabledProviders,
 		...linkedProviders.filter((provider) => !enabledProviders.includes(provider))
 	]);
 
-	// SocialConnectionRow owns the confirm-and-loading UI and calls this to perform
-	// the unlink. Unlink is never gated by enablement — that is what keeps a
-	// disabled-but-linked provider removable.
 	const unlinkMutation = createMutation(() => ({
 		...unlinkSocialAccountMutation(),
 		onSuccess: refreshUser
 	}));
 
-	// Connections ship with the current user, so its query is the one to refresh.
 	function refreshUser() {
 		return queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
 	}
 
-	// `mutateAsync`, not `mutate`: SocialConnectionRow awaits this to drive its
-	// confirm strip and spinner.
 	async function unlinkProvider(provider: SocialProvider) {
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
 
@@ -89,8 +70,6 @@
 </script>
 
 <SettingsSection title={m.signin_title()} description={m.signin_description()}>
-	<!-- One bordered group with hairline dividers between rows, so related account
-	     settings read as a set rather than as separate boxes. -->
 	<MenuGroup class="divide-y divide-border">
 		<Item.Root class="rounded-none">
 			<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">

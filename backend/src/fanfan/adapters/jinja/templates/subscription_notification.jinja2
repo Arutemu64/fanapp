@@ -1,9 +1,3 @@
-{# One notice per moment a subscriber acts on: "soon" (the reminder), "started"
-   (on stage), "changed" (the act itself moved, left or came back). The minutes
-   are an estimate from planned durations, so they are always "примерно",
-   rounded as on the schedule screen, and left out when the durations add up
-   to nothing. An event without a public
-   number (a break) is announced by title alone. #}
 {% macro event_label(number, title) -%}
 {% if number is not none %}№{{ '%03d' % number }} {% endif %}«{{ title }}»
 {%- endmacro -%}
@@ -11,7 +5,6 @@
 осталось <b>{{ positions_ahead }} {{ positions_ahead|plural('выступление', 'выступления', 'выступлений') }}</b>
 {%- if minutes_ahead %}, примерно {{ wait_time(minutes_ahead) }}{% endif %}
 {%- endmacro -%}
-{# Hours and minutes, as the schedule screen writes a wait (formatDuration). #}
 {% macro wait_time(total_minutes) -%}
 {% set hours = total_minutes // 60 %}
 {% set minutes = total_minutes % 60 %}

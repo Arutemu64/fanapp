@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import Any
+from typing import Any, override
 
 from sqlalchemy import DateTime, Enum, MetaData, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, mapped_column
@@ -63,6 +63,7 @@ class BaseORM(DeclarativeBase):
         server_default=func.now(),
     )
 
+    @override
     def __repr__(self) -> str:
         pk = self.__mapper__.primary_key_from_instance(self)
         pk_repr = ", ".join(map(repr, pk))

@@ -5,22 +5,10 @@ import httpx2
 from fanfan.adapters.rate_limiter import RateLimiter
 from fanfan.adapters.vk.config import VkConfig
 
-# Pin the API version so VK never falls back to an account-default that could
-# change response shapes under us. 5.199 is the latest documented version in the
-# official schema (VKCOM/vk-api-schema). https://dev.vk.ru/en/reference/versions
 _VK_API_VERSION = "5.199"
 
-# Every VK method hangs off this host. The vk.ru host is VK's post-rebrand
-# domain; api.vk.com still resolves to the same API. https://dev.vk.ru/
 _METHOD_BASE_URL = "https://api.vk.ru/method/"
 
-# VK allows a community token 20 requests per second and answers error 6 past
-# that (https://dev.vk.ru/ru/api/api-requests). Kept a little under, since the
-# limit is counted on VK's clock, not ours.
-# TODO: send identical texts (a change announcement) with `peer_ids`, up to 100
-# recipients a call — deferred because the consumer acks one notification per
-# message, and a multi-recipient call's per-recipient errors would each need
-# their own ack decision (ADR-0041).
 _REQUESTS_PER_SECOND = 18
 
 
@@ -39,24 +27,12 @@ class VkApiError(Exception):
 
 
 class VkApiClient:
-    # Thin wrapper over a shared httpx2.AsyncClient, mirroring BaseApiClient: the
-    # client (with its timeout) is configured once in the DI provider and reused
-    # across every call, so a notification burst reuses the single TCP+TLS
-    # connection to api.vk.ru instead of re-handshaking per message
-    # (https://www.python-httpx.org/advanced/clients/). Provided at APP scope so
-    # the pool outlives the per-message request scope; the group token is a
-    # private detail here rather than a container-wide dependency.
-    # The rate limiter lives here, not in the notifier, because the quota is
-    # the group token's: every method call spends it, the cleanup delete too.
     def __init__(self, client: httpx2.AsyncClient, config: VkConfig) -> None:
         self._client = client
         self._config = config
         self._rate_limiter = RateLimiter(per_second=_REQUESTS_PER_SECOND)
 
-    async def _call_method(self, method: str, params: dict[str, Any]) -> Any:  # noqa: ANN401  # raw VK JSON; the public methods narrow it
-        # Token and version travel in the POST body, not the query string, so the
-        # group token never lands in access logs or the URL. VK still returns
-        # HTTP 200 on a logical failure, carrying it in the body's `error` object.
+    async def _call_method(self, method: str, params: dict[str, Any]) -> Any:  # noqa: ANN401
         await self._rate_limiter.wait()
         response = await self._client.post(
             f"{_METHOD_BASE_URL}{method}",
@@ -77,33 +53,18 @@ class VkApiClient:
         return payload.get("response")
 
     async def send_message(self, *, peer_id: int, message: str) -> int:
-        # Returns the id of the sent message so the caller can delete the group's
-        # own copy afterwards. For a single peer_id VK answers with the bare
-        # integer message id. https://dev.vk.ru/ru/method/messages.send
-        # int() rather than a bare return: _call_method hands back the decoded
-        # JSON as Any, and the declared `int` is only honest if something checks.
         return int(
             await self._call_method(
                 "messages.send",
                 {
                     "peer_id": peer_id,
                     "message": message,
-                    # random_id 0 disables VK's uniqueness check, so every send
-                    # goes through even when two notifications carry identical
-                    # text; a fixed non-zero value would instead let VK drop the
-                    # second as a duplicate. The outbox is the deduplication
-                    # authority upstream.
                     "random_id": 0,
                 },
             )
         )
 
     async def delete_message(self, *, message_id: int) -> None:
-        # delete_for_all=0 removes the message only from the group's side of the
-        # dialog: the notification stays in the user's inbox, while the group's
-        # conversation list that organizers see is not cluttered by every send.
-        # Unlike delete_for_all=1, this is not bound to the 24h-since-send window.
-        # https://dev.vk.ru/ru/method/messages.delete
         await self._call_method(
             "messages.delete",
             {"message_ids": message_id, "delete_for_all": 0},

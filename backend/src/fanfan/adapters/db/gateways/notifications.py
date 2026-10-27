@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import Any, cast
+from typing import Any, cast, override
 
 from sqlalchemy import CursorResult, and_, delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -51,6 +51,7 @@ class SqlNotificationGateway(NotificationGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add_many(self, notifications: Sequence[Notification]) -> int:
         if not notifications:
             return 0
@@ -68,10 +69,6 @@ class SqlNotificationGateway(NotificationGateway):
             }
             for notification in notifications
         ]
-        # A rerun fan-out carries the same (deterministic) ids, so the
-        # conflicting rows are a clean no-op rather than an IntegrityError that
-        # would nack-and-redeliver forever. RETURNING lists only the rows this
-        # statement inserted, which is what the caller counts.
         stmt = (
             pg_insert(NotificationORM)
             .values(rows)
@@ -81,6 +78,7 @@ class SqlNotificationGateway(NotificationGateway):
         inserted = await self.session.scalars(stmt)
         return len(inserted.all())
 
+    @override
     async def get(
         self, notification_id: NotificationId, *, lock: bool = True
     ) -> Notification | None:
@@ -90,10 +88,10 @@ class SqlNotificationGateway(NotificationGateway):
         notification_orm = await self.session.scalar(stmt)
         return _to_model(notification_orm) if notification_orm else None
 
+    @override
     async def is_superseded(self, notification: Notification) -> bool:
         if notification.created_at is None:
             return False
-        # Served by ix_notifications_user_id_created_at.
         stmt = select(
             exists().where(
                 NotificationORM.user_id == notification.user_id,
@@ -104,6 +102,7 @@ class SqlNotificationGateway(NotificationGateway):
         )
         return bool(await self.session.scalar(stmt))
 
+    @override
     async def mark_all_read_for_user(
         self, user_id: UserId, timestamp: datetime
     ) -> None:
@@ -119,6 +118,7 @@ class SqlNotificationGateway(NotificationGateway):
         )
         await self.session.execute(stmt)
 
+    @override
     async def mark_read_for_user(
         self,
         user_id: UserId,
@@ -138,6 +138,7 @@ class SqlNotificationGateway(NotificationGateway):
         )
         await self.session.execute(stmt)
 
+    @override
     async def count_unread_for_user(self, user_id: UserId) -> int:
         stmt = select(func.count()).where(
             and_(
@@ -147,18 +148,20 @@ class SqlNotificationGateway(NotificationGateway):
         )
         return await self.session.scalar(stmt) or 0
 
+    @override
     async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
         stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
         await self.session.execute(stmt)
 
+    @override
     async def delete_created_before(self, days: int) -> int:
         cutoff = func.now() - timedelta(days=days)
         result = await self.session.execute(
             delete(NotificationORM).where(NotificationORM.created_at < cutoff)
         )
-        # execute() is typed as Result, but a DELETE yields a CursorResult.
         return cast("CursorResult[Any]", result).rowcount
 
+    @override
     async def read_realtime_notifications(
         self, notification_ids: Sequence[NotificationId]
     ) -> list[NotificationDTO]:
@@ -166,18 +169,13 @@ class SqlNotificationGateway(NotificationGateway):
         notifications_orm = await self.session.scalars(stmt)
         return [_parse_dto(orm) for orm in notifications_orm]
 
+    @override
     async def read_list_user_notifications(
         self, user_id: UserId, pagination: CursorPagination
     ) -> list[NotificationDTO]:
         stmt = (
             select(NotificationORM)
             .where(NotificationORM.user_id == user_id)
-            # id is a unique PK, so appending it gives the total order the page
-            # cursor needs — a broadcast fan-out inserts many rows in one
-            # transaction sharing created_at, which without a tiebreaker would
-            # leave the cursor ambiguous and let a notification slip through unseen.
-            # (Fan-out ids are deterministic uuid5, not time-ordered, so id only
-            # breaks the tie; created_at carries the recency the feed sorts on.)
             .order_by(NotificationORM.created_at.desc(), NotificationORM.id.desc())
             .limit(pagination.fetch_limit)
         )

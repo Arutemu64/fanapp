@@ -24,20 +24,12 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	// The mutations live here, not in the form: the form unmounts when the dialog
-	// closes and would take `isPending` with it, so a close and reopen mid-request
-	// could send a second code email. `mutateAsync` so the form can await them for
-	// its errors (ADR-0022).
-	// Sends the code — first from the email step, then as «Отправить код ещё раз».
 	const changeEmailMutation = createMutation(() => changeCurrentUserEmailMutation());
-	// Not awaited: the refreshed user flips `currentEmail`, and with it this
-	// dialog's title, so the dialog closes first.
 	const confirmMutation = createMutation(() => ({
 		...confirmEmailCodeMutation(),
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() })
 	}));
 
-	// Screen-reader description for the dialog (visually the form speaks for itself).
 	let dialogDescription = $derived(
 		currentEmail ? m.email_modal_description_change() : m.email_modal_description_add()
 	);

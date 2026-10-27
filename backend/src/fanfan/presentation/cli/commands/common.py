@@ -1,7 +1,11 @@
 import asyncio
 from collections.abc import Callable, Coroutine
 from functools import wraps
-from typing import Any
+from typing import Any, cast
+
+import click
+from dishka import AsyncContainer
+from dishka.integrations.click import CONTAINER_NAME
 
 from fanfan.adapters.db.event_loop import loop_factory
 
@@ -22,3 +26,7 @@ def async_command[**P, R](
         return asyncio.run(f(*args, **kwargs), loop_factory=loop_factory())
 
     return wrapper
+
+
+def cli_container(context: click.Context) -> AsyncContainer:
+    return cast("AsyncContainer", context.meta[CONTAINER_NAME])

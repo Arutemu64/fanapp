@@ -4,6 +4,7 @@ import dataclasses
 import logging
 from collections.abc import AsyncIterator
 from types import TracebackType
+from typing import override
 
 from faststream import BaseMiddleware
 from faststream.exceptions import HandlerException
@@ -16,25 +17,11 @@ from nats.js.client import JetStreamContext
 
 logger = logging.getLogger(__name__)
 
-# Deliveries (the first one included) before a failing message is given up on.
-# JetStream's default is unlimited and a plain nak redelivers immediately, so a
-# message that always fails would otherwise loop hot forever
-# (https://docs.nats.io/learn/jetstream/acknowledgment). The middleware below
-# terms at this count; the consumer carries it too, so the server also stops
-# when a handler hangs past AckWait instead of raising. Generous because the
-# send consumers spend deliveries on Telegram/VK flood-control retry-afters.
 MAX_DELIVER = 20
 
-# Delay before each redelivery, by deliveries so far; the last one repeats.
-# Sent with the nak rather than set as the consumer's BackOff: NATS applies
-# BackOff only to AckWait expiry, never to a nak, and setting it replaces
-# AckWait with its first step — which would cut the send consumers' 90 s
-# AckWait to one second.
 _REDELIVERY_DELAYS_SECONDS = (1, 5, 30, 120, 300)
 
 
-# How often a long handler tells JetStream it is still working. Well inside the
-# default 30 s AckWait, so a missed beat or two does not trigger redelivery.
 _IN_PROGRESS_INTERVAL_SECONDS = 10.0
 
 
@@ -62,7 +49,6 @@ async def in_progress_heartbeat(
             try:
                 await msg.in_progress()
             except NatsError:
-                # A missed beat only risks an early redelivery; keep beating.
                 logger.warning("Could not extend a message's AckWait", exc_info=True)
 
     task = asyncio.create_task(beat())
@@ -99,6 +85,7 @@ class RedeliveryMiddleware(BaseMiddleware):
     Ack/Nack/RejectMessage, is left to that decision.
     """
 
+    @override
     async def after_processed(
         self,
         exc_type: type[BaseException] | None = None,
@@ -114,7 +101,6 @@ class RedeliveryMiddleware(BaseMiddleware):
 
     async def _settle_failed(self) -> None:
         msg = self.msg
-        # Only a JetStream delivery can be redelivered or carries a count.
         if not isinstance(msg, Msg) or not msg.reply or msg.is_acked:
             return
         if not msg.reply.startswith("$JS.ACK."):
@@ -130,8 +116,6 @@ class RedeliveryMiddleware(BaseMiddleware):
                 return
             await msg.nak(delay=_redelivery_delay(deliveries))
         except NatsError:
-            # The ack could not reach NATS; with the message unsettled the
-            # server redelivers it after AckWait anyway, so this only costs time.
             logger.warning("Could not settle a failed message", exc_info=True)
 
 
@@ -151,9 +135,6 @@ async def sync_consumer_configs(broker: NatsBroker) -> None:
             continue
         if not isinstance(declared, ConsumerConfig) or declared.durable_name is None:
             continue
-        # The filter must be spelled out: nats-py fills it in only on create,
-        # and an update without one would widen the durable to every subject
-        # in the stream.
         config = dataclasses.replace(
             declared,
             name=declared.durable_name,
@@ -170,14 +151,8 @@ async def _apply_consumer_config(
     except NatsError:
         current = None
     try:
-        # Always applied, even when the diff below finds nothing: the diff only
-        # compares fields the declaration sets, so gating on it would miss an
-        # update such as a removed ack_wait falling back to the server default.
         await js.add_consumer(stream_name, config=config)
     except NatsError:
-        # A non-editable field changed, or NATS did not answer; the durable
-        # keeps working with its old config, so report it rather than block
-        # startup.
         logger.warning(
             "Could not update consumer config",
             extra={"durable": durable},

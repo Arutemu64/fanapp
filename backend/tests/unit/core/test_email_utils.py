@@ -29,5 +29,4 @@ def test_generate_numeric_code_is_zero_padded_digits() -> None:
 def test_generate_numeric_code_varies() -> None:
     codes = {generate_numeric_code() for _ in range(50)}
 
-    # Practically impossible to draw 50 identical 6-digit codes.
     assert len(codes) > 1

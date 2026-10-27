@@ -22,7 +22,6 @@ _TZ = "Europe/Moscow"
 
 class _FakeJetStream:
     def __init__(self, stored: dict[str, dict[str, str]] | None = None) -> None:
-        # Schedule subject -> headers of the message the server holds there.
         self.stored = stored or {}
         self.published: dict[str, dict[str, str]] = {}
         self.purged: list[str] = []
@@ -47,7 +46,7 @@ class _FakeJetStream:
         self.purged.append(subject)
 
 
-def _broker(js: _FakeJetStream) -> Any:  # noqa: ANN401  # stands in for NatsBroker
+def _broker(js: _FakeJetStream) -> Any:  # noqa: ANN401
     connection = SimpleNamespace(jetstream=lambda: js)
     return cast("Any", SimpleNamespace(connection=connection))
 
@@ -78,7 +77,6 @@ def test_nats_cron_passes_through(cron: str) -> None:
 
 
 def test_interval_has_no_time_zone() -> None:
-    # The server rejects a time zone on anything but a cron schedule.
     headers = schedule_headers(SYNC_TCLOUD, "@every 1h", _TZ)
 
     assert headers["Nats-Schedule"] == "@every 1h"
@@ -93,7 +91,6 @@ async def test_enabled_job_is_published_and_disabled_ones_purged() -> None:
     await sync_schedules(_broker(js), config, _TZ)
 
     assert list(js.published) == [SYNC_TCLOUD.schedule_subject]
-    # The tick too, so one left from when the job was enabled doesn't linger.
     assert OUTBOX_RETENTION.schedule_subject in js.purged
     assert OUTBOX_RETENTION.tick_subject in js.purged
     assert SYNC_TCLOUD.schedule_subject not in js.purged
@@ -101,7 +98,6 @@ async def test_enabled_job_is_published_and_disabled_ones_purged() -> None:
 
 @pytest.mark.asyncio
 async def test_unchanged_schedule_is_not_republished() -> None:
-    # Republishing would restart an @every interval on every deploy.
     stored = schedule_headers(SYNC_TCLOUD, "@every 1h", _TZ)
     stored_with_server_headers = {**stored, "Nats-Rollup": "sub"}
     js = _FakeJetStream({SYNC_TCLOUD.schedule_subject: stored_with_server_headers})
@@ -141,7 +137,6 @@ async def test_rejected_schedule_does_not_stop_the_rest() -> None:
 
 @pytest.mark.asyncio
 async def test_rejected_replacement_unschedules_the_old_cron() -> None:
-    # Left in place, the job would keep firing on a cron the config dropped.
     stored = schedule_headers(SYNC_TCLOUD, "0 * * * *", _TZ)
     js = _FakeJetStream({SYNC_TCLOUD.schedule_subject: stored})
     js.rejected.add(SYNC_TCLOUD.schedule_subject)

@@ -16,14 +16,6 @@
 	let { nomination }: Props = $props();
 </script>
 
-<!--
-	Stretched-link card, not a card wrapped in <a>: wrapping the whole card in an
-	anchor makes a screen reader announce every scrap of text inside as one giant
-	link name and buries the heading. Instead the anchor sits on the title only
-	(so its accessible name is just the nomination) and its ::after overlay covers
-	the card to keep the whole surface tappable. `relative` here anchors that
-	overlay; `has-[a:focus-visible]` lifts the keyboard ring back onto the card.
--->
 <Card.Root
 	as="article"
 	class={[
@@ -31,7 +23,6 @@
 		nomination.user_vote ? 'ring-2 ring-success' : ''
 	]}
 >
-	<!-- Header row mirrors ParticipantCard: reserved min-h keeps the title fixed whether voted or not. -->
 	<div class="mb-2 flex min-h-6 items-center justify-between gap-2">
 		<span class="text-xs font-semibold tracking-wide text-muted-foreground">
 			{m.participants_count({ count: nomination.participants_count })}
@@ -56,7 +47,6 @@
 		</a>
 	</h3>
 
-	<!-- Footer row: navigation cue. Arrow signals this navigates, not votes directly. -->
 	<div
 		class="mt-3 flex items-center justify-end gap-1.5 border-t border-border pt-3 text-sm font-medium text-primary"
 	>

@@ -40,7 +40,6 @@ Create Date: 2026-07-26 12:37:15.576940
 
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "c6ebdce7e2cc"
 down_revision = "1a3c5e7d9b02"
 branch_labels = None

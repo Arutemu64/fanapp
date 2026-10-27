@@ -143,8 +143,6 @@ async def test_cancel_vote_owned_by_another_user_raises_not_found(
         hashed_password=None,
         role=UserRole.VISITOR,
     )
-    # The vote belongs to another user; the acting user must not be able to
-    # cancel it, and its existence must not leak (VoteNotFound, not AccessDenied).
     other_vote = Vote(
         id=generate_vote_id(),
         user_id=other_user.id,
@@ -200,6 +198,5 @@ async def test_cancel_vote_when_voting_closed_raises_access_denied(
     with pytest.raises(VotingDisabled):
         await interactor(CancelVoteInput(vote_id=vote.id))
 
-    # A closed ballot is final: the vote still counts.
     assert await vote_gateway.get(vote.id) is not None
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []

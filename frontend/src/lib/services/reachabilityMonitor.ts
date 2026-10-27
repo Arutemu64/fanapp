@@ -2,27 +2,9 @@ import { onlineManager } from '@tanstack/svelte-query';
 
 import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
 
-// While unreachable, poll for recovery so the offline banner clears on its own.
-// We don't poll while reachable — API responses, the SSE stream and the browser
-// events below already keep the state fresh, so there's no battery/data to spend.
-// The delay backs off the longer we stay offline to save battery on a long
-// outage, while still reacting quickly once a short one ends.
 const RECOVERY_POLL_MIN_MS = 3000;
 const RECOVERY_POLL_MAX_MS = 30000;
 
-/**
- * Keep reachability (`reachability.ts`) current for the app's lifetime and act on
- * recovery. Call once from the root layout; returns the teardown, which matters
- * for dev HMR — without it each cycle would stack another poll and listener set.
- *
- * It is also what TanStack Query's `onlineManager` listens to, in place of its
- * default `navigator.onLine` events: while the backend is unreachable queries
- * pause instead of burning their retries, and on the offline→online edge every
- * query on screen refetches (`refetchOnReconnect`) — the catch-up for screens
- * showing cached copies. `onRecovered` runs on that edge too, for work that has
- * to wait for the backend (the root layout passes the offline logout's revoke).
- * https://tanstack.com/query/latest/docs/reference/onlineManager
- */
 export function startReachabilityMonitor({ onRecovered }: { onRecovered: () => void }): () => void {
 	let pollTimerId: ReturnType<typeof setTimeout> | null = null;
 	let pollDelayMs = RECOVERY_POLL_MIN_MS;
@@ -31,8 +13,6 @@ export function startReachabilityMonitor({ onRecovered }: { onRecovered: () => v
 		pollTimerId = setTimeout(() => {
 			void (async () => {
 				await probeReachability();
-				// Recovery stops the loop through the edge handler below; this guard
-				// also covers a teardown that ran while the probe was in flight.
 				if (pollTimerId === null || isReachable()) return;
 				pollDelayMs = Math.min(pollDelayMs * 2, RECOVERY_POLL_MAX_MS);
 				schedulePoll();
@@ -52,8 +32,6 @@ export function startReachabilityMonitor({ onRecovered }: { onRecovered: () => v
 		pollTimerId = null;
 	}
 
-	// Listeners only fire on a change, so a reachable verdict here is always the
-	// offline→online edge.
 	const unsubscribe = onReachableChange(() => {
 		if (!isReachable()) {
 			startPolling();
@@ -64,16 +42,11 @@ export function startReachabilityMonitor({ onRecovered }: { onRecovered: () => v
 		onRecovered();
 	});
 
-	// Replacing the listener cleans up the previous one, so an HMR restart doesn't
-	// stack them.
 	onlineManager.setEventListener((setOnline) => {
 		setOnline(isReachable());
 		return onReachableChange(() => setOnline(isReachable()));
 	});
 
-	// The `offline` event is a trustworthy negative; `online` only means an
-	// interface appeared, so verify it with a probe. Foregrounding is when a
-	// mobile connection most often changed while we weren't looking.
 	const handleOffline = () => markReachable(false);
 	const handleOnline = () => void probeReachability();
 	const handleVisibilityChange = () => {
@@ -83,8 +56,6 @@ export function startReachabilityMonitor({ onRecovered }: { onRecovered: () => v
 	window.addEventListener('online', handleOnline);
 	document.addEventListener('visibilitychange', handleVisibilityChange);
 
-	// A root `load` may already have found us offline before this started, which
-	// is no longer a change the listener above would see.
 	if (!isReachable()) startPolling();
 	void probeReachability();
 

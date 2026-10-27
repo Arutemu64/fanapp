@@ -1,4 +1,3 @@
-# Python cache and virtualenvs
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -16,7 +15,6 @@ htmlcov/
 dist/
 build/
 
-# Local environment files
 **/.env
 **/.env.*
 !.env.example
@@ -24,18 +22,11 @@ build/
 !.env.test
 !**/.env.test
 
-# Local secrets (VAPID PEM keys etc.) live in secrets/. That dir is kept in
-# the repo (empty) via its own secrets/.gitignore, which ignores everything
-# inside except itself — so no secret is ever accidentally committed.
-
-# Database dumps written by the pgbackup service's bind mount
 /backups/
 
-# Local tools and scratch files
 /etc/
 *.log
 
-# Editor settings
 .idea/
 *.iml
 *.iws
@@ -43,19 +34,11 @@ build/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
-# VS Code reads extensions.json and mcp.json only from the workspace-folder
-# root, so these two must live here rather than under frontend/ to have any
-# effect when the monorepo root is opened. The pattern above is anchored to
-# this file, which is why a nested frontend/.vscode/ escaped it and the files
-# ended up there — shared editor config is not per-package.
 !.vscode/extensions.json
 !.vscode/mcp.json
 
-# OS files
 .DS_Store
 Thumbs.db
-# CocoIndex Code (ccc)
 /.cocoindex_code/
 
-# Isolated worktrees created by Claude Code subagents
 /.claude/worktrees/

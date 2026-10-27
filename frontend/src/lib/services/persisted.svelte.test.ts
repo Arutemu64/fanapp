@@ -46,7 +46,6 @@ describe('Persisted', () => {
 		vi.stubGlobal('localStorage', throwingStorage());
 		const pref = new Persisted<string>('theme-mode', 'system');
 		expect(pref.current).toBe('system');
-		// A write can't persist, but must not throw, and the value still updates.
 		expect(() => (pref.current = 'dark')).not.toThrow();
 		expect(pref.current).toBe('dark');
 	});

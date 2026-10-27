@@ -57,7 +57,6 @@ async def test_sync_tickets_imports_new_tickets(
     source.tickets = [
         _external("ext-1", "barcode-1", EVENT_VISITOR),
         _external("ext-2", "barcode-2", EVENT_PARTICIPANT),
-        # An event the organizers never mapped sells visitor tickets.
         _external("ext-3", "barcode-3", EVENT_UNMAPPED),
     ]
     expected_roles = {
@@ -76,7 +75,6 @@ async def test_sync_tickets_imports_new_tickets(
         assert saved is not None
         assert saved.barcode == external.barcode
         assert saved.role == expected_roles[external.barcode]
-        # Synced tickets are unissued and unlinked until a user claims them.
         assert saved.used_by_user_id is None
         assert saved.issued_by_user_id is None
 
@@ -89,7 +87,6 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
-    # A ticket already imported in a previous sync, with its own barcode/role.
     existing = Ticket(
         id=generate_ticket_id(),
         barcode="original-barcode",
@@ -102,9 +99,6 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
     await ticket_gateway.add(existing)
     await uow.commit()
 
-    # The source re-yields ext-1 (now with different data) plus a brand new
-    # ticket. Import keys off the sale, so ext-1 must be left untouched
-    # and only ext-2 counts as new.
     source.tickets = [
         _external("ext-1", "changed-barcode"),
         _external("ext-2", "barcode-2"),
@@ -114,7 +108,6 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
 
     assert result.new_tickets_count == 1
 
-    # The existing ticket is not overwritten by the re-synced payload.
     saved_existing = await ticket_gateway.get_by_ticketscloud_sale(
         order_id="order-1", ticket_id="ext-1"
     )
@@ -147,8 +140,6 @@ async def test_sync_tickets_with_empty_source_imports_nothing(
 async def test_sync_tickets_commits_in_batches_persisting_all_tickets(
     dishka_request: AsyncContainer,
 ) -> None:
-    # Cross the batch-commit boundary so the mid-loop commit path runs and we
-    # verify no ticket is dropped when the run spans multiple transactions.
     total = COMMIT_BATCH_SIZE + 5
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
@@ -159,7 +150,6 @@ async def test_sync_tickets_commits_in_batches_persisting_all_tickets(
     result = await interactor()
 
     assert result.new_tickets_count == total
-    # Spot-check that tickets on both sides of the batch boundary persisted.
     for i in (0, COMMIT_BATCH_SIZE - 1, COMMIT_BATCH_SIZE, total - 1):
         saved = await ticket_gateway.get_by_barcode(f"barcode-{i}")
         assert saved is not None
@@ -169,8 +159,6 @@ async def test_sync_tickets_commits_in_batches_persisting_all_tickets(
 async def test_sync_tickets_imports_resale_of_refunded_ticket_id(
     dishka_request: AsyncContainer,
 ) -> None:
-    # TicketsCloud sells a refunded ticket id again under a new order with a
-    # new barcode; both sales must be stored and only the refunded one revoked.
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)
@@ -183,7 +171,6 @@ async def test_sync_tickets_imports_resale_of_refunded_ticket_id(
 
     result = await interactor()
 
-    # The refunded first sale is stored already revoked, never linkable.
     assert result.new_tickets_count == 1
     assert result.revoked_tickets_count == 1
     first_sale = await ticket_gateway.get_by_barcode("first-sale")
@@ -202,7 +189,6 @@ async def test_sync_tickets_backfills_order_id_and_revokes_legacy_ticket(
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
-    # Imported before the order id was stored.
     legacy = Ticket(
         id=generate_ticket_id(),
         barcode="legacy-barcode",
@@ -232,8 +218,6 @@ async def test_sync_tickets_revokes_legacy_ticket_missing_from_sweep(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
 ) -> None:
-    # The refunded order may no longer list the ticket, so the legacy row never
-    # gets its order id; the refund still revokes it by ticket id.
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)

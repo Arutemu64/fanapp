@@ -28,11 +28,6 @@ async def _raw_connect(config: DatabaseConfig) -> psycopg.AsyncConnection:
 
 
 async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer) -> None:
-    # End-to-end over a real database: the migration's AFTER INSERT trigger must
-    # pg_notify on the exact channel the adapter LISTENs on, or notifications
-    # would silently fall back to poll-only latency. The per-test session rolls
-    # back (so its commits never fire NOTIFY), so this drives its own committing
-    # connection instead.
     config = await dishka.get(DatabaseConfig)
 
     signal = PostgresOutboxSignal(config)
@@ -40,8 +35,6 @@ async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer) -> None
     writer = await _raw_connect(config)
     row_id = uuid7()
     try:
-        # Let the listener establish its LISTEN, then arm past the connect-time
-        # nudge so the wait below can only be woken by the trigger.
         await asyncio.sleep(0.3)
         signal.arm()
 
@@ -51,12 +44,8 @@ async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer) -> None
             (row_id, "test.signal", "{}"),
         )
 
-        # Wakes well within the timeout if the trigger fired; the outer wait_for
-        # fails the test rather than hanging if it did not.
         await asyncio.wait_for(signal.wait(5), timeout=2)
     finally:
-        # The insert really committed, so remove it — other outbox tests assert
-        # on the set of unpublished rows and must not see this one.
         await writer.execute("DELETE FROM outbox_events WHERE id = %s", (row_id,))
         await writer.close()
         await signal.stop()

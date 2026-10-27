@@ -26,7 +26,6 @@
 	} from '../timingsValidation';
 
 	interface Props {
-		/** The saved settings; the form is seeded from them once. */
 		initial: ScheduleSettingsDto;
 	}
 
@@ -38,8 +37,6 @@
 	const saveMutation = createMutation(() => ({
 		...updateScheduleSettingsMutation(),
 		onSuccess: () => {
-			// The changeover is public config too; config_updated would refresh it,
-			// but not before this organizer looks at the schedule.
 			void queryClient.invalidateQueries({ queryKey: getScheduleSettingsQueryKey() });
 			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
 		}
@@ -63,7 +60,6 @@
 
 	function handleAnnouncementTimeoutInput() {
 		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
 		if (announcementTimeoutError) {
 			validateAnnouncementTimeout();
 		}
@@ -81,15 +77,12 @@
 		}
 	}
 
-	// A connection that drops mid-form keeps what was typed; the submit explains
-	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
-		// Validate every field so all errors surface at once, not one at a time.
 		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
 		const isChangeoverValid = validateChangeover();
 		if (!isAnnouncementTimeoutValid || !isChangeoverValid) {
@@ -120,8 +113,6 @@
 	}
 </script>
 
-<!-- novalidate: the browser's own bubble for min/max would pre-empt the Russian
-     field errors with English text; the validate* functions cover the same bounds. -->
 <form novalidate class="flex flex-col gap-4" onsubmit={offlineGate.guard(handleSubmit)}>
 	<FormError message={submitError} />
 

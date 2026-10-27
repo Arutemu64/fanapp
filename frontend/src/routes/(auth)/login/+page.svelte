@@ -24,23 +24,11 @@
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
 
-	// The first screen offers the login options only; the email form (and the
-	// captcha proof-of-work it starts on mount) lives on its own step, so someone
-	// using an OAuth provider never runs it. 'password' is a factor under 'email', not a
-	// peer option, so it's reached from the email step rather than the options.
-	//
-	// Each step is its own history entry (shallow routing), so the phone's back
-	// gesture steps back through the flow instead of leaving the login page —
-	// https://svelte.dev/docs/kit/shallow-routing. page.state is empty after a
-	// reload, which lands on the options screen.
 	const step = $derived(page.state.loginStep ?? 'options');
 	const codeSentTo = $derived(page.state.loginCodeEmail);
 
-	// Kept on the parent so it survives every step switch.
 	let email = $state('');
 
-	// Cancelling is the user's own choice, so it gets an informational toast —
-	// only a flow that actually broke reads as an error.
 	const loginErrorToasts = {
 		cancelled: { message: m.login_cancelled(), type: 'info' },
 		failed: { message: m.login_failed(), type: 'error' }
@@ -61,16 +49,10 @@
 		});
 	}
 
-	// The on-screen back control walks the same history as the back gesture, so
-	// the two can never disagree about where "back" is.
 	function goBack() {
 		history.back();
 	}
 
-	// A step swap removes the control that opened it, dropping focus to <body>, so
-	// move focus into the new step: its first empty field, else its first field,
-	// else its marked default control. Skipped on the first render — that is always
-	// the options screen, where focus belongs at the top of the page.
 	let isFirstRender = true;
 	const focusStep: Attachment<HTMLElement> = (node) => {
 		if (isFirstRender) {
@@ -118,14 +100,8 @@
 		{/if}
 
 		<div class="flex flex-col gap-1 text-center">
-			<!-- Just «Вход»: the logo above already names ФАН ФАН. -->
 			<h1 class="text-headline text-foreground">{m.login_title()}</h1>
 			{#if step === 'options'}
-				<!-- Benefits belong on the entry screen only: once a method is chosen the
-					sub-steps are the task, not the pitch. Every method — email or social —
-					creates the account on first sign-in and there is no separate sign-up,
-					so the entry screen says so once rather than leave a newcomer hunting
-					for «Регистрация». -->
 				<p class="text-sm text-muted-foreground">
 					{m.login_intro()}
 				</p>
@@ -162,16 +138,6 @@
 	</div>
 </Card.Root>
 
-<!--
-	The app is usable by guests, and login is reached both voluntarily (navbar)
-	and via protected-route redirects, so always offer a way back into it.
-	Navigate to the app root explicitly instead of history.back(): going back
-	would re-enter a protected redirect straight to /login, and a direct
-	deep-link to /login has no history to return to.
-
-	Options screen only: a sub-step already has «Назад» at the top, and one exit
-	per screen keeps the stack short; leaving from there is one tap further.
--->
 {#if step === 'options'}
 	<div class="text-center">
 		<button

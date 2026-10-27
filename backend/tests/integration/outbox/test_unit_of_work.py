@@ -39,7 +39,6 @@ async def test_rolled_back_command_is_never_stored(
 ) -> None:
     uow.enqueue(_DummyCommand(value=1))
     await uow.rollback()
-    # A later commit on the same unit of work must not resurrect it.
     await uow.commit()
 
     assert await _stored(outbox) == []

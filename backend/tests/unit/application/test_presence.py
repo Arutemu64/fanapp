@@ -1,3 +1,5 @@
+from typing import override
+
 import pytest
 
 from fanfan.application.interactors.presence.get_online_users_count import (
@@ -23,9 +25,11 @@ class _FakeCurrentUser(CurrentUserProvider):
     def __init__(self, user_id: UserId | None = None) -> None:
         self._user_id = user_id
 
+    @override
     async def get_user_id(self) -> UserId | None:
         return self._user_id
 
+    @override
     async def require_user_id(self) -> UserId:
         if self._user_id is None:
             raise UserNotAuthenticated
@@ -37,9 +41,11 @@ class _RecordingPresence(PresenceGateway):
         self.count = count
         self.marked: list[UserId] = []
 
+    @override
     async def mark_online(self, user_id: UserId) -> None:
         self.marked.append(user_id)
 
+    @override
     async def count_online(self) -> int:
         return self.count
 
@@ -87,5 +93,4 @@ async def test_record_is_noop_for_anonymous_stream() -> None:
 
     await interactor()
 
-    # An unauthenticated SSE connection has no user to count.
     assert presence.marked == []

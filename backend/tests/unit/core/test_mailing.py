@@ -11,7 +11,6 @@ pytestmark = pytest.mark.unit
 
 
 def test_mark_failed_fails_a_mailing_whose_fan_out_never_finished() -> None:
-    # PENDING covers a fan-out that stored some notifications and then gave up.
     mailing = Mailing.create(by_user_id=UserId(uuid7()))
 
     mailing.mark_failed()
@@ -52,8 +51,6 @@ def test_finish_refuses_a_cancelled_mailing() -> None:
 def test_cancel_recalls_a_mailing_in_any_uncancelled_status(
     status: MailingStatus,
 ) -> None:
-    # FINISHED means stored, not delivered: its channel sends can still be
-    # stopped, so a finished mailing is cancellable too.
     mailing = Mailing.create(by_user_id=UserId(uuid7()))
     mailing.status = status
 
@@ -84,8 +81,6 @@ def test_is_broadcast_matches_the_same_author_text_and_audience() -> None:
     mailing = Mailing.create(by_user_id=author)
     mailing.queue_broadcast(body="Привет", roles=[UserRole.VISITOR, UserRole.VOLUNTEER])
 
-    # The audience is a set: a retry that lists the roles in another order is
-    # still the same broadcast.
     assert mailing.is_broadcast(
         by_user_id=author, body="Привет", roles=[UserRole.VOLUNTEER, UserRole.VISITOR]
     )

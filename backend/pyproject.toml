@@ -1,25 +1,11 @@
 [project]
 name = "fanfan"
-# Release version for the whole repo, frontend included — bump it here and move
-# the matching `vX.Y.Z` git tag in the same change. frontend/package.json stays
-# at a 0.0.0 placeholder rather than carrying a second, independently drifting
-# number. A running deploy is identified by its commit SHA, not by this.
-# See docs/dependencies.md, "Versioning the app".
 version = "2.1.0"
 authors = [
     { name = "Arutemu64", email = "arutemu64@outlook.com" },
 ]
 description = "Backend for the FAN FAN convention companion web app: HTTP API and background workers"
-# The LICENSE file lives at the monorepo root, outside this project dir, so
-# PEP 639 `license-files` cannot reference it (no `..` allowed).
 license = "MIT"
-# Compatibility floor, not an exact pin: the minimum interpreter the code needs,
-# so it stays at the minor and does not chase the patch (PEP 621 requires-python
-# expresses version *requirements*, not the build you run). The exact runtime pin
-# lives in backend/.python-version and mise.toml. Tying this to the latest patch
-# made a trailing .python-version — whose pyenv/docker datasource lags the CPython
-# release the other sites read — violate the floor and break `uv sync` in the
-# image build; Renovate is told to leave it alone (renovate.jsonc, `python` floor).
 requires-python = ">=3.14"
 dependencies = [
     "adaptix>=3.0.0b12",
@@ -47,12 +33,6 @@ dependencies = [
     "python-multipart>=0.0.32",
     "redis>=8.1.0",
     "rich>=15.0.0",
-    # Cap below 3.0: the 3.x line is a breaking rewrite onto OpenTelemetry-based
-    # scope management, published so far only as alphas. Without the cap, uv can
-    # resolve a bare `>=2.68.0` to `3.0.0a7` whenever the newest 2.x is still
-    # inside the `exclude-newer` cooldown, and that alpha crashes at
-    # `sentry_sdk.init()` against opentelemetry-api 1.44.0 on Python 3.14. The
-    # 3.x migration is a deliberate, separate change.
     "sentry-sdk[fastapi,sqlalchemy]>=2.71.0,<3",
     "sqlalchemy[asyncio]>=2.1.4",
     "structlog>=26.1.0",
@@ -73,12 +53,7 @@ dev = [
     "ty>=0.0.79",
     "types-authlib>=1.8.0.20260911",
     "uv-sort>=0.8.0",
-    # Dead-code sweep (`just backend-deadcode`), never a CI gate — see
-    # [tool.vulture] below and docs/backend.md "Dead-code sweep".
     "vulture>=2.16",
-    # Writing .xlsx, needed only by the schedule-template generator script and
-    # the parser tests. The app itself only ever reads spreadsheets
-    # (python-calamine), so this stays out of the runtime dependencies.
     "xlsxwriter>=3.2.9",
 ]
 
@@ -87,28 +62,14 @@ requires = ["uv_build>=0.13.0,<0.14"]
 build-backend = "uv_build"
 
 [tool.uv]
-# Matches mise.toml, backend/Dockerfile, .claude/setup.sh, and
-# .github/workflows/ci.yml; bump all five together.
 required-version = "==0.13.0"
-# Ignore releases younger than this when resolving, mirroring Renovate's
-# `minimumReleaseAge` in renovate.jsonc. Renovate applies the cooldown when it
-# *picks* a target version, but when it then calls uv to relock a bumped `>=`
-# floor, uv would otherwise resolve to the newest release available — which may
-# still be inside the cooldown — and Renovate rejects the lockfile as a pending
-# version (the `renovate/artifacts` failure seen on PR #310). Matching the two
-# keeps uv's own resolution inside the same window. Keep this in sync with
-# renovate.jsonc `minimumReleaseAge`.
 exclude-newer = "7 days"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-# Change both to session-scope so one loop is used for the whole run
 asyncio_default_test_loop_scope = "session"
 asyncio_default_fixture_loop_scope = "session"
 addopts = ["--strict-markers"]
-# Any warning fails the run, so a new deprecation surfaces when it is introduced
-# instead of hiding in a summary. A third-party warning that cannot be fixed here
-# gets a narrow `ignore::` entry below, with a comment saying why.
 filterwarnings = ["error"]
 markers = [
     "integration: tests that use real infrastructure such as PostgreSQL or Redis containers",
@@ -116,51 +77,32 @@ markers = [
 ]
 testpaths = ["tests"]
 
-# Type checking (run via `just backend-typecheck`). Configured here rather than
-# in a ty.toml because it is short enough not to earn its own file — ruff is the
-# exception, in backend/ruff.toml, because its config is mostly prose. The
-# convention is in AGENTS.md "Staying in sync".
-#
-# The paths live here rather than on the command line so the justfile,
-# .pre-commit-config.yaml and CI cannot drift apart: `ty check` with no
-# arguments means the same thing everywhere.
-#
-# `tests` is in scope so type checking catches doubles that drift from the ports
-# they stand in for. Suppressions there use `# ty: ignore[<rule>]` and state why:
-# mypy's bracketed `# type: ignore[code]` suppresses nothing in ty, which skips a
-# code without a `ty:` prefix by design so several checkers can share one comment
-# (https://docs.astral.sh/ty/suppression/).
 [tool.ty.src]
 include = ["src/fanfan", "tests", "scripts"]
 
-# Opt-in rules, from ty's own "stricter than mypy/pyright --strict" recipe
-# (https://docs.astral.sh/ty/coming-from-mypy-or-pyright/). Everything listed
-# here costs nothing today — the codebase satisfies all of it — so each entry is
-# a ratchet against future drift rather than a debt to pay down.
-#
-# `blanket-ignore-comment` is the load-bearing one: it rejects a bare
-# `# ty: ignore` with no rule code, the escape hatch that silences a whole line
-# instead of one diagnostic. Ruff already refuses the other three (PGH003 for a
-# bare `# type: ignore`, PGH004 for a bare `# noqa`, RUF100 for one that no
-# longer suppresses anything); this closes the one ruff cannot see.
-#
-# Note `terminal.error-on-warning` defaults to true, so "warn" would fail CI
-# exactly as "error" does — these say "error" so the config means what it reads.
 [tool.ty.rules]
 blanket-ignore-comment = "error"
 division-by-zero = "error"
 dynamic-function-decorator-return = "error"
+missing-direct-dependency = "error"
+missing-override-decorator = "error"
 missing-type-argument = "error"
 possibly-missing-attribute = "error"
 possibly-missing-import = "error"
 possibly-unresolved-reference = "error"
+redundant-condition-strict = "error"
+unsound-assignment = "error"
 unsound-return-statement = "error"
 unsound-yield = "error"
 unsupported-dynamic-base = "error"
 
+[[tool.ty.overrides]]
+include = ["src/fanfan/adapters/db/models/**"]
+
+[tool.ty.overrides.rules]
+unsound-assignment = "ignore"
+
 [tool.ty.analysis]
-# Narrow conservatively: `==` between disjoint types is a bug, not a False, and a
-# generic's type argument is checked rather than assumed compatible.
 strict-equality-semantics = true
 strict-generic-narrowing = true
 
@@ -171,40 +113,20 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 
-# Dead-code sweep — a manual aid, NOT a CI gate (run via `just backend-deadcode`).
-# Vulture finds globally-unused code that ruff's local rules (F401/F841) can't,
-# but the framework-driven half of this app looks "unused" to a static pass:
-# DI providers, route handlers and DTO fields are all invoked by reflection or
-# by the framework, never by a call site vulture can see. So this config quiets
-# the known-safe patterns and the remaining findings are for a human to judge —
-# see docs/backend.md "Dead-code sweep". Anything vulture is wrong about that a
-# decorator/name rule can't express goes in vulture_whitelist.py.
 [tool.vulture]
 paths = ["src/fanfan", "vulture_whitelist.py"]
-# 60 surfaces unused attributes too but drowns in DTO/ORM-field false positives;
-# 80 keeps imports, functions, classes and variables — the actionable slice.
 min_confidence = 80
 exclude = [
-    # Alembic-owned: env.py hook signatures (include_object's `obj`, the
-    # process_revision_directives args) and autogenerated revision files are
-    # framework contracts, not dead code.
     "src/fanfan/adapters/db/migrations/",
 ]
 ignore_decorators = [
-    # FastAPI/FastStream routers — handlers are dispatched by the framework.
-    # Every router in this app is named `*_router` (see presentation/web,
-    # presentation/faststream); .get/.post/.subscriber/… all match.
     "@*_router.*",
-    # Dishka DI — providers are resolved by the container, not called directly.
     "@provide",
     "@inject",
-    # Click CLI entrypoints.
     "@click.*",
     "@async_command",
-    # Pydantic hooks fired during (de)serialisation.
     "@field_validator",
     "@model_validator",
-    # SQLAlchemy declarative helper.
     "@declared_attr",
     "@declared_attr.*",
 ]
@@ -212,9 +134,6 @@ ignore_decorators = [
 [tool.uv.build-backend]
 module-name = "fanfan"
 
-# Architectural boundary enforcement (run via `just backend-import-lint`).
-# Keeps the Clean/Hexagonal layering from docs/backend.md honest: inner layers
-# must never import outer ones. See AGENTS.md ("Never") and docs/backend.md.
 [tool.importlinter]
 root_package = "fanfan"
 

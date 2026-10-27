@@ -20,8 +20,6 @@ class SubscriptionORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         ForeignKey("schedule.id", ondelete="CASCADE")
     )
     lead_minutes: Mapped[int] = mapped_column()
-    # SET NULL re-arms the reminder when its change is undone (the undo deletes
-    # the change). Indexed so that delete finds the rows to null.
     reminded_by_change_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule_changes.id", ondelete="SET NULL"), index=True
     )

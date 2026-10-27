@@ -13,12 +13,8 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ params, parent }) => {
 	const back = { href: 'voting', label: m.voting_back_to_nominations() } satisfies BackTarget;
 
-	// Online-only like the nominations list: the page shows no cached ballot
-	// offline, so there is nothing to wait for. 'Голосование' names the navbar.
 	if (!isReachable()) return { title: m.nav_voting(), back };
 
-	// The nomination names the navbar, so a first visit waits for it; a revisit
-	// answers from the cache and the page refetches it in the background.
 	const { queryClient } = await parent();
 	const nomination = await queryForLoad(queryClient, {
 		...getVotingNominationOptions({ path: { nomination_code: params.nominationCode } }),
@@ -27,7 +23,6 @@ export const load: PageLoad = async ({ params, parent }) => {
 		if (getApiErrorCode(apiError) === 'NOMINATION_NOT_FOUND') {
 			error(404, m.voting_nomination_not_found());
 		}
-		// A request that never got an answer leaves the page to its offline state.
 		if (isConnectionFailure(apiError)) return undefined;
 		return throwApiError(apiError, m.voting_nomination_load_failed());
 	});

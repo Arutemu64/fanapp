@@ -8,7 +8,7 @@ class Message(BaseModel):
 
     subject: ClassVar[str]
 
-    def dedup_id(self) -> str | None:
+    def dedup_id(self) -> str | None:  # noqa: PLR6301
         """A stable id for this message, if it has one.
 
         A message republished with the same id — a redelivered trigger rerunning

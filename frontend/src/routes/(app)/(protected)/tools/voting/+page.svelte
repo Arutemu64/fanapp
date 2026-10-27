@@ -39,13 +39,9 @@
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
 	const timeRangeMutation = createMutation(() => ({
 		...setVotingTimeRangeMutation(),
-		// config_updated would refresh the status too, but not before this organizer
-		// opens voting to check the window they just set.
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() })
 	}));
 
-	// Seeded from the dashboard, then refreshed from each draw's response, so the
-	// displayed pool tracks who is currently eligible even as people finish voting.
 	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
 	const drawMutation = createMutation(() => drawVotingContestWinnerMutation());
 	let winner = $state<UserBaseDto | null>(null);
@@ -54,9 +50,6 @@
 
 	let canDraw = $derived(poolSize > 0);
 
-	// The window is edited on the venue clock, like the festival dates in settings:
-	// the device's own zone would shift it for an organizer whose phone isn't on
-	// Moscow time.
 	function toLocalInput(iso: string | null): string {
 		if (!iso) return '';
 		return toEventDateTimeLocal(iso);
@@ -93,9 +86,6 @@
 		drawMutation.mutate(
 			{},
 			{
-				// The draw is read-only: the server draws from the live pool and returns
-				// both the winner and the current pool size, so there is nothing to
-				// refetch — trust the response.
 				onSuccess: (result) => {
 					poolSize = result.pool_size;
 					winner = result.winner;
@@ -175,8 +165,6 @@
 		<FormError message={drawError} />
 
 		{#if hasDrawn}
-			<!-- aria-live so the drawn name is announced to screen readers, which
-			     otherwise get no signal that the button did anything. -->
 			<div aria-live="polite" role="status">
 				{#if winner}
 					<div class="flex items-center gap-3 rounded-xl bg-primary/10 p-3">
