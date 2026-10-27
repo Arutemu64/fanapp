@@ -22,8 +22,13 @@ interface AnalyticsEvents {
 
 type AnalyticsEvent = keyof AnalyticsEvents;
 
+type UmamiPayload = Record<string, unknown>;
+
 interface UmamiTracker {
-	track: (event: string, data?: object) => void;
+	track: {
+		(event: string, data?: object): void;
+		(payload: (defaults: UmamiPayload) => UmamiPayload): void;
+	};
 }
 
 declare global {
@@ -80,4 +85,10 @@ export function trackEvent<E extends AnalyticsEvent>(
 	...[event, data]: AnalyticsEvents[E] extends undefined ? [E] : [E, AnalyticsEvents[E]]
 ): void {
 	globalThis.umami?.track(event, data);
+}
+
+// The tracker counts views only on pushState and replaceState, which Back and Forward skip.
+// Its own URL is stale then, so pass the new one without the query and hash.
+export function trackPageView(url: URL): void {
+	globalThis.umami?.track((defaults) => ({ ...defaults, url: url.origin + url.pathname }));
 }

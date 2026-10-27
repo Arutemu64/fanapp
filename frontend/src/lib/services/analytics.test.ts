@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { trackEvent, umamiScriptAttributes } from './analytics';
+import { trackEvent, trackPageView, umamiScriptAttributes } from './analytics';
 
 const config = {
 	scriptUrl: 'https://stats.example.com/script.js',
@@ -42,5 +42,20 @@ describe('trackEvent', () => {
 		trackEvent('login', { method: 'code' });
 
 		expect(track).toHaveBeenCalledWith('login', { method: 'code' });
+	});
+});
+
+describe('trackPageView', () => {
+	it('sends the new URL without its query and hash', () => {
+		const track = vi.fn();
+		vi.stubGlobal('umami', { track });
+
+		trackPageView(new URL('https://app.example.com/schedule?day=2#now'));
+
+		const [buildPayload] = track.mock.calls[0] as [(defaults: object) => object];
+		expect(buildPayload({ website: 'id', url: 'https://app.example.com/map' })).toEqual({
+			website: 'id',
+			url: 'https://app.example.com/schedule'
+		});
 	});
 });

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 
-	import { beforeNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import * as Sentry from '@sentry/sveltekit';
 
 	import '../app.css';
@@ -28,6 +28,7 @@
 	import { type QueuedWriteOutcome, watchQueuedWrites } from '#lib/api/writeQueue.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackPageView } from '#lib/services/analytics.js';
 	import { setAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
 	import { currentUserOptions, flushPendingLogout } from '#lib/services/identity.js';
@@ -67,6 +68,12 @@
 		if (navigation.to.url.pathname === navigation.from?.url.pathname) return;
 		navigation.cancel();
 		appUpdate.apply(navigation.to.url.href);
+	});
+
+	afterNavigate(({ type, from, to }) => {
+		if (type !== 'popstate' || !to) return;
+		if (to.url.pathname === from?.url.pathname) return;
+		trackPageView(to.url);
 	});
 
 	onMount(() => {
