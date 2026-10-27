@@ -1187,13 +1187,20 @@ export const processTcloudOrder = <ThrowOnError extends boolean = false>(
  * Applies stage events from the FestEngine playback console: the current act, skips and moves. Signed per Standard Webhooks.
  */
 export const processFestengineEvent = <ThrowOnError extends boolean = false>(
-	options?: Options<ProcessFestengineEventData, ThrowOnError>
+	options: Options<ProcessFestengineEventData, ThrowOnError>
 ): RequestResult<ProcessFestengineEventResponses, ProcessFestengineEventErrors, ThrowOnError> =>
-	(options?.client ?? client).post<
+	(options.client ?? client).post<
 		ProcessFestengineEventResponses,
 		ProcessFestengineEventErrors,
 		ThrowOnError
-	>({ url: '/webhooks/festengine', ...options });
+	>({
+		url: '/webhooks/festengine',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
 
 /**
  * List user notifications

@@ -297,6 +297,46 @@ export type FeedbackDto = {
 };
 
 /**
+ * FestEngineEvent
+ */
+export type FestEngineEvent = {
+	/**
+	 * Type
+	 */
+	type: string;
+	/**
+	 * Timestamp
+	 */
+	timestamp: string;
+	data?: FestEngineEventData;
+};
+
+/**
+ * FestEngineEventData
+ */
+export type FestEngineEventData = {
+	row?: FestEngineRow | null;
+	/**
+	 * After Num
+	 */
+	after_num?: string | null;
+};
+
+/**
+ * FestEngineRow
+ */
+export type FestEngineRow = {
+	/**
+	 * Num
+	 */
+	num?: string | null;
+	/**
+	 * Row Type
+	 */
+	row_type?: string | null;
+};
+
+/**
  * FestEngineWebhookResponse
  */
 export type FestEngineWebhookResponse = {
@@ -3415,7 +3455,21 @@ export type ProcessTcloudOrderResponse =
 	ProcessTcloudOrderResponses[keyof ProcessTcloudOrderResponses];
 
 export type ProcessFestengineEventData = {
-	body?: never;
+	body: FestEngineEvent;
+	headers?: {
+		/**
+		 * Webhook-Id
+		 */
+		'webhook-id'?: string | null;
+		/**
+		 * Webhook-Timestamp
+		 */
+		'webhook-timestamp'?: string | null;
+		/**
+		 * Webhook-Signature
+		 */
+		'webhook-signature'?: string | null;
+	};
 	path?: never;
 	query?: never;
 	url: '/webhooks/festengine';
@@ -3427,9 +3481,17 @@ export type ProcessFestengineEventErrors = {
 	 */
 	400: ProblemDetails;
 	/**
+	 * The service user lacks schedule:manage.
+	 */
+	403: ProblemDetails;
+	/**
 	 * Unknown endpoint, bad signature, or unknown number.
 	 */
 	404: ProblemDetails;
+	/**
+	 * Malformed payload.
+	 */
+	422: ProblemDetails;
 	/**
 	 * Announcement cooldown.
 	 */

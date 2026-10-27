@@ -1,12 +1,12 @@
 import enum
 import secrets
 from datetime import UTC, datetime
+from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException, Request, status
-from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, ValidationError
+from fastapi import APIRouter, Header, HTTPException, Request, status
+from pydantic import BaseModel
 
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
 from fanfan.application.interactors.schedule_mgmt.apply_stage_console_action import (
@@ -84,6 +84,10 @@ class FestEngineWebhookResponse(BaseModel):
     responses={
         200: {"description": "Event applied, already applied, or ignored."},
         400: {"model": ProblemDetails, "description": "The edit breaks a rule."},
+        403: {
+            "model": ProblemDetails,
+            "description": "The service user lacks schedule:manage.",
+        },
         404: {
             "model": ProblemDetails,
             "description": "Unknown endpoint, bad signature, or unknown number.",
@@ -93,29 +97,29 @@ class FestEngineWebhookResponse(BaseModel):
     },
 )
 @inject
-async def process_festengine_event(
+async def process_festengine_event(  # noqa: PLR0913, PLR0917
     request: Request,
+    event: FestEngineEvent,
     config: FromDishka[FestEngineConfig],
     apply_action: FromDishka[ApplyStageConsoleAction],
+    webhook_id: Annotated[str | None, Header()] = None,
+    webhook_timestamp: Annotated[str | None, Header()] = None,
+    webhook_signature: Annotated[str | None, Header()] = None,
 ) -> FestEngineWebhookResponse:
     secret = config.webhook_secret
-    # The signed bytes must be the raw body, so it is read before parsing.
+    # Starlette caches the body FastAPI parsed, so these are the signed bytes.
     body = await request.body()
     now = datetime.now(UTC)
     if secret is None or not verify_signature(
         secret.get_secret_value(),
-        msg_id=request.headers.get("webhook-id"),
-        timestamp=request.headers.get("webhook-timestamp"),
-        signature_header=request.headers.get("webhook-signature"),
+        msg_id=webhook_id,
+        timestamp=webhook_timestamp,
+        signature_header=webhook_signature,
         body=body,
         now=now,
     ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    try:
-        event = FestEngineEvent.model_validate_json(body)
-    except ValidationError as error:
-        raise RequestValidationError(error.errors()) from error
     if event.is_stale(now):
         return FestEngineWebhookResponse(status=FestEngineWebhookStatus.STALE)
     action_input = to_action_input(event)
