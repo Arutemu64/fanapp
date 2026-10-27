@@ -1,6 +1,7 @@
 from typing import Any
 
 from starlette import status
+from starlette.requests import Request
 
 from fanfan.presentation.web.schemas.error import ProblemDetails, ValidationProblem
 
@@ -24,8 +25,13 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
 
 
 def location_header(description: str) -> dict[str, Any]:
-    """OpenAPI doc for a `Location` header; its value is a path from the API root."""
+    """OpenAPI doc for a `Location` header; its value is an absolute path."""
     return {"Location": {"schema": {"type": "string"}, "description": description}}
+
+
+def resource_location(request: Request, path: str) -> str:
+    """A `Location` value for a route path, under the `/api` prefix the proxy strips."""
+    return f"{request.scope.get('root_path', '')}{path}"
 
 
 RATE_LIMIT_RESPONSES: dict[int | str, dict[str, Any]] = {

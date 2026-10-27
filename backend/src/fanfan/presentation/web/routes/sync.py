@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Request, Response, status
 from pydantic import BaseModel
 
 from fanfan.application.dto.sync import SyncRunDTO, SyncSourceStatusDTO
@@ -10,7 +10,11 @@ from fanfan.application.interactors.sync.request_sync import (
     RequestSyncInput,
 )
 from fanfan.core.vo.sync import SyncSource
-from fanfan.presentation.web.responses import AUTH_RESPONSES, location_header
+from fanfan.presentation.web.responses import (
+    AUTH_RESPONSES,
+    location_header,
+    resource_location,
+)
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
@@ -67,9 +71,10 @@ async def list_sync_sources(
 @inject
 async def request_sync(
     source: SyncSource,
+    request: Request,
     response: Response,
     interactor: FromDishka[RequestSync],
 ) -> SyncRunDTO:
     run = await interactor(RequestSyncInput(source=source))
-    response.headers["Location"] = SYNC_STATUS_PATH
+    response.headers["Location"] = resource_location(request, SYNC_STATUS_PATH)
     return run
