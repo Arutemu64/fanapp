@@ -45,13 +45,16 @@
 		}
 
 		openingProvider = provider;
-		trackEvent('login-social-start', { provider });
-		if (!session.logoutPending) return;
+		if (!session.logoutPending) {
+			trackEvent('login-social-start', { provider });
+			return;
+		}
 
 		event.preventDefault();
 		const settled = await session.settlePendingLogout();
 		if (abandoned) return;
 		if (settled) {
+			trackEvent('login-social-start', { provider });
 			window.location.assign(providerStartUrl(provider));
 			return;
 		}
