@@ -22,7 +22,8 @@ from fanfan.presentation.web.routes.webhooks import webhooks_router
 
 pytestmark = pytest.mark.unit
 
-SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
+# The public example secret from the Standard Webhooks test suites.
+SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"  # gitleaks:allow
 URL = "/webhooks/festengine"
 
 

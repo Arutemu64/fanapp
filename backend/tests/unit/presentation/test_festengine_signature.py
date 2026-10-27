@@ -7,7 +7,7 @@ from fanfan.presentation.web.festengine.signature import sign, verify_signature
 pytestmark = pytest.mark.unit
 
 # The example from the Standard Webhooks reference libraries' test suites.
-SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
+SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"  # gitleaks:allow
 MSG_ID = "msg_p5jXN8AQM9LWM0D4loKWxJek"
 TIMESTAMP = 1614265330
 BODY = b'{"test": 2432232314}'
