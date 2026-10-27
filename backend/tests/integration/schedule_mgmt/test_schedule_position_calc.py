@@ -79,7 +79,7 @@ async def test_schedule_names_the_current_event_once(
     schedule = await schedule_gateway.read_schedule()
 
     assert schedule.current_event_id == current.id
-    assert schedule.model_dump(mode="json")["schedule"][1] == {
+    assert schedule.model_dump(mode="json")["entries"][1] == {
         "type": "event",
         "id": str(current.id),
         "number": 2,
