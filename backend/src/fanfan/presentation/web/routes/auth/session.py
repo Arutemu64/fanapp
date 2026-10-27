@@ -17,7 +17,7 @@ session_router = APIRouter()
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",
     description=(
-        "Clears session cookie and removes Redis session state; also emits "
+        "Clears session cookie and deletes the server-side session; also emits "
         "Clear-Site-Data so the browser drops cookies itself."
     ),
     responses={204: {"description": "Successfully logged out."}},

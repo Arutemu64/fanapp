@@ -7,6 +7,7 @@ from fanfan.main.ioc.captcha import CaptchaProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
+from fanfan.main.ioc.expiring import ExpiringStateProvider
 from fanfan.main.ioc.html import HtmlProvider
 from fanfan.main.ioc.id_provider import SystemAuthProvider, WebAuthProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
@@ -14,7 +15,6 @@ from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.mail import MailProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
 from fanfan.main.ioc.push import PushProvider
-from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
@@ -33,7 +33,7 @@ def get_common_providers() -> list[Provider]:
         DbProvider(),
         InteractorsProvider(),
         TelegramProvider(),
-        RedisProvider(),
+        ExpiringStateProvider(),
         TCloudProvider(),
         SecurityProvider(),
         SerializationProvider(),

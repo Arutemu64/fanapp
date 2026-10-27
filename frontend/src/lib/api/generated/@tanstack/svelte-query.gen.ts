@@ -19,7 +19,6 @@ import {
 	changeCurrentUserPassword,
 	checkPushSubscription,
 	confirmEmailCode,
-	countOnlineUsers,
 	countUnreadNotifications,
 	createPushSubscription,
 	debug,
@@ -118,9 +117,6 @@ import type {
 	ConfirmEmailCodeData,
 	ConfirmEmailCodeError,
 	ConfirmEmailCodeResponse,
-	CountOnlineUsersData,
-	CountOnlineUsersError,
-	CountOnlineUsersResponse,
 	CountUnreadNotificationsData,
 	CountUnreadNotificationsError,
 	CountUnreadNotificationsResponse,
@@ -402,7 +398,7 @@ export const healthCheckOptions = (options?: Options<HealthCheckData>) =>
 /**
  * Login and create session
  *
- * Authenticates user with email and password. Sets an HttpOnly cookie with a Redis-backed session id.
+ * Authenticates user with email and password. Sets an HttpOnly cookie with an opaque session id.
  */
 export const loginMutation = (
 	options?: Partial<Options<LoginData>>
@@ -533,7 +529,7 @@ export const loginWithCodeMutation = (
 /**
  * Logout user
  *
- * Clears session cookie and removes Redis session state; also emits Clear-Site-Data so the browser drops cookies itself.
+ * Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.
  */
 export const logoutUserMutation = (
 	options?: Partial<Options<LogoutUserData>>
@@ -2434,33 +2430,6 @@ export const listUsersInfiniteOptions = (options?: Options<ListUsersData>) => {
 	);
 	return opts as Omit<typeof opts, 'initialData'>;
 };
-
-export const countOnlineUsersQueryKey = (options?: Options<CountOnlineUsersData>) =>
-	createQueryKey('countOnlineUsers', options);
-
-/**
- * Count online users
- *
- * How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.
- */
-export const countOnlineUsersOptions = (options?: Options<CountOnlineUsersData>) =>
-	queryOptions<
-		CountOnlineUsersResponse,
-		CountOnlineUsersError,
-		CountOnlineUsersResponse,
-		ReturnType<typeof countOnlineUsersQueryKey>
-	>({
-		queryFn: async ({ queryKey, signal }) => {
-			const { data } = await countOnlineUsers({
-				...options,
-				...queryKey[0],
-				signal,
-				throwOnError: true
-			});
-			return data;
-		},
-		queryKey: countOnlineUsersQueryKey(options)
-	});
 
 export const getUserQueryKey = (options: Options<GetUserData>) =>
 	createQueryKey('getUser', options);

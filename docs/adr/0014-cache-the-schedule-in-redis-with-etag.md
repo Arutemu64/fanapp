@@ -1,6 +1,6 @@
 # ADR-0014: Cache the schedule in Redis with an ETag; drop request-time schedule timing
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0047](0047-postgres-replaces-redis.md) (the Redis cache; dropping request-time timing stands)
 - **Date:** 2026-08-25
 - **Deciders:** Project maintainers
 - **Supersedes:** [ADR-0008](0008-schedule-timing-computed-in-application-layer.md)

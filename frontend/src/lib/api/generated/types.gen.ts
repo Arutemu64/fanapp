@@ -876,16 +876,6 @@ export type OAuthProvidersOutput = {
 };
 
 /**
- * OnlineUsersCountOutput
- */
-export type OnlineUsersCountOutput = {
-	/**
-	 * Count
-	 */
-	count: number;
-};
-
-/**
  * ParticipantFullDTO
  */
 export type ParticipantFullDto = {
@@ -4255,35 +4245,6 @@ export type ListUsersResponses = {
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
-
-export type CountOnlineUsersData = {
-	body?: never;
-	path?: never;
-	query?: never;
-	url: '/users/online-count';
-};
-
-export type CountOnlineUsersErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-};
-
-export type CountOnlineUsersError = CountOnlineUsersErrors[keyof CountOnlineUsersErrors];
-
-export type CountOnlineUsersResponses = {
-	/**
-	 * Online user count retrieved successfully.
-	 */
-	200: OnlineUsersCountOutput;
-};
-
-export type CountOnlineUsersResponse = CountOnlineUsersResponses[keyof CountOnlineUsersResponses];
 
 export type GetUserData = {
 	body?: never;

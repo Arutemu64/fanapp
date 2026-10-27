@@ -1,5 +1,6 @@
 from .app_settings import AppSettingsORM
 from .base import BaseORM
+from .expiring import AuthCodeORM, AuthSessionORM, CooldownORM, RateLimitORM
 from .feedback import FeedbackORM
 from .mailing import MailingORM
 from .nomination import NominationORM
@@ -21,7 +22,10 @@ from .vote import VoteORM
 
 __all__ = [
     "AppSettingsORM",
+    "AuthCodeORM",
+    "AuthSessionORM",
     "BaseORM",
+    "CooldownORM",
     "FeedbackORM",
     "MailingORM",
     "NominationORM",
@@ -30,6 +34,7 @@ __all__ = [
     "ParticipantORM",
     "PushSubscriptionORM",
     "QuestAwardORM",
+    "RateLimitORM",
     "ScheduleBlockStartORM",
     "ScheduleChangeORM",
     "ScheduleEntryORM",

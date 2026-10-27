@@ -115,10 +115,10 @@ dockerfile-lint:
     hadolint backend/Dockerfile frontend/Dockerfile
 
 run-infra:
-    docker compose up -d db redis nats
+    docker compose up -d db nats
 
 stop-infra:
-    docker compose stop db redis nats
+    docker compose stop db nats
 
 run-dev build="":
     docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up {{build}} --watch

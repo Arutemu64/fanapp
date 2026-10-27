@@ -60,7 +60,7 @@ if command -v dockerd >/dev/null 2>&1; then
     done
   fi
   if docker info >/dev/null 2>&1; then
-    for image in postgres:18.6-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.15.1; do
+    for image in postgres:18.6-alpine hadolint/hadolint:v2.15.1; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"
       else

@@ -54,15 +54,15 @@ async def get_schedule(
     request: Request,
     interactor: FromDishka[GetSchedule],
 ) -> Response:
-    cached = await interactor()
+    rendered = await interactor()
 
-    headers = {"ETag": cached.etag, "Cache-Control": "no-cache"}
+    headers = {"ETag": rendered.etag, "Cache-Control": "no-cache"}
 
-    if _if_none_match_hits(request.headers.get("if-none-match"), cached.etag):
+    if _if_none_match_hits(request.headers.get("if-none-match"), rendered.etag):
         return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers=headers)
 
     return Response(
-        content=cached.payload,
+        content=rendered.payload,
         media_type="application/json",
         headers=headers,
     )

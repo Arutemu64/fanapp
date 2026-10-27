@@ -6,10 +6,6 @@ from fastapi import APIRouter, Path, Query
 
 from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.user import UserDetailsDTO, UserListFilter
-from fanfan.application.interactors.presence.get_online_users_count import (
-    GetOnlineUsersCount,
-    OnlineUsersCountOutput,
-)
 from fanfan.application.interactors.users.get_user import GetUser, GetUserInput
 from fanfan.application.interactors.users.list_users import (
     ListUsers,
@@ -66,22 +62,6 @@ async def list_users(
         ),
     )
     return await interactor(data)
-
-
-@users_router.get(
-    "/online-count",
-    summary="Count online users",
-    description="How many users hold a live connection right now, for the "
-    "organizer dashboard. Approximate and ephemeral. Any authenticated user.",
-    responses={
-        200: {"description": "Online user count retrieved successfully."},
-    },
-)
-@inject
-async def count_online_users(
-    interactor: FromDishka[GetOnlineUsersCount],
-) -> OnlineUsersCountOutput:
-    return await interactor()
 
 
 @users_router.get(

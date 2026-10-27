@@ -28,14 +28,14 @@ correct test.
    Instantiate the object, call the method, assert. No mocks, no database, no
    DI container.
 2. **An interactor** (`application/interactors/`) → `@pytest.mark.integration`
-   test in `tests/integration/<feature>/`. Runs against real PostgreSQL and
-   Redis. Resolve the interactor from `dishka_request`, assert on persisted
+   test in `tests/integration/<feature>/`. Runs against real PostgreSQL.
+   Resolve the interactor from `dishka_request`, assert on persisted
    state and enqueued/published events and commands. **Never unit-test an interactor with
    mocked gateways** — its behavior lives in SQL.
 3. **Copy the reference example**:
    `tests/integration/schedule_mgmt/test_set_current_event.py` (happy path,
    permission failure, rate limit, rollback on error).
-4. **Real vs fake**: everything behind PostgreSQL/Redis is real (gateways,
+4. **Real vs fake**: everything behind PostgreSQL is real (gateways,
    `UnitOfWork`, rate limiter, sessions), and so are deterministic ports
    (hasher, Jinja). Ports that reach *other* external systems (NATS, SMTP,
    Telegram, WebPush, realtime) are faked. New side-effecting port? Add a
@@ -46,15 +46,15 @@ correct test.
    under test and the gateways you assert on are resolved explicitly with
    `dishka_request.get(...)` in the test body — never hidden in a fixture.
 6. **No cleanup code.** Database writes roll back automatically after every
-   test; Redis is flushed automatically. Don't truncate tables or hand-pick
-   unique ids.
+   test, and the expiring-state tables are truncated automatically. Don't
+   truncate tables or hand-pick unique ids.
 
 ## Two layers
 
 | Layer | Location | Marker | Infrastructure | Speed |
 |-------|----------|--------|----------------|-------|
 | Unit | `tests/unit/` | `@pytest.mark.unit` | none | instant |
-| Integration | `tests/integration/` | `@pytest.mark.integration` | real PostgreSQL + Redis (testcontainers) | seconds |
+| Integration | `tests/integration/` | `@pytest.mark.integration` | real PostgreSQL (testcontainers) | seconds |
 
 Every test is marked by the directory it lives in: a `pytest_collection_modifyitems`
 hook in `tests/conftest.py` adds `unit` under `tests/unit/` and `integration`
@@ -77,8 +77,8 @@ uv run pytest --cov             # with coverage (config in pyproject.toml)
 run, so fix the call site. Ignore a third-party warning only with a narrow
 `ignore::` entry there, commented with why it cannot be fixed here.
 
-Integration tests need Docker available (testcontainers spins up real
-PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
+Integration tests need Docker available (testcontainers spins up a real
+PostgreSQL). They cannot run in environments without a Docker daemon.
 
 ### Coverage
 
@@ -102,9 +102,9 @@ CI** (`.github/workflows/ci.yml`): it's slow, CI runs it regardless, and a green
 run there is the gate that counts. The daemon's routine in-session job is
 migration autogenerate (`just backend-generate-auto`); reach for
 `just backend-test-integration` locally only when it helps, e.g. debugging a
-failure. The setup script prepulls the testcontainers images
+failure. The setup script prepulls the testcontainers image
 (`postgres:18.6-alpine` — pinned, and shared with Alembic autogenerate and
-production — and `valkey/valkey:9.1-alpine`) and the hook sets
+production) and the hook sets
 `TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures already stop
 their own containers in `finally:` blocks, so the Ryuk reaper isn't needed), so
 the suite runs without a cold image pull when you do need it. Provisioning
@@ -218,13 +218,13 @@ Rule of thumb: take the plumbing you need from fixtures, but resolve the
 
 ## What is real and what is faked
 
-The rule follows the architecture: **run everything behind the DB/Redis
+The rule follows the architecture: **run everything behind the DB
 adapters for real; fake the ports that reach other external systems.**
 
 | Dependency | In tests | Why |
 |------------|----------|-----|
 | Gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
-| `TokenRegistry`, `SessionStore`, `RateLimiter`, `Cooldown` | **real** (Redis) | behavior is in Redis semantics |
+| `TokenRegistry`, `SessionStore`, `RateLimiter`, `Cooldown` | **real** (PostgreSQL) | behavior is in the upserts and expiry checks |
 | `PasswordHasher`, Jinja `TemplateRenderer` | **real** | deterministic, no external I/O |
 | `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
@@ -271,8 +271,10 @@ Consequences:
 
 * You do **not** need to clean up database rows, and you do not need to
   hand-pick unique ids to avoid collisions between tests.
-* Redis is **not** transactional, so it is flushed between tests by the
-  `reset_redis` autouse fixture.
+* The expiring-state adapters (`adapters/db/expiring/`) commit on their own
+  connections, outside the rolled-back test transaction, so the
+  `reset_expiring_state` autouse fixture truncates their tables before each
+  test.
 * Schema and seed data (the `system` user, permissions) are created once per
   session by Alembic migrations and are visible to every test.
 
@@ -282,7 +284,7 @@ The session-scoped `dishka` fixture builds a container from the real IoC
 providers plus test overrides:
 
 * Real: `InteractorsProvider`, `DbProvider`, `SqlGatewaysProvider`,
-  `RedisProvider`, `ServicesProvider`, `SecurityProvider`, `JinjaProvider`.
+  `ExpiringStateProvider`, `ServicesProvider`, `SecurityProvider`, `JinjaProvider`.
 * Test: `TestDbProvider` (testcontainers config), `TestConfigProvider`
   (fixed test `WebConfig` for the session store and token registry — the full
   `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),

@@ -31,7 +31,6 @@ dependencies = [
     "python-calamine>=0.8.2",
     "python-dotenv>=1.2.4",
     "python-multipart>=0.0.32",
-    "redis>=8.1.0",
     "rich>=15.0.0",
     "sentry-sdk[fastapi,sqlalchemy]>=2.71.0,<3",
     "sqlalchemy[asyncio]>=2.1.4",
@@ -72,8 +71,8 @@ asyncio_default_fixture_loop_scope = "session"
 addopts = ["--strict-markers"]
 filterwarnings = ["error"]
 markers = [
-    "integration: tests that use real infrastructure such as PostgreSQL or Redis containers",
-    "unit: fast, pure tests with no infrastructure (no DB, Redis, or DI container)",
+    "integration: tests that use real infrastructure such as PostgreSQL containers",
+    "unit: fast, pure tests with no infrastructure (no DB or DI container)",
 ]
 testpaths = ["tests"]
 

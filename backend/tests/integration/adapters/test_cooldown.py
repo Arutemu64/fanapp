@@ -1,8 +1,9 @@
 import pytest
 from dishka import AsyncContainer
-from redis.asyncio import Redis
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncEngine
 
-from fanfan.adapters.redis.cooldown import RedisCooldown
+from fanfan.adapters.db.models import CooldownORM
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.core.exceptions.rate_limit import CooldownActive
 
@@ -58,15 +59,21 @@ async def test_failed_block_leaves_a_newer_claim_alone(
     dishka_request: AsyncContainer,
 ) -> None:
     cooldown = await dishka_request.get(Cooldown)
-    redis = await dishka_request.get(Redis)
-    redis_key = RedisCooldown._redis_key("test-reclaimed")
+    engine = await dishka_request.get(AsyncEngine)
 
     async def send_that_outlives_its_window() -> None:
         async with cooldown.claim("test-reclaimed", 60):
-            await redis.set(redis_key, "someone-else", ex=60)
+            async with engine.begin() as connection:
+                await connection.execute(
+                    update(CooldownORM)
+                    .where(CooldownORM.key == "test-reclaimed")
+                    .values(token="someone-else")
+                )
             raise SendFailed
 
     with pytest.raises(SendFailed):
         await send_that_outlives_its_window()
 
-    assert await redis.get(redis_key) in ("someone-else", b"someone-else")
+    with pytest.raises(CooldownActive):
+        async with cooldown.claim("test-reclaimed", 60):
+            pass

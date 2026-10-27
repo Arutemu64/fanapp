@@ -72,7 +72,7 @@ site needs no group, just its own review PR.
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
   `.claude/setup.sh` shim; the uv, pnpm and node pins in `.claude/setup.sh`
   (the `npm install -g pnpm@…` and `NODE_VERSION=…` lines the session actually
-  runs — distinct from the postgres/valkey prepull literals in that file, which
+  runs — distinct from the postgres prepull literal in that file, which
   are cache hints, not functional pins, so they are left untracked); the uv pin
   in `backend/pyproject.toml`; and the uv version in the `backend/Dockerfile`
   builder tag, which the `dockerfile` manager is switched off for (next

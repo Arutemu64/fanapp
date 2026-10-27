@@ -14,8 +14,7 @@ class TestConfigProvider(Provider):
     SMTP, etc., none of which are wired). ``WebConfig`` (session store, token
     registry) and ``timezone`` (Jinja env used to render email codes) are the
     cross-cutting slices the interactors need, so they are supplied here with
-    fixed test values, the same way ``TestDbProvider`` supplies the DB and Redis
-    configs.
+    fixed test values, the same way ``TestDbProvider`` supplies the DB config.
     """
 
     scope = Scope.APP

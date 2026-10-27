@@ -39,8 +39,6 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
-      redis:
-        condition: service_healthy
       nats:
         condition: service_healthy
     volumes:
@@ -52,7 +50,6 @@ services:
       DB__APPLICATION_NAME: "fanfan-api"
       DB__POOL_SIZE: "10"
       DB__MAX_OVERFLOW: "10"
-      REDIS__HOST: "redis"
       NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
@@ -86,8 +83,6 @@ services:
         condition: service_completed_successfully
       nats:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     volumes:
       - ./secrets:/app/secrets:ro
     env_file:
@@ -97,7 +92,6 @@ services:
       DB__APPLICATION_NAME: "fanfan-worker"
       DB__POOL_SIZE: "5"
       DB__MAX_OVERFLOW: "10"
-      REDIS__HOST: "redis"
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
@@ -123,7 +117,6 @@ services:
       - .env
     environment:
       DB__HOST: "db"
-      REDIS__HOST: "redis"
       NATS__HOST: "nats"
     depends_on:
       db:
@@ -244,33 +237,6 @@ services:
     networks:
       - backend-network
 
-  redis:
-    image: valkey/valkey:9.2-alpine
-    environment:
-      REDIS__PASSWORD: "${REDIS__PASSWORD}"
-    volumes:
-      - redis-data:/data
-    configs:
-      - source: valkey-conf
-        target: /usr/local/etc/valkey/valkey.conf
-    command: "valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS__PASSWORD}"
-    ports:
-      - "127.0.0.1:6379:6379"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS__PASSWORD}\" valkey-cli ping | grep PONG" ]
-      interval: 5s
-      timeout: 20s
-      retries: 5
-    profiles: [ "core" ]
-    networks:
-      - backend-network
-
 configs:
   nats-conf:
     content: |
@@ -282,20 +248,6 @@ configs:
         max_memory_store: 16MB
         max_file_store: 1GB
       }
-  valkey-conf:
-    content: |
-
-      bind 0.0.0.0
-
-      maxmemory 192mb
-
-      maxmemory-policy allkeys-lru
-
-      save 900 1
-      save 300 10
-      save 60 10000
-
-      stop-writes-on-bgsave-error no
 
 secrets:
   sentry_auth_token:
@@ -303,7 +255,6 @@ secrets:
 
 volumes:
   db-data: {}
-  redis-data: {}
   nats-data: {}
 
 networks:

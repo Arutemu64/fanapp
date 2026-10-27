@@ -5,7 +5,6 @@ import pytest
 from altcha import Challenge, Payload, solve_challenge
 from dishka import AsyncContainer
 from pydantic import SecretStr
-from redis.asyncio import Redis
 
 from fanfan.adapters.captcha.altcha import (
     CHALLENGE_COUNTER_MAX,
@@ -13,6 +12,7 @@ from fanfan.adapters.captcha.altcha import (
     AltchaCaptchaVerifier,
 )
 from fanfan.adapters.captcha.config import AltchaConfig
+from fanfan.application.ports.cooldown import Cooldown
 from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
 
 pytestmark = [
@@ -22,9 +22,9 @@ pytestmark = [
 
 
 async def make_verifier(dishka_request: AsyncContainer) -> AltchaCaptchaVerifier:
-    redis = await dishka_request.get(Redis)
+    cooldown = await dishka_request.get(Cooldown)
     return AltchaCaptchaVerifier(
-        config=AltchaConfig(hmac_key=SecretStr("test-hmac-key")), redis=redis
+        config=AltchaConfig(hmac_key=SecretStr("test-hmac-key")), cooldown=cooldown
     )
 
 
@@ -49,9 +49,9 @@ async def test_challenge_signed_with_another_key_is_rejected(
     dishka_request: AsyncContainer,
 ) -> None:
     verifier = await make_verifier(dishka_request)
-    redis = await dishka_request.get(Redis)
+    cooldown = await dishka_request.get(Cooldown)
     forger = AltchaCaptchaVerifier(
-        config=AltchaConfig(hmac_key=SecretStr("attacker-key")), redis=redis
+        config=AltchaConfig(hmac_key=SecretStr("attacker-key")), cooldown=cooldown
     )
 
     with pytest.raises(CaptchaVerificationFailed):

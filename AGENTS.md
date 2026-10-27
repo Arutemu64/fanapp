@@ -38,7 +38,7 @@ Load the skills and read the guide before implementing. This file wins over a sk
 
 ## Stack & commands
 
-SvelteKit (Svelte 5) + shadcn-svelte + Tailwind v4 with `pnpm`. FastAPI + PostgreSQL (SQLAlchemy, Alembic) + Redis + NATS (FastStream) with `uv`. Run `just` from the repo root.
+SvelteKit (Svelte 5) + shadcn-svelte + Tailwind v4 with `pnpm`. FastAPI + PostgreSQL (SQLAlchemy, Alembic) + NATS (FastStream) with `uv`. Run `just` from the repo root.
 
 | Command                                                                             | Does                                                                     |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |

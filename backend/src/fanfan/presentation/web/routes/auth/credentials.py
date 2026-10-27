@@ -31,7 +31,7 @@ credentials_router = APIRouter()
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Login and create session",
     description="Authenticates user with email and password. "
-    "Sets an HttpOnly cookie with a Redis-backed session id.",
+    "Sets an HttpOnly cookie with an opaque session id.",
     responses={
         204: {"description": "Successfully authenticated. Session cookie is set."},
         **RATE_LIMIT_RESPONSES,
