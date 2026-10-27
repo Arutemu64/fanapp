@@ -2665,6 +2665,138 @@
         }
       }
     },
+    "/webhooks/festengine": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Process FestEngine webhook",
+        "description": "Applies stage events from the FestEngine playback console: the current act, skips and moves. Signed per Standard Webhooks.",
+        "operationId": "process_festengine_event",
+        "parameters": [
+          {
+            "name": "webhook-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Webhook-Id"
+            }
+          },
+          {
+            "name": "webhook-timestamp",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Webhook-Timestamp"
+            }
+          },
+          {
+            "name": "webhook-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Webhook-Signature"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FestEngineEvent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event applied, already applied, or ignored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FestEngineWebhookResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Malformed payload.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The edit breaks a rule.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The service user lacks schedule:manage.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown endpoint, bad signature, or unknown number.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Announcement cooldown.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notifications": {
       "get": {
         "tags": [
@@ -5556,6 +5688,106 @@
           "user"
         ],
         "title": "FeedbackDTO"
+      },
+      "FestEngineEvent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FestEngineEventData",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "timestamp"
+        ],
+        "title": "FestEngineEvent"
+      },
+      "FestEngineEventData": {
+        "properties": {
+          "row": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FestEngineRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after_num": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Num"
+          }
+        },
+        "type": "object",
+        "title": "FestEngineEventData"
+      },
+      "FestEngineRow": {
+        "properties": {
+          "num": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num"
+          },
+          "row_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Type"
+          }
+        },
+        "type": "object",
+        "title": "FestEngineRow"
+      },
+      "FestEngineWebhookResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/FestEngineWebhookStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "FestEngineWebhookResponse"
+      },
+      "FestEngineWebhookStatus": {
+        "type": "string",
+        "enum": [
+          "updated",
+          "unchanged",
+          "ignored",
+          "stale"
+        ],
+        "title": "FestEngineWebhookStatus"
       },
       "FindQuestPlayersOutput": {
         "properties": {

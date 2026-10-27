@@ -145,6 +145,16 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         return _event_to_model(event_orm) if event_orm else None
 
     @override
+    async def get_event_by_number(self, number: int) -> ScheduleEvent | None:
+        stmt = (
+            select(ScheduleEventORM)
+            .where(ScheduleEventORM.number == number)
+            .with_for_update()
+        )
+        event_orm = await self.session.scalar(stmt)
+        return _event_to_model(event_orm) if event_orm else None
+
+    @override
     async def get_first(self) -> ScheduleEntry | None:
         stmt = (
             select(ScheduleEntryORM)

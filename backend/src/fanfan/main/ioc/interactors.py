@@ -115,6 +115,9 @@ from fanfan.application.interactors.schedule.get_schedule import GetSchedule
 from fanfan.application.interactors.schedule.publish_schedule_updated import (
     PublishScheduleUpdated,
 )
+from fanfan.application.interactors.schedule_mgmt.apply_stage_console_action import (
+    ApplyStageConsoleAction,
+)
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ImportSchedule
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
@@ -187,6 +190,7 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
 from fanfan.application.interactors.voting.set_voting_time_range import (
     SetVotingTimeRange,
 )
+from fanfan.presentation.web.festengine.config import FestEngineConfig
 
 
 class InteractorsProvider(Provider):
@@ -197,6 +201,10 @@ class InteractorsProvider(Provider):
         return config.outbox
 
     @provide(scope=Scope.APP)
+    def get_festengine_config(self, config: EnvConfig) -> FestEngineConfig:
+        return config.festengine
+
+    @provide(scope=Scope.APP)
     def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
         return config.notification
 
@@ -205,6 +213,7 @@ class InteractorsProvider(Provider):
         PublishScheduleUpdated,
         MoveScheduleEvent,
         SetCurrentScheduleEvent,
+        ApplyStageConsoleAction,
         UpdateScheduleEventSkip,
         UndoScheduleChange,
         SendScheduleChangeNotifications,

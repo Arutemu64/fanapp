@@ -162,6 +162,9 @@ import type {
 	NewSubscriptionResponses,
 	OauthCallbackData,
 	OauthCallbackErrors,
+	ProcessFestengineEventData,
+	ProcessFestengineEventErrors,
+	ProcessFestengineEventResponses,
 	ProcessTcloudOrderData,
 	ProcessTcloudOrderErrors,
 	ProcessTcloudOrderResponses,
@@ -1171,6 +1174,27 @@ export const processTcloudOrder = <ThrowOnError extends boolean = false>(
 		ThrowOnError
 	>({
 		url: '/webhooks/tcloud/{token}',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Process FestEngine webhook
+ *
+ * Applies stage events from the FestEngine playback console: the current act, skips and moves. Signed per Standard Webhooks.
+ */
+export const processFestengineEvent = <ThrowOnError extends boolean = false>(
+	options: Options<ProcessFestengineEventData, ThrowOnError>
+): RequestResult<ProcessFestengineEventResponses, ProcessFestengineEventErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		ProcessFestengineEventResponses,
+		ProcessFestengineEventErrors,
+		ThrowOnError
+	>({
+		url: '/webhooks/festengine',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',

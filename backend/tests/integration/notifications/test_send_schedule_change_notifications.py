@@ -27,7 +27,7 @@ from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.permission import Permission, generate_user_permission_id
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.subscription import generate_subscription_id
-from fanfan.core.vo.user import UserId, Username, UserRole
+from fanfan.core.vo.user import STAGE_CONSOLE_USER_ID, UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
 from tests.integration.notifications.delivered import delivered_notifications
 
@@ -500,6 +500,85 @@ async def test_schedule_change_notifies_subscribers_first_and_editors_last(
         if not kinds or kinds[-1] != title:
             kinds.append(title)
     assert kinds == expected_order
+
+
+async def _add_schedule_editor(dishka_request: AsyncContainer, uow: UnitOfWork) -> User:
+    user_gateway = await dishka_request.get(UserGateway)
+    permission_gateway = await dishka_request.get(UserPermissionGateway)
+    editor = User(
+        id=UserId(uuid7()),
+        username=Username("schedule_editor"),
+        hashed_password=None,
+        role=UserRole.ORGANIZER,
+    )
+    await user_gateway.add(editor)
+    await permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.SCHEDULE_MANAGE,
+            user_id=editor.id,
+        )
+    )
+    await uow.commit()
+    return editor
+
+
+async def _notify_set_current(
+    dishka_request: AsyncContainer, uow: UnitOfWork, author_id: UserId
+) -> list[str]:
+    """Announce a set-current change by ``author_id``; return each notice's
+    recipient as "title:user_id"."""
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    current_event = _schedule_event(1, "Текущее", 1, is_current=True)
+    await schedule_gateway.add(current_event)
+    change = ScheduleChange.set_as_current(
+        changed_event_id=current_event.id,
+        previous_event_id=None,
+        mailing_id=None,
+        user_id=author_id,
+    )
+    await changes_gateway.add(change)
+    await uow.commit()
+
+    await interactor(
+        SendScheduleChangeNotificationsInput(
+            schedule_change_id=change.id, occurred_at=datetime.now(UTC)
+        )
+    )
+    return [
+        f"{n.title}:{n.user_id}" for n in await delivered_notifications(dishka_request)
+    ]
+
+
+async def test_stage_console_edit_does_not_notify_editors(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    login(visitor)
+    editor = await _add_schedule_editor(dishka_request, uow)
+
+    delivered = await _notify_set_current(dishka_request, uow, STAGE_CONSOLE_USER_ID)
+
+    assert f"Изменение программы:{editor.id}" not in delivered
+
+
+async def test_human_edit_notifies_editors_but_not_the_stage_console(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    login(visitor)
+    editor = await _add_schedule_editor(dishka_request, uow)
+
+    delivered = await _notify_set_current(dishka_request, uow, editor.id)
+
+    assert f"Изменение программы:{editor.id}" in delivered
+    assert f"Изменение программы:{STAGE_CONSOLE_USER_ID}" not in delivered
 
 
 async def test_abandoned_schedule_change_fails_its_mailing(

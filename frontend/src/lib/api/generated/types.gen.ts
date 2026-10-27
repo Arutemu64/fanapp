@@ -297,6 +297,58 @@ export type FeedbackDto = {
 };
 
 /**
+ * FestEngineEvent
+ */
+export type FestEngineEvent = {
+	/**
+	 * Type
+	 */
+	type: string;
+	/**
+	 * Timestamp
+	 */
+	timestamp: string;
+	data?: FestEngineEventData;
+};
+
+/**
+ * FestEngineEventData
+ */
+export type FestEngineEventData = {
+	row?: FestEngineRow | null;
+	/**
+	 * After Num
+	 */
+	after_num?: string | null;
+};
+
+/**
+ * FestEngineRow
+ */
+export type FestEngineRow = {
+	/**
+	 * Num
+	 */
+	num?: string | null;
+	/**
+	 * Row Type
+	 */
+	row_type?: string | null;
+};
+
+/**
+ * FestEngineWebhookResponse
+ */
+export type FestEngineWebhookResponse = {
+	status: FestEngineWebhookStatus;
+};
+
+/**
+ * FestEngineWebhookStatus
+ */
+export type FestEngineWebhookStatus = 'updated' | 'unchanged' | 'ignored' | 'stale';
+
+/**
  * FindQuestPlayersOutput
  */
 export type FindQuestPlayersOutput = {
@@ -3401,6 +3453,63 @@ export type ProcessTcloudOrderResponses = {
 
 export type ProcessTcloudOrderResponse =
 	ProcessTcloudOrderResponses[keyof ProcessTcloudOrderResponses];
+
+export type ProcessFestengineEventData = {
+	body: FestEngineEvent;
+	headers?: {
+		/**
+		 * Webhook-Id
+		 */
+		'webhook-id'?: string | null;
+		/**
+		 * Webhook-Timestamp
+		 */
+		'webhook-timestamp'?: string | null;
+		/**
+		 * Webhook-Signature
+		 */
+		'webhook-signature'?: string | null;
+	};
+	path?: never;
+	query?: never;
+	url: '/webhooks/festengine';
+};
+
+export type ProcessFestengineEventErrors = {
+	/**
+	 * The edit breaks a rule.
+	 */
+	400: ProblemDetails;
+	/**
+	 * The service user lacks schedule:manage.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Unknown endpoint, bad signature, or unknown number.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Malformed payload.
+	 */
+	422: ProblemDetails;
+	/**
+	 * Announcement cooldown.
+	 */
+	429: ProblemDetails;
+};
+
+export type ProcessFestengineEventError =
+	ProcessFestengineEventErrors[keyof ProcessFestengineEventErrors];
+
+export type ProcessFestengineEventResponses = {
+	/**
+	 * Event applied, already applied, or ignored.
+	 */
+	200: FestEngineWebhookResponse;
+};
+
+export type ProcessFestengineEventResponse =
+	ProcessFestengineEventResponses[keyof ProcessFestengineEventResponses];
 
 export type ListUserNotificationsData = {
 	body?: never;

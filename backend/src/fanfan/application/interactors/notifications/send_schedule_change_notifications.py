@@ -37,6 +37,7 @@ from fanfan.core.vo.notification import (
 )
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 from fanfan.core.vo.subscription import SubscriptionId
+from fanfan.core.vo.user import STAGE_CONSOLE_USER_ID
 
 logger = logging.getLogger(__name__)
 
@@ -179,10 +180,19 @@ class SendScheduleChangeNotifications:
     async def _build_editor_notifications(
         self, schedule_change: ScheduleChangeFullDTO, reason_msg: str | None
     ) -> list[NewNotification]:
+        """Tell the human editors what one of them changed.
+
+        The stage console's edits are routine (one per act), so they only
+        appear in the changes feed (docs/adr/0048).
+        """
         notifications: list[NewNotification] = []
-        if schedule_change.user:
-            editor = schedule_change.user
-            editors = await self.user_gateway.read_schedule_editors()
+        editor = schedule_change.user
+        if editor and editor.id != STAGE_CONSOLE_USER_ID:
+            editors = [
+                e
+                for e in await self.user_gateway.read_schedule_editors()
+                if e.id != STAGE_CONSOLE_USER_ID
+            ]
             body = await self.template_renderer.render(
                 "schedule_change_editor.jinja2",
                 {"editor_username": editor.username, "reason_msg": reason_msg},

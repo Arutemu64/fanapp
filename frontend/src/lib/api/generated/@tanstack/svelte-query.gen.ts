@@ -64,6 +64,7 @@ import {
 	newSubscription,
 	oauthCallback,
 	type Options,
+	processFestengineEvent,
 	processTcloudOrder,
 	requestLoginCode,
 	requestSync,
@@ -239,6 +240,9 @@ import type {
 	NewSubscriptionResponse,
 	OauthCallbackData,
 	OauthCallbackError,
+	ProcessFestengineEventData,
+	ProcessFestengineEventError,
+	ProcessFestengineEventResponse,
 	ProcessTcloudOrderData,
 	ProcessTcloudOrderError,
 	ProcessTcloudOrderResponse,
@@ -1600,6 +1604,35 @@ export const processTcloudOrderMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await processTcloudOrder({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Process FestEngine webhook
+ *
+ * Applies stage events from the FestEngine playback console: the current act, skips and moves. Signed per Standard Webhooks.
+ */
+export const processFestengineEventMutation = (
+	options?: Partial<Options<ProcessFestengineEventData>>
+): MutationOptions<
+	ProcessFestengineEventResponse,
+	ProcessFestengineEventError,
+	Options<ProcessFestengineEventData>
+> => {
+	const mutationOptions: MutationOptions<
+		ProcessFestengineEventResponse,
+		ProcessFestengineEventError,
+		Options<ProcessFestengineEventData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await processFestengineEvent({
 				...options,
 				...fnOptions,
 				throwOnError: true
