@@ -128,6 +128,16 @@ export type ChangePasswordInput = {
 };
 
 /**
+ * CheckPushSubscriptionInput
+ */
+export type CheckPushSubscriptionInput = {
+	/**
+	 * Endpoint
+	 */
+	endpoint: string;
+};
+
+/**
  * CheckPushSubscriptionOutput
  */
 export type CheckPushSubscriptionOutput = {
@@ -266,6 +276,16 @@ export type DebugOutput = {
 	headers: {
 		[key: string]: string;
 	};
+};
+
+/**
+ * DeletePushSubscriptionInput
+ */
+export type DeletePushSubscriptionInput = {
+	/**
+	 * Endpoint
+	 */
+	endpoint: string;
 };
 
 /**
@@ -3846,86 +3866,6 @@ export type CancelMailingResponses = {
 
 export type CancelMailingResponse = CancelMailingResponses[keyof CancelMailingResponses];
 
-export type DeletePushSubscriptionData = {
-	body?: never;
-	path?: never;
-	query: {
-		/**
-		 * Endpoint
-		 */
-		endpoint: string;
-	};
-	url: '/push';
-};
-
-export type DeletePushSubscriptionErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationProblem;
-};
-
-export type DeletePushSubscriptionError =
-	DeletePushSubscriptionErrors[keyof DeletePushSubscriptionErrors];
-
-export type DeletePushSubscriptionResponses = {
-	/**
-	 * Push subscription removed successfully.
-	 */
-	204: void;
-};
-
-export type DeletePushSubscriptionResponse =
-	DeletePushSubscriptionResponses[keyof DeletePushSubscriptionResponses];
-
-export type CheckPushSubscriptionData = {
-	body?: never;
-	path?: never;
-	query: {
-		/**
-		 * Endpoint
-		 */
-		endpoint: string;
-	};
-	url: '/push';
-};
-
-export type CheckPushSubscriptionErrors = {
-	/**
-	 * Not authenticated.
-	 */
-	401: ProblemDetails;
-	/**
-	 * Access denied.
-	 */
-	403: ProblemDetails;
-	/**
-	 * Request validation error.
-	 */
-	422: ValidationProblem;
-};
-
-export type CheckPushSubscriptionError =
-	CheckPushSubscriptionErrors[keyof CheckPushSubscriptionErrors];
-
-export type CheckPushSubscriptionResponses = {
-	/**
-	 * Subscription status for the endpoint.
-	 */
-	200: CheckPushSubscriptionOutput;
-};
-
-export type CheckPushSubscriptionResponse =
-	CheckPushSubscriptionResponses[keyof CheckPushSubscriptionResponses];
-
 export type CreatePushSubscriptionData = {
 	body: CreatePushSubscriptionInput;
 	path?: never;
@@ -3964,6 +3904,80 @@ export type CreatePushSubscriptionResponses = {
 
 export type CreatePushSubscriptionResponse =
 	CreatePushSubscriptionResponses[keyof CreatePushSubscriptionResponses];
+
+export type CheckPushSubscriptionData = {
+	body: CheckPushSubscriptionInput;
+	path?: never;
+	query?: never;
+	url: '/push/lookup';
+};
+
+export type CheckPushSubscriptionErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+};
+
+export type CheckPushSubscriptionError =
+	CheckPushSubscriptionErrors[keyof CheckPushSubscriptionErrors];
+
+export type CheckPushSubscriptionResponses = {
+	/**
+	 * Subscription status for the endpoint.
+	 */
+	200: CheckPushSubscriptionOutput;
+};
+
+export type CheckPushSubscriptionResponse =
+	CheckPushSubscriptionResponses[keyof CheckPushSubscriptionResponses];
+
+export type DeletePushSubscriptionData = {
+	body: DeletePushSubscriptionInput;
+	path?: never;
+	query?: never;
+	url: '/push/remove';
+};
+
+export type DeletePushSubscriptionErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * No subscription has this endpoint.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+};
+
+export type DeletePushSubscriptionError =
+	DeletePushSubscriptionErrors[keyof DeletePushSubscriptionErrors];
+
+export type DeletePushSubscriptionResponses = {
+	/**
+	 * Push subscription removed successfully.
+	 */
+	204: void;
+};
+
+export type DeletePushSubscriptionResponse =
+	DeletePushSubscriptionResponses[keyof DeletePushSubscriptionResponses];
 
 export type ListFeedbackData = {
 	body?: never;

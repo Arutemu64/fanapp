@@ -4,6 +4,8 @@ from typing import override
 
 import structlog
 
+from fanfan.adapters.debug.redaction import redact_secret_paths
+
 HEALTH_CHECK_PATH = "/debug/health"
 
 
@@ -13,6 +15,19 @@ class _HealthCheckFilter(logging.Filter):
     @override
     def filter(self, record: logging.LogRecord) -> bool:
         return HEALTH_CHECK_PATH not in record.getMessage()
+
+
+class SecretPathFilter(logging.Filter):
+    """Redact secret path segments from uvicorn access log lines."""
+
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple):
+            record.args = tuple(
+                redact_secret_paths(arg) if isinstance(arg, str) else arg
+                for arg in record.args
+            )
+        return True
 
 
 def setup_logging(level: int, *, json_logs: bool) -> None:
@@ -72,4 +87,6 @@ def setup_logging(level: int, *, json_logs: bool) -> None:
 
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("httpx2").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn.access").addFilter(_HealthCheckFilter())
+    access_logger = logging.getLogger("uvicorn.access")
+    access_logger.addFilter(_HealthCheckFilter())
+    access_logger.addFilter(SecretPathFilter())

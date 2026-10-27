@@ -1,8 +1,6 @@
-from typing import Annotated
-
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 
 from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscription,
@@ -10,7 +8,6 @@ from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscriptionOutput,
 )
 from fanfan.application.interactors.push_sub.create_push_subscription import (
-    PUSH_ENDPOINT_MAX_LENGTH,
     CreatePushSubscription,
     CreatePushSubscriptionInput,
 )
@@ -51,36 +48,44 @@ async def create_push_subscription(
     await interactor(data)
 
 
-@push_router.get(
-    "",
+# The endpoint is a capability URL (RFC 8030 §8.3), so lookups and removals send
+# it in a POST body: a path or query would put it in access logs.
+@push_router.post(
+    "/lookup",
+    status_code=200,
     summary="Check push subscription",
     description="Reports whether the given endpoint is registered for the "
     "authenticated user. The client only needs this yes/no answer for its own "
-    "device, so the full subscription list (incl. its keys) is not exposed.",
+    "device, so the full subscription list (incl. its keys) is not exposed. "
+    "Read-only; a POST only to keep the endpoint out of the URL.",
     responses={
         200: {"description": "Subscription status for the endpoint."},
     },
 )
 @inject
 async def check_push_subscription(
-    endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
+    data: CheckPushSubscriptionInput,
     interactor: FromDishka[CheckPushSubscription],
 ) -> CheckPushSubscriptionOutput:
-    return await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
+    return await interactor(data)
 
 
-@push_router.delete(
-    "",
+@push_router.post(
+    "/remove",
     summary="Unsubscribe from push notifications",
     description="Removes a push subscription endpoint for the authenticated user.",
     status_code=204,
     responses={
         204: {"description": "Push subscription removed successfully."},
+        404: {
+            "model": ProblemDetails,
+            "description": "No subscription has this endpoint.",
+        },
     },
 )
 @inject
 async def delete_push_subscription(
-    endpoint: Annotated[str, Query(max_length=PUSH_ENDPOINT_MAX_LENGTH)],
+    data: DeletePushSubscriptionInput,
     interactor: FromDishka[DeletePushSubscription],
 ) -> None:
-    await interactor(DeletePushSubscriptionInput(endpoint=endpoint))
+    await interactor(data)

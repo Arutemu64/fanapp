@@ -1391,54 +1391,6 @@ export const cancelMailing = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Unsubscribe from push notifications
- *
- * Removes a push subscription endpoint for the authenticated user.
- */
-export const deletePushSubscription = <ThrowOnError extends boolean = false>(
-	options: Options<DeletePushSubscriptionData, ThrowOnError>
-): RequestResult<DeletePushSubscriptionResponses, DeletePushSubscriptionErrors, ThrowOnError> =>
-	(options.client ?? client).delete<
-		DeletePushSubscriptionResponses,
-		DeletePushSubscriptionErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/push',
-		...options
-	});
-
-/**
- * Check push subscription
- *
- * Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.
- */
-export const checkPushSubscription = <ThrowOnError extends boolean = false>(
-	options: Options<CheckPushSubscriptionData, ThrowOnError>
-): RequestResult<CheckPushSubscriptionResponses, CheckPushSubscriptionErrors, ThrowOnError> =>
-	(options.client ?? client).get<
-		CheckPushSubscriptionResponses,
-		CheckPushSubscriptionErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/push',
-		...options
-	});
-
-/**
  * Subscribe to push notifications
  *
  * Registers a push subscription endpoint for the authenticated user's device.
@@ -1459,6 +1411,62 @@ export const createPushSubscription = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/push',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Check push subscription
+ *
+ * Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed. Read-only; a POST only to keep the endpoint out of the URL.
+ */
+export const checkPushSubscription = <ThrowOnError extends boolean = false>(
+	options: Options<CheckPushSubscriptionData, ThrowOnError>
+): RequestResult<CheckPushSubscriptionResponses, CheckPushSubscriptionErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		CheckPushSubscriptionResponses,
+		CheckPushSubscriptionErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/push/lookup',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Unsubscribe from push notifications
+ *
+ * Removes a push subscription endpoint for the authenticated user.
+ */
+export const deletePushSubscription = <ThrowOnError extends boolean = false>(
+	options: Options<DeletePushSubscriptionData, ThrowOnError>
+): RequestResult<DeletePushSubscriptionResponses, DeletePushSubscriptionErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		DeletePushSubscriptionResponses,
+		DeletePushSubscriptionErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/push/remove',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',

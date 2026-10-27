@@ -1963,62 +1963,6 @@ export const cancelMailingMutation = (
 };
 
 /**
- * Unsubscribe from push notifications
- *
- * Removes a push subscription endpoint for the authenticated user.
- */
-export const deletePushSubscriptionMutation = (
-	options?: Partial<Options<DeletePushSubscriptionData>>
-): MutationOptions<
-	DeletePushSubscriptionResponse,
-	DeletePushSubscriptionError,
-	Options<DeletePushSubscriptionData>
-> => {
-	const mutationOptions: MutationOptions<
-		DeletePushSubscriptionResponse,
-		DeletePushSubscriptionError,
-		Options<DeletePushSubscriptionData>
-	> = {
-		mutationFn: async (fnOptions) => {
-			const { data } = await deletePushSubscription({
-				...options,
-				...fnOptions,
-				throwOnError: true
-			});
-			return data;
-		}
-	};
-	return mutationOptions;
-};
-
-export const checkPushSubscriptionQueryKey = (options: Options<CheckPushSubscriptionData>) =>
-	createQueryKey('checkPushSubscription', options);
-
-/**
- * Check push subscription
- *
- * Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.
- */
-export const checkPushSubscriptionOptions = (options: Options<CheckPushSubscriptionData>) =>
-	queryOptions<
-		CheckPushSubscriptionResponse,
-		CheckPushSubscriptionError,
-		CheckPushSubscriptionResponse,
-		ReturnType<typeof checkPushSubscriptionQueryKey>
-	>({
-		queryFn: async ({ queryKey, signal }) => {
-			const { data } = await checkPushSubscription({
-				...options,
-				...queryKey[0],
-				signal,
-				throwOnError: true
-			});
-			return data;
-		},
-		queryKey: checkPushSubscriptionQueryKey(options)
-	});
-
-/**
  * Subscribe to push notifications
  *
  * Registers a push subscription endpoint for the authenticated user's device.
@@ -2037,6 +1981,64 @@ export const createPushSubscriptionMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await createPushSubscription({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Check push subscription
+ *
+ * Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed. Read-only; a POST only to keep the endpoint out of the URL.
+ */
+export const checkPushSubscriptionMutation = (
+	options?: Partial<Options<CheckPushSubscriptionData>>
+): MutationOptions<
+	CheckPushSubscriptionResponse,
+	CheckPushSubscriptionError,
+	Options<CheckPushSubscriptionData>
+> => {
+	const mutationOptions: MutationOptions<
+		CheckPushSubscriptionResponse,
+		CheckPushSubscriptionError,
+		Options<CheckPushSubscriptionData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await checkPushSubscription({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Unsubscribe from push notifications
+ *
+ * Removes a push subscription endpoint for the authenticated user.
+ */
+export const deletePushSubscriptionMutation = (
+	options?: Partial<Options<DeletePushSubscriptionData>>
+): MutationOptions<
+	DeletePushSubscriptionResponse,
+	DeletePushSubscriptionError,
+	Options<DeletePushSubscriptionData>
+> => {
+	const mutationOptions: MutationOptions<
+		DeletePushSubscriptionResponse,
+		DeletePushSubscriptionError,
+		Options<DeletePushSubscriptionData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await deletePushSubscription({
 				...options,
 				...fnOptions,
 				throwOnError: true

@@ -3351,20 +3351,15 @@
         "summary": "Subscribe to push notifications",
         "description": "Registers a push subscription endpoint for the authenticated user's device.",
         "operationId": "create_push_subscription",
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreatePushSubscriptionInput"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "204": {
@@ -3410,32 +3405,32 @@
               }
             }
           }
-        }
-      },
-      "get": {
-        "tags": [
-          "Push"
-        ],
-        "summary": "Check push subscription",
-        "description": "Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.",
-        "operationId": "check_push_subscription",
+        },
         "security": [
           {
             "SessionCookie": []
           }
+        ]
+      }
+    },
+    "/push/lookup": {
+      "post": {
+        "tags": [
+          "Push"
         ],
-        "parameters": [
-          {
-            "name": "endpoint",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "maxLength": 2048,
-              "title": "Endpoint"
+        "summary": "Check push subscription",
+        "description": "Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed. Read-only; a POST only to keep the endpoint out of the URL.",
+        "operationId": "check_push_subscription",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckPushSubscriptionInput"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Subscription status for the endpoint.",
@@ -3477,32 +3472,32 @@
               }
             }
           }
-        }
-      },
-      "delete": {
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/push/remove": {
+      "post": {
         "tags": [
           "Push"
         ],
         "summary": "Unsubscribe from push notifications",
         "description": "Removes a push subscription endpoint for the authenticated user.",
         "operationId": "delete_push_subscription",
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "endpoint",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "maxLength": 2048,
-              "title": "Endpoint"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletePushSubscriptionInput"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "204": {
             "description": "Push subscription removed successfully."
@@ -3536,8 +3531,23 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "No subscription has this endpoint.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
       }
     },
     "/feedback": {
@@ -5414,6 +5424,21 @@
         ],
         "title": "ChangePasswordInput"
       },
+      "CheckPushSubscriptionInput": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "title": "Endpoint"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "CheckPushSubscriptionInput"
+      },
       "CheckPushSubscriptionOutput": {
         "properties": {
           "subscribed": {
@@ -5638,6 +5663,21 @@
           "headers"
         ],
         "title": "DebugOutput"
+      },
+      "DeletePushSubscriptionInput": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "title": "Endpoint"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "DeletePushSubscriptionInput"
       },
       "DrawVotingContestWinnerOutput": {
         "properties": {

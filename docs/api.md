@@ -147,7 +147,7 @@ An action that cannot finish inside the request returns **202** with the created
 
 ## Inbound webhooks
 
-`/api/webhooks/*` are server-to-server and not called by the frontend. TicketsCloud authenticates with a secret path segment; FestEngine signs per Standard Webhooks. The FestEngine payload contract and event mapping are in [backend.md](backend.md) "FestEngine webhook".
+`/api/webhooks/*` are server-to-server and not called by the frontend. TicketsCloud authenticates with a secret path segment, which the uvicorn access log and Sentry events redact (`adapters/debug/redaction.py`); FestEngine signs per Standard Webhooks. The FestEngine payload contract and event mapping are in [backend.md](backend.md) "FestEngine webhook".
 
 ## Russian Localization & Error Handling
 

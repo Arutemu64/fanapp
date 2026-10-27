@@ -132,7 +132,7 @@ Authentication is **enforced inside interactors**, not via FastAPI `Depends`: th
 ### Route shape
 
 - **No trailing slash.** A collection is `/users`, not `/users/` ([Zalando: normalized paths](https://opensource.zalando.com/restful-api-guidelines/)). A router's root route takes the empty path (`@router.get("")`), which FastAPI allows only under a non-empty prefix — so a package that assembles sub-routers (`routes/schedule/`, `routes/current_user/`) passes its prefix on each `include_router`, not on the parent router.
-- **A DELETE carries no body.** Content in a DELETE has no defined semantics and some servers reject it ([RFC 9110 §9.3.5](https://www.rfc-editor.org/rfc/rfc9110#section-9.3.5)); identify the target in the path or the query (`DELETE /push?endpoint=…`).
+- **A DELETE carries no body.** Content in a DELETE has no defined semantics and some servers reject it ([RFC 9110 §9.3.5](https://www.rfc-editor.org/rfc/rfc9110#section-9.3.5)); identify the target in the path or the query. When the identifier is a secret, POST it in a body to an action route instead (`POST /push/remove`, `POST /push/lookup`): a path or query lands in access logs, and a push endpoint is a bearer capability ([RFC 8030 §8.3](https://www.rfc-editor.org/rfc/rfc8030.html#section-8.3)).
 - **A redirect route declares it.** Set `status_code` and `response_class=RedirectResponse` on the decorator, or FastAPI also documents a JSON 200 the route never sends (the OAuth start and callback routes).
 
 ## Persistence & Transaction Management
