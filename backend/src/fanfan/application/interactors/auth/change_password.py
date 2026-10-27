@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.session_store import SessionStore
@@ -9,7 +10,7 @@ from fanfan.core.exceptions.auth import IncorrectPassword
 from fanfan.core.vo.fields import PASSWORD_FIELD, PASSWORD_MAX_LENGTH
 
 
-class ChangePasswordInput(BaseModel):
+class ChangePasswordInput(InputModel):
     old_password: str | None = Field(max_length=PASSWORD_MAX_LENGTH, repr=False)
     new_password: str = PASSWORD_FIELD
 

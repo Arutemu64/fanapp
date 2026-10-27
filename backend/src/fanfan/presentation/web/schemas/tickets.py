@@ -1,9 +1,11 @@
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from fanfan.application.dto.input import InputModel
 
 
-class TicketListQuery(BaseModel):
+class TicketListQuery(InputModel):
     """Query string of GET /tickets, read as one model
     (https://fastapi.tiangolo.com/tutorial/query-param-models/)."""
 

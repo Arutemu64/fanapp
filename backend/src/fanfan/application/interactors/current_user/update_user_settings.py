@@ -1,7 +1,8 @@
 import logging
 
-from pydantic import BaseModel
+from pydantic import MISSING
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -9,10 +10,10 @@ from fanfan.application.services.current_user import CurrentUserProvider
 logger = logging.getLogger(__name__)
 
 
-class UpdateUserSettingsInput(BaseModel):
-    receive_all_announcements: bool | None = None
-    receive_telegram_notifications: bool | None = None
-    receive_vk_notifications: bool | None = None
+class UpdateUserSettingsInput(InputModel):
+    receive_all_announcements: bool | MISSING = MISSING
+    receive_telegram_notifications: bool | MISSING = MISSING
+    receive_vk_notifications: bool | MISSING = MISSING
 
 
 class UpdateUserSettings:
@@ -27,7 +28,7 @@ class UpdateUserSettings:
         self.uow = uow
 
     async def __call__(self, data: UpdateUserSettingsInput) -> None:
-        data_to_update = data.model_dump(exclude_unset=True)
+        data_to_update = data.model_dump()
         current_user = await self.current_user_provider.require_user()
         current_user.update_settings(
             receive_all_announcements=data_to_update.get("receive_all_announcements"),

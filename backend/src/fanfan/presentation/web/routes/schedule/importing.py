@@ -3,10 +3,11 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, File, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import Field
 from starlette.concurrency import run_in_threadpool
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
+from fanfan.application.dto.input import InputModel
 from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportSchedule,
     ImportScheduleInput,
@@ -50,7 +51,7 @@ def _ensure_valid_upload(file: UploadFile) -> None:
         )
 
 
-class ImportScheduleForm(BaseModel):
+class ImportScheduleForm(InputModel):
     """Multipart body of POST /schedule/import, named so the spec and the
     generated client don't carry FastAPI's ``Body_import_schedule``."""
 

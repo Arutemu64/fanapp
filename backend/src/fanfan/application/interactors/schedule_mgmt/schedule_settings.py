@@ -1,7 +1,9 @@
 import logging
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import MISSING, BaseModel, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
@@ -18,9 +20,9 @@ class ScheduleSettingsDTO(BaseModel):
     changeover_seconds: int = Field(ge=0, le=600)
 
 
-class UpdateScheduleSettingsInput(BaseModel):
-    announcement_timeout: int | None = Field(default=None, ge=1)
-    changeover_seconds: int | None = Field(default=None, ge=0, le=600)
+class UpdateScheduleSettingsInput(InputModel):
+    announcement_timeout: Annotated[int, Field(ge=1)] | MISSING = MISSING
+    changeover_seconds: Annotated[int, Field(ge=0, le=600)] | MISSING = MISSING
 
 
 class GetScheduleSettings:
@@ -68,13 +70,15 @@ class UpdateScheduleSettings:
             user=current_user, permission=Permission.SCHEDULE_SETUP
         )
 
+        changes = data.model_dump()
+        changeover_seconds = changes.get("changeover_seconds")
         settings = await self.app_settings_gateway.get_for_update()
         changeover_changed = (
-            data.changeover_seconds is not None
-            and data.changeover_seconds != settings.schedule.changeover_seconds
+            changeover_seconds is not None
+            and changeover_seconds != settings.schedule.changeover_seconds
         )
-        settings.update_limits(announcement_timeout=data.announcement_timeout)
-        settings.update_schedule(changeover_seconds=data.changeover_seconds)
+        settings.update_limits(announcement_timeout=changes.get("announcement_timeout"))
+        settings.update_schedule(changeover_seconds=changeover_seconds)
         await self.app_settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(

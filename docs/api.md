@@ -117,6 +117,7 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 - **An ordered list is ordered by the server.** Clients keep the array's order. Internal sort keys (the schedule's float `order`) stay off the wire, so changing how the server orders rows never breaks a client.
 - **A number with a unit names it**: `duration_seconds`, `lead_minutes`.
+- **A `PATCH` body is a JSON Merge Patch** ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396.html)): a missing field is left alone and `null` clears the value. A field that can't be cleared refuses `null` with a 422, so its type is `x?: T`, never `x?: T | null`. On the backend that is `x: T | MISSING = MISSING` (Pydantic's sentinel); `model_dump()` leaves missing fields out. A write that replaces a whole value (the voting window) is a `PUT`.
 - **A value that holds for one row at most is named once at the top**, not flagged on every row: the schedule's `current_event_id`, not a per-event `is_current`. The client derives the per-row flag in its view model (`mergeSubscriptions`).
 
 ## Mutations & Data Recovery

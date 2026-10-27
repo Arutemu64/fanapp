@@ -2482,13 +2482,15 @@
             "SessionCookie": []
           }
         ]
-      },
-      "patch": {
+      }
+    },
+    "/voting/time-range": {
+      "put": {
         "tags": [
           "Voting"
         ],
         "summary": "Set voting time range",
-        "description": "Sets the time range during which visitors can vote. Requires voting:manage.",
+        "description": "Replaces the time range during which visitors can vote; both bounds null closes voting. Requires voting:manage.",
         "operationId": "set_voting_time_range",
         "requestBody": {
           "content": {
@@ -5237,6 +5239,7 @@
             "title": "Participant Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "participant_id"
@@ -5321,6 +5324,7 @@
             "title": "Message"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "award_id",
@@ -5374,6 +5378,7 @@
             "title": "New Email"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "new_email"
@@ -5401,6 +5406,7 @@
             "title": "New Password"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "old_password",
@@ -5431,6 +5437,7 @@
             "title": "Code"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "code"
@@ -5479,6 +5486,7 @@
             "title": "Auth"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "endpoint",
@@ -5501,6 +5509,7 @@
             "title": "Lead Minutes"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "event_id",
@@ -5667,6 +5676,7 @@
             "title": "Password"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "email",
@@ -5837,6 +5847,7 @@
             "title": "Amount"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "batch_id",
@@ -6094,6 +6105,7 @@
             "description": "Excel file with schedule data."
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "file"
@@ -6226,6 +6238,7 @@
             "title": "Barcode"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "barcode"
@@ -6497,6 +6510,7 @@
             "title": "Code"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "email",
@@ -6593,6 +6607,7 @@
             "title": "Notification Ids"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "notification_ids"
@@ -7193,6 +7208,7 @@
             "title": "Captcha Token"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "email"
@@ -7516,6 +7532,7 @@
             "title": "Roles"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "mailing_id",
@@ -7546,6 +7563,7 @@
             "title": "Event Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "event_id"
@@ -7563,6 +7581,7 @@
             "title": "Event Roles"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "event_roles"
@@ -7575,6 +7594,7 @@
             "$ref": "#/components/schemas/UserRole"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "role"
@@ -7608,6 +7628,7 @@
             "title": "Voting End"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "voting_start",
@@ -7633,6 +7654,7 @@
             "title": "Text"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "text"
@@ -7850,6 +7872,7 @@
             "$ref": "#/components/schemas/UserRole"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "event_id",
@@ -7990,99 +8013,52 @@
       "UpdateAppSettingsInput": {
         "properties": {
           "festival_start": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Festival Start"
           },
           "festival_end": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "format": "date-time",
             "title": "Festival End"
           },
           "quest_enabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "boolean",
             "title": "Quest Enabled"
           },
           "quest_max_award": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 10000.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
             "title": "Quest Max Award"
           },
           "quest_cancel_window_minutes": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 1440.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 0.0,
             "title": "Quest Cancel Window Minutes"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdateAppSettingsInput"
       },
       "UpdateCurrentUserInput": {
         "properties": {
           "username": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 25,
-                "minLength": 3,
-                "pattern": "^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9_]{2,24}$"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "maxLength": 25,
+            "minLength": 3,
+            "pattern": "^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9_]{2,24}$",
             "title": "Username"
           },
           "avatar_seed": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{4,32}$"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{4,32}$",
             "title": "Avatar Seed"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdateCurrentUserInput"
       },
@@ -8114,70 +8090,37 @@
       "UpdateScheduleSettingsInput": {
         "properties": {
           "announcement_timeout": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "minimum": 1.0,
             "title": "Announcement Timeout"
           },
           "changeover_seconds": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 600.0,
-                "minimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 0.0,
             "title": "Changeover Seconds"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdateScheduleSettingsInput"
       },
       "UpdateUserSettingsInput": {
         "properties": {
           "receive_all_announcements": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "boolean",
             "title": "Receive All Announcements"
           },
           "receive_telegram_notifications": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "boolean",
             "title": "Receive Telegram Notifications"
           },
           "receive_vk_notifications": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "boolean",
             "title": "Receive Vk Notifications"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UpdateUserSettingsInput"
       },

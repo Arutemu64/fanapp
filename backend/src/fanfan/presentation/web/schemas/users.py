@@ -1,11 +1,12 @@
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.core.vo.user import UserRole
 
 
-class UserListQuery(BaseModel):
+class UserListQuery(InputModel):
     """Query string of GET /users, read as one model
     (https://fastapi.tiangolo.com/tutorial/query-param-models/)."""
 
@@ -23,5 +24,5 @@ class UserListQuery(BaseModel):
     has_ticket: bool | None = None
 
 
-class SetUserRoleBody(BaseModel):
+class SetUserRoleBody(InputModel):
     role: UserRole

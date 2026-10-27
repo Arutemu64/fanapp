@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.dto.ticket import TCloudEventRoleDTO
 from fanfan.application.interactors.sync.get_sync_sources import (
     AvailableSyncSources,
@@ -21,7 +22,7 @@ class TCloudEventRolesOutput(BaseModel):
     event_roles: list[TCloudEventRoleDTO]
 
 
-class SetTCloudEventRolesInput(BaseModel):
+class SetTCloudEventRolesInput(InputModel):
     event_roles: list[TCloudEventRoleDTO] = Field(max_length=100)
 
 

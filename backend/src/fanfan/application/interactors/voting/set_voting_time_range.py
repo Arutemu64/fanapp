@@ -1,7 +1,8 @@
 import logging
 
-from pydantic import AwareDatetime, BaseModel
+from pydantic import AwareDatetime
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
@@ -14,7 +15,7 @@ from fanfan.core.vo.permission import Permission
 logger = logging.getLogger(__name__)
 
 
-class SetVotingTimeRangeInput(BaseModel):
+class SetVotingTimeRangeInput(InputModel):
     voting_start: AwareDatetime | None
     voting_end: AwareDatetime | None
 

@@ -41,6 +41,12 @@ Everything below this section is detail; these rules alone prevent most mistakes
     client IP, is `…Body` (`UpdateScheduleEventBody`); a form or multipart body
     is `…Form`; a read model is `…DTO`, and an interactor's own result wrapper
     `…Output`.
+    Every model a client sends (body, form, query) subclasses `InputModel`
+    (`application/dto/input.py`), which forbids unknown fields; webhook
+    payloads stay lenient. `test_openapi_spec.py` guards it.
+    A `PATCH` field is `T | MISSING = MISSING`, never `T | None = None`:
+    `null` means "clear", so a field that can't be cleared must refuse it
+    ([docs/api.md](api.md) "Field conventions").
     Every response field is required, nullable when it can be empty — no
     defaults on response DTOs (guarded by `test_openapi_spec.py`).
     A person on a record is a `UserRefDTO` in a field named for their role

@@ -15,6 +15,9 @@ PYPROJECT_PATH = BACKEND_DIR / "pyproject.toml"
 
 MAX_DIFF_LINES = 40
 
+# Vendors add fields to their payloads without notice, so webhooks stay lenient.
+WEBHOOKS_PREFIX = "/webhooks/"
+
 DRIFT_MESSAGE = """\
 shared/openapi/openapi.json is out of date with the routers and DTOs.
 
@@ -105,19 +108,32 @@ def _referenced_schema_names(node: object) -> set[str]:
     return set()
 
 
-def _success_response_schema_names(spec: dict[str, Any]) -> set[str]:
+def _with_nested_schema_names(spec: dict[str, Any], pending: set[str]) -> set[str]:
     schemas = spec["components"]["schemas"]
-    pending: set[str] = set()
-    for status_code, response in iter_responses(spec):
-        if status_code.startswith("2"):
-            pending |= _referenced_schema_names(response.get("content", {}))
-
     seen: set[str] = set()
     while pending:
         name = pending.pop()
         seen.add(name)
         pending |= _referenced_schema_names(schemas[name]) - seen
     return seen
+
+
+def _success_response_schema_names(spec: dict[str, Any]) -> set[str]:
+    pending: set[str] = set()
+    for status_code, response in iter_responses(spec):
+        if status_code.startswith("2"):
+            pending |= _referenced_schema_names(response.get("content", {}))
+    return _with_nested_schema_names(spec, pending)
+
+
+def _request_body_schema_names(spec: dict[str, Any]) -> set[str]:
+    pending: set[str] = set()
+    for path, path_item in spec["paths"].items():
+        if path.startswith(WEBHOOKS_PREFIX):
+            continue
+        for operation in path_item.values():
+            pending |= _referenced_schema_names(operation.get("requestBody", {}))
+    return _with_nested_schema_names(spec, pending)
 
 
 def test_success_response_fields_are_required() -> None:
@@ -140,4 +156,25 @@ def test_success_response_fields_are_required() -> None:
     assert not optional, (
         "Response fields must be required; drop the default on the DTO field "
         f"(use `X | None` for an empty value): {optional}"
+    )
+
+
+def test_request_bodies_reject_unknown_fields() -> None:
+    """Every object a client sends, nested ones included, is an `InputModel`.
+
+    Pydantic ignores unknown fields by default, so a misspelled PATCH field
+    would answer 204 and change nothing. `InputModel` forbids them, which the
+    spec shows as `additionalProperties: false`.
+    """
+    spec = committed_spec()
+    schemas = spec["components"]["schemas"]
+    lenient = sorted(
+        name
+        for name in _request_body_schema_names(spec)
+        if "properties" in schemas[name]
+        and schemas[name].get("additionalProperties") is not False
+    )
+
+    assert not lenient, (
+        f"Request models must subclass InputModel (extra='forbid'): {lenient}"
     )

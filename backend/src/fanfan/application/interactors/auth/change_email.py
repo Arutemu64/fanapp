@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.interactors.auth.send_email_confirmation_code import (
     SendEmailConfirmationCode,
     SendEmailConfirmationCodeInput,
@@ -13,7 +14,7 @@ from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
 from fanfan.core.vo.email import Email
 
 
-class ChangeEmailInput(BaseModel):
+class ChangeEmailInput(InputModel):
     new_email: EmailStr
 
 

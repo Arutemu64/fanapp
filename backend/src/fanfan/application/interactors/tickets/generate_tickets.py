@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 from pydantic.types import UuidVersion
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -20,7 +21,7 @@ MIN_AMOUNT = 1
 MAX_AMOUNT = 100
 
 
-class GenerateTicketsInput(BaseModel):
+class GenerateTicketsInput(InputModel):
     batch_id: Annotated[
         TicketBatchId,
         UuidVersion(7),

@@ -1689,23 +1689,23 @@ export type UpdateAppSettingsInput = {
 	/**
 	 * Festival Start
 	 */
-	festival_start?: string | null;
+	festival_start?: string;
 	/**
 	 * Festival End
 	 */
-	festival_end?: string | null;
+	festival_end?: string;
 	/**
 	 * Quest Enabled
 	 */
-	quest_enabled?: boolean | null;
+	quest_enabled?: boolean;
 	/**
 	 * Quest Max Award
 	 */
-	quest_max_award?: number | null;
+	quest_max_award?: number;
 	/**
 	 * Quest Cancel Window Minutes
 	 */
-	quest_cancel_window_minutes?: number | null;
+	quest_cancel_window_minutes?: number;
 };
 
 /**
@@ -1715,11 +1715,11 @@ export type UpdateCurrentUserInput = {
 	/**
 	 * Username
 	 */
-	username?: string | null;
+	username?: string;
 	/**
 	 * Avatar Seed
 	 */
-	avatar_seed?: string | null;
+	avatar_seed?: string;
 };
 
 /**
@@ -1747,11 +1747,11 @@ export type UpdateScheduleSettingsInput = {
 	/**
 	 * Announcement Timeout
 	 */
-	announcement_timeout?: number | null;
+	announcement_timeout?: number;
 	/**
 	 * Changeover Seconds
 	 */
-	changeover_seconds?: number | null;
+	changeover_seconds?: number;
 };
 
 /**
@@ -1761,15 +1761,15 @@ export type UpdateUserSettingsInput = {
 	/**
 	 * Receive All Announcements
 	 */
-	receive_all_announcements?: boolean | null;
+	receive_all_announcements?: boolean;
 	/**
 	 * Receive Telegram Notifications
 	 */
-	receive_telegram_notifications?: boolean | null;
+	receive_telegram_notifications?: boolean;
 	/**
 	 * Receive Vk Notifications
 	 */
-	receive_vk_notifications?: boolean | null;
+	receive_vk_notifications?: boolean;
 };
 
 /**
@@ -3378,7 +3378,7 @@ export type SetVotingTimeRangeData = {
 	body: SetVotingTimeRangeInput;
 	path?: never;
 	query?: never;
-	url: '/voting/dashboard';
+	url: '/voting/time-range';
 };
 
 export type SetVotingTimeRangeErrors = {

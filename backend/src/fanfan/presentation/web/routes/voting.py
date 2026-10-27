@@ -163,12 +163,12 @@ async def get_voting_dashboard(
     return await interactor()
 
 
-@voting_router.patch(
-    "/dashboard",
+@voting_router.put(
+    "/time-range",
     status_code=204,
     summary="Set voting time range",
-    description="Sets the time range during which visitors can vote. "
-    "Requires voting:manage.",
+    description="Replaces the time range during which visitors can vote; both "
+    "bounds null closes voting. Requires voting:manage.",
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,

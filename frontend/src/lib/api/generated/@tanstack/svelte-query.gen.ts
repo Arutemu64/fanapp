@@ -1530,7 +1530,7 @@ export const getVotingDashboardOptions = (options?: Options<GetVotingDashboardDa
 /**
  * Set voting time range
  *
- * Sets the time range during which visitors can vote. Requires voting:manage.
+ * Replaces the time range during which visitors can vote; both bounds null closes voting. Requires voting:manage.
  */
 export const setVotingTimeRangeMutation = (
 	options?: Partial<Options<SetVotingTimeRangeData>>

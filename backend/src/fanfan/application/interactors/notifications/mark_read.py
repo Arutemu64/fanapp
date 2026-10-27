@@ -1,14 +1,15 @@
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.vo.notification import NotificationId
 
 
-class MarkNotificationsReadInput(BaseModel):
+class MarkNotificationsReadInput(InputModel):
     notification_ids: list[NotificationId] = Field(max_length=500)
 
 

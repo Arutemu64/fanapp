@@ -1111,12 +1111,12 @@ export const getVotingDashboard = <ThrowOnError extends boolean = false>(
 /**
  * Set voting time range
  *
- * Sets the time range during which visitors can vote. Requires voting:manage.
+ * Replaces the time range during which visitors can vote; both bounds null closes voting. Requires voting:manage.
  */
 export const setVotingTimeRange = <ThrowOnError extends boolean = false>(
 	options: Options<SetVotingTimeRangeData, ThrowOnError>
 ): RequestResult<SetVotingTimeRangeResponses, SetVotingTimeRangeErrors, ThrowOnError> =>
-	(options.client ?? client).patch<
+	(options.client ?? client).put<
 		SetVotingTimeRangeResponses,
 		SetVotingTimeRangeErrors,
 		ThrowOnError
@@ -1128,7 +1128,7 @@ export const setVotingTimeRange = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/voting/dashboard',
+		url: '/voting/time-range',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
