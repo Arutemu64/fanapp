@@ -3,8 +3,8 @@ from datetime import timedelta
 import pytest
 from dishka import AsyncContainer
 from sqlalchemy import func, update
-from sqlalchemy.ext.asyncio import AsyncEngine
 
+from fanfan.adapters.db.expiring.transactions import TransactionSource
 from fanfan.adapters.db.models import RateLimitORM
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.core.exceptions.rate_limit import TooManyAttempts
@@ -44,11 +44,11 @@ async def test_hit_starts_a_new_window_once_the_old_one_ends(
     dishka_request: AsyncContainer,
 ) -> None:
     limiter = await dishka_request.get(RateLimiter)
-    engine = await dishka_request.get(AsyncEngine)
+    transactions = await dishka_request.get(TransactionSource)
     key = "test-window-rolls-over"
 
     await limiter.hit(key, limit=1, window_seconds=60)
-    async with engine.begin() as connection:
+    async with transactions.begin() as connection:
         await connection.execute(
             update(RateLimitORM)
             .where(RateLimitORM.key == key)

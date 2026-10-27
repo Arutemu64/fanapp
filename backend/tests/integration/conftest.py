@@ -8,8 +8,6 @@ import pytest_asyncio
 from alembic.command import upgrade
 from alembic.config import Config as AlembicConfig
 from dishka import AnyOf, AsyncContainer, Provider, Scope, make_async_container
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine
 
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
@@ -175,18 +173,6 @@ async def login(dishka_request: AsyncContainer) -> Callable[[User], None]:
         id_provider.set_current_user_id(user.id)
 
     return _login
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def reset_expiring_state(dishka_request: AsyncContainer) -> None:
-    """Expiring-state adapters commit on their own connections, outside the
-    rolled-back test transaction, so their tables are emptied between tests.
-    """
-    engine = await dishka_request.get(AsyncEngine)
-    async with engine.begin() as connection:
-        await connection.execute(
-            text("TRUNCATE auth_sessions, auth_codes, rate_limits, cooldowns")
-        )
 
 
 @pytest_asyncio.fixture(scope="session")

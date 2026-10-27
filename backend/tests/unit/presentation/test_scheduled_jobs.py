@@ -7,6 +7,7 @@ from nats.js.errors import BadRequestError, NotFoundError
 from fanfan.presentation.faststream.jstream import scheduler_stream
 from fanfan.presentation.faststream.schedules.config import SchedulerConfig
 from fanfan.presentation.faststream.schedules.jobs import (
+    EXPIRED_STATE_RETENTION,
     OUTBOX_RETENTION,
     SCHEDULED_JOBS,
     SYNC_TCLOUD,
@@ -51,6 +52,26 @@ def _broker(js: _FakeJetStream) -> Any:  # noqa: ANN401
     return cast("Any", SimpleNamespace(connection=connection))
 
 
+def _only(**crons: str) -> SchedulerConfig:
+    """A config with every job off except the ones given."""
+    disabled = dict.fromkeys(SchedulerConfig.model_fields)
+    return SchedulerConfig.model_validate({**disabled, **crons})
+
+
+def test_retention_jobs_run_by_default_and_syncs_do_not() -> None:
+    crons = scheduled_crons(SchedulerConfig())
+
+    assert crons[SYNC_TCLOUD] is None
+    assert crons[OUTBOX_RETENTION] is not None
+    assert crons[EXPIRED_STATE_RETENTION] is not None
+
+
+def test_blank_cron_disables_a_default_job() -> None:
+    config = SchedulerConfig(outbox_retention_cron="")
+
+    assert config.outbox_retention_cron is None
+
+
 def test_every_config_field_maps_to_a_job() -> None:
     crons = scheduled_crons(SchedulerConfig())
 
@@ -86,7 +107,7 @@ def test_interval_has_no_time_zone() -> None:
 @pytest.mark.asyncio
 async def test_enabled_job_is_published_and_disabled_ones_purged() -> None:
     js = _FakeJetStream()
-    config = SchedulerConfig(sync_tcloud_cron="0 * * * *")
+    config = _only(sync_tcloud_cron="0 * * * *")
 
     await sync_schedules(_broker(js), config, _TZ)
 
@@ -102,7 +123,7 @@ async def test_unchanged_schedule_is_not_republished() -> None:
     stored_with_server_headers = {**stored, "Nats-Rollup": "sub"}
     js = _FakeJetStream({SYNC_TCLOUD.schedule_subject: stored_with_server_headers})
 
-    config = SchedulerConfig(sync_tcloud_cron="@every 1h")
+    config = _only(sync_tcloud_cron="@every 1h")
 
     await sync_schedules(_broker(js), config, _TZ)
 
@@ -114,7 +135,7 @@ async def test_dropped_header_counts_as_a_change() -> None:
     stored = schedule_headers(SYNC_TCLOUD, "0 * * * *", _TZ)
     js = _FakeJetStream({SYNC_TCLOUD.schedule_subject: stored})
 
-    config = SchedulerConfig(sync_tcloud_cron="@every 1h")
+    config = _only(sync_tcloud_cron="@every 1h")
 
     await sync_schedules(_broker(js), config, _TZ)
 
@@ -126,9 +147,7 @@ async def test_dropped_header_counts_as_a_change() -> None:
 async def test_rejected_schedule_does_not_stop_the_rest() -> None:
     js = _FakeJetStream()
     js.rejected.add(SYNC_TCLOUD.schedule_subject)
-    config = SchedulerConfig(
-        sync_tcloud_cron="not a cron", outbox_retention_cron="0 4 * * *"
-    )
+    config = _only(sync_tcloud_cron="not a cron", outbox_retention_cron="0 4 * * *")
 
     await sync_schedules(_broker(js), config, _TZ)
 
@@ -140,7 +159,7 @@ async def test_rejected_replacement_unschedules_the_old_cron() -> None:
     stored = schedule_headers(SYNC_TCLOUD, "0 * * * *", _TZ)
     js = _FakeJetStream({SYNC_TCLOUD.schedule_subject: stored})
     js.rejected.add(SYNC_TCLOUD.schedule_subject)
-    config = SchedulerConfig(sync_tcloud_cron="not a cron")
+    config = _only(sync_tcloud_cron="not a cron")
 
     await sync_schedules(_broker(js), config, _TZ)
 

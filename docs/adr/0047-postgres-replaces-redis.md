@@ -28,8 +28,11 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
 
 - **Four tables** (`adapters/db/models/expiring.py`): `auth_sessions`,
   `auth_codes`, `rate_limits` and `cooldowns`. Each row carries `expires_at`.
-  Readers ignore rows past it, using the database clock. `PurgeExpiredState`
-  deletes them on `SCHEDULER__EXPIRED_STATE_RETENTION_CRON`.
+  Readers ignore rows past it, using the database clock, so expiry never
+  depends on cleanup. `PurgeExpiredState` deletes dead rows nightly
+  (`SCHEDULER__EXPIRED_STATE_RETENTION_CRON`, on by default), as Django does
+  for its database sessions
+  ([Django: Clearing the session store](https://docs.djangoproject.com/en/5.2/topics/http/sessions/#clearing-the-session-store)).
 - **Own transactions.** The adapters (`adapters/db/expiring/`) run each call in
   a short transaction on the engine, outside the request's unit of work. A
   rate-limit hit must stick when the caller then raises and rolls back.
@@ -40,9 +43,16 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
 - **Sessions are stored as SHA-256 hashes** of the cookie token, so a database
   dump or backup holds no live sessions
   ([OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)).
-- **No foreign keys.** These rows are written on a connection separate from the
-  request transaction that may have just inserted the referenced user. An FK
-  check against an uncommitted row would wait on that transaction.
+- **`auth_sessions.user_id` references `users` with `ON DELETE CASCADE`**, as
+  Lucia's reference schema does
+  ([Lucia: PostgreSQL](https://v3.lucia-auth.com/database/postgresql)), so
+  removing a user removes their sessions. Every flow creates a session after
+  the user is committed. The other tables are keyed by emails, IPs or free-form
+  keys and have nothing to reference.
+- **A `TransactionSource` seam** (`adapters/db/expiring/transactions.py`)
+  supplies those transactions. Production passes the engine; tests pass a
+  savepoint on the test's own connection, so the writes see the test's
+  uncommitted users and roll back with them.
 - **ALTCHA's replay guard is a `Cooldown` claim** lasting until the challenge
   expires.
 - **Logged tables, not `UNLOGGED`.** An unlogged table is truncated after a
@@ -69,8 +79,10 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
   events, so 200 clients cost about 1.4 s of database time spread over the
   burst. That is acceptable at this scale. Revisit with a cache if the audience
   grows by an order of magnitude.
-- Tests: these adapters commit outside the rolled-back test transaction, so an
-  autouse fixture truncates the four tables between tests.
+- The adapters are request-scoped in DI so tests can swap the transaction
+  source; that costs one small object per request.
+- If the purge job stops, nothing breaks: expired rows are already ignored and
+  the tables just grow slowly.
 
 ## Alternatives considered
 

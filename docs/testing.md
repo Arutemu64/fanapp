@@ -46,8 +46,7 @@ correct test.
    under test and the gateways you assert on are resolved explicitly with
    `dishka_request.get(...)` in the test body — never hidden in a fixture.
 6. **No cleanup code.** Database writes roll back automatically after every
-   test, and the expiring-state tables are truncated automatically. Don't
-   truncate tables or hand-pick unique ids.
+   test. Don't truncate tables or hand-pick unique ids.
 
 ## Two layers
 
@@ -271,10 +270,10 @@ Consequences:
 
 * You do **not** need to clean up database rows, and you do not need to
   hand-pick unique ids to avoid collisions between tests.
-* The expiring-state adapters (`adapters/db/expiring/`) commit on their own
-  connections, outside the rolled-back test transaction, so the
-  `reset_expiring_state` autouse fixture truncates their tables before each
-  test.
+* The expiring-state adapters (`adapters/db/expiring/`) run on the same
+  per-test connection: `TestSessionProvider` gives them a `TransactionSource`
+  that opens a SAVEPOINT there, so their writes see the test's rows and roll
+  back with them.
 * Schema and seed data (the `system` user, permissions) are created once per
   session by Alembic migrations and are visible to every test.
 

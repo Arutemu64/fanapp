@@ -14,7 +14,7 @@ class CaptchaProvider(Provider):
     def get_altcha_config(self, config: EnvConfig) -> AltchaConfig | None:
         return config.altcha
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     def get_captcha_verifier(
         self, config: AltchaConfig | None, cooldown: Cooldown
     ) -> CaptchaVerifier:

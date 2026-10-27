@@ -51,6 +51,12 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
+        sa.ForeignKeyConstraint(
+            ["user_id"],
+            ["users.id"],
+            name=op.f("fk_auth_sessions_user_id_users"),
+            ondelete="CASCADE",
+        ),
         sa.PrimaryKeyConstraint("token_hash", name=op.f("pk_auth_sessions")),
     )
     op.create_index(

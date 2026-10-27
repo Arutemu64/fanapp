@@ -7,8 +7,8 @@ from typing import override
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncEngine
 
+from fanfan.adapters.db.expiring.transactions import TransactionSource
 from fanfan.adapters.db.models import CooldownORM
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.core.exceptions.rate_limit import CooldownActive
@@ -22,8 +22,8 @@ class PostgresCooldown(Cooldown):
     clock alone.
     """
 
-    def __init__(self, engine: AsyncEngine) -> None:
-        self.engine = engine
+    def __init__(self, transactions: TransactionSource) -> None:
+        self.transactions = transactions
 
     @override
     @asynccontextmanager
@@ -49,11 +49,11 @@ class PostgresCooldown(Cooldown):
             )
             .returning(CooldownORM.key)
         )
-        async with self.engine.begin() as connection:
+        async with self.transactions.begin() as connection:
             return (await connection.execute(statement)).first() is not None
 
     async def _retry_after(self, key: str) -> int:
-        async with self.engine.begin() as connection:
+        async with self.transactions.begin() as connection:
             seconds_left = await connection.scalar(
                 select(
                     func.extract("epoch", CooldownORM.expires_at - func.now())
@@ -63,7 +63,7 @@ class PostgresCooldown(Cooldown):
 
     async def _give_back(self, key: str, token: str) -> None:
         """Delete the claim only if it is still ours, not a newer one's."""
-        async with self.engine.begin() as connection:
+        async with self.transactions.begin() as connection:
             await connection.execute(
                 delete(CooldownORM).where(
                     CooldownORM.key == key, CooldownORM.token == token
