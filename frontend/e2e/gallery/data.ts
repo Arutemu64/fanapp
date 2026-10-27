@@ -35,13 +35,13 @@ const schedule: ScheduleEventFullDto[] = ACTS.map(([title, , nomination, duratio
 	id: `event-${index + 1}`,
 	number: index + 1,
 	title,
-	duration,
-	order: index + 1,
-	is_current: index + 1 === CURRENT_NUMBER,
+	duration_seconds: duration,
 	is_skipped: false,
 	nomination_title: nomination,
 	position: index + 1
 }));
+
+export const currentEventId = `event-${CURRENT_NUMBER}`;
 
 export const scheduleEntries: ScheduleEntryDto[] = schedule.flatMap((event, index) => {
 	const block = ACTS[index]?.[1] ?? null;
@@ -50,8 +50,7 @@ export const scheduleEntries: ScheduleEntryDto[] = schedule.flatMap((event, inde
 	const blockStart: ScheduleEntryDto = {
 		type: 'block_start',
 		id: `block-${index + 1}`,
-		title: block,
-		order: event.order - 0.5
+		title: block
 	};
 	return [blockStart, event];
 });
@@ -66,7 +65,6 @@ function subscription(number: number, leadMinutes: number): SubscriptionFullDto 
 			id: event.id,
 			number: event.number,
 			title: event.title,
-			order: event.order,
 			position: event.position
 		}
 	};

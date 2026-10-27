@@ -7,7 +7,8 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 class MoveScheduleEventInput(BaseModel):
     event_id: ScheduleEntryId
-    place_after_entry_id: ScheduleEntryId
+    # None moves the event to the top of the schedule.
+    place_after_entry_id: ScheduleEntryId | None
 
 
 class MoveScheduleEvent:

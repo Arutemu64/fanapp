@@ -21,11 +21,10 @@ export function getStageSnapshot(
 	schedule: ScheduleEventWithSubscription[],
 	changeoverSeconds: number
 ): StageSnapshot {
-	const ordered = [...schedule].sort((a, b) => a.order - b.order);
-	const currentIndex = ordered.findIndex((event) => event.is_current);
-	const current = ordered[currentIndex] ?? null;
+	const currentIndex = schedule.findIndex((event) => event.is_current);
+	const current = schedule[currentIndex] ?? null;
 
-	const upcoming = ordered.slice(currentIndex + 1).filter((event) => !event.is_skipped);
+	const upcoming = schedule.slice(currentIndex + 1).filter((event) => !event.is_skipped);
 
 	let featured: FeaturedAct | null = null;
 	let afterFeatured = upcoming;

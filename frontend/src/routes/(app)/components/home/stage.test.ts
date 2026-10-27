@@ -11,8 +11,7 @@ function event(
 		type: 'event',
 		number: null,
 		title: 'Выступление',
-		duration: 300,
-		order: 0,
+		duration_seconds: 300,
 		is_current: false,
 		is_skipped: false,
 		nomination_title: null,
@@ -31,24 +30,24 @@ function ids(events: ScheduleEventWithSubscription[]): string[] {
 describe('getStageSnapshot', () => {
 	it('lists the acts after the current one, in programme order', () => {
 		const schedule = [
-			event({ id: 'c', order: 3 }),
-			event({ id: 'a', order: 1 }),
-			event({ id: 'b', order: 2, is_current: true }),
-			event({ id: 'd', order: 4 })
+			event({ id: 'a', number: 3 }),
+			event({ id: 'b', number: 1, is_current: true }),
+			event({ id: 'c', number: 4 }),
+			event({ id: 'd', number: 2 })
 		];
 
 		const snapshot = getStageSnapshot(schedule, 0);
 
-		expect(snapshot.featured).toEqual({ event: schedule[2], live: true });
+		expect(snapshot.featured).toEqual({ event: schedule[1], live: true });
 		expect(snapshot.current?.id).toBe('b');
 		expect(ids(snapshot.upNext)).toEqual(['c', 'd']);
 	});
 
 	it('features the opening act, not live, before the first act is marked', () => {
 		const schedule = [
-			event({ id: 'skipped', order: 0, is_skipped: true }),
-			event({ id: 'a', order: 1 }),
-			event({ id: 'b', order: 2 })
+			event({ id: 'skipped', is_skipped: true }),
+			event({ id: 'a' }),
+			event({ id: 'b' })
 		];
 
 		const snapshot = getStageSnapshot(schedule, 0);
@@ -65,12 +64,12 @@ describe('getStageSnapshot', () => {
 
 	it('leaves skipped acts out and caps the list at three', () => {
 		const schedule = [
-			event({ id: 'now', order: 0, is_current: true }),
-			event({ id: 'a', order: 1 }),
-			event({ id: 'skipped', order: 2, is_skipped: true }),
-			event({ id: 'b', order: 3 }),
-			event({ id: 'c', order: 4 }),
-			event({ id: 'd', order: 5 })
+			event({ id: 'now', is_current: true }),
+			event({ id: 'a' }),
+			event({ id: 'skipped', is_skipped: true }),
+			event({ id: 'b' }),
+			event({ id: 'c' }),
+			event({ id: 'd' })
 		];
 
 		expect(ids(getStageSnapshot(schedule, 0).upNext)).toEqual(['a', 'b', 'c']);
@@ -78,20 +77,20 @@ describe('getStageSnapshot', () => {
 
 	it('finds the nearest subscribed act beyond the up-next list', () => {
 		const schedule = [
-			event({ id: 'now', order: 0, is_current: true }),
-			event({ id: 'a', order: 1, user_subscription: SUBSCRIPTION }),
-			event({ id: 'b', order: 2 }),
-			event({ id: 'c', order: 3 }),
-			event({ id: 'd', order: 4 }),
-			event({ id: 'mine', order: 5, user_subscription: SUBSCRIPTION }),
-			event({ id: 'later', order: 6, user_subscription: SUBSCRIPTION })
+			event({ id: 'now', is_current: true }),
+			event({ id: 'a', user_subscription: SUBSCRIPTION }),
+			event({ id: 'b' }),
+			event({ id: 'c' }),
+			event({ id: 'd' }),
+			event({ id: 'mine', user_subscription: SUBSCRIPTION }),
+			event({ id: 'later', user_subscription: SUBSCRIPTION })
 		];
 
 		expect(getStageSnapshot(schedule, 0).nextSubscribed?.id).toBe('mine');
 	});
 
 	it('has nothing up next once the last act is on stage', () => {
-		const schedule = [event({ id: 'a', order: 1 }), event({ id: 'b', order: 2, is_current: true })];
+		const schedule = [event({ id: 'a' }), event({ id: 'b', is_current: true })];
 
 		const snapshot = getStageSnapshot(schedule, 0);
 

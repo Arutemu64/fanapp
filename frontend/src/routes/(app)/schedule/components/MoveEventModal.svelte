@@ -4,14 +4,14 @@
 	import BellRing from '@lucide/svelte/icons/bell-ring';
 	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 
-	import type { ScheduleEntryDto, ScheduleEventFullDto } from '#lib/api/generated/index.js';
+	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		getScheduleOptions,
 		getScheduleQueryKey,
-		moveScheduleEventMutation
+		updateScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import FormError from '#lib/components/FormError.svelte';
 	import SearchInput from '#lib/components/SearchInput.svelte';
@@ -37,12 +37,13 @@
 	let schedule = $derived(scheduleQuery.data?.schedule ?? []);
 
 	const moveMutation = createMutation(() => ({
-		...moveScheduleEventMutation(),
+		...updateScheduleEventMutation(),
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
 	}));
 
 	let query = $state('');
-	let selectedId: string | null = $state(null);
+	// `afterId: null` is the top of the schedule; `target: null` is nothing picked yet.
+	let target: { afterId: string | null } | null = $state(null);
 	let formError = $state('');
 	let isSubmitting = $derived(moveMutation.isPending);
 
@@ -56,21 +57,24 @@
 
 	let filtered = $derived(searchIndex.filter(query));
 
-	function handleSelect(entry: ScheduleEntryDto) {
-		selectedId = selectedId === entry.id ? null : entry.id;
+	const rowClass =
+		'w-full cursor-pointer px-3 py-2.5 text-left text-body transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3';
+
+	function handleSelect(afterId: string | null) {
+		target = target?.afterId === afterId ? null : { afterId };
 	}
 
 	function handleSubmit() {
-		if (!selectedId || isSubmitting) return;
+		if (!target || isSubmitting) return;
 
 		formError = '';
 		moveMutation.mutate(
-			{ path: { event_id: event.id }, body: { place_after_entry_id: selectedId } },
+			{ path: { event_id: event.id }, body: { place_after_entry_id: target.afterId } },
 			{
 				onSuccess: () => {
 					toastService.add(m.event_moved_toast(), 'success');
 					open = false;
-					selectedId = null;
+					target = null;
 					query = '';
 				},
 				onError: (error) => {
@@ -120,15 +124,24 @@
 			/>
 
 			<div class="max-h-48 overflow-y-auto rounded-lg border border-border sm:max-h-60">
+				{#if !query}
+					<button
+						type="button"
+						class={[rowClass, 'bg-muted/60', target?.afterId === null && 'bg-primary/20']}
+						onclick={() => handleSelect(null)}
+					>
+						<span class="font-semibold text-foreground">{m.event_move_to_schedule_start()}</span>
+					</button>
+				{/if}
 				{#each filtered as entry (entry.id)}
 					<button
 						type="button"
 						class={[
-							'w-full cursor-pointer px-3 py-2.5 text-left text-body transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3',
+							rowClass,
 							entry.type === 'block_start' && 'bg-muted/60',
-							selectedId === entry.id && 'bg-primary/20'
+							target?.afterId === entry.id && 'bg-primary/20'
 						]}
-						onclick={() => handleSelect(entry)}
+						onclick={() => handleSelect(entry.id)}
 					>
 						{#if entry.type === 'block_start'}
 							<span class="text-muted-foreground">{m.event_move_to_block_start()} </span>
@@ -157,7 +170,7 @@
 			>
 				{m.common_cancel()}
 			</Button>
-			<Button type="button" onclick={handleSubmit} disabled={!selectedId || isSubmitting}>
+			<Button type="button" onclick={handleSubmit} disabled={!target || isSubmitting}>
 				{#if isSubmitting}
 					<Spinner data-icon="inline-start" />
 					{m.event_moving()}

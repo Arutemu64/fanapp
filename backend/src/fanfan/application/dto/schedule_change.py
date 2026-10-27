@@ -13,7 +13,6 @@ class ScheduleChangeEntryDTO(BaseModel):
     type: ScheduleEntryType
     number: int | None
     title: str
-    order: float
 
 
 class ScheduleChangeFullDTO(BaseModel):

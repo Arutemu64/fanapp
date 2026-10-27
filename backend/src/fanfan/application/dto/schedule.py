@@ -10,9 +10,7 @@ class ScheduleEventFullDTO(BaseModel):
     id: ScheduleEntryId
     number: int | None
     title: str
-    duration: int
-    order: float
-    is_current: bool
+    duration_seconds: int
     is_skipped: bool
     nomination_title: str | None
 
@@ -23,9 +21,15 @@ class ScheduleBlockStartDTO(BaseModel):
     type: Literal[ScheduleEntryType.BLOCK_START]
     id: ScheduleEntryId
     title: str
-    order: float
 
 
 type ScheduleEntryDTO = Annotated[
     ScheduleEventFullDTO | ScheduleBlockStartDTO, Field(discriminator="type")
 ]
+
+
+class ScheduleDTO(BaseModel):
+    current_event_id: ScheduleEntryId | None
+    schedule: list[ScheduleEntryDTO] = Field(
+        description="Every entry in running order."
+    )

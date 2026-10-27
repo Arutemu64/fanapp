@@ -73,8 +73,8 @@ def _seconds_ahead_by_position(
             seconds_ahead[entry.position] = elapsed
         else:
             seconds_ahead[entry.position] = None
-        elapsed += entry.duration + changeover_seconds
-        planned += entry.duration
+        elapsed += entry.duration_seconds + changeover_seconds
+        planned += entry.duration_seconds
     return seconds_ahead
 
 
@@ -268,7 +268,7 @@ class SendScheduleChangeNotifications:
             current_event_position = cast("int", current_event.position)
             settings = await self.app_settings_gateway.get()
             seconds_ahead = _seconds_ahead_by_position(
-                await self.schedule_gateway.read_list_schedule(),
+                (await self.schedule_gateway.read_schedule()).schedule,
                 current_event_position,
                 settings.schedule.changeover_seconds,
             )

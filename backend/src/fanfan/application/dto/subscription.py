@@ -10,7 +10,6 @@ class SubscriptionEventDTO(BaseModel):
     id: ScheduleEntryId
     number: int | None
     title: str
-    order: float
 
     position: int | None
 

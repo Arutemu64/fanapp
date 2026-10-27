@@ -3,10 +3,8 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request, Response
 from starlette import status
 
-from fanfan.application.interactors.schedule.get_schedule import (
-    GetSchedule,
-    GetScheduleOutput,
-)
+from fanfan.application.dto.schedule import ScheduleDTO
+from fanfan.application.interactors.schedule.get_schedule import GetSchedule
 
 public_router = APIRouter()
 
@@ -39,7 +37,7 @@ def _if_none_match_hits(header: str | None, etag: str) -> bool:
     response_model=None,
     responses={
         200: {
-            "model": GetScheduleOutput,
+            "model": ScheduleDTO,
             "description": "Schedule retrieved successfully.",
             "headers": _ETAG_HEADERS,
         },

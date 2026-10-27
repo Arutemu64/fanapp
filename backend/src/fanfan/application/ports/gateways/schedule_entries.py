@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from fanfan.application.dto.schedule import ScheduleEntryDTO, ScheduleEventFullDTO
+from fanfan.application.dto.schedule import ScheduleDTO, ScheduleEventFullDTO
 from fanfan.core.models.schedule_entry import ScheduleEntry, ScheduleEvent
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
@@ -39,4 +39,4 @@ class ScheduleEntryGateway(Protocol):
 
     async def read_current_event(self) -> ScheduleEventFullDTO | None: ...
 
-    async def read_list_schedule(self) -> list[ScheduleEntryDTO]: ...
+    async def read_schedule(self) -> ScheduleDTO: ...

@@ -1,11 +1,11 @@
 import type {
 	CaptchaChallengeDto,
-	GetScheduleOutput,
 	GetVotingStatusOutput,
 	HealthCheckOutput,
 	ListUserNotificationsOutput,
 	OAuthProvidersOutput,
 	PublicConfigDto,
+	ScheduleDto,
 	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
 import type { Handlers } from './api';
@@ -25,7 +25,7 @@ export const baselineHandlers: Handlers = {
 		schedule_changeover_seconds: 30
 	}),
 	'GET /me': problem('USER_NOT_AUTHENTICATED', 401),
-	'GET /schedule': json<GetScheduleOutput>({ schedule: [] }),
+	'GET /schedule': json<ScheduleDto>({ current_event_id: null, schedule: [] }),
 	'GET /schedule/subscriptions': json({ subscriptions: [] }),
 	'GET /voting/status': json<GetVotingStatusOutput>({
 		can_vote: false,
