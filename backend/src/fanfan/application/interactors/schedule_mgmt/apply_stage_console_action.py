@@ -1,7 +1,8 @@
 import enum
 import logging
+from typing import Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
@@ -37,6 +38,14 @@ class ApplyStageConsoleActionInput(BaseModel):
     # MOVE: the event to place it after. UNMOVE: where the cancelled move put it.
     after_number: int | None = None
 
+    @model_validator(mode="after")
+    def _placing_needs_after_number(self) -> Self:
+        placing = self.action in {StageConsoleAction.MOVE, StageConsoleAction.UNMOVE}
+        if placing and self.after_number is None:
+            msg = f"{self.action} needs after_number"
+            raise ValueError(msg)
+        return self
+
 
 class ApplyStageConsoleAction:
     """Apply what the stage console (FestEngine) did, as its service user.
@@ -64,6 +73,8 @@ class ApplyStageConsoleAction:
         actor = await self.user_gateway.get_by_id(STAGE_CONSOLE_USER_ID)
         if actor is None:
             raise UserNotFound
+        # The operations check this too, but an ignored unmove never reaches
+        # them and must not answer an unauthorized caller either.
         await self.perm_service.ensure(
             user=actor, permission=Permission.SCHEDULE_MANAGE
         )

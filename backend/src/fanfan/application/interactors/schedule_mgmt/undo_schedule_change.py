@@ -9,6 +9,7 @@ from fanfan.application.ports.gateways.schedule_changes import (
 from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.schedule_edit import ScheduleEditService
 from fanfan.core.exceptions.schedule import (
     EventNotFound,
@@ -16,7 +17,6 @@ from fanfan.core.exceptions.schedule import (
     ScheduleChangeNotFound,
 )
 from fanfan.core.models.schedule_entry import ScheduleEntry, ScheduleEvent
-from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 from fanfan.core.vo.schedule_entry import ScheduleEntryId
@@ -31,10 +31,12 @@ class UndoScheduleChangeInput(BaseModel):
 class UndoScheduleChange:
     def __init__(
         self,
+        current_user_provider: CurrentUserProvider,
         changes_gateway: ScheduleChangeGateway,
         schedule_gateway: ScheduleEntryGateway,
         schedule_edit: ScheduleEditService,
     ) -> None:
+        self.current_user_provider = current_user_provider
         self.changes_gateway = changes_gateway
         self.schedule_gateway = schedule_gateway
         self.schedule_edit = schedule_edit
@@ -89,7 +91,9 @@ class UndoScheduleChange:
         return entry
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
-        async def mutate(_: User) -> None:
+        user = await self.current_user_provider.require_user()
+
+        async def mutate() -> None:
             schedule_change = await self.changes_gateway.get_by_id(
                 data.schedule_change_id
             )
@@ -123,7 +127,7 @@ class UndoScheduleChange:
             schedule_change.mark_undone()
             await self.changes_gateway.delete(schedule_change)
 
-        user = await self.schedule_edit.edit(Permission.SCHEDULE_MANAGE, mutate)
+        await self.schedule_edit.edit(user, Permission.SCHEDULE_MANAGE, mutate)
 
         logger.info(
             "Schedule change reverted",

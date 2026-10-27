@@ -41,7 +41,7 @@ class ScheduleOperations:
                 return event_id is None
             return current_event.id == event_id
 
-        async def mutate(_: User) -> ChangeFactory:
+        async def mutate() -> ChangeFactory:
             previous_current_event = await self.schedule_gateway.get_current()
             if previous_current_event:
                 previous_current_event.unset_current()
@@ -103,7 +103,7 @@ class ScheduleOperations:
                 return place_after_entry_id is None
             return previous_entry.id == place_after_entry_id
 
-        async def mutate(_: User) -> ChangeFactory:
+        async def mutate() -> ChangeFactory:
             event = await self.schedule_gateway.get_event(event_id)
             if event is None:
                 raise EventNotFound
@@ -166,7 +166,7 @@ class ScheduleOperations:
             event = await self.schedule_gateway.get_event(event_id)
             return event is not None and event.is_skipped == is_skipped
 
-        async def mutate(_: User) -> ChangeFactory:
+        async def mutate() -> ChangeFactory:
             event = await self.schedule_gateway.get_event(event_id)
             if event is None:
                 raise EventNotFound

@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 import pytest
 from dishka import AsyncContainer
 
@@ -29,14 +27,12 @@ async def _not_applied() -> bool:
 async def test_edit_changes_the_served_schedule(
     dishka_request: AsyncContainer,
     schedule_editor: User,
-    login: Callable[[User], None],
 ) -> None:
     service = await dishka_request.get(ScheduleEditService)
     get_schedule = await dishka_request.get(GetSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
-    login(schedule_editor)
 
-    async def add_event(_: User) -> None:
+    async def add_event() -> None:
         await schedule_gateway.add(
             ScheduleEvent(
                 id=generate_schedule_entry_id(),
@@ -51,7 +47,7 @@ async def test_edit_changes_the_served_schedule(
         )
 
     before = await get_schedule()
-    await service.edit(Permission.SCHEDULE_SETUP, add_event)
+    await service.edit(schedule_editor, Permission.SCHEDULE_SETUP, add_event)
 
     after = await get_schedule()
     assert after.etag != before.etag
@@ -60,12 +56,10 @@ async def test_edit_changes_the_served_schedule(
 async def test_failed_mutation_does_not_commit_the_announcement(
     dishka_request: AsyncContainer,
     schedule_editor: User,
-    login: Callable[[User], None],
 ) -> None:
     service = await dishka_request.get(ScheduleEditService)
-    login(schedule_editor)
 
-    async def fail(_: User) -> ChangeFactory:
+    async def fail() -> ChangeFactory:
         raise EventNotFound
 
     with pytest.raises(EventNotFound):
@@ -76,7 +70,7 @@ async def test_failed_mutation_does_not_commit_the_announcement(
             already_applied=_not_applied,
         )
 
-    async def succeed(_: User) -> ChangeFactory:
+    async def succeed() -> ChangeFactory:
         return lambda ctx: ScheduleChange.set_as_current(
             changed_event_id=None,
             previous_event_id=None,
@@ -95,11 +89,9 @@ async def test_failed_mutation_does_not_commit_the_announcement(
 async def test_already_applied_edit_skips_mutation_and_commit(
     dishka_request: AsyncContainer,
     schedule_editor: User,
-    login: Callable[[User], None],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     service = await dishka_request.get(ScheduleEditService)
-    login(schedule_editor)
     calls: list[str] = []
 
     async def recording_commit() -> None:
@@ -107,7 +99,7 @@ async def test_already_applied_edit_skips_mutation_and_commit(
 
     monkeypatch.setattr(service.uow, "commit", recording_commit)
 
-    async def mutate(_: User) -> ChangeFactory:
+    async def mutate() -> ChangeFactory:
         calls.append("mutate")
         raise AssertionError
 

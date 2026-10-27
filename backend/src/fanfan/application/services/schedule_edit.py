@@ -11,7 +11,6 @@ from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.schedule import ScheduleEditTooFast
 from fanfan.core.models.mailing import Mailing
@@ -44,7 +43,6 @@ class ScheduleEditService:
 
     def __init__(  # noqa: PLR0913, PLR0917
         self,
-        current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
         settings_gateway: AppSettingsGateway,
         schedule_gateway: ScheduleEntryGateway,
@@ -52,7 +50,6 @@ class ScheduleEditService:
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
     ) -> None:
-        self.current_user_provider = current_user_provider
         self.perm_service = perm_service
         self.settings_gateway = settings_gateway
         self.schedule_gateway = schedule_gateway
@@ -64,7 +61,7 @@ class ScheduleEditService:
         self,
         actor: User,
         permission: Permission,
-        mutate: Callable[[User], Awaitable[ChangeFactory]],
+        mutate: Callable[[], Awaitable[ChangeFactory]],
         *,
         already_applied: Callable[[], Awaitable[bool]],
     ) -> bool:
@@ -88,7 +85,7 @@ class ScheduleEditService:
         await self._ensure_announcement_cooldown(settings.limits.announcement_timeout)
 
         next_event_before = await self.schedule_gateway.get_next()
-        build_change = await mutate(actor)
+        build_change = await mutate()
         next_event_after = await self.schedule_gateway.get_next()
 
         mailing = Mailing.create(by_user_id=actor.id)
@@ -107,19 +104,16 @@ class ScheduleEditService:
 
     async def edit(
         self,
+        actor: User,
         permission: Permission,
-        mutate: Callable[[User], Awaitable[None]],
-    ) -> User:
-        """Edit the schedule without an announcement or cooldown (undo, import).
-
-        Returns the acting user.
-        """
-        user = await self.current_user_provider.require_user()
-        await self.perm_service.ensure(user=user, permission=permission)
+        mutate: Callable[[], Awaitable[None]],
+    ) -> None:
+        """Edit the schedule as ``actor`` without an announcement or cooldown
+        (undo, import)."""
+        await self.perm_service.ensure(user=actor, permission=permission)
         await self.schedule_gateway.lock_for_edit()
-        await mutate(user)
+        await mutate()
         await self.uow.commit()
-        return user
 
     async def _ensure_announcement_cooldown(self, cooldown_seconds: int) -> None:
         """Reject an announced edit that comes too soon after the previous one.

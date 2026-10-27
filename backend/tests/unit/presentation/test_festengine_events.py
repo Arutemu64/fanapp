@@ -110,6 +110,21 @@ def test_other_events_are_ignored(event_type: str) -> None:
     assert to_action_input(event) is None
 
 
+@pytest.mark.parametrize("event_type", ["row.move", "row.unmove"])
+@pytest.mark.parametrize("after_num", [None, "brk"])
+def test_move_without_a_usable_after_number_is_ignored(
+    event_type: str, after_num: str | None
+) -> None:
+    event = _event(event_type, row=_row(), after_num=after_num)
+
+    assert to_action_input(event) is None
+
+
+def test_move_input_requires_an_after_number() -> None:
+    with pytest.raises(ValueError, match="after_number"):
+        ApplyStageConsoleActionInput(action=StageConsoleAction.MOVE, number=1)
+
+
 def test_event_without_a_row_is_ignored() -> None:
     assert to_action_input(_event("row.skip", row=None)) is None
 

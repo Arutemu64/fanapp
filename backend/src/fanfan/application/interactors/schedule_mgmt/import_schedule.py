@@ -8,13 +8,13 @@ from fanfan.application.interactors.schedule.publish_schedule_updated import (
 from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.schedule_edit import ScheduleEditService
 from fanfan.core.models.schedule_entry import (
     ScheduleBlockStart,
     ScheduleEntry,
     ScheduleEvent,
 )
-from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 
@@ -63,10 +63,12 @@ class ImportScheduleInput(BaseModel):
 class ImportSchedule:
     def __init__(
         self,
+        current_user_provider: CurrentUserProvider,
         schedule_gateway: ScheduleEntryGateway,
         schedule_edit: ScheduleEditService,
         publish_schedule_updated: PublishScheduleUpdated,
     ) -> None:
+        self.current_user_provider = current_user_provider
         self.schedule_gateway = schedule_gateway
         self.schedule_edit = schedule_edit
         self.publish_schedule_updated = publish_schedule_updated
@@ -110,7 +112,9 @@ class ImportSchedule:
         )
 
     async def __call__(self, data: ImportScheduleInput) -> None:
-        async def mutate(current_user: User) -> None:
+        current_user = await self.current_user_provider.require_user()
+
+        async def mutate() -> None:
             orphaned_entries = await self.schedule_gateway.list_all()
             order = ORDER_INIT
             for row in data.schedule:
@@ -155,6 +159,6 @@ class ImportSchedule:
                     },
                 )
 
-        await self.schedule_edit.edit(Permission.SCHEDULE_SETUP, mutate)
+        await self.schedule_edit.edit(current_user, Permission.SCHEDULE_SETUP, mutate)
 
         await self.publish_schedule_updated()

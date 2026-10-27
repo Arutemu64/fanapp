@@ -20,6 +20,7 @@ CUE_MAX_AGE = timedelta(seconds=60)
 _LEADING_DIGITS = re.compile(r"\d+")
 _STAGE_ROW_TYPES = frozenset({"track", "dup"})
 _CUE_TYPES = frozenset({"row.show", "row.play"})
+_PLACING_ACTIONS = frozenset({StageConsoleAction.MOVE, StageConsoleAction.UNMOVE})
 _ACTIONS = {
     "row.show": StageConsoleAction.SET_CURRENT,
     "row.play": StageConsoleAction.SET_CURRENT,
@@ -69,10 +70,11 @@ def to_action_input(event: FestEngineEvent) -> ApplyStageConsoleActionInput | No
     ):
         return None
     number = parse_number(row.num)
+    after_number = parse_number(event.data.after_num)
     if number is None:
         return None
+    if action in _PLACING_ACTIONS and after_number is None:
+        return None
     return ApplyStageConsoleActionInput(
-        action=action,
-        number=number,
-        after_number=parse_number(event.data.after_num),
+        action=action, number=number, after_number=after_number
     )
