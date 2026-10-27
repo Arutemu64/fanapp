@@ -38,11 +38,6 @@ class SqlVoteGateway(VoteGateway):
 
     async def add(self, vote: Vote) -> None:
         vote_orm = _from_model(vote)
-        # Denormalise the nomination from the participant so the DB can enforce
-        # one vote per nomination; the domain Vote doesn't carry it. A missing
-        # participant surfaces below as the existing FK violation (ParticipantNotFound),
-        # so the None case needs no handling here — the cast just satisfies the
-        # type checker, which can't see that guarantee.
         vote_orm.nomination_id = cast(
             "UUID",
             await self.session.scalar(

@@ -69,7 +69,7 @@ def test_place_after_uses_midpoint_when_next_exists() -> None:
 
     event.place_after(previous_event, next_event)
 
-    assert event.order == 3  # (2 + 4) / 2
+    assert event.order == 3
 
 
 def test_place_after_appends_when_no_next() -> None:
@@ -78,7 +78,7 @@ def test_place_after_appends_when_no_next() -> None:
 
     event.place_after(previous_event, None)
 
-    assert event.order == 3  # 2 + 1
+    assert event.order == 3
 
 
 def test_place_after_self_raises() -> None:
@@ -94,7 +94,7 @@ def test_place_before_first_with_existing_first() -> None:
 
     event.place_before_first(first_event)
 
-    assert event.order == 4  # 5 - 1
+    assert event.order == 4
 
 
 def test_place_before_first_when_no_events() -> None:
@@ -112,8 +112,6 @@ def _block_start(order: float) -> ScheduleBlockStart:
 
 
 def test_entries_are_equal_by_id_across_kinds() -> None:
-    # Undo compares the current event against the one a change recorded, and
-    # matching drops entries from a list by equality: both rest on id alone.
     event = _event(1, 1)
     same_event_later = _event(1, 7)
     same_event_later.id = event.id
@@ -124,7 +122,6 @@ def test_entries_are_equal_by_id_across_kinds() -> None:
 
 
 def test_an_event_moves_after_a_block_start() -> None:
-    # Placing an event right after a block start is how it changes blocks.
     event = _event(1, 99)
 
     event.place_after(_block_start(10), _event(2, 20))

@@ -48,8 +48,6 @@ test.describe('organizer user directory', () => {
 				}
 				return json<ListUsersOutput>({ users: [ANNA], total: 2, next_cursor: 'next' });
 			},
-			// SvelteKit preloads a row's card when the pointer passes over its link,
-			// which the clicks below can do on either row.
 			[`GET /users/${ANNA.id}`]: json<UserDetailsDto>(ANNA_DETAILS),
 			[`GET /users/${BORIS.id}`]: json<UserDetailsDto>({
 				...BORIS,
@@ -61,8 +59,6 @@ test.describe('organizer user directory', () => {
 
 		await expect(page.getByRole('link', { name: /ХитрыйЕнот42/ })).toBeVisible();
 		await page.getByRole('button', { name: 'Показать ещё' }).click();
-		// Focus lands on the first row of the new page, and that row link stays in
-		// the tab order.
 		const boris = page.getByRole('link', { name: /ТихийРонин64/ });
 		await expect(boris).toBeFocused();
 		await expect(boris).not.toHaveAttribute('tabindex');
@@ -71,7 +67,6 @@ test.describe('organizer user directory', () => {
 		await page.getByRole('option', { name: 'Участник' }).click();
 
 		await expect(page).toHaveURL(/role=participant/);
-		// Scoped to <main>: the shell's connection banner is a status region too.
 		await expect(page.getByRole('main').getByRole('status')).toHaveText('1 пользователь');
 		await expect(page.getByRole('link', { name: /ТихийРонин64/ })).toBeHidden();
 		expect(listRequests.at(-1)?.get('role')).toBe('participant');
@@ -83,7 +78,6 @@ test.describe('organizer user directory', () => {
 		api.use({
 			...organizer(),
 			[`GET /users/${ANNA.id}`]: () => json<UserDetailsDto>(details),
-			// The client percent-encodes the colon in the path segment.
 			[`PUT /users/${ANNA.id}/permissions/users%3Aread`]: () => {
 				grants += 1;
 				details = { ...details, permissions: [...details.permissions, 'users:read'] };

@@ -14,9 +14,6 @@ if typing.TYPE_CHECKING:
     from faststream.message import StreamMessage
     from faststream.response import PublishCommand
 
-# Sentry's queue instrumentation contract: these span ops and data keys are what
-# its Queues view reads.
-# https://docs.sentry.io/platforms/python/tracing/instrumentation/custom-instrumentation/queues-module/
 _PUBLISH_OP = "queue.publish"
 _PROCESS_OP = "queue.process"
 
@@ -29,22 +26,17 @@ class SentryMiddleware(BaseMiddleware):
     one trace across the web app, the outbox relay and every consumer.
     """
 
-    # The error consume_scope already reported, so after_processed does not
-    # send it twice. after_processed still reports the rest — a message that
-    # failed to parse never reaches consume_scope.
     _reported: BaseException | None = None
 
     async def publish_scope(
         self,
         call_next: typing.Callable[[PublishCommand], typing.Awaitable[typing.Any]],
         cmd: PublishCommand,
-    ) -> typing.Any:  # noqa: ANN401  # FastStream's publish_scope signature
+    ) -> typing.Any:  # noqa: ANN401
         if sentry_sdk.get_current_span() is None:
             return await call_next(cmd)
         with sentry_sdk.start_span(op=_PUBLISH_OP, name=cmd.destination) as span:
             span.set_data("messaging.destination.name", cmd.destination)
-            # setdefault: headers already on the command belong to an earlier
-            # producer (the outbox relay forwards the writer's trace) and win.
             for name, value in current_trace_headers().items():
                 cmd.headers.setdefault(name, value)
             return await call_next(cmd)
@@ -55,10 +47,7 @@ class SentryMiddleware(BaseMiddleware):
             [StreamMessage[typing.Any]], typing.Awaitable[typing.Any]
         ],
         msg: StreamMessage[typing.Any],
-    ) -> typing.Any:  # noqa: ANN401  # FastStream's consume_scope signature
-        # One isolation scope per message: a pull consumer handles messages one
-        # after another in the same task, and tags or breadcrumbs from one must
-        # not leak into the next.
+    ) -> typing.Any:  # noqa: ANN401
         with sentry_sdk.isolation_scope():
             name = _consumer_name(msg)
             transaction = sentry_sdk.continue_trace(
@@ -75,8 +64,6 @@ class SentryMiddleware(BaseMiddleware):
                 try:
                     return await call_next(msg)
                 except Exception as error:
-                    # Reported here, inside the transaction, so the error links
-                    # to the trace that produced the message.
                     sentry_sdk.capture_exception(error)
                     self._reported = error
                     raise
@@ -93,8 +80,6 @@ class SentryMiddleware(BaseMiddleware):
 
 
 def _consumer_name(msg: StreamMessage[typing.Any]) -> str:
-    # The durable names the handler; the subject alone does not, since several
-    # durables consume notifications.created.
     raw = msg.raw_message
     if isinstance(raw, Msg) and raw.reply.startswith("$JS.ACK."):
         return raw.metadata.consumer or raw.subject
@@ -114,6 +99,5 @@ def _describe_message(span: Span, msg: StreamMessage[typing.Any]) -> None:
         return
     metadata = raw.metadata
     span.set_data("messaging.message.retry.count", metadata.num_delivered - 1)
-    # Time the message waited in the stream before this delivery, in ms.
     stored_at = metadata.timestamp.timestamp()
     span.set_data("messaging.message.receive.latency", (time.time() - stored_at) * 1000)

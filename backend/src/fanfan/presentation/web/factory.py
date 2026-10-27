@@ -34,9 +34,6 @@ def create_app() -> FastAPI:
     config = get_config()
     container = create_web_container()
 
-    # The FastAPI integration never closes the container itself, so without
-    # this its finalizers (draining the NATS connections) never run.
-    # https://dishka.readthedocs.io/en/stable/integrations/fastapi.html
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
@@ -54,22 +51,12 @@ def create_app() -> FastAPI:
 
     app.add_middleware(RefreshSessionCookieMiddleware, web_config=config.web)
 
-    # Registered early so it sits inside every middleware below (the last one
-    # registered runs outermost): an unanticipated route error becomes a 500 that
-    # still passes through CORS, caching, security and request-id middleware.
     app.add_middleware(CatchUnexpectedErrorsMiddleware)
 
     app.include_router(setup_api_router())
 
     add_exception_handlers(app)
 
-    # This session cookie holds the Telegram OAuth state/nonce (authlib). Secure
-    # tracks cookie_secure so a plain-HTTP deploy can still complete the OAuth
-    # flow — a Secure cookie is never sent back over HTTP.
-    #
-    # max_age replaces Starlette's 14-day default with Authlib's own state TTL,
-    # the budget for one consent round-trip: don't shorten it, or a slow
-    # Telegram confirmation could fail here while Authlib still accepts the state.
     app.add_middleware(
         SessionMiddleware,
         secret_key=config.web.secret_key.get_secret_value(),
@@ -80,28 +67,18 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        # Explicit origins (never "*") because requests carry the session
-        # cookie — a wildcard with credentials would trust every site.
         allow_origins=config.web.cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # Default-deny caching on every response, including CORS/error responses.
     app.add_middleware(NoStoreCacheControlMiddleware)
 
-    # Hardening headers (nosniff, anti-framing, referrer policy) on every
-    # response, so the API stays secure-by-default behind any proxy.
     app.add_middleware(SecurityHeadersMiddleware)
 
-    # Reject an oversized body by Content-Length before anything reads it, so
-    # the app is not solely dependent on the reverse proxy's own cap.
     app.add_middleware(LimitRequestBodySizeMiddleware)
 
-    # Registered last so it runs first (outermost): the request id is bound
-    # before any other middleware or route handler, so all of their logs
-    # carry it.
     app.add_middleware(BindRequestContextMiddleware)
 
     return app

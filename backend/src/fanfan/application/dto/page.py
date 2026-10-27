@@ -34,8 +34,6 @@ class PageCursor:
             raw_created_at, raw_id = payload["t"], payload["id"]
         except (binascii.Error, ValueError, TypeError, KeyError) as e:
             raise InvalidPageCursor from e
-        # Checked up front: UUID() given a non-string fails with AttributeError,
-        # which would surface as a 500 instead of a bad request.
         if not isinstance(raw_created_at, str) or not isinstance(raw_id, str):
             raise InvalidPageCursor
         try:
@@ -43,8 +41,6 @@ class PageCursor:
             row_id = UUID(raw_id)
         except ValueError as e:
             raise InvalidPageCursor from e
-        # A naive timestamp would raise on comparison with the timestamptz column
-        # instead of failing as a bad request.
         if created_at.tzinfo is None:
             raise InvalidPageCursor
         return cls(created_at=created_at, id=row_id)
@@ -70,9 +66,6 @@ class CursorPagination:
 
     @property
     def fetch_limit(self) -> int:
-        # One row past the page tells whether a next page exists, so a page that
-        # happens to end exactly at the last row does not send the client after
-        # an empty one.
         return self.limit + 1
 
 

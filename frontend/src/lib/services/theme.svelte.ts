@@ -6,11 +6,6 @@ function parseThemeMode(raw: string): ThemeMode | undefined {
 	return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : undefined;
 }
 
-// Browser-UI tints (address/status bar). Must match app.html: each value is
-// app.css's --background for that theme (light oklch(1 0 0) = #ffffff, dark
-// oklch(0.145 0 0) = #0a0a0a), the surface of the top bar the status bar sits
-// above. The inline boot script in app.html seeds <meta name="theme-color"> with
-// the same two values before paint; keep all three in sync.
 const THEME_COLOR_LIGHT = '#ffffff';
 const THEME_COLOR_DARK = '#0a0a0a';
 
@@ -20,26 +15,13 @@ function applyTheme(mode: ThemeMode): void {
 		(mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 	document.documentElement.classList.toggle('dark', isDark);
 
-	// Declare the resolved scheme so Chromium's Auto Dark Theme (Android Chrome/Brave)
-	// doesn't force-darken a light app under a dark OS. Without a color-scheme signal
-	// the browser can't tell the app themes itself and darkens both the page and the
-	// shell tint, ignoring the light <meta name="theme-color"> below. Resolved rather
-	// than a static "light dark" because the app overrides the OS: a manual light
-	// choice must stay light even on a dark OS.
-	// https://developer.chrome.com/blog/auto-dark-theme
 	document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 
-	// Drive the shell tint from the resolved theme, not the OS preference. A single
-	// media-less <meta name="theme-color"> is updated here so a manual toggle that
-	// overrides the system scheme (e.g. dark app on a light OS) tints the browser
-	// chrome to match the app, not the OS.
 	const meta = document.querySelector('meta[name="theme-color"]');
 	if (meta) meta.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
 }
 
 class ThemeService {
-	// Device-wide preference, persisted through safeStorage (see the singleton
-	// note below for why surviving login/logout is wanted here, not a leak).
 	readonly #mode = new Persisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
 
 	get mode(): ThemeMode {
@@ -60,12 +42,6 @@ class ThemeService {
 	}
 }
 
-// Module-global singleton (the odd one out vs. the createContext-based services).
-// The no-module-singletons rule exists because a module outlives navigation and
-// login/logout; theme is a device-wide preference backed by localStorage, not
-// user-scoped state, so surviving a session change is the wanted behaviour rather
-// than a leak. Kept global so any component can read/toggle the theme without
-// threading context through every layout.
 let instance: ThemeService | null = null;
 
 export function setThemeService(): ThemeService {

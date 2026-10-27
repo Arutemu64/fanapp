@@ -23,18 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 class AwardQuestPointsInput(BaseModel):
-    # Client-generated so a retry after a lost response on festival Wi-Fi
-    # replays the award instead of paying the player twice (docs/adr/0034).
     award_id: Annotated[
         QuestAwardId,
         UuidVersion(7),
         Field(description="UUIDv7 the client generates once per award form."),
     ]
-    # The number, not the user ID: it is all a scanned code carries, and an
-    # award made offline from a scan has nothing else to send (docs/adr/0038).
     user_number: Annotated[UserNumber, Field(ge=USER_NUMBER_MIN, le=USER_NUMBER_MAX)]
-    # The upper bound is the organizer-set cap in app settings, checked by the
-    # aggregate; 1 here only rejects nonsense before any lookup.
     amount: int = Field(ge=1)
     message: str = Field(min_length=1, max_length=200)
 

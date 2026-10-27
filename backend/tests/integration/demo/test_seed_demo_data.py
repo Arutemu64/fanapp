@@ -20,7 +20,6 @@ from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 
-# Seeded by the initial-data migration; the actor for CLI/scheduler/NATS work.
 SYSTEM_USER_ID = UserId(UUID("00000000-0000-0000-0000-000000000000"))
 
 pytestmark = [
@@ -45,7 +44,6 @@ async def test_seed_populates_schedule_and_voting(
     schedule = await schedule_gateway.list_all()
     assert len(schedule) == len(DEMO_SCHEDULE)
 
-    # Every seeded nomination is votable, so all of them count.
     assert await nomination_gateway.count_votable() == len(DEMO_NOMINATIONS)
 
     settings = await settings_gateway.get()
@@ -58,7 +56,6 @@ async def test_seed_is_idempotent(
     demo_seeder: User,
     login: Callable[[User], None],
 ) -> None:
-    # A second run must refresh the demo rows in place, not duplicate them.
     login(demo_seeder)
     interactor = await dishka_request.get(SeedDemoData)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
@@ -76,8 +73,6 @@ async def test_seed_leaves_an_existing_programme_untouched(
     demo_seeder: User,
     login: Callable[[User], None],
 ) -> None:
-    # The schedule has a unique `order` column and no per-row natural key, so
-    # seeding must skip a programme that already has events rather than collide.
     login(demo_seeder)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     existing = ScheduleEvent(
@@ -113,9 +108,6 @@ async def test_seed_requires_the_permission(
 
 
 async def test_system_user_is_granted_demo_seed(dishka_request: AsyncContainer) -> None:
-    # Guards the grant in the demo:seed migration. The `demo seed` CLI command
-    # authenticates as this seeded user and goes through the same permission
-    # check, so losing that user_permissions row silently breaks seeding.
     perm_gateway = await dishka_request.get(UserPermissionGateway)
 
     granted = await perm_gateway.get_by_permission(

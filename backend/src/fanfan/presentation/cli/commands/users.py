@@ -23,18 +23,12 @@ _ROLE_CHOICE = click.Choice([r.value for r in UserRole])
 
 @click.command(name="create")
 @click.argument("username")
-# Prompt for the password instead of taking it as an argument so it never lands
-# in shell history or the process table; confirm it to catch typos.
 @click.option(
     "--password",
     prompt=True,
     hide_input=True,
     confirmation_prompt=True,
 )
-# Default to organizer: a CLI-created account is a staff account (the toolbox is
-# organizer-only), and it is the natural companion to `permissions grant`. The role is
-# only a UI label — it grants no access on its own — so permissions are still
-# granted separately.
 @click.option("--role", type=_ROLE_CHOICE, default=UserRole.ORGANIZER.value)
 @click.pass_context
 @async_command
@@ -46,9 +40,6 @@ async def create_user_command(
             username=username, password=password, role=UserRole(role)
         )
     except ValidationError as err:
-        # Turn Pydantic's field errors (username pattern, password too short) into
-        # a clean one-line-per-field message — its default str() leaks the model
-        # name and a docs URL that mean nothing to an operator.
         problems = "\n".join(
             f"{'.'.join(str(part) for part in issue['loc'])}: {issue['msg']}"
             for issue in err.errors()
@@ -61,8 +52,6 @@ async def create_user_command(
         try:
             user = await create_user(data)
         except AppException as err:
-            # Taken username, profanity — expected domain refusals, not bugs.
-            # AppException stringifies to its stable code (USER_ALREADY_EXISTS, …).
             raise click.ClickException(err.code) from err
         logger.info(
             "Created user %s (%s) with id %s", user.username, user.role, user.id

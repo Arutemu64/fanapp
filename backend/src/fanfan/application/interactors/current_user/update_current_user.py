@@ -18,8 +18,6 @@ class UpdateCurrentUserInput(BaseModel):
     username: str | None = Field(
         None, min_length=3, max_length=25, pattern=USERNAME_PATTERN
     )
-    # Proposed by the client so the profile editor can preview a face before
-    # saving; the pattern keeps it to a harmless token.
     avatar_seed: str | None = Field(None, pattern=AVATAR_SEED_PATTERN)
 
 
@@ -37,8 +35,6 @@ class UpdateCurrentUser:
         self.profanity_filter = profanity_filter
 
     async def _update_username(self, current_user: User, new_username: str) -> None:
-        # Usernames are public, so reject profanity. Checked here rather than in
-        # the input schema because the matching logic lives behind a port.
         if self.profanity_filter.contains_profanity(new_username):
             raise UsernameProfanity
         user = await self.user_gateway.get_by_username(new_username)
@@ -50,8 +46,6 @@ class UpdateCurrentUser:
         current_user = await self.current_user_provider.require_user()
         data_to_update = data.model_dump(exclude_unset=True)
         user_updated_flag = False
-        # Username is required: a truthy, changed value is the only case that
-        # updates it. Empty / null values are ignored so it can never be cleared.
         if (
             data_to_update.get("username")
             and data_to_update["username"] != current_user.username

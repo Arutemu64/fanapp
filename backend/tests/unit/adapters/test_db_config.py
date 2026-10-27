@@ -13,8 +13,6 @@ pytestmark = pytest.mark.unit
     ],
 )
 def test_dsn_always_connects_through_psycopg(dsn: str) -> None:
-    # The engine's connect args are psycopg-only, so a deployed DSN naming
-    # another driver must still be routed through psycopg.
     config = DatabaseConfig(url=dsn)
 
     assert config.build_connection_str() == "postgresql+psycopg://u:p@db:5432/fanfan"

@@ -85,7 +85,6 @@ async def test_create_push_subscription_same_endpoint_twice_raises(
         )
 
     await uow.rollback()
-    # The first registration survives; the duplicate never landed.
     saved = await push_gateway.get_by_endpoint(ENDPOINT)
     assert saved is not None
     assert saved.p256dh == "key"
@@ -165,13 +164,11 @@ async def test_delete_push_subscription_of_another_user_raises_access_denied(
     await user_gateway.add(other_user)
     await uow.commit()
 
-    # visitor (owner) registers the endpoint.
     login(visitor)
     await create(
         CreatePushSubscriptionInput(endpoint=ENDPOINT, p256dh="key", auth="auth")
     )
 
-    # other_user tries to delete the owner's endpoint.
     login(other_user)
     with pytest.raises(AccessDenied):
         await delete(DeletePushSubscriptionInput(endpoint=ENDPOINT))

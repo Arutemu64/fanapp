@@ -1,19 +1,11 @@
 name: Publish Docker images
 
-# Build the backend and frontend images once in CI and push them to the GitHub
-# Container Registry (GHCR), so the server can pull prebuilt images instead of
-# building from source. Runs on pushes to `main` (moves the `latest` tag) and on
-# version tags `v*` (publishes that release).
 on:
   push:
     branches: [main]
     tags: ['v*']
-  # Manual rebuild — use after changing a frontend PUBLIC_* repository variable,
-  # since those are baked in at build time and a variable change alone does not
-  # trigger a build. Run from the Actions tab on the `main` branch.
   workflow_dispatch:
 
-# Cancel an in-progress publish for the same ref when a newer commit arrives.
 concurrency:
   group: docker-publish-${{ github.ref }}
   cancel-in-progress: true
@@ -24,20 +16,13 @@ env:
 jobs:
   build:
     name: Build and push (${{ matrix.name }})
-    # Pinned to ubuntu-24.04, not the floating `ubuntu-latest` label GitHub
-    # migrates without notice. Pinning also lets Renovate's github-actions
-    # manager propose the runner bump via the github-runners datasource; it
-    # ignores the `ubuntu-latest` variable, so a pin is what gets tracked.
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
-      # Required to push images to GHCR with the automatic GITHUB_TOKEN.
       packages: write
     strategy:
       fail-fast: false
-      # One image per service kind. The backend image is shared by the api,
-      # worker and migration services (they differ only by command).
       matrix:
         include:
           - name: backend
@@ -49,9 +34,6 @@ jobs:
             image: ${{ github.repository }}-frontend
             target: prod
     steps:
-      # persist-credentials: false keeps the GITHUB_TOKEN out of .git/config;
-      # this job authenticates to GHCR with docker login, not git, so nothing
-      # here needs the checkout credential.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -66,26 +48,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # A mixed-case owner login (github.repository keeps it verbatim) yields a
-      # ref like ghcr.io/Arutemu64/…, which buildx rejects on the cache exporter
-      # ("repository name must be lowercase"). metadata-action lowercases its own
-      # tags, but the raw cache-from/to refs below do not — so lowercase once here.
       - name: Lowercase image ref
         id: image
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ matrix.image }}
         run: echo "ref=${IMAGE,,}" >> "$GITHUB_OUTPUT"
 
-      # Derives image tags/labels from the git ref. metadata-action lowercases
-      # the image name, so a mixed-case owner login still produces a valid tag.
       - name: Image metadata
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.REGISTRY }}/${{ matrix.image }}
-          # `type=sha` is the identity a deploy actually pins (IMAGE_TAG=sha-…);
-          # the semver patterns give a `v1.2.3` tag the rolling `1.2` and `1`
-          # aliases too, so a pin can choose how much drift it accepts.
           tags: |
             type=sha
             type=semver,pattern={{version}}
@@ -93,10 +66,6 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      # The release number lives in backend/pyproject.toml (docs/dependencies.md
-      # "Versioning the app"). The frontend's build context is ./frontend, which
-      # cannot see that file, so it arrives as a build arg instead. tomllib is in
-      # the runner's system Python (3.11+), so no uv setup is needed for one read.
       - name: Read release version
         id: version
         run: |
@@ -108,24 +77,10 @@ jobs:
         with:
           context: ${{ matrix.context }}
           target: ${{ matrix.target }}
-          # The server is amd64. Add linux/arm64 here if that ever changes.
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Frontend build args. PUBLIC_* are baked into the static SPA bundle at
-          # build time ($app/env/public) — they come from public, non-secret
-          # repository variables. The unprefixed SENTRY_* args are build-time only
-          # (the source-map upload target, read by vite.config.ts) and never reach
-          # the bundle; leave those variables unset to skip the upload.
-          # Each line for the other image evaluates to an empty string, which
-          # build-push-action ignores.
-          # The last two lines are the build's identity. APP_VERSION is the
-          # release number the profile footer shows. APP_BUILD is the commit SHA,
-          # matching the image's `type=sha` tag, baked into both images: it is the
-          # Sentry release on both sides of a deploy, which is what makes "did
-          # this deploy break it" answerable. Neither context has a .git, so
-          # neither image could detect the commit itself.
           build-args: |
             ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SITE_URL={0}', vars.PUBLIC_SITE_URL) || '' }}
@@ -140,20 +95,7 @@ jobs:
             ${{ matrix.name == 'frontend' && format('SENTRY_PROJECT={0}', vars.SENTRY_PROJECT) || '' }}
             ${{ matrix.name == 'frontend' && format('APP_VERSION={0}', steps.version.outputs.version) || '' }}
             APP_BUILD=${{ github.sha }}
-          # SENTRY_AUTH_TOKEN (a secret) uploads source maps in the `build` stage,
-          # together with the SENTRY_URL/ORG/PROJECT args above — all four are
-          # required or the upload is skipped. The token is passed as a BuildKit
-          # secret — unlike a build arg, it never lands in image layer metadata or
-          # the exported GHA build cache below.
           secrets: |
             ${{ matrix.name == 'frontend' && format('sentry_auth_token={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
-          # Registry-backed layer cache on GHCR, not the GitHub Actions cache.
-          # Two mode=max image caches (backend + frontend) overran the 10 GB
-          # Actions-cache pool and evicted the pnpm/uv dependency caches that
-          # share it. A dedicated `:buildcache` tag per image lives in GHCR,
-          # outside that pool — it neither evicts those caches nor gets evicted,
-          # and gives each image its own ref instead of colliding on one default
-          # gha scope. image-manifest + oci-mediatypes store the cache as a
-          # standard OCI artifact, which GHCR requires.
           cache-from: type=registry,ref=${{ steps.image.outputs.ref }}:buildcache
           cache-to: type=registry,ref=${{ steps.image.outputs.ref }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true

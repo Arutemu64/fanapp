@@ -23,14 +23,12 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	// Queued (ADR-0038), like the subscribe it undoes.
 	const unsubscribeMutation = createMutation(() => queuedUnsubscribeOptions(event.id));
 	handOffWhenQueued(unsubscribeMutation, () => {
 		toastService.add(m.unsubscribe_queued(), 'info');
 		open = false;
 	});
 
-	// No reset on open: EventCard mounts this modal only while it is open.
 	let formError = $state('');
 
 	function handleUnsubscribe() {
@@ -39,7 +37,6 @@
 			return;
 		}
 
-		// A subscription still waiting in the queue has no ID to delete: undo it there.
 		if (event.user_subscription.id === null) {
 			if (cancelQueuedSubscribe(queryClient, event.id)) {
 				toastService.add(m.unsubscribe_done(), 'success');
@@ -66,10 +63,6 @@
 	}
 </script>
 
-<!-- AlertDialog (role="alertdialog"), not Dialog: a confirmation that must force an
-	explicit choice and not dismiss on an outside click. The confirm is a plain Button
-	(not AlertDialog.Action) because the request is fired here and a failure must keep
-	the dialog open to show formError — Action would auto-close and drop the message. -->
 <AlertDialog.Root bind:open>
 	<AlertDialog.Content>
 		<AlertDialog.Header>

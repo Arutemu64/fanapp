@@ -18,16 +18,12 @@ schema at this revision and does not drift if an enum gains members later.
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "b70291fe7e46"
 down_revision = "344a57c66154"
 branch_labels = None
 depends_on = None
 
 
-# (table, column, check constraint name, [(member_name, member_value), ...]).
-# The pairs double as the name→value rewrite map and the new/old CHECK value
-# lists (new = values, old = names).
 _ENUM_COLUMNS = (
     (
         "users",
@@ -90,15 +86,12 @@ _ENUM_COLUMNS = (
     ),
 )
 
-# Columns whose server_default holds a role and must move name↔value with the data.
 _ROLE_DEFAULT_COLUMNS = (("users", "role"), ("tickets", "role"))
 
 
 def _rewrite(table: str, column: str, mapping: list[tuple[str, str]]) -> None:
     conn = op.get_bind()
     for src, dst in mapping:
-        # table/column are trusted literals from _ENUM_COLUMNS (never user
-        # input); the migrated values are passed as bound parameters.
         conn.execute(
             sa.text(f"UPDATE {table} SET {column} = :dst WHERE {column} = :src"),  # noqa: S608
             {"src": src, "dst": dst},
@@ -107,8 +100,6 @@ def _rewrite(table: str, column: str, mapping: list[tuple[str, str]]) -> None:
 
 def upgrade() -> None:
     for table, column, ck_name, pairs in _ENUM_COLUMNS:
-        # Drop the name-based CHECK first, otherwise the value rewrite would
-        # violate it mid-flight.
         op.drop_constraint(op.f(ck_name), table, type_="check")
         _rewrite(table, column, pairs)
         op.create_check_constraint(
@@ -125,7 +116,6 @@ def downgrade() -> None:
         op.alter_column(table, column, server_default="VISITOR")
     for table, column, ck_name, pairs in _ENUM_COLUMNS:
         op.drop_constraint(op.f(ck_name), table, type_="check")
-        # Reverse the map: value → name.
         _rewrite(table, column, [(value, name) for name, value in pairs])
         op.create_check_constraint(
             op.f(ck_name),

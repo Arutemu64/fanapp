@@ -13,8 +13,6 @@ from fanfan.presentation.web.schemas.error import InvalidScheduleFileProblem
 pytestmark = pytest.mark.unit
 
 
-# InvalidScheduleFileProblem only documents the response; the body is built from
-# the exception's details dict. This keeps the documented shape honest.
 @pytest.mark.parametrize("reason", list(InvalidScheduleFileReason))
 def test_invalid_schedule_file_details_match_the_documented_model(
     reason: InvalidScheduleFileReason,
@@ -25,7 +23,5 @@ def test_invalid_schedule_file_details_match_the_documented_model(
 
     body = json.loads(bytes(response.body))
 
-    # Validates the member types (`reason` against the enum), and every member
-    # sent must be one the model declares: extra="allow" would accept any.
     InvalidScheduleFileProblem.model_validate(body)
     assert set(body) <= set(InvalidScheduleFileProblem.model_fields)

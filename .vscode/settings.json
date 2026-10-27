@@ -1,14 +1,6 @@
 {
-	// Format on save is only safe because every language below names its
-	// formatter explicitly. With prettier, ruff and svelte-vscode all
-	// installed, an unset default makes VS Code prompt or pick arbitrarily,
-	// and a stray formatter then fights `just backend-format` (ruff) and
-	// `just frontend-lint` (prettier --check).
 	"editor.formatOnSave": true,
 
-	// prettier, not svelte-vscode's built-in formatter: CI runs
-	// `prettier --check --cache .` over the whole frontend tree (including
-	// .svelte), so matching it byte-for-byte is what keeps the gate green.
 	"[svelte]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
 	"[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
 	"[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
@@ -20,37 +12,18 @@
 	"[python]": {
 		"editor.defaultFormatter": "charliermarsh.ruff",
 		"editor.codeActionsOnSave": {
-			// Mirrors `just backend-check` (ruff check --fix). ruff.toml selects
-			// ALL, so the isort rules are on and imports sort here rather than
-			// surfacing as a lint failure later.
 			"source.fixAll": "explicit",
 			"source.organizeImports": "explicit"
 		}
 	},
 
-	// Pin the backend interpreter so the pytest Test Explorer, ty and the Ruff
-	// extension (which locates its binary through the active environment, its
-	// default `fromEnvironment` strategy) resolve `fanfan` and `.venv` tools
-	// instead of falling back to whatever VS Code guessed on a fresh clone.
-	// Point at the venv FOLDER, not bin/python: settings.json has no per-OS
-	// blocks, and the folder lets VS Code pick bin/python (POSIX) or
-	// Scripts\python.exe (Windows) itself. A hardcoded bin/python left Windows
-	// with no resolvable interpreter, so Ruff could not find its binary.
 	"python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv",
 
-	// No python.analysis.* here: the repo typechecks with ty
-	// (`just backend-typecheck`), and the ty extension disables the Python
-	// extension's language server. The interpreter above already resolves
-	// imports through the editable install, so extraPaths would be dead weight.
 	"python.testing.pytestEnabled": true,
 	"python.testing.unittestEnabled": false,
 	"python.testing.cwd": "${workspaceFolder}/backend",
-	// Collects tests/unit and tests/integration alike; the integration ones need
-	// a Docker daemon to run, same as `just backend-test-integration`.
 	"python.testing.pytestArgs": ["tests"],
 
-	// Only tells VS Code a workspace TypeScript exists — each contributor still
-	// runs "TypeScript: Select TypeScript Version" once to switch to it.
 	"js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
 
 	"files.exclude": {
@@ -62,9 +35,6 @@
 		"**/.svelte-kit": true
 	},
 
-	// search.exclude inherits files.exclude, but the file watcher does not — its
-	// default covers only .git/.hg internals. Without this VS Code watches both
-	// dependency trees and burns CPU on a monorepo this size.
 	"files.watcherExclude": {
 		"**/node_modules/**": true,
 		"**/.venv/**": true,
@@ -75,9 +45,5 @@
 		"**/frontend/build/**": true
 	},
 
-	// better-tailwindcss/enforce-canonical-classes (ADR-0030) already reports these,
-	// with the type roles and leading-* ignored; the extension's copy doesn't know
-	// that and would suggest rewriting text-body back to text-base.
-	// https://github.com/schoero/eslint-plugin-better-tailwindcss/blob/main/docs/rules/enforce-canonical-classes.md
 	"tailwindCSS.lint.suggestCanonicalClasses": "ignore"
 }

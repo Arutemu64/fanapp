@@ -6,11 +6,8 @@
 	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
-		/** The resend itself is in flight. */
 		sending: boolean;
-		/** Seconds left on the resend cooldown (ResendCooldown.remaining). */
 		remaining: number;
-		/** Other work in the form (checking the code) holds the button too. */
 		busy?: boolean;
 		onclick: () => void;
 	}

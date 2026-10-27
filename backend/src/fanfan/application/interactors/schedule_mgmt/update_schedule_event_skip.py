@@ -36,7 +36,6 @@ class UpdateScheduleEventSkip:
     async def __call__(self, data: UpdateScheduleEventSkipInput) -> None:
         async def already_applied() -> bool:
             event = await self.schedule_gateway.get_event(data.event_id)
-            # A missing event is not "applied": mutate raises EventNotFound.
             return event is not None and event.is_skipped == data.is_skipped
 
         async def mutate(_: User) -> ChangeFactory:

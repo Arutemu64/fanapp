@@ -91,8 +91,6 @@ class SqlQuestAwardGateway(QuestAwardGateway):
         self.uow = uow
 
     async def add(self, award: QuestAward) -> None:
-        # Two concurrent requests with one client ID can both pass the
-        # interactor's lookup; the second one lands here (docs/adr/0034).
         with translate_integrity_error({"pk_quest_awards": QuestAwardAlreadyExists}):
             self.session.add(_from_model(award))
             await self.session.flush()
@@ -118,8 +116,6 @@ class SqlQuestAwardGateway(QuestAwardGateway):
     async def save(self, award: QuestAward) -> None:
         await self.session.merge(_from_model(award))
         await self.session.flush()
-
-    # Read projections (return DTOs, not aggregates)
 
     def _players_stmt(self) -> Select[UUID, int, str, str, Any]:
         live_points = (
@@ -149,13 +145,9 @@ class SqlQuestAwardGateway(QuestAwardGateway):
     async def read_players_by_search(
         self, search: str, limit: int
     ) -> list[QuestPlayerDTO]:
-        # Prefix, case-insensitive: a volunteer types the start of the name the
-        # player reads out. %/_ are escaped so they match literally.
         term = search.strip()
         pattern = f"{_escape_like(term.lower())}%"
         matches = func.lower(UserORM.username).like(pattern)
-        # A whole number is a lookup by it as well: usernames can be digits too,
-        # so it widens the match instead of replacing it.
         if term.isdecimal() and USER_NUMBER_MIN <= int(term) <= USER_NUMBER_MAX:
             matches = or_(matches, UserORM.number == int(term))
         stmt = (
@@ -180,9 +172,6 @@ class SqlQuestAwardGateway(QuestAwardGateway):
             .group_by(QuestAwardORM.user_id)
             .subquery()
         )
-        # Merch goes to the top places, so ties must not share a rank: of two
-        # players on the same score, whoever reached it first ranks higher.
-        # The user id is only a last resort to keep the order stable.
         rank = (
             func.row_number()
             .over(

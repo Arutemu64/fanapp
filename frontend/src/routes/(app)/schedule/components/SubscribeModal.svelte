@@ -24,26 +24,17 @@
 	let { open = $bindable(), event }: Props = $props();
 	const toastService = getToastService();
 
-	// Queued (ADR-0038): offline it waits for the connection, shown on the card in
-	// the meantime, and the subscription list refreshes when it lands.
 	const subscribeMutation = createMutation(() => queuedSubscribeOptions(event.id));
 	handOffWhenQueued(subscribeMutation, () => {
 		toastService.add(m.subscribe_queued(), 'info');
 		open = false;
 	});
 
-	// A few fixed choices rather than a free number: the minutes are an estimate
-	// from planned durations, so finer steps would promise precision it lacks.
 	const LEAD_MINUTE_OPTIONS = [10, 15, 30, 60];
 
-	// No reset on open: EventCard mounts this modal only while it is open.
 	let leadMinutes = $state(15);
 	let formError = $state('');
 
-	// Fully controlled, like the schedule's scope switch: a single-select toggle
-	// group clears its value when the pressed item is tapped again, and the
-	// setter ignores that so one option always stays chosen
-	// (https://bits-ui.com/docs/components/toggle-group).
 	function getLeadMinutes() {
 		return String(leadMinutes);
 	}

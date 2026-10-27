@@ -35,9 +35,6 @@ class PublishScheduleUpdated:
         self.realtime = realtime
 
     async def __call__(self) -> None:
-        # Warming is an optimisation: when it fails, the cache is still empty
-        # (edits invalidate after commit), so clients refetch correct data, just
-        # slower. That must not hold back the live update.
         try:
             await self._warm_cache()
         except Exception:
@@ -47,12 +44,7 @@ class PublishScheduleUpdated:
         await self.realtime.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
 
     async def _warm_cache(self) -> None:
-        # Read and store under the schedule edit lock. Unlocked, an edit could
-        # commit and invalidate between our read and our write, leaving its
-        # pre-edit snapshot cached until the TTL lapses. Under the lock, an edit
-        # either commits before the read or invalidates after the write.
         await self.schedule_gateway.lock_for_edit()
         cached = await render_schedule(self.schedule_gateway)
         await self.schedule_cache.set(cached)
-        # Ends the read-only transaction, releasing the transaction-level lock.
         await self.uow.commit()

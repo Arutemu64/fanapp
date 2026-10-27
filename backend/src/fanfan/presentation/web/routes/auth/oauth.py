@@ -44,14 +44,10 @@ logger = logging.getLogger(__name__)
 
 oauth_router = APIRouter()
 
-# Frontend reads these one-time codes off the URL and shows a safe toast.
 OAUTH_LOGIN_ERROR_QUERY_PARAM = "oauthLoginError"
 OAUTH_LINK_ERROR_QUERY_PARAM = "oauthLinkError"
-# The post-login destination, under the same name the frontend's login page and
-# `(protected)` guard use (`LOGIN_NEXT_PARAM` in frontend/src/lib/utils/auth.ts).
 LOGIN_NEXT_QUERY_PARAM = "next"
 
-# Link-only outcomes the user can act on, on top of the shared cancelled/failed.
 LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT = "linked_to_another_account"
 LINK_ERROR_USER_ALREADY_HAS_PROVIDER = "user_already_has_provider"
 LINK_ERROR_SESSION_CHANGED = "session_changed"
@@ -117,8 +113,6 @@ def _build_redirect(path: str, params: dict[str, str]) -> RedirectResponse:
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 
-# Declaring the redirect as the route's own status and response class keeps
-# FastAPI from also documenting a JSON 200 that the route never sends.
 @oauth_router.get(
     "/oauth/{provider}/start",
     status_code=status.HTTP_302_FOUND,
@@ -144,17 +138,11 @@ async def start_social_login(
     request: Request,
     oauth: FromDishka[OAuth],
     config: FromDishka[WebConfig],
-    # No max_length or pattern here: a rejected Query answers 422 with a JSON body,
-    # which this browser-navigation route must never do. An invalid value is
-    # dropped by the sanitizer instead, and the login lands on the app root.
     next_path: Annotated[str | None, Query(alias=LOGIN_NEXT_QUERY_PARAM)] = None,
 ) -> Response:
     return_path = sanitize_return_path(next_path)
 
     if provider not in config.enabled_oauth_providers:
-        # Defence in depth: the login screen hides a disabled provider's button,
-        # but its start URL is still guessable. Entered by a top-level navigation,
-        # so it leaves as a redirect like every other failure here, not a body.
         logger.info(
             "Rejected social login start for a disabled provider",
             extra={"provider": provider.value},
@@ -172,18 +160,12 @@ async def start_social_login(
             return_path=return_path,
         )
     except Exception:
-        # Building the redirect needs the provider's discovery document. The
-        # registry is APP-scoped so it is fetched once per process — this is the
-        # first login after a restart running into an unreachable provider.
         logger.exception("Could not reach the provider to start the login")
         return build_login_redirect(OAUTH_ERROR_FAILED, return_path)
 
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
 
-# The provider stays in the path rather than the state on purpose — RFC 9700
-# §4.4.2.2 wants a distinct redirect URI per issuer. See oauth.py's module
-# docstring. Only the *intent* is merged into this one callback.
 @oauth_router.get(
     "/oauth/{provider}/callback",
     status_code=status.HTTP_303_SEE_OTHER,
@@ -207,7 +189,7 @@ async def start_social_login(
     },
 )
 @inject
-async def oauth_callback(  # noqa: PLR0913, PLR0917 — all params framework-injected
+async def oauth_callback(  # noqa: PLR0913, PLR0917
     provider: SocialProvider,
     request: Request,
     config: FromDishka[WebConfig],
@@ -218,12 +200,8 @@ async def oauth_callback(  # noqa: PLR0913, PLR0917 — all params framework-inj
     client: StarletteOAuth2App = oauth.create_client(provider.value)
 
     try:
-        # Must precede the token exchange: authorize_access_token consumes the
-        # state payload without returning it.
         flow_state = await read_flow_state(client, request, provider)
     except OAuthFailed as e:
-        # No trustworthy intent means no idea where the user came from, so send
-        # them to the login page. Safe default: nothing privileged happened.
         return build_login_redirect(e.error_code)
 
     try:
@@ -262,7 +240,7 @@ async def _fetch_identity(
             return str(vk.user_id), vk.user_id
 
 
-async def build_authorization_url(  # noqa: PLR0913, PLR0917 — one flow-state field each
+async def build_authorization_url(  # noqa: PLR0913, PLR0917
     client: StarletteOAuth2App,
     request: Request,
     provider: SocialProvider,
@@ -290,7 +268,7 @@ async def build_authorization_url(  # noqa: PLR0913, PLR0917 — one flow-state 
     )
 
 
-async def _finish_login(  # noqa: PLR0913, PLR0917 — the callback's resolved inputs
+async def _finish_login(  # noqa: PLR0913, PLR0917
     authorize: AuthorizeSocialLogin,
     config: WebConfig,
     provider: SocialProvider,

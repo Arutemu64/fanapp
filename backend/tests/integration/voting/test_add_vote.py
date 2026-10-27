@@ -48,8 +48,6 @@ async def test_add_vote_creates_vote(
     vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
-    # Voting is only available to a user with a linked ticket
-    # and the voting setting enabled in the festival config.
     settings = await settings_gateway.get_for_update()
     settings.set_voting_time_range(
         start=datetime(2020, 1, 1, tzinfo=UTC),

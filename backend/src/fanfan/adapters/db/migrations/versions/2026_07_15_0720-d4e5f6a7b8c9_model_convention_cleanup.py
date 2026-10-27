@@ -24,13 +24,11 @@ Create Date: 2026-07-15 07:20:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "d4e5f6a7b8c9"
 down_revision = "b70291fe7e46"
 branch_labels = None
 depends_on = None
 
-# Tables that lose updated_at (append-only / audit — insert/delete only).
 APPEND_ONLY_TABLES = (
     "votes",
     "feedback",
@@ -43,7 +41,6 @@ APPEND_ONLY_TABLES = (
 
 
 def upgrade() -> None:
-    # --- schedule -> schedule_events -------------------------------------
     op.rename_table("schedule", "schedule_events")
     op.execute(
         "ALTER TABLE schedule_events RENAME CONSTRAINT pk_schedule TO pk_schedule_events"
@@ -58,7 +55,6 @@ def upgrade() -> None:
     )
     op.execute("ALTER INDEX ix_schedule_title RENAME TO ix_schedule_events_title")
     op.execute("ALTER SEQUENCE schedule_order_seq RENAME TO schedule_events_order_seq")
-    # Inbound FKs live on the referring tables and embed the referred table name.
     op.execute(
         "ALTER TABLE subscriptions "
         "RENAME CONSTRAINT fk_subscriptions_event_id_schedule "
@@ -75,7 +71,6 @@ def upgrade() -> None:
         "TO fk_schedule_changes_argument_event_id_schedule_events"
     )
 
-    # --- push_subs -> push_subscriptions ---------------------------------
     op.rename_table("push_subs", "push_subscriptions")
     op.execute(
         "ALTER TABLE push_subscriptions "
@@ -94,13 +89,11 @@ def upgrade() -> None:
         "ALTER INDEX ix_push_subs_user_id RENAME TO ix_push_subscriptions_user_id"
     )
 
-    # --- drop noise updated_at from append-only tables -------------------
     for table in APPEND_ONLY_TABLES:
         op.drop_column(table, "updated_at")
 
 
 def downgrade() -> None:
-    # Re-add updated_at (existing rows get now() via the server default).
     for table in APPEND_ONLY_TABLES:
         op.add_column(
             table,
@@ -112,7 +105,6 @@ def downgrade() -> None:
             ),
         )
 
-    # --- push_subscriptions -> push_subs ---------------------------------
     op.execute(
         "ALTER INDEX ix_push_subscriptions_user_id RENAME TO ix_push_subs_user_id"
     )
@@ -131,7 +123,6 @@ def downgrade() -> None:
     )
     op.rename_table("push_subscriptions", "push_subs")
 
-    # --- schedule_events -> schedule -------------------------------------
     op.execute(
         "ALTER TABLE schedule_changes "
         "RENAME CONSTRAINT fk_schedule_changes_argument_event_id_schedule_events "

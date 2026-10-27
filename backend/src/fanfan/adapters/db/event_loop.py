@@ -15,6 +15,6 @@ def loop_factory() -> Callable[[], asyncio.AbstractEventLoop]:
     if sys.platform == "win32":
         return asyncio.SelectorEventLoop
 
-    import uvloop  # noqa: PLC0415 — absent on Windows, see above
+    import uvloop  # noqa: PLC0415
 
     return uvloop.new_event_loop

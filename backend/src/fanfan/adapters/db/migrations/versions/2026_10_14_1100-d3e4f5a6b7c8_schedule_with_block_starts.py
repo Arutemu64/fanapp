@@ -36,7 +36,6 @@ Create Date: 2026-10-14 11:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "d3e4f5a6b7c8"
 down_revision = "c2d3e4f5a6b7"
 branch_labels = None
@@ -45,7 +44,6 @@ depends_on = None
 _TYPE_CHECK = "ck_schedule_scheduleentrytype"
 _BLOCK_START_CHECK = "ck_schedule_block_start_has_no_stage_state"
 
-# (table, old name, new name) for every constraint naming the renamed table.
 _CONSTRAINT_RENAMES = (
     ("schedule", "pk_schedule_events", "pk_schedule"),
     ("schedule", "uq_schedule_events_number", "uq_schedule_number"),
@@ -81,8 +79,6 @@ def upgrade() -> None:
         "RENAME TO ix_schedule_changes_related_entry_id"
     )
 
-    # The server default fills every existing row in one fast metadata-only
-    # change (Postgres 11+), then goes: the app always states the type.
     op.add_column(
         "schedule",
         sa.Column("type", sa.String(length=32), nullable=False, server_default="event"),
@@ -94,9 +90,6 @@ def upgrade() -> None:
         sa.column("type").in_(["event", "block_start"]),
     )
 
-    # A run starts wherever a row's block differs from the row above it. Its
-    # block start takes an order halfway to the row above, which is free: order
-    # is unique and nothing sits strictly between two neighbours.
     op.execute(
         """
         WITH ranked AS (

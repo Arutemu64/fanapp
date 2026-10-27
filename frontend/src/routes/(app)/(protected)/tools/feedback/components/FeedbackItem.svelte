@@ -14,7 +14,6 @@
 	let submittedAt = $derived(formatRelativeTime(feedback.created_at));
 </script>
 
-<!-- A row in FeedbackFeed's grouped list, which supplies the border and dividers. -->
 <article class="p-4">
 	<div class="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
 		<User class="size-4 shrink-0" aria-hidden="true" />
@@ -23,6 +22,5 @@
 		<span aria-hidden="true">·</span>
 		<span class="shrink-0">{submittedAt}</span>
 	</div>
-	<!-- Free-text feedback: Svelte escapes it, so it renders as plain text. -->
 	<p class="text-body whitespace-pre-line text-foreground">{feedback.text}</p>
 </article>

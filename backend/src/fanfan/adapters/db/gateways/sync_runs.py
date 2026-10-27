@@ -60,13 +60,9 @@ class SqlSyncRunGateway(SyncRunGateway):
 
     async def add(self, run: SyncRun) -> None:
         run_orm = _from_model(run)
-        # Let the partial unique index decide whether another run is active
-        # rather than pre-SELECTing, so two concurrent triggers can't both pass
-        # the check and start duplicate sweeps.
         with translate_integrity_error({"uq_sync_runs_active": SyncAlreadyRunning}):
             self.session.add(run_orm)
             await self.session.flush()
-        # Register so any event recorded on the run lands in the outbox on commit.
         self.uow.register(run)
 
     async def get(self, run_id: SyncRunId) -> SyncRun | None:
@@ -101,9 +97,6 @@ class SqlSyncRunGateway(SyncRunGateway):
     async def fail_stale(
         self, source: SyncSource, *, older_than: datetime, error: str
     ) -> int:
-        # Age is measured from created_at, not started_at: a run that was
-        # requested but never picked up (broker outage) has no started_at and
-        # would otherwise wedge the index forever.
         stmt = (
             update(SyncRunORM)
             .where(
@@ -113,9 +106,6 @@ class SqlSyncRunGateway(SyncRunGateway):
             )
             .values(
                 status=SyncRunStatus.FAILED,
-                # DB clock: this is a bulk UPDATE with no domain logic, and the
-                # moment we noticed is the best "finished" time available — when
-                # the worker actually died is unknowable.
                 finished_at=func.now(),
                 error=error,
             )

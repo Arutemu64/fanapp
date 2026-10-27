@@ -17,7 +17,6 @@ Create Date: 2026-10-21 18:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "e4b7c2a9d1f3"
 down_revision = "c3d9e1f2a4b6"
 branch_labels = None
@@ -47,8 +46,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # The counts are gone: every mailing comes back with sent_count 0, and a
-    # mailing moved from sending to finished stays finished.
     op.add_column(
         _TABLE,
         sa.Column(

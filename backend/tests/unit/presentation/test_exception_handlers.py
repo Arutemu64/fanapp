@@ -44,7 +44,6 @@ def _app() -> FastAPI:
 
     @app.get("/unmarked")
     async def unmarked() -> None:
-        # Internal-only: meant to be re-raised as a flow-specific RateLimited.
         raise CooldownActive(retry_after=30)
 
     @app.post("/password")
@@ -55,8 +54,6 @@ def _app() -> FastAPI:
     async def limited(_: _LimitedInput) -> None:
         pass
 
-    # The same relative order as create_app: the catch sits inside the
-    # middleware whose headers every response must carry.
     app.add_middleware(CatchUnexpectedErrorsMiddleware)
     app.add_middleware(NoStoreCacheControlMiddleware)
     app.add_middleware(BindRequestContextMiddleware)
@@ -66,8 +63,6 @@ def _app() -> FastAPI:
 
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    # A migration test elsewhere runs Alembic's fileConfig() in-process, which
-    # disables every logger created before it (disable_existing_loggers=True).
     monkeypatch.setattr(handlers_logger, "disabled", False)
     return TestClient(_app(), raise_server_exceptions=False)
 
@@ -137,7 +132,6 @@ def test_router_errors_use_the_error_shape(
 def test_incorrect_password_is_bad_input_not_a_lost_session(
     client: TestClient,
 ) -> None:
-    # A 401 would make the frontend treat the session as ended.
     response = client.post("/password")
 
     assert response.status_code == 400
@@ -165,7 +159,6 @@ def test_validation_error_carries_the_broken_limit_but_not_the_input(
     errors = response.json()["errors"]
     by_field = {error["loc"][-1]: error for error in errors}
     assert by_field["name"]["ctx"] == {"max_length": 3}
-    # A custom validator's ctx holds the exception object, which stays out.
     assert by_field["code"]["ctx"] == {}
     assert "toolong" not in response.text
     assert "secret" not in response.text

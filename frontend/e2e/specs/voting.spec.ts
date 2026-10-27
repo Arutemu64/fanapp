@@ -52,7 +52,6 @@ test.describe('voting', { tag: '@critical' }, () => {
 		await page.goto('/voting');
 
 		await expect(page.getByText('Лучший косплей')).toBeVisible();
-		// Open voting hides the status banner.
 		await expect(page.getByText('Голосование сейчас закрыто.')).toHaveCount(0);
 	});
 });

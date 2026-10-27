@@ -25,8 +25,6 @@ SCHEDULE_EDIT_LOCK_KEY = "schedule:edit"
 
 def _from_model(model: ScheduleEntry) -> ScheduleEntryORM:
     if isinstance(model, ScheduleBlockStart):
-        # The event columns are written out rather than left to their server
-        # defaults, so a merge onto an existing row cannot keep stale values.
         return ScheduleBlockStartORM(
             id=model.id,
             title=model.title,
@@ -75,9 +73,6 @@ def _parse_event_dto(
     *,
     position: int | None,
 ) -> ScheduleEventFullDTO:
-    # position is passed in explicitly: single-row reads supply the undeferred
-    # column_property value, while the list query supplies it from its single
-    # joined ranking subquery.
     return ScheduleEventFullDTO(
         type=ScheduleEntryType.EVENT,
         id=ScheduleEntryId(event_orm.id),
@@ -118,9 +113,6 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         self.session = session
 
     async def lock_for_edit(self) -> None:
-        # Transaction-level, so commit or rollback releases it and a pooled
-        # connection never carries it into another request
-        # (https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS).
         await self.session.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
             {"key": SCHEDULE_EDIT_LOCK_KEY},
@@ -189,8 +181,6 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         return _event_to_model(event_orm) if event_orm else None
 
     async def list_all(self) -> list[ScheduleEntry]:
-        # In order, so the import matches a repeated block title to the same
-        # block start on every run instead of whichever row Postgres returns.
         stmt = (
             select(ScheduleEntryORM).order_by(ScheduleEntryORM.order).with_for_update()
         )
@@ -260,10 +250,6 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         return None
 
     async def read_list_schedule(self) -> list[ScheduleEntryDTO]:
-        # The whole schedule is read at once, so position comes from a single
-        # ranking subquery joined once here, rather than the per-row correlated
-        # column_property (which would re-run the window for every one of the
-        # ~hundreds of rows).
         ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
             select(ScheduleEntryORM, ranked.c.position)

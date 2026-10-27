@@ -6,14 +6,6 @@ export interface DayGroup<T> {
 	items: T[];
 }
 
-/**
- * Split a newest-first feed into venue-clock day sections ("Сегодня", "Вчера",
- * "8 октября"), keeping the feed's order inside and across sections.
- *
- * Keyed by day rather than by run: the feed is merged from live SSE arrivals and
- * fetched pages, so one day can in principle show up twice in sequence, and a
- * repeated section key would break the keyed `{#each}` that renders them.
- */
 export function groupByDay<T extends { created_at: string }>(
 	items: ReadonlyArray<T>,
 	now: number = Date.now()

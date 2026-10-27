@@ -23,7 +23,6 @@ WORD_LISTS = [
     MASCULINE_NOUNS,
     FEMININE_NOUNS,
 ]
-# Each gender's adjectives only ever meet that gender's nouns.
 PAIRINGS = [
     (MASCULINE_ADJECTIVES, MASCULINE_NOUNS),
     (FEMININE_ADJECTIVES, FEMININE_NOUNS),
@@ -48,9 +47,6 @@ def test_longest_pair_fits_the_username_rules(
 ) -> None:
     longest = max(adjectives, key=len) + max(nouns, key=len) + "99"
 
-    # Well under the 25-character limit on purpose: the quest leaderboard gives
-    # a name about 130px on a 360px phone, where each word of a 17-character
-    # name still fits its own line; longer words start breaking mid-word.
     assert len(longest) <= 17
     assert re.fullmatch(USERNAME_PATTERN, longest)
 
@@ -59,9 +55,6 @@ def test_longest_pair_fits_the_username_rules(
 def test_no_pair_trips_the_profanity_filter(
     adjectives: tuple[str, ...], nouns: tuple[str, ...]
 ) -> None:
-    # A user who keeps the generated name and edits nothing else must not be
-    # told their own name is profane, and the filter matches roots across the
-    # adjective/noun seam.
     profanity_filter = WordListProfanityFilter()
     flagged = [
         adjective + noun

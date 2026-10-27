@@ -4,12 +4,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from fanfan.core.exceptions.schedule import InvalidScheduleFileReason
 
-# The code the validation handler emits; referenced from the OpenAPI code-enum
-# builder so it appears in the client-facing union alongside domain codes.
 VALIDATION_ERROR_CODE = "VALIDATION_ERROR"
 
 
-# RFC 9457 §3: problem details serialized as JSON carry this media type.
 PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
 
 
@@ -25,16 +22,11 @@ class ProblemDetails(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     type: str
-    # The status phrase: the client never shows server text (it picks Russian
-    # copy from `code`), so a per-code English title would go unread.
     title: str
     status: int
     code: str
 
 
-# A Pydantic error's `ctx` keeps only these: it carries the limit the input broke
-# (`max_length`, `ge`, …) for copy like "at most 500 characters", but a custom
-# validator can put an exception object there too.
 ValidationContextValue = str | int | float | bool
 
 
@@ -59,7 +51,6 @@ class InvalidScheduleFileProblem(ProblemDetails):
 
     code: Literal["INVALID_SCHEDULE_FILE"]
     reason: InvalidScheduleFileReason
-    # What locates the problem; which of these are set depends on the reason.
     columns: list[str] | None = None
     column: str | None = None
     row: int | None = None

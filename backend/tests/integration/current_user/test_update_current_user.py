@@ -61,7 +61,6 @@ async def test_update_current_user_unchanged_username_is_noop(
     user_gateway = await dishka_request.get(UserGateway)
     login(visitor)
 
-    # Passing the current username changes nothing and must not error.
     await interactor(UpdateCurrentUserInput(username=visitor.username))
 
     reloaded = await user_gateway.get_by_id(visitor.id)
@@ -78,7 +77,6 @@ async def test_update_current_user_rejects_profane_username(
     user_gateway = await dishka_request.get(UserGateway)
     login(visitor)
 
-    # Usernames are public, so the real profanity filter must reject this one.
     with pytest.raises(UsernameProfanity):
         await interactor(UpdateCurrentUserInput(username="fuck"))
 

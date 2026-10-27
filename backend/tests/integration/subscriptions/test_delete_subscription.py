@@ -56,8 +56,6 @@ async def test_delete_subscription_removes_own_subscription(
 
     event = _schedule_event(1, "Событие", 1)
     await schedule_gateway.add(event)
-    # Commit the event first: the subscription's FK to schedule must see a
-    # persisted row.
     await uow.commit()
     subscription = Subscription(
         id=generate_subscription_id(),
@@ -103,7 +101,6 @@ async def test_delete_subscription_of_another_user_raises_access_denied(
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
     user_gateway = await dishka_request.get(UserGateway)
 
-    # visitor (user A) owns the subscription; other_user (user B) attacks it.
     other_user = User(
         id=UserId(uuid7()),
         username=Username("other_visitor"),
@@ -113,7 +110,6 @@ async def test_delete_subscription_of_another_user_raises_access_denied(
     await user_gateway.add(other_user)
     event = _schedule_event(1, "Событие", 1)
     await schedule_gateway.add(event)
-    # Commit the event first so the subscription's FK sees a persisted row.
     await uow.commit()
     subscription = Subscription(
         id=generate_subscription_id(),

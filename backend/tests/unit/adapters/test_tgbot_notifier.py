@@ -87,8 +87,8 @@ class _StubSocialIdentityGateway(SocialIdentityGateway):
 
     async def get_by_provider(
         self,
-        user_id: UserId,  # noqa: ARG002  # part of the port contract
-        provider: SocialProvider,  # noqa: ARG002  # part of the port contract
+        user_id: UserId,  # noqa: ARG002
+        provider: SocialProvider,  # noqa: ARG002
     ) -> SocialIdentity | None:
         return self._identity
 
@@ -123,8 +123,6 @@ async def test_ends_lookup_transaction_before_sending() -> None:
 
     await notifier.send_notification(_notification())
 
-    # The send can take up to a minute; the pooled connection (and the
-    # identity's row lock) must not be held through it.
     assert uow.commits == 1
     assert len(client.calls) == 1
 
@@ -138,11 +136,8 @@ async def test_sends_html_with_escaped_title_and_deep_link_button() -> None:
     assert len(client.calls) == 1
     call = client.calls[0]
     assert call["chat_id"] == TG_USER_ID
-    # The plain-text title is uppercased and HTML-escaped before wrapping in <b>;
-    # the stored body (already a safe HTML subset) is passed through untouched.
     assert "КАФЕ A&amp;B" in call["text"]
     assert "Тело <b>уведомления</b>" in call["text"]
-    # The deep-link button points at the in-app path on the public host.
     button = call["reply_markup"]["inline_keyboard"][0][0]
     assert button["url"] == "https://app.example/schedule"
 
@@ -168,7 +163,6 @@ async def test_retry_after_maps_to_notification_retry_after() -> None:
 
 
 async def test_forbidden_is_unreachable() -> None:
-    # The user blocked the bot or deleted their account.
     error = TelegramApiError(
         status=403, description="Forbidden: bot was blocked by the user"
     )
@@ -179,7 +173,6 @@ async def test_forbidden_is_unreachable() -> None:
 
 
 async def test_bad_request_is_unreachable() -> None:
-    # A malformed request (e.g. unparseable message HTML) is dropped, not retried.
     error = TelegramApiError(
         status=400, description="Bad Request: can't parse entities"
     )
@@ -190,7 +183,6 @@ async def test_bad_request_is_unreachable() -> None:
 
 
 async def test_unauthorized_token_is_channel_unavailable() -> None:
-    # Invalid bot token — a channel-wide misconfiguration, not a per-user problem.
     error = TelegramApiError(status=401, description="Unauthorized")
     notifier = _notifier(identity=_identity(), client=_RecordingClient(error=error))
 

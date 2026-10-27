@@ -38,8 +38,6 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
         foreign_keys=[changed_event_id],
         lazy="raise",
     )
-    # Any entry: a move records the one the event sat right after before it
-    # moved, which is a block start when the event opened its block.
     related_entry: Mapped[ScheduleEntryORM | None] = relationship(
         foreign_keys=[related_entry_id],
         lazy="raise",

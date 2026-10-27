@@ -16,7 +16,6 @@ export {
 	Footer,
 	Group,
 	Header,
-	//
 	Root as Item,
 	Actions as ItemActions,
 	Content as ItemContent,

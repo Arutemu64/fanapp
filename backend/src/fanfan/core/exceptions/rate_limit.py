@@ -5,9 +5,6 @@ class RateLimitException(AppException):
     pass
 
 
-# Internal: a caller catches this and re-raises a flow-specific RateLimited
-# exception (below), so the cooldown guard never reaches the HTTP boundary and
-# intentionally carries no status marker.
 class CooldownActive(RateLimitException):
     code = "COOLDOWN_ACTIVE"
 

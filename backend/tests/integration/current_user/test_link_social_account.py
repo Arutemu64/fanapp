@@ -74,9 +74,6 @@ async def test_linking_stores_subject_and_notification_address(
     assert identity.provider_user_id == PROVIDER_USER_ID
 
 
-# The security property the merged callback rests on: the flow records who
-# started it, and finishing it while signed in as somebody else must refuse
-# rather than attach the external account to whoever holds the session now.
 async def test_a_session_change_mid_flow_refuses_the_link(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
@@ -99,8 +96,6 @@ async def test_a_session_change_mid_flow_refuses_the_link(
             )
         )
 
-    # Neither account gets the identity — not the one that asked, and above all
-    # not the one that happened to be signed in.
     assert (
         await social_identity_gateway.get_by_provider(
             hijacker.id, SocialProvider.TELEGRAM
@@ -120,8 +115,6 @@ async def test_relinking_the_same_account_is_a_no_op(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # Double-tapping "connect" must not raise at the user — they already have
-    # exactly what they asked for.
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     social_identity_gateway = await dishka_request.get(SocialIdentityGateway)
@@ -211,8 +204,6 @@ async def test_two_providers_coexist_on_one_user(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # `(user_id, provider)` is unique, so one account may hold both a Telegram and
-    # a VK identity at once — the two links must not collide.
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     social_identity_gateway = await dishka_request.get(SocialIdentityGateway)

@@ -3,9 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 import { cn } from './utils';
 
-// Every font-size role in app.css `@theme`, minus the `--line-height` / `--font-weight`
-// companions. Read from the stylesheet so a role added there without joining cn()'s
-// tailwind-merge list fails here instead of vanishing from a component at runtime.
 const appCss = readFileSync(new URL('../app.css', import.meta.url), 'utf8');
 const textRoles = [...appCss.matchAll(/--text-([a-z0-9]+):/g)].map((match) => match[1]);
 

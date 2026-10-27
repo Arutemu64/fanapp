@@ -30,8 +30,6 @@
 
 	let selectedRole = $state<UserRole>('visitor');
 	let selectedRoleLabel = $derived(getRoleLabel(selectedRole));
-	// A `type="number"` binding yields a number, or an empty value when the field is
-	// cleared — never a string. Validated as an integer in range on submit.
 	let amountInput = $state<number | undefined>(10);
 	const generateMutation = createMutation(() => ({
 		...generateTicketsMutation(),
@@ -42,12 +40,9 @@
 	let submitError = $state('');
 
 	let generatedBarcodes = $state<string[]>([]);
-	// One barcode per line: pasting this into a spreadsheet fills a single column,
-	// one ticket per row.
 	let barcodesText = $derived(generatedBarcodes.join('\n'));
 
 	function parseAmount(): number | null {
-		// Guards both the cleared field (null/undefined) and non-integer input.
 		if (!Number.isInteger(amountInput)) {
 			return null;
 		}
@@ -70,8 +65,6 @@
 		}
 	}
 
-	// A connection that drops mid-form keeps what was typed; the submit explains
-	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {

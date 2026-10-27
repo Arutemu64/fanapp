@@ -48,12 +48,8 @@ class RequestSync:
             user=current_user, permission=Permission.SYNC_RUN
         )
 
-        # Clear a run wedged by a dead worker first, otherwise the unique index
-        # would report "already running" forever.
         await self.tracker.reap_stale(data.source)
 
-        # Enqueued, not published: the command lands in the outbox in the same
-        # transaction as the row — no dual write between commit and publish.
         run = SyncRun.create(source=data.source, by_user_id=current_user.id)
         await self.sync_run_gateway.add(run)
         self.uow.enqueue(RunSyncCommand(sync_run_id=run.id, source=run.source))

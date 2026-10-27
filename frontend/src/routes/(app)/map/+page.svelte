@@ -32,10 +32,6 @@
 		point: MapPoint;
 	}
 
-	// The search spans every floor: someone looking for the toilet doesn't know
-	// which floor it is on, so a match on the other floor is listed too and
-	// picking it switches the plan there. The plans never change at runtime, so
-	// the index is built once.
 	const searchIndex = createSearchIndex(
 		maps.flatMap((entry) => entry.points.map((point) => ({ entry, point }))),
 		({ point }: Place) => [point.name(), point.number]
@@ -55,8 +51,6 @@
 		m.results_shown_of({ count: searchResults.length, total: placeCount })
 	);
 
-	// `replace` so picking places doesn't stack history entries Back would have to
-	// step through; `reset: false` leaves scroll and focus where the tap left them.
 	function select(next: MapSelection) {
 		void goto(`${resolve('map')}${buildMapSelectionQuery(next)}`, {
 			replace: true,
@@ -68,8 +62,6 @@
 		return floorId;
 	}
 
-	// A single-select ToggleGroup hands back '' when the pressed item is tapped
-	// again; a floor must always be shown, so that tap changes nothing.
 	function setFloor(id: string) {
 		if (!id || id === floorId) return;
 		select({ floorId: id, placeNumber: null });
@@ -79,8 +71,6 @@
 		select({ floorId, placeNumber: selectedNumber === number ? null : number });
 	}
 
-	// Off the current floor only a search result can be tapped; it brings its
-	// floor up already selected rather than toggling.
 	function selectPlace(place: Place) {
 		if (place.entry.id === floorId) {
 			togglePoint(place.point.number);
@@ -89,20 +79,12 @@
 		select({ floorId: place.entry.id, placeNumber: place.point.number });
 	}
 
-	// While searching, every row names its floor, since the results mix floors;
-	// otherwise only the points off the plan's main floor do.
 	function floorLabel(place: Place): string | undefined {
 		if (place.point.floor) return place.point.floor();
 		if (isSearching) return place.entry.label();
 		return undefined;
 	}
 
-	// On a phone the list runs below the plan, so a row tapped far down would
-	// light up a zone off screen. `nearest` scrolls only when the plan isn't
-	// already in view; the layout's scroll-padding keeps it clear of the navbar.
-	// Only for a tap or click: Enter/Space fire a click with `detail` 0, and
-	// scrolling then would carry the focused row off screen (WCAG 2.4.11); the
-	// status line still announces the pick.
 	function selectFromList(event: MouseEvent, place: Place) {
 		selectPlace(place);
 		if (event.detail === 0) return;
@@ -132,21 +114,13 @@
 			{/each}
 		</ToggleGroup.Root>
 
-		<!-- Two columns once there's room, so the plan stays in view beside its
-		list; on a phone the list follows the plan. -->
 		<div class="grid items-start gap-4 lg:grid-cols-[3fr_2fr]">
-			<!-- Sticks below the top chrome through the (app) layout's --sticky-top,
-			which follows the bar as it hides and the connection banner as it shows. -->
 			<div
 				class="flex flex-col gap-3 motion-reduce:transition-none lg:sticky lg:transition-[top]"
 				style:top="calc(var(--sticky-top, 0px) + 1rem)"
 				style:transition-duration="var(--sticky-top-duration, 0ms)"
 				style:transition-timing-function="var(--sticky-top-easing, ease-out)"
 			>
-				<!-- The plan is a picture to sighted users and one image to a screen
-				reader: the list below carries every place by name and is the keyboard
-				path to the same selection, so the zones stay pointer-only rather than
-				doubling every tab stop. -->
 				<svg
 					bind:this={planElement}
 					viewBox={plan.viewBox}
@@ -228,7 +202,6 @@
 
 					{#each plan.zones as zone, index (index)}
 						{const isSelected = $derived(zone.point === selectedNumber)}
-						<!-- Pointer-only by design; the list below is the keyboard path (see above). -->
 						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 						<g
 							data-point={zone.point}
@@ -294,8 +267,6 @@
 					label={m.map_search_label()}
 					placeholder={m.map_search_placeholder()}
 				/>
-				<!-- Tells a screen reader the list changed; shown only while searching, as
-				on the schedule, since an unfiltered total tells a sighted user nothing. -->
 				<p
 					role="status"
 					aria-live="polite"

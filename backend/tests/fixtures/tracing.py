@@ -24,4 +24,4 @@ def tracing() -> Iterator[None]:
         default_integrations=False,
     )
     yield
-    sentry_sdk.init()  # back to an inactive client for the rest of the suite
+    sentry_sdk.init()

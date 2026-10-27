@@ -18,7 +18,6 @@ Create Date: 2026-09-04 09:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "a7b8c9d0e1f2"
 down_revision = "f1e2d3c4b5a6"
 branch_labels = None
@@ -53,8 +52,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop any wildcard grants first: the pre-wildcard constraint would reject
-    # them, failing the downgrade on a database where "*" was granted.
     permissions = sa.table(_TABLE, sa.column(_COLUMN))
     op.execute(permissions.delete().where(permissions.c[_COLUMN] == _NEW))
     op.drop_constraint(op.f(_CONSTRAINT), _TABLE, type_="check")

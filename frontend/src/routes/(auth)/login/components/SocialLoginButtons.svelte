@@ -18,36 +18,15 @@
 	const toastService = getToastService();
 	const session = getSession();
 
-	// Which social login buttons to show is a per-deployment backend decision — a
-	// provider can be built in yet unreachable from this host (Telegram is blocked
-	// on Russian hosting) — so it is read at runtime, not baked into the bundle.
-	//
-	// No answer yet (first visit, offline, an error) is NOT the same as "none
-	// enabled": it must not hide every social button, or a social-only account (no
-	// password, and its OAuth email was never stored) loses its only way in. So the
-	// page fails open to every known provider; a disabled one is still rejected by
-	// its start endpoint, so the worst case is a handled error, never a lockout. An
-	// authoritative empty list stays empty.
 	const providersQuery = createQuery(() => listOauthProvidersOptions());
 	const providers = $derived(providersQuery.data?.providers ?? ALL_SOCIAL_PROVIDERS);
 
-	// Starting an OAuth login is a full-page navigation that waits on our backend
-	// and on the provider's discovery/authorize page, so the button has to say it
-	// was heard. Tracking which provider is opening lets each button show its own
-	// spinner while a pending navigation blocks starting a second one.
 	let openingProvider = $state<SocialProvider | null>(null);
-	// Set once these buttons go away (the user picked email, or left the page with
-	// "continue without login") while a provider click still waits on a
-	// pending-logout revoke, so the late callback doesn't drag them off to the
-	// provider after all.
 	let abandoned = false;
 	onDestroy(() => {
 		abandoned = true;
 	});
 
-	// The email forms read `next` straight off the URL in Session.loggedIn; a social
-	// login leaves for the provider, so the backend carries it through the OAuth
-	// state instead (and re-validates it there) and lands the user on it.
 	let nextPath = $derived(sanitizeNextPath(page.url.searchParams.get(LOGIN_NEXT_PARAM)));
 
 	function providerStartUrl(provider: SocialProvider): string {
@@ -65,9 +44,6 @@
 		}
 
 		openingProvider = provider;
-		// A logout made offline must be revoked before a new session exists, or the
-		// queued revoke would end the new one on return (see settlePendingLogout).
-		// Usually the reconnect/boot flush already did it and the link just navigates.
 		if (!session.logoutPending) return;
 
 		event.preventDefault();
@@ -82,9 +58,6 @@
 	}
 </script>
 
-<!-- Coming back from a provider restores this page from the bfcache with its DOM
-	frozen mid-navigation, so the spinner would still be running. `pageshow` fires
-	on that restore (and on a normal load, where the flag is already null). -->
 <svelte:window
 	onpageshow={() => {
 		openingProvider = null;

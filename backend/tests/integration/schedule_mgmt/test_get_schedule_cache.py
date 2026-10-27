@@ -55,15 +55,12 @@ async def test_get_schedule_serves_cached_payload_between_reads(
 
     first = await interactor()
 
-    # A second, uninvalidated write must NOT change the read: a cache hit serves
-    # the stored payload without touching the database.
     await schedule_gateway.add(_schedule_event(2, 2.0))
     await uow.commit()
 
     second = await interactor()
     assert second.etag == first.etag
     assert second.payload == first.payload
-    # The stale cache still describes only the first event.
     assert '"number":2' not in second.payload
 
 
@@ -82,12 +79,11 @@ async def test_schedule_edit_invalidates_cache(
     await schedule_gateway.add(event)
     await uow.commit()
 
-    before = await get_schedule()  # populates the cache
+    before = await get_schedule()
 
     await set_current(SetCurrentScheduleEventInput(event_id=event.id))
 
     after = await get_schedule()
-    # The edit invalidated the cache, so the read recomputed from committed state.
     assert after.etag != before.etag
     assert '"is_current":true' in after.payload
 
@@ -105,15 +101,11 @@ async def test_publish_schedule_updated_warms_cache_before_broadcast(
 
     await schedule_gateway.add(_schedule_event(1, 1.0))
     await uow.commit()
-    stale = await get_schedule()  # populates the cache
+    stale = await get_schedule()
 
-    # Left stale on purpose: the warm-up must overwrite the entry from
-    # committed state, not keep whatever the cache already holds.
     await schedule_gateway.add(_schedule_event(2, 2.0))
     await uow.commit()
 
-    # Read the cache at the moment of the broadcast: checking it after publish()
-    # returns would also pass if the broadcast went out before the warm-up.
     cached_at_broadcast: list[CachedSchedule | None] = []
     record_broadcast = realtime.publish
 

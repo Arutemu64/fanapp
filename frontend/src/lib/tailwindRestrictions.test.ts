@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-// The no-restricted-classes patterns live in the ESLint config (ADR-0030); this
-// suite sits under src/ only because that is where Vitest looks.
 import { RESTRICTION_GROUPS } from '../../eslint.tailwind.js';
 
 type Group = keyof typeof RESTRICTION_GROUPS;

@@ -8,11 +8,8 @@ from fanfan.core.events.base import Message
 
 class FakeEventBroker(EventBroker):
     def __init__(self) -> None:
-        # Messages a consumer publishes directly, bypassing the outbox.
         self.published_events: list[Message] = []
-        # Raw publishes, as the outbox relay would emit them.
         self.published_raw: list[tuple[str, dict[str, Any], str]] = []
-        # occurred_at of each raw publish, in the same order.
         self.published_occurred_at: list[datetime] = []
         self.published_trace_headers: list[dict[str, str] | None] = []
 

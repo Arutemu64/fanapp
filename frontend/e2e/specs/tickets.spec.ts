@@ -81,7 +81,6 @@ test.describe('tickets tool', () => {
 		await page.goto('/tools/tickets');
 		await page.getByRole('tab', { name: 'TicketsCloud' }).click();
 
-		// The TicketsCloud sync moved here from the sync tool.
 		await expect(page.getByRole('heading', { name: 'TicketsCloud' })).toBeVisible();
 
 		await page.getByRole('button', { name: 'Добавить мероприятие' }).click();

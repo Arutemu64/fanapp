@@ -7,8 +7,6 @@ import {
 
 import type { PageLoad } from './$types';
 
-// The shared OAuth outcomes (cancelled, failed) plus the conflicts only the
-// linking flow can hit.
 const LINK_ERROR_CODES = [
 	...OAUTH_ERROR_CODES,
 	'linked_to_another_account',

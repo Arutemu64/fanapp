@@ -28,10 +28,6 @@
 		onSuccess: () => queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() })
 	}));
 
-	// The mutation lives here, not in the form: the form unmounts when the dialog
-	// closes and would take `isPending` with it, so a close and reopen mid-request
-	// could submit twice. `mutateAsync` so the form can await it for its errors
-	// (ADR-0022).
 	async function save(body: UpdateCurrentUserInput) {
 		await updateProfileMutation.mutateAsync({ body });
 		toastService.add(m.profile_updated(), 'success');

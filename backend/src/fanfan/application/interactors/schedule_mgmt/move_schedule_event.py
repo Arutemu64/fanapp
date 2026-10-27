@@ -50,8 +50,6 @@ class MoveScheduleEvent:
             if event is None:
                 raise EventNotFound
 
-            # Any entry: a block start as the anchor moves the event to the top
-            # of that block.
             place_after_event = await self.schedule_gateway.get_entry(
                 data.place_after_entry_id
             )

@@ -42,7 +42,6 @@ class CountingHash:
 async def test_concurrent_calls_never_exceed_the_memory_bound() -> None:
     hasher = PwdlibPasswordHasher()
     counting = CountingHash()
-    # Swap out the real Argon2 so overlap is observable and the test is fast.
     hasher._password_hash = cast("PasswordHash", counting)
 
     results = await asyncio.gather(

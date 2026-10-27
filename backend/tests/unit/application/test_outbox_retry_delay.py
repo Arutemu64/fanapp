@@ -20,6 +20,4 @@ def test_retry_delay_is_capped() -> None:
 
 
 def test_retry_delay_survives_a_row_failing_for_days() -> None:
-    # A row NATS keeps rejecting is retried every few minutes indefinitely; an
-    # unclamped exponent would overflow timedelta after a few dozen attempts.
     assert _retry_delay(5000) == _RETRY_MAX_DELAY

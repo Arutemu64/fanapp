@@ -19,8 +19,6 @@ from fanfan.presentation.web.exceptions import (
 )
 from fanfan.presentation.web.schemas.error import VALIDATION_ERROR_CODE
 
-# Domain exceptions also live in a couple of adapter packages; import them so
-# their subclasses are registered for discovery.
 _EXTRA_EXCEPTION_MODULES = (
     "fanfan.adapters.api.cosplay2.exceptions",
     "fanfan.adapters.api.ticketscloud.exceptions",

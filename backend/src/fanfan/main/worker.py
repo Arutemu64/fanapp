@@ -17,9 +17,6 @@ from fanfan.presentation.faststream.redelivery import sync_consumer_configs
 from fanfan.presentation.faststream.routes import setup_router
 from fanfan.presentation.faststream.schedules.jobs import sync_schedules
 
-# How long the health route waits for the broker to report a live connection.
-# Below the 3 s urlopen timeout of the image's HEALTHCHECK (backend/Dockerfile),
-# so a disconnected broker answers 500 instead of timing the probe out.
 _HEALTH_PING_TIMEOUT_SECONDS = 2.0
 
 
@@ -30,9 +27,6 @@ def create_app() -> AsgiFastStream:
     broker = create_broker(config=config.nats, name="fanfan-worker")
     broker.include_router(setup_router())
 
-    # ASGI only to serve the image's HEALTHCHECK on the path the api uses, so
-    # `docker ps` shows a consumer that has lost NATS as unhealthy.
-    # https://faststream.ag2.ai/0.7/getting-started/observability/healthcheks/
     app = AsgiFastStream(
         broker,
         asgi_routes=[
@@ -77,7 +71,6 @@ def create_app() -> AsgiFastStream:
 
 def main() -> None:
     app = create_app()
-    # Off 8000, the api's port on the host; mirrors `just backend-worker`.
     asyncio.run(app.run(run_extra_options={"port": 8001}), loop_factory=loop_factory())
 
 

@@ -19,8 +19,6 @@ def test_missing_file_means_no_build_id(tmp_path: Path) -> None:
 
 
 def test_empty_file_means_no_build_id(tmp_path: Path) -> None:
-    # A local image build passes no APP_BUILD, so the Dockerfile writes an empty
-    # file; it must not become a blank Sentry release.
     path = tmp_path / "BUILD_ID"
     path.write_text("", encoding="utf-8")
 

@@ -14,13 +14,10 @@
 
 	let { votingState, class: className = '' }: Props = $props();
 
-	// Closed voting reads as an error; a missing login/ticket is a warning the user
-	// can act on. Both map to Alert's semantic variants (tinting lives there now).
 	let variant: Alert.AlertVariant = $derived(
 		votingState?.status === 'disabled' ? 'destructive' : 'warning'
 	);
 
-	// Centralize banner copy so list and nomination pages stay consistent.
 	function getStatusMessage(status: VotingStatus): string {
 		switch (status) {
 			case 'open':

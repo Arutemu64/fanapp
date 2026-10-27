@@ -5,17 +5,6 @@ import { m } from '#lib/paraglide/messages.js';
 
 type ChannelOwner = Pick<CurrentUserDto, 'settings' | 'social_identities'>;
 
-/**
- * The hub row's value: «Включены» when any channel reaches the user, «Выключены»
- * when none does. The channels mirror the backend's delivery: push needs a live
- * subscription on this device; VK and Telegram need the account linked and the
- * channel's setting on (SendNotification checks the setting, each notifier the
- * link). Telegram has no switch on the notifications page, but it still delivers,
- * so it counts — leaving it out would read «Выключены» to someone getting messages.
- *
- * Unknown device push with no social channel on returns nothing: a guess would
- * be the one thing this line must not do.
- */
 export function notificationsStatus(
 	devicePush: DevicePushState,
 	user: ChannelOwner

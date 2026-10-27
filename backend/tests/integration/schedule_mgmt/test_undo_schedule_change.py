@@ -89,7 +89,6 @@ async def test_undo_skipped_change_unskips_event(
     assert saved_event is not None
     assert saved_event.is_skipped is False
 
-    # The change is consumed by the undo.
     assert await changes_gateway.get_by_id(change.id) is None
     assert (
         await changes_gateway.read_list_schedule_changes(
@@ -98,7 +97,6 @@ async def test_undo_skipped_change_unskips_event(
         == []
     )
 
-    # Outbox holds the setup's created event plus the undo event, in order.
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(
@@ -168,8 +166,6 @@ async def test_undo_moved_change_places_event_back_on_top(
         await schedule_gateway.add(event)
     mailing = Mailing.create(by_user_id=schedule_editor.id)
     await mailing_gateway.add(mailing)
-    # A MOVED change with no previous event: undo puts the event back on top,
-    # ahead of the current first event.
     change = ScheduleChange.moved(
         event_id=moved.id,
         previous_entry_id=None,
@@ -182,8 +178,6 @@ async def test_undo_moved_change_places_event_back_on_top(
 
     await interactor(UndoScheduleChangeInput(schedule_change_id=change.id))
 
-    # place_before_first sets order to (first event order - 1), so the moved
-    # event now sorts ahead of everything else.
     saved_moved = await schedule_gateway.get_event(moved.id)
     assert saved_moved is not None
     assert saved_moved.order == 0
@@ -210,7 +204,6 @@ async def test_undo_set_as_current_restores_previous_event(
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
 
-    # "previous" ran earlier, then "changed" was set as current.
     previous = _schedule_event(1, 1)
     changed = _schedule_event(2, 2, is_current=True)
     await schedule_gateway.add(previous)
@@ -232,7 +225,6 @@ async def test_undo_set_as_current_restores_previous_event(
     saved_previous = await schedule_gateway.get_event(previous.id)
     assert saved_changed is not None
     assert saved_previous is not None
-    # Current is handed back to the previously-current event.
     assert saved_changed.is_current is False
     assert saved_previous.is_current is True
     assert await changes_gateway.get_by_id(change.id) is None
@@ -257,8 +249,6 @@ async def test_undo_set_as_current_raises_when_current_moved_on(
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
-    # The change made "changed" current, but the schedule has since moved on:
-    # a different event is current now, so the undo is outdated.
     changed = _schedule_event(1, 1, is_current=False)
     now_current = _schedule_event(2, 2, is_current=True)
     await schedule_gateway.add(changed)
@@ -276,7 +266,6 @@ async def test_undo_set_as_current_raises_when_current_moved_on(
         await interactor(UndoScheduleChangeInput(schedule_change_id=change.id))
     await uow.rollback()
 
-    # Nothing is reverted and the change is preserved for a later, valid undo.
     saved_now_current = await schedule_gateway.get_event(now_current.id)
     assert saved_now_current is not None
     assert saved_now_current.is_current is True
@@ -313,7 +302,6 @@ async def test_undo_without_permission_raises_access_denied(
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
 
     event = _schedule_event(1, 1, is_skipped=True)
@@ -330,7 +318,6 @@ async def test_undo_without_permission_raises_access_denied(
     with pytest.raises(AccessDenied):
         await interactor(UndoScheduleChangeInput(schedule_change_id=change.id))
 
-    # The change is untouched: permission is checked before anything is reverted.
     saved_event = await schedule_gateway.get_event(event.id)
     assert saved_event is not None
     assert saved_event.is_skipped is True

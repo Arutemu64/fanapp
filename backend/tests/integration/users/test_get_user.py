@@ -63,7 +63,6 @@ async def test_returns_basics_and_social_links(
     assert len(result.social_links) == 1
     link = result.social_links[0]
     assert link.provider is SocialProvider.TELEGRAM
-    # provider_user_id is serialised as a string to survive the JS number range.
     assert link.id == "987654321"
 
 

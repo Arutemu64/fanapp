@@ -36,14 +36,8 @@
 		right: '1rem'
 	};
 
-	// Sonner's default only swipes toward the toast's own edge, so a bottom toast
-	// could be flicked only downward, into the bottom nav. Any direction dismisses.
 	const swipeDirections: SonnerProps['swipeDirections'] = ['top', 'right', 'bottom', 'left'];
 
-	// Only Sonner's own options here, no overrides of its CSS (they break silently
-	// on upgrade). Inline styles and the variables below beat its stylesheet. The
-	// close-button variables mirror Sonner's macOS-style top-left badge to the
-	// top-right corner, where Carbon and most web toasts put it.
 	const toastOptions = {
 		actionButtonStyle: 'background: var(--color-primary); color: var(--color-primary-foreground);'
 	};

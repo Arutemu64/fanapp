@@ -7,12 +7,9 @@ import type {
 
 import { expect, json, loggedInAs, organizer, problem, test } from '../fixtures';
 
-// A 1×1 white PNG: a valid image with no code in it.
 const BLANK_PNG =
 	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC';
 
-// The Profile tab is the hub for everything without a tab of its own: login for
-// guests; account settings, feedback, the organizer toolbox and logout for members.
 test.describe('profile hub', () => {
 	test('offers a guest the login entry point, returning to the hub', async ({ page }) => {
 		await page.goto('/profile');
@@ -24,8 +21,6 @@ test.describe('profile hub', () => {
 	});
 
 	test('carries the return path through a social login start', async ({ page, api }) => {
-		// A social login leaves for the provider, so `next` has to ride along to the
-		// backend start route, which keeps it in the OAuth state.
 		api.use({
 			'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: ['vk'] })
 		});
@@ -42,7 +37,6 @@ test.describe('profile hub', () => {
 		const main = page.getByRole('main');
 		await expect(main.getByRole('link', { name: /@ЛунныйЛис07/ })).toBeVisible();
 		await expect(main.getByRole('link', { name: /Билет/ })).toContainText('Не привязан');
-		// No push subscription in a fresh browser: the row says so at a glance.
 		await expect(main.getByRole('link', { name: /Уведомления/ })).toContainText('Выключены');
 		await expect(main.getByRole('link', { name: 'Обратная связь' })).toBeVisible();
 		await expect(main.getByRole('link', { name: 'Инструменты' })).toHaveCount(0);
@@ -50,7 +44,6 @@ test.describe('profile hub', () => {
 	});
 
 	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
-		// Push is off in a fresh browser, but VK still delivers, so the row says so.
 		api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
 		await page.goto('/profile');
 
@@ -62,7 +55,6 @@ test.describe('profile hub', () => {
 	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
 		api.use({
 			...organizer(),
-			// The toolbox hub polls this for its online-users card.
 			'GET /users/online-count': json<OnlineUsersCountOutput>({ count: 5 })
 		});
 		await page.goto('/profile');
@@ -70,7 +62,6 @@ test.describe('profile hub', () => {
 		await page.getByRole('main').getByRole('link', { name: 'Инструменты' }).click();
 		await expect(page).toHaveURL('/tools');
 
-		// The toolbox has no tab of its own, so the Profile tab stays the current one.
 		const nav = page.getByRole('navigation', { name: 'Разделы' });
 		await expect(nav.getByRole('link', { name: 'Профиль' })).toHaveAttribute(
 			'aria-current',
@@ -106,7 +97,6 @@ test.describe('profile settings on a phone', () => {
 		});
 		await page.goto('/profile/ticket');
 
-		// The phone keyboard's Enter/«Go» key submits — no reach for the button.
 		const field = page.getByLabel('Номер билета');
 		await field.fill('fan-7k4q9m');
 		await field.press('Enter');
@@ -129,8 +119,6 @@ test.describe('profile settings on a phone', () => {
 
 		await page.getByRole('button', { name: 'Сканировать билет' }).click();
 		const dialog = page.getByRole('dialog', { name: 'Сканирование билета' });
-		// The fake camera feed is a single JPEG frame, so it doubles as the screenshot;
-		// no camera here, so the read can only come from the image.
 		await dialog.locator('input[type="file"]').setInputFiles({
 			name: 'ticket.jpg',
 			mimeType: 'image/jpeg',
@@ -154,8 +142,6 @@ test.describe('profile settings on a phone', () => {
 				return problem('TICKET_NOT_FOUND', 404);
 			}
 		});
-		// Hold the decoder download, so the first read is still waiting on it when the
-		// scanner closes.
 		let releaseDecoder = () => {};
 		await page.route('**/*.wasm', (route) => {
 			releaseDecoder = () => void route.continue();
@@ -176,8 +162,6 @@ test.describe('profile settings on a phone', () => {
 		await scan.click();
 		await expect(dialog).toBeVisible();
 		releaseDecoder();
-		// Reads run in order on the one decoder, so once this codeless image is
-		// answered the cancelled read has been answered too.
 		await dialog.locator('input[type="file"]').setInputFiles({
 			name: 'blank.png',
 			mimeType: 'image/png',
@@ -213,8 +197,6 @@ test.describe('logging out', { tag: '@critical' }, () => {
 
 test.describe('diagnostics', () => {
 	test('opens from five taps on the version line and copies a report', async ({ page, api }) => {
-		// Captured instead of read back: WebKit rejects `clipboard-write` as an
-		// unknown permission, so granting it cannot be shared across projects.
 		await page.addInitScript(() => {
 			navigator.clipboard.writeText = (text: string) => {
 				(window as { copiedText?: string }).copiedText = text;
@@ -269,9 +251,6 @@ test.describe('avatar', () => {
 	});
 });
 
-// Each account dialog mounts its form inside the dialog content, so closing it
-// throws the draft away: reopening must start from the saved state, never from
-// a half-typed value or an old error.
 test.describe('account dialogs start fresh on reopen', () => {
 	test('edit profile drops an unsaved username', async ({ page, api }) => {
 		api.use(loggedInAs());
@@ -296,9 +275,6 @@ test.describe('account dialogs start fresh on reopen', () => {
 
 		await page.getByRole('button', { name: 'Изменить' }).click();
 		await newPassword.fill('short');
-		// Enter, not a tap on the submit button: on a phone the sheet's button sits
-		// over the bottom nav, and the pointer left there after the sheet closes
-		// would hover-preload the voting tab.
 		await newPassword.press('Enter');
 		await expect(dialog.getByText(/^Новый пароль должен быть/)).toBeVisible();
 		await page.keyboard.press('Escape');

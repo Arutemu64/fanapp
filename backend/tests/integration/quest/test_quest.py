@@ -96,10 +96,6 @@ async def test_ties_rank_whoever_reached_the_score_first(
     login: Callable[[User], None],
 ) -> None:
     login(quest_volunteer)
-    # Each award takes its own created_at from the interactor's clock, so the
-    # visitor reaches 10 first. The manager's account is older, so its uuid7
-    # sorts first: a ranking that fell through to the user-id tiebreaker would
-    # put the manager on top and fail here.
     await _award(dishka_request, visitor, 10)
     await _award(dishka_request, quest_manager, 10)
     assert quest_manager.id < visitor.id
@@ -145,7 +141,6 @@ async def test_award_and_cancel_each_enqueue_one_notification_for_the_player(
 ) -> None:
     login(quest_volunteer)
     award_id = await _award(dishka_request, visitor, 10)
-    # A replay is answered from the ledger and must not notify again.
     await _award(dishka_request, visitor, 10, award_id)
     await (await dishka_request.get(CancelQuestAward))(award_id)
 

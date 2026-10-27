@@ -15,25 +15,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Metadata Alembic autogenerate diffs migrations against.
 target_metadata = BaseORM.metadata
 
-# Alembic keeps this placeholder in alembic.ini. Runtime migrations should use
-# app settings instead, while tests may still override sqlalchemy.url explicitly.
 DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 
-# Named CHECK constraints are only diffed by this opt-in plugin (opt-in since
-# Alembic 1.19.2). It suits schemas whose constraints are all named by a
-# naming_convention, as ours are (adapters/db/models/base.py); without it, a
-# CHECK added to or dropped from a model never reaches a migration.
 AUTOGENERATE_PLUGINS = ["alembic.autogenerate.*", "alembic.ext.checkconstraint_byname"]
 
-# Migrations run while the previous release still serves traffic (`just
-# deploy`). DDL waiting on a lock queues every later query on that table behind
-# it, stalling the app; failing fast instead rolls the whole run back, and the
-# Compose migration service's `restart: on-failure` retries it. No
-# statement_timeout, unlike the app's connections: it would kill a long
-# backfill or index build midway.
 MIGRATION_LOCK_TIMEOUT = "5s"
 
 

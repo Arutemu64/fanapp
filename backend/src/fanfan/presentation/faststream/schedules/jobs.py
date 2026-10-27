@@ -20,7 +20,6 @@ from fanfan.presentation.faststream.schedules.config import SchedulerConfig
 
 logger = logging.getLogger(__name__)
 
-# A crontab line has no seconds field; NATS cron leads with one.
 _CRONTAB_FIELDS = 5
 
 
@@ -38,9 +37,6 @@ class ScheduledJob:
         return f"scheduler.tick.{self.id}"
 
 
-# Execute*Sync rather than the bare sync interactors: they record a SyncRun for
-# every trigger and take part in the one-active-run-per-source guard, so a
-# scheduled tick can't overlap a manual sync.
 SYNC_TCLOUD = ScheduledJob("sync_tcloud", ExecuteTicketsSync)
 SYNC_COSPLAY2 = ScheduledJob("sync_cosplay2", ExecuteCosplaySync)
 OUTBOX_RETENTION = ScheduledJob("outbox_retention", PurgeOutboxEvents)
@@ -92,9 +88,6 @@ async def sync_schedules(
             await _unschedule(js, job)
             continue
         headers = schedule_headers(job, cron, timezone)
-        # Republishing restarts an @every interval, so an unchanged schedule
-        # is left alone; otherwise a deploy more often than the interval would
-        # keep the job from ever firing.
         if await _current_schedule(js, job) == headers:
             continue
         try:
@@ -113,9 +106,6 @@ async def sync_schedules(
 
 
 async def _unschedule(js: JetStreamContext, job: ScheduledJob) -> None:
-    # The tick too, so one left from when the job was enabled does not wait for
-    # a worker. The subscribers start before this runs, so one already pending
-    # may still be picked up and run once.
     await js.purge_stream(scheduler_stream.name, subject=job.schedule_subject)
     await js.purge_stream(scheduler_stream.name, subject=job.tick_subject)
 

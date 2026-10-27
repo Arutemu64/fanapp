@@ -8,10 +8,6 @@ import type {
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
-// The home hero fades its countdown cells in with a staggered per-cell delay. axe
-// reads computed colour, so a cell caught mid-fade blends with its backdrop and
-// reports a contrast the settled UI clears. Wait for every cell to reach full
-// opacity before scanning. (No-op when the countdown isn't rendered.)
 async function settleHomeCountdown(page: Page): Promise<void> {
 	await page.waitForFunction(() => {
 		const cells = Array.from(document.querySelectorAll('.countdown-cell'));
@@ -19,30 +15,11 @@ async function settleHomeCountdown(page: Page): Promise<void> {
 	});
 }
 
-// axe scans the *rendered* page, so each scan waits for a stable landmark first —
-// analysing mid-boot would flag the splash, not the app. Full WCAG A/AA is
-// enforced, color-contrast included.
-//
-// Every screen is scanned in both themes: the app follows the system scheme by
-// default, and dark mode swaps every token, so a light-only scan would leave half
-// the contrast pairs unchecked.
 const COLOR_SCHEMES = ['light', 'dark'] as const;
 
-// The hero sets its text over the key-art photo, whose contrast axe can't
-// measure. Checked by hand from a screenshot with the text hidden: every label
-// clears 4.5:1 over the brightest backdrop pixel under it, on phone and desktop.
-// Re-check when the key art, the scrim or the hero's text colours change.
 const HERO = 'section[aria-labelledby="hero-heading"]';
 
 test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
-	// Emulate reduced motion so entrance animations (the home countdown fades its
-	// cells in) are stilled before the scan — axe would otherwise measure a colour
-	// mid-fade against its backdrop and flag a contrast the settled UI clears. The
-	// app already gates those animations on prefers-reduced-motion.
-	//
-	// Goes through `contextOptions`, not a top-level `reducedMotion` key: Playwright
-	// exposes it on BrowserContextOptions only, so the flat form silently emulates
-	// nothing. The config sets no other contextOptions, so nothing is clobbered here.
 	test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
 	for (const colorScheme of COLOR_SCHEMES) {
@@ -101,8 +78,6 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 				await expectAccessible();
 			});
 
-			// The per-row vote buttons use the tonal variant, whose tinted fill is the
-			// contrast-sensitive part, so the scan runs on a ballot that still offers them.
 			test('an open nomination ballot has no WCAG A/AA violations', async ({
 				page,
 				api,

@@ -80,7 +80,6 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
 
     delivered = await delivered_notifications(dishka_request)
     recipient_ids = [n.user_id for n in delivered]
-    # One notification per matching user, each targeting a distinct recipient.
     assert len(delivered) == len(expected_ids)
     assert set(recipient_ids) == expected_ids
     assert len(recipient_ids) == len(set(recipient_ids))
@@ -92,8 +91,6 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
 
     stored = await mailing_gateway.get(mailing.id, lock=False)
     assert stored is not None
-    # Every notification is stored by the time the fan-out returns, so the
-    # mailing is already FINISHED.
     assert stored.total_count == len(expected_ids)
     assert stored.status is MailingStatus.FINISHED
 
@@ -118,7 +115,6 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     await mailing_gateway.add(mailing)
     await uow.commit()
 
-    # No PARTICIPANT users exist in the isolated test transaction.
     await interactor(
         ProcessBroadcastInput(
             mailing_id=mailing.id, body="Никому", roles=[UserRole.PARTICIPANT]

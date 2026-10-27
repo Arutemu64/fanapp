@@ -4,9 +4,6 @@ services:
     build:
       context: ./frontend
       target: prod
-      # PUBLIC_* are baked into the SPA bundle at build time ($app/env/public);
-      # the static NGINX container has no way to inject them at runtime. They are
-      # public, non-secret constants.
       args:
         PUBLIC_API_URL: ${PUBLIC_API_URL}
         PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
@@ -16,48 +13,18 @@ services:
         PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT}
         PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${PUBLIC_SENTRY_TRACES_SAMPLE_RATE}
         PUBLIC_VK_GROUP_ID: ${PUBLIC_VK_GROUP_ID}
-        # Release number for the profile footer, from backend/pyproject.toml.
-        # `just run-prod` supplies it; empty hides the footer line.
         APP_VERSION: ${APP_VERSION:-}
-        # Source-map upload target. Non-secret and build-time only (read by
-        # vite.config.ts, never bundled). An empty URL/ORG/PROJECT = upload
-        # skipped.
         SENTRY_URL: ${SENTRY_URL}
         SENTRY_ORG: ${SENTRY_ORG}
         SENTRY_PROJECT: ${SENTRY_PROJECT}
-      # The Sentry token (source-map upload) is a real secret, so it enters the
-      # build as a BuildKit secret (never stored in layers or build caches)
-      # instead of a build arg. Empty token = upload skipped.
       secrets:
         - sentry_auth_token
-    # env_file is kept for the dev overlay (vite dev reads PUBLIC_* at runtime).
-    # The prod NGINX container ignores these — its values are already baked in.
     env_file:
       - .env
-    # No depends_on the API: the frontend is a static SPA (NGINX in prod, vite in
-    # dev) that never talks to the API at boot — browser /api calls are routed to
-    # the api container by the upstream Caddy, not by this container. Gating the
-    # frontend on API health would turn any backend outage into a total blackout
-    # (even the static shell wouldn't serve); decoupled, the UI stays up and
-    # degrades gracefully while the backend recovers.
-    # Host port defaults to 3000 so the upstream Caddy reverse proxy is unchanged;
-    # override with FRONTEND_PORT in .env to avoid a collision. NGINX listens on
-    # 80 inside the container regardless (only the host side is remapped).
     ports:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:80'
     restart: unless-stopped
     init: true
-    # Resource ceilings are budgeted for the smallest target host: a 1-vCPU /
-    # 2 GB VPS. Plain `docker compose up` (non-swarm, how we deploy) enforces
-    # `limits` but silently ignores `reservations` (docker/compose#10046), so we
-    # set limits only. A `cpus` limit may not exceed the host core count, or the
-    # container fails to create. Memory limits are hard caps — breach one and the
-    # container is OOM-killed — so each is sized above the service's real peak,
-    # not at it; the long-running services (core + ops profiles) sum to 1792 MiB,
-    # leaving ~12% of the 2 GB for the kernel, Docker and sshd (the one-shot
-    # migration's limit applies only while it runs at deploy). Keep docs/deployment.md
-    # "Sizing and tuning" in step. Raise everything to match a bigger host.
-    # A hit limit shows up as CPU throttling or an OOM kill.
     deploy:
       resources:
         limits:
@@ -83,11 +50,6 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-api"
-      # Pools are sized per service so their combined backend count stays well
-      # under Postgres' max_connections (60, set on db). The api is the only side
-      # with real request concurrency, so it keeps the largest pool; the workers
-      # below are trimmed. Each backend is a ~5-10 MB process, so oversized pools
-      # cost real RAM on a 2 GB host. Overrides the .env DB__POOL_SIZE default.
       DB__POOL_SIZE: "10"
       DB__MAX_OVERFLOW: "10"
       REDIS__HOST: "redis"
@@ -96,18 +58,9 @@ services:
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
       UVICORN_ROOT_PATH: "/api"
-      # Open SSE streams never end on their own, and uvicorn otherwise waits
-      # for every connection indefinitely, so `docker stop` would run into the
-      # 10s default stop_grace_period, SIGKILL the api and skip its lifespan
-      # shutdown. 5s leaves that shutdown room inside the 10s. The requests it
-      # cancels are filtered out of Sentry (adapters/debug/telemetry.py).
-      # Mirrored in main/web.py for the host runner.
       UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN: "5"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
-    # Host port defaults to 8000; override with API_PORT in .env to avoid a
-    # collision. The container always listens on 8000 (UVICORN_PORT above) — only
-    # the host side is remapped. If you change this, update Caddyfile too.
     ports:
       - '127.0.0.1:${API_PORT:-8000}:8000'
     restart: unless-stopped
@@ -126,9 +79,6 @@ services:
       - frontend-network
       - backend-network
 
-  # Runs as one container: don't scale it without a shared send limiter. The
-  # Telegram/VK limiters pace per process (adapters/rate_limiter.py), so a
-  # second replica doubles the send rate into the providers' flood control.
   worker:
     build: ./backend
     depends_on:
@@ -145,10 +95,6 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-worker"
-      # Trimmed pool: a NATS consumer with modest DB write concurrency. See api.
-      # The overflow also covers the outbox relay and the scheduled jobs, which
-      # run here too; a running sync pins two connections (its session plus its
-      # WorkerLock).
       DB__POOL_SIZE: "5"
       DB__MAX_OVERFLOW: "10"
       REDIS__HOST: "redis"
@@ -156,10 +102,6 @@ services:
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
     command: [ "faststream", "run", "--factory", "fanfan.main.worker:create_app" ]
-    # On SIGTERM the broker waits up to its graceful timeout (15s,
-    # presentation/faststream/broker.py) for the dozens of sends in flight
-    # before it closes. The 10s default would SIGKILL it first, leaving every
-    # interrupted send to wait out its 90s AckWait before redelivery.
     stop_grace_period: 20s
     restart: unless-stopped
     init: true
@@ -170,15 +112,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          # Idles near 110M but this is where the heavy work runs — full
-          # TicketsCloud/cosplay2 sync sweeps and broadcast fan-out load real
-          # data and spike well above idle, so leave headroom over the ~130M
-          # shared-image baseline. Matches the api ceiling.
           memory: 256M
-    # Inherits the image's HEALTHCHECK: the worker serves the api's health path
-    # and answers 500 while its broker is disconnected (main/worker.py).
-    # Compose only reports the state; it does not restart an unhealthy
-    # container. Reconnecting is the clients' job (adapters/nats/config.py).
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -187,10 +121,6 @@ services:
     build: ./backend
     env_file:
       - .env
-    # Alembic only opens the DB, but loading the config validates every section,
-    # so pin all three hosts like the other services — the .env values are
-    # host-side (localhost) and would be wrong the moment a migration step grows
-    # a Redis or NATS dependency.
     environment:
       DB__HOST: "db"
       REDIS__HOST: "redis"
@@ -201,8 +131,6 @@ services:
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
     init: true
-    # One-shot: runs to completion before api/workers start (they depend on it),
-    # so this ceiling overlaps only with db/redis/nats, never the app processes.
     deploy:
       resources:
         limits:
@@ -213,10 +141,6 @@ services:
       - backend-network
 
   db:
-    # Pinned (not a floating minor tag) so dev/prod, the Alembic autogenerate
-    # script, and the integration test suite all run the exact same image —
-    # see backend/scripts/generate_migration.py and
-    # backend/tests/fixtures/db_provider.py.
     image: postgres:18.6-alpine
     volumes:
       - db-data:/var/lib/postgresql
@@ -224,23 +148,9 @@ services:
       POSTGRES_USER: "${DB__USER}"
       POSTGRES_PASSWORD: "${DB__PASSWORD}"
       POSTGRES_DB: "${DB__NAME}"
-    # Published on loopback only — unreachable from the internet, but reachable
-    # through an SSH tunnel so desktop DB clients (DBeaver etc.) can connect:
-    #   ssh -L 5433:127.0.0.1:5432 <server>  →  client connects to localhost:5433
     ports:
       - "127.0.0.1:5432:5432"
-    # Postgres uses /dev/shm for parallel workers; Docker's 64M default is too
-    # small and surfaces as "no space left on device" under load.
     shm_size: 128mb
-    # Otherwise Postgres runs on image defaults. These override the ones that are
-    # wrong for a 2 GB SSD host: effective_cache_size defaults to 4 GB (a planner
-    # hint far above the page cache this host can spare, so it caps at 512M);
-    # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
-    # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
-    # single core from spending it JIT-compiling OLTP queries. max_connections
-    # tracks the per-service pool ceilings (see api/worker).
-    # shared_buffers stays at the image default (128M, ~28% of this container's
-    # cap and matched to shm_size above); raising it would starve work_mem.
     command:
       - postgres
       - -c
@@ -255,14 +165,6 @@ services:
       - jit=off
       - -c
       - max_connections=60
-    # Postgres is the heaviest and most critical service, so it gets the largest
-    # memory ceiling. The cpus ceiling can't exceed the host core count — a 2.0
-    # here is what failed to create on the 1-vCPU VPS — so it caps at the whole
-    # single core. Memory is sized to the engine's own worst case, not the idle
-    # working set: shared_buffers 128M + maintenance_work_mem (64M default, up to
-    # 3 autovacuum workers) + max_connections 60 x work_mem 8M can approach this
-    # ceiling under a heavy-sort burst, so keep ~20% headroom to stay off the OOM
-    # killer (Postgres has no graceful degradation — it gets killed).
     deploy:
       resources:
         limits:
@@ -286,9 +188,6 @@ services:
     configs:
       - source: nats-conf
         target: /etc/nats/nats.conf
-    # JetStream (enable + store_dir + fsync tuning) lives in the nats-conf config;
-    # auth stays on the CLI so the password never lands in the committed file
-    # (compose interpolates it from .env), same split as redis --requirepass.
     command: "-c /etc/nats/nats.conf -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     ports:
       - "127.0.0.1:4222:4222"
@@ -298,10 +197,6 @@ services:
           cpus: '0.5'
           memory: 96M
     environment:
-      # Go's soft memory limit; the runtime does not derive one from the cgroup
-      # limit, so without it the heap can grow past 96M and the container is
-      # OOM-killed rather than collecting harder near the cap. ~90% of the limit.
-      # https://pkg.go.dev/runtime#hdr-Environment_Variables
       GOMEMLIMIT: "86MiB"
     restart: unless-stopped
     healthcheck:
@@ -315,20 +210,11 @@ services:
 
   pgbackup:
     image: prodrigestivill/postgres-backup-local:18-alpine
-    # BACKUP_ON_START fires immediately, so wait for a ready Postgres instead of
-    # a merely started container.
     depends_on:
       db:
         condition: service_healthy
-    # A bind mount, not a named volume: the dumps are pulled off the host with
-    # rsync (docs/deployment.md "Backups and restore"), and Docker documents bind
-    # mounts as the fit for files both the host and a container need.
     volumes:
       - ./backups:/backups
-    # Custom format (-Fc) restores with pg_restore: one table at a time, or the
-    # whole database. Deliberately no --schema=public: an explicit -n makes
-    # pg_dump emit CREATE SCHEMA public, which collides with the public schema
-    # every fresh database already has, so the restore fails.
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_DB=${DB__NAME}
@@ -348,13 +234,6 @@ services:
           cpus: '0.5'
           memory: 96M
     restart: unless-stopped
-    # The image runs a tiny HTTP server that reports unhealthy once the last
-    # scheduled dump is older than the SCHEDULE window — so a backup that starts
-    # failing silently (bad credentials, full disk, version skew after a Postgres
-    # bump) surfaces in `docker ps` and any prober watching container health,
-    # instead of being discovered only when a restore is needed. start_period
-    # covers the BACKUP_ON_START dump, which must finish before health goes green.
-    # test command is the one upstream documents for this image.
     healthcheck:
       test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080" ]
       interval: 30s
@@ -377,9 +256,6 @@ services:
     command: "valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "127.0.0.1:6379:6379"
-    # valkey.conf sets maxmemory 192mb (allkeys-lru) as the in-process ceiling;
-    # this container limit sits above it as a backstop, with headroom for the
-    # copy-on-write spike during RDB saves.
     deploy:
       resources:
         limits:
@@ -395,88 +271,32 @@ services:
     networks:
       - backend-network
 
-# Server config for nats and redis, inlined so a deploy needs no config files
-# beside the Compose files. Compose interpolates `content`, so a literal `$`
-# here must be written `$$`. Inline configs cannot target a `read_only` service
-# (Compose refuses: "`file` is the sole supported option"); nats and redis are
-# not read-only, so keep it that way or move the config back to a `file:`.
 configs:
   nats-conf:
     content: |
-      # NATS JetStream config for the FAN FAN companion app.
-      #
-      # Defining this jetstream block is what ENABLES JetStream (store_dir set here),
-      # so the CLI carries no --js/--sd — only auth (--user/--pass, kept off this
-      # committed file) and monitoring (-m 8222). A --js flag on the command line
-      # would override this block and silently reset sync_interval to its default.
       jetstream {
-        # Matches the nats-data volume mount in docker-compose.yml.
         store_dir: "/data"
 
-        # How often the filestore is fsync'd to disk. The default is 2 minutes:
-        # JetStream acks a publish immediately but only flushes every sync_interval,
-        # so a host crash (power loss, kernel panic) in that window drops writes that
-        # were already acknowledged (nats-server#7564; Jepsen NATS 2.12.1, 2025-12).
-        # We run single-node with no replication, so there is no second replica to
-        # recover from — the fsync window IS the durability guarantee. This matters
-        # because the outbox marks a row published once NATS acks it and never
-        # redelivers it (see presentation/faststream/jstream.py), so an event lost in
-        # the fsync window is lost on both sides. 10s shrinks that window 12x from the
-        # 120s default at negligible I/O cost for this traffic. Not "always" (fsync
-        # before every ack): that adds disk latency to every publish, and the outbox
-        # relay publishes serially.
         sync_interval: "10s"
 
-        # Ceilings on JetStream storage. The defaults are 75% of the host's RAM (not
-        # this container's limit) and 75% of the disk under store_dir, which on this
-        # host is shared with Postgres and its backups, so JetStream could fill it.
-        # Nothing uses memory storage, so that cap stays small. The stream's own
-        # max_bytes (presentation/faststream/jstream.py) must stay below
-        # max_file_store.
-        # https://docs.nats.io/learn/deployment/sizing-and-resources
         max_memory_store: 16MB
         max_file_store: 1GB
       }
   valkey-conf:
     content: |
-      # Valkey config for the FAN FAN companion app.
-      # This store holds only regenerable, TTL'd data: web sessions, auth tokens,
-      # rate-limit counters, and short-lived locks. There is no system-of-record
-      # data here, so both the memory policy and persistence are tuned to degrade
-      # gracefully rather than to guarantee durability.
 
-      # Listen on all interfaces inside the container. This is safe because the
-      # host only publishes the port on 127.0.0.1 (see docker-compose.yml), the
-      # service sits on an isolated Docker network, and access requires a password
-      # (--requirepass, passed on the command line so it stays out of this
-      # committed, non-secret file).
       bind 0.0.0.0
 
-      # Memory ceiling. Kept below the container's 256M limit so Valkey evicts keys
-      # itself instead of being OOM-killed by the kernel, with headroom for the
-      # copy-on-write spike during RDB saves. Without this, the default noeviction
-      # policy makes writes (logins, token issue, rate-limit increments) fail as
-      # memory fills, right before the container is killed.
       maxmemory 192mb
 
-      # Every key here carries a TTL and is regenerable, so evicting the coldest
-      # keys under memory pressure (a user re-logs in, a rate-limit window resets)
-      # is strictly better than failing writes.
       maxmemory-policy allkeys-lru
 
-      # RDB snapshots. Enough to survive a restart without logging everyone out;
-      # some minutes of data loss on a hard crash is acceptable for this data.
       save 900 1
       save 300 10
       save 60 10000
 
-      # A failed background snapshot must not take the app down. Persistence here is
-      # best-effort, so keep serving writes even if a save fails (default is `yes`,
-      # which stops all writes until the next successful save).
       stop-writes-on-bgsave-error no
 
-# Build-time secret for the frontend image, sourced from .env. Present but
-# empty in most setups (the upload is skipped); see .env.example.
 secrets:
   sentry_auth_token:
     environment: DEBUG__SENTRY_AUTH_TOKEN

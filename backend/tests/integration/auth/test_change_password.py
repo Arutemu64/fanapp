@@ -66,7 +66,6 @@ async def test_change_password_with_correct_old_password_updates_hash(
     assert await password_hasher.verify(NEW_PASSWORD, saved_user.hashed_password)
     assert not await password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)
 
-    # The interactor returns a fresh, valid session.
     resolution = await session_store.resolve_session(session_id)
     assert resolution.user_id == user.id
 
@@ -90,7 +89,6 @@ async def test_change_password_with_wrong_old_password_raises(
             )
         )
 
-    # Password must be unchanged after a rejected attempt.
     await uow.rollback()
     saved_user = await user_gateway.get_by_id(user.id)
     assert saved_user is not None
@@ -103,8 +101,6 @@ async def test_change_password_without_old_password_when_one_is_set_raises(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # Omitting the current password is only allowed for accounts that have none;
-    # when a password exists it must be provided.
     interactor = await dishka_request.get(ChangePassword)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -123,8 +119,6 @@ async def test_change_password_for_account_without_password_sets_one(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A social-only account (no password) can set an initial password without
-    # supplying an old one.
     interactor = await dishka_request.get(ChangePassword)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -153,7 +147,6 @@ async def test_change_password_revokes_existing_sessions(
     user = await _user(user_gateway, password_hasher, uow, OLD_PASSWORD)
     login(user)
 
-    # An already-open session that must be invalidated by the password change.
     old_session_id = await session_store.create_session(user.id)
     assert (await session_store.resolve_session(old_session_id)).user_id == user.id
 
@@ -161,6 +154,5 @@ async def test_change_password_revokes_existing_sessions(
         ChangePasswordInput(old_password=OLD_PASSWORD, new_password=NEW_PASSWORD)
     )
 
-    # The pre-existing session is gone; only the freshly issued one is valid.
     assert (await session_store.resolve_session(old_session_id)).user_id is None
     assert (await session_store.resolve_session(new_session_id)).user_id == user.id

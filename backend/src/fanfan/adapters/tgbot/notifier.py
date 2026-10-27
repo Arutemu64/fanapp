@@ -19,9 +19,6 @@ from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
-# Telegram lets a bot send about 30 messages per second in bulk and answers 429
-# past that (https://core.telegram.org/bots/faq). Kept under it: the figure is
-# approximate, and a 429 costs a redelivery plus the retry_after wait.
 _MESSAGES_PER_SECOND = 25
 
 
@@ -52,32 +49,19 @@ class TelegramNotifier(TelegramNotifierPort):
 
     @staticmethod
     def _render_message_text(notification: Notification) -> str:
-        # The body is already stored as a safe Telegram-compatible HTML subset
-        # (see HtmlSanitizer). The title is plain text, so escape it before
-        # wrapping it in <b> to keep the message valid HTML. The bell emoji
-        # prefixes the title to flag it as a notification at a glance.
         title = html.escape(notification.title.upper(), quote=False)
         return f"<b>🔔 {title}</b>\n\n{notification.body}"
 
     def _build_reply_markup(self, notification: Notification) -> dict[str, Any]:
-        # Deep-link the user to the relevant in-app page (root when path unset).
         url = self.web_config.build_url(notification.path or "/")
         return {"inline_keyboard": [[{"text": "🌐 Открыть приложение", "url": url}]]}
 
     async def send_notification(self, notification: Notification) -> None:
-        # Whether the user wants Telegram notifications is application policy,
-        # checked by the SendNotification interactor before we get here; this
-        # adapter only decides whether the user is physically reachable.
         social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider=SocialProvider.TELEGRAM
         )
-        # provider_user_id is the Bot API id we message. An unlinked user has no
-        # identity at all, which is the only unreachable case here: the column is
-        # NOT NULL and both providers always supply the id (see SocialIdentity).
         if social_identity is None:
             raise UserNotReachable
-        # End the lookup's transaction (and its row lock) before the send, which
-        # can take up to ~60s; the pooled connection is not held through it.
         await self.uow.commit()
         await self.rate_limiter.wait()
         try:
@@ -95,15 +79,8 @@ class TelegramNotifier(TelegramNotifierPort):
             case HTTPStatus.TOO_MANY_REQUESTS if error.retry_after is not None:
                 raise NotificationRetryAfter(retry_after=error.retry_after) from error
             case HTTPStatus.FORBIDDEN:
-                # The user blocked the bot or deleted their account — genuinely
-                # unreachable, and nothing to log per delivery.
                 raise UserNotReachable from error
             case HTTPStatus.BAD_REQUEST:
-                # Telegram rejected the request itself — most likely the message
-                # HTML failed to parse (a sanitizer/template regression), not a
-                # per-user problem. Log the reason so the bug is diagnosable, then
-                # drop this notification rather than redeliver a message that can
-                # never parse.
                 logger.warning(
                     "Telegram rejected notification as a bad request",
                     extra={
@@ -113,19 +90,10 @@ class TelegramNotifier(TelegramNotifierPort):
                 )
                 raise UserNotReachable from error
             case HTTPStatus.UNAUTHORIZED:
-                # Invalid bot token (e.g. the placeholder used when no real bot is
-                # configured). This is a channel-wide misconfiguration, not a
-                # per-user problem, so signal it as such: the consumer drops the
-                # message instead of redelivering it forever (retrying can't fix a
-                # bad token). Logged loudly as a concise one-liner, not a
-                # traceback — it fires on every notification while the token is a
-                # placeholder, and the cause is chained onto the raised exception.
                 logger.error(
                     "Telegram bot token is invalid or unauthorized — "
                     "cannot deliver notifications via Telegram"
                 )
                 raise NotificationChannelUnavailable from error
             case _:
-                # 5xx and a 429 without retry_after are transient: let the
-                # consumer redeliver.
                 raise error

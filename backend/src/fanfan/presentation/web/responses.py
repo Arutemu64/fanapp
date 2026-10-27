@@ -4,8 +4,6 @@ from starlette import status
 
 from fanfan.presentation.web.schemas.error import ProblemDetails, ValidationProblem
 
-# Validation can happen on any route that accepts input, so this set is applied
-# globally in setup_api_router().
 VALIDATION_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_422_UNPROCESSABLE_CONTENT: {
         "model": ValidationProblem,
@@ -13,8 +11,6 @@ VALIDATION_RESPONSES: dict[int | str, dict[str, Any]] = {
     },
 }
 
-# Only attached to routes that require an authenticated user (alongside the
-# SessionCookie security marker), so public routes don't advertise 401/403.
 AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_401_UNAUTHORIZED: {
         "model": ProblemDetails,
@@ -26,10 +22,6 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     },
 }
 
-# Attached to routes whose interactor enforces a cooldown or attempt limit (e.g.
-# schedule edits share the announcement cooldown, sign-in counts guesses), so
-# the 429 + Retry-After contract is documented in one place instead of being
-# repeated per route.
 RATE_LIMIT_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_429_TOO_MANY_REQUESTS: {
         "model": ProblemDetails,

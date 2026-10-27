@@ -24,7 +24,6 @@ class WebIdProvider(IdProvider):
 
         resolution = await self.session_store.resolve_session(session_id)
         if resolution.touched:
-            # Mark session for cookie TTL refresh in HTTP middleware.
             self.request.state.renew_session_id = session_id
 
         if resolution.user_id is not None:

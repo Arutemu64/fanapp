@@ -3,8 +3,6 @@ import sys
 
 import structlog
 
-# Path of the container/Dockerfile HEALTHCHECK probe (the api and the
-# worker both serve it); its access logs are noise.
 HEALTH_CHECK_PATH = "/debug/health"
 
 
@@ -34,8 +32,6 @@ def setup_logging(level: int, *, json_logs: bool) -> None:
         structlog.processors.StackInfoRenderer(),
         structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.processors.UnicodeDecoder(),
-        # Must stay last: it hands the event dict to the stdlib handler's
-        # ProcessorFormatter (https://www.structlog.org/en/stable/standard-library.html).
         structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
     ]
 
@@ -61,9 +57,6 @@ def setup_logging(level: int, *, json_logs: bool) -> None:
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
-    # Drop any handlers from a previous setup_logging() call so repeated
-    # initialization (e.g. running a service entrypoint that also builds the
-    # app factory) does not stack handlers and emit every log line twice.
     for existing_handler in root_logger.handlers[:]:
         root_logger.removeHandler(existing_handler)
     root_logger.addHandler(handler)
@@ -75,9 +68,6 @@ def setup_logging(level: int, *, json_logs: bool) -> None:
         cache_logger_on_first_use=True,
     )
 
-    # Silence noisy loggers
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    # httpx2 logs every request URL at INFO, and the Telegram bot token is part
-    # of its URL path (adapters/tgbot/client.py) — WARNING keeps it out of logs.
     logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").addFilter(_HealthCheckFilter())

@@ -22,10 +22,6 @@
 	const nominationsQuery = createQuery(() => listVotingNominationsOptions());
 	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
 
-	// Voting is a live, online-only surface: casting a vote is a mutation, and the
-	// open/closed and already-voted state must not be shown stale (a ballot you
-	// can't submit is a dead end). So it is never persisted, and a copy still in
-	// memory from earlier in the session is not shown offline either.
 	let nominationsView = $derived(
 		queryView(nominationsQuery, {
 			policy: 'live',

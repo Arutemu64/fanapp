@@ -12,8 +12,6 @@ pytestmark = pytest.mark.unit
 
 PYPROJECT_PATH = BACKEND_DIR / "pyproject.toml"
 
-# A full diff of a spec this size buries the signal; the first hunks are enough
-# to name the endpoint or schema that moved.
 MAX_DIFF_LINES = 40
 
 DRIFT_MESSAGE = """\

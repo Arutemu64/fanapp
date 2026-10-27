@@ -80,13 +80,13 @@ class _FakeNotificationGateway(NotificationGateway):
 
     async def is_superseded(
         self,
-        notification: Notification,  # noqa: ARG002  # part of the port contract
+        notification: Notification,  # noqa: ARG002
     ) -> bool:
         return self._superseded
 
     async def get(
         self,
-        notification_id: object,  # noqa: ARG002  # part of the port contract
+        notification_id: object,  # noqa: ARG002
         *,
         lock: bool = True,
     ) -> Notification | None:
@@ -101,7 +101,7 @@ class _FakeUserGateway(UserGateway):
 
     async def get_by_id(
         self,
-        user_id: UserId,  # noqa: ARG002  # part of the port contract
+        user_id: UserId,  # noqa: ARG002
     ) -> User | None:
         return self._user
 
@@ -109,11 +109,10 @@ class _FakeUserGateway(UserGateway):
 class _StubMailingGateway(MailingGateway):
     async def get(
         self,
-        mailing_id: MailingId,  # noqa: ARG002  # part of the port contract
+        mailing_id: MailingId,  # noqa: ARG002
         *,
-        lock: bool = True,  # noqa: ARG002  # part of the port contract
+        lock: bool = True,  # noqa: ARG002
     ) -> None:
-        # Never called: these notifications carry no mailing_id.
         msg = "mailing gateway should not be queried"
         raise AssertionError(msg)
 
@@ -135,7 +134,7 @@ class _CommitCheckingNotifier(TelegramNotifierPort, PushNotifierPort, VkNotifier
 
     async def send_notification(
         self,
-        notification: Notification,  # noqa: ARG002  # part of the port contract
+        notification: Notification,  # noqa: ARG002
     ) -> None:
         self.commits_at_send = self._uow.commits
 
@@ -190,8 +189,6 @@ async def test_telegram_delivered_when_enabled() -> None:
 async def test_read_transaction_ends_before_the_external_send(
     send: Callable[[SendNotification, SendNotificationInput], Awaitable[None]],
 ) -> None:
-    # An open transaction holds a pooled connection, and the user row's lock,
-    # for the length of the external call, while the senders run in parallel.
     uow = _FakeUow()
     notifier = _CommitCheckingNotifier(uow)
     notification_gateway = _FakeNotificationGateway(_make_notification())
@@ -208,7 +205,6 @@ async def test_read_transaction_ends_before_the_external_send(
     await send(interactor, _INPUT)
 
     assert notifier.commits_at_send == 1
-    # Nothing is written back, so the notification is read without a row lock.
     assert notification_gateway.locked_reads == 0
 
 
@@ -219,7 +215,6 @@ async def test_read_transaction_ends_before_the_external_send(
 async def test_stale_schedule_notification_is_expired_not_sent(
     notification_type: NotificationType,
 ) -> None:
-    # "On stage now" sent eleven minutes late names the wrong act.
     push = FakePushNotifier()
     interactor = _interactor(
         user=_make_user(),
@@ -265,8 +260,6 @@ async def test_fresh_schedule_notification_is_sent() -> None:
 async def test_superseded_schedule_notification_is_not_sent(
     send: Callable[[SendNotification, SendNotificationInput], Awaitable[None]],
 ) -> None:
-    # Parallel senders can reach an older change after a newer one; sending it
-    # then would leave the stale text on top.
     tg, push, vk = FakeTelegramNotifier(), FakePushNotifier(), FakeVkNotifier()
     interactor = _interactor(
         user=_make_user(),
@@ -292,8 +285,6 @@ async def test_superseded_schedule_notification_is_not_sent(
 async def test_only_stage_notices_can_be_superseded(
     notification_type: NotificationType,
 ) -> None:
-    # A later subscription notice may be about another act, and two broadcasts
-    # are two messages: neither is a newer version of the one being sent.
     push = FakePushNotifier()
     interactor = _interactor(
         user=_make_user(),
@@ -310,7 +301,6 @@ async def test_only_stage_notices_can_be_superseded(
 
 
 async def test_late_broadcast_is_still_sent() -> None:
-    # Only schedule notifications describe a moment; a broadcast stays true.
     push = FakePushNotifier()
     interactor = _interactor(
         user=_make_user(),
@@ -338,7 +328,6 @@ async def test_telegram_opt_out_is_unreachable() -> None:
 
     with pytest.raises(UserNotReachable):
         await interactor.send_notification_to_telegram(_INPUT)
-    # The opt-out is decided before the adapter is ever called.
     assert tg.sent_notifications == []
 
 
@@ -371,8 +360,6 @@ async def test_vk_opt_out_is_unreachable() -> None:
 
 
 async def test_push_ignores_channel_opt_outs() -> None:
-    # Push has no per-channel setting — a live subscription is the opt-in — so it
-    # delivers even when both messaging channels are switched off.
     push = FakePushNotifier()
     interactor = _interactor(
         user=_make_user(telegram=False, vk=False),

@@ -28,12 +28,10 @@ def test_cursor_round_trips_through_its_token() -> None:
     "token",
     [
         "not base64 !",
-        "bm90IGpzb24",  # "not json"
-        "eyJ0IjogIjIwMjYtMDUtMDEifQ",  # {"t": "2026-05-01"}: no id
-        "WzFd",  # [1]: not an object
-        # {"t": "2026-05-01T12:00:00+00:00", "id": 123}: id is not a string
+        "bm90IGpzb24",
+        "eyJ0IjogIjIwMjYtMDUtMDEifQ",
+        "WzFd",
         "eyJ0IjogIjIwMjYtMDUtMDFUMTI6MDA6MDArMDA6MDAiLCAiaWQiOiAxMjN9",
-        # {"t": "2026-05-01T12:00:00", "id": <uuid>}: naive timestamp
         "eyJ0IjogIjIwMjYtMDUtMDFUMTI6MDA6MDAiLCAiaWQiOiAiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIn0",
     ],
 )

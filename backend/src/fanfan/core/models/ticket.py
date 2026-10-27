@@ -16,12 +16,8 @@ class Ticket(AggregateRoot):
     used_by_user_id: UserId | None
     issued_by_user_id: UserId | None
 
-    # A TicketsCloud ticket id names a seat/slot that is sold again after a
-    # refund, so one sale is identified by the order and ticket ids together.
     ticketscloud_ticket_id: str | None
     ticketscloud_order_id: str | None = None
-    # Set when the sale was refunded. Revocation only blocks new links: a user
-    # who already linked the ticket keeps it and their role.
     revoked_at: datetime | None = None
 
     @classmethod
@@ -59,8 +55,6 @@ class Ticket(AggregateRoot):
         self.used_by_user_id = user_id
 
     def release(self) -> None:
-        # Freed rather than deleted: the barcode can be linked again, by the
-        # same person or by whoever the organizer hands it to.
         self.used_by_user_id = None
 
     def revoke(self, now: datetime) -> None:

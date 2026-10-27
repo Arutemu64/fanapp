@@ -41,9 +41,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         social_identity_orm = _from_model(social_identity)
         with translate_integrity_error(
             {
-                # UNIQUE(provider, subject): the external account is taken.
                 "uq_social_identities_provider": SocialAccountLinkedToAnotherUser,
-                # UNIQUE(user_id, provider): the user already has this provider.
                 "uq_social_identities_user_id": UserAlreadyHasProviderLinked,
             }
         ):

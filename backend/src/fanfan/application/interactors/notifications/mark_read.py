@@ -9,8 +9,6 @@ from fanfan.core.vo.notification import NotificationId
 
 
 class MarkNotificationsReadInput(BaseModel):
-    # The feed sends the unread ids it has on screen (pages of at most 100), so a
-    # legitimate batch stays far below this; the cap only bounds a hostile body.
     notification_ids: list[NotificationId] = Field(max_length=500)
 
 
@@ -29,11 +27,7 @@ class MarkNotificationsRead:
         if not data.notification_ids:
             return
         current_user_id = await self.current_user_provider.require_user_id()
-        # seen_at is a timestamptz column, so the stored instant is identical
-        # regardless of tzinfo; use UTC to match every other interactor.
         timestamp = datetime.now(UTC)
-        # The gateway scopes the update to current_user_id, so a caller cannot
-        # mark another user's notifications read by guessing their ids.
         await self.notifications_gateway.mark_read_for_user(
             user_id=current_user_id,
             notification_ids=data.notification_ids,

@@ -11,9 +11,6 @@ from fanfan.core.vo.vote import VotingStatus
 @dataclass(frozen=True, slots=True)
 class VotingState:
     status: VotingStatus
-    # The configured window, surfaced alongside the status so the client can
-    # schedule its banner to flip exactly when the clock crosses a boundary
-    # (there is no server event for that). None/None means no window is set.
     voting_start: datetime | None
     voting_end: datetime | None
 
@@ -23,8 +20,6 @@ class VotingService:
         self.settings_gateway = settings_gateway
 
     async def get_voting_window(self) -> tuple[datetime | None, datetime | None]:
-        # The window without the per-user status, for callers (e.g. a guest's voting
-        # page) that show when voting runs but have no ticket/status to resolve.
         settings = await self.settings_gateway.get()
         return settings.voting_start, settings.voting_end
 

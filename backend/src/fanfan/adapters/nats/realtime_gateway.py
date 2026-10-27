@@ -14,16 +14,12 @@ from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
-# Cap per-connection buffering so a slow/stuck SSE client cannot grow memory
-# without bound. On overflow we drop the oldest message to favour freshness.
 SSE_QUEUE_MAXSIZE = 100
 
 
 def _offer(
     queue: asyncio.Queue[SSEMessage], message: SSEMessage, user_id: UserId | None
 ) -> None:
-    # Slow consumer: drop the oldest to make room for the newest.
-    # No lock needed — asyncio runs this callback without interruption.
     if queue.full():
         queue.get_nowait()
         logger.warning(
@@ -41,11 +37,6 @@ class NatsRealtimeGateway(RealtimeGateway):
     def __init__(self, nc: NATSClient, retort: Retort) -> None:
         self.nc = nc
         self.retort = retort
-        # Broadcasts reach every open stream, so one process-wide subscription
-        # decodes each message once and fans it out to the per-connection
-        # queues; a subscription per stream would decode it once per viewer.
-        # Relies on APP scope (main/ioc/stream.py): one gateway per process.
-        # Queues map to their stream's user only for the overflow log.
         self._broadcast_queues: dict[asyncio.Queue[SSEMessage], UserId | None] = {}
         self._broadcast_subscription: Subscription | None = None
         self._broadcast_subscribe_lock = asyncio.Lock()
@@ -70,9 +61,6 @@ class NatsRealtimeGateway(RealtimeGateway):
         return self.retort.load(data, SSEMessage)
 
     async def _ensure_broadcast_subscription(self) -> None:
-        # The lock stops two streams opening at once from both subscribing. The
-        # subscription then stays for the life of the process: an idle one costs
-        # nothing, and nats-py restores it after a reconnect.
         async with self._broadcast_subscribe_lock:
             if self._broadcast_subscription is not None:
                 return

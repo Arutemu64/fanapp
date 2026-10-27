@@ -22,7 +22,6 @@ class GenerateTicketsInput(BaseModel):
 
 
 class GenerateTicketsOutput(BaseModel):
-    # One barcode per generated ticket, ready to be copied into a spreadsheet.
     barcodes: list[str]
 
 
@@ -67,8 +66,6 @@ class GenerateTickets:
 def _build_tickets(
     *, role: UserRole, amount: int, issued_by_user_id: UserId
 ) -> list[Ticket]:
-    # Deduplicate within the batch so a single request can never emit two
-    # identical codes; cross-batch uniqueness is enforced by the DB constraint.
     tickets: list[Ticket] = []
     seen: set[str] = set()
     while len(tickets) < amount:

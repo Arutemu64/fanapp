@@ -8,37 +8,18 @@ export type InstallState = 'available' | 'installed' | 'unavailable';
 export interface ReadyStepsInput {
 	signedIn: boolean;
 	hasTicket: boolean;
-	/** Once voting has closed a ticket unlocks nothing, so the step expires with it. */
 	votingEnded: boolean;
-	/** The voting card is already asking for the ticket — don't ask twice. */
 	ticketAskedElsewhere: boolean;
 	hasProgramme: boolean;
 	hasSubscriptions: boolean;
-	/** Null while unknown (the device check hasn't answered): the step stays hidden. */
 	notificationsOn: boolean | null;
 	install: InstallState;
-	/**
-	 * iOS and iPadOS deliver web push only to a Home Screen app
-	 * (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/), so
-	 * there installing has to come before notifications can be switched on. Not on
-	 * a Mac: Safari there delivers push to an ordinary tab.
-	 */
 	installBeforeNotifications: boolean;
 }
 
-/**
- * The setup steps still open for this viewer, most important first. Each step
- * drops out once its condition holds, so the list differs per person and runs
- * empty once everything is done — the home page then hides the section. There
- * is deliberately no done/total count: which steps apply varies by device and
- * moment (install support, the async push check, the voting window), so a total
- * would shift under the viewer.
- */
 export function getReadySteps(input: ReadyStepsInput): ReadyStepKey[] {
 	const canInstall = input.install === 'available';
 
-	// Every other step needs an account, so a guest is offered only what they can
-	// do right now.
 	if (!input.signedIn) {
 		return canInstall ? ['account', 'install'] : ['account'];
 	}
@@ -64,11 +45,6 @@ export function getReadySteps(input: ReadyStepsInput): ReadyStepKey[] {
 	return steps;
 }
 
-/**
- * Whether reminders reach this viewer, or null while the device check is still
- * pending. A messenger channel counts as much as push on this device: either
- * way the reminders arrive.
- */
 export function getNotificationsOn(
 	user: CurrentUserDto | null,
 	devicePush: DevicePushState

@@ -87,5 +87,4 @@ async def test_record_is_noop_for_anonymous_stream() -> None:
 
     await interactor()
 
-    # An unauthenticated SSE connection has no user to count.
     assert presence.marked == []

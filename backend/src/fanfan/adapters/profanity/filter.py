@@ -5,10 +5,6 @@ from fanfan.application.ports.profanity_filter import ProfanityFilter
 
 _DATA_DIR = Path(__file__).parent / "data"
 
-# Map look-alike Latin letters and common leetspeak to their Cyrillic
-# equivalents so obfuscated mat (e.g. "xyu", "пизд@") folds onto the same
-# canonical form as the plain word. Both user input and the word lists pass
-# through this map, so matching stays consistent across mixed scripts.
 _CONFUSABLES = {
     "a": "а",
     "b": "б",
@@ -30,7 +26,6 @@ _CONFUSABLES = {
     "ё": "е",
 }
 
-# Collapse runs of the same letter ("хуууй" -> "хуй").
 _REPEATED_LETTER = re.compile(r"(.)\1+")
 
 
@@ -38,8 +33,6 @@ def _normalize(text: str) -> str:
     folded: list[str] = []
     for char in text.casefold():
         mapped = _CONFUSABLES.get(char, char)
-        # Drop digits, separators and punctuation; keep only letters. This is
-        # what defeats "х.у.й" / "p_i_z_d_a" style obfuscation.
         if mapped.isalpha():
             folded.append(mapped)
     return _REPEATED_LETTER.sub(r"\1", "".join(folded))

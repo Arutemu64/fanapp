@@ -34,8 +34,6 @@ class ExecuteCosplaySync:
         self.sync_cosplay = sync_cosplay
 
     async def __call__(self, run_id: SyncRunId | None = None) -> None:
-        # Under cron/CLI/NATS this resolves to the seeded system user, which is
-        # granted sync:run by migration — the check is real, not decorative.
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SYNC_RUN
@@ -48,9 +46,6 @@ class ExecuteCosplaySync:
         try:
             output = await self.sync_cosplay()
         except Exception:
-            # Recorded on the run and logged (Sentry picks ERROR logs up), but
-            # deliberately not re-raised: the NATS consumer would redeliver and
-            # retry forever against a vendor that is simply down.
             logger.exception("Cosplay2 sync failed", extra={"sync_run_id": str(run.id)})
             await self.tracker.fail(run, SYNC_FAILED_ERROR)
             return

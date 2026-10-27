@@ -27,9 +27,6 @@ function block(id: string, title: string): ScheduleBlockStartDto {
 	return { type: 'block_start', id, title, order: 0 };
 }
 
-// Flatten a grouped tree into a comparable summary so assertions can avoid
-// unchecked index access (noUncheckedIndexedAccess) while still pinning shape.
-// Interludes summarize to their kind + event id so both node types are visible.
 function summarize(nodes: ScheduleNode[]) {
 	return nodes.map((node) => {
 		if (node.kind === 'interlude') {
@@ -97,7 +94,6 @@ describe('buildScheduleGroups', () => {
 			event({ id: '1', nomination_title: 'Ном 1' })
 		]);
 
-		// A stray nomination on an interlude is ignored — there is no block for it.
 		expect(summarize(nodes)).toEqual([
 			{ kind: 'interlude', eventId: 'opening' },
 			{
@@ -168,7 +164,6 @@ describe('filterScheduleGroups', () => {
 				nominations: [{ title: 'Ном 1', eventIds: ['1'] }]
 			}
 		]);
-		// The surviving block reuses its pre-filter key so Svelte keeps its rows.
 		expect(result.map((node) => node.key)).toEqual(['block-a']);
 	});
 

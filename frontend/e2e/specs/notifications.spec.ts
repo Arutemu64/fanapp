@@ -25,7 +25,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 				next_cursor: null,
 				notifications: [UNREAD]
 			}),
-			// Opening the page marks the on-screen unread items read (mark-on-open).
 			'POST /notifications/mark-read': json({})
 		});
 
@@ -35,11 +34,8 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		await expect(item).toBeVisible();
 		await expect(page.getByText(UNREAD.body)).toBeVisible();
 
-		// The mark-on-open request fired for the one unread item.
 		await expect.poll(() => api.countCalls('POST /notifications/mark-read')).toBe(1);
 
-		// Marked read on the server, but still flagged new for this visit — the
-		// cue for what the user hasn't seen yet must not vanish on arrival.
 		await expect(item.getByRole('link', { name: 'Новое: Скоро твоё событие' })).toBeVisible();
 		await expect(page.getByText('Новых: 1')).toBeVisible();
 	});
@@ -93,7 +89,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 
 		const item = page.getByRole('listitem').filter({ hasText: 'Рассылка от организаторов' });
 		await expect(item).toBeVisible();
-		// Only the organizer's own link in the body — no card link wrapping it.
 		await expect(item.getByRole('link')).toHaveCount(1);
 		await expect(item.getByRole('link', { name: 'Схема' })).toBeVisible();
 	});
@@ -159,9 +154,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 			['20', 'cursor-after-first']
 		]);
 
-		// A new arrival refetches every loaded page. The second must follow the
-		// refreshed first page's cursor, not the one it was first loaded with, or
-		// loaded pages could overlap — the feeds no longer dedupe.
 		firstPage = [newest, first];
 		firstPageCursor = 'cursor-after-refetch';
 		await emitSse(page, 'notification_created', newest);
@@ -173,7 +165,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 
 	test('shows the empty state when there are no notifications', async ({ page, api }) => {
 		api.use(loggedInAs());
-		// Baseline already returns an empty feed; navigate a logged-in user to it.
 		await page.goto('/notifications');
 
 		await expect(page.getByText('Уведомлений пока нет')).toBeVisible();
@@ -181,7 +172,6 @@ test.describe('notifications', { tag: '@critical' }, () => {
 			'href',
 			'/profile/notifications'
 		);
-		// Nothing unread → no mark-read call.
 		expect(api.countCalls('POST /notifications/mark-read')).toBe(0);
 	});
 });

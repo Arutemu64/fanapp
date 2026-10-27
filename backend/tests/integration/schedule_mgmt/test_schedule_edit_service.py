@@ -51,8 +51,6 @@ async def test_edit_invalidates_cache_after_commit(
             )
         )
 
-    # Same session on both reads, so the etag alone cannot tell invalidate-before-
-    # commit from invalidate-after-commit; record the call order instead.
     calls: list[str] = []
     commit = service.uow.commit
     invalidate = service.schedule_cache.invalidate
@@ -68,7 +66,7 @@ async def test_edit_invalidates_cache_after_commit(
     monkeypatch.setattr(service.uow, "commit", recording_commit)
     monkeypatch.setattr(service.schedule_cache, "invalidate", recording_invalidate)
 
-    before = await get_schedule()  # populates the cache
+    before = await get_schedule()
     await service.edit(Permission.SCHEDULE_SETUP, add_event)
 
     assert calls == ["commit", "invalidate"]
@@ -92,7 +90,6 @@ async def test_failed_mutation_does_not_commit_the_announcement(
             Permission.SCHEDULE_MANAGE, fail, already_applied=_not_applied
         )
 
-    # No change was recorded, so the cooldown was not spent by the failed edit.
     async def succeed(_: User) -> ChangeFactory:
         return lambda ctx: ScheduleChange.set_as_current(
             changed_event_id=None,

@@ -20,7 +20,6 @@ class Email:
         local, _, domain = normalized.partition("@")
         if not local or not domain:
             raise InvalidEmail
-        # Frozen dataclass: store the normalized form via object.__setattr__.
         object.__setattr__(self, "value", normalized)
 
     def __str__(self) -> str:

@@ -19,13 +19,11 @@ Create Date: 2026-10-15 09:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "e4f5a6b7c8d9"
 down_revision = "d3e4f5a6b7c8"
 branch_labels = None
 depends_on = None
 
-# (table, check constraint name). Both columns are named ``role``.
 _ROLE_COLUMNS = (("users", "ck_users_userrole"), ("tickets", "ck_tickets_userrole"))
 
 _RENAMES = [("helper", "volunteer"), ("org", "organizer")]
@@ -36,11 +34,8 @@ _NEW_VALUES = ["visitor", "participant", "volunteer", "organizer"]
 
 def _rewrite(renames: list[tuple[str, str]], allowed: list[str]) -> None:
     conn = op.get_bind()
-    # Fail fast instead of queueing behind a long transaction from the old app
-    # still running during the deploy: every users read would queue behind us.
     op.execute("SET LOCAL lock_timeout = '5s'")
     for table, ck_name in _ROLE_COLUMNS:
-        # Drop the CHECK first, otherwise the rewrite would violate it mid-flight.
         op.drop_constraint(op.f(ck_name), table, type_="check")
         role_table = sa.table(table, sa.column("role"))
         for src, dst in renames:
@@ -50,7 +45,6 @@ def _rewrite(renames: list[tuple[str, str]], allowed: list[str]) -> None:
         op.create_check_constraint(op.f(ck_name), table, sa.column("role").in_(allowed))
 
     for src, dst in renames:
-        # Swap one element inside each JSONB array, keeping element order.
         conn.execute(
             sa.text(
                 """

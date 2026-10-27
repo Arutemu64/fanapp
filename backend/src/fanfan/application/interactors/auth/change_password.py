@@ -10,7 +10,6 @@ from fanfan.core.vo.fields import PASSWORD_FIELD, PASSWORD_MAX_LENGTH
 
 
 class ChangePasswordInput(BaseModel):
-    # None when the user has no password yet; repr=False per core/vo/fields.py.
     old_password: str | None = Field(max_length=PASSWORD_MAX_LENGTH, repr=False)
     new_password: str = PASSWORD_FIELD
 

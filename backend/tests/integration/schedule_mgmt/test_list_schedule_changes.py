@@ -93,8 +93,6 @@ async def test_list_schedule_changes_next_page_survives_deleting_a_seen_row(
     schedule_editor: User,
     login: Callable[[User], None],
 ) -> None:
-    # Offset paging would shift the second page up by the deleted row and skip
-    # `second` without anyone noticing.
     first = await _add_change(dishka_request, schedule_editor)
     second = await _add_change(dishka_request, schedule_editor)
     third = await _add_change(dishka_request, schedule_editor)

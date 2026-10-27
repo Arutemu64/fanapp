@@ -8,7 +8,6 @@ import Store from '@lucide/svelte/icons/store';
 import Tent from '@lucide/svelte/icons/tent';
 import Trophy from '@lucide/svelte/icons/trophy';
 
-/** The Home heading an article is listed under. */
 export type GuideSection = 'important' | 'activities';
 
 export interface GuideArticle {
@@ -25,7 +24,6 @@ interface Frontmatter {
 	description: string;
 	icon: keyof typeof ICONS;
 	order: number;
-	/** Omitted for the activity articles, which are most of them. */
 	section?: GuideSection;
 }
 
@@ -39,9 +37,6 @@ const ICONS = {
 	play: Gamepad2
 };
 
-// Eager, so every article ships in the main bundle and opens offline with the
-// rest of the guide; the set is a handful of short pages. mdsvex exposes each
-// file's frontmatter as `metadata` next to the compiled component.
 const modules = import.meta.glob<{ default: Component; metadata: Frontmatter }>(
 	'/src/content/guide/*.md',
 	{ eager: true }

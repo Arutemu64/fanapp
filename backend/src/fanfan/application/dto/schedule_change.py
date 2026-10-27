@@ -10,8 +10,6 @@ from fanfan.core.vo.schedule_entry import ScheduleEntryId, ScheduleEntryType
 
 class ScheduleChangeEntryDTO(BaseModel):
     id: ScheduleEntryId
-    # A move records the entry the event sat right after before it moved,
-    # which is a block start when the event opened its block.
     type: ScheduleEntryType
     number: int | None
     title: str

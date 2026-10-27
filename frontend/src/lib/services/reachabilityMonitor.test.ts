@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// A hand-driven reachability state, so a test flips it without real probes.
 const fake = vi.hoisted(() => {
 	let reachable = true;
 	const listeners = new Set<() => void>();
@@ -33,7 +32,6 @@ const { startReachabilityMonitor } = await import('./reachabilityMonitor.js');
 beforeEach(() => {
 	vi.useFakeTimers();
 	fake.reset();
-	// The Vitest runner has no DOM (ADR-0011); the monitor only adds listeners.
 	vi.stubGlobal('window', new EventTarget());
 	vi.stubGlobal('document', Object.assign(new EventTarget(), { visibilityState: 'visible' }));
 });

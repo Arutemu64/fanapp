@@ -15,13 +15,9 @@
 
 	let { user }: Props = $props();
 
-	// The ticket number is what staff check at the door, so it leads the second
-	// line; the email fills in for someone without a ticket.
 	let details = $derived(user.ticket_number ?? user.email ?? m.user_row_no_contacts());
 </script>
 
-<!-- The whole row is one link, so the tap target is the full width rather than
-     the username alone. -->
 <a
 	href={resolve(`tools/users/${user.id}`)}
 	class="flex min-h-16 items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset sm:px-4"

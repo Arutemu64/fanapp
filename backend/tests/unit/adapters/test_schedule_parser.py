@@ -25,9 +25,6 @@ VALID_ENTRY = ScheduleEventRow(
     duration=900,
     nomination_title="Вне конкурса",
 )
-# The same entry as spreadsheet cells, keyed by column name. Derived from the
-# entry rather than written twice, so the row and the expected parse result
-# cannot drift apart. An event row may leave its type blank.
 VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump() | {"type": None}
 
 
@@ -121,16 +118,12 @@ def test_column_order_does_not_matter() -> None:
 
 
 def test_accepts_whole_numbers_stored_as_floats() -> None:
-    # Excel has no integer type, so a hand-typed 1 can arrive as 1.0.
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(number=1.0, duration=900.0)])
 
     assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
 
 
 def test_accepts_a_sub_minute_duration() -> None:
-    # `duration` is seconds, so an act shorter than a minute is an ordinary
-    # value rather than something to round up — a single defile really does run
-    # under a minute.
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=45)])
 
     assert parse_schedule_from_excel(sheet) == [
@@ -165,8 +158,6 @@ def test_rejects_an_empty_sheet() -> None:
 
 
 def test_rejects_a_blank_title() -> None:
-    # `title` is an event row's only human identity, so it stays required even
-    # though the nomination is optional.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
         [valid_row(), valid_row(number=2, title="   ")],
@@ -177,15 +168,11 @@ def test_rejects_a_blank_title() -> None:
 
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.EMPTY_CELL
     assert exc_info.value.details["column"] == "title"
-    # Row 1 is the header and row 2 is the valid entry, so the bad one is row 3.
     assert exc_info.value.details["row"] == 3
 
 
 @pytest.mark.parametrize("blank", [None, "", "   "])
 def test_accepts_a_blank_nomination(blank: object) -> None:
-    # Breaks, the opening and the closing carry no nomination, so the cell may
-    # be blank — an empty cell, an empty string or whitespace all read back as
-    # None rather than forcing an invented placeholder.
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(nomination_title=blank)])
 
     schedule = parse_schedule_from_excel(sheet)
@@ -238,8 +225,6 @@ def test_rejects_a_block_row_without_a_title() -> None:
     [("number", 1), ("duration", 60), ("nomination_title", "Х")],
 )
 def test_rejects_a_block_row_with_event_cells(column: str, value: object) -> None:
-    # A block row is a heading, not an act: a number, duration or nomination on
-    # it means the type was set on the wrong row.
     sheet = build_sheet(REQUIRED_COLUMNS, [block_row("Косплей", **{column: value})])
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
@@ -303,8 +288,6 @@ def test_rejects_a_repeated_number() -> None:
 
 
 def test_accepts_an_empty_number() -> None:
-    # Breaks carry no public number, so `number` is the one column that may be
-    # left blank.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
         [valid_row(), valid_row(number=None, title="Перерыв")],
@@ -319,8 +302,6 @@ def test_accepts_an_empty_number() -> None:
 
 
 def test_accepts_several_numberless_rows() -> None:
-    # Numberless rows match no existing event, so they never collide the way two
-    # rows sharing a number would.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
         [
@@ -338,8 +319,6 @@ def test_accepts_several_numberless_rows() -> None:
 
 
 def test_skips_a_blank_row_and_keeps_excel_row_numbers() -> None:
-    # A gap left between acts is not an act with an empty title, and a bad cell
-    # after the gap is reported at the row the organizer sees in Excel.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
         [valid_row(), (None,) * len(REQUIRED_COLUMNS), valid_row(number=2, title="")],

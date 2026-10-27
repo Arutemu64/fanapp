@@ -13,16 +13,11 @@ class QuestAwardORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "quest_awards"
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
-        # Balances and the leaderboard sum only live awards, so the partial
-        # index covers exactly the rows those aggregates read.
         Index(
             "ix_quest_awards_user_id_active",
             "user_id",
             postgresql_where=text("cancelled_at IS NULL"),
         ),
-        # A player's own history, newest first, cancelled awards included, so
-        # the partial index above cannot serve it. created_at is inherited from
-        # BaseORM, so reference it as SQL text.
         Index(
             "ix_quest_awards_user_id_created_at",
             "user_id",
@@ -33,8 +28,6 @@ class QuestAwardORM(UUIDPrimaryKeyMixin, BaseORM):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     amount: Mapped[int]
     message: Mapped[str] = mapped_column(Text())
-    # SET NULL keeps the ledger whole when a staff account is deleted: the
-    # points stay with the player even if who gave them is forgotten.
     awarded_by: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )

@@ -31,9 +31,6 @@ def test_rejects_a_mailing_id_of_another_version() -> None:
         )
 
 
-# 3000 bytes of text plus its quotes. The rest of the 3993-octet Web Push
-# plaintext (RFC 8291 §4) holds the title, the link and the JSON keys, about
-# 340 bytes with a Cyrillic title.
 BODY_BYTE_BUDGET = 3002
 
 
@@ -45,7 +42,6 @@ def _with_body(body: str) -> SendBroadcastInput:
 
 @pytest.mark.parametrize("unit", ["ж", "🎉", '"', "\x01"])
 def test_longest_accepted_body_fits_the_push_payload(unit: str) -> None:
-    # As many of `unit` as the cap allows, counted the way the cap counts.
     count = BROADCAST_BODY_MAX_LENGTH // (len(unit.encode("utf-16-le")) // 2)
     body = _with_body(unit * count).body
 

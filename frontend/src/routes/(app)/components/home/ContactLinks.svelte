@@ -14,15 +14,10 @@
 		href: string;
 		label: () => string;
 		icon: Component;
-		/** mailto: stays in the app's tab; web links open elsewhere. */
 		external: boolean;
-		/** Lets the label be selected, against the Button's select-none. */
 		selectable: boolean;
 	}
 
-	// The address is the label rather than «Почта»: a device with no mail app set up
-	// can't follow mailto:, and then the address is what the visitor copies, so its
-	// label stays selectable.
 	const EMAIL = 'orgcom.fan@mail.ru';
 
 	const contactLinks: ContactLink[] = [
@@ -58,10 +53,6 @@
 	];
 </script>
 
-<!-- Rarely needed on the day, so last, and as one wrapped row of labelled buttons
-     rather than a list: five full-width rows would be the longest block on Home for
-     its least-used links. Labelled, not icon-only, since a globe or a speech bubble
-     doesn't say which channel it is (https://www.nngroup.com/articles/icon-usability/). -->
 <section aria-labelledby="guide-contacts" class="flex flex-col gap-3">
 	<h2 id="guide-contacts" class="px-1 text-section text-foreground">
 		{m.guide_contacts_heading()}

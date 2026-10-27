@@ -36,9 +36,6 @@ async def test_position_with_fractional_orders(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
 ) -> None:
-    # place_after averages neighbour orders, so orders are floats with gaps
-    # smaller than 1. position must stay a dense 1..N rank regardless of those gaps
-    # (a RANGE window frame would frame by the order value and drop events).
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
 
     first = _schedule_event(1, order=1.0, duration=10)
@@ -53,7 +50,6 @@ async def test_position_with_fractional_orders(
     schedule = await schedule_gateway.read_list_schedule()
     by_number = {e.number: e for e in schedule if isinstance(e, ScheduleEventFullDTO)}
 
-    # Skipped events and block starts are excluded from the position numbering.
     assert [e.id for e in schedule] == [
         first.id,
         second.id,

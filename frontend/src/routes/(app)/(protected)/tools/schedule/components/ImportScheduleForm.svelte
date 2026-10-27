@@ -38,8 +38,6 @@
 		successMessage = '';
 	}
 
-	// A connection that drops mid-form keeps what was typed; the submit explains
-	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
@@ -64,9 +62,6 @@
 					form.reset();
 				},
 				onError: (error) => {
-					// Mapped by the error `code`, not the status: a rejected spreadsheet
-					// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
-					// fault, which is the whole point of showing an error here.
 					inlineError = getApiErrorDetail(error) ?? m.import_failed();
 				}
 			}

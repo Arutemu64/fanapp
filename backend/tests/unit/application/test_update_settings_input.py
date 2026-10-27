@@ -11,11 +11,7 @@ pytestmark = pytest.mark.unit
 
 
 def test_festival_boundaries_require_an_offset() -> None:
-    # A naive festival boundary is rejected at the schema, before the range check
-    # can compare it against the tz-aware persisted counterpart — that comparison
-    # would otherwise raise TypeError (a 500) instead of this clean 422.
     with pytest.raises(ValidationError) as exc_info:
-        # The missing tzinfo is the point of the test — that is what must be rejected.
         UpdateAppSettingsInput(festival_end=datetime(2026, 8, 23, 20, 0))  # noqa: DTZ001
 
     assert [error["loc"] for error in exc_info.value.errors()] == [("festival_end",)]

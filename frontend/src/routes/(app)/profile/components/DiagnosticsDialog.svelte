@@ -51,9 +51,6 @@
 	let confirmResetOpen = $state(false);
 	let isResetting = $state(false);
 
-	// Gathered on open rather than kept live: it is a snapshot for a report, and
-	// reading it once keeps the Push and Storage API calls off the profile screen.
-	// Untracked so only `open` re-runs it, not the reachability it records.
 	$effect(() => {
 		if (open) untrack(() => void refresh());
 	});
@@ -100,11 +97,7 @@
 		}
 		const subscription = await browserPush.getSubscription().catch(() => null);
 		let serverRegistered: boolean | null = null;
-		// Only a signed-in user has subscriptions on the server, and offline the
-		// question can't be asked.
 		if (subscription && user && reachability.current) {
-			// Bounded so a stalled request can't hold back the rest of the report,
-			// which is all local; a timeout leaves the answer unknown.
 			const { data } = await checkPushSubscription({
 				query: { endpoint: subscription.endpoint },
 				signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
@@ -119,7 +112,6 @@
 		};
 	}
 
-	// https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/estimate
 	async function readStorage(): Promise<StorageDiagnostics> {
 		const storage = navigator.storage as Partial<StorageManager> | undefined;
 		const [estimate, persisted] = await Promise.all([
@@ -160,11 +152,7 @@
 		}
 	}
 
-	// The reload after this fetches everything afresh, which is why it is offered
-	// online only: offline it would leave nothing to open the app with. The session
-	// cookie is not touched, so the user stays signed in.
 	async function resetAndReload() {
-		// The connection can drop while the confirmation is open.
 		if (!reachability.current) {
 			toastService.add(m.diagnostics_reset_offline(), 'error');
 			return;
@@ -182,7 +170,6 @@
 				await Promise.all(registrations.map((registration) => registration.unregister()));
 			}
 		} catch (error) {
-			// Whatever was cleared stays cleared; the reload still gets a fresh bundle.
 			console.error('Diagnostics reset failed part-way:', error);
 		}
 		location.reload();
@@ -190,9 +177,6 @@
 </script>
 
 <Dialog.Root bind:open>
-	<!-- Capped and scrolled on wider screens too: the cache section grows with every
-	     saved screen (the offline warm-up saves them all), and the shared dialog only
-	     scrolls below `sm`; on a short laptop window the actions would fall off-screen. -->
 	<Dialog.Content class="sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">

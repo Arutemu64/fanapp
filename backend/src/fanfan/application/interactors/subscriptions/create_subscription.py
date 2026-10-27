@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 class CreateSubscriptionInput(BaseModel):
     event_id: ScheduleEntryId
-    # The screen offers 10 to 60 minutes; the bounds only reject nonsense.
     lead_minutes: Annotated[int, Field(ge=1, le=240)]
 
 
@@ -50,9 +49,6 @@ class CreateSubscription:
         data: CreateSubscriptionInput,
     ) -> CreateSubscriptionOutput:
         current_user = await self.current_user_provider.require_user()
-        # The foreign key accepts any schedule row, block starts included, so
-        # only this lookup keeps a subscription off something with no position
-        # to remind about. A delete racing past it still lands on the FK.
         if await self.schedule_gateway.get_event(data.event_id) is None:
             raise EventNotFound
         subscription = Subscription(

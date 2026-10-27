@@ -12,17 +12,12 @@ class SubscriptionEventDTO(BaseModel):
     title: str
     order: float
 
-    # Calculated values
     position: int | None
 
 
 class SubscriptionFullDTO(BaseModel):
     id: SubscriptionId
-    # The subscriber: routes the reminder fan-out. Kept out of the API, where it
-    # is always the caller.
     user_id: UserId = Field(exclude=True)
     lead_minutes: int
-    # Delivery bookkeeping for the schedule-change fan-out; kept out of the
-    # API, where nothing reads it.
     reminded_by_change_id: ScheduleChangeId | None = Field(default=None, exclude=True)
     event: SubscriptionEventDTO

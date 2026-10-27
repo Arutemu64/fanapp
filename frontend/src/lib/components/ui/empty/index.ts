@@ -8,7 +8,6 @@ import Root from './empty.svelte';
 export {
 	Content,
 	Description,
-	//
 	Root as Empty,
 	Content as EmptyContent,
 	Description as EmptyDescription,

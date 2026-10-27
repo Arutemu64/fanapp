@@ -37,7 +37,5 @@ async def test_wildcard_passes_every_permission_check(
 ) -> None:
     perm_service = await dishka_request.get(PermissionService)
 
-    # The superuser holds only "*", yet clears checks for every specific
-    # permission it was never granted directly.
     for permission in Permission:
         await perm_service.ensure(user=superuser, permission=permission)

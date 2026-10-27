@@ -36,8 +36,6 @@ class ExecuteTicketsSync:
         self.sync_tickets = sync_tickets
 
     async def __call__(self, run_id: SyncRunId | None = None) -> None:
-        # Under cron/CLI/NATS this resolves to the seeded system user, which is
-        # granted sync:run by migration — the check is real, not decorative.
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SYNC_RUN
@@ -50,7 +48,6 @@ class ExecuteTicketsSync:
         try:
             output = await self.sync_tickets()
         except Exception:
-            # See ExecuteCosplaySync: recorded and logged, never re-raised.
             logger.exception(
                 "TicketsCloud sync failed", extra={"sync_run_id": str(run.id)}
             )

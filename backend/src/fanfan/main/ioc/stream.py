@@ -26,8 +26,6 @@ class StreamProvider(Provider):
         broker = create_broker(config=config, name="fanfan-publisher")
         await broker.connect()
         yield broker
-        # Drains the connection, so whatever is still buffered reaches the
-        # server before it closes.
         await broker.stop()
 
     events_broker = provide(NatsEventBroker, provides=EventBroker)

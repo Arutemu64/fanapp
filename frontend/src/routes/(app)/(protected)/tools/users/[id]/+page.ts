@@ -15,7 +15,6 @@ export const load: PageLoad = async ({ parent, params }) => {
 
 	requireTool('users', user, toolConfig);
 
-	// Staff-only operational data, like the directory: waits for a fresh copy.
 	const data = await queryForLoad(queryClient, {
 		...getUserOptions({ path: { user_id: params.id } }),
 		staleTime: 0

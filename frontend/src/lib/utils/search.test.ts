@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { createSearchIndex } from './search';
 
-/** Index over bare titles — enough for the normalization rules. */
 function titleIndex(titles: string[]) {
 	return createSearchIndex(titles, (title) => [title]);
 }
@@ -14,8 +13,6 @@ type ScheduleRow = {
 	nomination_title: string | null;
 };
 
-// Mirrors the schedule page's field set: a number plus three text fields, two of
-// which are nullable.
 const rows: ScheduleRow[] = [
 	{ number: 1, title: 'Опенинг: Наруто', block_title: 'Блок А', nomination_title: 'Караоке' },
 	{ number: 2, title: 'Café Européen', block_title: null, nomination_title: null },
@@ -41,7 +38,6 @@ describe('createSearchIndex', () => {
 	it('returns every item for an empty or whitespace-only query', () => {
 		expect(rowIndex.filter('')).toEqual(rows);
 		expect(rowIndex.filter('   ')).toEqual(rows);
-		// Punctuation alone normalizes away to nothing, so it is not a token either.
 		expect(rowIndex.filter('—')).toEqual(rows);
 	});
 
@@ -63,7 +59,6 @@ describe('createSearchIndex', () => {
 	it('treats punctuation as a word break rather than a blocker', () => {
 		expect(titleIndex(['Re:Zero']).filter('re zero')).toEqual(['Re:Zero']);
 		expect(titleIndex(['Re:Zero']).filter('re:zero')).toEqual(['Re:Zero']);
-		// The break is real: the two words never join into one token.
 		expect(titleIndex(['Re:Zero']).filter('rezero')).toEqual([]);
 	});
 

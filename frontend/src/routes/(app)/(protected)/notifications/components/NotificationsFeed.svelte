@@ -19,8 +19,6 @@
 		listUserNotificationsQueryKey,
 		markAllNotificationsReadMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	// A plain SDK call, not a mutation: read-on-view is a background sync no one
-	// submits, with its own retry bookkeeping (requestedReadIds below).
 	import { markNotificationsRead } from '#lib/api/generated/index.js';
 	import { notificationsFeedOptions } from '#lib/api/offlineQueries.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
@@ -45,11 +43,9 @@
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
 
-	// The bell shows the same query, so clearing it here clears the badge too.
 	const unreadQuery = createQuery(() => countUnreadNotificationsOptions());
 	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
 
-	// New arrivals (SSE) invalidate the query, which refetches every loaded page.
 	const notificationsQuery = createInfiniteQuery(() => notificationsFeedOptions());
 
 	let notifications = $derived(
@@ -65,15 +61,8 @@
 		})
 	);
 
-	// This page shows no push toast (the item lands in the list instead), so it
-	// announces arrivals to screen readers itself.
 	let liveAnnouncement = $state('');
 
-	// Ids that were unseen when they reached this screen. Each stays marked "new"
-	// for as long as the screen is open, even once a refetch brings it back with the
-	// seen_at this visit recorded: clearing the dot the moment the mark-read request
-	// lands would erase the one cue telling the user which items they haven't seen
-	// yet. The next visit shows them as seen.
 	const unseenOnArrival = new SvelteSet<NotificationDto['id']>();
 
 	function isNew(notification: NotificationDto): boolean {
@@ -82,19 +71,11 @@
 
 	let newCount = $derived(notifications.filter(isNew).length);
 
-	// Ids already sent (or in flight) to mark-read, so each one is posted once.
-	// Deliberately not reactive: the effect below reads it, and a failed request
-	// removing ids would re-run the effect and retry in a tight loop while offline.
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- non-reactive on purpose, see above
 	const requestedReadIds = new Set<NotificationDto['id']>();
 
-	// Holds back "Прочитать все" until the opening mark-read round has settled:
-	// before that the shared count still includes the on-screen items about to be
-	// marked, and the button would flash for a round-trip on every visit.
 	let openingReadSettled = $state(false);
 
-	// Unread items the screen can't mark on view: older than every loaded page, or
-	// arrived while the app was in the background.
 	let showMarkAll = $derived(openingReadSettled && unreadCount > 0);
 
 	async function markRead(ids: Array<NotificationDto['id']>) {
@@ -110,7 +91,6 @@
 				body: { notification_ids: batch }
 			});
 			if (error || !response?.ok) {
-				// Retried with the next batch the effect below sends.
 				for (const id of batch) {
 					requestedReadIds.delete(id);
 				}
@@ -121,21 +101,12 @@
 		if (!markedAny) return;
 
 		await queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
-		// The cached feed still carries these as unseen. Mark it stale without
-		// refetching every loaded page now (unseenOnArrival keeps this visit's dots),
-		// so the next visit refetches instead of showing them as new again.
 		void queryClient.invalidateQueries({
 			queryKey: listUserNotificationsQueryKey(),
 			refetchType: 'none'
 		});
 	}
 
-	// Read-on-view: an item counts as read once it is on this screen while the app
-	// is in front — the opening page, each "Показать ещё" page, live arrivals. The
-	// feed is informational (programme changes, reminders, mailings), not a queue
-	// of tasks — the case where read-on-open is the recommended default (Courier,
-	// "In-app notification center design"). Items that land while the app is in
-	// the background wait until it comes back, so nothing is marked read unseen.
 	$effect(() => {
 		if (!documentVisibility.current) return;
 		if (notificationsQuery.data === undefined) return;
@@ -157,10 +128,6 @@
 	const markAllReadMutation = createMutation(() => ({
 		...markAllNotificationsReadMutation(),
 		onSuccess: async () => {
-			// Zero the badge at once, then reconcile with the server: a notification
-			// committed between the mark-all and this callback is still unread, and only
-			// the refetch surfaces it. Cancelling first stops a count fetched before the
-			// mark-all from landing on top of the zero (TanStack's optimistic-update order).
 			const queryKey = countUnreadNotificationsQueryKey();
 			await queryClient.cancelQueries({ queryKey });
 			queryClient.setQueryData(queryKey, { count: 0 });
@@ -191,8 +158,6 @@
 	});
 </script>
 
-<!-- Rendered before any announcement: a live region injected together with its
-	text is not reliably announced. -->
 <p class="sr-only" aria-live="polite" aria-atomic="true">{liveAnnouncement}</p>
 
 <QueryState view={notificationsView}>
@@ -259,7 +224,6 @@
 						</h2>
 						<ul class="flex flex-col gap-3">
 							{#each group.items as notification (notification.id)}
-								<!-- Focus target after "Показать ещё" for an item without a link. -->
 								<li
 									data-notification-id={notification.id}
 									tabindex="-1"

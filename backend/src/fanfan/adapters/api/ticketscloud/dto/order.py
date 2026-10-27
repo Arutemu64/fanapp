@@ -23,9 +23,6 @@ class Order:
 
 @dataclass(slots=True, frozen=True)
 class OrderResponse:
-    # The single-order endpoint wraps the order in the same `data` envelope the
-    # list endpoint uses, just without pagination — so the order fields live
-    # under `data`, not at the top level.
     data: Order
 
 

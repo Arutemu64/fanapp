@@ -15,7 +15,6 @@ export const load: PageLoad = ({ params }) => {
 	return {
 		article,
 		title: article.title,
-		// The articles are listed on Home, so that is where the back arrow leads.
 		back: { href: '', label: m.common_to_home() } satisfies BackTarget
 	};
 };

@@ -94,14 +94,6 @@ class SqlParticipantGateway(ParticipantGateway):
     async def save(self, participant: Participant) -> None:
         await self.session.merge(_from_model(participant))
         await self.session.flush()
-        # Cosplay sync can reassign a participant to a different nomination
-        # after votes for it exist. votes.nomination_id is a denormalised
-        # copy backing uq_votes_user_nomination (a unique constraint can't
-        # span the participants join), so it must be kept in lockstep here
-        # or the constraint enforces the *old* nomination and a user could
-        # cast a second effective vote in the participant's new one. If the
-        # user already holds a vote in that nomination, this correctly
-        # raises an IntegrityError instead of silently allowing a duplicate.
         await self.session.execute(
             update(VoteORM)
             .where(VoteORM.participant_id == participant.id)

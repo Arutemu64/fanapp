@@ -13,8 +13,6 @@ class EmailMessage:
     subject: str
     recipients: list[EmailRecipient]
     html_body: str
-    # Optional plain-text alternative. Sending multipart/alternative improves
-    # deliverability (spam scoring) and degrades gracefully in text-only clients.
     text_body: str | None = None
 
 

@@ -3,13 +3,12 @@ from dataclasses import dataclass
 
 
 class RequestStatus(enum.StrEnum):
-    # Comments show the label as displayed on the cosplay2 site (in Russian).
-    PENDING = "pending"  # Under review ("Проверка")
-    WAITING = "waiting"  # Response needed ("Нужен отклик")
-    MATERIALS = "materials"  # Awaiting materials ("Ждём материалы")
-    REVIEW = "review"  # Reviewed ("Рассмотрена")
-    APPROVED = "approved"  # Accepted ("Принята")
-    DISAPPROVED = "disapproved"  # Rejected ("Отклонена")
+    PENDING = "pending"
+    WAITING = "waiting"
+    MATERIALS = "materials"
+    REVIEW = "review"
+    APPROVED = "approved"
+    DISAPPROVED = "disapproved"
 
 
 @dataclass(slots=True, frozen=True)

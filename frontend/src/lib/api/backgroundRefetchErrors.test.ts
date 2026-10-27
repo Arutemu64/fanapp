@@ -6,8 +6,6 @@ import { droppedConnectionError } from '#lib/testing/connection.js';
 
 const KEY = ['thing'];
 
-// A query on screen (one observer) that has already loaded once, whose next
-// fetch rejects with `error`.
 async function failRefetch(
 	error: unknown,
 	options: { cached?: boolean; observed?: boolean; meta?: Record<string, unknown> } = {}
@@ -71,7 +69,6 @@ describe('watchBackgroundRefetchErrors', () => {
 	});
 
 	describe('a paginated feed', () => {
-		// A feed on screen with its first page loaded; every later request fails.
 		async function loadedFeed() {
 			const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 			const onFailure = vi.fn();

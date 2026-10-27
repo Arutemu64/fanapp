@@ -8,7 +8,6 @@ pytestmark = pytest.mark.unit
 
 def test_compute_etag_is_a_quoted_strong_validator() -> None:
     etag = _compute_etag('{"schedule":[]}')
-    # Strong validator: quoted, no weak W/ prefix.
     assert etag.startswith('"')
     assert etag.endswith('"')
     assert not etag.startswith("W/")
@@ -16,7 +15,6 @@ def test_compute_etag_is_a_quoted_strong_validator() -> None:
 
 def test_compute_etag_changes_with_payload() -> None:
     assert _compute_etag('{"a":1}') != _compute_etag('{"a":2}')
-    # Same bytes in, same ETag out — the read must be reproducible.
     assert _compute_etag('{"a":1}') == _compute_etag('{"a":1}')
 
 
@@ -30,7 +28,6 @@ def test_if_none_match_matches_the_exact_validator() -> None:
 
 
 def test_if_none_match_matches_within_a_list() -> None:
-    # Clients may send several cached validators, comma-separated.
     assert _if_none_match_hits('"x", "abc", "y"', '"abc"') is True
 
 

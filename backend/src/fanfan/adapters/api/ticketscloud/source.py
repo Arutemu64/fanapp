@@ -41,10 +41,6 @@ class TCloudSource(TicketsSource):
 
     def fetch_all_tickets(self) -> AsyncIterator[ExternalTicket]:
         async def iterator() -> AsyncIterator[ExternalTicket]:
-            # Reuse the first page to read the total page count, then request
-            # the rest starting from page 2 so page 1 is not fetched twice.
-            # Only done orders carry barcodes, so the vendor filters the rest
-            # out; _extract_tickets still checks, since get_order does not filter.
             first_page = await self.client.get_orders(
                 status=OrderStatus.DONE, page=1, page_size=DEFAULT_PAGE_SIZE
             )
@@ -68,8 +64,6 @@ class TCloudSource(TicketsSource):
 
     def fetch_revoked_tickets(self) -> AsyncIterator[RevokedExternalTicket]:
         async def iterator() -> AsyncIterator[RevokedExternalTicket]:
-            # Only an approved refund has returned the money; a new or
-            # in-progress request can still be rejected.
             page = 1
             total_pages = 1
             while page <= total_pages:
@@ -89,9 +83,6 @@ class TCloudSource(TicketsSource):
         return iterator()
 
     async def fetch_order_tickets(self, order_id: str) -> list[ExternalTicket]:
-        # The order id comes from an untrusted webhook body, so the authoritative
-        # order is fetched from the authenticated API. A missing order yields no
-        # tickets rather than an error.
         order = await self.client.get_order(order_id)
         if order is None:
             logger.warning(

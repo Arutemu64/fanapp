@@ -41,10 +41,6 @@ class OutboxRelay:
 
     async def stop(self) -> None:
         if self._task is not None:
-            # Cancelling mid-drain rolls the tick's transaction back, so its
-            # rows stay unpublished and the next start sends them again; the
-            # stream's duplicate window and idempotent consumers absorb a
-            # publish that landed before the cancel.
             self._task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._task
@@ -65,8 +61,6 @@ class OutboxRelay:
                     relay = await request_container.get(PublishOutboxEvents)
                     await relay()
             except Exception:
-                # One bad tick must not kill the loop; report it and let the
-                # next tick (poll backstop) retry the still-unpublished rows.
                 logger.exception(
                     "Outbox relay tick failed", extra={"relay_event": "tick_failed"}
                 )

@@ -24,7 +24,6 @@
 	import { getRoleLabel } from '#lib/utils/users.js';
 
 	interface Props {
-		/** The saved mapping; the form is seeded from it once. */
 		initial: TCloudEventRolesOutput;
 	}
 
@@ -34,15 +33,12 @@
 	const queryClient = useQueryClient();
 
 	interface Row {
-		// A stable {#each} key, so removing a row keeps focus and input state on
-		// the rows that stay.
 		key: number;
 		eventId: string;
 		role: UserRole;
 		error: string;
 	}
 
-	// Mirror the backend bounds (SetTCloudEventRolesInput, TCloudEventRoleDTO).
 	const MAX_EVENTS = 100;
 	const EVENT_ID_MAX_LENGTH = 100;
 
@@ -97,8 +93,6 @@
 		return valid;
 	}
 
-	// A connection that drops mid-form keeps what was typed; the submit explains
-	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {

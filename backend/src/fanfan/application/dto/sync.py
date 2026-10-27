@@ -26,7 +26,5 @@ class SyncRunDTO(BaseModel):
 
 class SyncSourceStatusDTO(BaseModel):
     source: SyncSource
-    # False when the vendor is not configured for this deployment, so the UI can
-    # disable a button that could only ever fail.
     available: bool
     last_run: SyncRunDTO | None

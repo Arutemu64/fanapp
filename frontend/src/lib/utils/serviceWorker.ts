@@ -2,20 +2,6 @@ import type { AssetPath } from '$app/types';
 
 import { asset } from '$app/paths';
 
-// We register the service worker ourselves instead of letting SvelteKit do it
-// (vite.config.ts sets serviceWorker.register = false). SvelteKit's built-in
-// registration leaves the register() promise's rejection unhandled, and some
-// browsers reject it for reasons the app can do nothing about — storage
-// partitioning in embedded/in-app browsers, private/incognito modes, or an
-// enterprise policy that blocks workers. There the app simply degrades to
-// online-only, which is expected; without a .catch() that rejection surfaces to
-// Sentry as an uncaught "Error: Rejected". Mirrors SvelteKit's default: same
-// script path, registered on load so it doesn't compete with first paint for
-// bandwidth, and as a module worker — SvelteKit emits the worker as an ES module,
-// so a browser without module service workers (Firefox < 147) rejects here and
-// stays online-only.
-// SvelteKit serves the worker beside the static/ files and prefixes it the same
-// way in its own registration, but the generated AssetPath union lists only static/.
 const SCRIPT_URL = asset('service-worker.js' as AssetPath);
 
 export function registerServiceWorker(): void {
@@ -23,20 +9,11 @@ export function registerServiceWorker(): void {
 
 	const register = () => {
 		navigator.serviceWorker.register(SCRIPT_URL, { type: 'module' }).catch((err: unknown) => {
-			// Logged, not reported. Reporting brings back the noise this wrapper
-			// exists to remove — the high-volume rejections are benign (see above)
-			// — and the failures worth acting on (a 404 from a broken deploy, an
-			// install-time throw) already fail far more loudly: the same deploy
-			// 404s the app's own hashed assets, and a script bug is caught by the
-			// build. console.debug keeps the real message to hand when someone is
-			// actually looking (devtools, a deploy check).
 			// eslint-disable-next-line no-console -- debug-level on purpose, see above
 			console.debug('Service worker registration failed:', err);
 		});
 	};
 
-	// `load` has already fired by the time the app hydrates on a warm/back-forward
-	// navigation, so the listener would never run — register straight away then.
 	if (document.readyState === 'complete') {
 		register();
 	} else {

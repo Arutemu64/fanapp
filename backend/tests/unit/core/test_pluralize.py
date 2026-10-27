@@ -10,23 +10,19 @@ _FORM = Plurals(one="one", three="three", five="five")
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
-        # ...1 but not ...11 -> "one" form
         (1, "one"),
         (21, "one"),
         (101, "one"),
         (1001, "one"),
-        # ...2-4 but not ...12-14 -> "three" form
         (2, "three"),
         (3, "three"),
         (4, "three"),
         (22, "three"),
         (104, "three"),
-        # everything else -> "five" form
         (5, "five"),
         (10, "five"),
         (0, "five"),
         (100, "five"),
-        # The teens (11-14) are the exception the "one"/"three" rules exclude.
         (11, "five"),
         (12, "five"),
         (13, "five"),

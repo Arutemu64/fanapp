@@ -53,9 +53,6 @@ async def start_account_link(
     config: FromDishka[WebConfig],
 ) -> Response:
     if provider not in config.enabled_oauth_providers:
-        # A globally disabled provider cannot be linked either. The profile screen
-        # hides its button, but the start URL is guessable — redirect back like any
-        # other link failure rather than begin a flow that login won't accept.
         logger.info(
             "Rejected account link for a disabled provider",
             extra={"provider": provider.value},
@@ -64,9 +61,6 @@ async def start_account_link(
 
     try:
         client: StarletteOAuth2App = oauth.create_client(provider.value)
-        # Recorded in the OAuth state and compared against the session at the
-        # callback, so signing in as somebody else mid-flow cannot retarget the
-        # link. require_user also keeps an anonymous browser out of this route.
         current_user = await current_user_provider.require_user()
         url = await build_authorization_url(
             client,
@@ -76,10 +70,6 @@ async def start_account_link(
             initiator_user_id=current_user.id,
         )
     except Exception:
-        # Building the redirect needs the provider's discovery document. The
-        # registry is APP-scoped so it is fetched once per process — this is the
-        # first linking attempt after a restart running into an unreachable
-        # provider, or a discovery document we cannot parse.
         logger.exception("Could not reach the provider to start account linking")
         return build_profile_redirect(OAUTH_ERROR_FAILED)
 
@@ -105,6 +95,4 @@ async def unlink_social_account(
     provider: SocialProvider,
     interactor: FromDishka[UnlinkSocialAccount],
 ) -> None:
-    # No enabled-provider check, unlike linking: switching a provider off must
-    # not trap the accounts already linked to it.
     await interactor(UnlinkSocialAccountInput(provider=provider))

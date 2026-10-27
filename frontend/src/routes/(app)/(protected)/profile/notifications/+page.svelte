@@ -10,8 +10,6 @@
 
 	let { data }: PageProps = $props();
 	const userQuery = createQuery(() => currentUserOptions());
-	// Live from the query; the guard's snapshot covers the moment a session expiry
-	// has emptied it but not yet moved us to /login.
 	let user = $derived(userQuery.data ?? data.user);
 </script>
 

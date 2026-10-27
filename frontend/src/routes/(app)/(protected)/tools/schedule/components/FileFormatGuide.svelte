@@ -11,9 +11,6 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 
-	// The header names are literal file content, not UI copy — they must stay
-	// exactly as the parser expects them (REQUIRED_COLUMNS in
-	// backend/src/fanfan/adapters/parsers/schedule.py).
 	const columns = [
 		{
 			name: 'type',

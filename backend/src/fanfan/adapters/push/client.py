@@ -13,32 +13,18 @@ from fanfan.core.models.push_subscription import PushSubscription
 
 logger = logging.getLogger(__name__)
 
-# RFC 8030 §5.3 urgency levels. A push service may hold back a lower-urgency
-# message while the device saves battery; "high" is the level meant for a
-# time-sensitive alert. https://www.rfc-editor.org/rfc/rfc8030#section-5.3
 PushUrgency = Literal["very-low", "low", "normal", "high"]
 
 
 class NotificationData(TypedDict):
-    # Read by the service worker only; the browser's declarative parser passes
-    # `data` through untouched.
-    # Test pushes must render the OS notification even when the app is in the
-    # foreground (the service worker otherwise suppresses it to avoid
-    # duplicating the in-app toast).
     test: bool
 
 
 class DeclarativeNotification(TypedDict):
     title: str
     body: str
-    # Absolute URL the browser opens on click. WebKit's examples use absolute
-    # URLs, and the spec doesn't promise to resolve a relative one.
     navigate: str
     tag: str
-    # Whether a replacement of the same tag should re-alert (sound/vibration).
-    # True only for topic-grouped notifications, where a new one replaces the
-    # displayed one and must still buzz; the Notification API requires a
-    # non-empty tag alongside it, which we always provide.
     renotify: bool
     data: NotificationData
 
@@ -56,29 +42,16 @@ class MessageData(TypedDict):
 
     web_push: Literal[8030]
     notification: DeclarativeNotification
-    # Still dispatch the `push` event where the message is parsed
-    # declaratively, so the worker can flag the app-icon badge.
     mutable: bool
 
 
 class WebPushClient:
-    # Owns the VAPID signer and a shared httpx2.AsyncClient. The client (with its
-    # timeout) is configured once in the DI provider and reused across every push,
-    # so bursts to the same push service reuse the connection pool instead of
-    # re-handshaking per message (https://www.python-httpx.org/advanced/clients/).
-    # Provided at APP scope so both the pool and the VAPID signer outlive the
-    # per-message request scope; the WebPush signer is now built once for the
-    # process rather than once per notification.
     def __init__(self, client: httpx2.AsyncClient, config: PushConfig) -> None:
         self._client = client
         self._config = config
         self._wp: WebPush | None = None
 
     def _get_web_push(self) -> WebPush:
-        # Build WebPush lazily (and cache it) so missing or invalid VAPID keys
-        # surface here, at send time inside the consumer's try/except, rather
-        # than at DI-resolution time where the error can't be caught and the
-        # NATS message would be redelivered forever.
         if self._wp is None:
             try:
                 self._wp = WebPush(
@@ -94,8 +67,6 @@ class WebPushClient:
         return self._wp
 
     def ensure_available(self) -> None:
-        # Let the notifier resolve WebPush up front so a misconfigured channel
-        # fails fast (and is caught by the consumer) before it hits the gateway.
         self._get_web_push()
 
     async def send(
@@ -107,29 +78,15 @@ class WebPushClient:
         urgency: PushUrgency,
         topic: str | None,
     ) -> httpx2.Response:
-        # Encrypt per subscription (each has its own keys) and POST to that
-        # endpoint. Returns the raw response so the notifier can act on the push
-        # service's status: prune a retired subscription (404/410), honor a 429's
-        # Retry-After, or flag a channel-wide auth failure (400/401/403).
-        # The library's WebPushSubscription nests the keys under `keys`; our
-        # domain model keeps them flat, so map explicitly here rather than
-        # feeding it a dict of the wrong shape.
         push_subscription = WebPushSubscription(
             endpoint=cast("AnyHttpUrl", subscription.endpoint),
             keys=WebPushKeys(auth=subscription.auth, p256dh=subscription.p256dh),
         )
         message = self._get_web_push().get(
-            # get() types `message` as dict[Any, Any]; a TypedDict is not
-            # assignable to an invariant dict, so cast. get() only reads it
-            # (json.dumps), never mutating, so the cast is sound.
             message=cast("dict[Any, Any]", message_data),
             subscription=push_subscription,
-            # Stored on the shared WebPush and read back into the header by the
-            # same synchronous call, so concurrent sends cannot mix them up.
             ttl=ttl_seconds,
         )
-        # The library sets only TTL, encoding and authorization; Urgency and
-        # Topic (RFC 8030 §5.3, §5.4) are added here.
         headers: dict[str, str] = {**message.headers, "urgency": urgency}
         if topic is not None:
             headers["topic"] = topic

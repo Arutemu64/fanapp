@@ -73,8 +73,6 @@ class SqlTicketGateway(TicketGateway):
     async def add_all(self, tickets: list[Ticket]) -> None:
         ticket_orms = [_from_model(ticket) for ticket in tickets]
         self.session.add_all(ticket_orms)
-        # Flush here so a duplicate barcode surfaces as a domain exception at the
-        # gateway (not later at uow.commit()); the caller regenerates and retries.
         with translate_integrity_error({"uq_tickets_barcode": TicketBarcodeCollision}):
             await self.session.flush()
 
@@ -100,8 +98,6 @@ class SqlTicketGateway(TicketGateway):
     async def get_legacy_by_ticketscloud_ticket_id(
         self, ticket_id: str
     ) -> Ticket | None:
-        # Rows imported before the order id was stored. The ticket id used to be
-        # unique, so at most one such row exists per ticket id.
         stmt = (
             select(TicketORM)
             .where(
@@ -158,8 +154,6 @@ class SqlTicketGateway(TicketGateway):
     def _apply_ticket_filter[SelectT: Select[Any]](
         stmt: SelectT, ticket_filter: TicketListFilter
     ) -> SelectT:
-        # Same escaping as the user directory search: %/_ in the term match
-        # themselves instead of acting as wildcards.
         search = ticket_filter.search
         if not search or not search.strip():
             return stmt

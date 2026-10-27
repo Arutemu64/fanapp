@@ -41,8 +41,6 @@ async def test_solved_challenge_passes_once(dishka_request: AsyncContainer) -> N
 
     await verifier.verify(token)
 
-    # A solution stays cryptographically valid until it expires; only the
-    # replay guard stops a bot from reusing one for every request.
     with pytest.raises(CaptchaVerificationFailed):
         await verifier.verify(token)
 
@@ -63,7 +61,6 @@ async def test_challenge_signed_with_another_key_is_rejected(
 async def test_tampered_challenge_is_rejected(dishka_request: AsyncContainer) -> None:
     verifier = await make_verifier(dishka_request)
     payload = json.loads(base64.b64decode(await solve(verifier)))
-    # Pushing the expiry out would let a bot stockpile solutions.
     payload["challenge"]["parameters"]["expiresAt"] += 3600
     tampered = base64.b64encode(json.dumps(payload).encode()).decode()
 
@@ -87,8 +84,6 @@ async def test_challenge_makes_the_client_find_the_issued_counter(
     verifier = await make_verifier(dishka_request)
     challenge = Challenge.from_dict(await verifier.issue_challenge())
 
-    # Deterministic mode: the prefix pins one counter in the configured range,
-    # so every client does the same amount of work.
     solution = solve_challenge(challenge)
     assert solution is not None
     assert CHALLENGE_COUNTER_MIN <= solution.counter <= CHALLENGE_COUNTER_MAX

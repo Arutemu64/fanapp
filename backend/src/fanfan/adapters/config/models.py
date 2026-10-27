@@ -33,56 +33,36 @@ class Environment(StrEnum):
 class EnvConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
-        # "ignore", not "forbid": the backend reads the same root `.env` that also
-        # holds Compose/frontend vars (IMAGE_TAG, FRONTEND_PORT, PUBLIC_*, ...),
-        # which are not backend fields — "forbid" would crash the app on them.
-        # "ignore" drops those silently; a renamed/typo'd BACKEND key is caught by
-        # the .env.example drift check instead (see AGENTS.md config-drift rule).
         extra="ignore",
         env_file=".env",
         env_file_encoding="utf-8",
     )
 
-    # General
     web: WebConfig
     timezone: TimeZoneName = "Europe/Moscow"
 
-    # Environment
     db: DatabaseConfig
     redis: RedisConfig
     nats: NatsConfig
-    # Optional — when unset, outgoing emails are logged instead of sent.
     mail: MailConfig | None = None
 
-    # Notifications
     bot: TelegramConfig
     push: PushConfig
 
-    # Social login
     vk: VkConfig
 
-    # Debug
-    # Read from APP_ENV, not bare ENV: pydantic-settings also reads os.environ,
-    # and `ENV` is a common ambient shell var that could silently shadow the
-    # .env value. The Python attribute stays `env`.
     env: Environment = Field(validation_alias="APP_ENV")
-    # Defaults to production-safe values; relaxed for APP_ENV=dev (see validator).
     debug: DebugConfig = DebugConfig()
 
-    # External
     cosplay2: Cosplay2Config | None = None
     tcloud: TCloudConfig | None = None
 
-    # Captcha (optional — when unset, captcha verification is disabled)
     altcha: AltchaConfig | None = None
 
-    # Scheduler
     scheduler: SchedulerConfig = SchedulerConfig()
 
-    # Outbox relay (poll interval, batch size, retention)
     outbox: OutboxConfig = OutboxConfig()
 
-    # Notification retention (age before old notifications are purged)
     notification: NotificationConfig = NotificationConfig()
 
     @model_validator(mode="after")
@@ -104,17 +84,12 @@ class EnvConfig(BaseSettings):
                 self.debug.json_logs = False
         elif self.env is Environment.PROD:
             if self.debug.enabled:
-                # FastAPI debug mode leaks stack traces in HTTP responses, so it
-                # must never reach production — refuse to start rather than leak.
                 msg = (
                     "DEBUG__ENABLED must be False when APP_ENV=prod "
                     "(FastAPI debug mode leaks stack traces in HTTP responses)."
                 )
                 raise ValueError(msg)
             if not self.web.cookie_secure:
-                # Without Secure, the browser sends the session and OAuth-state
-                # cookies over plain HTTP — refuse to start rather than ship them
-                # unprotected.
                 msg = (
                     "WEB__COOKIE_SECURE must be True when APP_ENV=prod "
                     "(cookies without Secure are sent over plain HTTP)."

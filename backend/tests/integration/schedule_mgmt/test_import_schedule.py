@@ -84,16 +84,10 @@ async def test_import_creates_events_on_empty_schedule(
     assert by_number[3].title == "Закрытие"
     assert by_number[1].nomination_title == "Номинация 1"
 
-    # Orders are assigned in list order with a fixed step, so imported events
-    # keep their given sequence.
     assert by_number[1].order < by_number[2].order < by_number[3].order
 
-    # Import records no schedule change and enqueues no events.
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
-    # Because there is no outbox event, the SSE broadcast telling every other
-    # client to refetch has to come from the interactor itself. Broadcast, not
-    # targeted at the importing user — the schedule is shared state.
     assert realtime.published == [(None, SSEMessage(SSEEventName.SCHEDULE_UPDATED))]
 
 
@@ -107,8 +101,6 @@ async def test_import_updates_existing_and_deletes_orphans(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
-    # An event matched by number is updated in place (id preserved); one that
-    # is not in the import is treated as orphaned and deleted.
     existing = _schedule_event(1, "Старое название", 100.0)
     orphan = _schedule_event(2, "Больше не в расписании", 200.0)
     await schedule_gateway.add(existing)
@@ -128,12 +120,9 @@ async def test_import_updates_existing_and_deletes_orphans(
     by_number = {e.number: e for e in schedule}
     assert set(by_number) == {1, 3}
 
-    # Matched event keeps its identity but takes the imported details.
     assert by_number[1].id == existing.id
     assert by_number[1].title == "Новое название"
-    # New event is added.
     assert by_number[3].title == "Новое событие"
-    # Orphan is gone.
     assert await schedule_gateway.get_event(orphan.id) is None
 
 
@@ -147,8 +136,6 @@ async def test_import_replaces_numberless_events(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
-    # A break carries no number, so nothing in the file can be matched to it:
-    # the old row is deleted as an orphan and the imported one is created fresh.
     existing_break = _schedule_event(None, "Перерыв", 100.0)
     await schedule_gateway.add(existing_break)
     await uow.commit()
@@ -169,7 +156,6 @@ async def test_import_replaces_numberless_events(
         (None, "Перерыв"),
         (None, "Технический перерыв"),
     ]
-    # Same title, but a new event — the previous break was not matched.
     assert await schedule_gateway.get_event(existing_break.id) is None
 
 
@@ -213,7 +199,6 @@ async def test_import_keeps_block_starts_in_place_and_reuses_them_by_title(
         (ScheduleBlockStart, "Караоке"),
         (ScheduleEvent, "Песня"),
     ]
-    # A block matched by title keeps its id; one missing from the file goes.
     assert schedule[1].id == existing_block.id
     assert await schedule_gateway.get_entry(stale_block.id) is None
 
@@ -228,9 +213,6 @@ async def test_import_persists_null_nomination(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
 
-    # An interlude (a break, the opening or the closing) carries no nomination;
-    # it arrives as None and must be stored as None rather than coerced to a
-    # placeholder.
     interlude = ScheduleEventRow(
         number=None,
         title="Перерыв",
@@ -255,7 +237,6 @@ async def test_import_without_permission_raises_access_denied(
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
-    # A regular visitor does not have the SCHEDULE_SETUP permission.
     login(visitor)
 
     existing = _schedule_event(1, "Существующее событие", 100.0)
@@ -265,11 +246,9 @@ async def test_import_without_permission_raises_access_denied(
     with pytest.raises(AccessDenied):
         await interactor(ImportScheduleInput(schedule=[_entry(2, "Новое")]))
 
-    # The schedule is left exactly as it was.
     schedule = await _events(schedule_gateway)
     assert [e.number for e in schedule] == [1]
     assert await schedule_gateway.get_event(existing.id) is not None
-    # A rejected import must not send every client off to refetch.
     assert realtime.published == []
 
 
@@ -279,9 +258,6 @@ async def test_reimport_keeps_repeated_block_titles_on_their_own_ids(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # Two blocks share a title. Matching goes in schedule order, so an unchanged
-    # re-import pairs each row with the block start it already was, and a move
-    # recorded against either one still undoes into the right block.
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)

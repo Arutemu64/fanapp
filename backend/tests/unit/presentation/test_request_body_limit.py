@@ -13,8 +13,6 @@ pytestmark = pytest.mark.unit
 
 
 def _client() -> TestClient:
-    # The route never reads the body, so a declared Content-Length is all the
-    # middleware sees — no need to send that many bytes.
     app = Starlette(
         routes=[Route("/", lambda _: PlainTextResponse("ok"), methods=["POST"])]
     )
@@ -31,8 +29,6 @@ def test_passes_through_a_body_within_the_limit() -> None:
 
 
 def test_passes_through_when_content_length_is_absent() -> None:
-    # A chunked body with no Content-Length reaches the route unbounded; the
-    # reverse proxy's own cap is the only defence against that case.
     response = _client().post("/")
 
     assert response.text == "ok"

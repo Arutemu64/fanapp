@@ -17,11 +17,6 @@ from fanfan.core.vo.notification import NotificationId
 
 logger = logging.getLogger(__name__)
 
-# Notifications stored per transaction. Each chunk is one INSERT under the
-# mailing's row lock, and its channel sends start as soon as it commits, so a
-# large mailing starts delivering after the first chunk rather than after the
-# last. Small enough to keep the lock short and the statement well under
-# Postgres' 65535 bind-parameter cap (9 columns per row).
 _CHUNK_SIZE = 500
 
 
@@ -36,7 +31,7 @@ class NotificationFanOut:
     deduplicated by JetStream, and a repeated toast beats a lost one).
     """
 
-    def __init__(  # noqa: PLR0913, PLR0917 — one parameter per port, injected by Dishka
+    def __init__(  # noqa: PLR0913, PLR0917
         self,
         mailing_gateway: MailingGateway,
         notification_gateway: NotificationGateway,
@@ -103,14 +98,6 @@ class NotificationFanOut:
         *,
         finish_with: int | None,
     ) -> None:
-        # Lock the mailing row (SELECT ... FOR UPDATE) before inserting, not
-        # after. The INSERT takes a FOR KEY SHARE lock on the referenced mailing
-        # row via its foreign key; two fan-outs of one mailing (a redelivery
-        # racing a live run) that each inserted first and then asked for FOR
-        # UPDATE would hold each other's shared lock and deadlock. Taking the
-        # exclusive lock first gives them one lock order, so they serialize.
-        # It also serializes against a cancellation, which is why ensure_active
-        # is checked per chunk.
         mailing = None
         if mailing_id is not None:
             mailing = await self.mailing_gateway.get(mailing_id)
@@ -126,14 +113,8 @@ class NotificationFanOut:
         await self.uow.commit()
 
     async def _publish_realtime(self, ids: Sequence[NotificationId]) -> None:
-        # After commit, so a toast never shows a notification that rolled back.
-        # Best-effort: the notification is stored and the feed shows it on the
-        # next load, so a failure here is logged, not raised — raising would
-        # stop the channel sends from being queued.
         try:
             dtos = await self.notification_gateway.read_realtime_notifications(ids)
-            # Ends the read transaction before the publishes, so the pooled
-            # connection is not held while NATS is written to.
             await self.uow.commit()
             for dto in dtos:
                 await self.realtime_gateway.publish(
@@ -148,6 +129,4 @@ class NotificationFanOut:
                 "Failed to publish realtime notifications",
                 extra={"notification_count": len(ids)},
             )
-            # A failed read leaves the transaction aborted; the next chunk
-            # needs a usable one.
             await self.uow.rollback()

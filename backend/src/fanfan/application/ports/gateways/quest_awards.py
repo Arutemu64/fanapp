@@ -20,8 +20,6 @@ class QuestAwardGateway(Protocol):
 
     async def save(self, award: QuestAward) -> None: ...
 
-    # Read projections (return DTOs, not aggregates)
-
     async def read_player(self, number: UserNumber) -> QuestPlayerDTO | None: ...
 
     async def read_players_by_search(

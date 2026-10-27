@@ -21,28 +21,15 @@ class SSEEventName(StrEnum):
       * Every value here must have a matching key in the frontend `SSEEventMap`.
     """
 
-    # Handshake sent once when a stream opens (see StreamEvents interactor).
     CONNECTION_ESTABLISHED = "connection_established"
-    # Liveness heartbeat injected by the SSE route when the stream is idle.
-    # Never published via RealtimeGateway — it exists so the frontend watchdog
-    # can tell a quiet-but-healthy stream from a silently dead one.
     PING = "ping"
-    # Schedule changed; clients should refetch the schedule.
     SCHEDULE_UPDATED = "schedule_updated"
     NOTIFICATION_CREATED = "notification_created"
-    # A vendor sync run changed state; organizers should refetch sync sources.
     SYNC_RUN_UPDATED = "sync_run_updated"
-    # Public festival config changed (phase, start, voting); clients should
-    # refetch GET /config so the home page reflects it without a reload.
     CONFIG_UPDATED = "config_updated"
 
 
 @dataclass(slots=True, frozen=True)
 class SSEMessage:
     event_name: SSEEventName
-    # Default to an empty dict, not None, for payload-less signals (schedule_updated,
-    # ping). Per the SSE spec, EventSource drops an event whose data buffer is empty
-    # even when `event:` is set, so the named listener never fires; sending `{}` keeps
-    # the data line non-empty. The router JSON-encodes the dict to `{}` on the wire.
-    # https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
     data: dict[str, Any] = field(default_factory=dict)

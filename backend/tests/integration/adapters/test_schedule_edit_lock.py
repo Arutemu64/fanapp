@@ -27,9 +27,6 @@ async def _rival_can_lock(engine: AsyncEngine) -> bool:
 async def test_edit_lock_is_held_until_the_transaction_ends(
     dishka_request: AsyncContainer,
 ) -> None:
-    # Undo and import take no rate lock, so this lock alone keeps them from
-    # computing an order against neighbours a concurrent move is changing.
-    # Its own session, not the test fixture's: that one never really commits.
     engine = await dishka_request.get(AsyncEngine)
     async with AsyncSession(engine) as session:
         await SqlScheduleEntryGateway(session).lock_for_edit()

@@ -38,9 +38,6 @@ async def test_projects_public_fields_from_settings() -> None:
 
     assert result.festival_start == start
     assert result.festival_end == end
-    # Neither limits (organizer-only) nor the voting time range leak into the
-    # public projection: voting availability is served per-user from
-    # GET /voting/status, so the time range must not appear here.
     assert not hasattr(result, "limits")
     assert not hasattr(result, "voting_start")
     assert not hasattr(result, "voting_end")

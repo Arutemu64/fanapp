@@ -93,8 +93,6 @@ async def test_older_notification_is_superseded_by_a_later_mailing(
 async def test_parts_of_one_mailing_never_supersede_each_other(
     dishka_request: AsyncContainer, visitor: User, uow: UnitOfWork
 ) -> None:
-    # One change's notifications are parts of one message, even when the
-    # fan-out stored them in different chunks.
     gateway = await dishka_request.get(NotificationGateway)
     change = await _mailing(dishka_request, visitor)
     first_act = await _store(
@@ -119,7 +117,6 @@ async def test_parts_of_one_mailing_never_supersede_each_other(
 async def test_a_newer_notification_of_another_kind_does_not_supersede(
     dishka_request: AsyncContainer, visitor: User, uow: UnitOfWork
 ) -> None:
-    # The stage announcement says nothing about the reader's own act.
     gateway = await dishka_request.get(NotificationGateway)
     subscription = await _store(
         dishka_request,

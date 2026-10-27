@@ -13,24 +13,13 @@ from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
-# How long an active run may go without finishing before it is treated as dead.
-# A worker killed mid-run leaves its row with finished_at NULL, which the
-# uq_sync_runs_active index then holds against every future run for that source
-# — syncing would stop permanently. A live worker is never reaped however long
-# it runs: reaping needs the source's lock, which that worker holds. So this
-# only bounds how long a dead run, or a requested one whose trigger never
-# arrived, blocks the source.
 STALE_RUN_TIMEOUT = timedelta(minutes=30)
 STALE_RUN_ERROR = "Синхронизация прервалась — процесс не ответил вовремя"
 
-# Shown to the organizer when a sync raises. Deliberately generic: the real
-# cause is in the logs and Sentry, and vendor errors are not actionable copy.
 SYNC_FAILED_ERROR = "Не удалось синхронизировать — попробуй ещё раз позже"
 
 
 def sync_lock_key(source: SyncSource) -> str:
-    # One lock per source, not per run: the reaper has to know whether any
-    # worker is still sweeping the source, whichever run it is on.
     return f"sync:{source.value}"
 
 
@@ -57,8 +46,6 @@ class SyncRunTracker:
     async def reap_stale(self, source: SyncSource) -> None:
         """Fail runs whose worker is gone, for a caller that will not run the sync."""
         if not await self.worker_lock.try_acquire(sync_lock_key(source)):
-            # A live worker holds the lock, so its run is not stale however
-            # old it is.
             return
         try:
             await self._reap_stale(source)
@@ -66,8 +53,6 @@ class SyncRunTracker:
             await self.worker_lock.release()
 
     async def _reap_stale(self, source: SyncSource) -> None:
-        # Caller holds the source's lock: only then is an old active row
-        # proof of a dead worker rather than a slow one.
         cutoff = datetime.now(UTC) - STALE_RUN_TIMEOUT
         reaped = await self.sync_run_gateway.fail_stale(
             source, older_than=cutoff, error=STALE_RUN_ERROR
@@ -97,17 +82,11 @@ class SyncRunTracker:
         """
         if not await self.worker_lock.try_acquire(sync_lock_key(source)):
             if run_id is None:
-                # Another worker is mid-sweep: skip quietly, for the same reason
-                # as the unique-index collision below.
                 logger.info(
                     "Sync already running, skipping this trigger",
                     extra={"source": source.value},
                 )
                 return None
-            # Redelivery alone does not prove the previous worker stopped: one
-            # that missed its NATS heartbeats may still be running. The lock
-            # does — a live worker holds it — so without it, back off and let
-            # the trigger come again (the consumer redelivers on this error).
             raise SyncAlreadyRunning
 
         run: SyncRun | None = None
@@ -131,9 +110,6 @@ class SyncRunTracker:
             try:
                 await self.sync_run_gateway.add(run)
             except SyncAlreadyRunning:
-                # A scheduled tick colliding with a manual run is normal, not an
-                # error — raising here would put Sentry noise on every overlap.
-                # The manual path surfaces its own 409 from RequestSync instead.
                 await self.uow.rollback()
                 logger.info(
                     "Sync already running, skipping this trigger",
@@ -148,8 +124,6 @@ class SyncRunTracker:
                     extra={"sync_run_id": str(run_id)},
                 )
                 return None
-            # The trigger is redelivered after an error or a dead worker. A
-            # finished or failed run is done, so its trigger is a duplicate.
             if run.status in (SyncRunStatus.FINISHED, SyncRunStatus.FAILED):
                 logger.info(
                     "Sync run already settled, skipping redelivered trigger",
@@ -178,11 +152,6 @@ class SyncRunTracker:
         )
 
     async def fail(self, run: SyncRun, error: str) -> None:
-        # Always reached after the sync raised, which may have left the session
-        # in a rollback-required state (e.g. a failed flush on a duplicate key).
-        # Discard that poisoned transaction before writing the FAILED row —
-        # otherwise _persist raises PendingRollbackError, the row stays RUNNING,
-        # and the run is stuck "syncing" until reap_stale clears it 30 min later.
         await self.uow.rollback()
         run.mark_failed(error, datetime.now(UTC))
         await self._persist(run)
@@ -198,8 +167,6 @@ class SyncRunTracker:
         await self._publish(run)
 
     async def _publish(self, run: SyncRun) -> None:
-        # Broadcast rather than target a user: the run is shared state, and any
-        # organizer with the permission may be watching the page.
         await self.realtime.publish(
             SSEMessage(
                 event_name=SSEEventName.SYNC_RUN_UPDATED,

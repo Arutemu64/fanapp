@@ -54,8 +54,6 @@ class AddVote:
         if participant is None:
             raise ParticipantNotFound
 
-        # One vote per nomination, not per participant: the participant is
-        # resolved above only to read the nomination it competes in.
         if await self.vote_gateway.get_user_vote_by_nomination(
             nomination_id=participant.nomination_id, user_id=current_user.id
         ):

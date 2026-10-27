@@ -17,8 +17,6 @@ PASSWORD = "correct-horse-battery"
 CODE = "482915"
 
 
-# Sentry records a frame's local variables by their repr, so a secret in a
-# model's repr ships with any unexpected error (core/vo/fields.py).
 @pytest.mark.parametrize(
     ("model", "secret"),
     [

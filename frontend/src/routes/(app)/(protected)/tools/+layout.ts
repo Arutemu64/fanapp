@@ -14,29 +14,16 @@ import type { LayoutLoad } from './$types';
 export const load: LayoutLoad = async ({ parent, url }) => {
 	const { queryClient, user } = await parent();
 
-	// The toolbox is for staff, and the dashboard lists only the tools a user
-	// holds. Each page enforces its own permission.
 	if (!isStaff(user)) {
 		error(403, m.tools_forbidden());
 	}
 
-	// Almost every tool is an online-only mutation surface (import, broadcast,
-	// settings, sync…) with nothing to read offline. Offline, redirect any such
-	// sub-tool to the hub: each sub-page load does `await parent()` first, so this
-	// redirect aborts it before it fires a doomed API request. The hub itself has a
-	// static load, so it lands safely and lists only the tools that work offline —
-	// the quest, whose station scans codes and queues its awards (ADR-0038).
 	const offline = !isReachable();
 	const worksOffline = OFFLINE_TOOL_HREFS.some((href) => url.pathname === resolvePath(href));
 	if (offline && !worksOffline && url.pathname !== resolve('tools')) {
 		redirect(307, resolve('tools'));
 	}
 
-	// Read once for every tool guard (the quest tool is off with the quest). A
-	// persisted or already-loaded copy answers at once, however old: the guard is
-	// a UX redirect and the backend enforces the real rule. Only a true cache miss
-	// asks the network, and if that fails the guard fails open on the quest flag
-	// rather than locking out a quest awarder over a request that didn't land.
 	const toolConfig = await queryForLoad(queryClient, {
 		...getPublicConfigOptions(),
 		staleTime: 'static'

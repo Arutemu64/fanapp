@@ -20,33 +20,19 @@ class NotificationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         NotificationType,
         name="notificationtype",
     )
-    # In-app deep-link path the notification points to (e.g. "/schedule").
-    # Nullable: legacy rows and notifications without a target fall back to root.
     path: Mapped[str | None] = mapped_column()
-    # SET NULL, not CASCADE: cancelling a mailing already deletes its
-    # undelivered notifications explicitly (DeleteMailingNotifications), so a
-    # hard delete of an old mailing row must not wipe delivered notifications
-    # out of users' inboxes.
     mailing_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("mailings.id", ondelete="SET NULL"),
         index=True,
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # No foreign key: a notification is a record of what was said, and it
-    # outlives the act it was about. Only the push lane reads it.
     event_id: Mapped[UUID | None] = mapped_column()
 
     __table_args__ = (
-        # Covers "list user notifications newest first" filter + sort.
-        # created_at is inherited from BaseORM, so reference it as SQL text.
         Index(
             "ix_notifications_user_id_created_at",
             "user_id",
             text("created_at DESC"),
         ),
-        # Serves the retention sweep (delete_created_before). The composite index
-        # above leads with user_id and cannot answer a bare created_at range, so
-        # without this the cron full-scans the table on every tick — including in
-        # the steady state where there is nothing left to delete.
         Index("ix_notifications_created_at", "created_at"),
     )

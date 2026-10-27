@@ -46,9 +46,6 @@ async def test_change_email_sends_confirmation_code(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # Changing an email does not update the account directly — it sends a
-    # confirmation code to the new address, synchronously, so a delivery failure
-    # would surface to the caller.
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -62,7 +59,6 @@ async def test_change_email_sends_confirmation_code(
     recipients = email_sender.sent_messages[0].recipients
     assert [recipient.email for recipient in recipients] == ["new.address@example.com"]
 
-    # The stored email stays put until the code is confirmed.
     saved_user = await user_gateway.get_by_id(user.id)
     assert saved_user is not None
     assert saved_user.email == Email("old.address@example.com")
@@ -80,7 +76,6 @@ async def test_change_email_to_same_address_is_noop(
     user = await _user(user_gateway, uow, "same.address@example.com")
     login(user)
 
-    # Normalization means differing case is still the same address.
     await interactor(ChangeEmailInput(new_email="Same.Address@Example.COM"))
 
     assert email_sender.sent_messages == []
@@ -110,8 +105,6 @@ async def test_change_email_twice_in_a_row_hits_cooldown(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # The per-address cooldown lock stops a second confirmation code being sent
-    # to the same target immediately after the first.
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -123,7 +116,6 @@ async def test_change_email_twice_in_a_row_hits_cooldown(
     with pytest.raises(EmailCodeRequestTooFast):
         await interactor(ChangeEmailInput(new_email="target@example.com"))
 
-    # Only the first request sent a code.
     assert len(email_sender.sent_messages) == 1
     recipients = email_sender.sent_messages[0].recipients
     assert [recipient.email for recipient in recipients] == ["target@example.com"]

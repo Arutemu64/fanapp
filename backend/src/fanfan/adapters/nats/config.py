@@ -1,11 +1,5 @@
 from pydantic import BaseModel, NatsDsn, SecretStr
 
-# nats-py's default gives up after 60 reconnect attempts 2 s apart, about two
-# minutes, and then closes the connection for good. Nothing reopens it, so a
-# longer NATS outage would leave the process running but cut off from NATS, and
-# Compose does not restart a container for failing its healthcheck. A negative
-# value retries forever.
-# https://docs.nats.io/using-nats/developer/connecting/reconnect/max
 MAX_RECONNECT_ATTEMPTS = -1
 
 

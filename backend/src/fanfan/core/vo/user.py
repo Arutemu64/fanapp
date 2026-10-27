@@ -12,9 +12,6 @@ def generate_user_id() -> UserId:
     return UserId(uuid7())
 
 
-# The seed is not a secret: it is a public input to the avatar generator, only
-# unguessable enough that two users do not collide on the same face. URL-safe
-# characters keep it printable wherever it is logged or copied.
 AVATAR_SEED_PATTERN = r"^[A-Za-z0-9_-]{4,32}$"
 
 
@@ -22,9 +19,6 @@ def generate_avatar_seed() -> str:
     return secrets.token_urlsafe(9)
 
 
-# Six digits, never a leading zero, so the number reads the same as an int and
-# as typed. Random, not sequential: a counter would publish how many accounts
-# exist and let anyone walk them in order.
 USER_NUMBER_MIN = 100_000
 USER_NUMBER_MAX = 999_999
 

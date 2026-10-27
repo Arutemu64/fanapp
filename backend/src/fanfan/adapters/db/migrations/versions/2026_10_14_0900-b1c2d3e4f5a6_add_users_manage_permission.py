@@ -18,7 +18,6 @@ Create Date: 2026-10-14 09:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "b1c2d3e4f5a6"
 down_revision = "5bd294fc9eaa"
 branch_labels = None
@@ -54,8 +53,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop any users:manage grants first: the narrower constraint would reject
-    # them, failing the downgrade on a database where it was granted.
     permissions = sa.table(_TABLE, sa.column(_COLUMN))
     op.execute(permissions.delete().where(permissions.c[_COLUMN] == _NEW))
     op.drop_constraint(op.f(_CONSTRAINT), _TABLE, type_="check")

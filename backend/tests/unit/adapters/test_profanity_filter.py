@@ -14,15 +14,15 @@ def profanity_filter() -> WordListProfanityFilter:
     "value",
     [
         "хуй",
-        "пиздец",  # inflected form, caught by the "пизд" root
-        "ХуЙло",  # case-insensitive
-        "х.у.й",  # separators stripped
-        "хуууй",  # repeated letters collapsed
-        "пизд@",  # leetspeak "@" -> "а"
-        "xуй",  # Latin look-alike "x" folded to Cyrillic "х"
-        "pizda",  # Latin transliteration from the LDNOOBW list (exact match)
-        "fuck",  # English exact-match list
-        "ебанько",  # inflected mat root
+        "пиздец",
+        "ХуЙло",
+        "х.у.й",
+        "хуууй",
+        "пизд@",
+        "xуй",
+        "pizda",
+        "fuck",
+        "ебанько",
     ],
 )
 def test_detects_profanity(
@@ -37,8 +37,8 @@ def test_detects_profanity(
         "tester",
         "anime_fan_2026",
         "Светлана",
-        "команда",  # must not trip on the "манда" lookalike
-        "требовать",  # contains "еб" but is an ordinary word
+        "команда",
+        "требовать",
         "",
     ],
 )

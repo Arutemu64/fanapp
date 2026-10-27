@@ -33,35 +33,19 @@
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	// The move picker searches the whole programme. It reads that off the cached
-	// schedule query rather than a prop, so the full array isn't drilled through
-	// every EventCard row just to reach this rarely-opened dialog.
 	const scheduleQuery = createQuery(() => getScheduleOptions());
 	let schedule = $derived(scheduleQuery.data?.schedule ?? []);
 
-	// Read-your-writes: refetch our own schedule off the successful response
-	// rather than waiting for the schedule_updated SSE echo, which can arrive
-	// late or be dropped on a flaky operator connection. See EventStaffActions'
-	// reloadSchedule for the full rationale.
 	const moveMutation = createMutation(() => ({
 		...moveScheduleEventMutation(),
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
 	}));
 
-	// No reset on open: EventStaffActions mounts this modal only while it is open,
-	// so a cancelled selection never lingers.
 	let query = $state('');
 	let selectedId: string | null = $state(null);
 	let formError = $state('');
-	// Blocks re-entry while the move request is in flight. A move fans out an
-	// irreversible push to every subscriber, so a double-tap on a slow venue cell
-	// must not fire the request — and the mailing — twice.
 	let isSubmitting = $derived(moveMutation.isPending);
 
-	// Shared matcher folds ё/е and matches space-separated tokens in any order.
-	// Indexed once per schedule so typing through a few hundred events stays cheap.
-	// Block starts are targets too: placing an event after one moves it to the
-	// top of that block, which is how an event changes blocks.
 	let searchIndex = $derived.by(() => {
 		const blockTitles = blockTitleByEventId(schedule);
 		return createSearchIndex(schedule, (entry) => {
@@ -120,7 +104,6 @@
 				</ParaglideMessage>
 			</Dialog.Description>
 
-			<!-- Moving an event sends a change announcement to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
 			<Alert.Root variant="warning">
 				<BellRing class="shrink-0" />
 				<Alert.Description>
@@ -154,7 +137,6 @@
 							<span class="font-medium text-foreground">№{entry.number}</span>
 							<span class="text-muted-foreground"> — {entry.title}</span>
 						{:else}
-							<!-- No number to lead with (a break), so the title carries the row. -->
 							<span class="font-medium text-foreground">{entry.title}</span>
 						{/if}
 					</button>

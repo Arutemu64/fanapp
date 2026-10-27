@@ -6,7 +6,6 @@ export { type AlertVariant, alertVariants } from './alert.svelte';
 
 export {
 	Action,
-	//
 	Root as Alert,
 	Action as AlertAction,
 	Description as AlertDescription,

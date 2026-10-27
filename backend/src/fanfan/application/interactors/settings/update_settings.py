@@ -16,9 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateAppSettingsInput(BaseModel):
-    # Require an offset: the range check compares an incoming boundary against the
-    # persisted (tz-aware) counterpart, and a naive value would raise TypeError —
-    # a 500 — instead of a clean 422. The organizer form always sends an instant.
     festival_start: AwareDatetime | None = None
     festival_end: AwareDatetime | None = None
     quest_enabled: bool | None = None
@@ -54,20 +51,11 @@ class UpdateSettings:
             raise AppSettingsNotFound
 
         update_flag = False
-        # Tracks changes to fields exposed by GET /config, so the CONFIG_UPDATED
-        # broadcast fires only when a public-facing value actually moved — a
-        # cancel-window-only edit would send every client to refetch identical
-        # config.
         public_config_changed = False
 
         festival_start = data_to_update.get("festival_start")
         festival_end = data_to_update.get("festival_end")
         if festival_start is not None or festival_end is not None:
-            # PATCH may carry either boundary alone, so validate the range as a
-            # whole — filling the untouched side from the persisted value — rather
-            # than each field in isolation, which could reject a valid shift of both.
-            # A datetime is always truthy, so `or` picks the persisted value only
-            # when this PATCH left the boundary out.
             new_start = festival_start or settings.festival_start
             new_end = festival_end or settings.festival_end
             settings.set_festival_schedule(start=new_start, end=new_end)
@@ -83,7 +71,6 @@ class UpdateSettings:
             or quest_cancel_window is not None
         )
         if quest_touched:
-            # The switch and the cap are public; the cancel window is not.
             if quest_enabled is not None or quest_max_award is not None:
                 public_config_changed = True
             settings.update_quest(
@@ -103,9 +90,5 @@ class UpdateSettings:
             extra={"actor_id": str(current_user.id)},
         )
 
-        # Published after commit: SSE carries no committed state, and a live update
-        # for a rolled-back change would send clients to refetch config that never
-        # moved. Best-effort like the schedule live update — a missed event self-heals
-        # on the next /config load (reconnect, navigation, or app resume).
         if public_config_changed:
             await self.realtime.publish(SSEMessage(SSEEventName.CONFIG_UPDATED))

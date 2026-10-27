@@ -21,7 +21,7 @@ class _FakeJetStream:
         self.updates.append(config)
 
 
-def _broker(js: _FakeJetStream) -> Any:  # noqa: ANN401  # stands in for NatsBroker
+def _broker(js: _FakeJetStream) -> Any:  # noqa: ANN401
     connection = SimpleNamespace(jetstream=lambda: js)
     return cast("Any", SimpleNamespace(connection=connection))
 
@@ -34,7 +34,6 @@ async def test_retired_subjects_are_removed_and_the_rest_kept() -> None:
 
     [update] = js.updates
     assert update.subjects == ["cmd.sync.run"]
-    # The rest of the server's config is sent back unchanged.
     assert update.max_age == js.config.max_age
 
 
@@ -48,5 +47,4 @@ async def test_stream_without_retired_subjects_is_not_updated() -> None:
 
 
 def test_stream_does_not_capture_sse_subjects() -> None:
-    # Live updates go over core NATS and nothing replays them.
     assert not any(subject.startswith("sse.") for subject in stream.subjects)

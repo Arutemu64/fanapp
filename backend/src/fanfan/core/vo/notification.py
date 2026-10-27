@@ -9,11 +9,6 @@ from fanfan.core.vo.user import UserId
 
 NotificationId = NewType("NotificationId", UUID)
 
-# How long a schedule notification stays worth delivering. Its text describes
-# the programme as it was when it was built ("on stage now"), so past this age
-# it is wrong rather than late: the fan-out drops a change this old, the
-# channels drop a notification this old, and a push asks the push service to
-# discard it by then.
 SCHEDULE_NOTIFICATION_LIFETIME = timedelta(minutes=10)
 
 
@@ -59,12 +54,8 @@ class NotificationType(StrEnum):
     SCHEDULE_CHANGE = "schedule_change"
     SCHEDULE_SUBSCRIPTION = "schedule_subscription"
     MESSAGE = "message"
-    # Quest points awarded or taken back.
     QUEST = "quest"
     BROADCAST = "broadcast"
-    # Self-test triggered from the profile page. The service worker always shows
-    # the OS-level push for this type, even when the app is visible, so the user
-    # can verify push delivery without backgrounding the app.
     TEST = "test"
 
     @property

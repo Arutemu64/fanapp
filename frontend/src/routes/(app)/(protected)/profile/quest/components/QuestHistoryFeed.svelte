@@ -50,8 +50,6 @@
 								<p class="text-sm wrap-break-word text-foreground">{award.message}</p>
 								<p class="text-xs text-muted-foreground">{formatRelativeTime(award.created_at)}</p>
 							</div>
-							<!-- Struck through rather than dropped: the player was told about both
-							     the award and its cancellation, so the list keeps both. -->
 							<div class="flex shrink-0 flex-col items-end gap-1">
 								<span
 									class={[

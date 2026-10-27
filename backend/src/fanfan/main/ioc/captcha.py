@@ -18,7 +18,6 @@ class CaptchaProvider(Provider):
     def get_captcha_verifier(
         self, config: AltchaConfig | None, redis: Redis
     ) -> CaptchaVerifier:
-        # No ALTCHA key means captcha is disabled, so accept everything.
         if config is None:
             return NoOpCaptchaVerifier()
         return AltchaCaptchaVerifier(config=config, redis=redis)

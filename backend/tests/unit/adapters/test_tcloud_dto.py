@@ -6,9 +6,6 @@ from fanfan.adapters.serialization import create_retort
 
 pytestmark = pytest.mark.unit
 
-# Trimmed from the examples in the TicketsCloud API docs; nested objects the
-# DTOs ignore are kept so the test proves unknown keys are skipped.
-# https://ticketscloud.readthedocs.io/ru/latest/extra/orders_list.html
 ORDERS_PAYLOAD = {
     "data": [
         {
@@ -41,8 +38,6 @@ ORDERS_PAYLOAD = {
     "refs": {"events": {}, "partners": {}},
 }
 
-# https://ticketscloud.readthedocs.io/ru/latest/extra/refunds_list.html, with
-# the ticket list shaped as the refund object in walkthrough/refund_requests.html.
 REFUNDS_PAYLOAD = {
     "data": [
         {

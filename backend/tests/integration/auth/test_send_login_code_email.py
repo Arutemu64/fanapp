@@ -38,7 +38,6 @@ async def test_send_login_code_email_user_without_email_raises(
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
 
-    # A Telegram-only account has no email, so there is nowhere to send the code.
     user = User(
         id=generate_user_id(),
         username=Username("no_email"),

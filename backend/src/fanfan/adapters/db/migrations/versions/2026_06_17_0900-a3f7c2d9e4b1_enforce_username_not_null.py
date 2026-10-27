@@ -14,7 +14,6 @@ Create Date: 2026-06-17 09:00:00.000000
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "a3f7c2d9e4b1"
 down_revision = "c4a1f8e3d291"
 branch_labels = None
@@ -22,9 +21,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Backfill any NULL usernames with a unique, pattern-valid placeholder
-    # (starts with a letter; letters/digits/underscore only) so the NOT NULL
-    # constraint can be applied without losing rows.
     op.execute(
         sa.text(
             "UPDATE users "

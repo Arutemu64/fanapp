@@ -20,9 +20,6 @@ sync_router = APIRouter(
     responses=AUTH_RESPONSES,
 )
 
-# The 202's status resource. There is no per-run endpoint: nothing polls a
-# single run — the page loads this list and is pushed updates over SSE — and it
-# already reports the active run for each source.
 SYNC_STATUS_PATH = "/sync/sources"
 
 

@@ -25,22 +25,17 @@ class OrderMixin:
     automatically.
     """
 
-    # Hint for the type checker; each concrete model overrides it with its own
-    # table name, which is what `order` reads at runtime to name the sequence.
     __tablename__ = None
 
     @declared_attr
     @classmethod
     def order(cls) -> Mapped[float]:
         order_sequence = Sequence(f"{cls.__tablename__}_order_seq", start=1)
-        # mapped_column() is typed as MappedColumn[Any]; Mapped[float] is the
-        # contract SQLAlchemy actually honours at mapping time.
         return mapped_column(  # ty: ignore[unsound-return-statement]
             nullable=False,
             server_default=order_sequence.next_value(),
         )
 
-    # Auto-applied to orderable models that declare NO other table args.
     @declared_attr.directive
     @classmethod
     def __table_args__(cls) -> tuple[Any, ...]:
@@ -48,6 +43,4 @@ class OrderMixin:
 
     @staticmethod
     def order_table_args() -> tuple[Any, ...]:
-        # Deferred so a transaction can swap two rows' order values without
-        # tripping the unique constraint on an intermediate flush.
         return (UniqueConstraint("order", deferrable=True, initially="DEFERRED"),)

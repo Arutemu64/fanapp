@@ -3,31 +3,10 @@ import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
 type StorageKind = 'local' | 'session';
 
 interface PersistedOptions<T extends string> {
-	/** Which Web Storage to back the value with. Defaults to `'local'`. */
 	kind?: StorageKind;
-	/**
-	 * Narrow a raw stored string into `T`, returning `undefined` to fall back —
-	 * so a hand-edited or stale key can never seed an invalid value. Omit when any
-	 * stored string is acceptable.
-	 */
 	parse?: (raw: string) => T | undefined;
 }
 
-/**
- * A `$state` value mirrored into Web Storage through `safeStorage`, so a
- * preference survives a reload with no read/write boilerplate at the call site:
- * read `.current`, assign `.current`, done.
- *
- * Deliberately routed through `safeStorage` rather than raw Web Storage (or a
- * generic library persisted-state): in-app webviews — Telegram's Android
- * webview, sandboxed iframes, some privacy modes — throw on the very *access* of
- * `localStorage`, which would take down the caller. Here a blocked store
- * degrades to an in-memory value: the preference just doesn't outlive the tab.
- *
- * String values only. Web Storage stores strings, and staying with them avoids
- * a serialize/deserialize surface no caller needs yet — a future object-valued
- * caller adds it then, rather than everyone paying for it now.
- */
 export class Persisted<T extends string> {
 	readonly #key: string;
 	readonly #kind: StorageKind;

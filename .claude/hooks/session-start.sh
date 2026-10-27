@@ -1,47 +1,14 @@
 #!/bin/bash
-#
-# SessionStart hook for Claude Code on the web.
-#
-# This runs at the start of EVERY web session (startup + resume). It does the
-# work that must run each session rather than once at environment creation:
-#   * project dependency syncs (uv sync / pnpm install) - the setup script only
-#     re-runs on config change or cache expiry, so it would miss a dependency
-#     bump on the branch; running the syncs here keeps deps in step with the
-#     code. They are near-instant when the lockfile is unchanged.
-#   * Playwright's Chromium for the pinned @playwright/test version - it tracks
-#     the lockfile like the syncs above (see the playwright block below)
-#   * the CodeGraph index (.codegraph/, gitignored) - per-branch project state
-#     that must track the code actually checked out this session, which the
-#     setup script's snapshot cannot guarantee (see the codegraph block below).
-#   * per-session environment variables (PATH) written to $CLAUDE_ENV_FILE
-#
-# The Docker daemon and Docker Hub login live in session-start-docker.sh, a
-# separate async hook, so they don't delay the first response.
-#
-# The cloud-missing tooling (just, uv, Python 3.14, Node 24 via nvm) lives in
-# .claude/setup.sh, which runs once at environment creation and is baked into
-# the snapshot this hook starts from. Keep the two in sync: this hook assumes
-# setup.sh already ran.
 set -euo pipefail
 
-# Only do remote setup in the Claude Code web environment. Local developers
-# already have their own toolchains.
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-# Fall back through git, then pwd, so a non-repo cwd can't abort the hook under
-# `set -e` (CLAUDE_PROJECT_DIR is normally set by Claude Code).
 REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
-# Make the snapshot's upgraded uv reachable for the steps below.
 export PATH="$HOME/.local/bin:$PATH"
 
-# Activate the Node 24 setup.sh installed via nvm, so the `pnpm install` below
-# (and anything else this session runs) uses it instead of the base image's
-# system Node 22 at /opt/node22/bin, which is otherwise earlier on PATH
-# (/etc/profile.d/nodejs.sh). nvm.sh alone doesn't switch PATH - only `nvm use`
-# does - so resolve and prepend Node 24's bin dir explicitly.
 export NVM_DIR="/opt/nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then
   # shellcheck disable=SC1091
@@ -49,17 +16,6 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   export PATH="$(dirname "$(nvm which default)"):$PATH"
 fi
 
-# Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
-# are used throughout the session, not just in this hook's own shell. Also
-# disable the testcontainers Ryuk reaper, matching CI (.github/workflows/ci.yml):
-# the integration test fixtures already stop their own containers in `finally`
-# blocks (backend/tests/fixtures/db_provider.py), and dockerd itself is
-# restarted fresh every session, so Ryuk's crash-cleanup role isn't needed here
-# - skipping it avoids pulling/running an extra container per test session. The
-# hook re-runs on resume against the same env file, so guard with a marker line
-# to avoid stacking duplicate entries. Written before the slow network steps below
-# because the hook's `timeout` can cut them short: a session that loses its
-# dependency syncs should still keep the Node 24 PATH and the Ryuk setting.
 ENV_MARKER="# fanfan session-start PATH"
 if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
   {
@@ -71,27 +27,10 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"
   } >> "$CLAUDE_ENV_FILE"
 fi
 
-# Seed / reconcile the root .env so `$app/env/public` resolves during the
-# svelte-kit sync that pnpm's `prepare` runs below (the frontend reads env from
-# the repo root — see `env.dir` in frontend/vite.config.ts). SvelteKit inlines
-# static public env at build time and turns any variable frontend/src/env.ts
-# declares but the environment lacks into a hard error, so every one must exist as a key or
-# `pnpm check`/`lint`/`build` fail in the cloud container. Placeholder values
-# suffice: the gate only needs the keys to exist, not real secrets. .env is
-# gitignored, so nothing leaks.
 if [ ! -f "$REPO_ROOT/.env" ]; then
   echo "[session-start] Seeding .env from .env.example..."
   cp "$REPO_ROOT/.env.example" "$REPO_ROOT/.env"
 else
-  # Seeding only fires when .env is absent, but the environment snapshot carries
-  # a .env built from an OLDER .env.example — it keeps only the keys it had then,
-  # so every PUBLIC_* var added to the code + .env.example since (AGENTS.md
-  # requires the two move together) reads as undefined and breaks the frontend
-  # gate. Backfill each uncommented key that .env.example declares but .env
-  # lacks, copying the example's placeholder value. This self-heals the drift
-  # each session and is idempotent (a backfilled key is "present" next run).
-  # Only uncommented `KEY=` lines are copied: commented example entries
-  # (APP_VERSION, APP_BUILD, IMAGE_TAG) are deliberately optional and must stay out.
   missing_env=$(awk -F= '
     FNR==NR { if ($0 ~ /^[A-Za-z_][A-Za-z0-9_]*=/) seen[$1]=1; next }
     /^[A-Za-z_][A-Za-z0-9_]*=/ && !($1 in seen)
@@ -106,21 +45,6 @@ else
   fi
 fi
 
-# Sync project dependencies against the current branch code. These are fast when
-# the lockfile is unchanged (uv/pnpm short-circuit) and only fetch the delta
-# after a real bump, since the caches persist in the snapshot. Kept here rather
-# than in setup.sh so a dependency change is picked up without an env rebuild.
-#
-# The backend sync runs AFTER the .env seed above, and best-effort: it fetches
-# from the network, so a registry hiccup must not abort the hook under `set -e`
-# and strand the frontend gate without its .env (that ordering bug made "no .env
-# → frontend lint fails" a recurring web-session failure). A backend dep problem
-# surfaces on its own when a backend command runs; it must not take the frontend
-# down with it.
-#
-# SessionStart stdout is injected into Claude's context, so installer output (pnpm's
-# update notice, package diffs, progress bars) goes to a log file and only a status
-# line plus the log tail on failure reach the session.
 SYNC_LOG="$(mktemp -t session-start-sync.XXXXXX)"
 trap 'rm -f "$SYNC_LOG"' EXIT
 
@@ -136,30 +60,10 @@ if ! (cd "$REPO_ROOT/frontend" && pnpm install) >"$SYNC_LOG" 2>&1; then
   exit 1
 fi
 
-# Install the Chromium build the pinned @playwright/test expects, so web sessions
-# run the E2E suite on the same browser as CI. The base image's pre-baked
-# Chromium in $PLAYWRIGHT_BROWSERS_PATH follows the image's schedule, not our
-# pin, and each Playwright version needs its own browser build
-# (https://playwright.dev/docs/browsers). Lives here, not in setup.sh, because it
-# must resolve the version from node_modules and track a bump without an
-# environment rebuild. `--only-shell`: the suite runs headless, which uses the
-# headless shell; a few seconds fresh, a no-op once installed. Best-effort:
-# a failed download must not abort session setup.
 echo "[session-start] Installing Playwright's Chromium for the pinned version..."
 (cd "$REPO_ROOT/frontend" && pnpm exec playwright install --only-shell --no-progress chromium >/dev/null) \
   || echo "[session-start] WARN: Playwright Chromium install failed; run 'pnpm --dir frontend exec playwright install --only-shell chromium' before E2E work."
 
-# Build/refresh the CodeGraph index so code-navigation queries (AGENTS.md "Code
-# Navigation") reflect the current branch. The binary is installed by setup.sh
-# and persists in the snapshot, but the index itself is deliberately NOT seeded
-# there: a snapshot is reused across sessions on different branches/commits, so
-# an index baked in at environment-creation time could reflect the wrong ref.
-# Building it here instead - like the dependency syncs above - means every
-# session indexes the code it actually has. `sync` updates an existing index
-# incrementally (near-instant when unchanged); a session with no index yet
-# (every session, since setup.sh no longer seeds one) falls back to a full
-# `init`. Best-effort: navigation is a convenience, so a failure must not abort
-# session setup (the `if`/`||` keep set -e from tripping).
 if command -v codegraph >/dev/null 2>&1; then
   if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
     echo "[session-start] Syncing CodeGraph index..."

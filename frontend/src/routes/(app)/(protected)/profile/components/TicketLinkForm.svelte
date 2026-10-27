@@ -34,17 +34,13 @@
 	const linkMutation = createMutation(() => ({
 		...linkTicketMutation(),
 		onSuccess: () => {
-			// A linked ticket is what lets the user vote, so the voting status moves with it.
 			void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
 			return queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
 		}
 	}));
 
-	// Linking a ticket is a mutation — online only. A linked ticket still shows.
 	const offlineGate = offlineWriteGate();
 
-	// The QR code and both Code 128 stubs on a TicketsCloud ticket all encode the
-	// number printed beside them, so either scans straight into the field.
 	const TICKET_FORMATS = ['QRCode', 'Code128'] as const;
 
 	let barcode = $state('');

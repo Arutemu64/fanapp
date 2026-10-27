@@ -1,7 +1,3 @@
-{# One line naming what a schedule change did. Plain text: it is stored as the
-   mailing summary, and the notification templates escape it when they embed it.
-   An event without a public number (a break) is named by its title, the only
-   handle the reader has. #}
 {% autoescape false %}
 {% if event_number is not none %}
 {% set label = '№%03d' % event_number %}

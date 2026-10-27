@@ -17,7 +17,6 @@
 
 	interface Props {
 		heading: string;
-		/** The open steps, already decided by the page (see getReadySteps). */
 		steps: ReadyStepKey[];
 	}
 
@@ -72,16 +71,12 @@
 					title: m.install_title(),
 					description: installDescription,
 					icon: Download,
-					// Open the install dialog directly; the library handles per-platform UX.
 					onclick: () => pwa.showInstallDialog()
 				};
 		}
 	}
 </script>
 
-<!-- Every row is the same whole-row target with a chevron, as in the profile hub:
-     order and the counter carry priority, so no step gets a shape of its own. The
-     description is unclamped because it is the reason to do the step. -->
 {#snippet stepRow(step: ReadyStep)}
 	{#if step.href}
 		<MenuRow

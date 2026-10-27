@@ -19,17 +19,14 @@
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 
 	interface Props {
-		/** Linked usernames open the user page only for someone who may read it. */
 		canOpenUsers: boolean;
 	}
 
 	let { canOpenUsers }: Props = $props();
 
-	// Rows per page, loaded with "Показать ещё" like the user directory.
 	const TICKETS_PAGE_SIZE = 20;
 
 	let searchValue = $state('');
-	// The term the query runs with, trailing the input by a short debounce.
 	let search = $state('');
 
 	const ticketsQuery = createInfiniteQuery(() => {
@@ -37,8 +34,6 @@
 		if (search) query.search = search;
 		return {
 			...listTicketsInfiniteOptions({ query }),
-			// An object page param is request overrides to hey-api, a string the
-			// cursor: an empty object asks for the first page.
 			initialPageParam: {},
 			getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined,
 			placeholderData: keepPreviousData

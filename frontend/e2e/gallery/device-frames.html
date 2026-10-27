@@ -1,28 +1,4 @@
 <!doctype html>
-<!--
-	Device frames for the README hero: a laptop with a browser window and an iPhone 16,
-	each showing a screenshot handed to the page's frameScreens():
-
-	  await frameScreens({ desktop: '<url>', phone: '<url>', title: '<tab title>' });
-
-	A function rather than query-string parameters: CodeQL flags assigning an `src`
-	read from `location` (js/xss, js/client-side-unvalidated-url-redirection), and
-	the caller here is a script anyway.
-
-	`desktop` is a 1280×720 capture (a 1280×800 screen minus the 80px browser chrome
-	drawn here); `phone` is a 393×852 capture taken with the iPhone 16's safe-area insets
-	(59 top, 34 bottom) emulated, so the app's own layout leaves room for the status bar
-	and home indicator drawn over it. Any device scale factor works: the images are
-	sized by CSS. The readme-gallery spec calls it and screenshots #stage with a
-	transparent background; to reuse it, open the file and call it from the devtools
-	console with your own captures.
-
-	Devices are drawn at native size (CSS px = device points) and composited with
-	`zoom`, so every bezel, radius and inset below reads as the real device value. `zoom`,
-	not `scale`, because it scales the layout box too: the phone then takes its zoomed
-	size in the stage's flex row instead of overlapping the laptop's screen.
-	iPhone 16 screen and insets: https://useyourloaf.com/blog/iphone-16-screen-sizes/
--->
 <html lang="ru">
 	<head>
 		<meta charset="utf-8" />
@@ -56,8 +32,6 @@
 				background: transparent;
 			}
 
-			/* Laptop and phone side by side, bottoms level; the phone tucks over the laptop's
-			   right edge with a negative margin. */
 			#stage {
 				display: inline-flex;
 				align-items: flex-end;
@@ -113,7 +87,6 @@
 				background: linear-gradient(#e6e7e9, #c4c5c9);
 			}
 
-			/* The thumb scoop in the base's front edge. */
 			.base::before {
 				content: '';
 				position: absolute;
@@ -126,7 +99,6 @@
 				translate: -50% 0;
 			}
 
-			/* Browser chrome: 40px tab strip + 40px toolbar = the 80px above the capture. */
 			.tabstrip {
 				display: flex;
 				align-items: flex-end;
@@ -205,11 +177,8 @@
 			}
 
 			.phone {
-				/* Positioned like the lid and base, so DOM order paints it above them: an
-				   unpositioned phone would sit under the laptop wherever they overlap. */
 				position: relative;
 				flex: none;
-				/* Over the base's overhang and the lid's bezel, never the screen. */
 				margin-left: -96px;
 				width: 393px;
 				height: 852px;
@@ -237,8 +206,6 @@
 				height: 852px;
 			}
 
-			/* Status bar items sit in the two "ears" beside the Dynamic Island, centred on
-			   its vertical midline. */
 			.status-bar {
 				position: absolute;
 				top: 11px;
@@ -396,8 +363,6 @@
 		</div>
 
 		<script>
-			// Resolves once both screenshots are decoded, so a screenshot taken after it
-			// never catches an empty frame.
 			window.frameScreens = async ({ desktop, phone, title }) => {
 				const desktopImage = document.querySelector('[data-screen="desktop"]');
 				const phoneImage = document.querySelector('[data-screen="phone"]');

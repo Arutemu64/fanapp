@@ -14,8 +14,6 @@ pytestmark = pytest.mark.asyncio
 
 
 def _signal() -> PostgresOutboxSignal:
-    # No connection is opened (start() is never called); these tests drive the
-    # in-process latch directly to pin its edge-triggered semantics.
     config = DatabaseConfig(url="postgresql+psycopg://u:p@localhost:5432/db")
     return PostgresOutboxSignal(config)
 
@@ -29,8 +27,6 @@ async def test_wait_returns_immediately_after_a_signal() -> None:
     signal.arm()
     _notify(signal)
 
-    # A generous timeout would be returned in full if the signal were missed;
-    # the outer wait_for fails the test instead of hanging if it is.
     await asyncio.wait_for(signal.wait(60), timeout=1)
 
 
@@ -41,26 +37,22 @@ async def test_wait_times_out_when_no_signal_arrives() -> None:
     loop = asyncio.get_running_loop()
     start = loop.time()
     await signal.wait(0.05)
-    # It waited out the backstop interval rather than returning early.
     assert loop.time() - start >= 0.05
 
 
 async def test_arm_clears_a_prior_signal() -> None:
     signal = _signal()
-    _notify(signal)  # a signal lands...
-    signal.arm()  # ...but arm() before the next drain clears it
+    _notify(signal)
+    signal.arm()
 
     loop = asyncio.get_running_loop()
     start = loop.time()
     await signal.wait(0.05)
-    # The stale signal was cleared, so the next wait blocks for the full backstop.
     assert loop.time() - start >= 0.05
 
 
 async def test_signal_arriving_during_a_drain_is_not_lost() -> None:
     signal = _signal()
-    # The relay arms, then drains; a NOTIFY that lands between the arm and the
-    # following wait must still wake that wait rather than being swallowed.
     signal.arm()
     _notify(signal)
 
@@ -78,7 +70,6 @@ class _FakeListenConnection:
         self.probes = 0
         self.probed_twice = asyncio.Event()
 
-    # Mirrors psycopg's notifies() signature, timeout included.
     async def notifies(self, *, timeout: float) -> AsyncIterator[object]:  # noqa: ASYNC109
         while self.pending_notifications:
             self.pending_notifications -= 1
@@ -93,7 +84,6 @@ class _FakeListenConnection:
         if self.probes >= 2:
             self.probed_twice.set()
         if self.probe_hangs:
-            # A half-dead socket: the query never gets an answer.
             await asyncio.Event().wait()
 
 
@@ -118,8 +108,6 @@ async def test_hold_wakes_the_relay_on_a_notification() -> None:
 
 @pytest.mark.usefixtures("fast_probe")
 async def test_hold_raises_when_the_connection_silently_stops_answering() -> None:
-    # The socket never reports an error, as with a NAT/firewall drop; the probe
-    # timing out is the only way the supervisor learns it must reconnect.
     connection = _FakeListenConnection(probe_hangs=True)
 
     with pytest.raises(TimeoutError):
@@ -141,7 +129,6 @@ async def test_hold_keeps_probing_a_healthy_connection_until_it_drops() -> None:
 async def test_reconnect_delay_backs_off_to_the_cap() -> None:
     first = outbox_signal._reconnect_delay(1)
     assert 0.5 <= first <= 1.5
-    # Far past the cap, and past where an unclamped power would overflow float.
     for failures in (10, 5000):
         delay = outbox_signal._reconnect_delay(failures)
         assert delay == outbox_signal._RECONNECT_MAX_DELAY_SECONDS

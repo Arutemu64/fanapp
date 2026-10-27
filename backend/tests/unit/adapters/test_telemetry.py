@@ -16,8 +16,6 @@ def _never_expected(_: BaseException) -> bool:
 
 
 def _chained_shutdown_cancel() -> asyncio.CancelledError:
-    # Mirrors what uvicorn reports: a bare CancelledError whose context is the
-    # one carrying uvicorn's message.
     outer = asyncio.CancelledError()
     outer.__context__ = asyncio.CancelledError(UVICORN_SHUTDOWN_CANCEL_MESSAGE)
     return outer

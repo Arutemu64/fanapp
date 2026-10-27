@@ -10,6 +10,5 @@ def get_client_ip(request: Request) -> str | None:
     """
     forwarded_for = request.headers.get("x-forwarded-for")
     if forwarded_for:
-        # Format: "client, proxy1, proxy2" — the client is the first entry.
         return forwarded_for.split(",")[0].strip()
     return request.client.host if request.client else None

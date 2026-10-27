@@ -3,7 +3,6 @@
 
 	interface Props {
 		value: string;
-		/** Accessible name; the code itself means nothing to a screen reader. */
 		label: string;
 		class?: string;
 	}
@@ -13,9 +12,6 @@
 	let qr = $derived(qrPath(value));
 </script>
 
-<!-- Dark on white in both themes: scanners read a light-on-dark code poorly,
-     so the code never follows the dark palette. crispEdges keeps neighbouring
-     modules from showing hairline seams when the SVG is scaled. -->
 <svg
 	viewBox="0 0 {qr.size} {qr.size}"
 	role="img"

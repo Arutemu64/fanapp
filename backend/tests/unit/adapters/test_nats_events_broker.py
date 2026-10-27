@@ -34,7 +34,6 @@ class StubNatsBroker:
         self.in_flight += 1
         self.peak_in_flight = max(self.peak_in_flight, self.in_flight)
         try:
-            # Yield so concurrent publishes actually overlap.
             await asyncio.sleep(0)
             if message.notification_id in self.failing:
                 raise PublishRejected
@@ -80,8 +79,6 @@ async def test_in_flight_publishes_stay_under_the_cap(
 
 
 async def test_a_publish_cancelled_on_its_own_counts_as_failed() -> None:
-    # The fan-out task itself is not cancelled, so gather hands the child's
-    # CancelledError back as a result; dropping it would ack a lost event.
     events = _events(3)
     stub = StubNatsBroker(cancelled={events[0].notification_id})
 

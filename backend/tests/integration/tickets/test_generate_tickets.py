@@ -66,8 +66,6 @@ async def test_generate_tickets_creates_unique_persisted_tickets(
     assert len(set(result.barcodes)) == 5
     assert all(barcode.startswith("FAN-") for barcode in result.barcodes)
 
-    # Every returned barcode is persisted with the chosen role, marked as issued
-    # by the actor, and not yet used.
     for barcode in result.barcodes:
         saved = await ticket_gateway.get_by_barcode(barcode)
         assert saved is not None

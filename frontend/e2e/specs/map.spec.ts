@@ -55,7 +55,6 @@ test.describe('map', () => {
 
 		await page.getByRole('searchbox', { name: 'Поиск по карте' }).fill('туалет');
 
-		// Both toilets, one per floor, each naming where it is.
 		const results = page.getByRole('main').getByRole('listitem');
 		await expect(results).toHaveCount(2);
 		await expect(page.getByRole('status').filter({ hasText: 'Показано 2 из' })).toBeVisible();

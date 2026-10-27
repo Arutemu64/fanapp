@@ -20,10 +20,10 @@ class FakeRealtimeGateway(RealtimeGateway):
 
     def subscribe(
         self,
-        user_id: UserId | None = None,  # noqa: ARG002  # part of the port contract
+        user_id: UserId | None = None,  # noqa: ARG002
     ) -> AsyncIterator[SSEMessage]:
         return self._empty_stream()
 
     async def _empty_stream(self) -> AsyncIterator[SSEMessage]:
         return
-        yield  # makes this an async generator that yields nothing
+        yield

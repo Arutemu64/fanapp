@@ -72,10 +72,6 @@ class TicketImportService:
             order_id=revoked.order_id, ticket_id=revoked.external_id
         )
         if ticket is None:
-            # Safe for a row with no order id: before the order id was stored, a
-            # resale of the same ticket id was never imported, so that row is
-            # the only sale of this ticket id we hold, and any refund of the id
-            # implies that sale was refunded first.
             ticket = await self.ticket_gateway.get_legacy_by_ticketscloud_ticket_id(
                 revoked.external_id
             )

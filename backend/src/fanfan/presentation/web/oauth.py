@@ -33,34 +33,20 @@ from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
-# How long one authorization round-trip may take. Mirrors Authlib's own state
-# TTL (`FrameworkIntegration.expires_in`), which the session cookie's max_age is
-# set to match — see the SessionMiddleware comment in factory.py.
 OAUTH_STATE_TTL_SECONDS = 3600
 
-# The user declined on the provider's consent screen. Expected, not a fault.
 OAUTH_ERROR_CANCELLED = "cancelled"
-# Everything else: expired or replayed state, a failed token exchange, a token we
-# cannot read. All of them look the same to the user, so they share one message.
 OAUTH_ERROR_FAILED = "failed"
 
-# Authlib passes the provider's `error` parameter through verbatim, and
-# `access_denied` is the OAuth 2.0 code for a user who refused (RFC 6749 4.1.2.1).
 _ACCESS_DENIED = "access_denied"
 
-# Stable issuer identifiers per provider. Telegram publishes its issuer via OIDC
-# discovery; VK ID does not expose a discovery endpoint, so the value is
-# hardcoded. Both are compared in `read_flow_state` as a mix-up defence.
 PROVIDER_ISSUERS: dict[SocialProvider, str] = {
     SocialProvider.TELEGRAM: "https://oauth.telegram.org",
     SocialProvider.VK: "https://id.vk.ru",
 }
 
 
-# Generous for any in-app path plus query, small enough that a crafted link can't
-# bloat the server-side state store.
 _RETURN_PATH_MAX_LENGTH = 2048
-# C0 controls (U+0000-U+001F) and DEL, the range URL parsers strip or choke on.
 _FIRST_PRINTABLE_CODE_POINT = 0x20
 _DELETE_CODE_POINT = 0x7F
 
@@ -120,17 +106,8 @@ class OAuthFlowState(BaseModel):
     """
 
     intent: OAuthIntent
-    # RFC 9700 §4.4.2: "clients MUST store, for each authorization request, the
-    # issuer they sent the authorization request to and bind this information to
-    # the user agent." Authlib binds it — it refuses a state with no matching
-    # marker in the signed session cookie — and the callback compares it back.
     issuer: str
-    # Only set for LINK: who asked for it. Compared against the session at the
-    # callback so a mid-flow login as somebody else cannot retarget the link.
     initiator_user_id: UserId | None = None
-    # Only set for LOGIN: the in-app path to land on afterwards. Validated on the
-    # way in and again on the way out, so even a state written by older code can
-    # never redirect off-site.
     return_path: Annotated[str | None, AfterValidator(sanitize_return_path)] = None
 
 
@@ -226,13 +203,8 @@ async def read_flow_state(
         logger.info("OAuth callback carried no state")
         raise OAuthFailed(OAUTH_ERROR_FAILED)
 
-    # Reaching past the app to its framework integration is the only way to read
-    # the payload we stored; `authorize_access_token` consumes it silently.
     state_data = await client.framework.get_state_data(request.session, state)
     if not state_data:
-        # Expired, replayed, or started in a different browser. Authlib would
-        # raise the same way a moment later; failing here keeps the error one
-        # kind rather than two.
         logger.info("OAuth callback state is missing or already used")
         raise OAuthFailed(OAUTH_ERROR_FAILED)
 
@@ -242,9 +214,6 @@ async def read_flow_state(
         logger.warning("OAuth state payload could not be read")
         raise OAuthFailed(OAUTH_ERROR_FAILED) from e
 
-    # RFC 9700 §4.4.2.1: a response whose issuer is not the one the request
-    # went to must abort the interaction.  Telegram publishes its issuer via
-    # OIDC discovery; VK does not, so PROVIDER_ISSUERS carries a static value.
     expected_issuer = PROVIDER_ISSUERS.get(provider)
     if flow_state.issuer != expected_issuer:
         logger.warning(
@@ -274,21 +243,14 @@ async def fetch_telegram_claims(
         token = await telegram.authorize_access_token(request)
         return read_telegram_claims(token)
     except OAuthError as e:
-        # Declining on Telegram, letting the state expire (Authlib gives it an
-        # hour) and re-opening an already-used callback URL all land here. None
-        # of them is a server fault, so this stays below warning level.
         logger.info(
             "Telegram authorization did not complete", extra={"oauth_error": e.error}
         )
         raise OAuthFailed(classify_oauth_error(e)) from e
     except InvalidTelegramAuthPayload as e:
-        # Signature-valid token, unusable content — almost always the bot's
-        # signing algorithm in BotFather stripping the `profile` scope.
         logger.warning("Telegram ID token carried no usable profile claims")
         raise OAuthFailed(OAUTH_ERROR_FAILED) from e
     except Exception as e:
-        # Deliberately broad — narrowing this back to an exception list is what
-        # the docstring above argues against, and the cost is a JSON page.
         logger.exception("Telegram token exchange failed")
         raise OAuthFailed(OAUTH_ERROR_FAILED) from e
 

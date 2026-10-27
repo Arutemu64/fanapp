@@ -4,13 +4,8 @@ import type { GetScheduleOutput } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
-// The phone-only "native feel" layer: page transitions and the bottom-sheet dialog. Each check
-// also pins that the desktop project keeps the plain behaviour.
-
 const isDesktop = (projectName: string) => projectName === 'desktop-chromium';
 
-// Records every value html[data-nav-transition] takes, so a test can read which
-// transitions ran after the fact without racing their 250ms animations.
 async function recordTransitions(page: Page) {
 	await page.evaluate(() => {
 		const kinds: string[] = [];
@@ -36,10 +31,6 @@ async function openEditProfile(page: Page) {
 	return dialog;
 }
 
-// Parks the row's first control at `offset` px from the top of the viewport (under a
-// bar), focuses it, and checks that focus scrolled it out from under: the control
-// itself is the topmost element at its top and bottom edge. Focusing a control that
-// sits off-screen proves nothing, since browsers centre it.
 async function focusAndExpectUnobscured(page: Page, eventId: string, offset: number) {
 	const control = page.locator(`[data-event-id="${eventId}"] button`).first();
 	await control.evaluate((element, offset) => {
@@ -58,7 +49,6 @@ async function focusAndExpectUnobscured(page: Page, eventId: string, offset: num
 		.toBe(true);
 }
 
-// Long enough that the page scrolls well past the top bar on any project's viewport.
 const longSchedule: GetScheduleOutput['schedule'] = [
 	{ type: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
 	...Array.from({ length: 60 }, (_, index) => ({
@@ -76,8 +66,6 @@ const longSchedule: GetScheduleOutput['schedule'] = [
 ];
 
 test.describe('native feel', () => {
-	// The document is the scroll region: SvelteKit restores it on back/forward, and the
-	// shell adds the tab-bar convention of returning a re-entered tab to where it was left.
 	test('hides the top bar on scroll and keeps a tab where it was left', async ({
 		page,
 		api
@@ -87,8 +75,6 @@ test.describe('native feel', () => {
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 		const title = page.getByRole('heading', { level: 1, name: 'Программа' });
 		await expect(title).toBeInViewport();
-		// Not mouse.wheel: Playwright doesn't support it in mobile WebKit. A scrollBy fires
-		// the same `scroll` events the shell's hide-on-scroll listens to.
 		await page.evaluate(() => window.scrollBy(0, 1500));
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
 		/* eslint-disable playwright/no-conditional-in-test, playwright/no-conditional-expect -- the desktop shell keeps its bar; each device project takes one branch */
@@ -98,10 +84,6 @@ test.describe('native feel', () => {
 			await expect(title).not.toBeInViewport();
 		}
 		/* eslint-enable playwright/no-conditional-in-test, playwright/no-conditional-expect */
-		// WCAG 2.4.11: focus landing in the hidden bar brings it back rather than
-		// leaving the focused control off-screen. preventScroll, because a plain focus()
-		// scrolls the page up in Chromium, which reveals the bar on its own and would
-		// pass without the shell's focusin handling.
 		await page
 			.getByRole('link', { name: /^Открыть уведомления/ })
 			.evaluate((link: HTMLElement) => link.focus({ preventScroll: true }));
@@ -116,12 +98,9 @@ test.describe('native feel', () => {
 		await tabs.getByRole('link', { name: 'Программа' }).click();
 		await expect(page).toHaveURL('/schedule');
 		await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scrolledTo);
-		// A programmatic restore is no scroll gesture: the bar comes back with the page.
 		await expect(title).toBeInViewport();
 	});
 
-	// The tab link reopens the query the tab was left at, so the restored offset lands on
-	// the same filtered list it was measured on.
 	test('reopens a tab with the filters it was left with', async ({ page, api }) => {
 		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
 		await page.goto('/schedule');
@@ -139,7 +118,6 @@ test.describe('native feel', () => {
 		await expect(page.getByText('Выступление 4', { exact: true })).toBeHidden();
 	});
 
-	// Going up from a nested page is the same return as the tab tap, not a fresh visit.
 	test('the back arrow returns to the tab with its filters', async ({ page, api }) => {
 		api.use({
 			...organizer(),
@@ -158,8 +136,6 @@ test.describe('native feel', () => {
 		);
 	});
 
-	// Logout lands on Home inside the same shell, so the tabs must forget what the last
-	// account searched for: the next person on a shared phone starts clean.
 	test('forgets the tabs’ filters on logout', async ({ page, api }) => {
 		api.use({
 			...loggedInAs(),
@@ -183,16 +159,12 @@ test.describe('native feel', () => {
 		await expect(page.getByRole('searchbox', { name: 'Поиск по программе' })).toHaveValue('');
 	});
 
-	// WCAG 2.4.11: a control that keyboard focus scrolls into view must not land under
-	// the top chrome, the schedule's sticky headers or the floating bottom nav.
 	test('keeps a focused control clear of the bars', async ({ page, api }) => {
 		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 
-		// Under the top chrome and the schedule's sticky headers.
 		await focusAndExpectUnobscured(page, 'event-30', 20);
-		// Under the floating bottom nav (phones) or at the bottom edge (desktop).
 		const viewportHeight = page.viewportSize()?.height ?? 0;
 		await focusAndExpectUnobscured(page, 'event-40', viewportHeight - 30);
 	});
@@ -233,8 +205,6 @@ test.describe('native feel', () => {
 	}, testInfo) => {
 		api.use(loggedInAs());
 		const dialog = await openEditProfile(page);
-		// Let the enter animation (a CSS keyframe slide/zoom) settle before measuring.
-		// allSettled, not all: a cancelled animation rejects `finished`.
 		await dialog.evaluate((element) =>
 			Promise.allSettled(element.getAnimations().map((animation) => animation.finished))
 		);

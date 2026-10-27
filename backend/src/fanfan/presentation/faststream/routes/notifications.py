@@ -45,36 +45,12 @@ from fanfan.presentation.faststream.redelivery import (
 
 notifications_router = NatsRouter()
 
-# AckWait for the external-send channels, in seconds: how long JetStream waits
-# for an ack before it redelivers. It must clear a send's own client-timeout
-# ceiling so a slow-but-live send is not redelivered mid-flight (the default 30s
-# would be) — Telegram 30s, VK up to ~60s (send + delete,
-# 30s each), and push 10s per device, sent to a user's devices at once.
-# The channel rate limiters (adapters/rate_limiter.py) wait before a send, so a
-# burst queued behind one adds to this; at the worker counts below that wait
-# stays under a second.
 _SEND_ACK_WAIT_SECONDS = 90.0
 
-# Sends in flight per channel. One at a time, a channel delivers a mailing at
-# the speed of one round trip to its provider (a push service answers in ~0.1-
-# 0.3s), so a schedule change reaching a thousand people would take minutes.
-# FastStream runs this many handlers of one durable concurrently
-# (ConcurrentPullStreamSubscriber, picked when max_workers > 1 with pull_sub).
-# Push has no published rate limit, so it gets the most; Telegram (~30
-# messages/s, https://core.telegram.org/bots/faq) and VK (20 requests/s for a
-# community token, https://dev.vk.ru/ru/api/api-requests) are paced by their
-# rate limiters, and a few workers are enough to keep those busy. Every worker
-# holds a pooled DB connection only for its reads, never across the send, so
-# these can exceed the worker's DB pool.
 _PUSH_WORKERS = 32
 _TELEGRAM_WORKERS = 8
 _VK_WORKERS = 8
 
-# Messages per pull request. With the default of one, every message costs its
-# own request to NATS; a batch keeps the workers fed in fewer round trips. Kept
-# small because a message fetched but not yet started when the process stops is
-# never acked, so it waits out the full AckWait before redelivery
-# (https://docs.nats.io/learn/jetstream/pull-consumers).
 _SEND_PULL_BATCH = 8
 
 
@@ -114,8 +90,6 @@ async def _deliver_to_channel(
         )
         await msg.reject()
     except NotificationChannelUnavailable:
-        # The whole channel is misconfigured (bad token, missing VAPID keys).
-        # Retrying can't fix it, so drop the message instead of redelivering.
         logger.warning(
             "%s channel unavailable — dropping notification %s",
             channel,
@@ -229,10 +203,6 @@ async def send_push_notification(
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_broadcast",
-    # Redeliver on failure rather than TERM: this stream's guarantee is
-    # redelivery + idempotent consumers (see jstream.py), so a transient blip
-    # mid-broadcast must not silently drop a whole mailing. The default
-    # REJECT_ON_ERROR would discard it permanently.
     ack_policy=AckPolicy.NACK_ON_ERROR,
     config=consumer_config(),
 )
@@ -242,8 +212,6 @@ async def create_new_broadcast(
     interactor: FromDishka[ProcessBroadcast],
     msg: NatsMessage,
 ) -> None:
-    # A large fan-out can outlast AckWait while NATS is slow to ack; the
-    # heartbeat keeps a live run from being redelivered on top of itself.
     async with in_progress_heartbeat(msg):
         try:
             await interactor(
@@ -254,8 +222,6 @@ async def create_new_broadcast(
                 )
             )
         except Exception:
-            # Out of redeliveries: nothing retries the fan-out after this, so
-            # the mailing would otherwise stay PENDING for good.
             if is_last_delivery(msg.raw_message):
                 await interactor.abandon(data.mailing_id)
             raise
@@ -266,8 +232,6 @@ async def create_new_broadcast(
     stream=stream,
     pull_sub=PullSub(),
     durable="cancel_mailing",
-    # Same as create_new_broadcast: redeliver on a transient failure instead of
-    # TERMing, so a cancellation is not lost while notifications keep going out.
     ack_policy=AckPolicy.NACK_ON_ERROR,
     config=consumer_config(),
 )

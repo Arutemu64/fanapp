@@ -10,17 +10,10 @@ import type {
 import { m } from '#lib/paraglide/messages.js';
 import { anySignal, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
-// The closed set of error codes the API can return, generated from the backend
-// OpenAPI spec (ProblemDetails.code enum). Drives both typo safety on the message
-// dictionary and the compile-time drift guard at the bottom of this file.
 type ApiErrorCode = ProblemDetails['code'];
 
-// An RFC 9457 problem details body as received: unverified, so every member but
-// `code` is unknown. Problem-specific members (`retry_after`, `reason`,
-// `errors`, …) sit beside the standard ones at the top level.
 type ApiProblem = Record<string, unknown> & { code: string };
 
-// The limits Pydantic reports for the broken rule (`max_length`, `ge`, …).
 type ValidationContext = Record<string, unknown>;
 
 interface ApiValidationErrorDetail {
@@ -52,10 +45,6 @@ function getValidationErrors(problem: ApiProblem): ApiValidationErrorDetail[] {
 	});
 }
 
-// The request field a Pydantic `loc` points at: its last named segment, past
-// the leading `body` / `query` / `path` location. Only that first segment is a
-// location — a field can itself be called `body` (the broadcast's
-// `['body', 'body']`).
 function getFieldName(path: Array<string | number>): string | null {
 	const [location, ...rest] = path;
 	const isLocation = typeof location === 'string' && ['body', 'query', 'path'].includes(location);
@@ -108,8 +97,6 @@ function tooLongReason(ctx: ValidationContext): string {
 	return m.validation_too_long();
 }
 
-// Pydantic error "type" -> short Russian reason. Kept lowercase so it reads
-// naturally when appended after a field label ("поле «пароль»: ...").
 const VALIDATION_TYPE_MESSAGES: Record<string, (ctx: ValidationContext) => string> = {
 	missing: m.validation_missing,
 	string_too_short: tooShortReason,
@@ -151,20 +138,10 @@ function getValidationMessage(problem: ApiProblem): string {
 	return m.validation_check_form();
 }
 
-/**
- * The API error `code`, for a caller that branches on one. A query rethrows the
- * error body without its HTTP status, so a "not found" is told apart by code.
- */
 export function getApiErrorCode(error: unknown): string | undefined {
 	return getApiProblem(error)?.code;
 }
 
-/**
- * What a VALIDATION_ERROR says about one request field, for showing under that
- * input instead of as a form-level message. `null` when the error is anything
- * else or names a different field — the caller then falls back to
- * getApiErrorDetail for the form as a whole.
- */
 export function getApiFieldError(error: unknown, field: string): string | null {
 	const problem = getApiProblem(error);
 	if (problem?.code !== 'VALIDATION_ERROR') {
@@ -200,11 +177,6 @@ function formatColumnList(value: unknown): string {
 
 type ScheduleFileMessage = (problem: Partial<InvalidScheduleFileProblem>, at: string) => string;
 
-// The backend rejects a schedule spreadsheet with a `reason` plus whatever
-// locates the problem (column, spreadsheet row, duplicated number), so the copy
-// can point the organizer at the cell to fix instead of just saying the file is
-// wrong. `satisfies Record<InvalidScheduleFileReason, …>` makes a reason the
-// backend adds a compile error here until it has copy.
 const SCHEDULE_FILE_MESSAGES = {
 	UNREADABLE_FILE: () => m.import_error_unreadable(),
 	MISSING_COLUMNS: (problem) =>
@@ -225,7 +197,6 @@ const SCHEDULE_FILE_MESSAGES = {
 } satisfies Record<InvalidScheduleFileReason, ScheduleFileMessage>;
 
 function getInvalidScheduleFileMessage(problem: ApiProblem): string {
-	// Unverified wire data: every field may be missing, the reason may be unknown.
 	const fields = problem as Partial<InvalidScheduleFileProblem>;
 	const at = m.import_error_location({
 		row: String(fields.row),
@@ -241,9 +212,6 @@ function getInvalidScheduleFileMessage(problem: ApiProblem): string {
 	return message(fields, at);
 }
 
-// Dictionary: error code -> user-facing message. `satisfies` keeps the literal
-// keys (so the drift guard below can see which codes are covered) while checking
-// every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
 	ACCESS_DENIED: m.error_no_access,
 	ALREADY_VOTED_IN_THIS_NOMINATION: m.error_already_voted_in_this_nomination,
@@ -299,7 +267,6 @@ const ERROR_MESSAGES = {
 	VOTING_TICKET_REQUIRED: m.error_voting_needs_ticket
 } satisfies Partial<Record<ApiErrorCode, () => string>>;
 
-// Codes carrying a `retry_after` detail; all share the same formatted message.
 const RETRY_AFTER_CODES = [
 	'EMAIL_CODE_REQUEST_TOO_FAST',
 	'SCHEDULE_EDIT_TOO_FAST',
@@ -310,11 +277,6 @@ const RETRY_AFTER_CODES = [
 	'TOO_MANY_LOGIN_CODE_REQUESTS'
 ] as const satisfies readonly ApiErrorCode[];
 
-// Codes intentionally left to the generic fallback toast: not individually
-// actionable by the user (server/internal errors) or surfaced by dedicated UI
-// elsewhere (not-found states). Listed explicitly so the drift guard passes.
-// Underscore-prefixed: consumed only by the type-level guard below, never at
-// runtime (matches the `_exhaustiveErrorCodes` convention).
 const _GENERIC_FALLBACK_CODES = [
 	'AUTHENTICATION_ERROR',
 	'HTTP_ERROR',
@@ -328,10 +290,6 @@ const _GENERIC_FALLBACK_CODES = [
 	'SUBSCRIPTION_NOT_FOUND'
 ] as const satisfies readonly ApiErrorCode[];
 
-// A network failure rejects `fetch` with a TypeError that each engine words
-// differently, so the type is the only stable signal — but a bug in our own
-// query code (a property read on undefined) is a TypeError too. So only the ones
-// the network produced count, recorded where the call is made.
 const connectionFailures = new WeakSet<object>();
 
 function recordConnectionFailure(error: unknown): never {
@@ -341,16 +299,12 @@ function recordConnectionFailure(error: unknown): never {
 	throw error;
 }
 
-// Every way the client reads a body. A connection that drops after the headers
-// arrived rejects the read with the same TypeError as a failed `fetch`.
 const BODY_READS = ['text', 'json', 'arrayBuffer', 'blob', 'formData'] as const;
 
 function recordBodyReadFailures(response: Response): Response {
 	for (const method of BODY_READS) {
 		const read = response[method].bind(response);
 		response[method] = () => {
-			// Reading a body twice is a TypeError too, but it is our bug, not the
-			// network's. A JSON parse failure is a SyntaxError, so it never counts.
 			if (response.bodyUsed) return read();
 			return read().catch(recordConnectionFailure);
 		};
@@ -358,27 +312,12 @@ function recordBodyReadFailures(response: Response): Response {
 	return response;
 }
 
-// A connection a network blocks without refusing it — a mobile operator's
-// whitelist mode, a congested venue cell — can leave a request hanging until the
-// OS gives up on TCP, a minute or more, with nothing on screen saying so. The
-// deadline turns that hang into a TimeoutError, which the retries, the
-// reachability probe and the offline states already treat as no answer. It
-// covers the body read too, and is generous enough for an upload on slow Wi-Fi.
 const REQUEST_TIMEOUT_MS = 15_000;
 
-/**
- * The `fetch` the generated client calls (`clientConfig.ts`): the real one,
- * bounded by `REQUEST_TIMEOUT_MS` and remembering the TypeErrors the network
- * produces — from `fetch` itself or from reading the body — so
- * `isConnectionFailure` can tell a dropped connection from a bug that happens
- * to throw the same type.
- */
 export function fetchRecordingConnectionFailures(
 	input: RequestInfo | URL,
 	init?: RequestInit
 ): Promise<Response> {
-	// The generated client passes a Request carrying the caller's signal (TanStack
-	// Query's, which cancels an unused query); `init.signal` would replace it.
 	const callerSignal = input instanceof Request ? input.signal : init?.signal;
 	const deadline = timeoutSignal(REQUEST_TIMEOUT_MS);
 	const signal = callerSignal ? anySignal([callerSignal, deadline]) : deadline;
@@ -387,11 +326,6 @@ export function fetchRecordingConnectionFailures(
 		.then(recordBodyReadFailures, recordConnectionFailure);
 }
 
-// The generated client never throws: a request that got no response comes back
-// as `{ error }` holding what `fetch` or the body read rejected with — a
-// TypeError recorded above,
-// or a TimeoutError DOMException from `timeoutSignal` or `queryForLoad`. A
-// deliberate AbortError is left out: nobody is waiting for that request's answer.
 export function isConnectionFailure(error: unknown): boolean {
 	if (error instanceof TypeError) {
 		return connectionFailures.has(error);
@@ -399,23 +333,10 @@ export function isConnectionFailure(error: unknown): boolean {
 	return error instanceof DOMException && error.name === 'TimeoutError';
 }
 
-/**
- * True when a request got no answer from the API itself: the connection
- * failed, timed out, or a proxy answered with its own non-JSON page (a 502
- * from a backend that is down), which the client hands back as a plain string.
- * Worth retrying — unlike an API error body, the server's verdict, or a bug in
- * our own code, which a retry only repeats.
- */
 export function gotNoApiAnswer(error: unknown): boolean {
 	return isConnectionFailure(error) || typeof error === 'string';
 }
 
-/**
- * True for a failed query or mutation that is neither an API error body nor a
- * missing answer — a parse failure or a throw in our own query code. The backend
- * reports its own errors and a dropped connection is expected, so only this is
- * a frontend bug worth reporting. A deliberate cancel or abort is not.
- */
 export function isUnexpectedRequestError(error: unknown): boolean {
 	if (gotNoApiAnswer(error) || getApiProblem(error) || error instanceof CancelledError) {
 		return false;
@@ -423,11 +344,6 @@ export function isUnexpectedRequestError(error: unknown): boolean {
 	return !(error instanceof DOMException && error.name === 'AbortError');
 }
 
-/**
- * Russian copy for a failed API call: the mapped `code` of an error response,
- * or the connection message when the request never got an answer. `null` means
- * there is nothing specific to say, so the caller shows its own fallback.
- */
 export function getApiErrorDetail(error: unknown): string | null {
 	if (isConnectionFailure(error)) {
 		return m.error_connection_failed();
@@ -438,8 +354,6 @@ export function getApiErrorDetail(error: unknown): string | null {
 		return null;
 	}
 
-	// Dictionary covers most codes. Cast because problem.code is an unverified
-	// wire string, not a known ApiErrorCode.
 	const simple = (ERROR_MESSAGES as Record<string, (() => string) | undefined>)[problem.code];
 	if (simple) {
 		return simple();
@@ -457,23 +371,12 @@ export function getApiErrorDetail(error: unknown): string | null {
 	return null;
 }
 
-/**
- * Throw a SvelteKit error from a failed API call, so a `load` failure
- * speaks the same language as a form/toast failure. Maps the API error `code` to
- * the shared Russian copy; `code` rides along on `App.Error` for the error page
- * and Sentry. Usage:
- * `.catch((apiError: unknown) => throwApiError(apiError, 'Не удалось загрузить …'))`
- */
 export function throwApiError(apiError: unknown, fallback: string): never {
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const problem = getApiProblem(apiError);
 	return kitError(problemStatus(problem), message, problem ? { code: problem.code } : {});
 }
 
-// A query rethrows the problem body without the HTTP response, so its `status`
-// member is the only status left. RFC 9457 §5 ranks the HTTP status above it,
-// but only our backend writes problem bodies, so the two match. Anything else
-// (no answer, a bug in our code) is a 500.
 function problemStatus(problem: ApiProblem | null): number {
 	const status = problem?.status;
 	if (typeof status === 'number' && status >= 400 && status <= 599) {
@@ -482,12 +385,6 @@ function problemStatus(problem: ApiProblem | null): number {
 	return 500;
 }
 
-// Compile-time drift guard: every client-facing code must be covered by the
-// dictionary, the retry-after / schedule-file / validation handling, or the
-// explicit generic-fallback list. If the backend adds a new code that is none of
-// these, UnhandledCode stops being `never` and this line fails `pnpm check` —
-// naming the missing code(s). Resolve by adding copy to ERROR_MESSAGES or
-// listing the code in _GENERIC_FALLBACK_CODES.
 type HandledCode =
 	| keyof typeof ERROR_MESSAGES
 	| (typeof RETRY_AFTER_CODES)[number]

@@ -38,7 +38,6 @@ async def test_changeover_change_broadcasts_config_updated(
     settings = await settings_gateway.get()
     assert settings.limits.announcement_timeout == 20
     assert settings.schedule.changeover_seconds == 45
-    # The changeover is in GET /config, so every open schedule refetches it.
     assert [
         (user_id, message.event_name) for user_id, message in realtime.published
     ] == [(None, SSEEventName.CONFIG_UPDATED)]
@@ -57,9 +56,6 @@ async def test_cooldown_only_change_does_not_broadcast(
 
     await interactor(UpdateScheduleSettingsInput(announcement_timeout=42))
 
-    # Persisted, the omitted changeover left as is, and the cooldown is not in
-    # GET /config, so nothing should broadcast — a refetch would return
-    # identical public config.
     settings = await settings_gateway.get()
     assert settings.limits.announcement_timeout == 42
     assert settings.schedule.changeover_seconds == changeover

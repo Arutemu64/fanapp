@@ -29,8 +29,6 @@ class ListBroadcasts:
         self.perm_service = perm_service
 
     async def __call__(self, data: ListBroadcastsInput) -> ListBroadcastsOutput:
-        # Same gate as sending: the mailing history is a broadcaster tool, so it
-        # shows every organizer's broadcasts (not scoped to the current user).
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.NOTIFICATIONS_SEND

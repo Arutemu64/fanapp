@@ -8,15 +8,6 @@ import type {
 	SubscriptionFullDto
 } from '../../src/lib/api/generated/types.gen';
 
-// The demo festival behind the README gallery: the acts and nominations of the
-// backend's demo seed (seed_demo_data.py), so the gallery and the README hero
-// show one programme. Blocks are numbered sections, as at the real festival: each
-// starts at a block start entry and runs until the next, so the break falls at the
-// end of Блок 1.
-
-// The capture pins the browser clock here (page.clock.setFixedTime), so relative
-// times like «34 минуты назад» and the festival/voting windows render the same
-// on every run.
 export const GALLERY_NOW = new Date('2026-10-17T15:00:00+03:00');
 
 const MINUTE_MS = 60_000;
@@ -52,7 +43,6 @@ const schedule: ScheduleEventFullDto[] = ACTS.map(([title, , nomination, duratio
 	position: index + 1
 }));
 
-// The events with a block start ahead of each block, as GET /schedule/ serves them.
 export const scheduleEntries: ScheduleEntryDto[] = schedule.flatMap((event, index) => {
 	const block = ACTS[index]?.[1] ?? null;
 	const previousBlock = ACTS[index - 1]?.[1] ?? null;
@@ -129,7 +119,6 @@ export const notifications: NotificationDto[] = [
 		'schedule_subscription',
 		'Уведомление о подписке',
 		'До начала выступления <b>№005 «Тандзиро Камадо — Клинок, рассекающий демонов»</b> осталось <b>2 выступления</b>',
-		// The two unread ones behind the bell badge: they stay flagged new on the feed.
 		{ path: '/schedule', seen_at: null }
 	),
 	notification(
@@ -153,9 +142,6 @@ export const notifications: NotificationDto[] = [
 	)
 ];
 
-// The quest standings behind the profile hub's quest row and the quest page: the
-// gallery's visitor (persona id and avatar) sits fourth, just off the podium, so
-// a capture scrolled to the board shows the medals and their own row together.
 const QUEST_RIVALS = [
 	{ username: 'РыжийКот09', points: 185 },
 	{ username: 'СонныйСамурай15', points: 160 },

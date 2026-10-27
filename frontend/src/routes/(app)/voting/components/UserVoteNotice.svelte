@@ -24,11 +24,6 @@
 
 	const cancelMutation = createMutation(() => ({
 		...cancelVoteMutation(),
-		// Wait for the refetch before confirming: the participant's row keeps its
-		// old count and «Твой голос» badge until then, and a toast landing first
-		// would contradict it on slow con-venue wifi. The spinner covers the gap.
-		// The toast lives here, not in a `mutate` callback: the refetch removes this
-		// notice, and TanStack drops a call's callbacks once its component unmounts.
 		onSuccess: async () => {
 			await onCancelled?.();
 			toastService.add(m.voting_vote_cancelled(), 'success');
@@ -51,16 +46,12 @@
 	}
 </script>
 
-<!-- role="status", not the Alert default "alert": this is the standing state of
-     the ballot, not an urgent interruption to announce on every page load. -->
 <Alert.Root variant="success" role="status" class="flex items-center gap-3">
 	<CircleCheck class="shrink-0" />
 	<div class="min-w-0 flex-1">
 		<Alert.Title>{m.voting_your_choice()}</Alert.Title>
 		<Alert.Description class="wrap-break-word">{participantLabel}</Alert.Description>
 	</div>
-	<!-- A closed ballot is final (CancelVote enforces the same window as casting),
-	     so the button goes rather than sitting there disabled. -->
 	{#if canVote}
 		<Button
 			variant="outline"

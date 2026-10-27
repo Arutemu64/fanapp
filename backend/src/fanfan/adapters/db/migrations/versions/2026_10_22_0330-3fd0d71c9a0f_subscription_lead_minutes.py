@@ -9,17 +9,12 @@ Create Date: 2026-10-22 03:30:44.522708
 import sqlalchemy as sa
 from alembic import op
 
-# revision identifiers, used by Alembic.
 revision = "3fd0d71c9a0f"
 down_revision = "e4b7c2a9d1f3"
 branch_labels = None
 depends_on = None
 
-# A count of acts has no fixed length in minutes (a single defile runs about a
-# minute, a mass defile up to 13), so existing subscriptions are not converted:
-# they take the default the subscribe screen now offers.
 DEFAULT_LEAD_MINUTES = 15
-# What the subscribe screen offered by default before; only the downgrade uses it.
 DEFAULT_COUNTER = 5
 
 
@@ -55,7 +50,6 @@ def upgrade() -> None:
         ondelete="SET NULL",
     )
 
-    # New accounts only: existing users keep the value they have.
     op.alter_column(
         "users",
         "receive_all_announcements",

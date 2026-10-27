@@ -4,16 +4,6 @@ import { createContext } from 'svelte';
 
 const ELEMENT_TAG = 'pwa-install';
 
-/**
- * Wraps the <pwa-install> web component (@khmyznikov/pwa-install).
- *
- * The library renders its own localized install dialog and handles every
- * platform (Chromium Web Install / `beforeinstallprompt`, iOS Safari "Add to
- * Home Screen", Apple desktop, menu instructions for Firefox and other Android
- * browsers, "open in a real browser" for in-app WebViews like Telegram or VK),
- * so this service only mirrors the element's state into Svelte reactivity and
- * exposes a single entry point to open the dialog.
- */
 class PwaService {
 	#element: PWAInstallElement | null = null;
 	#canInstall = $state(false);
@@ -22,22 +12,11 @@ class PwaService {
 	#isAppleMobilePlatform = $state(false);
 
 	constructor() {
-		// Detect standalone mode synchronously — reliable and race-free, unlike the
-		// element's `isUnderStandaloneMode`, which is set during its async init.
 		this.#isInstalled = this.#detectStandalone();
 
-		// Registers the <pwa-install> custom element. Imported dynamically so the
-		// library lands in its own chunk instead of the initial bundle — the install
-		// row is a small corner of the profile page.
-		import('@khmyznikov/pwa-install').catch(() => {
-			// Chunk failed to load; the install card just stays hidden.
-		});
+		import('@khmyznikov/pwa-install').catch(() => {});
 	}
 
-	/**
-	 * Connect the mounted <pwa-install> element. Returns a cleanup function so it
-	 * can be wired up with Svelte's `{@attach ...}` directive in the layout.
-	 */
 	attach(element: PWAInstallElement) {
 		this.#element = element;
 
@@ -45,8 +24,6 @@ class PwaService {
 		element.addEventListener('pwa-install-success-event', this.#syncState);
 		element.addEventListener('pwa-user-choice-result-event', this.#syncState);
 
-		// The element upgrades asynchronously after the dynamic import resolves;
-		// read its state once it is defined, then again on every lifecycle event.
 		void customElements.whenDefined(ELEMENT_TAG).then(this.#syncState);
 
 		return () => {
@@ -57,7 +34,6 @@ class PwaService {
 		};
 	}
 
-	// Standalone (installed) detection that does not depend on the element.
 	#detectStandalone() {
 		return (
 			window.matchMedia('(display-mode: standalone)').matches ||
@@ -65,20 +41,13 @@ class PwaService {
 		);
 	}
 
-	// Arrow function so it can be used directly as an event listener.
 	readonly #syncState = () => {
 		const el = this.#element;
 		if (!el) return;
 
-		// Combine our own detection with the element's signal (e.g. install-success).
 		this.#isInstalled = this.#detectStandalone() || el.isUnderStandaloneMode;
 		this.#isApplePlatform = el.isAppleMobilePlatform || el.isAppleDesktopPlatform;
 		this.#isAppleMobilePlatform = el.isAppleMobilePlatform;
-		// Offer installation wherever the library has something to show: Chromium's
-		// prompt, its Android fallback (Firefox, Opera, in-app WebViews), or Apple
-		// platforms, where it shows its own how-to instructions instead. Desktop
-		// browsers that cannot install at all (Firefox, old Safari) stay hidden: a
-		// forced dialog there would offer a button with nothing behind it.
 		this.#canInstall = !this.#isInstalled && (el.isInstallAvailable || this.#isApplePlatform);
 	};
 
@@ -90,27 +59,14 @@ class PwaService {
 		return this.#isInstalled;
 	}
 
-	/**
-	 * True on iOS/iPadOS and Apple desktop, where the library shows its own install
-	 * instructions instead of a browser prompt, and where an installed app keeps its
-	 * notification permission in the system settings.
-	 */
 	get isApplePlatform() {
 		return this.#isApplePlatform;
 	}
 
-	/**
-	 * True on iPhone and iPad (the library counts a touch Mac UA as one, which is
-	 * how iPadOS Safari reports itself). Web push there reaches only a Home Screen
-	 * app (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/);
-	 * Safari on a Mac delivers it to an ordinary tab (https://webkit.org/?p=12945),
-	 * so Apple desktop is deliberately not included.
-	 */
 	get pushRequiresInstall() {
 		return this.#isAppleMobilePlatform;
 	}
 
-	/** Open the library's install dialog (forced, since we run it in manual mode). */
 	showInstallDialog() {
 		this.#element?.showDialog(true);
 	}

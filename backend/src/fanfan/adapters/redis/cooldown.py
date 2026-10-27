@@ -26,9 +26,6 @@ class RedisCooldown(Cooldown):
 
     async def _retry_after(self, redis_key: str) -> int:
         milliseconds = await self.redis.pttl(redis_key)
-        # Round up so Retry-After never invites a retry that is still too
-        # early. PTTL is -2 when the window lapsed right after our SET failed;
-        # 1 s is then a harmless overestimate.
         return max(1, math.ceil(milliseconds / 1000))
 
     @asynccontextmanager
@@ -40,9 +37,5 @@ class RedisCooldown(Cooldown):
         try:
             yield
         except BaseException:
-            # Delete only our own claim: if the block outlived the window,
-            # another caller may already hold the key. DELIFEQ (Valkey 9.0+,
-            # https://valkey.io/commands/delifeq/) is that compare-and-delete
-            # as one native command, so no Lua script is needed.
             await self.redis.execute_command("DELIFEQ", redis_key, token)
             raise

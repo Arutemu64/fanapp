@@ -100,13 +100,10 @@ async def test_confirm_email_code_rejects_email_taken_by_another_user(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # The code is valid, but its target email already belongs to someone else,
-    # so confirming it would collide — the interactor refuses it as invalid.
     interactor = await dishka_request.get(ConfirmEmailCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
 
-    # Creates the collision this test needs: the address is already taken.
     await _make_user(user_gateway, uow, "owner", email=TAKEN_EMAIL)
     user = await _make_user(user_gateway, uow, "confirmer", email=None)
     login(user)

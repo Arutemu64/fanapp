@@ -68,10 +68,6 @@ class SqlNotificationGateway(NotificationGateway):
             }
             for notification in notifications
         ]
-        # A rerun fan-out carries the same (deterministic) ids, so the
-        # conflicting rows are a clean no-op rather than an IntegrityError that
-        # would nack-and-redeliver forever. RETURNING lists only the rows this
-        # statement inserted, which is what the caller counts.
         stmt = (
             pg_insert(NotificationORM)
             .values(rows)
@@ -93,7 +89,6 @@ class SqlNotificationGateway(NotificationGateway):
     async def is_superseded(self, notification: Notification) -> bool:
         if notification.created_at is None:
             return False
-        # Served by ix_notifications_user_id_created_at.
         stmt = select(
             exists().where(
                 NotificationORM.user_id == notification.user_id,
@@ -156,7 +151,6 @@ class SqlNotificationGateway(NotificationGateway):
         result = await self.session.execute(
             delete(NotificationORM).where(NotificationORM.created_at < cutoff)
         )
-        # execute() is typed as Result, but a DELETE yields a CursorResult.
         return cast("CursorResult[Any]", result).rowcount
 
     async def read_realtime_notifications(
@@ -172,12 +166,6 @@ class SqlNotificationGateway(NotificationGateway):
         stmt = (
             select(NotificationORM)
             .where(NotificationORM.user_id == user_id)
-            # id is a unique PK, so appending it gives the total order the page
-            # cursor needs — a broadcast fan-out inserts many rows in one
-            # transaction sharing created_at, which without a tiebreaker would
-            # leave the cursor ambiguous and let a notification slip through unseen.
-            # (Fan-out ids are deterministic uuid5, not time-ordered, so id only
-            # breaks the tie; created_at carries the recency the feed sorts on.)
             .order_by(NotificationORM.created_at.desc(), NotificationORM.id.desc())
             .limit(pagination.fetch_limit)
         )

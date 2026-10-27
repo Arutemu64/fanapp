@@ -1,5 +1,3 @@
-{# Plain-text alternative for the login-code email. The Jinja env has autoescape on
-   globally (it is HTML-first); disable it here so text output stays literal. #}
 {% autoescape false %}
 {% if username %}Привет, {{ username }}!{% else %}Привет!{% endif %}
 

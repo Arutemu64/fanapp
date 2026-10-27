@@ -13,8 +13,6 @@ export const load: PageLoad = async ({ parent }) => {
 
 	requireTool('settings', user, toolConfig);
 
-	// The form is seeded once from this, so it waits for a fresh copy rather than
-	// a cached one an edit would then overwrite.
 	const settings = await queryForLoad(queryClient, { ...getSettingsOptions(), staleTime: 0 }).catch(
 		(apiError: unknown) => throwApiError(apiError, m.settings_load_failed())
 	);

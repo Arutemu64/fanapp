@@ -28,10 +28,6 @@ describe('formatEventNumber', () => {
 	});
 });
 
-// `duration` is seconds everywhere — spreadsheet cell, database column, API
-// field — so that a sub-minute act survives the round trip exactly. These cases
-// pin that the label reads the value as seconds and never rounds a short act up
-// to a whole minute.
 describe('formatDuration', () => {
 	it('renders a sub-minute act in seconds', () => {
 		expect(formatDuration(45)).toBe('45 секунд');
@@ -51,15 +47,12 @@ describe('formatDuration', () => {
 	});
 
 	it('renders an hour or more', () => {
-		// Pins the hour carry: taking `seconds % 3600` first renders exactly an
-		// hour as "0 минут" and 90 minutes as "30 минут".
 		expect(formatDuration(3600)).toBe('1 час');
 		expect(formatDuration(5400)).toBe('1 час 30 минут');
 		expect(formatDuration(7325)).toBe('2 часа 2 минуты 5 секунд');
 	});
 
 	it('renders a zero duration rather than an empty label', () => {
-		// The database default is 0, so an event can legitimately have no duration.
 		expect(formatDuration(0)).toBe('0 секунд');
 	});
 
@@ -86,11 +79,7 @@ describe('formatUntil', () => {
 	});
 });
 
-// festival_start is stored as an instant and shown/edited on the venue clock
-// (Europe/Moscow, +03:00). These pin the display copy and the lossless round
-// trip through the zone-naive datetime-local input organizers edit it with.
 describe('festival start helpers', () => {
-	// 2027-03-13 11:30 Moscow, the shipped default, expressed as its UTC instant.
 	const START_ISO = '2027-03-13T08:30:00.000Z';
 
 	it('formats the start on the venue clock without a "г." suffix', () => {
@@ -99,7 +88,6 @@ describe('festival start helpers', () => {
 
 	it('formats the day with its weekday last, on the venue clock', () => {
 		expect(formatFestivalDate(START_ISO)).toBe('13 марта 2027, суббота');
-		// 23:30 UTC on the 12th is already the 13th in Moscow.
 		expect(formatFestivalDate('2027-03-12T23:30:00.000Z')).toBe('13 марта 2027, суббота');
 	});
 
@@ -117,9 +105,6 @@ describe('festival start helpers', () => {
 	});
 });
 
-// The messages pick their form with Intl.PluralRules('ru') (CLDR), not mod-10
-// arithmetic: 11–14 are `many` even though they end in 1–4. `other` is fractions
-// only and takes the `few` form ("1,5 часа").
 describe('Russian plural messages', () => {
 	it.each([
 		[0, '0 голосов'],
@@ -138,8 +123,6 @@ describe('Russian plural messages', () => {
 	});
 });
 
-// The venue clock is Europe/Moscow (UTC+3, no DST) when PUBLIC_TIMEZONE is unset,
-// so these instants are written in UTC with the venue-local time alongside.
 describe('formatRelativeTime', () => {
 	const now = Date.parse('2026-10-08T12:00:00Z');
 
@@ -155,7 +138,6 @@ describe('formatRelativeTime', () => {
 });
 
 describe('formatDayHeading', () => {
-	// 00:30 at the venue on 8 October, while it is still 7 October in UTC.
 	const now = Date.parse('2026-10-07T21:30:00Z');
 
 	it('names today and yesterday on the venue clock, not the device one', () => {
@@ -178,8 +160,6 @@ describe('previousDayKey', () => {
 	});
 
 	it('is pure date arithmetic, so a DST switch cannot skip a day', () => {
-		// Europe/Berlin springs forward on 29 March 2026: "now minus 24h" at 00:30
-		// on the 30th would land on the 28th.
 		expect(previousDayKey('2026-03-30')).toBe('2026-03-29');
 	});
 });

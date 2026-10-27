@@ -24,12 +24,8 @@ from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.utils import get_client_ip
 
 
-# Not RequestLoginCodeInput itself: that DTO also carries the client IP, which
-# must come from the connection, never from a body the client controls.
 class RequestLoginCodeBody(BaseModel):
     email: EmailStr
-    # A real ALTCHA payload is well under 4 KB; capping it keeps a hostile
-    # megabyte out of the parser (https://altcha.org/legal/security-advisory/).
     captcha_token: str | None = Field(default=None, max_length=4096)
 
 

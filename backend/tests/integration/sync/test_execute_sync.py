@@ -30,7 +30,6 @@ from fanfan.core.vo.sync import SyncRunStatus, SyncSource
 from fanfan.core.vo.user import UserId
 from tests.fakes.cosplay_source import FakeCosplaySource
 
-# Seeded by the initial-data migration; the actor for CLI/scheduler/NATS work.
 SYSTEM_USER_ID = UserId(UUID("00000000-0000-0000-0000-000000000000"))
 
 pytestmark = [
@@ -44,9 +43,6 @@ async def test_unattended_run_is_recorded_and_attributed(
     sync_operator: User,
     login: Callable[[User], None],
 ) -> None:
-    # The cron/CLI path: no run_id, so the interactor creates its own row. This
-    # is the whole point of the Execute*Sync layer — without it, scheduled syncs
-    # would leave no trace and "last synced" would only show manual runs.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
@@ -73,8 +69,6 @@ async def test_run_id_adopts_the_existing_pending_row(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # The manual path: RequestSync already created the row, so the consumer must
-    # move that one along rather than inserting a second.
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
     queued = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
@@ -97,9 +91,6 @@ async def test_redelivered_trigger_does_not_rerun_a_finished_run(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # The RunSyncCommand consumer redelivers its trigger after an error, or when a
-    # long sync outlasts AckWait. A run that already moved past PENDING must not
-    # start again, or one request would hit the vendor twice.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     gateway = await dishka_request.get(SyncRunGateway)
@@ -130,10 +121,6 @@ async def test_redelivered_trigger_resumes_an_interrupted_run(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A worker that died after committing RUNNING never acked its trigger, so
-    # NATS redelivers it. The consumer heartbeats while a sync is alive, so that
-    # redelivery means the run was interrupted, and it must be picked up again
-    # rather than acked away and left for reap_stale.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
@@ -161,10 +148,6 @@ async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A worker that missed its NATS heartbeats is still running, and its trigger
-    # got redelivered. Redelivery alone cannot tell it from a dead worker; the
-    # lock it holds can. The redelivered trigger must back off (raise, so the
-    # consumer retries later) instead of running the same sync alongside it.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
@@ -192,8 +175,6 @@ async def test_unattended_run_skips_quietly_when_one_is_active(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A scheduled tick colliding with a manual run must not raise: the scheduler
-    # would report it to Sentry on every overlap.
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
     active = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
@@ -242,9 +223,6 @@ async def test_unattended_run_spares_a_long_run_whose_worker_is_alive(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # A full sweep can outlast STALE_RUN_TIMEOUT. Age alone must not get it
-    # reaped while its worker still holds the lock, or the next tick would
-    # start a second sweep of the same source alongside it.
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
     running = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
@@ -276,8 +254,6 @@ async def test_vendor_failure_is_recorded_not_raised(
     sync_operator: User,
     login: Callable[[User], None],
 ) -> None:
-    # Re-raising would make the NATS consumer redeliver and retry forever
-    # against a vendor that is simply down.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.raises = RuntimeError("cosplay2 is down")
@@ -297,11 +273,6 @@ async def test_failure_mid_flush_is_recorded_not_left_running(
     sync_operator: User,
     login: Callable[[User], None],
 ) -> None:
-    # A vendor error that raises *before* the DB is touched (the test above) is
-    # the easy case. This one fails during a flush: two nominations sharing a
-    # code violate uq_nominations_code, which poisons the session. fail() must
-    # roll that back before writing the FAILED row — otherwise persisting it
-    # raises PendingRollbackError and the run stays stuck in RUNNING ("syncing").
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
     source.nominations = [
@@ -325,10 +296,6 @@ async def test_recreated_nomination_may_reuse_a_retired_code(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # Cosplay2 retires a nomination and issues a new one (a new cosplay2_id) that
-    # reuses the old code. Because stale nominations are pruned before the upsert
-    # loop, the old row is deleted first and frees its code for the newcomer —
-    # rather than the insert colliding on uq_nominations_code.
     login(sync_operator)
     nomination_gateway = await dishka_request.get(NominationGateway)
     await nomination_gateway.add(
@@ -362,7 +329,6 @@ async def test_execute_sync_requires_the_permission(
     visitor: User,
     login: Callable[[User], None],
 ) -> None:
-    # The check on the unattended path is real, not decorative.
     login(visitor)
     interactor = await dishka_request.get(ExecuteCosplaySync)
 
@@ -371,10 +337,6 @@ async def test_execute_sync_requires_the_permission(
 
 
 async def test_system_user_is_granted_sync_run(dishka_request: AsyncContainer) -> None:
-    # Guards the grant in the sync:run migration. Cron and CLI syncs
-    # authenticate as this seeded user and go through the same permission check,
-    # so losing that user_permissions row silently stops all unattended syncing
-    # — the failure is a recorded AccessDenied, not a crash anyone would notice.
     perm_gateway = await dishka_request.get(UserPermissionGateway)
 
     granted = await perm_gateway.get_by_permission(

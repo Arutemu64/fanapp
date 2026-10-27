@@ -49,7 +49,6 @@ async def test_grant_is_idempotent(
         await grant(username=visitor.username, permission=Permission.SCHEDULE_MANAGE)
         is True
     )
-    # A second grant is a no-op — the unique (user, permission) row already exists.
     assert (
         await grant(username=visitor.username, permission=Permission.SCHEDULE_MANAGE)
         is False

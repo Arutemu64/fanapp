@@ -8,37 +8,22 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	interface Props {
-		/** Provider mark, rendered in the row's icon tile. */
 		icon: Snippet;
 		label: string;
 		connected: boolean;
-		/** Backend link URL, opened when the user connects the provider. */
 		connectHref: string;
-		/** Confirm-strip question, e.g. «Отвязать Telegram?». */
 		unlinkPrompt: string;
-		/**
-		 * Unlink is blocked without an email so the user never loses their last
-		 * recovery path — the backend enforces it too; this just disables the
-		 * affordance and says why in the status line.
-		 */
 		hasEmail: boolean;
-		/** Performs the actual unlink (API call + toast + refresh). */
 		onUnlink: () => Promise<void>;
 	}
 
 	let { icon, label, connected, connectHref, unlinkPrompt, hasEmail, onUnlink }: Props = $props();
 
-	// Connecting (a backend OAuth redirect) and unlinking (a DELETE) both need the
-	// network — gate them offline. The linked/not-linked status still renders.
 	const offlineGate = offlineWriteGate();
 
 	let isUnlinking = $state(false);
-	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
 	let isConfirming = $state(false);
 
-	// The status line says why "Отвязать" is disabled, next to the button, rather
-	// than in a notice under the whole group (Android settings: explain why a
-	// dependent setting is unavailable, where it is).
 	let status = $derived.by(() => {
 		if (!connected) {
 			return m.social_not_connected();
@@ -62,8 +47,6 @@
 	}
 </script>
 
-<!-- No border/radius of its own: the parent SignInMethods groups this row with the
-	others in a single bordered container and supplies the divider between them. -->
 <Item.Root class="rounded-none">
 	<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
 		{@render icon()}
@@ -75,8 +58,6 @@
 
 	{#if !connected}
 		<Item.Actions>
-			<!-- A link: online the browser follows it, so the guarded action is empty and
-			     the guard only stops the navigation offline. -->
 			<Button
 				href={connectHref}
 				variant="outline"
@@ -89,8 +70,6 @@
 			</Button>
 		</Item.Actions>
 	{:else if !isConfirming}
-		<!-- Neutral at rest: the red is saved for the confirm step, where the
-		     destructive choice is actually made. -->
 		<Item.Actions>
 			<Button
 				variant="outline"
@@ -104,7 +83,6 @@
 			</Button>
 		</Item.Actions>
 	{:else}
-		<!-- basis-full wraps the confirm strip onto its own line under the row. -->
 		<div class="flex basis-full flex-col gap-2">
 			<p class="text-sm font-medium text-foreground">{unlinkPrompt}</p>
 			<div class="flex gap-2">

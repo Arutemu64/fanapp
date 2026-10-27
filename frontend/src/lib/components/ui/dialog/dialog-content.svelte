@@ -47,7 +47,6 @@
 			visibleHeight = viewport.height;
 		};
 		update();
-		// iOS fires `scroll`, not `resize`, when it pans to a focused field.
 		viewport.addEventListener('resize', update);
 		viewport.addEventListener('scroll', update);
 		return () => {
@@ -87,9 +86,6 @@
 		style={keyboardStyle}
 		{...restProps}
 	>
-		<!-- On phones the body scrolls, not the sheet, so the absolutely positioned close
-			button stays in view on a tall form. `contents` elsewhere keeps the children as
-			direct grid items. The 1-unit inset stops the scroller clipping focus rings. -->
 		<div
 			class="contents max-sm:-m-1 max-sm:grid max-sm:min-h-0 max-sm:gap-6 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:p-1"
 		>

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { groupByDay } from './groupByDay';
 
-// Venue clock is Europe/Moscow (UTC+3) when PUBLIC_TIMEZONE is unset.
 const now = Date.parse('2026-10-08T12:00:00Z');
 
 function item(id: string, createdAt: string) {
@@ -14,7 +13,7 @@ describe('groupByDay', () => {
 		const groups = groupByDay(
 			[
 				item('a', '2026-10-08T10:00:00Z'),
-				item('b', '2026-10-07T22:00:00Z'), // 01:00 on 8 October at the venue
+				item('b', '2026-10-07T22:00:00Z'),
 				item('c', '2026-10-07T20:00:00Z'),
 				item('d', '2026-10-01T10:00:00Z')
 			],

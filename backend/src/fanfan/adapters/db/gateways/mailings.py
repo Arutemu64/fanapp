@@ -57,14 +57,9 @@ class SqlMailingGateway(MailingGateway):
 
     async def add(self, mailing: Mailing) -> None:
         mailing_orm = _from_model(mailing)
-        # The ID can come from the client (SendBroadcast), so two overlapping
-        # requests with one ID can both pass the interactor's lookup; the
-        # second one lands here.
         with translate_integrity_error({"pk_mailings": MailingAlreadyExists}):
             self.session.add(mailing_orm)
             await self.session.flush()
-        # Register so any event recorded on the mailing is written to the
-        # outbox when the unit of work commits.
         self.uow.register(mailing)
 
     async def get(self, mailing_id: MailingId, *, lock: bool = True) -> Mailing | None:
@@ -91,19 +86,10 @@ class SqlMailingGateway(MailingGateway):
         await self.session.execute(stmt)
 
     async def read_broadcasts(self, pagination: CursorPagination) -> list[MailingDTO]:
-        # Organizer broadcasts only: a change announcement has no roles, so it
-        # never surfaces in the mailing history. SQLAlchemy writes a Python None
-        # into a JSONB column as the JSON value `null`, not SQL NULL, so
-        # `roles IS NOT NULL` would match those fan-outs too; test for an array
-        # instead. The table is small (manual broadcasts are infrequent), so a
-        # plain created_at sort needs no index.
         stmt = (
             select(MailingORM)
             .options(joinedload(MailingORM.by_user))
             .where(func.jsonb_typeof(MailingORM.roles) == "array")
-            # id (uuid7, time-ordered) breaks created_at ties so the page cursor
-            # names one row — otherwise same-timestamp rows leave it ambiguous
-            # and a mailing slips through unseen.
             .order_by(MailingORM.created_at.desc(), MailingORM.id.desc())
             .limit(pagination.fetch_limit)
         )

@@ -47,7 +47,6 @@ describe('isNavItemActive', () => {
 });
 
 describe('handleNavItemClick', () => {
-	// The unit tier runs in Node, which has no MouseEvent; the helper only calls preventDefault.
 	function clickEvent() {
 		const preventDefault = vi.fn();
 		return { event: { preventDefault } as unknown as MouseEvent, preventDefault };
@@ -90,7 +89,6 @@ describe('hasUpdateDot', () => {
 });
 
 describe('toAppPath', () => {
-	// Paths the backend's notification interactors actually send.
 	it.each([
 		['/', ''],
 		['/notifications', 'notifications'],

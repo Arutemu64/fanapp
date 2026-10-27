@@ -1,14 +1,5 @@
-/**
- * The browser's Push API behind a small port, so `PushDevice` can be tested with a
- * fake and the capability check lives in exactly one place.
- */
 export interface PushBrowser {
-	/** Service worker, Push API and Notification API are all present. */
 	isSupported: () => boolean;
-	/**
-	 * Pushes arrive as Declarative Web Push, which the browser shows itself, even
-	 * over the open app.
-	 */
 	showsPushItself: () => boolean;
 	permission: () => NotificationPermission;
 	requestPermission: () => Promise<NotificationPermission>;
@@ -16,12 +7,6 @@ export interface PushBrowser {
 	subscribe: (vapidKey: string) => Promise<PushSubscription>;
 }
 
-/**
- * Convert a base64url-encoded VAPID application server key into the
- * `Uint8Array` the Push API's `pushManager.subscribe` expects. VAPID keys are
- * distributed base64url (`-`/`_`, no padding), which `atob` cannot read, so pad
- * and translate back to standard base64 first.
- */
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 	const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -35,10 +20,6 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 	return outputArray;
 }
 
-// `getRegistration()` rather than `serviceWorker.ready` for every read: `ready`
-// never resolves when no worker is registered (dev builds, a blocked
-// registration), which would leave a caller waiting forever. With no registration
-// there can be no subscription, so `undefined` already means "none".
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
 	return navigator.serviceWorker.getRegistration();
 }
@@ -46,17 +27,9 @@ async function getRegistration(): Promise<ServiceWorkerRegistration | undefined>
 const ACTIVATION_TIMEOUT_MS = 10_000;
 
 export const browserPush: PushBrowser = {
-	// No Push API means push is off here: iOS Safari only exposes it to a Home
-	// Screen app (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/),
-	// and in-app browsers (Telegram, VK, Instagram, …) lack it outright. Android ones
-	// report a plain Chrome UA, so the capability is detected rather than the user
-	// agent sniffed.
 	isSupported: () =>
 		'serviceWorker' in navigator && 'PushManager' in window && typeof Notification !== 'undefined',
 
-	// Only browsers that implement Declarative Web Push expose a page-level
-	// `window.pushManager` (Safari 18.4+ Home Screen apps):
-	// https://webkit.org/blog/16535/meet-declarative-web-push/
 	showsPushItself: () => 'pushManager' in window,
 
 	permission: () => Notification.permission,
@@ -73,9 +46,6 @@ export const browserPush: PushBrowser = {
 		if (!registration) {
 			throw new Error('No service worker registered');
 		}
-		// A registration can still be installing; `subscribe` needs an active worker.
-		// `ready` waits for it but never settles if that install fails, so bound it
-		// to keep the switch from staying busy forever.
 		await Promise.race([
 			navigator.serviceWorker.ready,
 			new Promise<never>((_, reject) => {

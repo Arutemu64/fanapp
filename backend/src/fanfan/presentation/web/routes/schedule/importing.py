@@ -28,26 +28,16 @@ from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import InvalidScheduleFileProblem
 from fanfan.presentation.web.security import session_security
 
-# A real convention schedule is a few hundred rows — well under a megabyte. Cap
-# generously so a legitimate import never trips it, while a hostile multi-hundred-
-# MB body is rejected before the in-memory spreadsheet parse.
 _MAX_IMPORT_BYTES = 5 * 1024 * 1024
 _ALLOWED_CONTENT_TYPES = frozenset(
     {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/octet-stream",  # some browsers send this for .xlsx
+        "application/octet-stream",
     }
 )
 
 
 def _ensure_valid_upload(file: UploadFile) -> None:
-    # Raises the same InvalidScheduleFile the parser raises on unreadable
-    # content, so the client has one error code to handle for "this upload
-    # can't become a schedule" regardless of which layer rejected it — a
-    # plain HTTPException(detail=...) here would not: the central handler
-    # only preserves a string `detail` for the internal HTTP_ERROR fallback,
-    # so a hand-picked Russian message set that way would never reach the
-    # client (presentation/web/exceptions.py:http_exception_handler).
     if file.size is not None and file.size > _MAX_IMPORT_BYTES:
         raise InvalidScheduleFile(reason=InvalidScheduleFileReason.FILE_TOO_LARGE)
     filename = file.filename or ""
@@ -98,14 +88,9 @@ async def import_schedule(
     current_user_provider: FromDishka[CurrentUserProvider],
     perm_service: FromDishka[PermissionService],
 ) -> None:
-    # Authorize before reading/parsing the upload: the parse buffers the whole
-    # file and runs a CPU-heavy synchronous read, so an unauthorized caller must
-    # be rejected before it, not by the interactor afterwards.
     current_user = await current_user_provider.require_user()
     await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_SETUP)
     _ensure_valid_upload(form.file)
-    # python-calamine is synchronous; parsing on the event loop would stall every
-    # other request for the duration of the import.
     schedule = await run_in_threadpool(parse_schedule_from_excel, form.file.file)
     await interactor(ImportScheduleInput(schedule=schedule))
 

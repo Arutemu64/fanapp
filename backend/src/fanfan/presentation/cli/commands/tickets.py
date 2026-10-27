@@ -19,8 +19,6 @@ logger = logging.getLogger(__name__)
 async def sync_tcloud_command(context: click.Context) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
-        # Execute*Sync, not the bare interactor, so a CLI run is recorded in
-        # sync_runs like any other trigger.
         execute_sync = await r_container.get(ExecuteTicketsSync)
         await execute_sync()
         logger.info("Importing from TCloud done!")

@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# The enum values ("schedule:manage", …) are the operator-facing choices, so a
-# typo is rejected by click instead of silently failing the ensure() check later.
 _PERMISSION_CHOICE = click.Choice([p.value for p in Permission])
 
 

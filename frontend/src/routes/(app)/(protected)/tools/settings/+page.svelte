@@ -39,14 +39,10 @@
 	const saveMutation = createMutation(() => ({
 		...updateSettingsMutation(),
 		onSuccess: () => {
-			// The festival dates are public config too; config_updated would refresh it,
-			// but not before this organizer looks at the home hero.
 			void queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
 			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
 		}
 	}));
-	// festival_start and festival_end are instants; edit them on the venue clock
-	// via zone-naive datetime-locals, converting back to ISO instants on save.
 	let savedFestivalStart = $state(
 		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
 	);
@@ -80,7 +76,6 @@
 
 	function handleFestivalStartInput() {
 		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
 		if (festivalStartError) {
 			validateFestivalStart();
 		}
@@ -93,7 +88,6 @@
 
 	function handleFestivalEndInput() {
 		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
 		if (festivalEndError) {
 			validateFestivalEnd();
 		}
@@ -123,15 +117,12 @@
 		}
 	}
 
-	// A connection that drops mid-form keeps what was typed; the submit explains
-	// itself instead of sending.
 	const offlineGate = offlineWriteGate();
 
 	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
-		// Validate every field so all errors surface at once, not one at a time.
 		const isFestivalStartValid = validateFestivalStart();
 		const isFestivalEndValid = validateFestivalEnd();
 		const isQuestMaxAwardValid = validateQuestMaxAward();
@@ -200,8 +191,6 @@
 
 <SectionIntro description={m.settings_description()} />
 
-<!-- novalidate: the browser's own bubble for min/max would pre-empt the Russian
-     field errors with English text; the validate* functions cover the same bounds. -->
 <form
 	novalidate
 	class="mx-auto flex w-full max-w-2xl flex-col gap-5"

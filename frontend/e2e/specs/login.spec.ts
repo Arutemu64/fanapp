@@ -7,17 +7,12 @@ import type {
 
 import { expect, json, problem, test } from '../fixtures';
 
-// A real deterministic ALTCHA challenge at the API's own difficulty, pinned to
-// counter 750. The browser never checks the signatures (only the API does), and
-// with no expiresAt it never goes stale. Nothing here is secret: keyPrefix is the
-// public difficulty target every client sees, which gitleaks' entropy rule
-// mistakes for an API key.
 const CAPTCHA_CHALLENGE = {
 	parameters: {
 		algorithm: 'PBKDF2/SHA-256',
 		cost: 5000,
 		keyLength: 32,
-		keyPrefix: '687afc72cc05a84c0d4dd5ded62b86ed', // gitleaks:allow
+		keyPrefix: '687afc72cc05a84c0d4dd5ded62b86ed',
 		nonce: '1d8fa1307004e5bf19a024e955438c3e',
 		salt: 'eb91ea0efa8c99bcbf08a8cd17d95e62',
 		keySignature: 'cf27fc8a37aca2adec2a919739effb46e4873301fd81de1b3b0f6ab0612487f6'
@@ -36,7 +31,6 @@ test.describe('email login', { tag: '@critical' }, () => {
 		const email = await openEmailStep(page);
 		await expect(email).toBeFocused();
 
-		// A half-typed address is not a mistake yet.
 		await email.pressSequentially('ann');
 		await expect(page.getByRole('alert')).toHaveCount(0);
 
@@ -84,8 +78,6 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await email.press('Enter');
 		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
 
-		// The token is the ALTCHA payload: the challenge as issued plus the one
-		// solution its prefix pins.
 		expect(typeof sentToken).toBe('string');
 		const payload = JSON.parse(atob(sentToken as string)) as {
 			challenge: unknown;
@@ -99,8 +91,6 @@ test.describe('email login', { tag: '@critical' }, () => {
 	});
 
 	test('a rate-limited captcha says when to retry', async ({ page, api }) => {
-		// Venue NAT can put many visitors behind one IP, so the challenge cap is
-		// reachable; its retry_after must survive the captcha layer.
 		api.use({
 			'GET /auth/captcha-challenge': problem('TOO_MANY_LOGIN_CODE_REQUESTS', 429, {
 				retry_after: 42
@@ -142,7 +132,6 @@ test.describe('email login', { tag: '@critical' }, () => {
 
 		await page.getByRole('button', { name: 'Назад' }).click();
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
-		// Listen before releasing it, so a fast response can't slip past the wait.
 		const lateResponse = page.waitForResponse('**/auth/request-login-code');
 		deliver();
 		await lateResponse;
@@ -175,7 +164,6 @@ test.describe('email login', { tag: '@critical' }, () => {
 		const code = page.getByLabel('Код подтверждения');
 		await expect(code).toBeFocused();
 
-		// Digits only: a stray letter never reaches the field.
 		await code.pressSequentially('a12b3456');
 
 		await expect(page.getByRole('alert')).toHaveText('Неверный или устаревший код');
@@ -189,7 +177,6 @@ test('password login offers the code as the way out', async ({ page }) => {
 	await email.fill('ann@example.com');
 	await page.getByRole('button', { name: 'Войти с паролем' }).click();
 
-	// The address carries over, so focus lands on the field still to fill.
 	await expect(page.getByLabel('Пароль', { exact: true })).toBeFocused();
 
 	await page.getByRole('button', { name: 'Войти по коду без пароля' }).click();
@@ -217,7 +204,6 @@ test(
 		await email.fill('ann@example.com');
 		await email.press('Enter');
 		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
-		// The address sits inside a tag of the markup message.
 		await expect(page.getByText('Код отправлен на ann@example.com.')).toBeVisible();
 		await expectAccessible();
 	}

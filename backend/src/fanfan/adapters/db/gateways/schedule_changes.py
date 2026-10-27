@@ -91,9 +91,6 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
 
     async def add(self, change: ScheduleChange) -> None:
         change_orm = _from_model(change)
-        # Insert time, not the column's now() default: now() is the transaction
-        # start, which precedes the lock_for_edit wait, so it would backdate the
-        # change and shorten the announcement cooldown measured from it.
         change_orm.created_at = func.clock_timestamp()
         self.session.add(change_orm)
         self.uow.register(change)
@@ -136,10 +133,6 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
     ) -> list[ScheduleChangeFullDTO]:
         stmt = (
             select(ScheduleChangeORM)
-            # id (uuid7, time-ordered) breaks created_at ties so the page cursor
-            # names one row — a bulk schedule edit inserts many change rows in one
-            # transaction sharing created_at, which would otherwise leave the
-            # cursor ambiguous and let a change slip through unseen.
             .order_by(ScheduleChangeORM.created_at.desc(), ScheduleChangeORM.id.desc())
             .options(
                 joinedload(ScheduleChangeORM.changed_event),
@@ -158,9 +151,6 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         return [_parse_full_dto(s) for s in result]
 
     async def read_seconds_since_last_change(self) -> float | None:
-        # clock_timestamp(), not now(): now() is frozen at the start of this
-        # transaction, which may predate the lock wait behind the edit whose
-        # row we are measuring from.
         elapsed = func.extract(
             "epoch", func.clock_timestamp() - func.max(ScheduleChangeORM.created_at)
         )

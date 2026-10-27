@@ -24,7 +24,6 @@
 
 	interface Props {
 		onPick: (player: AwardTarget) => void;
-		/** Set when the award form just closed: its focused control is gone. */
 		focusOnMount: boolean;
 	}
 
@@ -33,8 +32,6 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	// Player codes are always QR; scanning nothing else keeps a ticket barcode
-	// on the same badge from being read first.
 	const QUEST_FORMATS = ['QRCode'] as const;
 	const SEARCH_DEBOUNCE_MS = 300;
 
@@ -51,8 +48,6 @@
 	}));
 	let players = $derived(searchQuery.data?.players ?? []);
 	let showResults = $derived(searchTerm !== '' && searchQuery.isSuccess && players.length > 0);
-	// Read out without moving focus off the search box (WCAG 4.1.3 names "no
-	// results" as a status message): https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html
 	let searchStatus = $derived.by(() => {
 		if (searchTerm === '' || searchQuery.isPending) {
 			return '';
@@ -74,7 +69,6 @@
 
 	function handleSearchInput() {
 		clearTimeout(searchTimer);
-		// Debounce so a request fires once the volunteer pauses, not per keystroke.
 		searchTimer = setTimeout(() => (searchTerm = searchValue.trim()), SEARCH_DEBOUNCE_MS);
 	}
 
@@ -88,18 +82,12 @@
 			toastService.add(m.quest_tool_invalid_code(), 'error');
 			return;
 		}
-		// No connection to look the player up: award by the code alone, which the
-		// queue sends when it returns, rather than turn a player away.
 		if (!isReachable()) {
 			onPick({ number: userNumber, unverified: true });
 			return;
 		}
 		lookingUp = true;
 		try {
-			// Fresh, not cached: the form shows the player's current balance. One
-			// attempt that never pauses: a volunteer is waiting with the player in
-			// front of them, and a lost connection should fall back to the code at
-			// once, not wait out retries or a pause until reachability recovers.
 			const player = await queryClient.query({
 				...getQuestPlayerOptions({ path: { number: userNumber } }),
 				staleTime: 0,
@@ -157,9 +145,6 @@
 		<div class="flex justify-center py-2"><Spinner /></div>
 	{/if}
 
-	<!-- Always mounted: a live region only announces changes it was present for.
-	     sr-only rather than hidden while empty or showing the count, which is for
-	     screen readers (sighted users see the list); being out of flow, it adds no gap. -->
 	<p
 		role="status"
 		class={[

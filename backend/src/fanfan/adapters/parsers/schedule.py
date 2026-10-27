@@ -15,23 +15,9 @@ from fanfan.core.exceptions.schedule import (
 
 logger = logging.getLogger(__name__)
 
-# The header names the organizer must put in row 1. Matched by name, so column
-# order in the sheet is free. Kept in sync with the template spreadsheet
-# (frontend/static/schedule-template.xlsx) by a parser test.
-#
-# `duration` is read as whole **seconds** and stored unconverted, because that is
-# the unit every consumer downstream already uses (ADR-0008 projects expected
-# start times with `timedelta(seconds=duration)`). Minutes here would both
-# misreport every projection by 60x and make a sub-minute act unrepresentable.
-#
-# `type` says what a row is: blank or `event` for an event, `block` for the start
-# of a block, whose `title` is the block's name. The event rows below a block
-# row, up to the next one, belong to that block. Blank means event because
-# nearly every row is one.
 REQUIRED_COLUMNS = ("type", "number", "title", "duration", "nomination_title")
 EVENT_ROW_TYPE = "event"
 BLOCK_ROW_TYPE = "block"
-# Cells only an event row may fill; a block row carries just its title.
 EVENT_ONLY_COLUMNS = ("number", "duration", "nomination_title")
 
 
@@ -111,8 +97,6 @@ def _read_rows(file: typing.BinaryIO) -> list[tuple[int, list[object]]]:
     """
     try:
         sheet = CalamineWorkbook.from_filelike(file).get_sheet_by_index(0)
-        # Keep the leading empty area so a list index maps straight onto the
-        # row number the organizer sees in Excel.
         cells = sheet.to_python(skip_empty_area=False)
     except Exception as e:
         logger.info("Rejected an unreadable schedule file", exc_info=e)
@@ -139,7 +123,6 @@ def _read_row_type(value: object, *, row: int) -> str:
     row_type = _read_optional_text(value, column="type", row=row)
     if row_type is None:
         return EVENT_ROW_TYPE
-    # Matched case-insensitively: "Block" typed by hand means the same thing.
     row_type = row_type.lower()
     if row_type not in {EVENT_ROW_TYPE, BLOCK_ROW_TYPE}:
         raise InvalidScheduleFile(
@@ -166,7 +149,6 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
     if not rows:
         raise InvalidScheduleFile(InvalidScheduleFileReason.EMPTY_FILE)
 
-    # The first non-blank row holds the headers.
     _, header = rows[0]
     data_rows = rows[1:]
     columns = _index_columns(header)
@@ -186,12 +168,7 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
             schedule.append(_read_block_row(row, row_index))
             continue
 
-        # An empty number is allowed — breaks and other filler rows have none.
         number = _read_optional_int(row["number"], column="number", row=row_index)
-        # The import matches existing events by number and deletes the rest, so a
-        # repeated number would update one event and orphan another instead of
-        # doing what the organizer meant. Numberless rows match nothing, so any
-        # number of them may coexist.
         if number is not None:
             if number in seen_numbers:
                 raise InvalidScheduleFile(

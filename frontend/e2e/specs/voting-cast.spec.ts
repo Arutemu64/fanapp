@@ -17,10 +17,6 @@ const OPEN: GetVotingStatusOutput = {
 	voting_end: null
 };
 
-// The nomination detail as the backend would return it before and after the vote.
-// The page refetches after casting (invalidate 'app:voting:nomination'), so the
-// second read must carry the persisted ballot for the UI to settle into its
-// "your vote" state.
 function nomination(voted: boolean): GetVotingNominationOutput {
 	return {
 		id: '01890000-0000-7000-8000-0000000000b1',
@@ -46,8 +42,6 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 		api.use(loggedInAs());
 		api.use({
 			'GET /voting/status': json(OPEN),
-			// One key serves both the initial load and the post-vote refetch; branch on
-			// whether the vote has landed to hand back the updated ballot.
 			'GET /voting/nominations/best-cosplay': () =>
 				json(nomination(api.countCalls('POST /voting/votes') > 0)),
 			'POST /voting/votes': json<AddVoteOutput>({ vote_id: VOTE_ID }, 201)
@@ -59,9 +53,7 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 		await expect(voteButton).toBeVisible();
 		await voteButton.click();
 
-		// The success toast confirms the POST was accepted...
 		await expect(page.getByText('Голос учтён')).toBeVisible();
-		// ...and the refetched card settles into the persisted "your vote" state.
 		await expect(page.getByText('Твой голос')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Отменить голос' })).toBeVisible();
 
@@ -74,8 +66,6 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 		api.use(loggedInAs());
 		api.use({
 			'GET /voting/status': json(OPEN),
-			// The post-vote refetch waits for `release`, opening the window where the
-			// accepted vote isn't in the cached ballot yet.
 			'GET /voting/nominations/best-cosplay': async () => {
 				const voted = api.countCalls('POST /voting/votes') > 0;
 				if (voted) await released;
@@ -91,8 +81,6 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 		await voteButton.click();
 		await voteAnswered;
 
-		// Accepted but not refetched: the count keeps the vote and the button stays
-		// off, rather than dropping back to the stale ballot for a round-trip.
 		await expect(page.getByText('1 голос', { exact: true })).toBeVisible();
 		await expect(voteButton).toBeDisabled();
 
@@ -139,7 +127,6 @@ test.describe('voting — taking a vote back', { tag: '@critical' }, () => {
 		await page.goto('/voting/best-cosplay');
 		await expect(page.getByText('Твой выбор')).toBeVisible();
 
-		// Filter the list down to the participant the user did NOT vote for.
 		await page.getByRole('searchbox', { name: 'Поиск участников в номинации' }).fill('Мику');
 		await expect(page.getByText('Показано 1 из 2')).toBeVisible();
 

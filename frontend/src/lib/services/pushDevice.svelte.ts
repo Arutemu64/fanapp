@@ -4,14 +4,8 @@ import { getApiErrorCode } from '#lib/api/errors.js';
 
 import { browserPush, type PushBrowser } from './pushBrowser.js';
 
-/**
- * - `blocked`: the browser permission is "denied" and never prompts again.
- * - `unsupported`: this browser can never receive push.
- * - `unknown`: the check itself failed; the switch stays usable.
- */
 export type PushDeviceState = 'on' | 'off' | 'unknown' | 'blocked' | 'unsupported';
 
-/** The coarse state the home and profile hub show, read from the browser alone. */
 export type DevicePushState = 'on' | 'off' | 'unknown';
 
 export type PushToggleOutcome =
@@ -32,14 +26,12 @@ interface PushRegistration {
 	auth: string;
 }
 
-/** The server's side of a device subscription. */
 export interface PushBackend {
 	isRegistered: (endpoint: string) => Promise<boolean>;
 	register: (registration: PushRegistration) => Promise<void>;
 	unregister: (endpoint: string) => Promise<void>;
 }
 
-/** What the browser says about push, before asking the server. */
 async function inspectBrowser(
 	browser: PushBrowser
 ): Promise<PushSubscription | 'unsupported' | 'blocked' | 'off'> {
@@ -52,38 +44,20 @@ async function inspectBrowser(
 	return (await browser.getSubscription()) ?? 'off';
 }
 
-/**
- * Read this device's push state from the browser alone — no network, so it works
- * offline and costs nothing on the home and profile hub. It can disagree with the
- * server in one rare case (the server dropped a subscription the browser still
- * holds); the notifications page does the server round-trip and is the source of
- * truth.
- */
 export async function getDevicePushState(
 	browser: PushBrowser = browserPush
 ): Promise<DevicePushState> {
 	try {
 		const found = await inspectBrowser(browser);
 		if (typeof found === 'string') {
-			// Unsupported and blocked both mean nothing reaches this device; the
-			// notifications page explains how to change that.
 			return 'off';
 		}
 		return 'on';
 	} catch {
-		// A status line is not worth an error: show nothing rather than a guess.
 		return 'unknown';
 	}
 }
 
-/**
- * Whether a new notification also shows as an OS notification while the app is
- * open on this device. True where the browser shows pushes itself and this device
- * is subscribed, so the in-app toast would repeat it. A subscription here always
- * belongs to the signed-in account, since every session end drops it
- * (`unsubscribeDevicePush`). Elsewhere the service worker skips the OS
- * notification for a visible app and the toast is the only alert.
- */
 export async function pushShowsOverOpenApp(browser: PushBrowser = browserPush): Promise<boolean> {
 	if (!browser.isSupported() || !browser.showsPushItself()) {
 		return false;
@@ -91,14 +65,6 @@ export async function pushShowsOverOpenApp(browser: PushBrowser = browserPush): 
 	return (await getDevicePushState(browser)) === 'on';
 }
 
-/**
- * End this device's push subscription when the session ends. Only this device's:
- * the account's other devices keep theirs. The server row is left behind, since a
- * passive expiry has no session to delete it with; the push service answers the
- * next push to it with 404/410 and `PushNotifier` prunes it. `unsubscribe()`
- * itself works offline: it stops delivery here at once and tells the push service
- * in the background (https://w3c.github.io/push-api/#dom-pushsubscription-unsubscribe).
- */
 export async function unsubscribeDevicePush(browser: PushBrowser = browserPush): Promise<void> {
 	if (!browser.isSupported()) {
 		return;
@@ -113,19 +79,12 @@ export async function unsubscribeDevicePush(browser: PushBrowser = browserPush):
 
 interface PushDeviceOptions {
 	backend: PushBackend;
-	/** Build-time VAPID public key; empty when the deployment shipped without one. */
 	vapidKey: string;
 	browser?: PushBrowser;
 }
 
-/**
- * This device's push subscription: capability, permission, browser subscription
- * and server registration behind `state` and `toggle()`. Create one per view —
- * it holds no module-level state.
- */
 export class PushDevice {
 	state = $state<PushDeviceState>('unknown');
-	/** True during the initial check and while a toggle is in flight. */
 	isBusy = $state(true);
 
 	readonly #backend: PushBackend;
@@ -138,7 +97,6 @@ export class PushDevice {
 		this.#browser = browser;
 	}
 
-	/** Re-read the state from the browser, confirmed against the server. */
 	async refresh() {
 		this.isBusy = true;
 		try {
@@ -147,9 +105,6 @@ export class PushDevice {
 				this.state = found;
 				return;
 			}
-			// The browser holds a subscription; confirm the server still knows this
-			// exact endpoint, otherwise treat it as off so the user can re-register
-			// (e.g. after the server lost the subscription).
 			this.state = (await this.#backend.isRegistered(found.endpoint)) ? 'on' : 'off';
 		} catch (error) {
 			console.error('Error checking push subscription:', error);
@@ -168,8 +123,6 @@ export class PushDevice {
 		try {
 			const subscription = await this.#browser.getSubscription();
 			if (subscription) {
-				// Remove the matching subscription on the backend before unsubscribing
-				// locally. A server failure doesn't stop the local unsubscribe.
 				await this.#backend.unregister(subscription.endpoint).catch((error: unknown) => {
 					console.error('Failed to remove subscription from server:', error);
 				});
@@ -191,15 +144,9 @@ export class PushDevice {
 		}
 
 		this.isBusy = true;
-		// Flips once the browser subscription exists, so the catch below can tell a
-		// genuine subscribe / service-worker failure from a later backend-request throw.
 		let browserSubscribed = false;
 		try {
-			// The key is baked in at build time, so it may be empty if push
-			// notifications were not configured for this deployment.
 			if (!this.#vapidKey) {
-				// Deploy misconfig, not a user problem: the build shipped without a VAPID
-				// key, so push can never work here. One grouped GlitchTip issue surfaces it.
 				Sentry.captureMessage('Push subscribe blocked: missing VAPID key', {
 					level: 'warning',
 					tags: { push_outcome: 'no_vapid_key' }
@@ -217,8 +164,6 @@ export class PushDevice {
 					if (permission === 'denied') {
 						this.state = 'blocked';
 					}
-					// User choice, not a bug — a breadcrumb (buffered, free) is enough to
-					// give context if a real error fires later in this attempt.
 					Sentry.addBreadcrumb({
 						category: 'push',
 						level: 'info',
@@ -234,8 +179,6 @@ export class PushDevice {
 
 			const { endpoint, keys } = subscription.toJSON();
 			if (!endpoint || !keys?.p256dh || !keys.auth) {
-				// The browser handed back a subscription missing the fields the backend
-				// needs — a real failure worth surfacing, not a user choice.
 				Sentry.captureMessage('Push subscribe returned an incomplete subscription', {
 					level: 'warning',
 					tags: { push_outcome: 'invalid_subscription' }
@@ -248,8 +191,6 @@ export class PushDevice {
 				await this.#backend.register({ endpoint, p256dh: keys.p256dh, auth: keys.auth });
 			} catch (error: unknown) {
 				console.error('API Error:', error);
-				// The browser subscribed but the backend rejected it, so push stays off
-				// despite a granted permission — the failure mode worth catching.
 				Sentry.captureMessage('Push subscribe rejected by backend', {
 					level: 'warning',
 					tags: { push_outcome: 'backend_rejected' },
@@ -263,9 +204,6 @@ export class PushDevice {
 			return 'enabled';
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
-			// Classify by where it threw: before the browser subscription exists it's a
-			// genuine subscribe / service-worker failure; after, it's a bug in handling
-			// the backend registration (the request's own failure is caught above).
 			Sentry.captureException(error, {
 				tags: { push_outcome: browserSubscribed ? 'backend_request_threw' : 'subscribe_threw' }
 			});
@@ -275,9 +213,6 @@ export class PushDevice {
 		}
 	}
 
-	// Best-effort rollback of a browser push subscription. A failing unsubscribe is
-	// itself a cleanup problem — it must not propagate and be reported as the
-	// original failure, whose real cause was already captured at the call site.
 	async #discard(subscription: PushSubscription) {
 		try {
 			await subscription.unsubscribe();

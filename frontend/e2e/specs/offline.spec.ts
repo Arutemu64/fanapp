@@ -11,10 +11,6 @@ import { loggedInAs } from '../mocks/personas';
 
 test.describe('offline', { tag: '@critical' }, () => {
 	test('voting shows the online-only state when the network is down', async ({ page, api }) => {
-		// Voting is uncached and online-only, so a dead network must yield the honest
-		// "online only" state, not a generic error. Simulate the dead network by
-		// aborting its reads — `context.setOffline` can't, because a mocked route
-		// still fulfils under it.
 		api.use({
 			'GET /voting/status': (route) => route.abort(),
 			'GET /voting/nominations': (route) => route.abort()
@@ -31,20 +27,13 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.goto('/');
 		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
 
-		// The app trusts an `offline` event at once. Dispatched by hand rather than via
-		// context.setOffline, which would also fail the build's own chunk loads (and a
-		// mocked route still fulfils under it); the aborted health check keeps the
-		// app's probes from recovering under the test.
 		api.use({ 'GET /debug/health': (route) => route.abort() });
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
 
-		// The strip holds for at least 4s, so the button is still there even if the
-		// background poll happens to win the race to the healthy endpoint.
 		api.use({ 'GET /debug/health': json({ status: 'healthy' }) });
 		await page.getByRole('button', { name: 'Повторить' }).click();
 
-		// Shown once the offline wording has had its minimum time on screen.
 		await expect(page.getByRole('status').getByText('Связь восстановлена')).toBeAttached({
 			timeout: 10_000
 		});
@@ -55,12 +44,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 		page,
 		api
 	}) => {
-		// Every API response marks the backend reachable, so a first-load response
-		// still on its way into the page when the `offline` event fires flips the app
-		// straight back online, and the banner never offers «Повторить». The heading
-		// renders before Home's data does, so wait for something each of Home's
-		// queries puts on screen instead: the act on stage (/config + /schedule/),
-		// the voting card (/voting/status) and the guest's account step (/me/).
 		const hour = 3_600_000;
 		api.use({
 			'GET /config': json<PublicConfigDto>({
@@ -103,16 +86,10 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 		await expect(page.getByRole('status').getByText('Нет связи с сервером')).toBeAttached();
 
-		// Past the 60s staleTime, so reconnecting refetches what Home shows, and past
-		// the offline wording's minimum time on screen.
 		await page.clock.fastForward('01:05');
 
-		// The installed clock keeps running after the fast-forward, so the 3s recovery
-		// poll can reach a healthy endpoint before the click and take «Повторить»
-		// away. Holding the health check until the click is made keeps the button.
 		let reconnect = () => {};
 		const reconnected = new Promise<void>((resolve) => (reconnect = resolve));
-		// Hold one of Home's refetches open to watch the catch-up state.
 		let release = () => {};
 		const released = new Promise<void>((resolve) => (release = resolve));
 		api.use({
@@ -150,8 +127,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 				return json({ feedback_id: 'feedback-1' }, 201);
 			}
 		});
-		// A boot or warm-up response the page handles after the `offline` event marks
-		// the backend reachable again, so let the signed-in warm-up land first.
 		const warmedUp = Promise.all(
 			['/notifications', '/schedule/subscriptions'].map((path) =>
 				page.waitForResponse((response) => new URL(response.url()).pathname.endsWith(path))
@@ -172,8 +147,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await field.fill('Карта зала очень помогла');
 		await page.getByRole('button', { name: 'Отправить сообщение' }).click();
 
-		// Should a late response still flip the app online, the send gets no answer
-		// and pauses once the probe's confirm window runs out: slower, same outcome.
 		await expect(page.getByText('Отправим, когда появится связь')).toBeVisible({
 			timeout: 10_000
 		});
@@ -209,11 +182,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.getByRole('button', { name: 'Настроить уведомления' }).click();
 		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
 		await expect(allAnnouncements).toBeChecked();
-		// Every API response the app handles marks the backend reachable, and the
-		// switch renders before the bell's unread count has answered: handled after
-		// the `offline` event below, it would flip the app back online. Waiting for
-		// the request to finish isn't enough on WebKit, where the page can handle the
-		// response later still; the count in the bell's name shows it has been handled.
 		await expect(
 			page.getByRole('link', { name: 'Открыть уведомления, непрочитанных: 1' })
 		).toBeVisible();
@@ -222,9 +190,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 		await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 		await expect(allAnnouncements).toHaveAttribute('aria-disabled', 'true');
 
-		// Dimmed, not disabled: it still takes focus and the press, and says why nothing
-		// happens. Driven from the keyboard because Playwright won't click (or click the
-		// label of) an aria-disabled control.
 		await allAnnouncements.focus();
 		await page.keyboard.press('Space');
 
@@ -237,17 +202,12 @@ test.describe('offline', { tag: '@critical' }, () => {
 		page,
 		api
 	}) => {
-		// The identity check runs before the API interceptors exist, so only the root
-		// load's own probe tells the protected guard that a failed /me/ means
-		// "offline" rather than "guest".
 		api.use({
 			'GET /me': (route) => route.abort(),
 			'GET /debug/health': (route) => route.abort()
 		});
 		await page.goto('/notifications');
 
-		// The device still reports a network, so the probe sits out its 5s offline
-		// confirm window before giving a verdict.
 		await expect(page.getByRole('main').getByText('Нет связи с сервером')).toBeVisible({
 			timeout: 10_000
 		});
@@ -258,14 +218,10 @@ test.describe('offline', { tag: '@critical' }, () => {
 		page,
 		api
 	}) => {
-		// The session cookie is still valid until the queued logout reaches the server,
-		// so /me/ keeps answering with the user.
 		api.use({ ...loggedInAs(), 'POST /auth/logout': json({}) });
 		await page.goto('/notifications');
 		await expect(page.getByRole('heading', { name: 'Уведомления' })).toBeVisible();
 
-		// The persister saves on a throttle, so wait until the user is on disk
-		// (idb-keyval's default store, under `QUERY_CACHE_KEY` in queryPersister.ts).
 		await expect
 			.poll(() =>
 				page.evaluate(
@@ -284,7 +240,6 @@ test.describe('offline', { tag: '@critical' }, () => {
 			)
 			.toContain('getCurrentUser');
 
-		// What an offline logout leaves when the app closes before the next save.
 		await page.evaluate(() => localStorage.setItem('fanfan:pending-logout', '1'));
 		await page.reload();
 

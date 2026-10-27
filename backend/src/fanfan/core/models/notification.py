@@ -19,16 +19,10 @@ class Notification(AggregateRoot):
     title: str
     body: str
     type: NotificationType
-    # In-app path the notification deep-links to (e.g. "/schedule"). Consumed by
-    # the web UI (clickable list items/toasts) and the push service worker, which
-    # navigates here on notification click. None falls back to the app root.
     path: str | None
     mailing_id: MailingId | None
     seen_at: datetime | None
-    # The act a subscription notice is about, so each act keeps its own push
-    # lane and a notice about one never replaces a notice about another.
     event_id: ScheduleEntryId | None = None
-    # Set once stored; None on a notification not yet inserted.
     created_at: datetime | None = None
 
     def remaining_lifetime(self, now: datetime) -> timedelta | None:
@@ -65,8 +59,6 @@ class NewNotification:
     title: str
     body: str
     type: NotificationType
-    # In-app deep-link path; see Notification.path above. None falls back to root.
     path: str | None
     mailing_id: MailingId | None
-    # See Notification.event_id above.
     event_id: ScheduleEntryId | None = None

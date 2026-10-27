@@ -11,9 +11,6 @@ from fanfan.adapters.db.models import BaseORM
 ROUND_TRIP_DATABASE = "migration_round_trip"
 
 
-# These tests must stay synchronous (a plain `def`, not async): the Alembic
-# env.py runs migrations via `asyncio.run(...)`, which fails if called from
-# inside an already-running event loop (as an async test would have).
 def test_no_migration_drift(alembic_config: AlembicConfig) -> None:
     """Fail if the ORM models drift from the migrations.
 
@@ -50,9 +47,6 @@ def test_drift_check_sees_named_check_constraints(
 
 @pytest.fixture
 def round_trip_alembic_config(alembic_config: AlembicConfig) -> AlembicConfig:
-    # A database of its own in the same container: the round trip drops every
-    # table, and the session database the other integration tests share must
-    # stay at head.
     session_url = make_url(alembic_config.get_main_option("sqlalchemy.url", ""))
     engine = create_engine(session_url, isolation_level="AUTOCOMMIT")
     with engine.connect() as connection:

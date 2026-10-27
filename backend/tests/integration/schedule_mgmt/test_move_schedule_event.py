@@ -73,8 +73,6 @@ async def test_move_reorders_event_and_records_change(
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
 
-    # No event is current, so get_next() sees nothing and the queue never
-    # changes: next_event_changed must stay False.
     first = _schedule_event(1, 1)
     second = _schedule_event(2, 2)
     third = _schedule_event(3, 3)
@@ -89,7 +87,6 @@ async def test_move_reorders_event_and_records_change(
         )
     )
 
-    # place_after averages the neighbour orders: (2 + 3) / 2.
     saved_first = await schedule_gateway.get_event(first.id)
     assert saved_first is not None
     assert saved_first.order == 2.5
@@ -102,8 +99,6 @@ async def test_move_reorders_event_and_records_change(
     assert change.type == ScheduleChangeType.MOVED
     assert change.changed_event is not None
     assert change.changed_event.id == first.id
-    # The moved event had no event before it in order, so there is no anchor
-    # to record for undo.
     assert change.related_entry is None
     assert change.next_event_changed is False
     assert change.user is not None
@@ -131,7 +126,6 @@ async def test_move_records_previous_event_and_next_change(
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
-    # With a current event, the next event is the first one after it by order.
     current = _schedule_event(1, 1, is_current=True)
     second = _schedule_event(2, 2)
     third = _schedule_event(3, 3)
@@ -139,8 +133,6 @@ async def test_move_records_previous_event_and_next_change(
         await schedule_gateway.add(event)
     await uow.commit()
 
-    # Move "second" to the very end: the next event after "current" changes
-    # from "second" to "third".
     await interactor(
         MoveScheduleEventInput(
             event_id=second.id,
@@ -148,7 +140,6 @@ async def test_move_records_previous_event_and_next_change(
         )
     )
 
-    # Placed after the last event, so its order is last_order + 1.
     saved_second = await schedule_gateway.get_event(second.id)
     assert saved_second is not None
     assert saved_second.order == 4
@@ -161,8 +152,6 @@ async def test_move_records_previous_event_and_next_change(
     assert change.type == ScheduleChangeType.MOVED
     assert change.changed_event is not None
     assert change.changed_event.id == second.id
-    # "current" was the only event before "second" in order, so it is recorded
-    # as the anchor to restore on undo.
     assert change.related_entry is not None
     assert change.related_entry.id == current.id
     assert change.next_event_changed is True
@@ -294,7 +283,6 @@ async def test_move_without_permission_raises_access_denied(
     interactor = await dishka_request.get(MoveScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
 
     first = _schedule_event(1, 1)
@@ -343,9 +331,6 @@ async def test_move_twice_in_a_row_raises_too_fast(
         await schedule_gateway.add(event)
     await uow.commit()
 
-    # The same announcement cooldown as set_current applies
-    # (announcement_timeout from seeds), so a second move within the window
-    # is rejected.
     await interactor(
         MoveScheduleEventInput(
             event_id=first.id,
@@ -360,8 +345,6 @@ async def test_move_twice_in_a_row_raises_too_fast(
             )
         )
 
-    # The second move is rejected before writing: "third" keeps its order and
-    # only the first change is recorded.
     saved_third = await schedule_gateway.get_event(third.id)
     assert saved_third is not None
     assert saved_third.order == 3
@@ -383,8 +366,6 @@ async def test_move_is_allowed_again_once_the_cooldown_has_passed(
     login: Callable[[User], None],
     uow: UnitOfWork,
 ) -> None:
-    # The cooldown is measured from the newest recorded change, so backdating
-    # it past announcement_timeout stands in for waiting the window out.
     interactor = await dishka_request.get(MoveScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(schedule_editor)
@@ -442,7 +423,6 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
         MoveScheduleEventInput(event_id=moved.id, place_after_entry_id=block.id)
     )
 
-    # Between the block start and the block's first event: now in the block.
     saved = await schedule_gateway.get_event(moved.id)
     assert saved is not None
     assert saved.order == 3.5
@@ -450,7 +430,6 @@ async def test_move_to_the_top_of_a_block_records_the_block_start(
     changes = await changes_gateway.read_list_schedule_changes(
         pagination=CursorPagination(limit=100)
     )
-    # The anchor recorded for undo is the true previous entry, not the first.
     assert changes[0].related_entry is not None
     assert changes[0].related_entry.id == first.id
 
@@ -473,7 +452,6 @@ async def test_a_block_start_is_not_an_event_to_move(
         await schedule_gateway.add(entry)
     await uow.commit()
 
-    # Block starts never move; to the stage tools they are not events at all.
     with pytest.raises(EventNotFound):
         await interactor(
             MoveScheduleEventInput(event_id=block.id, place_after_entry_id=event.id)

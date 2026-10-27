@@ -86,16 +86,12 @@ class DbProvider(Provider):
     async def get_worker_lock(self, engine: AsyncEngine) -> AsyncIterable[WorkerLock]:
         lock = PostgresWorkerLock(engine)
         yield lock
-        # A lock still held when the request ends (an error skipped the
-        # tracker's own release) must not linger on a pooled connection.
         await lock.release()
 
 
 class SqlGatewaysProvider(Provider):
     scope = Scope.REQUEST
 
-    # Each gateway implements a single repository port (reads + writes),
-    # so one binding per aggregate is enough.
     nominations = provide(SqlNominationGateway, provides=NominationGateway)
     participants = provide(SqlParticipantGateway, provides=ParticipantGateway)
     schedule_entries = provide(SqlScheduleEntryGateway, provides=ScheduleEntryGateway)

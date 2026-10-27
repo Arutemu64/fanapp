@@ -24,14 +24,9 @@
 	import ConfirmActionModal from './ConfirmActionModal.svelte';
 	import MoveEventModal from './MoveEventModal.svelte';
 
-	// Its own component so the mutations exist only for staff: EventCard renders
-	// once per schedule row, and every other viewer would pay for three unused
-	// mutation observers per row.
 	interface Props {
 		event: ScheduleEventWithSubscription;
 		isSkipped: boolean;
-		// EventCard's override of `event.is_skipped`, so the whole row (strikethrough,
-		// badge) reflects a skip before the schedule refetch confirms it.
 		optimisticSkipped: boolean | null;
 	}
 
@@ -53,31 +48,17 @@
 		action();
 	}
 
-	// Confirmation dialog for management actions. Each one broadcasts an
-	// irreversible push, so the action only runs after the staffer confirms.
 	type ConfirmConfig = {
 		title: string;
 		message: string;
 		confirmLabel: string;
 		color: 'primary' | 'red';
-		// 'warning' for actions that push new info; 'muted' for reverting actions.
 		notifyTone: 'warning' | 'muted';
 		run: () => void;
 	};
-	// Two pieces of state, set together when a staff button is tapped:
-	// confirmOpen drives the modal's visibility (bound two-way so Esc/backdrop
-	// can close it), and confirmConfig holds what that modal should show.
 	let confirmOpen = $state(false);
 	let confirmConfig = $state<ConfirmConfig | null>(null);
 
-	// Read-your-writes: after our own successful mutation, refetch straight off the
-	// response instead of waiting for the schedule_updated SSE echo. That echo
-	// travels DB → outbox relay → NATS → SSE fan-out before it reaches us, and on a
-	// flaky operator connection it can arrive late or be dropped — which would leave
-	// the operator who made the change on a stale schedule while everyone else
-	// already sees it. The refetch reads committed state (the write closed before
-	// the 200), so it is correct even before the relay has ticked; the SSE echo
-	// still drives every other client.
 	function reloadSchedule() {
 		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 	}
@@ -90,8 +71,6 @@
 		...uncheckCurrentEventMutation(),
 		onSuccess: reloadSchedule
 	}));
-	// Settled, not just succeeded: the skip is shown optimistically, and a failure
-	// (another staffer's change raced it) must still resync the row.
 	const skipMutation = createMutation(() => ({
 		...updateScheduleEventMutation(),
 		onSettled: reloadSchedule
@@ -121,12 +100,7 @@
 		);
 	}
 
-	// `skip` is captured when the confirm dialog opens, not recomputed here: if
-	// another staffer flips this event while the modal is open, the schedule_updated
-	// reload could change `isSkipped` under us and make a generic toggle broadcast
-	// the opposite action from what the dialog promised.
 	function handleSkip(skip: boolean) {
-		// Flip the row immediately; revert below if the request fails.
 		optimisticSkipped = skip;
 
 		skipMutation.mutate(
@@ -173,8 +147,6 @@
 					confirmLabel: m.event_staff_restore(),
 					color: 'primary',
 					notifyTone: 'muted',
-					// Lock the direction to what the dialog shows now, so a concurrent
-					// schedule_updated reload can't flip it before the staffer confirms.
 					run: () => handleSkip(false)
 				}
 			: {
@@ -189,10 +161,6 @@
 	}
 </script>
 
-<!-- One ⋯ button beside the bell instead of an always-visible strip: these are
-	occasional actions, and three icon buttons on every row crowded the list the whole
-	audience reads. An overflow menu fits secondary, less frequent actions
-	(https://www.nngroup.com/articles/contextual-menus/). -->
 <button
 	type="button"
 	onclick={offlineGate.guard(() => (actionsOpen = true))}
@@ -205,10 +173,6 @@
 	<Ellipsis class="size-5" />
 </button>
 
-<!-- A Dialog, so phones get the repo's bottom sheet and wider screens a centred
-	dialog (docs/frontend.md). Mounted only while open: the button renders once per
-	schedule row for staff. Each action closes the sheet before opening its own
-	dialog, so two modals never stack. -->
 {#if actionsOpen}
 	<Dialog.Root bind:open={actionsOpen}>
 		<Dialog.Content>
@@ -218,7 +182,6 @@
 			</Dialog.Header>
 
 			<div class="flex flex-col gap-1">
-				<!-- Hidden on skipped events: a skipped event can't go on stage (backend rejects it), so don't offer the action. Still shown when it's somehow current, to keep the unmark affordance available. -->
 				{#if event.is_current || !isSkipped}
 					<Button
 						variant="ghost"
@@ -265,13 +228,10 @@
 	</Dialog.Root>
 {/if}
 
-<!-- Mounted only while open, like EventCard's own dialogs: the menu renders once
-	per schedule row for staff. -->
 {#if moveModal}
 	<MoveEventModal bind:open={moveModal} {event} />
 {/if}
 
-<!-- Shared confirm dialog for the broadcast actions. -->
 {#if confirmOpen && confirmConfig}
 	<ConfirmActionModal
 		bind:open={confirmOpen}

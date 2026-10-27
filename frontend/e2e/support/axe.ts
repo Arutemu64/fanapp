@@ -3,40 +3,20 @@ import type { Page, TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { expect } from '@playwright/test';
 
-// axe-core's own types, reached through the builder: pnpm keeps axe-core a
-// transitive dependency, so it can't be imported by name from here.
 type AxeResults = Awaited<ReturnType<AxeBuilder['analyze']>>;
 type NodeResult = AxeResults['incomplete'][number]['nodes'][number];
 
-// The WCAG levels we hold the app to: 2.0, 2.1 and 2.2 at A/AA. axe leaves its
-// 2.2 rules (target-size among them) off unless their tags are named. axe's
-// `best-practice` tag is deliberately excluded so a spec fails on real
-// conformance issues, not on stylistic hints. All rules within these tags are
-// enforced, color-contrast included.
-// https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22a', 'wcag22aa'];
 
-// Reasons axe gives for an undecided contrast check that are not a contrast
-// question at all: a glyph-only string (a "•••" separator), text too short to
-// call text, or text painted in its own background colour, which is how an
-// input that is deliberately invisible (the code field's overlay) looks.
-// The keys are axe-core's `color-contrast` incomplete messages (locales/_template.json).
 const NOT_A_CONTRAST_QUESTION = new Set(['nonBmp', 'shortTextContent', 'equalRatio']);
 
-// Regions on every page whose backdrop is whatever scrolls under them, so axe can
-// never decide their contrast. The glass bottom nav's label colours are set for
-// its worst backdrop instead; the numbers live beside them in AppBottomNav.svelte.
 const CHECKED_BY_HAND_ON_EVERY_PAGE = ['[data-bottom-nav]'];
 
 export interface AccessibleOptions {
 	builder?: AxeBuilder;
-	// Selectors of regions whose contrast axe can't measure (text over a photo)
-	// and a human has checked. Their undecided contrast is noted in the report
-	// instead of failing the test.
 	contrastCheckedByHand?: string[];
 }
 
-/** A WCAG-scoped AxeBuilder for the page under test. */
 export function axeBuilder(page: Page): AxeBuilder {
 	return new AxeBuilder({ page }).withTags(WCAG_TAGS);
 }
@@ -85,18 +65,12 @@ async function splitUndecidedContrast(
 	return split;
 }
 
-/**
- * Scan the page, attach the full results to the report, and fail on any
- * violation or on a contrast check axe could not decide.
- */
 export async function expectAccessible(
 	page: Page,
 	testInfo: TestInfo,
 	{ builder = axeBuilder(page), contrastCheckedByHand = [] }: AccessibleOptions = {}
 ): Promise<void> {
 	const results = await builder.analyze();
-	// Passes and inconclusive checks are in the full results too, which the
-	// violations list alone can't explain. https://playwright.dev/docs/accessibility-testing
 	await testInfo.attach('axe-results', {
 		body: JSON.stringify(results, null, 2),
 		contentType: 'application/json'
@@ -104,10 +78,6 @@ export async function expectAccessible(
 
 	expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([]);
 
-	// axe files contrast it can't measure (a gradient, a background image, text
-	// over another element) under `incomplete`, not `violations`, so it would pass
-	// unseen. Fail on it so a human decides: fix the surface, or check it by hand
-	// and list it in `contrastCheckedByHand`.
 	const { undecided, checkedByHand } = await splitUndecidedContrast(page, results, [
 		...CHECKED_BY_HAND_ON_EVERY_PAGE,
 		...contrastCheckedByHand
@@ -117,8 +87,6 @@ export async function expectAccessible(
 		'axe could not decide the contrast of these elements'
 	).toEqual([]);
 
-	// Name what the hand check let through, so a reader of the report sees which
-	// elements passed on a human's word rather than axe's.
 	if (checkedByHand.length > 0) {
 		testInfo.annotations.push({
 			type: 'contrast checked by hand',

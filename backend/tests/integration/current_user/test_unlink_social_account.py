@@ -73,8 +73,6 @@ async def test_unlinking_with_an_email_present_succeeds(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # Email drives password and email-code login, so removing the only social
-    # identity still leaves a way in.
     interactor = await dishka_request.get(UnlinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     gateway = await dishka_request.get(SocialIdentityGateway)
@@ -101,7 +99,6 @@ async def test_unlinking_the_last_sign_in_method_is_refused(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # No email and only one identity: removing it would lock the user out.
     interactor = await dishka_request.get(UnlinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     gateway = await dishka_request.get(SocialIdentityGateway)
@@ -119,7 +116,6 @@ async def test_unlinking_the_last_sign_in_method_is_refused(
     with pytest.raises(CannotRemoveLastSignInMethod):
         await interactor(UnlinkSocialAccountInput(provider=SocialProvider.TELEGRAM))
 
-    # The identity survives the refusal.
     assert await gateway.get_by_provider(user.id, SocialProvider.TELEGRAM) is not None
 
 
@@ -128,8 +124,6 @@ async def test_unlinking_one_of_two_providers_is_allowed_without_email(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # No email, but the other provider remains as a way in — this is exactly the
-    # case the old per-provider "email required" rule got wrong.
     interactor = await dishka_request.get(UnlinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     gateway = await dishka_request.get(SocialIdentityGateway)
@@ -155,7 +149,6 @@ async def test_unlinking_one_of_two_providers_is_allowed_without_email(
     await interactor(UnlinkSocialAccountInput(provider=SocialProvider.TELEGRAM))
 
     assert await gateway.get_by_provider(user.id, SocialProvider.TELEGRAM) is None
-    # VK stays, so the account is still reachable.
     assert await gateway.get_by_provider(user.id, SocialProvider.VK) is not None
 
 
@@ -164,8 +157,6 @@ async def test_unlinking_a_provider_that_is_not_linked_is_a_no_op(
     uow: UnitOfWork,
     login: Callable[[User], None],
 ) -> None:
-    # Delete stays idempotent so the profile can recover from stale UI safely,
-    # and the guard never fires on an absent identity.
     interactor = await dishka_request.get(UnlinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     gateway = await dishka_request.get(SocialIdentityGateway)
@@ -182,6 +173,5 @@ async def test_unlinking_a_provider_that_is_not_linked_is_a_no_op(
 
     await interactor(UnlinkSocialAccountInput(provider=SocialProvider.VK))
 
-    # The identity that does exist must not be touched by the no-op.
     assert await gateway.get_by_provider(user.id, SocialProvider.VK) is None
     assert await gateway.get_by_provider(user.id, SocialProvider.TELEGRAM) is not None

@@ -71,9 +71,6 @@ class User(AggregateRoot):
         receive_telegram_notifications: bool | None = None,
         receive_vk_notifications: bool | None = None,
     ) -> None:
-        # Only the fields that were explicitly passed get changed; None means
-        # "leave as is". Mutation goes through the aggregate root so callers
-        # never reach into the settings object directly.
         if receive_all_announcements is not None:
             self.settings.receive_all_announcements = receive_all_announcements
         if receive_telegram_notifications is not None:

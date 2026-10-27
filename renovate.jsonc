@@ -3,17 +3,13 @@
   "extends": [
     "config:recommended",
     ":pinDevDependencies",
-    // :semanticCommits enables semantic prefixes, so Renovate titles its PRs as `chore(deps): …` (semanticCommitType 'chore', semanticCommitScope 'deps', lowercased subject). Not cosmetic: the PR title is the squash-merge commit on main and is linted against Conventional Commits by .github/workflows/pr-title.yml, so a plain 'Update dependency …' title would fail that check — and jam dep automation the moment it becomes a required check. 'deps' is in that workflow's allowed scopes; keep the two in sync.
     ":semanticCommits",
     ":enablePreCommit",
-    // ToSemver, not plain pinGitHubActionDigests: a SHA pinned under a floating `# v7` comment only ever gets 'digest' updates, which Renovate ages against the *newest* v7.x.y (https://docs.renovatebot.com/key-concepts/minimum-release-age/#digest-updates). An action that releases more often than every 7 days never passes that age, so its digest PR sat on a pending renovate/stability-days status for months (#557, #642, #847). Rewriting the comment to a full `# v7.0.1` turns these into ordinary versioned updates, which pick the newest release that has already aged. It extends pinGitHubActionDigests, so SHA pinning stays.
     "helpers:pinGitHubActionDigestsToSemver",
     "abandonments:recommended",
-    // customManagers:dockerfileVersions reads `# renovate: datasource=… depName=…` annotations above `ENV`/`ARG` *_VERSION lines in Dockerfiles — the built-in dockerfile manager sees FROM lines only. Preferred over a hand-rolled regex manager per https://docs.renovatebot.com/modules/manager/regex/ ('you only need one customManager instead of four', and the annotation documents the pin where a reader of the Dockerfile will see it). Currently one site: PNPM_VERSION in frontend/Dockerfile. The preset only matches annotated lines, so it cannot pick anything up by accident.
     "customManagers:dockerfileVersions"
   ],
   "configMigration": true,
-  // ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.
   "ignorePaths": [
     "**/node_modules/**",
     "**/bower_components/**",
@@ -22,28 +18,21 @@
     "**/__tests__/**",
     "**/test/**",
     "**/__fixtures__/**",
-    // '.agents/skills/**' takes the vendored skills tree out of scope. These skills are upstream packages managed by `npx skills` and pinned in skills-lock.json, not code we hand-maintain, yet some ship their own manifests — humanizer bundles .github/workflows/validate.yml, whose hard-coded `node-version` and `python-version` the github-actions manager scanned recursively and folded into our real 'node'/'python' groups (PR #641 was a lone bump of that vendored workflow). Ignoring the tree keeps Renovate on the pins we own; the skills move only when their lockfile does. Renovate is denylist-only — there is no positive includePaths — so exclusion is the mechanism. The sibling '.skills/**' mirror is a generated, git-ignored symlink directory Renovate never reads, so it needs no entry here.
     ".agents/skills/**"
   ],
   "timezone": "Europe/Moscow",
-  // Monday 00:00–05:59 Moscow time, in Cron rather than the deprecated Later syntax (https://docs.renovatebot.com/configuration-options/#schedule). Six hours spans at least one run at Mend's 4-hourly cadence, within the docs' 'at least 3-4 hours' advice.
   "schedule": ["* 0-5 * * 1"],
-  // Holds the weekly window strictly. Left at the default true, Renovate keeps pushing to existing branches outside the schedule — and since automerge makes rebaseWhen 'auto' resolve to 'behind-base-branch', every merge to main re-pushed every open automerge PR and re-ran its full CI. The cost is that an automerge PR can land without a rebase onto main's latest commit; main's ruleset doesn't require up-to-date branches, so it still merges, and its CI ran against the main it was cut from.
   "updateNotScheduled": false,
   "labels": ["dependencies"],
   "rangeStrategy": "bump",
   "minimumReleaseAge": "7 days",
-  // osvVulnerabilityAlerts adds OSV-sourced CVE detection for direct dependencies on top of GitHub's own alerts, so a vulnerable backend package is caught even where the Dependabot dependency graph does not read uv.lock. Security fixes need no further wiring: Renovate's vulnerabilityAlerts defaults already override the weekly schedule and the minimumReleaseAge cooldown below (schedule [], minimumReleaseAge null, prCreation 'immediate').
   "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
     "schedule": ["* 0-5 * * 1"],
-    // Renovate cannot age a lock file refresh (https://docs.renovatebot.com/key-concepts/minimum-release-age/ — 'lockFileMaintenance: Not possible'), and the timestamp-required default then holds it forever: #607 waited on renovate/stability-days from August on. The cooldown is not lost — pnpm's minimumReleaseAge (frontend/pnpm-workspace.yaml) and uv's exclude-newer (backend/pyproject.toml) refuse anything younger than 7 days while relocking.
     "minimumReleaseAge": null
   },
-  // One dependency, one PR: bumps are deliberately NOT batched into weekly grouped PRs. This repo is public and every CI job runs on a standard GitHub-hosted runner, which GitHub does not meter (https://docs.github.com/en/billing/concepts/product-billing/github-actions), so grouping bought nothing but cost atomicity: a grouped branch passes or fails as a whole, Renovate cannot split it, and one bad bump then holds back every other update in the batch ('grouping dependencies increases the chance that the branch has an error' — https://docs.renovatebot.com/noise-reduction/). Per-package PRs give one revertable commit per dependency instead. The shared-pin groups below are the exception, and they exist for correctness — every site of one pin must move together — not to save minutes.
-  // Concurrency, rebasing and platform automerge are left at Renovate's defaults (prConcurrentLimit 10, prHourlyLimit 2, rebaseWhen 'auto', platformAutomerge true), which suit unmetered CI. 'auto' resolves to 'behind-base-branch' on a branch with automerge enabled, but updateNotScheduled false (above) confines those rebases to the Monday window, so an automerge PR's CI ran against the main of its last in-window push.
   "packageRules": [
     {
       "description": "This is an application (frontend is private, backend is a deployed service — neither is published for others to install), so Renovate best practice is to pin runtime deps to exact versions rather than float SemVer ranges (https://docs.renovatebot.com/dependency-pinning/). :pinDevDependencies already pins frontend devDependencies; this rule extends exact pinning to the frontend runtime 'dependencies' that still carry '^' ranges. Scoped to frontend/package.json so it does not rewrite the backend's '>=' floors, which intentionally rely on uv.lock as the real pin. The global rangeStrategy stays 'bump'.",
@@ -85,7 +74,6 @@
         "unplugin-icons",
         "@iconify-json/**"
       ],
-      // A reviewed PR returns to the global 7 days; the 14 days above is for merges nobody looks at.
       "minimumReleaseAge": "7 days",
       "automerge": false
     },

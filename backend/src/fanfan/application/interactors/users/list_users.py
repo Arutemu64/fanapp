@@ -15,8 +15,6 @@ class ListUsersInput(BaseModel):
 
 class ListUsersOutput(BaseModel):
     users: list[UserListItemDTO]
-    # Total matching the current filter, so the client can say how many it
-    # found without walking every page.
     total: int
     next_cursor: str | None
 

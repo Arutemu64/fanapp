@@ -6,22 +6,17 @@ test.describe('organizer tools', { tag: '@critical' }, () => {
 	test('an organizer sees the toolbox', async ({ page, api }) => {
 		api.use({
 			...organizer(),
-			// The hub renders the live online-users card, which polls this endpoint.
 			'GET /users/online-count': json<OnlineUsersCountOutput>({ count: 5 })
 		});
 		await page.goto('/tools');
 
 		await expect(page.getByText('Инструменты для работы на фестивале.')).toBeVisible();
-		// The online-now card renders for every organizer, above the tool grid.
 		await expect(page.getByText('сейчас в приложении')).toBeVisible();
-		// A couple of the permission-gated tool cards render for a full-permission organizer.
 		await expect(page.getByRole('link', { name: 'Пользователи' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Синхронизация' })).toBeVisible();
 	});
 
 	test('a guest is bounced to login', async ({ page }) => {
-		// No persona: the baseline /me/ is a 401 guest, and the protected guard
-		// redirects a reachable guest to login, remembering where they were headed.
 		await page.goto('/tools');
 
 		await expect(page).toHaveURL(/\/login\?/);

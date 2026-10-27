@@ -13,11 +13,7 @@ from fanfan.core.vo.user import UserRole, generate_user_id
 
 class AuthorizeSocialLoginInput(BaseModel):
     provider: SocialProvider
-    # The provider's stable account identifier (OIDC `sub` for Telegram) — the
-    # identity key, not the native account id.
     subject: str
-    # The native account id, so the notifier can reach the user. Required: a
-    # token without it is refused upstream, so it always arrives.
     provider_user_id: int
 
 

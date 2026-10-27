@@ -45,8 +45,6 @@ from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, Username, UserNumber, UserRole
 
 _NUMBER_CONSTRAINT = "uq_users_number"
-# Six digits leave 900,000 numbers. Even with 100,000 accounts a draw collides
-# about one time in nine, so five draws in a row all colliding is ~1 in 60,000.
 _NUMBER_ATTEMPTS = 5
 
 
@@ -59,8 +57,6 @@ def _from_model(model: User) -> UserORM:
         avatar_seed=model.avatar_seed,
         number=model.number,
         role=model.role,
-        # Queryable notification flags go to columns; the JSON bag is an
-        # extension point for future non-queryable prefs (currently empty).
         receive_all_announcements=model.settings.receive_all_announcements,
         receive_telegram_notifications=model.settings.receive_telegram_notifications,
         receive_vk_notifications=model.settings.receive_vk_notifications,
@@ -117,8 +113,6 @@ def _parse_details_dto(orm: UserORM) -> UserDetailsDTO:
         social_links=[
             UserSocialLinkDTO(
                 provider=identity.provider,
-                # provider_user_id is BIGINT; stringify so a >2^53 Telegram
-                # id survives the JSON round-trip without precision loss.
                 id=str(identity.provider_user_id),
             )
             for identity in orm.social_identities
@@ -165,16 +159,10 @@ class SqlUserGateway(UserGateway):
         if user_orm is None:
             return None
         user = _to_model(user_orm)
-        # Track the aggregate so any domain events it records are dispatched
-        # by the UnitOfWork on commit.
         self.uow.register(user)
         return user
 
     async def add(self, user: User) -> None:
-        # The number is drawn at random, so it can land on one already taken.
-        # Each try runs in a SAVEPOINT: a failed INSERT then rolls back only
-        # itself and the caller's transaction stays usable for the next draw.
-        # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#using-savepoint
         for attempt in range(1, _NUMBER_ATTEMPTS + 1):
             try:
                 async with self.session.begin_nested():
@@ -239,10 +227,6 @@ class SqlUserGateway(UserGateway):
             select(UserORM)
             .where(UserORM.id == user_id)
             .options(
-                # ticket is many-to-one (single row) -> joinedload.
-                # permissions and social_identities are independent collections;
-                # joining both in one query multiplies rows (cartesian product),
-                # so load each with a separate IN query instead.
                 joinedload(UserORM.ticket),
                 selectinload(UserORM.permissions),
                 selectinload(UserORM.social_identities),
@@ -257,11 +241,6 @@ class SqlUserGateway(UserGateway):
         return [UserId(user_id) for user_id in user_ids]
 
     def _voting_contest_pool(self) -> Subquery:
-        # Count only votes that land in a currently-votable nomination and match the
-        # number of distinct ones against the votable total: a stale vote in a
-        # nomination that has since become non-votable must not stand in for a
-        # missing vote in a votable one. Both the threshold and the tally come from
-        # the same statement, so the pool is always internally consistent.
         votable_count = (
             select(func.count(NominationORM.id))
             .where(NominationORM.is_votable.is_(True))
@@ -285,13 +264,6 @@ class SqlUserGateway(UserGateway):
         return await self.session.scalar(stmt) or 0
 
     async def draw_voting_contest_winner(self) -> tuple[UserBaseDTO | None, int]:
-        # Winner and pool size come from one statement so a vote committing
-        # mid-draw cannot make them describe different snapshots (the session runs
-        # READ COMMITTED, under which two separate queries could). count() OVER ()
-        # tallies the whole eligible set before ORDER BY random()/LIMIT picks the
-        # winner, so the surviving row carries the full pool size; an empty pool
-        # yields no row. The pool is small (a live convention audience) and this is
-        # a one-off organizer action, so the sort scan is cheap.
         pool = self._voting_contest_pool()
         stmt = (
             select(UserORM, func.count().over().label("pool_size"))
@@ -364,10 +336,6 @@ class SqlUserGateway(UserGateway):
         elif user_filter.has_ticket is False:
             stmt = stmt.where(~UserORM.ticket.has())
 
-        # Blank query means "no filter". ILIKE gives a case-insensitive substring
-        # match on username, email or ticket number; %/_ in the term are escaped
-        # so a literal '100%' searches for that text rather than acting as a
-        # wildcard.
         search = user_filter.search
         if not search or not search.strip():
             return stmt

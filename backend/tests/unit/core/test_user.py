@@ -56,11 +56,9 @@ def test_users_are_equal_by_id() -> None:
 
     assert one == two
     assert one != other
-    # Equal users must share a hash so they collapse in sets/dicts.
     assert len({one, two}) == 1
 
 
-# "helper" and "org" are the spellings before the volunteer/organizer rename.
 @pytest.mark.parametrize("value", ["admin", "helper", "org"])
 def test_role_rejects_unknown_value(value: str) -> None:
     with pytest.raises(ValueError, match=value):

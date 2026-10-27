@@ -36,10 +36,6 @@ def _if_none_match_hits(header: str | None, etag: str) -> bool:
     summary="Get current schedule",
     description="Returns the full public schedule with an ETag for conditional "
     "revalidation.",
-    # The interactor returns the cached payload + its ETag, which we place on the
-    # response by hand, so FastAPI must not coerce the return value into a model.
-    # The 200 schema is still documented via `responses` below so the generated
-    # OpenAPI (and the frontend types) keep GetScheduleOutput.
     response_model=None,
     responses={
         200: {
@@ -60,9 +56,6 @@ async def get_schedule(
 ) -> Response:
     cached = await interactor()
 
-    # no-cache lets clients store the body but always revalidate against the
-    # ETag: a cheap 304 while the schedule is unchanged, a full body when an
-    # operator edits it. See ADR-0014.
     headers = {"ETag": cached.etag, "Cache-Control": "no-cache"}
 
     if _if_none_match_hits(request.headers.get("if-none-match"), cached.etag):

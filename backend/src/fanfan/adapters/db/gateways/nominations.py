@@ -96,8 +96,6 @@ class SqlNominationGateway(NominationGateway):
         return await self.session.scalar(stmt) or 0
 
     async def read_voting_contenders(self) -> list[NominationContenderDTO]:
-        # Rank participants within each nomination by vote count, so the leader is
-        # rank 1. voting_number breaks ties for a stable, deterministic pick.
         votes_count = func.count(VoteORM.id)
         ranked = (
             select(
@@ -117,7 +115,6 @@ class SqlNominationGateway(NominationGateway):
             .subquery()
         )
 
-        # Total votes in the nomination — context for how commanding the lead is.
         total_votes = (
             select(func.count(VoteORM.id))
             .join(ParticipantORM, VoteORM.participant_id == ParticipantORM.id)
@@ -151,9 +148,6 @@ class SqlNominationGateway(NominationGateway):
 
         contenders: list[NominationContenderDTO] = []
         for row in rows:
-            # A rank-1 participant on zero votes is not a real leader: keep
-            # leader=None until at least one vote is cast (also covers a
-            # nomination with no participants, where the outer join is NULL).
             if row.participant_id is not None and row.votes_count > 0:
                 leader = ContenderDTO(
                     participant_id=ParticipantId(row.participant_id),

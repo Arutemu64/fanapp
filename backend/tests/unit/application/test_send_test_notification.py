@@ -11,8 +11,6 @@ from fanfan.application.interactors.notifications.send_test_notification import 
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
-
-# Imported as a module: pytest would try to collect a bare Test* class name.
 from fanfan.core.exceptions import notifications as notification_errors
 from fanfan.core.exceptions.rate_limit import CooldownActive
 from fanfan.core.vo.user import generate_user_id
@@ -46,7 +44,6 @@ class FakeCooldown(Cooldown):
 def make_interactor(
     broker: FakeEventBroker, cooldown: FakeCooldown, id_provider: FakeIdProvider
 ) -> SendTestNotification:
-    # require_user_id reads the id provider alone; the gateway is never touched.
     provider = CurrentUserProvider(id_provider, cast("UserGateway", object()))
     return SendTestNotification(provider, broker, cooldown)
 

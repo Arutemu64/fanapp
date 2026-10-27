@@ -9,8 +9,6 @@ from fanfan.adapters.db.models import OutboxEventORM
 from fanfan.application.dto.outbox import OutboxMessage
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 
-# Bound the stored error text: an exception can carry a whole payload in its
-# message, and last_error is a debugging aid, not an archive.
 _LAST_ERROR_MAX_CHARS = 2000
 
 
@@ -28,12 +26,8 @@ class SqlOutboxGateway(OutboxGateway):
                     OutboxEventORM.next_attempt_at <= func.now(),
                 ),
             )
-            # created_at is the transaction timestamp, so every row from one
-            # commit ties on it; the uuid7 id breaks the tie in creation order.
             .order_by(OutboxEventORM.created_at, OutboxEventORM.id)
             .limit(limit)
-            # SKIP LOCKED: a concurrent relay tick skips rows we already hold
-            # instead of blocking, so ticks never double-send the same row.
             .with_for_update(skip_locked=True)
         )
         return [OutboxMessage.model_validate(row) for row in rows]
@@ -56,8 +50,6 @@ class SqlOutboxGateway(OutboxGateway):
             .values(
                 attempts=OutboxEventORM.attempts + 1,
                 last_error=error[:_LAST_ERROR_MAX_CHARS],
-                # Database clock, like published_at and the fetch filter, so the
-                # relay host's clock skew cannot shift the retry.
                 next_attempt_at=func.now() + retry_in,
             )
         )
@@ -70,5 +62,4 @@ class SqlOutboxGateway(OutboxGateway):
                 OutboxEventORM.published_at < cutoff,
             )
         )
-        # execute() is typed as Result, but a DELETE yields a CursorResult.
         return cast("CursorResult[Any]", result).rowcount

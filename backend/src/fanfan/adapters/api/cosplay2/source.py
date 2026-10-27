@@ -38,9 +38,6 @@ class Cosplay2Source(CosplaySource):
 
         participants: list[ExternalParticipant] = []
         for request in requests:
-            # Only approved requests that still carry a voting title can be
-            # represented as participants; everything else is not a participant
-            # the domain recognizes, so it is dropped at the boundary.
             if request.status != RequestStatus.APPROVED or not request.voting_title:
                 continue
             participants.append(

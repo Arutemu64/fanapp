@@ -39,7 +39,7 @@ class _ScriptedHandler:
 
     def __call__(
         self,
-        request: httpx2.Request,  # noqa: ARG002  # required by the MockTransport handler contract
+        request: httpx2.Request,  # noqa: ARG002
     ) -> httpx2.Response:
         outcome = self._outcomes[min(self.calls, len(self._outcomes) - 1)]
         self.calls += 1
@@ -70,8 +70,6 @@ def _client(handler: _ScriptedHandler) -> BaseApiClient:
 
 @pytest.fixture(autouse=True)
 def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
-    # Skip the real sleep so the retry tests stay instant, but record each
-    # delay so the Retry-After tests can check what was waited.
     delays: list[float] = []
 
     async def _record_sleep(delay: float) -> None:
@@ -102,9 +100,6 @@ async def test_retries_server_error_then_succeeds() -> None:
 
 
 async def test_does_not_retry_client_error() -> None:
-    # A 404 is the caller's problem, not a transient one — retrying only delays
-    # the inevitable. TCloudClient.get_order relies on the 404 surfacing so it
-    # can turn it into a normal "order not found".
     handler = _ScriptedHandler([_status(404)])
     client = _client(handler)
 
@@ -140,8 +135,6 @@ async def test_waits_until_a_retry_after_date(sleeps: list[float]) -> None:
 
     await client._get("orders", _Payload)
 
-    # The date has one-second resolution and the clock moves between the two
-    # reads, so only the ballpark is stable.
     assert len(sleeps) == 1
     assert 25 <= sleeps[0] <= 30
 
@@ -165,7 +158,6 @@ async def test_falls_back_to_backoff_on_an_unusable_retry_after(
 
     await client._get("orders", _Payload)
 
-    # The first backoff step, jittered by at most ±50%.
     assert len(sleeps) == 1
     assert sleeps[0] <= RETRY_BASE_DELAY * 1.5
 
@@ -179,9 +171,6 @@ def _tcloud_client(handler: _ScriptedHandler) -> TCloudClient:
 
 
 async def test_get_order_unwraps_data_envelope() -> None:
-    # The single-order endpoint returns the order under a `data` key (like the
-    # list endpoint, minus pagination), and the vendor sends far more fields
-    # than the DTO declares — both must load without a NoRequiredFieldsLoadError.
     envelope = httpx2.Response(
         200,
         json={

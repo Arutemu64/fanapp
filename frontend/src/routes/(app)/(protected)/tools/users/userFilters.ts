@@ -12,14 +12,9 @@ function isUserRole(value: string | null): value is UserRole {
 	return USER_ROLES.some((role) => role === value);
 }
 
-// The filters live in the URL so a filtered list survives the back button and
-// can be shared. Anything unrecognised reads as "no filter" rather than an error:
-// a hand-edited link should still open the list.
 export function parseUserFilters(params: Pick<URLSearchParams, 'get'>): UserFilters {
 	const role = params.get('role');
 	const ticket = params.get('ticket');
-	// URL value of the ticket filter: short words rather than true/false, so a
-	// shared link reads as what it shows.
 	let hasTicket: boolean | null = null;
 	if (ticket === 'yes' || ticket === 'no') {
 		hasTicket = ticket === 'yes';

@@ -31,8 +31,6 @@ class RedisTokenRegistry(TokenRegistry):
 
     @staticmethod
     def _email_confirmation_active_key(user_id: UserId) -> str:
-        # Points to the hash of the only code that should currently be valid
-        # for this user, so issuing a new code can revoke the previous one.
         return f"auth:email-confirmation:active:{user_id}"
 
     @staticmethod
@@ -60,11 +58,6 @@ class RedisTokenRegistry(TokenRegistry):
         max_attempts: int,
         window_seconds: int,
     ) -> None:
-        # Count every consume attempt (including wrong guesses) and lock the
-        # target once it goes over the limit. A wrong guess never deletes the
-        # code, so without this counter brute-forcing a 6-digit code is free.
-        # Re-raise the shared limiter error as the OTP-specific one so the
-        # frontend keeps its own error code and copy for this flow.
         try:
             await self.rate_limiter.hit(
                 attempts_key,
@@ -81,9 +74,6 @@ class RedisTokenRegistry(TokenRegistry):
         ttl: int,
         new_code_hash: str,
     ) -> None:
-        # Delete the previously issued code (if any) so only the newest code
-        # stays valid, then remember the new code as the active one. Requests
-        # are rate-limited per target, so this read-modify-write is not racy.
         old_hash = await self.redis.get(active_key)
         if old_hash:
             if isinstance(old_hash, bytes):
@@ -129,7 +119,6 @@ class RedisTokenRegistry(TokenRegistry):
         if not stored_payload:
             return None
 
-        # Correct code: clear the attempt counter and the active-code pointer.
         await self.rate_limiter.reset(attempts_key)
         await self.redis.delete(self._email_confirmation_active_key(user_id))
 
@@ -177,7 +166,6 @@ class RedisTokenRegistry(TokenRegistry):
         if not stored_payload:
             return None
 
-        # Correct code: clear the attempt counter and the active-code pointer.
         await self.rate_limiter.reset(attempts_key)
         await self.redis.delete(self._email_login_active_key(email))
 

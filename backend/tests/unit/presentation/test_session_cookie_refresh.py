@@ -14,7 +14,6 @@ pytestmark = pytest.mark.unit
 
 
 def _renewing(request: Request) -> Response:
-    # What WebIdProvider does when the session store reports a touched session.
     request.state.renew_session_id = "renewed-session"
     return PlainTextResponse("ok")
 

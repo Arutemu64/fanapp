@@ -8,18 +8,14 @@ from fanfan.core.vo.user import UserRole
 
 
 class TicketListFilter(BaseModel):
-    # `search` is a case-insensitive substring of the ticket number.
     search: str | None = None
 
 
 class TicketListItemDTO(BaseModel):
-    # A row in the organizer ticket list. created_at is the sort key the page
-    # cursor points into.
     id: TicketId
     barcode: str
     role: UserRole
     used_by: UserRefDTO | None
-    # Imported tickets carry the vendor's ids; generated ones carry neither.
     from_ticketscloud: bool
     revoked_at: datetime | None
     created_at: datetime

@@ -1,7 +1,4 @@
 {
-	// Every command here must exist in the justfile — `just` fails loudly on an
-	// unknown recipe, and a task that silently never worked is worse than no
-	// task. Check against `just --list` when adding one.
 	"version": "2.0.0",
 	"tasks": [
 		{
@@ -25,10 +22,6 @@
 			"problemMatcher": []
 		},
 		{
-			// isBackground marks these long-running so VS Code does not wait for
-			// an exit code. With problemMatcher [] there is no readiness signal,
-			// so give them a background matcher before using either as a
-			// preLaunchTask — otherwise the launch hangs waiting for "ready".
 			"label": "dev: backend",
 			"type": "shell",
 			"command": "just backend-dev",
@@ -43,10 +36,6 @@
 			"problemMatcher": []
 		},
 		{
-			// Auto-fixing gate tasks — run the ones for the area you touched while
-			// working. There is deliberately no aggregate "run everything" task:
-			// it would drift from .github/workflows/ci.yml, which is the
-			// authoritative gate. Run Test Task lists these to pick from.
 			"label": "lint: backend (fix)",
 			"type": "shell",
 			"command": "just backend-lint",
@@ -89,8 +78,6 @@
 			"problemMatcher": []
 		},
 		{
-			// Full Compose environment with live sync; replaces the infra-* tasks,
-			// which named recipes that never existed.
 			"label": "docker: run dev",
 			"type": "shell",
 			"command": "just run-dev",

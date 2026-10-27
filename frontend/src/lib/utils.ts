@@ -1,9 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { extendTailwindMerge } from 'tailwind-merge';
 
-// Deviates from upstream: registers the type roles from app.css `@theme`. Unregistered,
-// tailwind-merge reads `text-body` as a text colour and `cn('text-body text-foreground')`
-// silently drops it.
 const twMerge = extendTailwindMerge({
 	extend: { theme: { text: ['headline', 'section', 'body'] } }
 });

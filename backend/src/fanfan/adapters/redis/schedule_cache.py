@@ -11,16 +11,8 @@ from fanfan.application.ports.schedule_cache import (
     ScheduleCacheGateway,
 )
 
-# Safety net only: every user-facing schedule edit invalidates the entry
-# explicitly, so this TTL just bounds staleness from out-of-band writes (the
-# demo seeder, a direct DB change) and the rare read that repopulates the cache
-# with a snapshot taken microseconds before a concurrent edit committed. An hour
-# is far longer than any live-show edit gap, so it never masks a real change.
 _CACHE_TTL_SECONDS = 3600
 
-# Keyed by the payload's JSON schema, so a deploy that changes its shape reads
-# a fresh key instead of serving the previous release's payload — which the new
-# frontend cannot parse — until the TTL runs out. The old key just expires.
 _PAYLOAD_SHAPE = hashlib.sha256(
     json.dumps(GetScheduleOutput.model_json_schema(), sort_keys=True).encode()
 ).hexdigest()[:12]
@@ -36,8 +28,6 @@ class RedisScheduleCache(ScheduleCacheGateway):
         self.redis = redis
 
     async def get(self) -> CachedSchedule | None:
-        # redis-py's async stubs mistype hgetall() as a bare dict, so cast the
-        # call to its real awaitable return type before awaiting it.
         data = await cast(
             "Awaitable[dict[str, str]]",
             self.redis.hgetall(_KEY),

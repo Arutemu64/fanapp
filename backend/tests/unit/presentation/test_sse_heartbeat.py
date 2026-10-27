@@ -9,8 +9,6 @@ from fanfan.presentation.web.routes.sse import _stream_with_heartbeat
 
 pytestmark = pytest.mark.unit
 
-# Short enough to keep the test fast, long enough that a busy CI runner does
-# not fire it between two immediate yields.
 HEARTBEAT_INTERVAL = 0.05
 
 HANDSHAKE = SSEMessage(
@@ -33,15 +31,12 @@ async def test_messages_pass_through_and_empty_data_stays_empty_object() -> None
         SSEEventName.CONNECTION_ESTABLISHED,
         SSEEventName.SCHEDULE_UPDATED,
     ]
-    # Payload-less signals carry an empty dict so EventSource does not drop the
-    # event; the router serializes it to a non-empty `data: {}` line on the wire.
     assert events[1].data == {}
 
 
 async def test_ping_injected_when_stream_is_idle() -> None:
     async def source() -> AsyncGenerator[SSEMessage]:
         yield HANDSHAKE
-        # Stay idle long enough for at least one heartbeat, then send more.
         await asyncio.sleep(HEARTBEAT_INTERVAL * 3)
         yield SCHEDULE_UPDATED
 
@@ -68,14 +63,13 @@ async def test_close_runs_source_cleanup() -> None:
     async def source() -> AsyncGenerator[SSEMessage]:
         try:
             yield HANDSHAKE
-            await asyncio.sleep(3600)  # Block like a quiet NATS subscription.
+            await asyncio.sleep(3600)
         finally:
             cleaned_up.set()
 
     stream = _stream_with_heartbeat(source(), HEARTBEAT_INTERVAL)
     assert (await anext(stream)).event == SSEEventName.CONNECTION_ESTABLISHED
 
-    # Simulate the client disconnecting mid-stream.
     await stream.aclose()
 
     assert cleaned_up.is_set(), "source generator cleanup did not run on close"

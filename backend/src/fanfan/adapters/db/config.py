@@ -13,34 +13,16 @@ class DatabaseConfig(BaseModel):
 
     database_system: str = "postgresql"
     driver: str = "psycopg"
-    # Defaults off: echo logs every statement *and* its bound parameters, so a
-    # deployment whose .env loses DB__ECHO would quietly start writing emails and
-    # password hashes to the logs. `extra="ignore"` means that drift never fails
-    # at boot, so the safe value has to be the default. Dev opts in.
     echo: bool = False
 
-    # Connection pool sizing (SQLAlchemy QueuePool). A single process may open up
-    # to pool_size + max_overflow connections. Kept explicit so the two
-    # long-lived services (api, worker), each with its own engine,
-    # stay well under Postgres' default max_connections=100.
     pool_size: int = 5
     max_overflow: int = 10
-    # Recycle connections older than this many seconds, guarding against a VPS
-    # firewall or Postgres silently dropping connections that sit idle too long.
     pool_recycle: int = 1800
 
-    # Server-side safety timeouts (milliseconds), sent as libpq `options` on
-    # every connection. They bound the blast radius of a runaway query or a
-    # transaction left open across an await: a tripped timeout raises instead of
-    # pinning a pooled connection (and any locks it holds) forever. Defaults are
-    # generous enough for the batch deletes the outbox and notification relays
-    # run. Set to 0 to disable an individual timeout.
     statement_timeout: int = 30000
     lock_timeout: int = 10000
     idle_in_transaction_session_timeout: int = 60000
 
-    # Labels connections in pg_stat_activity so you can tell which service holds a
-    # lock. Overridden per service in Docker Compose; None leaves it blank.
     application_name: str | None = None
 
     def build_connect_args(self) -> dict[str, str]:
@@ -49,8 +31,6 @@ class DatabaseConfig(BaseModel):
         Timeouts set to 0 are omitted so Postgres keeps its own default
         (unlimited) rather than being handed a redundant "0".
         """
-        # Pinned so timestamptz values decode as UTC whatever the server's own
-        # TimeZone is; psycopg decodes them in the session time zone.
         settings = ["-c TimeZone=UTC"]
         timeouts = {
             "statement_timeout": self.statement_timeout,
@@ -88,10 +68,6 @@ class DatabaseConfig(BaseModel):
 
     def build_connection_str(self) -> str:
         if self.url is not None:
-            # The driver is forced rather than read from the DSN: the engine's
-            # connect args are psycopg-specific, so a DSN naming another driver
-            # (a deployed postgresql+asyncpg://, a bare postgres://) still
-            # connects through psycopg instead of failing at boot.
             url = make_url(self.url.unicode_string())
             url = url.set(drivername=f"{self.database_system}+{self.driver}")
             return url.render_as_string(hide_password=False)

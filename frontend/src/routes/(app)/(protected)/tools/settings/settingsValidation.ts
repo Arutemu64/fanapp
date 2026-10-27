@@ -1,8 +1,5 @@
 import { m } from '#lib/paraglide/messages.js';
 
-// Each check returns the field's error message, or '' when the value is valid.
-
-// Mirror the backend bounds (UpdateAppSettingsInput).
 export const QUEST_MAX_AWARD_LIMIT = 10_000;
 export const QUEST_CANCEL_WINDOW_LIMIT = 1440;
 
@@ -17,14 +14,10 @@ export function checkFestivalStart(start: string): string {
 	return '';
 }
 
-/** Both values are datetime-local strings, which compare correctly as text. */
 export function checkFestivalEnd(start: string, end: string): string {
 	if (!end) {
 		return m.settings_validation_end();
 	}
-	// Guard the range: the backend stores the two instants independently with no
-	// ordering check, and an end at or before the start collapses the home page's
-	// "during" phase entirely — the countdown would jump straight to the farewell.
 	if (start && end <= start) {
 		return m.error_invalid_festival_time_range();
 	}

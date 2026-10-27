@@ -1,6 +1,3 @@
-// Tailwind-only lint config for the PostToolUse edit hook (.claude/hooks/post-edit-check.py).
-// No type information and no other rule sets, so linting one file takes ~1s instead of the
-// main config's ~9s; CI and pre-commit still run the full eslint.config.js.
 import svelte from 'eslint-plugin-svelte';
 import { defineConfig } from 'eslint/config';
 import ts from 'typescript-eslint';
@@ -17,8 +14,6 @@ export default defineConfig(
 	},
 	...tailwindConfigs,
 	{
-		// ~2.5s of Tailwind startup, and only ever autofixable spelling; pre-commit fixes
-		// it. The hook is for the design restrictions an agent has to act on.
 		files: ['**/*'],
 		rules: { 'better-tailwindcss/enforce-canonical-classes': 'off' }
 	}

@@ -1,15 +1,11 @@
 import { m } from '#lib/paraglide/messages.js';
 
-/** A numbered place on a floor, listed under the plan as «Что где». */
 interface MapPoint {
-	/** The number drawn on the plan, so the list and the map agree. */
 	number: number;
 	name: () => string;
-	/** Set where a point sits off the plan's main floor, e.g. «3 этаж». */
 	floor?: () => string;
 }
 
-/** Axis-aligned box in the plan's own coordinates (the viewBox's units). */
 interface Rect {
 	x: number;
 	y: number;
@@ -17,36 +13,25 @@ interface Rect {
 	h: number;
 }
 
-/** A tappable area on the plan. One point can own several, e.g. three stairways. */
 interface MapZone extends Rect {
 	point: number;
 }
 
 interface FloorPlan {
-	/** SVG viewBox: `minX minY width height`. */
 	viewBox: string;
-	/** Wall centre lines as SVG path data, stroked at `WALL_WIDTH`. */
 	walls: string;
-	/** Short wall stubs and pillars, filled like walls. */
 	pillars: Rect[];
-	/** Stair flights, drawn hatched. */
 	stairs: Rect[];
-	/** Open wells between floors, drawn as a crossed-out dark box. */
 	wells: Rect[];
-	/** Round structures, as [cx, cy, r]. */
 	columns: [number, number, number][];
-	/** Text drawn on the plan itself, e.g. the 3rd-floor annex's title. */
 	captions: { x: number; y: number; text: () => string }[];
 	zones: MapZone[];
-	/** Number size in plan units: the two plans have different scales. */
 	fontSize: number;
 }
 
 interface MapEntry {
 	id: string;
-	/** Floor switcher label, e.g. «1 этаж». */
 	label: () => string;
-	/** The plan's accessible name. */
 	alt: () => string;
 	plan: FloorPlan;
 	points: MapPoint[];
@@ -58,26 +43,19 @@ function numbered(names: (() => string)[]): MapPoint[] {
 	return names.map((name, index) => ({ number: index + 1, name }));
 }
 
-// Traced from the festival's printed posters, in their 900×1350 preview's
-// pixels, so a correction can be measured against the poster directly.
-// Only the layout is kept: the posters' title, legend and «Я тут» marker
-// belong to a sign standing at one spot, not a phone in a visitor's hand.
 const FLOOR_1: FloorPlan = {
 	viewBox: '150 140 610 700',
 	fontSize: 22,
 	walls: [
-		// Café wing and the corridor to the backstage door
 		'M196 153 H406 V387',
 		'M196 153 V434 H261',
 		'M197 387 H277',
 		'M159 434 V487 H374',
-		// Lobby and the main hall
 		'M322 387 H704 V491 H729',
 		'M729 543 H704 V762 H729',
 		'M729 812 H704 V826 H604',
 		'M553 826 H452 V542 H342',
 		'M452 387 V455',
-		// The stand block between the two flights up
 		'M494 491 V426 H547',
 		'M611 426 H665 V491'
 	].join(' '),
@@ -124,11 +102,9 @@ const FLOOR_2_3: FloorPlan = {
 	viewBox: '45 50 835 740',
 	fontSize: 28,
 	walls: [
-		// West wing: the authors' alley with the two side doors
 		'M54 343 H119 V202 H831 V329 H870',
 		'M54 407 H115 V682 H54',
 		'M54 743 H115 V780 H831 V396 H870',
-		// East wing: the stands' hall under the 11/12 room
 		'M449 202 V336',
 		'M449 332 H751',
 		'M449 396 V652',
@@ -136,7 +112,6 @@ const FLOOR_2_3: FloorPlan = {
 		'M449 704 H517',
 		'M511 396 V509',
 		'M511 604 V704',
-		// 3rd-floor annex
 		'M529 59 H831 V177 H529 Z'
 	].join(' '),
 	pillars: [
@@ -189,8 +164,6 @@ const FLOOR_2_3: FloorPlan = {
 	]
 };
 
-// Labels, accessible names and legends are human-authored Russian, kept in
-// ru.json; the legend lists every number on the plan, in order.
 export const maps: MapEntry[] = [
 	{
 		id: 'floor-1',
