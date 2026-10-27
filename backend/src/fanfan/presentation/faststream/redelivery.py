@@ -4,6 +4,7 @@ import dataclasses
 import logging
 from collections.abc import AsyncIterator
 from types import TracebackType
+from typing import override
 
 from faststream import BaseMiddleware
 from faststream.exceptions import HandlerException
@@ -84,6 +85,7 @@ class RedeliveryMiddleware(BaseMiddleware):
     Ack/Nack/RejectMessage, is left to that decision.
     """
 
+    @override
     async def after_processed(
         self,
         exc_type: type[BaseException] | None = None,

@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -55,6 +57,7 @@ class SqlMailingGateway(MailingGateway):
         self.session = session
         self.uow = uow
 
+    @override
     async def add(self, mailing: Mailing) -> None:
         mailing_orm = _from_model(mailing)
         with translate_integrity_error({"pk_mailings": MailingAlreadyExists}):
@@ -62,6 +65,7 @@ class SqlMailingGateway(MailingGateway):
             await self.session.flush()
         self.uow.register(mailing)
 
+    @override
     async def get(self, mailing_id: MailingId, *, lock: bool = True) -> Mailing | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)
         if lock:
@@ -73,6 +77,7 @@ class SqlMailingGateway(MailingGateway):
         self.uow.register(mailing)
         return mailing
 
+    @override
     async def save(self, mailing: Mailing) -> None:
         stmt = (
             update(MailingORM)
@@ -85,6 +90,7 @@ class SqlMailingGateway(MailingGateway):
         )
         await self.session.execute(stmt)
 
+    @override
     async def read_broadcasts(self, pagination: CursorPagination) -> list[MailingDTO]:
         stmt = (
             select(MailingORM)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import override
 
 from fanfan.core.exceptions.users import InvalidEmail
 from fanfan.core.utils.email import normalize_email
@@ -22,5 +23,6 @@ class Email:
             raise InvalidEmail
         object.__setattr__(self, "value", normalized)
 
+    @override
     def __str__(self) -> str:
         return self.value

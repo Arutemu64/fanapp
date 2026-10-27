@@ -1,5 +1,6 @@
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
+from typing import override
 from uuid import uuid7
 
 import pytest
@@ -78,15 +79,17 @@ class _FakeNotificationGateway(NotificationGateway):
         self._superseded = superseded
         self.locked_reads = 0
 
+    @override
     async def is_superseded(
         self,
-        notification: Notification,  # noqa: ARG002
+        notification: Notification,
     ) -> bool:
         return self._superseded
 
+    @override
     async def get(
         self,
-        notification_id: object,  # noqa: ARG002
+        notification_id: object,
         *,
         lock: bool = True,
     ) -> Notification | None:
@@ -99,19 +102,21 @@ class _FakeUserGateway(UserGateway):
     def __init__(self, user: User | None) -> None:
         self._user = user
 
+    @override
     async def get_by_id(
         self,
-        user_id: UserId,  # noqa: ARG002
+        user_id: UserId,
     ) -> User | None:
         return self._user
 
 
 class _StubMailingGateway(MailingGateway):
+    @override
     async def get(
         self,
-        mailing_id: MailingId,  # noqa: ARG002
+        mailing_id: MailingId,
         *,
-        lock: bool = True,  # noqa: ARG002
+        lock: bool = True,
     ) -> None:
         msg = "mailing gateway should not be queried"
         raise AssertionError(msg)
@@ -121,6 +126,7 @@ class _FakeUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
+    @override
     async def commit(self) -> None:
         self.commits += 1
 
@@ -132,9 +138,10 @@ class _CommitCheckingNotifier(TelegramNotifierPort, PushNotifierPort, VkNotifier
         self._uow = uow
         self.commits_at_send: int | None = None
 
+    @override
     async def send_notification(
         self,
-        notification: Notification,  # noqa: ARG002
+        notification: Notification,
     ) -> None:
         self.commits_at_send = self._uow.commits
 

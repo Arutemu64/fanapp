@@ -1,4 +1,5 @@
 import re
+from typing import override
 
 import nh3
 
@@ -25,6 +26,7 @@ _PARAGRAPH_TAG = re.compile(r"(?i)</?p[^>]*>")
 
 
 class Nh3HtmlSanitizer(HtmlSanitizer):
+    @override
     def sanitize(self, text: str) -> str:
         text = _BR_TAG.sub("\n", text)
         text = _PARAGRAPH_BREAK.sub("\n\n", text)

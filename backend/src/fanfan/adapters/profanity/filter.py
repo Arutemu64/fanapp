@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import override
 
 from fanfan.application.ports.profanity_filter import ProfanityFilter
 
@@ -72,6 +73,7 @@ class WordListProfanityFilter(ProfanityFilter):
         )
         self._roots = frozenset(_load_normalized("roots_ru.txt"))
 
+    @override
     def contains_profanity(self, text: str) -> bool:
         normalized = _normalize(text)
         if not normalized:

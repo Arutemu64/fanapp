@@ -32,6 +32,16 @@ _REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,128}")
 _MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024
 
 
+def _append_session_cookie(
+    headers: MutableHeaders, session_id: str, web_config: WebConfig
+) -> None:
+    carrier = Response()
+    set_auth_cookie(carrier, session_id, web_config)
+    for name, value in carrier.raw_headers:
+        if name == b"set-cookie":
+            headers.append("set-cookie", value.decode("latin-1"))
+
+
 class RefreshSessionCookieMiddleware:
     """Re-set the session cookie when a handler renewed the session id.
 
@@ -52,12 +62,9 @@ class RefreshSessionCookieMiddleware:
             if message["type"] == "http.response.start":
                 session_id = scope.get("state", {}).get("renew_session_id")
                 if session_id:
-                    carrier = Response()
-                    set_auth_cookie(carrier, session_id, self.web_config)
-                    headers = MutableHeaders(scope=message)
-                    for name, value in carrier.raw_headers:
-                        if name == b"set-cookie":
-                            headers.append("set-cookie", value.decode("latin-1"))
+                    _append_session_cookie(
+                        MutableHeaders(scope=message), session_id, self.web_config
+                    )
             await send(message)
 
         await self.app(scope, receive, send_with_cookie)

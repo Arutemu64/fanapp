@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from typing import override
 
 from fanfan.application.dto.realtime import SSEMessage
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
@@ -15,12 +16,14 @@ class FakeRealtimeGateway(RealtimeGateway):
     def __init__(self) -> None:
         self.published: list[tuple[UserId | None, SSEMessage]] = []
 
+    @override
     async def publish(self, message: SSEMessage, user_id: UserId | None = None) -> None:
         self.published.append((user_id, message))
 
+    @override
     def subscribe(
         self,
-        user_id: UserId | None = None,  # noqa: ARG002
+        user_id: UserId | None = None,
     ) -> AsyncIterator[SSEMessage]:
         return self._empty_stream()
 

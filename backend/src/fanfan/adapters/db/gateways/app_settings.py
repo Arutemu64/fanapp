@@ -1,3 +1,5 @@
+from typing import override
+
 from adaptix import Retort
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,10 +23,12 @@ class SqlAppSettingsGateway(AppSettingsGateway):
         self.session = session
         self.retort = retort
 
+    @override
     async def get(self) -> AppSettings:
         stmt = select(AppSettingsORM).where(AppSettingsORM.id == 1)
         return await self._get_by_stmt(stmt)
 
+    @override
     async def get_for_update(self) -> AppSettings:
         stmt = select(AppSettingsORM).where(AppSettingsORM.id == 1).with_for_update()
         return await self._get_by_stmt(stmt)
@@ -35,5 +39,6 @@ class SqlAppSettingsGateway(AppSettingsGateway):
             raise AppSettingsNotFound
         return _to_model(settings_orm, self.retort)
 
+    @override
     async def save(self, settings: AppSettings) -> None:
         await self.session.merge(_from_model(settings, self.retort))

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Self
+from typing import Self, override
 
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.email import Email
@@ -86,8 +86,10 @@ class User(AggregateRoot):
     def set_password_hash(self, hashed_password: str) -> None:
         self.hashed_password = hashed_password
 
+    @override
     def __eq__(self, other: object) -> bool:
         return isinstance(other, User) and self.id == other.id
 
+    @override
     def __hash__(self) -> int:
         return hash(self.id)

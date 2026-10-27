@@ -43,8 +43,6 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
-              # The backend suite owns the OpenAPI drift test, so a hand-edited
-              # spec (or a bad merge resolution) has to re-run it.
               - 'shared/**'
               - '.github/workflows/ci.yml'
             frontend:
@@ -55,9 +53,6 @@ jobs:
               - '**/Dockerfile'
               - '.hadolint.yaml'
               - '.github/workflows/ci.yml'
-            # Every workflow, not just this one: the linters below audit them
-            # all. `.pre-commit-config.yaml` is in the list because zizmor is
-            # pointed at it too, so editing it has to re-run its only audit.
             workflows:
               - '.github/workflows/**'
               - '.pre-commit-config.yaml'

@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
+from typing import override
 
 from adaptix import Retort
 from nats.aio.msg import Msg
@@ -41,6 +42,7 @@ class NatsRealtimeGateway(RealtimeGateway):
         self._broadcast_subscription: Subscription | None = None
         self._broadcast_subscribe_lock = asyncio.Lock()
 
+    @override
     async def publish(self, message: SSEMessage, user_id: UserId | None = None) -> None:
         payload = json.dumps(self.retort.dump(message)).encode()
 
@@ -74,6 +76,7 @@ class NatsRealtimeGateway(RealtimeGateway):
                 "sse.broadcast.*", cb=broadcast_handler
             )
 
+    @override
     def subscribe(self, user_id: UserId | None = None) -> AsyncIterator[SSEMessage]:
         async def iterator() -> AsyncIterator[SSEMessage]:
             queue: asyncio.Queue[SSEMessage] = asyncio.Queue(maxsize=SSE_QUEUE_MAXSIZE)

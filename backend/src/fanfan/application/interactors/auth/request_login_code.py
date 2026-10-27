@@ -68,37 +68,39 @@ class RequestLoginCode:
         )
         try:
             async with claim:
-                user = await self.user_gateway.get_by_email(email.value)
-
-                if user is None:
-                    for _ in range(3):
-                        try:
-                            user = User.create(
-                                id=generate_user_id(),
-                                username=await self.user_service.generate_username(),
-                                email=email,
-                                hashed_password=None,
-                                role=UserRole.VISITOR,
-                            )
-                            await self.user_gateway.add(user)
-                            await self.uow.commit()
-                        except UserAlreadyExists:
-                            await self.uow.rollback()
-                            user = await self.user_gateway.get_by_email(email.value)
-                            if user is not None:
-                                break
-                        else:
-                            break
-
-                    if user is None:
-                        msg = "Could not provision user for login code"
-                        raise RuntimeError(msg)
-
+                user = await self._get_or_create_user(email)
                 await self.send_login_code_email(
                     SendLoginCodeEmailInput(user_id=user.id)
                 )
         except CooldownActive as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e
+
+    async def _get_or_create_user(self, email: Email) -> User:
+        user = await self.user_gateway.get_by_email(email.value)
+        if user is not None:
+            return user
+        for _ in range(3):
+            user = await self._try_create_user(email)
+            if user is not None:
+                return user
+        msg = "Could not provision user for login code"
+        raise RuntimeError(msg)
+
+    async def _try_create_user(self, email: Email) -> User | None:
+        user = User.create(
+            id=generate_user_id(),
+            username=await self.user_service.generate_username(),
+            email=email,
+            hashed_password=None,
+            role=UserRole.VISITOR,
+        )
+        try:
+            await self.user_gateway.add(user)
+            await self.uow.commit()
+        except UserAlreadyExists:
+            await self.uow.rollback()
+            return await self.user_gateway.get_by_email(email.value)
+        return user
 
     async def _register_ip_attempt(self, client_ip: str) -> None:
         try:

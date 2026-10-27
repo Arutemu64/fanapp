@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import CheckConstraint, Index, func, select, text
 from sqlalchemy.orm import (
     Mapped,
@@ -55,6 +57,7 @@ class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     )
     __mapper_args__ = {"polymorphic_on": "type"}  # noqa: RUF012
 
+    @override
     def __str__(self) -> str:
         return self.title
 

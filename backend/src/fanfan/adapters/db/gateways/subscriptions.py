@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from typing import override
 from uuid import UUID
 
 from sqlalchemy import Select, delete, or_, select, update
@@ -83,6 +84,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, subscription: Subscription) -> None:
         subscription_orm = _from_model(subscription)
         self.session.add(subscription_orm)
@@ -94,6 +96,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         ):
             await self.session.flush()
 
+    @override
     async def get_by_id(self, subscription_id: SubscriptionId) -> Subscription | None:
         stmt = (
             select(SubscriptionORM)
@@ -103,11 +106,13 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         subscription_orm = await self.session.scalar(stmt)
         return _to_model(subscription_orm) if subscription_orm else None
 
+    @override
     async def delete(self, subscription: Subscription) -> None:
         await self.session.execute(
             delete(SubscriptionORM).where(SubscriptionORM.id == subscription.id)
         )
 
+    @override
     async def set_reminded_by(
         self,
         subscription_ids: Sequence[SubscriptionId],
@@ -121,6 +126,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
             .values(reminded_by_change_id=change_id)
         )
 
+    @override
     async def read_subscriptions_to_notify(
         self,
         current_event_position: int | None,
@@ -139,6 +145,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         results = await self.session.scalars(stmt)
         return [_parse_full_dto(subscription_orm) for subscription_orm in results]
 
+    @override
     async def read_subscriptions_by_user(
         self, user_id: UserId
     ) -> list[SubscriptionFullDTO]:

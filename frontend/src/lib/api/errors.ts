@@ -17,7 +17,7 @@ type ApiProblem = Record<string, unknown> & { code: string };
 type ValidationContext = Record<string, unknown>;
 
 interface ApiValidationErrorDetail {
-	loc: Array<string | number>;
+	loc: (string | number)[];
 	type: string;
 	ctx?: ValidationContext;
 }
@@ -45,7 +45,7 @@ function getValidationErrors(problem: ApiProblem): ApiValidationErrorDetail[] {
 	});
 }
 
-function getFieldName(path: Array<string | number>): string | null {
+function getFieldName(path: (string | number)[]): string | null {
 	const [location, ...rest] = path;
 	const isLocation = typeof location === 'string' && ['body', 'query', 'path'].includes(location);
 	const fieldPath = isLocation ? rest : path;
@@ -57,7 +57,7 @@ function getFieldName(path: Array<string | number>): string | null {
 	return lastSegment ?? null;
 }
 
-function getFieldLabel(path: Array<string | number>): string | null {
+function getFieldLabel(path: (string | number)[]): string | null {
 	const fieldName = getFieldName(path);
 	if (!fieldName) {
 		return null;

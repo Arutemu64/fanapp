@@ -12,6 +12,7 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeEntryDTO,
     ScheduleChangeFullDTO,
 )
+from fanfan.application.dto.subscription import SubscriptionFullDTO
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
@@ -93,6 +94,31 @@ class _SubscriptionNotices:
     notifications: list[NewNotification] = field(default_factory=list)
     reminded: list[SubscriptionId] = field(default_factory=list)
     rearmed: list[SubscriptionId] = field(default_factory=list)
+
+
+def _classify_subscription(
+    subscription: SubscriptionFullDTO,
+    schedule_change: ScheduleChangeFullDTO,
+    changed_event: ScheduleChangeEntryDTO,
+    reminder_due: bool,  # noqa: FBT001
+    notices: _SubscriptionNotices,
+) -> str | None:
+    is_own_change = subscription.event.id == changed_event.id
+    if is_own_change and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
+        return "started"
+    if is_own_change:
+        if reminder_due:
+            notices.reminded.append(subscription.id)
+        else:
+            notices.rearmed.append(subscription.id)
+        return "changed"
+    if reminder_due and subscription.reminded_by_change_id in {
+        None,
+        schedule_change.id,
+    }:
+        notices.reminded.append(subscription.id)
+        return "soon"
+    return None
 
 
 _SUBSCRIPTION_TITLES = {
@@ -255,25 +281,10 @@ class SendScheduleChangeNotifications:
                     seconds_ahead=event_seconds_ahead,
                 )
 
-            is_own_change = s.event.id == changed_event.id
-            if (
-                is_own_change
-                and schedule_change.type is ScheduleChangeType.SET_AS_CURRENT
-            ):
-                kind = "started"
-            elif is_own_change:
-                kind = "changed"
-                if reminder_due:
-                    notices.reminded.append(s.id)
-                else:
-                    notices.rearmed.append(s.id)
-            elif reminder_due and s.reminded_by_change_id in {
-                None,
-                schedule_change.id,
-            }:
-                kind = "soon"
-                notices.reminded.append(s.id)
-            else:
+            kind = _classify_subscription(
+                s, schedule_change, changed_event, reminder_due, notices
+            )
+            if kind is None:
                 continue
 
             body = await self.template_renderer.render(

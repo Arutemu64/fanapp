@@ -33,16 +33,15 @@ export function getReadySteps(input: ReadyStepsInput): ReadyStepKey[] {
 		steps.push('subscribe');
 	}
 
-	const needsNotifications = input.notificationsOn === false;
-	if (input.installBeforeNotifications) {
-		if (canInstall) steps.push('install');
-		if (needsNotifications) steps.push('notifications');
-	} else {
-		if (needsNotifications) steps.push('notifications');
-		if (canInstall) steps.push('install');
-	}
-
+	steps.push(...getDeviceSteps(input));
 	return steps;
+}
+
+function getDeviceSteps(input: ReadyStepsInput): ReadyStepKey[] {
+	const install: ReadyStepKey[] = input.install === 'available' ? ['install'] : [];
+	const notifications: ReadyStepKey[] = input.notificationsOn === false ? ['notifications'] : [];
+	if (input.installBeforeNotifications) return [...install, ...notifications];
+	return [...notifications, ...install];
 }
 
 export function getNotificationsOn(

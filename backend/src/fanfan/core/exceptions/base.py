@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, ClassVar
+from typing import Any, ClassVar, override
 
 
 class AppException(Exception):
@@ -13,6 +13,7 @@ class AppException(Exception):
         self.details = dict(details or {})
         super().__init__(self.code)
 
+    @override
     def __str__(self) -> str:
         return self.code
 

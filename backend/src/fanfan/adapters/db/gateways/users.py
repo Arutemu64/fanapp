@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 
 from sqlalchemy import Select, Subquery, func, select
 from sqlalchemy.exc import IntegrityError
@@ -150,6 +150,25 @@ def _parse_current_user_dto(orm: UserORM) -> CurrentUserDTO:
     )
 
 
+def _voting_contest_pool() -> Subquery:
+    votable_count = (
+        select(func.count(NominationORM.id))
+        .where(NominationORM.is_votable.is_(True))
+        .scalar_subquery()
+    )
+    return (
+        select(VoteORM.user_id.label("user_id"))
+        .join(ParticipantORM, VoteORM.participant_id == ParticipantORM.id)
+        .join(NominationORM, ParticipantORM.nomination_id == NominationORM.id)
+        .where(NominationORM.is_votable.is_(True))
+        .group_by(VoteORM.user_id)
+        .having(
+            func.count(func.distinct(ParticipantORM.nomination_id)) >= votable_count
+        )
+        .subquery()
+    )
+
+
 class SqlUserGateway(UserGateway):
     def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
@@ -162,18 +181,11 @@ class SqlUserGateway(UserGateway):
         self.uow.register(user)
         return user
 
+    @override
     async def add(self, user: User) -> None:
         for attempt in range(1, _NUMBER_ATTEMPTS + 1):
             try:
-                async with self.session.begin_nested():
-                    with translate_integrity_error(
-                        {
-                            "ix_users_email": UserAlreadyExists,
-                            "ix_users_username_lower": UserAlreadyExists,
-                        }
-                    ):
-                        self.session.add(_from_model(user))
-                        await self.session.flush()
+                await self._insert(user)
                 break
             except IntegrityError as e:
                 if get_constraint_name(e) != _NUMBER_CONSTRAINT:
@@ -183,16 +195,30 @@ class SqlUserGateway(UserGateway):
                 user.redraw_number()
         self.uow.register(user)
 
+    async def _insert(self, user: User) -> None:
+        async with self.session.begin_nested():
+            with translate_integrity_error(
+                {
+                    "ix_users_email": UserAlreadyExists,
+                    "ix_users_username_lower": UserAlreadyExists,
+                }
+            ):
+                self.session.add(_from_model(user))
+                await self.session.flush()
+
+    @override
     async def get_by_id(self, user_id: UserId) -> User | None:
         stmt = select(UserORM).where(UserORM.id == user_id).with_for_update()
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 
+    @override
     async def get_by_number(self, number: UserNumber) -> User | None:
         stmt = select(UserORM).where(UserORM.number == number).with_for_update()
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 
+    @override
     async def get_by_username(self, username: str) -> User | None:
         stmt = (
             select(UserORM)
@@ -202,6 +228,7 @@ class SqlUserGateway(UserGateway):
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 
+    @override
     async def get_by_email(self, email: str) -> User | None:
         normalized_email = normalize_email(email)
         stmt = (
@@ -210,6 +237,7 @@ class SqlUserGateway(UserGateway):
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 
+    @override
     async def save(self, user: User) -> None:
         user_orm = _from_model(user)
         with translate_integrity_error(
@@ -222,6 +250,7 @@ class SqlUserGateway(UserGateway):
             await self.session.flush()
         self.uow.register(user)
 
+    @override
     async def read_current_user(self, user_id: UserId) -> CurrentUserDTO | None:
         stmt = (
             select(UserORM)
@@ -235,36 +264,21 @@ class SqlUserGateway(UserGateway):
         user_orm = await self.session.scalar(stmt)
         return _parse_current_user_dto(user_orm) if user_orm else None
 
+    @override
     async def read_ids_by_roles(self, *roles: UserRole) -> list[UserId]:
         stmt = select(UserORM.id).where(UserORM.role.in_(roles))
         user_ids = await self.session.scalars(stmt)
         return [UserId(user_id) for user_id in user_ids]
 
-    def _voting_contest_pool(self) -> Subquery:
-        votable_count = (
-            select(func.count(NominationORM.id))
-            .where(NominationORM.is_votable.is_(True))
-            .scalar_subquery()
-        )
-        return (
-            select(VoteORM.user_id.label("user_id"))
-            .join(ParticipantORM, VoteORM.participant_id == ParticipantORM.id)
-            .join(NominationORM, ParticipantORM.nomination_id == NominationORM.id)
-            .where(NominationORM.is_votable.is_(True))
-            .group_by(VoteORM.user_id)
-            .having(
-                func.count(func.distinct(ParticipantORM.nomination_id)) >= votable_count
-            )
-            .subquery()
-        )
-
+    @override
     async def count_voting_contest_pool(self) -> int:
-        pool = self._voting_contest_pool()
+        pool = _voting_contest_pool()
         stmt = select(func.count()).select_from(pool)
         return await self.session.scalar(stmt) or 0
 
+    @override
     async def draw_voting_contest_winner(self) -> tuple[UserBaseDTO | None, int]:
-        pool = self._voting_contest_pool()
+        pool = _voting_contest_pool()
         stmt = (
             select(UserORM, func.count().over().label("pool_size"))
             .join(pool, pool.c.user_id == UserORM.id)
@@ -277,11 +291,13 @@ class SqlUserGateway(UserGateway):
         user_orm, pool_size = row
         return _parse_base_dto(user_orm), pool_size
 
+    @override
     async def read_ids_receiving_all_announcements(self) -> list[UserId]:
         stmt = select(UserORM.id).where(UserORM.receive_all_announcements)
         user_ids = await self.session.scalars(stmt)
         return [UserId(user_id) for user_id in user_ids]
 
+    @override
     async def read_schedule_editors(self) -> list[UserBaseDTO]:
         stmt = (
             select(UserORM)
@@ -291,6 +307,7 @@ class SqlUserGateway(UserGateway):
         users_orm = await self.session.scalars(stmt)
         return [_parse_base_dto(u) for u in users_orm]
 
+    @override
     async def read_users_page(
         self, *, pagination: CursorPagination, user_filter: UserListFilter
     ) -> list[UserListItemDTO]:
@@ -307,11 +324,13 @@ class SqlUserGateway(UserGateway):
         users_orm = result.scalars().unique()
         return [_parse_list_item_dto(u) for u in users_orm]
 
+    @override
     async def count_users(self, *, user_filter: UserListFilter) -> int:
         stmt = select(func.count(UserORM.id))
         stmt = self._apply_user_filter(stmt, user_filter)
         return await self.session.scalar(stmt) or 0
 
+    @override
     async def read_user_details(self, user_id: UserId) -> UserDetailsDTO | None:
         stmt = (
             select(UserORM)

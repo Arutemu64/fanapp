@@ -2,6 +2,7 @@ import logging
 from email.headerregistry import Address
 from email.message import EmailMessage as MimeMessage
 from email.utils import formatdate, make_msgid
+from typing import override
 
 import aiosmtplib
 import sentry_sdk
@@ -38,6 +39,7 @@ class SmtpEmailSender(EmailSender):
     def __init__(self, config: MailConfig) -> None:
         self.config = config
 
+    @override
     async def send(self, message: EmailMessage) -> None:
         logger.info("Sending email", extra={"recipient_count": len(message.recipients)})
         try:
@@ -63,6 +65,7 @@ class LogOnlyEmailSender(EmailSender):
     so the email-based auth flows remain usable without a real mail server.
     """
 
+    @override
     async def send(self, message: EmailMessage) -> None:
         logger.warning(
             "Mail is not configured — email NOT sent. Subject %r to %s\n%s",

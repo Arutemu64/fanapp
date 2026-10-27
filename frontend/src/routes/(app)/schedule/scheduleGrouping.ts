@@ -3,25 +3,25 @@ import type {
 	ScheduleEventWithSubscription
 } from '#lib/types/schedule.js';
 
-type ScheduleNominationGroup = {
+interface ScheduleNominationGroup {
 	key: string;
 	title: string | null;
 	events: ScheduleEventWithSubscription[];
-};
+}
 
-export type ScheduleBlockGroup = {
+export interface ScheduleBlockGroup {
 	kind: 'block';
 	key: string;
 	title: string;
 	eventCount: number;
 	nominations: ScheduleNominationGroup[];
-};
+}
 
-type ScheduleInterlude = {
+interface ScheduleInterlude {
 	kind: 'interlude';
 	key: string;
 	event: ScheduleEventWithSubscription;
-};
+}
 
 export type ScheduleNode = ScheduleBlockGroup | ScheduleInterlude;
 
@@ -51,7 +51,7 @@ export function buildScheduleGroups(schedule: ScheduleEntryWithSubscription[]): 
 
 		const nominationTitle = entry.nomination_title?.trim() || null;
 		let nominationGroup = blockGroup.nominations.at(-1);
-		if (!nominationGroup || nominationGroup.title !== nominationTitle) {
+		if (nominationGroup?.title !== nominationTitle) {
 			nominationGroup = {
 				key: `${blockGroup.key}-nomination-${blockGroup.nominations.length}`,
 				title: nominationTitle,

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 from urllib.parse import parse_qs
 from uuid import uuid7
 
@@ -153,10 +153,11 @@ class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
+    @override
     async def get_by_provider(
         self,
-        user_id: UserId,  # noqa: ARG002
-        provider: SocialProvider,  # noqa: ARG002
+        user_id: UserId,
+        provider: SocialProvider,
     ) -> SocialIdentity | None:
         return self._identity
 
@@ -183,12 +184,14 @@ class _StubVkClient(VkApiClient):
         self.calls: list[dict[str, Any]] = []
         self.deleted: list[int] = []
 
+    @override
     async def send_message(self, *, peer_id: int, message: str) -> int:
         self.calls.append({"peer_id": peer_id, "message": message})
         if self._error is not None:
             raise self._error
         return _SENT_MESSAGE_ID
 
+    @override
     async def delete_message(self, *, message_id: int) -> None:
         self.deleted.append(message_id)
         if self._delete_error is not None:
@@ -199,6 +202,7 @@ class _StubUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
+    @override
     async def commit(self) -> None:
         self.commits += 1
 

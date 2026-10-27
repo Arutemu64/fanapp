@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any
+from typing import Any, override
 
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.core.events.base import Message
@@ -13,12 +13,15 @@ class FakeEventBroker(EventBroker):
         self.published_occurred_at: list[datetime] = []
         self.published_trace_headers: list[dict[str, str] | None] = []
 
+    @override
     async def publish(self, event: Message) -> None:
         self.published_events.append(event)
 
+    @override
     async def publish_many(self, events: Sequence[Message]) -> None:
         self.published_events.extend(events)
 
+    @override
     async def publish_raw(
         self,
         subject: str,

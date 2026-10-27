@@ -2,12 +2,12 @@ import { getApiErrorDetail, isConnectionFailure } from '#lib/api/errors.js';
 
 export type QueryPolicy = 'cached' | 'live';
 
-export type ReadyView<T> = {
+export interface ReadyView<T> {
 	kind: 'ready';
 	data: T;
 	stale: boolean;
 	cachedAt: number;
-};
+}
 
 export type QueryView<T> =
 	| { kind: 'offline' }

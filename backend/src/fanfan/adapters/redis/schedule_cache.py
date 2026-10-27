@@ -1,7 +1,7 @@
 import hashlib
 import json
 from collections.abc import Awaitable
-from typing import cast
+from typing import cast, override
 
 from redis.asyncio import Redis
 
@@ -27,6 +27,7 @@ class RedisScheduleCache(ScheduleCacheGateway):
     def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
+    @override
     async def get(self) -> CachedSchedule | None:
         data = await cast(
             "Awaitable[dict[str, str]]",
@@ -36,6 +37,7 @@ class RedisScheduleCache(ScheduleCacheGateway):
             return None
         return CachedSchedule(etag=data[_ETAG_FIELD], payload=data[_PAYLOAD_FIELD])
 
+    @override
     async def set(self, cached: CachedSchedule) -> None:
         async with self.redis.pipeline(transaction=True) as pipe:
             pipe.hset(
@@ -45,5 +47,6 @@ class RedisScheduleCache(ScheduleCacheGateway):
             pipe.expire(_KEY, _CACHE_TTL_SECONDS)
             await pipe.execute()
 
+    @override
     async def invalidate(self) -> None:
         await self.redis.delete(_KEY)

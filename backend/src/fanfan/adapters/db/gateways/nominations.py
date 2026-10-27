@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
@@ -75,11 +77,13 @@ class SqlNominationGateway(NominationGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, nomination: Nomination) -> None:
         nomination_orm = _from_model(nomination)
         self.session.add(nomination_orm)
         await self.session.flush()
 
+    @override
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Nomination | None:
         stmt = (
             select(NominationORM)
@@ -89,12 +93,14 @@ class SqlNominationGateway(NominationGateway):
         nomination_orm = await self.session.scalar(stmt)
         return _to_model(nomination_orm) if nomination_orm else None
 
+    @override
     async def count_votable(self) -> int:
         stmt = select(func.count(NominationORM.id)).where(
             NominationORM.is_votable.is_(True)
         )
         return await self.session.scalar(stmt) or 0
 
+    @override
     async def read_voting_contenders(self) -> list[NominationContenderDTO]:
         votes_count = func.count(VoteORM.id)
         ranked = (
@@ -167,14 +173,17 @@ class SqlNominationGateway(NominationGateway):
             )
         return contenders
 
+    @override
     async def save(self, nomination: Nomination) -> None:
         await self.session.merge(_from_model(nomination))
         await self.session.flush()
 
+    @override
     async def list_cosplay2_ids(self) -> list[int]:
         stmt = select(NominationORM.cosplay2_id)
         return list((await self.session.scalars(stmt)).all())
 
+    @override
     async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
         if not cosplay2_ids:
             return
@@ -182,6 +191,7 @@ class SqlNominationGateway(NominationGateway):
             delete(NominationORM).where(NominationORM.cosplay2_id.in_(cosplay2_ids))
         )
 
+    @override
     async def read_voting_dto(
         self, nomination_code: NominationCode, user_id: UserId | None = None
     ) -> NominationVotingDTO | None:
@@ -196,6 +206,7 @@ class SqlNominationGateway(NominationGateway):
             return _parse_voting_dto(nomination_orm=nomination_orm, vote_orm=vote_orm)
         return None
 
+    @override
     async def read_list_votable_nominations(
         self, user_id: UserId | None = None
     ) -> list[NominationVotingDTO]:

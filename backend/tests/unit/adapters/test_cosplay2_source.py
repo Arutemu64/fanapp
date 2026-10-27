@@ -1,3 +1,5 @@
+from typing import override
+
 import pytest
 
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
@@ -24,9 +26,11 @@ class FakeCosplay2Client(Cosplay2Client):
         self._topics = topics
         self._requests = requests
 
+    @override
     async def get_topics_list(self) -> list[Topic]:
         return self._topics
 
+    @override
     async def get_all_requests(self) -> list[Request]:
         return self._requests
 

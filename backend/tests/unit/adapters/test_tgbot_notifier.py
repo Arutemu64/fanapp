@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, override
 from uuid import uuid7
 
 import httpx2
@@ -71,6 +71,7 @@ class _RecordingClient(TelegramApiClient):
         self._error = error
         self.calls: list[dict[str, Any]] = []
 
+    @override
     async def send_message(
         self, *, chat_id: int, text: str, reply_markup: dict[str, Any]
     ) -> None:
@@ -85,10 +86,11 @@ class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
+    @override
     async def get_by_provider(
         self,
-        user_id: UserId,  # noqa: ARG002
-        provider: SocialProvider,  # noqa: ARG002
+        user_id: UserId,
+        provider: SocialProvider,
     ) -> SocialIdentity | None:
         return self._identity
 
@@ -97,6 +99,7 @@ class _StubUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
+    @override
     async def commit(self) -> None:
         self.commits += 1
 

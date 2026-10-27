@@ -1,4 +1,5 @@
-from typing import Any
+from collections.abc import Iterator
+from typing import Any, override
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -21,6 +22,16 @@ def generate_operation_id(route: APIRoute) -> str:
     return route.name
 
 
+def iter_operations(schema: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    for path_item in schema["paths"].values():
+        yield from path_item.values()
+
+
+def iter_responses(schema: dict[str, Any]) -> Iterator[tuple[str, dict[str, Any]]]:
+    for operation in iter_operations(schema):
+        yield from operation["responses"].items()
+
+
 def drop_unreachable_validation_responses(schema: dict[str, Any]) -> None:
     """Remove the 422 response from operations that take no input.
 
@@ -32,11 +43,10 @@ def drop_unreachable_validation_responses(schema: dict[str, Any]) -> None:
     same no-input test, but documents its own HTTPValidationError shape rather
     than our ValidationProblem, which is why the 422 is ours to prune.
     """
-    for path_item in schema["paths"].values():
-        for operation in path_item.values():
-            takes_input = "parameters" in operation or "requestBody" in operation
-            if not takes_input:
-                operation["responses"].pop("422", None)
+    for operation in iter_operations(schema):
+        takes_input = "parameters" in operation or "requestBody" in operation
+        if not takes_input:
+            operation["responses"].pop("422", None)
 
 
 def document_errors_as_problem_json(schema: dict[str, Any]) -> None:
@@ -45,12 +55,10 @@ def document_errors_as_problem_json(schema: dict[str, Any]) -> None:
     The handlers answer errors as RFC 9457 problem details, but FastAPI files an
     additional response under the route's own media type (application/json).
     """
-    for path_item in schema["paths"].values():
-        for operation in path_item.values():
-            for status_code, response in operation["responses"].items():
-                content = response.get("content", {})
-                if status_code[0] in "45" and "application/json" in content:
-                    content[PROBLEM_JSON_MEDIA_TYPE] = content.pop("application/json")
+    for status_code, response in iter_responses(schema):
+        content = response.get("content", {})
+        if status_code[0] in "45" and "application/json" in content:
+            content[PROBLEM_JSON_MEDIA_TYPE] = content.pop("application/json")
 
 
 class FanfanAPI(FastAPI):
@@ -60,6 +68,7 @@ class FanfanAPI(FastAPI):
     every build site so /openapi.json matches the committed spec.
     """
 
+    @override
     def openapi(self) -> dict[str, Any]:
         if self.openapi_schema is not None:
             return self.openapi_schema

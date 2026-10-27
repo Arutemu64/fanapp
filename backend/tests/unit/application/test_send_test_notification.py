@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import cast
+from typing import cast, override
 
 import pytest
 
@@ -37,6 +37,7 @@ class FakeCooldown(Cooldown):
             del self.claimed[key]
             raise
 
+    @override
     def claim(self, key: str, seconds: int) -> AbstractAsyncContextManager[None]:
         return self._claim(key, seconds)
 

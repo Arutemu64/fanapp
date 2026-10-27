@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, override
 from uuid import uuid7
 
 import pytest
@@ -37,6 +37,7 @@ class FailingEventBroker(FakeEventBroker):
         super().__init__()
         self.fail_subject = fail_subject
 
+    @override
     async def publish_raw(
         self,
         subject: str,

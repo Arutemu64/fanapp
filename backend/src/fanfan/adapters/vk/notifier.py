@@ -1,5 +1,6 @@
 import html
 import logging
+from typing import override
 
 import nh3
 
@@ -47,6 +48,7 @@ class VkNotifier(VkNotifierPort):
             f"🔔 {notification.title.upper()}\n\n{body}\n\n🌐 Открыть приложение: {url}"
         )
 
+    @override
     async def send_notification(self, notification: Notification) -> None:
         social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider=SocialProvider.VK

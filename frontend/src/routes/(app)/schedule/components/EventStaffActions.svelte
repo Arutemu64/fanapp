@@ -48,14 +48,14 @@
 		action();
 	}
 
-	type ConfirmConfig = {
+	interface ConfirmConfig {
 		title: string;
 		message: string;
 		confirmLabel: string;
 		color: 'primary' | 'red';
 		notifyTone: 'warning' | 'muted';
 		run: () => void;
-	};
+	}
 	let confirmOpen = $state(false);
 	let confirmConfig = $state<ConfirmConfig | null>(null);
 

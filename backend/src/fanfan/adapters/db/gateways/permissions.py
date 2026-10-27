@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,17 +35,20 @@ class SqlUserPermissionGateway(UserPermissionGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, user_permission: UserPermission) -> None:
         user_perm_orm = _from_model(user_permission)
         self.session.add(user_perm_orm)
         await self.session.flush()
 
+    @override
     async def delete(self, user_permission: UserPermission) -> None:
         await self.session.execute(
             delete(UserPermissionORM).where(UserPermissionORM.id == user_permission.id)
         )
         await self.session.flush()
 
+    @override
     async def get_by_permission(
         self,
         user_id: UserId,
@@ -59,6 +64,7 @@ class SqlUserPermissionGateway(UserPermissionGateway):
         )
         return _to_model(user_perm_orm) if user_perm_orm else None
 
+    @override
     async def get_all_for_user(self, user_id: UserId) -> list[UserPermission]:
         user_perm_orms = await self.session.scalars(
             select(UserPermissionORM)

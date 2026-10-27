@@ -3,6 +3,7 @@ import contextlib
 import logging
 import random
 import time
+from typing import override
 
 import psycopg
 from psycopg import sql
@@ -24,9 +25,16 @@ _HEALTH_CHECK_INTERVAL_SECONDS = 30.0
 _HEALTH_CHECK_TIMEOUT_SECONDS = 5.0
 
 
+async def _close_quietly(connection: psycopg.AsyncConnection | None) -> None:
+    if connection is None:
+        return
+    with contextlib.suppress(Exception):
+        await connection.close()
+
+
 def _reconnect_delay(failures: int) -> float:
     exponent = min(failures - 1, _RECONNECT_MAX_EXPONENT)
-    multiplier: int = 2**exponent
+    multiplier = 1 << exponent
     delay = _RECONNECT_BASE_DELAY_SECONDS * multiplier
     jitter = random.uniform(0.5, 1.5)  # noqa: S311
     return min(delay * jitter, _RECONNECT_MAX_DELAY_SECONDS)
@@ -50,10 +58,12 @@ class PostgresOutboxSignal(OutboxSignal):
         self._task: asyncio.Task[None] | None = None
         self._closing = False
 
+    @override
     def arm(self) -> None:
         self._event.clear()
 
-    async def wait(self, timeout: float) -> None:  # noqa: ASYNC109
+    @override
+    async def wait(self, timeout: float) -> None:
         with contextlib.suppress(TimeoutError):
             await asyncio.wait_for(self._event.wait(), timeout)
 
@@ -84,7 +94,7 @@ class PostgresOutboxSignal(OutboxSignal):
                 connected_at = time.monotonic()
                 self._event.set()
                 await self._hold(connection)
-                if self._closing:
+                if self._closing:  # ty: ignore[redundant-condition-strict]
                     return
                 logger.warning(
                     "Outbox LISTEN connection lost; reconnecting",
@@ -97,9 +107,7 @@ class PostgresOutboxSignal(OutboxSignal):
                     extra={"relay_event": "listener_failed"},
                 )
             finally:
-                if connection is not None:
-                    with contextlib.suppress(Exception):
-                        await connection.close()
+                await _close_quietly(connection)
             if connected_at is not None:
                 uptime = time.monotonic() - connected_at
                 if uptime >= _RECONNECT_RESET_AFTER_SECONDS:

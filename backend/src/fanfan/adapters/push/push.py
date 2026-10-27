@@ -4,6 +4,7 @@ import html
 import logging
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from typing import override
 
 import httpx2
 import nh3
@@ -108,6 +109,7 @@ class PushNotifier(PushNotifierPort):
             return_exceptions=True,
         )
 
+    @override
     async def send_notification(self, notification: Notification) -> None:
         self.client.ensure_available()
         push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
@@ -119,45 +121,60 @@ class PushNotifier(PushNotifierPort):
             if isinstance(response, BaseException):
                 send_error = send_error or response
                 continue
-            status_code = response.status_code
-            if status_code in _GONE_STATUS_CODES:
-                await self.push_sub_gateway.delete(sub)
-                await self.uow.commit()
-            elif status_code in _CHANNEL_UNAVAILABLE_STATUS_CODES:
-                logger.error(
-                    "Push service rejected notification — VAPID keys or "
-                    "authorization are misconfigured",
-                    extra={
-                        "notification_id": str(notification.id),
-                        "status_code": status_code,
-                    },
-                )
-                raise NotificationChannelUnavailable
-            elif (
-                status_code == HTTPStatus.TOO_MANY_REQUESTS
-                or status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
-            ):
-                retry_after = self._retry_after_seconds(response)
-                logger.warning(
-                    "Push service throttled or failed; will retry",
-                    extra={
-                        "notification_id": str(notification.id),
-                        "status_code": status_code,
-                        "retry_after": retry_after,
-                    },
-                )
-            elif status_code >= HTTPStatus.BAD_REQUEST:
-                logger.warning(
-                    "Unexpected push service status",
-                    extra={
-                        "notification_id": str(notification.id),
-                        "status_code": status_code,
-                    },
-                )
+            response_retry_after = await self._handle_response(
+                notification, sub, response
+            )
+            if response_retry_after is not None:
+                retry_after = response_retry_after
         if send_error is not None:
             raise send_error
         if retry_after is not None:
             raise NotificationRetryAfter(retry_after=retry_after)
+
+    async def _handle_response(
+        self,
+        notification: Notification,
+        sub: PushSubscription,
+        response: httpx2.Response,
+    ) -> int | None:
+        """Act on one device's response; return seconds to wait if throttled."""
+        status_code = response.status_code
+        if status_code in _GONE_STATUS_CODES:
+            await self.push_sub_gateway.delete(sub)
+            await self.uow.commit()
+        elif status_code in _CHANNEL_UNAVAILABLE_STATUS_CODES:
+            logger.error(
+                "Push service rejected notification — VAPID keys or "
+                "authorization are misconfigured",
+                extra={
+                    "notification_id": str(notification.id),
+                    "status_code": status_code,
+                },
+            )
+            raise NotificationChannelUnavailable
+        elif (
+            status_code == HTTPStatus.TOO_MANY_REQUESTS
+            or status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
+        ):
+            retry_after = self._retry_after_seconds(response)
+            logger.warning(
+                "Push service throttled or failed; will retry",
+                extra={
+                    "notification_id": str(notification.id),
+                    "status_code": status_code,
+                    "retry_after": retry_after,
+                },
+            )
+            return retry_after
+        elif status_code >= HTTPStatus.BAD_REQUEST:
+            logger.warning(
+                "Unexpected push service status",
+                extra={
+                    "notification_id": str(notification.id),
+                    "status_code": status_code,
+                },
+            )
+        return None
 
     @staticmethod
     def _retry_after_seconds(response: httpx2.Response) -> int:

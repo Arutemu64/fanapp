@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import and_, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +31,7 @@ class SqlUserFlagGateway(UserFlagGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, flag: UserFlag) -> None:
         flag_orm = _from_model(flag)
         stmt = (
@@ -38,6 +41,7 @@ class SqlUserFlagGateway(UserFlagGateway):
         )
         await self.session.execute(stmt)
 
+    @override
     async def get_by_user(
         self, user_id: UserId, flag_name: UserFlagName
     ) -> UserFlag | None:
@@ -54,5 +58,6 @@ class SqlUserFlagGateway(UserFlagGateway):
         flag_orm = await self.session.scalar(stmt)
         return _to_model(flag_orm) if flag_orm else None
 
+    @override
     async def delete(self, flag: UserFlag) -> None:
         await self.session.execute(delete(UserFlagORM).where(UserFlagORM.id == flag.id))

@@ -25,7 +25,8 @@ VALID_ENTRY = ScheduleEventRow(
     duration=900,
     nomination_title="Вне конкурса",
 )
-VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump() | {"type": None}
+VALID_ROW: dict[str, object] = dict(VALID_ENTRY.model_dump())
+VALID_ROW["type"] = None
 
 
 def valid_row(**overrides: object) -> tuple[object, ...]:

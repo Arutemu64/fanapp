@@ -87,7 +87,7 @@ class WebPushClient:
             subscription=push_subscription,
             ttl=ttl_seconds,
         )
-        headers: dict[str, str] = {**message.headers, "urgency": urgency}
+        headers = {**cast("dict[str, str]", message.headers), "urgency": urgency}
         if topic is not None:
             headers["topic"] = topic
         return await self._client.post(

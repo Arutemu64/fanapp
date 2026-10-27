@@ -3,7 +3,7 @@ import re
 from base64 import urlsafe_b64encode
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 from uuid import uuid7
 
 import httpx2
@@ -158,9 +158,11 @@ class _RecordingClient(WebPushClient):
         self._fail_endpoints = fail_endpoints
         self.calls: list[dict[str, Any]] = []
 
+    @override
     def ensure_available(self) -> None:
         pass
 
+    @override
     async def send(
         self,
         *,
@@ -190,12 +192,14 @@ class _StubGateway(PushSubscriptionGateway):
         self._subs = subs
         self.deleted: list[PushSubscription] = []
 
+    @override
     async def list_by_user(
         self,
-        user_id: UserId,  # noqa: ARG002
+        user_id: UserId,
     ) -> list[PushSubscription]:
         return self._subs
 
+    @override
     async def delete(self, model: PushSubscription) -> None:
         self.deleted.append(model)
 
@@ -204,6 +208,7 @@ class _StubUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
+    @override
     async def commit(self) -> None:
         self.commits += 1
 

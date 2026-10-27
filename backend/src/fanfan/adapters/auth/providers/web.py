@@ -1,3 +1,5 @@
+from typing import override
+
 import sentry_sdk
 from fastapi import Request
 
@@ -16,6 +18,7 @@ class WebIdProvider(IdProvider):
         self.request = request
         self.session_store = session_store
 
+    @override
     async def get_current_user_id(self) -> UserId | None:
         session_id = self.request.cookies.get(SESSION_COOKIE_NAME)
         if session_id is None:

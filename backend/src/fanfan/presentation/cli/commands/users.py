@@ -1,8 +1,6 @@
 import logging
-from typing import TYPE_CHECKING
 
 import click
-from dishka.integrations.click import CONTAINER_NAME
 from pydantic import ValidationError
 
 from fanfan.application.interactors.users.create_user import (
@@ -11,10 +9,7 @@ from fanfan.application.interactors.users.create_user import (
 )
 from fanfan.core.exceptions.base import AppException
 from fanfan.core.vo.user import UserRole
-from fanfan.presentation.cli.commands.common import async_command
-
-if TYPE_CHECKING:
-    from dishka import AsyncContainer
+from fanfan.presentation.cli.commands.common import async_command, cli_container
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +41,7 @@ async def create_user_command(
         )
         raise click.ClickException(problems) from err
 
-    container: AsyncContainer = context.meta[CONTAINER_NAME]
+    container = cli_container(context)
     async with container() as r_container:
         create_user = await r_container.get(CreateUser)
         try:

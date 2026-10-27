@@ -2,7 +2,7 @@ import type * as Svelte from 'svelte';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const destroyCallbacks = vi.hoisted(() => [] as Array<() => void>);
+const destroyCallbacks = vi.hoisted(() => [] as (() => void)[]);
 
 vi.mock('svelte', async (importOriginal) => ({
 	...(await importOriginal<typeof Svelte>()),

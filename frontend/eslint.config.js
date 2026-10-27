@@ -26,6 +26,7 @@ export default defineConfig(
 	{ ignores: ['src/lib/api/generated/', 'src/lib/paraglide/'] },
 	js.configs.recommended,
 	ts.configs.strictTypeChecked,
+	ts.configs.stylisticTypeChecked,
 	svelte.configs.recommended,
 	prettier,
 	svelte.configs.prettier,
@@ -84,6 +85,17 @@ export default defineConfig(
 			'@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
 			'no-implicit-coercion': ['error', { allow: ['!!'] }],
 			'no-param-reassign': 'error',
+			complexity: ['error', 10],
+			'max-depth': ['error', 3],
+			'max-params': ['error', 4],
+			'max-lines-per-function': ['error', { max: 60, skipBlankLines: true, skipComments: true }],
+			'no-nested-ternary': 'error',
+			'@typescript-eslint/non-nullable-type-assertion-style': 'off',
+			'@typescript-eslint/no-empty-function': ['error', { allow: ['arrowFunctions'] }],
+			'@typescript-eslint/prefer-nullish-coalescing': [
+				'error',
+				{ ignorePrimitives: { string: true, boolean: true } }
+			],
 			'no-console': ['error', { allow: ['warn', 'error'] }],
 			'no-restricted-imports': [
 				'error',
@@ -152,6 +164,14 @@ export default defineConfig(
 		files: ['src/**/*.test.ts'],
 		extends: [vitest.configs.recommended]
 	},
+	{
+		files: ['src/**/*.test.ts', 'e2e/**/*.ts'],
+		rules: {
+			'max-lines-per-function': 'off',
+			'max-params': 'off',
+			'@typescript-eslint/no-empty-function': 'off'
+		}
+	},
 	...tailwindConfigs,
 	{
 		files: ['src/lib/components/ui/button/button.svelte'],
@@ -169,7 +189,17 @@ export default defineConfig(
 			'@typescript-eslint/no-unsafe-assignment': 'off',
 			'@typescript-eslint/no-unsafe-call': 'off',
 			'@typescript-eslint/no-unsafe-member-access': 'off',
-			'@typescript-eslint/no-unsafe-return': 'off'
+			'@typescript-eslint/no-unsafe-return': 'off',
+			complexity: 'off',
+			'max-depth': 'off',
+			'max-params': 'off',
+			'max-lines-per-function': 'off',
+			'no-nested-ternary': 'off',
+			'@typescript-eslint/array-type': 'off',
+			'@typescript-eslint/consistent-type-definitions': 'off',
+			'@typescript-eslint/no-empty-function': 'off',
+			'@typescript-eslint/prefer-nullish-coalescing': 'off',
+			'@typescript-eslint/prefer-optional-chain': 'off'
 		}
 	},
 	{
@@ -182,5 +212,9 @@ export default defineConfig(
 			'playwright.gallery.config.ts'
 		],
 		extends: [ts.configs.disableTypeChecked]
+	},
+	{
+		files: ['vite.config.ts'],
+		rules: { 'max-lines-per-function': 'off' }
 	}
 );

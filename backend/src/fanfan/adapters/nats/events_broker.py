@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any
+from typing import Any, override
 
 from faststream.nats import NatsBroker
 
@@ -22,6 +22,7 @@ class NatsEventBroker(EventBroker):
     def __init__(self, broker: NatsBroker) -> None:
         self.broker = broker
 
+    @override
     async def publish(self, event: Message) -> None:
         headers: dict[str, str] = {}
         dedup_id = event.dedup_id()
@@ -35,6 +36,7 @@ class NatsEventBroker(EventBroker):
             timeout=_PUBLISH_TIMEOUT_SECONDS,
         )
 
+    @override
     async def publish_many(self, events: Sequence[Message]) -> None:
         in_flight = asyncio.Semaphore(_MAX_IN_FLIGHT_PUBLISHES)
 
@@ -57,6 +59,7 @@ class NatsEventBroker(EventBroker):
             msg = f"{len(failures)} of {len(events)} events were not published"
             raise ExceptionGroup(msg, failures)
 
+    @override
     async def publish_raw(
         self,
         subject: str,

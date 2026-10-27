@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +39,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, social_identity: SocialIdentity) -> None:
         social_identity_orm = _from_model(social_identity)
         with translate_integrity_error(
@@ -48,6 +51,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             self.session.add(social_identity_orm)
             await self.session.flush()
 
+    @override
     async def get_by_provider(
         self, user_id: UserId, provider: SocialProvider
     ) -> SocialIdentity | None:
@@ -64,6 +68,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         social_identity_orm = await self.session.scalar(stmt)
         return _to_model(social_identity_orm) if social_identity_orm else None
 
+    @override
     async def get_by_subject(
         self, provider: SocialProvider, subject: str
     ) -> SocialIdentity | None:
@@ -80,6 +85,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         social_identity_orm = await self.session.scalar(stmt)
         return _to_model(social_identity_orm) if social_identity_orm else None
 
+    @override
     async def count_by_user(self, user_id: UserId) -> int:
         stmt = (
             select(func.count())
@@ -88,6 +94,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         )
         return await self.session.scalar(stmt) or 0
 
+    @override
     async def delete(self, social_identity: SocialIdentity) -> None:
         await self.session.execute(
             delete(SocialIdentityORM).where(SocialIdentityORM.id == social_identity.id)

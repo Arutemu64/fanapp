@@ -177,10 +177,9 @@ async def login(dishka_request: AsyncContainer) -> Callable[[User], None]:
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def reset_redis(dishka_request: AsyncContainer) -> AsyncGenerator[None]:
+async def reset_redis(dishka_request: AsyncContainer) -> None:
     redis = await dishka_request.get(Redis)
     await redis.flushdb()
-    yield
 
 
 @pytest_asyncio.fixture(scope="session")

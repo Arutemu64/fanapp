@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
@@ -17,9 +17,11 @@ class FakeCaptchaVerifier(CaptchaVerifier):
         self.verified_tokens: list[str | None] = []
         self.reject = False
 
+    @override
     async def issue_challenge(self) -> dict[str, Any] | None:
         return None
 
+    @override
     async def verify(self, token: str | None) -> None:
         self.verified_tokens.append(token)
         if self.reject:

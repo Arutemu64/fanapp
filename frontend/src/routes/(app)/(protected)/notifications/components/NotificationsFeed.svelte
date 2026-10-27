@@ -78,7 +78,7 @@
 
 	let showMarkAll = $derived(openingReadSettled && unreadCount > 0);
 
-	async function markRead(ids: Array<NotificationDto['id']>) {
+	async function markRead(ids: NotificationDto['id'][]) {
 		for (const id of ids) {
 			requestedReadIds.add(id);
 			unseenOnArrival.add(id);

@@ -11,11 +11,11 @@ function normalizeSearchText(value: string): string {
 		.trim();
 }
 
-type SearchFields = Array<string | number | null | undefined>;
+type SearchFields = (string | number | null | undefined)[];
 
-export type SearchIndex<T> = {
+export interface SearchIndex<T> {
 	filter(query: string): T[];
-};
+}
 
 export function createSearchIndex<T>(
 	items: readonly T[],

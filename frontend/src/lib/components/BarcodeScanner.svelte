@@ -83,6 +83,18 @@
 		}
 	}
 
+	function captureFrame(
+		video: HTMLVideoElement,
+		canvas: HTMLCanvasElement,
+		context: CanvasRenderingContext2D
+	): ImageData {
+		const { videoWidth: width, videoHeight: height } = video;
+		canvas.width = width;
+		canvas.height = height;
+		context.drawImage(video, 0, 0, width, height);
+		return context.getImageData(0, 0, width, height);
+	}
+
 	function scanFromCamera(video: HTMLVideoElement) {
 		const teardown = new AbortController();
 		const isTornDown = () => teardown.signal.aborted;
@@ -116,13 +128,10 @@
 		async function readFrame() {
 			if (isTornDown() || context === null) return;
 			if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-				const { videoWidth: width, videoHeight: height } = video;
-				canvas.width = width;
-				canvas.height = height;
-				context.drawImage(video, 0, 0, width, height);
+				const frame = captureFrame(video, canvas, context);
 				let text: string | null;
 				try {
-					text = await readBarcode(context.getImageData(0, 0, width, height), formats);
+					text = await readBarcode(frame, formats);
 				} catch {
 					cameraStatus = 'failed';
 					stopCamera();

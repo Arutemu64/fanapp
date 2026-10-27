@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import delete, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,6 +38,7 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, model: PushSubscription) -> None:
         push_sub_orm = _from_model(model)
         with translate_integrity_error(
@@ -46,6 +49,7 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
             self.session.add(push_sub_orm)
             await self.session.flush()
 
+    @override
     async def get_by_endpoint(self, endpoint: str) -> PushSubscription | None:
         stmt = (
             select(PushSubscriptionORM)
@@ -55,6 +59,7 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
         push_sub_orm = await self.session.scalar(stmt)
         return _to_model(push_sub_orm) if push_sub_orm else None
 
+    @override
     async def exists_for_user(self, user_id: UserId, endpoint: str) -> bool:
         stmt = select(
             exists().where(
@@ -64,11 +69,13 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
         )
         return bool(await self.session.scalar(stmt))
 
+    @override
     async def list_by_user(self, user_id: UserId) -> list[PushSubscription]:
         stmt = select(PushSubscriptionORM).where(PushSubscriptionORM.user_id == user_id)
         push_sub_orm = await self.session.scalars(stmt)
         return [_to_model(ps) for ps in push_sub_orm]
 
+    @override
     async def delete(self, model: PushSubscription) -> None:
         stmt = delete(PushSubscriptionORM).where(PushSubscriptionORM.id == model.id)
         await self.session.execute(stmt)

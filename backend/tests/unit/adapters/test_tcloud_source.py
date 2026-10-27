@@ -1,3 +1,5 @@
+from typing import override
+
 import pytest
 
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
@@ -55,6 +57,7 @@ class FakeTCloudClient(TCloudClient):
         self.order_statuses: list[OrderStatus] = []
         self.refund_statuses: list[RefundStatus] = []
 
+    @override
     async def get_orders(
         self, status: OrderStatus, page: int = 1, page_size: int = 200
     ) -> OrdersResponse:
@@ -67,9 +70,11 @@ class FakeTCloudClient(TCloudClient):
             ),
         )
 
+    @override
     async def get_order(self, order_id: str) -> Order | None:
         return self._orders_by_id.get(order_id)
 
+    @override
     async def get_refunds(
         self, status: RefundStatus, page: int = 1, page_size: int = 200
     ) -> RefundsResponse:

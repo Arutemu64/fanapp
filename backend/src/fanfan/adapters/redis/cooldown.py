@@ -2,6 +2,7 @@ import math
 import secrets
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import override
 
 from redis.asyncio import Redis
 
@@ -28,6 +29,7 @@ class RedisCooldown(Cooldown):
         milliseconds = await self.redis.pttl(redis_key)
         return max(1, math.ceil(milliseconds / 1000))
 
+    @override
     @asynccontextmanager
     async def claim(self, key: str, seconds: int) -> AsyncIterator[None]:
         redis_key = self._redis_key(key)

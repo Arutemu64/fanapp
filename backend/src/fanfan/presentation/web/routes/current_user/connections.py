@@ -1,6 +1,6 @@
 import logging
 
-from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
+from authlib.integrations.starlette_client import OAuth
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
@@ -14,7 +14,11 @@ from fanfan.application.interactors.current_user.unlink_social_account import (
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.config import WebConfig
-from fanfan.presentation.web.oauth import OAUTH_ERROR_FAILED, OAuthIntent
+from fanfan.presentation.web.oauth import (
+    OAUTH_ERROR_FAILED,
+    OAuthIntent,
+    create_oauth_client,
+)
 from fanfan.presentation.web.routes.auth.oauth import (
     build_authorization_url,
     build_profile_redirect,
@@ -60,7 +64,7 @@ async def start_account_link(
         return build_profile_redirect(OAUTH_ERROR_FAILED)
 
     try:
-        client: StarletteOAuth2App = oauth.create_client(provider.value)
+        client = create_oauth_client(oauth, provider)
         current_user = await current_user_provider.require_user()
         url = await build_authorization_url(
             client,

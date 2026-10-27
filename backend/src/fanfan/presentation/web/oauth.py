@@ -19,11 +19,11 @@ provider into the state to save a route.
 import logging
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 from urllib.parse import urlencode, urlsplit
 
 import httpx2
-from authlib.integrations.starlette_client import OAuthError, StarletteOAuth2App
+from authlib.integrations.starlette_client import OAuth, OAuthError, StarletteOAuth2App
 from pydantic import AfterValidator, BaseModel, ValidationError
 from starlette.requests import Request
 
@@ -323,3 +323,7 @@ async def fetch_vk_claims(vk: StarletteOAuth2App, request: Request) -> VkClaims:
     except Exception as e:
         logger.exception("VK token exchange or user-info fetch failed")
         raise OAuthFailed(OAUTH_ERROR_FAILED) from e
+
+
+def create_oauth_client(oauth: OAuth, provider: SocialProvider) -> StarletteOAuth2App:
+    return cast("StarletteOAuth2App", oauth.create_client(provider.value))

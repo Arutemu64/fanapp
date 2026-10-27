@@ -6,12 +6,12 @@ function titleIndex(titles: string[]) {
 	return createSearchIndex(titles, (title) => [title]);
 }
 
-type ScheduleRow = {
+interface ScheduleRow {
 	number: number;
 	title: string;
 	block_title: string | null;
 	nomination_title: string | null;
-};
+}
 
 const rows: ScheduleRow[] = [
 	{ number: 1, title: 'Опенинг: Наруто', block_title: 'Блок А', nomination_title: 'Караоке' },

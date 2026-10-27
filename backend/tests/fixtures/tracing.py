@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from typing import override
 
 import pytest
 import sentry_sdk
@@ -7,6 +8,7 @@ from sentry_sdk.transport import Transport
 
 
 class _DropTransport(Transport):
+    @override
     def capture_envelope(self, envelope: Envelope) -> None: ...
 
 

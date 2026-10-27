@@ -1,6 +1,6 @@
 import time
 from collections.abc import Awaitable
-from typing import cast
+from typing import cast, override
 
 from redis.asyncio import Redis
 
@@ -18,6 +18,7 @@ class RedisPresenceGateway(PresenceGateway):
     def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
+    @override
     async def mark_online(self, user_id: UserId) -> None:
         now = time.time()
         async with self.redis.pipeline(transaction=True) as pipe:
@@ -25,6 +26,7 @@ class RedisPresenceGateway(PresenceGateway):
             pipe.expire(_KEY, _ONLINE_WINDOW_SECONDS)
             await pipe.execute()
 
+    @override
     async def count_online(self) -> int:
         cutoff = time.time() - _ONLINE_WINDOW_SECONDS
         async with self.redis.pipeline(transaction=True) as pipe:

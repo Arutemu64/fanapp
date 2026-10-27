@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 from collections.abc import Callable
+from typing import override
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -81,6 +82,7 @@ class RedisTokenRegistry(TokenRegistry):
             await self.redis.delete(build_code_key(old_hash))
         await self.redis.set(active_key, new_code_hash, ex=ttl)
 
+    @override
     async def issue_email_confirmation_code(
         self,
         user_id: UserId,
@@ -103,6 +105,7 @@ class RedisTokenRegistry(TokenRegistry):
             new_code_hash=code_hash,
         )
 
+    @override
     async def consume_email_confirmation_code(
         self,
         user_id: UserId,
@@ -128,6 +131,7 @@ class RedisTokenRegistry(TokenRegistry):
         payload = json.loads(stored_payload)
         return str(payload["email"])
 
+    @override
     async def issue_email_login_code(
         self,
         user_id: UserId,
@@ -150,6 +154,7 @@ class RedisTokenRegistry(TokenRegistry):
             new_code_hash=code_hash,
         )
 
+    @override
     async def consume_email_login_code(
         self,
         email: str,

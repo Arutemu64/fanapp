@@ -1,3 +1,5 @@
+from typing import override
+
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
@@ -21,6 +23,7 @@ class PostgresWorkerLock(WorkerLock):
         self._connection: AsyncConnection | None = None
         self._key: str | None = None
 
+    @override
     async def try_acquire(self, key: str) -> bool:
         if self._connection is None:
             self._connection = await self._engine.connect()
@@ -33,6 +36,7 @@ class PostgresWorkerLock(WorkerLock):
             self._key = key
         return bool(acquired)
 
+    @override
     async def release(self) -> None:
         if self._connection is None:
             return

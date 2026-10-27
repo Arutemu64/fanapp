@@ -18,7 +18,7 @@ _STUCK_AFTER_ATTEMPTS = 10
 
 def _retry_delay(attempt: int) -> timedelta:
     exponent = min(attempt - 1, _RETRY_MAX_EXPONENT)
-    multiplier: int = 2**exponent
+    multiplier = 1 << exponent
     return min(_RETRY_BASE_DELAY * multiplier, _RETRY_MAX_DELAY)
 
 
@@ -52,40 +52,45 @@ class PublishOutboxEvents:
             )
             if not messages:
                 return
-            published_ids: list[UUID] = []
-            failed = False
-            try:
-                for message in messages:
-                    try:
-                        await self.events_broker.publish_raw(
-                            subject=message.subject,
-                            payload=message.payload,
-                            message_id=str(message.id),
-                            occurred_at=message.created_at,
-                            trace_headers=message.trace_headers,
-                        )
-                    except Exception as error:  # noqa: BLE001
-                        await self._hold_back(message, error)
-                        failed = True
-                        break
-                    published_ids.append(message.id)
-            finally:
-                if published_ids:
-                    await self.outbox_gateway.mark_published(published_ids)
-                if published_ids or failed:
-                    await self.uow.commit()
-                if published_ids:
-                    logger.info(
-                        "Outbox relay published events",
-                        extra={
-                            "relay_event": "published",
-                            "event_count": len(published_ids),
-                        },
-                    )
+            failed = await self._publish_batch(messages)
             if failed:
                 return
             if len(messages) < self.config.batch_size:
                 return
+
+    async def _publish_batch(self, messages: list[OutboxMessage]) -> bool:
+        """Publish in order until one fails; return whether one failed."""
+        published_ids: list[UUID] = []
+        failed = False
+        try:
+            for message in messages:
+                try:
+                    await self.events_broker.publish_raw(
+                        subject=message.subject,
+                        payload=message.payload,
+                        message_id=str(message.id),
+                        occurred_at=message.created_at,
+                        trace_headers=message.trace_headers,
+                    )
+                except Exception as error:  # noqa: BLE001
+                    await self._hold_back(message, error)
+                    failed = True
+                    break
+                published_ids.append(message.id)
+        finally:
+            if published_ids:
+                await self.outbox_gateway.mark_published(published_ids)
+            if published_ids or failed:
+                await self.uow.commit()
+            if published_ids:
+                logger.info(
+                    "Outbox relay published events",
+                    extra={
+                        "relay_event": "published",
+                        "event_count": len(published_ids),
+                    },
+                )
+        return failed
 
     async def _hold_back(self, message: OutboxMessage, error: Exception) -> None:
         attempt = message.attempts + 1

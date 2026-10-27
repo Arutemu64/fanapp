@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
+	import {
+		type AfterNavigate,
+		afterNavigate,
+		beforeNavigate,
+		type OnNavigate,
+		onNavigate
+	} from '$app/navigation';
 	import { page } from '$app/state';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { prefersReducedMotion } from 'svelte/motion';
@@ -112,31 +118,37 @@
 		if (TAB_ROOTS.has(to)) {
 			tabMemory.lastSearches[to] = navigation.to?.url.search ?? '';
 		}
-		const isQueryOnly =
-			navigation.type !== 'enter' &&
-			navigation.type !== 'popstate' &&
-			navigation.from?.url.pathname === to;
-		if (isQueryOnly) return;
-		const savedTop = tabMemory.scrollTops[to];
-		if (
-			navigation.type !== 'popstate' &&
-			TAB_ROOTS.has(to) &&
-			savedTop !== undefined &&
-			savedTop > 0
-		) {
-			window.scrollTo({ top: savedTop, behavior: 'instant' });
-		}
+		if (isQueryOnlyNavigation(navigation, to)) return;
+		if (navigation.type !== 'popstate') restoreTabScroll(to);
 		syncChromeToScroll();
 	});
 
+	function isQueryOnlyNavigation(navigation: AfterNavigate, to: string): boolean {
+		return (
+			navigation.type !== 'enter' &&
+			navigation.type !== 'popstate' &&
+			navigation.from?.url.pathname === to
+		);
+	}
+
+	function restoreTabScroll(to: string) {
+		const savedTop = tabMemory.scrollTops[to];
+		if (TAB_ROOTS.has(to) && savedTop !== undefined && savedTop > 0) {
+			window.scrollTo({ top: savedTop, behavior: 'instant' });
+		}
+	}
+
 	let transitionId = 0;
 
+	function canAnimateNavigation(navigation: OnNavigate): boolean {
+		if (!('startViewTransition' in document)) return false;
+		if (isDesktop.current || prefersReducedMotion.current) return false;
+		return navigation.to?.route.id?.startsWith('/(app)') ?? false;
+	}
+
 	onNavigate((navigation) => {
-		if (navigation.shallow) return;
-		if (!('startViewTransition' in document)) return;
-		if (isDesktop.current || prefersReducedMotion.current) return;
+		if (navigation.shallow || !canAnimateNavigation(navigation)) return;
 		if (!navigation.from || !navigation.to) return;
-		if (!navigation.to.route.id?.startsWith('/(app)')) return;
 
 		const kind = navTransitionKind({
 			from: navigation.from.url.pathname,

@@ -154,54 +154,12 @@ export class PushDevice {
 				return 'unavailable';
 			}
 
-			if (this.#browser.permission() === 'denied') {
-				this.state = 'blocked';
-				return 'blocked';
-			}
-			if (this.#browser.permission() === 'default') {
-				const permission = await this.#browser.requestPermission();
-				if (permission !== 'granted') {
-					if (permission === 'denied') {
-						this.state = 'blocked';
-					}
-					Sentry.addBreadcrumb({
-						category: 'push',
-						level: 'info',
-						message: 'Push permission not granted',
-						data: { permission }
-					});
-					return 'not-granted';
-				}
-			}
+			const refusal = await this.#ensurePermission();
+			if (refusal) return refusal;
 
 			const subscription = await this.#browser.subscribe(this.#vapidKey);
 			browserSubscribed = true;
-
-			const { endpoint, keys } = subscription.toJSON();
-			if (!endpoint || !keys?.p256dh || !keys.auth) {
-				Sentry.captureMessage('Push subscribe returned an incomplete subscription', {
-					level: 'warning',
-					tags: { push_outcome: 'invalid_subscription' }
-				});
-				await this.#discard(subscription);
-				return 'incomplete';
-			}
-
-			try {
-				await this.#backend.register({ endpoint, p256dh: keys.p256dh, auth: keys.auth });
-			} catch (error: unknown) {
-				console.error('API Error:', error);
-				Sentry.captureMessage('Push subscribe rejected by backend', {
-					level: 'warning',
-					tags: { push_outcome: 'backend_rejected' },
-					extra: { code: getApiErrorCode(error) }
-				});
-				await this.#discard(subscription);
-				return 'rejected';
-			}
-
-			this.state = 'on';
-			return 'enabled';
+			return await this.#register(subscription);
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
 			Sentry.captureException(error, {
@@ -211,6 +169,56 @@ export class PushDevice {
 		} finally {
 			this.isBusy = false;
 		}
+	}
+
+	async #ensurePermission(): Promise<PushToggleOutcome | null> {
+		const current = this.#browser.permission();
+		if (current === 'denied') {
+			this.state = 'blocked';
+			return 'blocked';
+		}
+		if (current !== 'default') return null;
+
+		const permission = await this.#browser.requestPermission();
+		if (permission === 'granted') return null;
+		if (permission === 'denied') {
+			this.state = 'blocked';
+		}
+		Sentry.addBreadcrumb({
+			category: 'push',
+			level: 'info',
+			message: 'Push permission not granted',
+			data: { permission }
+		});
+		return 'not-granted';
+	}
+
+	async #register(subscription: PushSubscription): Promise<PushToggleOutcome> {
+		const { endpoint, keys } = subscription.toJSON();
+		if (!endpoint || !keys?.p256dh || !keys.auth) {
+			Sentry.captureMessage('Push subscribe returned an incomplete subscription', {
+				level: 'warning',
+				tags: { push_outcome: 'invalid_subscription' }
+			});
+			await this.#discard(subscription);
+			return 'incomplete';
+		}
+
+		try {
+			await this.#backend.register({ endpoint, p256dh: keys.p256dh, auth: keys.auth });
+		} catch (error: unknown) {
+			console.error('API Error:', error);
+			Sentry.captureMessage('Push subscribe rejected by backend', {
+				level: 'warning',
+				tags: { push_outcome: 'backend_rejected' },
+				extra: { code: getApiErrorCode(error) }
+			});
+			await this.#discard(subscription);
+			return 'rejected';
+		}
+
+		this.state = 'on';
+		return 'enabled';
 	}
 
 	async #discard(subscription: PushSubscription) {

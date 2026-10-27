@@ -7,7 +7,7 @@ export interface DayGroup<T> {
 }
 
 export function groupByDay<T extends { created_at: string }>(
-	items: ReadonlyArray<T>,
+	items: readonly T[],
 	now: number = Date.now()
 ): DayGroup<T>[] {
 	const groups = new Map<string, DayGroup<T>>();

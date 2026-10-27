@@ -1,5 +1,6 @@
 import time
 import typing
+from typing import override
 
 import sentry_sdk
 from faststream import BaseMiddleware
@@ -28,11 +29,12 @@ class SentryMiddleware(BaseMiddleware):
 
     _reported: BaseException | None = None
 
+    @override
     async def publish_scope(
         self,
         call_next: typing.Callable[[PublishCommand], typing.Awaitable[typing.Any]],
         cmd: PublishCommand,
-    ) -> typing.Any:  # noqa: ANN401
+    ) -> typing.Any:
         if sentry_sdk.get_current_span() is None:
             return await call_next(cmd)
         with sentry_sdk.start_span(op=_PUBLISH_OP, name=cmd.destination) as span:
@@ -41,13 +43,14 @@ class SentryMiddleware(BaseMiddleware):
                 cmd.headers.setdefault(name, value)
             return await call_next(cmd)
 
+    @override
     async def consume_scope(
         self,
         call_next: typing.Callable[
             [StreamMessage[typing.Any]], typing.Awaitable[typing.Any]
         ],
         msg: StreamMessage[typing.Any],
-    ) -> typing.Any:  # noqa: ANN401
+    ) -> typing.Any:
         with sentry_sdk.isolation_scope():
             name = _consumer_name(msg)
             transaction = sentry_sdk.continue_trace(
@@ -68,6 +71,7 @@ class SentryMiddleware(BaseMiddleware):
                     self._reported = error
                     raise
 
+    @override
     async def after_processed(
         self,
         exc_type: type[BaseException] | None = None,

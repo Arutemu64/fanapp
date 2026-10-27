@@ -16,7 +16,7 @@ import {
 const CONNECTION_FAILED = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 
 function validationError(
-	errors: Array<{ loc: Array<string | number>; type: string; ctx?: Record<string, unknown> }>
+	errors: { loc: (string | number)[]; type: string; ctx?: Record<string, unknown> }[]
 ) {
 	return { code: 'VALIDATION_ERROR', errors };
 }

@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, override
 from uuid import UUID
 
 from sqlalchemy import and_, delete, func, select
@@ -36,6 +36,7 @@ class SqlVoteGateway(VoteGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def add(self, vote: Vote) -> None:
         vote_orm = _from_model(vote)
         vote_orm.nomination_id = cast(
@@ -56,6 +57,7 @@ class SqlVoteGateway(VoteGateway):
             self.session.add(vote_orm)
             await self.session.flush()
 
+    @override
     async def get(self, vote_id: VoteId) -> Vote | None:
         vote_orm = await self.session.scalar(
             select(VoteORM).where(VoteORM.id == vote_id).with_for_update()
@@ -64,6 +66,7 @@ class SqlVoteGateway(VoteGateway):
             return None
         return _to_model(vote_orm)
 
+    @override
     async def get_user_vote_by_nomination(
         self, nomination_id: NominationId, user_id: UserId
     ) -> Vote | None:
@@ -81,6 +84,7 @@ class SqlVoteGateway(VoteGateway):
             return None
         return _to_model(vote_orm)
 
+    @override
     async def count_user_votes(self, user_id: UserId) -> int:
         return (
             await self.session.scalar(
@@ -89,8 +93,10 @@ class SqlVoteGateway(VoteGateway):
             or 0
         )
 
+    @override
     async def delete_all_by_user(self, user_id: UserId) -> None:
         await self.session.execute(delete(VoteORM).where(VoteORM.user_id == user_id))
 
+    @override
     async def delete(self, vote: Vote) -> None:
         await self.session.execute(delete(VoteORM).where(VoteORM.id == vote.id))

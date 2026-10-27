@@ -1,8 +1,6 @@
 import logging
-from typing import TYPE_CHECKING
 
 import click
-from dishka.integrations.click import CONTAINER_NAME
 
 from fanfan.application.interactors.permissions.grant_permission import (
     GrantPermission,
@@ -14,10 +12,7 @@ from fanfan.application.interactors.permissions.revoke_permission import (
     RevokePermission,
 )
 from fanfan.core.vo.permission import Permission
-from fanfan.presentation.cli.commands.common import async_command
-
-if TYPE_CHECKING:
-    from dishka import AsyncContainer
+from fanfan.presentation.cli.commands.common import async_command, cli_container
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +27,7 @@ _PERMISSION_CHOICE = click.Choice([p.value for p in Permission])
 async def grant_permission_command(
     context: click.Context, username: str, permission: str
 ) -> None:
-    container: AsyncContainer = context.meta[CONTAINER_NAME]
+    container = cli_container(context)
     async with container() as r_container:
         grant = await r_container.get(GrantPermission)
         added = await grant(username=username, permission=Permission(permission))
@@ -50,7 +45,7 @@ async def grant_permission_command(
 async def revoke_permission_command(
     context: click.Context, username: str, permission: str
 ) -> None:
-    container: AsyncContainer = context.meta[CONTAINER_NAME]
+    container = cli_container(context)
     async with container() as r_container:
         revoke = await r_container.get(RevokePermission)
         removed = await revoke(username=username, permission=Permission(permission))
@@ -65,7 +60,7 @@ async def revoke_permission_command(
 @click.pass_context
 @async_command
 async def list_permissions_command(context: click.Context, username: str) -> None:
-    container: AsyncContainer = context.meta[CONTAINER_NAME]
+    container = cli_container(context)
     async with container() as r_container:
         list_permissions = await r_container.get(ListUserPermissions)
         permissions = await list_permissions(username=username)

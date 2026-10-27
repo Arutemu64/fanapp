@@ -6,8 +6,8 @@ import type {
 } from '#lib/types/schedule.js';
 
 export interface QueuedSubscriptionChanges {
-	subscribing: ReadonlyArray<{ event_id: string; lead_minutes: number }>;
-	unsubscribing: ReadonlyArray<string>;
+	subscribing: readonly { event_id: string; lead_minutes: number }[];
+	unsubscribing: readonly string[];
 }
 
 const NO_QUEUED_CHANGES: QueuedSubscriptionChanges = { subscribing: [], unsubscribing: [] };

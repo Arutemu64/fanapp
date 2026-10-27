@@ -50,6 +50,6 @@ export function setThemeService(): ThemeService {
 }
 
 export function getThemeService(): ThemeService {
-	if (!instance) instance = new ThemeService();
+	instance ??= new ThemeService();
 	return instance;
 }

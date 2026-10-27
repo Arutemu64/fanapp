@@ -1,3 +1,5 @@
+from typing import override
+
 from fanfan.application.ports.email_sender import EmailMessage, EmailSender
 
 
@@ -10,5 +12,6 @@ class FakeEmailSender(EmailSender):
     def __init__(self) -> None:
         self.sent_messages: list[EmailMessage] = []
 
+    @override
     async def send(self, message: EmailMessage) -> None:
         self.sent_messages.append(message)

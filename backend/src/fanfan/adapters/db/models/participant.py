@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 from uuid import UUID
 
 from sqlalchemy import ForeignKey, UniqueConstraint, func, select
@@ -44,5 +44,6 @@ class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
             deferred=True,
         )
 
+    @override
     def __str__(self) -> str:
         return self.title

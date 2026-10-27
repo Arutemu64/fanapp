@@ -3,7 +3,7 @@ import hmac
 import logging
 import secrets
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, override
 
 from altcha import Payload, create_challenge, verify_solution
 from redis.asyncio import Redis
@@ -32,6 +32,7 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
         self._challenge_secret = _subkey(master, b"challenge-signature")
         self._key_secret = _subkey(master, b"derived-key-signature")
 
+    @override
     async def issue_challenge(self) -> dict[str, Any]:
         counter = CHALLENGE_COUNTER_MIN + secrets.randbelow(
             CHALLENGE_COUNTER_MAX - CHALLENGE_COUNTER_MIN + 1
@@ -46,6 +47,7 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
         )
         return challenge.to_dict()
 
+    @override
     async def verify(self, token: str | None) -> None:
         if not token:
             raise CaptchaVerificationFailed
@@ -92,8 +94,10 @@ def _subkey(master: bytes, purpose: bytes) -> str:
 class NoOpCaptchaVerifier(CaptchaVerifier):
     """Accepts every token. Wired in when ALTCHA is not configured."""
 
+    @override
     async def issue_challenge(self) -> None:
         return None
 
-    async def verify(self, token: str | None) -> None:  # noqa: ARG002
+    @override
+    async def verify(self, token: str | None) -> None:
         return None

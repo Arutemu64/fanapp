@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import override
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, UniqueConstraint
@@ -46,5 +47,6 @@ class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         lazy="raise",
     )
 
+    @override
     def __str__(self) -> str:
         return str(self.id)

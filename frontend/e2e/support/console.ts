@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 export interface ConsoleGuard {
-	allow(...patterns: Array<string | RegExp>): void;
+	allow(...patterns: (string | RegExp)[]): void;
 }
 
 function matches(text: string, pattern: string | RegExp): boolean {
@@ -14,7 +14,7 @@ function matches(text: string, pattern: string | RegExp): boolean {
 
 export function watchConsole(page: Page): { guard: ConsoleGuard; assertClean: () => void } {
 	const collected: string[] = [];
-	const allowed: Array<string | RegExp> = [];
+	const allowed: (string | RegExp)[] = [];
 
 	page.on('console', (message) => {
 		if (message.type() !== 'error') return;

@@ -1,5 +1,6 @@
 import {
 	CancelledError,
+	type QueryCacheNotifyEvent,
 	type QueryClient,
 	type QueryExecuteOptions,
 	type QueryKey
@@ -37,6 +38,14 @@ const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code'])
 
 const SESSION_ERROR_CODES = new Set(['AUTHENTICATION_ERROR', 'USER_NOT_AUTHENTICATED']);
 
+function isQuietRefetchFailure(query: QueryCacheNotifyEvent['query'], error: unknown): boolean {
+	if (query.state.data === undefined || query.getObserversCount() === 0) return true;
+	if (query.state.fetchMeta?.fetchMore) return true;
+	if (query.meta?.quietRefetchErrors === true) return true;
+	if (gotNoApiAnswer(error) || error instanceof CancelledError) return true;
+	return SESSION_ERROR_CODES.has(getApiErrorCode(error) ?? '');
+}
+
 export function watchBackgroundRefetchErrors(
 	queryClient: QueryClient,
 	onFailure: () => void
@@ -44,13 +53,8 @@ export function watchBackgroundRefetchErrors(
 	return queryClient.getQueryCache().subscribe((event) => {
 		if (event.type !== 'updated' || event.action.type !== 'error') return;
 
-		const { query } = event;
 		const error: unknown = event.action.error;
-		if (query.state.data === undefined || query.getObserversCount() === 0) return;
-		if (query.state.fetchMeta?.fetchMore) return;
-		if (query.meta?.quietRefetchErrors === true) return;
-		if (gotNoApiAnswer(error) || error instanceof CancelledError) return;
-		if (SESSION_ERROR_CODES.has(getApiErrorCode(error) ?? '')) return;
+		if (isQuietRefetchFailure(event.query, error)) return;
 
 		onFailure();
 	});

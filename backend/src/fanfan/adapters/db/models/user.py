@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 from sqlalchemy import Index, func, text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -58,5 +58,6 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         Index("ix_users_username_lower", func.lower(username), unique=True),
     )
 
+    @override
     def __str__(self) -> str:
         return f"{self.username} ({self.id})"

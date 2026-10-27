@@ -1,7 +1,7 @@
 import html
 import logging
 from http import HTTPStatus
-from typing import Any
+from typing import Any, override
 
 from fanfan.adapters.rate_limiter import RateLimiter
 from fanfan.adapters.tgbot.client import TelegramApiClient, TelegramApiError
@@ -56,6 +56,7 @@ class TelegramNotifier(TelegramNotifierPort):
         url = self.web_config.build_url(notification.path or "/")
         return {"inline_keyboard": [[{"text": "🌐 Открыть приложение", "url": url}]]}
 
+    @override
     async def send_notification(self, notification: Notification) -> None:
         social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider=SocialProvider.TELEGRAM

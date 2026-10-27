@@ -1,3 +1,5 @@
+from typing import override
+
 from redis.asyncio import Redis
 
 from fanfan.application.ports.rate_limiter import RateLimiter
@@ -14,6 +16,7 @@ class RedisRateLimiter(RateLimiter):
     def _counter_key(key: str) -> str:
         return f"rate_limit:counter:{key}"
 
+    @override
     async def hit(self, key: str, *, limit: int, window_seconds: int) -> None:
         counter_key = self._counter_key(key)
         async with self.redis.pipeline(transaction=True) as pipe:
@@ -24,5 +27,6 @@ class RedisRateLimiter(RateLimiter):
             retry_after = await self.redis.ttl(counter_key)
             raise TooManyAttempts(retry_after=max(1, retry_after))
 
+    @override
     async def reset(self, key: str) -> None:
         await self.redis.delete(self._counter_key(key))

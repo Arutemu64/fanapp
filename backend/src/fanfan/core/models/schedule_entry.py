@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import override
 
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
@@ -17,9 +18,11 @@ class BaseScheduleEntry(AggregateRoot):
     title: str
     order: float
 
+    @override
     def __eq__(self, other: object) -> bool:
         return isinstance(other, BaseScheduleEntry) and self.id == other.id
 
+    @override
     def __hash__(self) -> int:
         return hash(self.id)
 

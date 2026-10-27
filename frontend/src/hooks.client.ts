@@ -28,6 +28,18 @@ function isStaleChunkError(exception: unknown): boolean {
 	return typeof message === 'string' && STALE_CHUNK_MESSAGE.test(message);
 }
 
+const SENSITIVE_HEADERS = ['cookie', 'authorization', 'x-api-key', 'x-auth-token'];
+
+function scrubHeaders(headers: Record<string, string>): Record<string, string> {
+	const scrubbed = { ...headers };
+	for (const key of Object.keys(scrubbed)) {
+		if (SENSITIVE_HEADERS.includes(key.toLowerCase())) {
+			scrubbed[key] = '[Filtered]';
+		}
+	}
+	return scrubbed;
+}
+
 const DEFAULT_TRACES_SAMPLE_RATE = 0.1;
 const configuredTracesSampleRate = Number(PUBLIC_SENTRY_TRACES_SAMPLE_RATE);
 const tracesSampleRate =
@@ -52,14 +64,7 @@ if (PUBLIC_SENTRY_DSN) {
 			if (event.request) {
 				delete event.request.cookies;
 				if (event.request.headers) {
-					const scrubbedHeaders = { ...event.request.headers };
-					const sensitive = ['cookie', 'authorization', 'x-api-key', 'x-auth-token'];
-					for (const key of Object.keys(scrubbedHeaders)) {
-						if (sensitive.includes(key.toLowerCase())) {
-							scrubbedHeaders[key] = '[Filtered]';
-						}
-					}
-					event.request.headers = scrubbedHeaders;
+					event.request.headers = scrubHeaders(event.request.headers);
 				}
 			}
 			return event;

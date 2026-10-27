@@ -1,14 +1,9 @@
 import logging
-from typing import TYPE_CHECKING
 
 import click
-from dishka.integrations.click import CONTAINER_NAME
 
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
-from fanfan.presentation.cli.commands.common import async_command
-
-if TYPE_CHECKING:
-    from dishka import AsyncContainer
+from fanfan.presentation.cli.commands.common import async_command, cli_container
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +12,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 @async_command
 async def sync_cosplay2_command(context: click.Context) -> None:
-    container: AsyncContainer = context.meta[CONTAINER_NAME]
+    container = cli_container(context)
     async with container() as r_container:
         execute_sync = await r_container.get(ExecuteCosplaySync)
         await execute_sync()

@@ -32,6 +32,7 @@ from fanfan.presentation.web.oauth import (
     OAuthFailed,
     OAuthFlowState,
     OAuthIntent,
+    create_oauth_client,
     fetch_telegram_claims,
     fetch_vk_claims,
     read_flow_state,
@@ -150,7 +151,7 @@ async def start_social_login(
         return build_login_redirect(OAUTH_ERROR_FAILED, return_path)
 
     try:
-        client: StarletteOAuth2App = oauth.create_client(provider.value)
+        client = create_oauth_client(oauth, provider)
         url = await build_authorization_url(
             client,
             request,
@@ -197,7 +198,7 @@ async def oauth_callback(  # noqa: PLR0913, PLR0917
     authorize: FromDishka[AuthorizeSocialLogin],
     link: FromDishka[LinkSocialAccount],
 ) -> RedirectResponse:
-    client: StarletteOAuth2App = oauth.create_client(provider.value)
+    client = create_oauth_client(oauth, provider)
 
     try:
         flow_state = await read_flow_state(client, request, provider)

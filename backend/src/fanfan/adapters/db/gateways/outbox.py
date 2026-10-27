@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Any, cast
+from typing import Any, cast, override
 from uuid import UUID
 
 from sqlalchemy import CursorResult, delete, func, or_, select, update
@@ -16,6 +16,7 @@ class SqlOutboxGateway(OutboxGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @override
     async def fetch_unpublished(self, limit: int) -> list[OutboxMessage]:
         rows = await self.session.scalars(
             select(OutboxEventORM)
@@ -32,6 +33,7 @@ class SqlOutboxGateway(OutboxGateway):
         )
         return [OutboxMessage.model_validate(row) for row in rows]
 
+    @override
     async def mark_published(self, ids: list[UUID]) -> None:
         if not ids:
             return
@@ -41,6 +43,7 @@ class SqlOutboxGateway(OutboxGateway):
             .values(published_at=func.now())
         )
 
+    @override
     async def record_failed_attempt(
         self, message_id: UUID, error: str, retry_in: timedelta
     ) -> None:
@@ -54,6 +57,7 @@ class SqlOutboxGateway(OutboxGateway):
             )
         )
 
+    @override
     async def delete_published_before(self, days: int) -> int:
         cutoff = func.now() - timedelta(days=days)
         result = await self.session.execute(

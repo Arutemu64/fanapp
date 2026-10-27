@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import override
 
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import distinct_on
@@ -58,6 +59,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         self.session = session
         self.uow = uow
 
+    @override
     async def add(self, run: SyncRun) -> None:
         run_orm = _from_model(run)
         with translate_integrity_error({"uq_sync_runs_active": SyncAlreadyRunning}):
@@ -65,6 +67,7 @@ class SqlSyncRunGateway(SyncRunGateway):
             await self.session.flush()
         self.uow.register(run)
 
+    @override
     async def get(self, run_id: SyncRunId) -> SyncRun | None:
         stmt = select(SyncRunORM).where(SyncRunORM.id == run_id).with_for_update()
         run_orm = await self.session.scalar(stmt)
@@ -74,10 +77,12 @@ class SqlSyncRunGateway(SyncRunGateway):
         self.uow.register(run)
         return run
 
+    @override
     async def save(self, run: SyncRun) -> None:
         run_orm = _from_model(run)
         await self.session.merge(run_orm)
 
+    @override
     async def get_active(self, source: SyncSource) -> SyncRun | None:
         stmt = (
             select(SyncRunORM)
@@ -94,6 +99,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         self.uow.register(run)
         return run
 
+    @override
     async def fail_stale(
         self, source: SyncSource, *, older_than: datetime, error: str
     ) -> int:
@@ -114,6 +120,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         reaped = await self.session.scalars(stmt)
         return len(reaped.all())
 
+    @override
     async def read_latest_by_source(self) -> dict[SyncSource, SyncRunDTO]:
         stmt = (
             select(SyncRunORM)

@@ -144,6 +144,37 @@ def _read_block_row(row: dict[str, object], row_index: int) -> ScheduleBlockRow:
     )
 
 
+def _read_event_row(
+    row: dict[str, object], row_index: int, seen_numbers: set[int]
+) -> ScheduleEventRow:
+    number = _read_optional_int(row["number"], column="number", row=row_index)
+    if number is not None:
+        if number in seen_numbers:
+            raise InvalidScheduleFile(
+                InvalidScheduleFileReason.DUPLICATE_NUMBER,
+                row=row_index,
+                number=number,
+            )
+        seen_numbers.add(number)
+
+    duration = _read_int(row["duration"], column="duration", row=row_index)
+    if duration <= 0:
+        raise InvalidScheduleFile(
+            InvalidScheduleFileReason.DURATION_NOT_POSITIVE,
+            column="duration",
+            row=row_index,
+        )
+
+    return ScheduleEventRow(
+        number=number,
+        title=_read_text(row["title"], column="title", row=row_index),
+        duration=duration,
+        nomination_title=_read_optional_text(
+            row["nomination_title"], column="nomination_title", row=row_index
+        ),
+    )
+
+
 def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
     rows = _read_rows(file)
     if not rows:
@@ -166,36 +197,8 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleRow]:
 
         if _read_row_type(row["type"], row=row_index) == BLOCK_ROW_TYPE:
             schedule.append(_read_block_row(row, row_index))
-            continue
-
-        number = _read_optional_int(row["number"], column="number", row=row_index)
-        if number is not None:
-            if number in seen_numbers:
-                raise InvalidScheduleFile(
-                    InvalidScheduleFileReason.DUPLICATE_NUMBER,
-                    row=row_index,
-                    number=number,
-                )
-            seen_numbers.add(number)
-
-        duration = _read_int(row["duration"], column="duration", row=row_index)
-        if duration <= 0:
-            raise InvalidScheduleFile(
-                InvalidScheduleFileReason.DURATION_NOT_POSITIVE,
-                column="duration",
-                row=row_index,
-            )
-
-        schedule.append(
-            ScheduleEventRow(
-                number=number,
-                title=_read_text(row["title"], column="title", row=row_index),
-                duration=duration,
-                nomination_title=_read_optional_text(
-                    row["nomination_title"], column="nomination_title", row=row_index
-                ),
-            )
-        )
+        else:
+            schedule.append(_read_event_row(row, row_index, seen_numbers))
 
     if not schedule:
         raise InvalidScheduleFile(InvalidScheduleFileReason.EMPTY_FILE)

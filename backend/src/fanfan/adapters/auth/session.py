@@ -1,4 +1,5 @@
 import secrets
+from typing import override
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -29,6 +30,7 @@ class SessionManager(SessionStore):
     def _decode(value: str | bytes) -> str:
         return value.decode() if isinstance(value, bytes) else value
 
+    @override
     async def create_session(self, user_id: UserId) -> str:
         session_id = secrets.token_urlsafe(32)
         user_sessions_key = self._user_sessions_key(user_id)
@@ -43,6 +45,7 @@ class SessionManager(SessionStore):
             await pipe.execute()
         return session_id
 
+    @override
     async def resolve_session(self, session_id: str) -> SessionResolution:
         key = self._session_key(session_id)
         user_id = await self.redis.get(key)
@@ -63,6 +66,7 @@ class SessionManager(SessionStore):
 
         return SessionResolution(user_id=resolved_user_id, touched=touched)
 
+    @override
     async def delete_session(self, session_id: str) -> None:
         key = self._session_key(session_id)
         user_id = await self.redis.get(key)
@@ -75,6 +79,7 @@ class SessionManager(SessionStore):
                 )
             await pipe.execute()
 
+    @override
     async def revoke_user_sessions(self, user_id: UserId) -> None:
         user_sessions_key = self._user_sessions_key(user_id)
         session_ids = await self.redis.smembers(user_sessions_key)

@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import override
 
 import structlog
 
@@ -9,6 +10,7 @@ HEALTH_CHECK_PATH = "/debug/health"
 class _HealthCheckFilter(logging.Filter):
     """Drop uvicorn access logs for the health check endpoint."""
 
+    @override
     def filter(self, record: logging.LogRecord) -> bool:
         return HEALTH_CHECK_PATH not in record.getMessage()
 
