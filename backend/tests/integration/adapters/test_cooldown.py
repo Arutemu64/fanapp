@@ -1,8 +1,8 @@
 import pytest
 from dishka import AsyncContainer
 from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from fanfan.adapters.db.expiring.transactions import TransactionSource
 from fanfan.adapters.db.models import CooldownORM
 from fanfan.application.ports.cooldown import Cooldown
 from fanfan.core.exceptions.rate_limit import CooldownActive
@@ -59,12 +59,12 @@ async def test_failed_block_leaves_a_newer_claim_alone(
     dishka_request: AsyncContainer,
 ) -> None:
     cooldown = await dishka_request.get(Cooldown)
-    transactions = await dishka_request.get(TransactionSource)
+    sessions = await dishka_request.get(async_sessionmaker[AsyncSession])
 
     async def send_that_outlives_its_window() -> None:
         async with cooldown.claim("test-reclaimed", 60):
-            async with transactions.begin() as connection:
-                await connection.execute(
+            async with sessions.begin() as session:
+                await session.execute(
                     update(CooldownORM)
                     .where(CooldownORM.key == "test-reclaimed")
                     .values(token="someone-else")

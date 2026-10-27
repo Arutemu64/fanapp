@@ -49,10 +49,12 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
   removing a user removes their sessions. Every flow creates a session after
   the user is committed. The other tables are keyed by emails, IPs or free-form
   keys and have nothing to reference.
-- **A `TransactionSource` seam** (`adapters/db/expiring/transactions.py`)
-  supplies those transactions. Production passes the engine; tests pass a
-  savepoint on the test's own connection, so the writes see the test's
-  uncommitted users and roll back with them.
+- **The adapters take the app's `async_sessionmaker`** and open one short
+  session per call. Tests bind the factory to the test's own connection with
+  `join_transaction_mode="create_savepoint"`, SQLAlchemy's documented test
+  recipe
+  ([SQLAlchemy: Joining a Session into an External Transaction](https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites)),
+  so the writes see the test's uncommitted users and roll back with them.
 - **ALTCHA's replay guard is a `Cooldown` claim** lasting until the challenge
   expires.
 - **Logged tables, not `UNLOGGED`.** An unlogged table is truncated after a
@@ -79,8 +81,8 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
   events, so 200 clients cost about 1.4 s of database time spread over the
   burst. That is acceptable at this scale. Revisit with a cache if the audience
   grows by an order of magnitude.
-- The adapters are request-scoped in DI so tests can swap the transaction
-  source; that costs one small object per request.
+- The adapters are request-scoped in DI because the test's connection is;
+  that costs one small object per request.
 - If the purge job stops, nothing breaks: expired rows are already ignored and
   the tables just grow slowly.
 

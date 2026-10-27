@@ -4,8 +4,8 @@ from datetime import timedelta
 from typing import override
 
 from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from fanfan.adapters.db.expiring.transactions import TransactionSource
 from fanfan.adapters.db.models import AuthSessionORM
 from fanfan.application.ports.session_store import SessionResolution, SessionStore
 from fanfan.core.vo.user import UserId
@@ -24,19 +24,19 @@ class PostgresSessionStore(SessionStore):
 
     def __init__(
         self,
-        transactions: TransactionSource,
+        sessions: async_sessionmaker[AsyncSession],
         ttl_seconds: int,
         touch_threshold_seconds: int,
     ) -> None:
-        self.transactions = transactions
+        self.sessions = sessions
         self.ttl = timedelta(seconds=max(1, ttl_seconds))
         self.touch_threshold = timedelta(seconds=max(1, touch_threshold_seconds))
 
     @override
     async def create_session(self, user_id: UserId) -> str:
         session_id = secrets.token_urlsafe(32)
-        async with self.transactions.begin() as connection:
-            await connection.execute(
+        async with self.sessions.begin() as session:
+            await session.execute(
                 insert(AuthSessionORM).values(
                     token_hash=_hash_token(session_id),
                     user_id=user_id,
@@ -48,9 +48,9 @@ class PostgresSessionStore(SessionStore):
     @override
     async def resolve_session(self, session_id: str) -> SessionResolution:
         token_hash = _hash_token(session_id)
-        async with self.transactions.begin() as connection:
+        async with self.sessions.begin() as session:
             row = (
-                await connection.execute(
+                await session.execute(
                     select(
                         AuthSessionORM.user_id,
                         (AuthSessionORM.expires_at - func.now()).label("remaining"),
@@ -65,7 +65,7 @@ class PostgresSessionStore(SessionStore):
 
             touched = row.remaining <= self.touch_threshold
             if touched:
-                await connection.execute(
+                await session.execute(
                     update(AuthSessionORM)
                     .where(AuthSessionORM.token_hash == token_hash)
                     .values(expires_at=func.now() + self.ttl)
@@ -74,8 +74,8 @@ class PostgresSessionStore(SessionStore):
 
     @override
     async def delete_session(self, session_id: str) -> None:
-        async with self.transactions.begin() as connection:
-            await connection.execute(
+        async with self.sessions.begin() as session:
+            await session.execute(
                 delete(AuthSessionORM).where(
                     AuthSessionORM.token_hash == _hash_token(session_id)
                 )
@@ -83,7 +83,7 @@ class PostgresSessionStore(SessionStore):
 
     @override
     async def revoke_user_sessions(self, user_id: UserId) -> None:
-        async with self.transactions.begin() as connection:
-            await connection.execute(
+        async with self.sessions.begin() as session:
+            await session.execute(
                 delete(AuthSessionORM).where(AuthSessionORM.user_id == user_id)
             )

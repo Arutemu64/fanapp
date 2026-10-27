@@ -1,48 +1,32 @@
-from collections.abc import AsyncIterable, AsyncIterator
-from contextlib import asynccontextmanager
-from typing import override
+from collections.abc import AsyncIterable
 
 from dishka import Provider, Scope, provide
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession
-
-from fanfan.adapters.db.expiring.transactions import TransactionSource
-
-
-class SavepointTransactions(TransactionSource):
-    """Runs each expiring-state call in a SAVEPOINT on the test's connection.
-
-    The writes then see rows the test added (the ``auth_sessions`` foreign key
-    needs its user) and roll back with everything else at teardown.
-    """
-
-    def __init__(self, connection: AsyncConnection) -> None:
-        self.connection = connection
-
-    @override
-    @asynccontextmanager
-    async def begin(self) -> AsyncIterator[AsyncConnection]:
-        async with self.connection.begin_nested():
-            yield self.connection
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+)
 
 
 class TestSessionProvider(Provider):
     """Per-test connection whose outer transaction is always rolled back.
 
-    Each test opens its own connection and starts an outer transaction. The
-    session binds to it with ``join_transaction_mode="create_savepoint"``: when
-    an interactor calls ``session.commit()`` it only releases a SAVEPOINT, so the
-    outer transaction stays open and is rolled back when the test finishes. The
-    expiring-state adapters share the connection through
-    ``SavepointTransactions``.
+    Each test opens its own connection and starts an outer transaction. Every
+    session binds to it with ``join_transaction_mode="create_savepoint"``, so a
+    ``commit()`` only releases a SAVEPOINT and the outer transaction is rolled
+    back when the test finishes
+    (https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites).
+    The unit of work's session and the expiring-state adapters' sessions share
+    the connection, so they see each other's rows.
 
     This gives complete isolation for free: no test can see another test's
     writes and nothing is persisted, even though interactors commit normally.
     It replaces manual table cleanup and removes the need to hand-pick unique
     ids across tests.
 
-    Registered AFTER ``DbProvider`` and ``ExpiringStateProvider`` so it
-    overrides their session and transaction source (Dishka resolves the last
-    provider registered for a given type).
+    Registered AFTER ``DbProvider`` so it overrides the production session and
+    session factory (Dishka resolves the last provider registered for a type).
     """
 
     scope = Scope.REQUEST
@@ -60,19 +44,18 @@ class TestSessionProvider(Provider):
                     await transaction.rollback()
 
     @provide
-    async def get_session(
+    def get_session_factory(
         self, connection: AsyncConnection
-    ) -> AsyncIterable[AsyncSession]:
-        session = AsyncSession(
+    ) -> async_sessionmaker[AsyncSession]:
+        return async_sessionmaker(
             bind=connection,
             expire_on_commit=False,
             join_transaction_mode="create_savepoint",
         )
-        try:
-            yield session
-        finally:
-            await session.close()
 
     @provide
-    def get_transactions(self, connection: AsyncConnection) -> TransactionSource:
-        return SavepointTransactions(connection)
+    async def get_session(
+        self, sessions: async_sessionmaker[AsyncSession]
+    ) -> AsyncIterable[AsyncSession]:
+        async with sessions() as session:
+            yield session

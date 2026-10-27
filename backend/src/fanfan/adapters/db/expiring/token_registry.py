@@ -7,8 +7,8 @@ from uuid import UUID
 
 from sqlalchemy import delete, func
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from fanfan.adapters.db.expiring.transactions import TransactionSource
 from fanfan.adapters.db.models import AuthCodeORM
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.token_registry import TokenRegistry
@@ -27,11 +27,11 @@ class PostgresTokenRegistry(TokenRegistry):
 
     def __init__(
         self,
-        transactions: TransactionSource,
+        sessions: async_sessionmaker[AsyncSession],
         config: WebConfig,
         rate_limiter: RateLimiter,
     ) -> None:
-        self.transactions = transactions
+        self.sessions = sessions
         self._secret = config.secret_key.get_secret_value().encode()
         self.rate_limiter = rate_limiter
 
@@ -54,8 +54,8 @@ class PostgresTokenRegistry(TokenRegistry):
                 set_=row,
             )
         )
-        async with self.transactions.begin() as connection:
-            await connection.execute(statement)
+        async with self.sessions.begin() as session:
+            await session.execute(statement)
 
     async def _consume(
         self,
@@ -83,8 +83,8 @@ class PostgresTokenRegistry(TokenRegistry):
             )
             .returning(AuthCodeORM.value)
         )
-        async with self.transactions.begin() as connection:
-            value = await connection.scalar(statement)
+        async with self.sessions.begin() as session:
+            value = await session.scalar(statement)
         if value is not None:
             await self.rate_limiter.reset(attempts_key)
         return value

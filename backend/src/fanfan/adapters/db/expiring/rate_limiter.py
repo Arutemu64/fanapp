@@ -4,8 +4,8 @@ from typing import override
 
 from sqlalchemy import case, delete, func
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from fanfan.adapters.db.expiring.transactions import TransactionSource
 from fanfan.adapters.db.models import RateLimitORM
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.core.exceptions.rate_limit import TooManyAttempts
@@ -18,8 +18,8 @@ class PostgresRateLimiter(RateLimiter):
     work rolls back (a wrong password raises after counting).
     """
 
-    def __init__(self, transactions: TransactionSource) -> None:
-        self.transactions = transactions
+    def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
+        self.sessions = sessions
 
     @override
     async def hit(self, key: str, *, limit: int, window_seconds: int) -> None:
@@ -42,14 +42,12 @@ class PostgresRateLimiter(RateLimiter):
                 func.extract("epoch", RateLimitORM.expires_at - func.now()),
             )
         )
-        async with self.transactions.begin() as connection:
-            hits, seconds_left = (await connection.execute(statement)).one()
+        async with self.sessions.begin() as session:
+            hits, seconds_left = (await session.execute(statement)).one()
         if hits > limit:
             raise TooManyAttempts(retry_after=max(1, math.ceil(seconds_left)))
 
     @override
     async def reset(self, key: str) -> None:
-        async with self.transactions.begin() as connection:
-            await connection.execute(
-                delete(RateLimitORM).where(RateLimitORM.key == key)
-            )
+        async with self.sessions.begin() as session:
+            await session.execute(delete(RateLimitORM).where(RateLimitORM.key == key))
