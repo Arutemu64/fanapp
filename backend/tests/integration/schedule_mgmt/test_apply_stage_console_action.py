@@ -35,7 +35,7 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
-from fanfan.core.vo.user import SYSTEM_USER_ID
+from fanfan.core.vo.user import STAGE_CONSOLE_USER_ID
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -89,7 +89,7 @@ async def _previous_number(
     return previous.number
 
 
-async def test_set_current_by_number_acts_as_the_system_user(
+async def test_set_current_by_number_acts_as_the_service_user(
     dishka_request: AsyncContainer, uow: UnitOfWork
 ) -> None:
     interactor = await dishka_request.get(ApplyStageConsoleAction)
@@ -108,7 +108,7 @@ async def test_set_current_by_number_acts_as_the_system_user(
     change = await changes_gateway.get_latest_for_event(act.id)
     assert change is not None
     assert change.type is ScheduleChangeType.SET_AS_CURRENT
-    assert change.user_id == SYSTEM_USER_ID
+    assert change.user_id == STAGE_CONSOLE_USER_ID
 
 
 async def test_repeated_cue_is_unchanged_inside_the_cooldown(
@@ -155,14 +155,14 @@ async def test_unknown_number_is_not_found(
         )
 
 
-async def test_system_user_without_schedule_manage_is_rejected(
+async def test_service_user_without_schedule_manage_is_rejected(
     dishka_request: AsyncContainer, uow: UnitOfWork
 ) -> None:
     interactor = await dishka_request.get(ApplyStageConsoleAction)
     perm_gateway = await dishka_request.get(UserPermissionGateway)
     await _add_events(dishka_request, uow, 7)
     grant = await perm_gateway.get_by_permission(
-        user_id=SYSTEM_USER_ID, permission=Permission.SCHEDULE_MANAGE
+        user_id=STAGE_CONSOLE_USER_ID, permission=Permission.SCHEDULE_MANAGE
     )
     assert grant is not None
     await perm_gateway.delete(grant)

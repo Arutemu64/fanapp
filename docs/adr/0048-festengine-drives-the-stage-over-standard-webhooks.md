@@ -29,10 +29,18 @@ We will accept FestEngine's outbound webhooks at
   twenty lines of stdlib in `presentation/web/festengine/signature.py`, no new
   dependency. A missing secret, a bad signature or an old timestamp answers 404,
   like `/webhooks/tcloud/{token}`.
-- **The system user, not API keys.** Edits run as the seeded system user
-  (ADR-0010), which needs `schedule:manage` like any organizer. The history
-  shows them as the system's. Unsetting `FESTENGINE__WEBHOOK_SECRET` or revoking
-  the grant switches the integration off.
+- **A dedicated service user, not API keys.** Edits run as the seeded
+  `festengine-bot` user, which holds only `schedule:manage` and goes through the
+  same permission check as an organizer. The history names it. It is not the
+  system user (ADR-0010), so cron, the CLI and NATS consumers gain no right to
+  edit the schedule. A webhook still needs an identity: the permission check,
+  the change history and the mailing all name a user. Unsetting
+  `FESTENGINE__WEBHOOK_SECRET`, or revoking the grant with no redeploy, switches
+  the integration off.
+- **Editors hear only about human edits.** The console changes the programme
+  once per act, so its edits skip the editor notice and appear only in the
+  changes feed. Attendee notifications are unchanged. A manual edit is now the
+  exception, so it still notifies every editor.
 - **Facts, not notes.** fanapp acts on what FestEngine did (`row.show`,
   `row.play`, `row.skip`, `row.unskip`, `row.move`, `row.unmove`) and ignores
   the raw `row.updated` edits. FestEngine is the source of truth for what the
@@ -49,18 +57,22 @@ We will accept FestEngine's outbound webhooks at
 - The announcement cooldown applies to the console too. FestEngine retries a
   429 after `Retry-After`; a repeated cue for the current act is a no-op and
   never spends the cooldown.
-- `row.unmove` only moves an act back while its latest change is the system's
-  move and it still sits after the cancelled `after_num`. Otherwise it is
+- `row.unmove` only moves an act back while its latest change is the service
+  user's move and it still sits after the cancelled `after_num`. Otherwise it is
   logged and ignored. A move corrected twice in FestEngine unmoves to the
   position before the last correction.
-- Any CLI command or NATS consumer acting as the system user may now edit the
-  schedule too.
+- The service user appears wherever users are listed, as the system user
+  already does.
 - Notes edited while hooks were off never reach fanapp; there is no snapshot.
 
 ## Alternatives considered
 
 - **Parse the notes in fanapp.** Duplicates FestEngine's rules and cannot see a
   move cancelled by deleting the dup row.
-- **Per-user API keys.** More setup for a single laptop; the system user is
-  enough until the history must name the operator.
+- **Per-user API keys.** More setup for a single laptop, and the operator is a
+  shift, not a person. Revisit if several consoles or a named operator are
+  needed.
+- **The shared system user.** Simpler, but every unattended entrypoint would
+  inherit `schedule:manage`, and the history could not tell the console from
+  other automation.
 - **fanapp polls FestEngine.** Impossible through the venue NAT.

@@ -378,8 +378,9 @@ The stage console, [FestEngine](https://github.com/DanteBC/FestEngine), posts wh
   | `row.unmove`                                         | Move it back, see below                      |
   | anything else, `row.updated` included                | `{"status": "ignored"}`                      |
 
-- **Applying** (`ApplyStageConsoleAction`): acts as the system user, which needs `schedule:manage` (migration `4b8e2d6f1a37`). It takes the edit lock, resolves numbers, and runs the same `ScheduleOperations` as the organizer interactors. An edit that is already applied answers `unchanged` without spending the cooldown; otherwise `updated`. An unknown number is `404 EVENT_NOT_FOUND`, a broken rule the usual 400, the cooldown a 429 with `Retry-After`, which FestEngine honours.
-- **Unmove** moves the act back after the entry its latest change recorded, only while that change is the system user's `MOVED` and the act still sits right after `after_num`. Anything else (an organizer moved it since, a retry already moved it back) is logged and ignored.
+- **Applying** (`ApplyStageConsoleAction`): acts as the seeded `festengine-bot` service user (`STAGE_CONSOLE_USER_ID`, migration `4b8e2d6f1a37`), which holds only `schedule:manage`. It takes the edit lock, resolves numbers, and runs the same `ScheduleOperations` as the organizer interactors. An edit that is already applied answers `unchanged` without spending the cooldown; otherwise `updated`. An unknown number is `404 EVENT_NOT_FOUND`, a broken rule the usual 400, the cooldown a 429 with `Retry-After`, which FestEngine honours.
+- **Unmove** moves the act back after the entry its latest change recorded, only while that change is the service user's `MOVED` and the act still sits right after `after_num`. Anything else (an organizer moved it since, a retry already moved it back) is logged and ignored.
+- **Editor notices**: `SendScheduleChangeNotifications` skips the editors' notice for the service user's edits, which are routine, and never sends one to the service user. Human edits still notify every editor.
 - **Operator cheat sheet** (Russian): [festengine-operator.md](festengine-operator.md).
 
 ## Presentation Layers

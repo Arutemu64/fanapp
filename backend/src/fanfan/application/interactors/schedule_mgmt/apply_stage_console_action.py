@@ -18,7 +18,7 @@ from fanfan.core.models.schedule_entry import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_change import ScheduleChangeType
-from fanfan.core.vo.user import SYSTEM_USER_ID
+from fanfan.core.vo.user import STAGE_CONSOLE_USER_ID
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class ApplyStageConsoleActionInput(BaseModel):
 
 
 class ApplyStageConsoleAction:
-    """Apply what the stage console (FestEngine) did, as the system user.
+    """Apply what the stage console (FestEngine) did, as its service user.
 
     Events are addressed by number, the only key both sides share. The edits
     run through ``ScheduleOperations``, like an organizer's (docs/adr/0048).
@@ -61,7 +61,7 @@ class ApplyStageConsoleAction:
 
     async def __call__(self, data: ApplyStageConsoleActionInput) -> bool:
         """Return whether the schedule changed."""
-        actor = await self.user_gateway.get_by_id(SYSTEM_USER_ID)
+        actor = await self.user_gateway.get_by_id(STAGE_CONSOLE_USER_ID)
         if actor is None:
             raise UserNotFound
         await self.perm_service.ensure(
@@ -108,7 +108,7 @@ class ApplyStageConsoleAction:
         moved_by_console = (
             latest_change is not None
             and latest_change.type is ScheduleChangeType.MOVED
-            and latest_change.user_id == SYSTEM_USER_ID
+            and latest_change.user_id == STAGE_CONSOLE_USER_ID
         )
         previous_entry = await self.schedule_gateway.get_previous_by_order(event.order)
         still_in_place = (
