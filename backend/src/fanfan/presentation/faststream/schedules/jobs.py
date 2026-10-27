@@ -7,6 +7,7 @@ from nats.errors import Error as NatsError
 from nats.js.client import JetStreamContext
 from nats.js.errors import NotFoundError
 
+from fanfan.application.interactors.auth.purge_expired_state import PurgeExpiredState
 from fanfan.application.interactors.notifications.purge_notifications import (
     PurgeNotifications,
 )
@@ -41,8 +42,15 @@ SYNC_TCLOUD = ScheduledJob("sync_tcloud", ExecuteTicketsSync)
 SYNC_COSPLAY2 = ScheduledJob("sync_cosplay2", ExecuteCosplaySync)
 OUTBOX_RETENTION = ScheduledJob("outbox_retention", PurgeOutboxEvents)
 NOTIFICATION_RETENTION = ScheduledJob("notification_retention", PurgeNotifications)
+EXPIRED_STATE_RETENTION = ScheduledJob("expired_state_retention", PurgeExpiredState)
 
-SCHEDULED_JOBS = (SYNC_TCLOUD, SYNC_COSPLAY2, OUTBOX_RETENTION, NOTIFICATION_RETENTION)
+SCHEDULED_JOBS = (
+    SYNC_TCLOUD,
+    SYNC_COSPLAY2,
+    OUTBOX_RETENTION,
+    NOTIFICATION_RETENTION,
+    EXPIRED_STATE_RETENTION,
+)
 
 
 def scheduled_crons(config: SchedulerConfig) -> dict[ScheduledJob, str | None]:
@@ -51,6 +59,7 @@ def scheduled_crons(config: SchedulerConfig) -> dict[ScheduledJob, str | None]:
         SYNC_COSPLAY2: config.sync_cosplay2_cron,
         OUTBOX_RETENTION: config.outbox_retention_cron,
         NOTIFICATION_RETENTION: config.notification_retention_cron,
+        EXPIRED_STATE_RETENTION: config.expired_state_retention_cron,
     }
 
 

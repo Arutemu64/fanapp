@@ -39,9 +39,6 @@ import type {
 	ConfirmEmailCodeData,
 	ConfirmEmailCodeErrors,
 	ConfirmEmailCodeResponses,
-	CountOnlineUsersData,
-	CountOnlineUsersErrors,
-	CountOnlineUsersResponses,
 	CountUnreadNotificationsData,
 	CountUnreadNotificationsErrors,
 	CountUnreadNotificationsResponses,
@@ -282,7 +279,7 @@ export const healthCheck = <ThrowOnError extends boolean = false>(
 /**
  * Login and create session
  *
- * Authenticates user with email and password. Sets an HttpOnly cookie with a Redis-backed session id.
+ * Authenticates user with email and password. Sets an HttpOnly cookie with an opaque session id.
  */
 export const login = <ThrowOnError extends boolean = false>(
 	options: Options<LoginData, ThrowOnError>
@@ -372,7 +369,7 @@ export const loginWithCode = <ThrowOnError extends boolean = false>(
 /**
  * Logout user
  *
- * Clears session cookie and removes Redis session state; also emits Clear-Site-Data so the browser drops cookies itself.
+ * Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.
  */
 export const logoutUser = <ThrowOnError extends boolean = false>(
 	options?: Options<LogoutUserData, ThrowOnError>
@@ -1669,26 +1666,6 @@ export const listUsers = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/users',
-		...options
-	});
-
-/**
- * Count online users
- *
- * How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.
- */
-export const countOnlineUsers = <ThrowOnError extends boolean = false>(
-	options?: Options<CountOnlineUsersData, ThrowOnError>
-): RequestResult<CountOnlineUsersResponses, CountOnlineUsersErrors, ThrowOnError> =>
-	(options?.client ?? client).get<CountOnlineUsersResponses, CountOnlineUsersErrors, ThrowOnError>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/users/online-count',
 		...options
 	});
 

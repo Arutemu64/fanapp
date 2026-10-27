@@ -1,7 +1,6 @@
 import asyncio
 import contextlib
 import logging
-import time
 from collections.abc import AsyncGenerator, AsyncIterable
 
 from dishka import FromDishka
@@ -10,15 +9,12 @@ from fastapi import APIRouter
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
-from fanfan.application.interactors.presence.record_presence import RecordPresence
 from fanfan.application.interactors.sse.stream_events import StreamEvents
 
 sse_router = APIRouter(tags=["SSE"])
 logger = logging.getLogger(__name__)
 
 HEARTBEAT_INTERVAL_SECONDS = 15
-
-PRESENCE_REFRESH_INTERVAL_SECONDS = HEARTBEAT_INTERVAL_SECONDS
 
 
 def _to_sse(message: SSEMessage) -> ServerSentEvent:
@@ -64,13 +60,6 @@ async def _stream_with_heartbeat(
             await pump_task
 
 
-async def _refresh_presence(record_presence: RecordPresence) -> None:
-    try:
-        await record_presence()
-    except Exception:
-        logger.exception("Failed to refresh user presence")
-
-
 @sse_router.get(
     "/events",
     summary="Stream events via SSE",
@@ -85,15 +74,9 @@ async def _refresh_presence(record_presence: RecordPresence) -> None:
 @inject
 async def stream_events(
     interactor: FromDishka[StreamEvents],
-    record_presence: FromDishka[RecordPresence],
 ) -> AsyncIterable[ServerSentEvent]:
-    last_presence_refresh = 0.0
     async with contextlib.aclosing(
         _stream_with_heartbeat(interactor(), HEARTBEAT_INTERVAL_SECONDS)
     ) as stream:
         async for event in stream:
-            now = time.monotonic()
-            if now - last_presence_refresh >= PRESENCE_REFRESH_INTERVAL_SECONDS:
-                await _refresh_presence(record_presence)
-                last_presence_refresh = now
             yield event

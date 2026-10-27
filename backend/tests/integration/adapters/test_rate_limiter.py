@@ -1,8 +1,11 @@
+from datetime import timedelta
+
 import pytest
 from dishka import AsyncContainer
-from redis.asyncio import Redis
+from sqlalchemy import func, update
 
-from fanfan.adapters.redis.rate_limiter import RedisRateLimiter
+from fanfan.adapters.db.expiring.sessions import ExpiringSessionFactory
+from fanfan.adapters.db.models import RateLimitORM
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.core.exceptions.rate_limit import TooManyAttempts
 
@@ -10,17 +13,6 @@ pytestmark = [
     pytest.mark.asyncio,
     pytest.mark.integration,
 ]
-
-
-async def test_hit_sets_ttl_on_first_hit(dishka_request: AsyncContainer) -> None:
-    limiter = await dishka_request.get(RateLimiter)
-    redis = await dishka_request.get(Redis)
-    key = "test-ttl-on-first-hit"
-
-    await limiter.hit(key, limit=5, window_seconds=60)
-
-    ttl = await redis.ttl(RedisRateLimiter._counter_key(key))
-    assert 0 < ttl <= 60
 
 
 async def test_hit_raises_once_limit_is_exceeded(
@@ -33,22 +25,34 @@ async def test_hit_raises_once_limit_is_exceeded(
     for _ in range(limit):
         await limiter.hit(key, limit=limit, window_seconds=60)
 
-    with pytest.raises(TooManyAttempts):
+    with pytest.raises(TooManyAttempts) as error:
         await limiter.hit(key, limit=limit, window_seconds=60)
+    assert 0 < error.value.details["retry_after"] <= 60
 
 
-async def test_hit_self_heals_a_counter_that_lost_its_ttl(
+async def test_reset_clears_the_counter(dishka_request: AsyncContainer) -> None:
+    limiter = await dishka_request.get(RateLimiter)
+    key = "test-reset"
+
+    await limiter.hit(key, limit=1, window_seconds=60)
+    await limiter.reset(key)
+
+    await limiter.hit(key, limit=1, window_seconds=60)
+
+
+async def test_hit_starts_a_new_window_once_the_old_one_ends(
     dishka_request: AsyncContainer,
 ) -> None:
     limiter = await dishka_request.get(RateLimiter)
-    redis = await dishka_request.get(Redis)
-    key = "test-self-heal-orphaned-counter"
-    counter_key = RedisRateLimiter._counter_key(key)
+    sessions = await dishka_request.get(ExpiringSessionFactory)
+    key = "test-window-rolls-over"
 
-    await redis.incr(counter_key)  # ty: ignore[invalid-await]
-    assert await redis.ttl(counter_key) == -1
+    await limiter.hit(key, limit=1, window_seconds=60)
+    async with sessions.begin() as session:
+        await session.execute(
+            update(RateLimitORM)
+            .where(RateLimitORM.key == key)
+            .values(expires_at=func.now() - timedelta(seconds=1))
+        )
 
-    await limiter.hit(key, limit=5, window_seconds=60)
-
-    ttl = await redis.ttl(counter_key)
-    assert 0 < ttl <= 60
+    await limiter.hit(key, limit=1, window_seconds=60)

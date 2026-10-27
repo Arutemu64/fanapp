@@ -1,16 +1,18 @@
 import hashlib
 import hmac
 import logging
+import math
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any, override
 
 from altcha import Payload, create_challenge, verify_solution
-from redis.asyncio import Redis
 
 from fanfan.adapters.captcha.config import AltchaConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
+from fanfan.application.ports.cooldown import Cooldown
 from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
+from fanfan.core.exceptions.rate_limit import CooldownActive
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +28,8 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
     verifies solutions locally, with no third-party call.
     """
 
-    def __init__(self, config: AltchaConfig, redis: Redis) -> None:
-        self.redis = redis
+    def __init__(self, config: AltchaConfig, cooldown: Cooldown) -> None:
+        self.cooldown = cooldown
         master = config.hmac_key.get_secret_value().encode()
         self._challenge_secret = _subkey(master, b"challenge-signature")
         self._key_secret = _subkey(master, b"derived-key-signature")
@@ -74,17 +76,26 @@ class AltchaCaptchaVerifier(CaptchaVerifier):
         A valid solution stays cryptographically valid until it expires, so
         without this a bot solves one challenge and replays it for every request
         (https://altcha.org/docs/v2/cloud/integrate). Recorded only after
-        verification, so unverified garbage cannot fill Redis, and with SET NX,
-        so two concurrent submits of the same payload cannot both pass.
+        verification, so unverified garbage cannot fill the store. A cooldown
+        claim lasting until the challenge expires admits exactly one of two
+        concurrent submits of the same payload.
         """
         signature = payload.challenge.signature
-        expires_at = payload.challenge.parameters.expires_at
-        first_use = await self.redis.set(
-            f"captcha:altcha:spent:{signature}", 1, nx=True, exat=expires_at
-        )
-        if not first_use:
+        try:
+            async with self.cooldown.claim(
+                f"captcha:altcha:spent:{signature}", _seconds_left(payload)
+            ):
+                pass
+        except CooldownActive as e:
             logger.warning("Captcha verification rejected: challenge replayed")
-            raise CaptchaVerificationFailed
+            raise CaptchaVerificationFailed from e
+
+
+def _seconds_left(payload: Payload) -> int:
+    expires_at = payload.challenge.parameters.expires_at
+    if expires_at is None:
+        return int(CHALLENGE_TTL.total_seconds())
+    return max(1, math.ceil(expires_at - datetime.now(UTC).timestamp()))
 
 
 def _subkey(master: bytes, purpose: bytes) -> str:

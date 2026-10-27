@@ -10,7 +10,6 @@ from fanfan.application.ports.gateways.schedule_changes import (
 from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
-from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -36,11 +35,11 @@ type ChangeFactory = Callable[[AnnouncedChangeContext], ScheduleChange]
 
 
 class ScheduleEditService:
-    """Runs one schedule edit transaction: authorize, lock, mutate, commit, invalidate.
+    """Runs one schedule edit transaction: authorize, lock, mutate, commit.
 
     Every interactor that writes schedule events goes through here, so the
-    rules that must hold for all of them live in one place: the edit lock, the
-    announcement cooldown ordering, and the cache invalidation of ADR-0014.
+    rules that must hold for all of them live in one place: the edit lock and the
+    announcement cooldown ordering.
     """
 
     def __init__(  # noqa: PLR0913, PLR0917
@@ -52,7 +51,6 @@ class ScheduleEditService:
         changes_gateway: ScheduleChangeGateway,
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
-        schedule_cache: ScheduleCacheGateway,
     ) -> None:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
@@ -61,7 +59,6 @@ class ScheduleEditService:
         self.changes_gateway = changes_gateway
         self.mailing_gateway = mailing_gateway
         self.uow = uow
-        self.schedule_cache = schedule_cache
 
     async def announce(
         self,
@@ -104,7 +101,7 @@ class ScheduleEditService:
         )
         await self.changes_gateway.add(change)
 
-        await self._commit_and_invalidate()
+        await self.uow.commit()
         return user
 
     async def edit(
@@ -119,18 +116,13 @@ class ScheduleEditService:
         user = await self._authorize(permission)
         await self.schedule_gateway.lock_for_edit()
         await mutate(user)
-        await self._commit_and_invalidate()
+        await self.uow.commit()
         return user
 
     async def _authorize(self, permission: Permission) -> User:
         user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(user=user, permission=permission)
         return user
-
-    async def _commit_and_invalidate(self) -> None:
-        await self.uow.commit()
-
-        await self.schedule_cache.invalidate()
 
     async def _ensure_announcement_cooldown(self, cooldown_seconds: int) -> None:
         """Reject an announced edit that comes too soon after the previous one.

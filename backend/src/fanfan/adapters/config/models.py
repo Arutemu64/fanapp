@@ -13,7 +13,6 @@ from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.nats.config import NatsConfig
 from fanfan.adapters.push.config import PushConfig
-from fanfan.adapters.redis.config import RedisConfig
 from fanfan.adapters.tgbot.config import TelegramConfig
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.application.interactors.notifications.config import NotificationConfig
@@ -42,7 +41,6 @@ class EnvConfig(BaseSettings):
     timezone: TimeZoneName = "Europe/Moscow"
 
     db: DatabaseConfig
-    redis: RedisConfig
     nats: NatsConfig
     mail: MailConfig | None = None
 

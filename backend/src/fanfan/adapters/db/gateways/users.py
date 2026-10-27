@@ -208,13 +208,19 @@ class SqlUserGateway(UserGateway):
 
     @override
     async def get_by_id(self, user_id: UserId) -> User | None:
-        stmt = select(UserORM).where(UserORM.id == user_id).with_for_update()
+        stmt = (
+            select(UserORM).where(UserORM.id == user_id).with_for_update(key_share=True)
+        )
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 
     @override
     async def get_by_number(self, number: UserNumber) -> User | None:
-        stmt = select(UserORM).where(UserORM.number == number).with_for_update()
+        stmt = (
+            select(UserORM)
+            .where(UserORM.number == number)
+            .with_for_update(key_share=True)
+        )
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
 
@@ -223,7 +229,7 @@ class SqlUserGateway(UserGateway):
         stmt = (
             select(UserORM)
             .where(func.lower(UserORM.username) == username.lower())
-            .with_for_update()
+            .with_for_update(key_share=True)
         )
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)
@@ -232,7 +238,9 @@ class SqlUserGateway(UserGateway):
     async def get_by_email(self, email: str) -> User | None:
         normalized_email = normalize_email(email)
         stmt = (
-            select(UserORM).where(UserORM.email == normalized_email).with_for_update()
+            select(UserORM)
+            .where(UserORM.email == normalized_email)
+            .with_for_update(key_share=True)
         )
         user_orm = await self.session.scalar(stmt)
         return self._to_tracked_model(user_orm)

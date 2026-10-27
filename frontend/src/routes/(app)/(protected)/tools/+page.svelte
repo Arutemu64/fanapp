@@ -10,15 +10,11 @@
 	import { toolsFor } from '#lib/data/tools.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { isOrganizer } from '#lib/utils/permissions.js';
 
 	import type { PageProps } from './$types';
 
-	import OnlineNowCard from './components/OnlineNowCard.svelte';
-
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);
-	let organizer = $derived(isOrganizer(user));
 
 	const configQuery = createQuery(() => getPublicConfigOptions());
 
@@ -32,12 +28,6 @@
 {:else}
 	<div class="mx-auto max-w-2xl">
 		<SectionIntro description={m.tools_intro()} />
-
-		{#if organizer && !offline}
-			<div class="mb-4">
-				<OnlineNowCard />
-			</div>
-		{/if}
 
 		<MenuGroup>
 			{#each shownTools as tool (tool.key)}

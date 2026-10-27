@@ -53,7 +53,7 @@
           "Authentication"
         ],
         "summary": "Login and create session",
-        "description": "Authenticates user with email and password. Sets an HttpOnly cookie with a Redis-backed session id.",
+        "description": "Authenticates user with email and password. Sets an HttpOnly cookie with an opaque session id.",
         "operationId": "login",
         "requestBody": {
           "content": {
@@ -400,7 +400,7 @@
           "Authentication"
         ],
         "summary": "Logout user",
-        "description": "Clears session cookie and removes Redis session state; also emits Clear-Site-Data so the browser drops cookies itself.",
+        "description": "Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.",
         "operationId": "logout_user",
         "responses": {
           "204": {
@@ -4243,53 +4243,6 @@
         }
       }
     },
-    "/users/online-count": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Count online users",
-        "description": "How many users hold a live connection right now, for the organizer dashboard. Approximate and ephemeral. Any authenticated user.",
-        "operationId": "count_online_users",
-        "responses": {
-          "200": {
-            "description": "Online user count retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OnlineUsersCountOutput"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
-      }
-    },
     "/users/{user_id}": {
       "get": {
         "tags": [
@@ -6754,19 +6707,6 @@
         ],
         "title": "OAuthProvidersOutput",
         "description": "The social login providers the login screen should offer, in order.\n\nOnly the provider ids: labels, icons and brand colours are the frontend's to\nown. This is deployment config, not a fixed set — a provider may be built in\nyet withheld here because it is unreachable from this host."
-      },
-      "OnlineUsersCountOutput": {
-        "properties": {
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          }
-        },
-        "type": "object",
-        "required": [
-          "count"
-        ],
-        "title": "OnlineUsersCountOutput"
       },
       "ParticipantFullDTO": {
         "properties": {

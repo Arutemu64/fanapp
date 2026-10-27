@@ -67,7 +67,7 @@ rather than failing the build.
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* Docker image prepulls (`postgres:18.6-alpine`, `valkey/valkey:9.1-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
+* Docker image prepulls (`postgres:18.6-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
 * a `hadolint` shim in `/usr/local/bin` — hadolint ships only as a GitHub
   release binary (403 here) and is not in apt, so the shim runs the prepulled
   image instead. It bind-mounts the caller's working directory read-only at the
@@ -145,7 +145,7 @@ Docker Hub rate-limit below.)
 
 The cloud daemon's routine in-session job is autogenerating Alembic migrations
 against a throwaway Postgres (`just backend-generate-auto`). The
-`@pytest.mark.integration` suite runs against real Postgres + Valkey via
+`@pytest.mark.integration` suite runs against a real Postgres via
 testcontainers (see [testing.md](testing.md)); you *can* run it in-session, but
 per AGENTS.md **prefer CI** even here — it's slow, CI runs it regardless, and a
 green run in CI is the gate that matters. The setup script prepulls the images
@@ -159,11 +159,6 @@ disk at session start:
   running against a different Postgres build than production — Alpine's
   musl libc has different collation/locale behavior than glibc-based images,
   so a mismatched variant could hide or fabricate sorting bugs.
-* `valkey/valkey:9.1-alpine` — the testcontainers image
-  `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
-  tests, matching what CI (`.github/workflows/ci.yml`) uses; prepulled so the
-  suite runs without a cold pull in-session, though CI stays the default place
-  to run it.
 * `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
   (`just dockerfile-lint`) runs in-session instead of only in CI. Pinned to the same version
   as `mise.toml` and the `.pre-commit-config.yaml` rev (docs/dependencies.md);

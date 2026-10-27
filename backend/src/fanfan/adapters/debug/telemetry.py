@@ -6,7 +6,6 @@ import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.httpx2 import Httpx2Integration
-from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.types import Event
 
@@ -96,7 +95,6 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917
                 FastApiIntegration(failed_request_status_codes={*range(500, 600)}),
                 SqlalchemyIntegration(),
                 Httpx2Integration(),
-                RedisIntegration(),
             ],
         )
         sentry_sdk.set_tag("service", service_name)

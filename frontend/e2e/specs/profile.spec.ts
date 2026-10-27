@@ -1,9 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type {
-	OAuthProvidersOutput,
-	OnlineUsersCountOutput
-} from '../../src/lib/api/generated/types.gen';
+import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, problem, test } from '../fixtures';
 
@@ -53,10 +50,7 @@ test.describe('profile hub', () => {
 	});
 
 	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
-		api.use({
-			...organizer(),
-			'GET /users/online-count': json<OnlineUsersCountOutput>({ count: 5 })
-		});
+		api.use(organizer());
 		await page.goto('/profile');
 
 		await page.getByRole('main').getByRole('link', { name: 'Инструменты' }).click();

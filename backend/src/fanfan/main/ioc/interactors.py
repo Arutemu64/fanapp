@@ -13,6 +13,7 @@ from fanfan.application.interactors.auth.get_captcha_challenge import (
 )
 from fanfan.application.interactors.auth.login_with_code import LoginWithCode
 from fanfan.application.interactors.auth.logout_user import LogoutUser
+from fanfan.application.interactors.auth.purge_expired_state import PurgeExpiredState
 from fanfan.application.interactors.auth.request_login_code import RequestLoginCode
 from fanfan.application.interactors.auth.send_email_confirmation_code import (
     SendEmailConfirmationCode,
@@ -94,10 +95,6 @@ from fanfan.application.interactors.permissions.list_user_permissions import (
 from fanfan.application.interactors.permissions.revoke_permission import (
     RevokePermission,
 )
-from fanfan.application.interactors.presence.get_online_users_count import (
-    GetOnlineUsersCount,
-)
-from fanfan.application.interactors.presence.record_presence import RecordPresence
 from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscription,
 )
@@ -281,13 +278,12 @@ class InteractorsProvider(Provider):
         SetTCloudEventRoles,
         SyncCosplay,
         StreamEvents,
-        RecordPresence,
-        GetOnlineUsersCount,
         CreatePushSubscription,
         CheckPushSubscription,
         DeletePushSubscription,
         PublishOutboxEvents,
         PurgeOutboxEvents,
+        PurgeExpiredState,
         PurgeNotifications,
         CreateNotification,
         ListUserNotifications,

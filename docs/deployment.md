@@ -63,7 +63,7 @@ read at runtime:
 
 | Path | Why |
 | --- | --- |
-| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The NATS and Valkey server configs are inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
+| `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The NATS server config is inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
 | `.env` | All runtime config. Start from `.env.example`. |
 | `secrets/` | VAPID PEM keys, mounted read-only. Ships empty — the keys are yours. |
 
@@ -490,7 +490,8 @@ The shape of it:
 - **Connection pools** are trimmed per service: only the api carries real request
   concurrency, so the workers use small pools. The combined backend count stays
   under `max_connections`, and fewer idle backends means less RAM (each is a
-  process). Host runs (`just backend-dev`) use the `.env` defaults.
+  process). Each backend process also keeps a 3 + 2 pool for sessions, codes,
+  rate limits and cooldowns (`adapters/db/expiring/sessions.py`, ADR-0047). Host runs (`just backend-dev`) use the `.env` defaults.
 
 If you move to a larger host, the levers to raise in order are: the vCPU count
 (the real ceiling under load), then the memory limits, then `shared_buffers` and
@@ -626,7 +627,7 @@ network Docker DNS also resolves the bare `api` / `frontend`, and if another
 stack on `proxy` defines a service by the same name, DNS returns both containers
 and round-robins between them silently. The prefixed alias stays unambiguous no
 matter what else joins the network. The internal service-to-service names
-(`db`, `redis`, `nats`, and `api` for same-stack callers) are unaffected — they
+(`db`, `nats`, and `api` for same-stack callers) are unaffected — they
 resolve on the private `backend-network` / `frontend-network` as before.
 
 The base file's loopback host bindings (`127.0.0.1:3000` / `:8000`) are kept, so

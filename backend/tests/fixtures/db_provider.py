@@ -5,10 +5,8 @@ from collections.abc import Iterable
 from dishka import Provider, Scope, provide
 from pydantic import PostgresDsn
 from testcontainers.community.postgres import PostgresContainer
-from testcontainers.community.valkey import ValkeyContainer
 
 from fanfan.adapters.db.config import DatabaseConfig
-from fanfan.adapters.redis.config import RedisConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +27,3 @@ class TestDbProvider(Provider):
             yield db_config
         finally:
             postgres.stop()
-
-    @provide
-    def get_redis_config(self) -> Iterable[RedisConfig]:
-        valkey = ValkeyContainer("valkey/valkey:9.1-alpine")
-        if os.name == "nt":
-            valkey.get_container_host_ip = lambda: "127.0.0.1"
-        try:
-            valkey.start()
-            host = valkey.get_container_host_ip()
-            port = valkey.get_exposed_port()
-            redis_config = RedisConfig(
-                host=host,
-                port=int(port),
-            )
-            yield redis_config
-        finally:
-            valkey.stop()

@@ -8,7 +8,6 @@ import pytest_asyncio
 from alembic.command import upgrade
 from alembic.config import Config as AlembicConfig
 from dishka import AnyOf, AsyncContainer, Provider, Scope, make_async_container
-from redis.asyncio import Redis
 
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
@@ -33,11 +32,11 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permission, generate_user_permission_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
+from fanfan.main.ioc.expiring import ExpiringStateProvider
 from fanfan.main.ioc.html import HtmlProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
-from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
@@ -99,7 +98,7 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         TestConfigProvider(),
         InteractorsProvider(),
         DbProvider(),
-        RedisProvider(),
+        ExpiringStateProvider(),
         ServicesProvider(),
         SqlGatewaysProvider(),
         SyncProvider(),
@@ -174,12 +173,6 @@ async def login(dishka_request: AsyncContainer) -> Callable[[User], None]:
         id_provider.set_current_user_id(user.id)
 
     return _login
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def reset_redis(dishka_request: AsyncContainer) -> None:
-    redis = await dishka_request.get(Redis)
-    await redis.flushdb()
 
 
 @pytest_asyncio.fixture(scope="session")

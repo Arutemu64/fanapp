@@ -515,7 +515,6 @@
 	"offline_action_hint": "Доступно только онлайн",
 	"offline_unavailable_message": "Откроется, как только появится связь.",
 	"offline_unavailable_title": "Раздел доступен только онлайн",
-	"online_now_suffix": "сейчас в приложении",
 	"participants_count": [
 		{
 			"declarations": ["input count", "local countPlural = count: plural"],
@@ -978,18 +977,6 @@
 				"countPlural=few": "минуты",
 				"countPlural=many": "минут",
 				"countPlural=*": "минуты"
-			}
-		}
-	],
-	"unit_people": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "человек",
-				"countPlural=few": "человека",
-				"countPlural=many": "человек",
-				"countPlural=*": "человека"
 			}
 		}
 	],
