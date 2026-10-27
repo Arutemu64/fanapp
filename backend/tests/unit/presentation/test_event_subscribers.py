@@ -51,7 +51,7 @@ def _subject_matches(pattern: str, subject: str) -> bool:
             return len(subject_tokens) > index
         if index >= len(subject_tokens):
             return False
-        if token not in ("*", subject_tokens[index]):
+        if token not in {"*", subject_tokens[index]}:
             return False
     return len(pattern_tokens) == len(subject_tokens)
 

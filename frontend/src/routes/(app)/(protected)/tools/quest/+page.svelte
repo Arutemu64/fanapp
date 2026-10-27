@@ -8,9 +8,9 @@
 	import { canAwardQuest, canManageQuest } from '#lib/utils/permissions.js';
 
 	import type { PageProps } from './$types';
+	import type { AwardTarget } from './awardTarget.js';
 
 	import ToolSection from '../components/ToolSection.svelte';
-	import { type AwardTarget } from './awardTarget.js';
 	import AwardForm from './components/AwardForm.svelte';
 	import PlayerPicker from './components/PlayerPicker.svelte';
 	import QuestAwardsFeed from './components/QuestAwardsFeed.svelte';

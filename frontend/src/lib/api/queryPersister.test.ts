@@ -7,11 +7,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createIdbPersister, QUERY_CACHE_KEY } from './queryPersister';
 
 const { store, set } = vi.hoisted(() => {
-	const store = new Map<string, unknown>();
+	const entries = new Map<string, unknown>();
 	return {
-		store,
+		store: entries,
 		set: vi.fn((key: string, value: unknown) => {
-			store.set(key, structuredClone(value));
+			entries.set(key, structuredClone(value));
 			return Promise.resolve();
 		})
 	};

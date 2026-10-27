@@ -20,7 +20,7 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { parseQuestCode } from '#lib/utils/questCode.js';
 
-	import { type AwardTarget } from '../awardTarget.js';
+	import type { AwardTarget } from '../awardTarget.js';
 
 	interface Props {
 		onPick: (player: AwardTarget) => void;

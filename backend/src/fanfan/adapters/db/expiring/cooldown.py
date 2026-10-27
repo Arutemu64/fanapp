@@ -1,6 +1,6 @@
 import math
 import secrets
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import override
 
@@ -27,7 +27,7 @@ class PostgresCooldown(Cooldown):
 
     @override
     @asynccontextmanager
-    async def claim(self, key: str, seconds: int) -> AsyncIterator[None]:
+    async def claim(self, key: str, seconds: int) -> AsyncGenerator[None]:
         token = secrets.token_hex(16)
         if not await self._take(key, token, seconds):
             raise CooldownActive(retry_after=await self._retry_after(key))

@@ -38,7 +38,7 @@ function summarize(nodes: ScheduleNode[]) {
 			eventCount: node.eventCount,
 			nominations: node.nominations.map((nomination) => ({
 				title: nomination.title,
-				eventIds: nomination.events.map((event) => event.id)
+				eventIds: nomination.events.map((scheduleEvent) => scheduleEvent.id)
 			}))
 		};
 	});

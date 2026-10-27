@@ -124,7 +124,7 @@ class SyncRunTracker:
                     extra={"sync_run_id": str(run_id)},
                 )
                 return None
-            if run.status in (SyncRunStatus.FINISHED, SyncRunStatus.FAILED):
+            if run.status in {SyncRunStatus.FINISHED, SyncRunStatus.FAILED}:
                 logger.info(
                     "Sync run already settled, skipping redelivered trigger",
                     extra={"sync_run_id": str(run_id), "status": run.status.value},

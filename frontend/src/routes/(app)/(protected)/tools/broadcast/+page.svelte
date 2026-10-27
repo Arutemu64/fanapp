@@ -45,11 +45,11 @@
 	function validateForm() {
 		let isValid = true;
 
-		if (!bodyText.trim()) {
+		if (bodyText.trim()) {
+			bodyError = '';
+		} else {
 			bodyError = m.broadcast_validation_text();
 			isValid = false;
-		} else {
-			bodyError = '';
 		}
 
 		if (selectedRoles.length === 0) {

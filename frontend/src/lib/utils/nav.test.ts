@@ -63,7 +63,7 @@ describe('handleNavItemClick', () => {
 	it('navigates from a nested page of the same tab', () => {
 		const { event, preventDefault } = clickEvent();
 		const scrollToTop = vi.fn();
-		handleNavItemClick(event, resolve('schedule') + '/changes', 'schedule', scrollToTop);
+		handleNavItemClick(event, `${resolve('schedule')}/changes`, 'schedule', scrollToTop);
 		expect(preventDefault).not.toHaveBeenCalled();
 		expect(scrollToTop).not.toHaveBeenCalled();
 	});

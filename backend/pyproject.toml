@@ -79,8 +79,13 @@ testpaths = ["tests"]
 [tool.ty.src]
 include = ["src/fanfan", "tests", "scripts"]
 
+[tool.ty.terminal]
+# Warnings such as `unused-awaitable` and `deprecated` fail the gate too.
+error-on-warning = true
+
 [tool.ty.rules]
 blanket-ignore-comment = "error"
+disjoint-cast = "error"
 division-by-zero = "error"
 dynamic-function-decorator-return = "error"
 missing-direct-dependency = "error"

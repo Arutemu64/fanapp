@@ -23,7 +23,6 @@ class TestDbProvider(Provider):
             postgres.start()
             postgres_url = postgres.get_connection_url()
             logger.info("postgres url %s", postgres_url)
-            db_config = DatabaseConfig(url=PostgresDsn(postgres_url), echo=False)
-            yield db_config
+            yield DatabaseConfig(url=PostgresDsn(postgres_url), echo=False)
         finally:
             postgres.stop()

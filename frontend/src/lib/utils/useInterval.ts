@@ -1,8 +1,8 @@
 import { onDestroy } from 'svelte';
 
 export interface Interval {
-	start(): void;
-	stop(): void;
+	start: () => void;
+	stop: () => void;
 }
 
 export function useInterval(callback: () => void, delayMs: number): Interval {

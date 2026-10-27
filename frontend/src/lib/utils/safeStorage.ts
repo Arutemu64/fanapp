@@ -25,6 +25,6 @@ export function removeStorage(kind: StorageKind, key: string): void {
 	try {
 		storage(kind).removeItem(key);
 	} catch {
-		return;
+		// Storage is blocked, so there is nothing to remove.
 	}
 }

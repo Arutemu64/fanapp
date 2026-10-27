@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import cast, override
 
@@ -27,7 +27,7 @@ class FakeCooldown(Cooldown):
         self.claimed: dict[str, int] = {}
 
     @asynccontextmanager
-    async def _claim(self, key: str, seconds: int) -> AsyncIterator[None]:
+    async def _claim(self, key: str, seconds: int) -> AsyncGenerator[None]:
         if key in self.claimed:
             raise CooldownActive(retry_after=self.claimed[key])
         self.claimed[key] = seconds

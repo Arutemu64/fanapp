@@ -4,7 +4,7 @@ import { resolvePath } from '#lib/utils/paths.js';
 
 export function isActivePath(activeUrl: string, href: string): boolean {
 	if (href === '/') return activeUrl === '/';
-	return activeUrl === href || activeUrl.startsWith(href + '/');
+	return activeUrl === href || activeUrl.startsWith(`${href}/`);
 }
 
 export function isNavItemActive(
