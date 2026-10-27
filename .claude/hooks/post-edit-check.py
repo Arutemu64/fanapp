@@ -93,6 +93,19 @@ def check_prettier(path: Path, repo: Path) -> str | None:
     )
 
 
+def check_markdown(path: Path, repo: Path) -> str | None:
+    """Markdown outside frontend/ uses the repo-root .prettierrc and .prettierignore."""
+    rel = path.relative_to(repo)
+    prettier = repo / "frontend" / "node_modules" / ".bin" / "prettier"
+    code, _ = run([str(prettier), "--check", str(rel)], repo)
+    if code == 0:
+        return None
+    return (
+        "Not formatted to Prettier style. Fix with:\n"
+        f"  {prettier.relative_to(repo)} --write {rel}"
+    )
+
+
 def check_tailwind(path: Path, repo: Path) -> str | None:
     """Design-system class rules (type roles, colour tokens, z-index ladder).
 
@@ -202,6 +215,17 @@ def check_frontend(path: Path, repo: Path) -> list[str | None]:
     return reports
 
 
+def check_area(path: Path, repo: Path) -> list[str | None]:
+    area = path.relative_to(repo).parts[0]
+    if area == "backend" and path.suffix == ".py":
+        return [check_python(path, repo)]
+    if area == "frontend":
+        return check_frontend(path, repo)
+    if path.suffix == ".md":
+        return [check_markdown(path, repo)]
+    return []
+
+
 def main() -> int:
     try:
         event = json.load(sys.stdin)
@@ -224,16 +248,7 @@ def main() -> int:
     except ValueError:
         return 0
 
-    parts = relative.parts
-    area = parts[0] if parts else ""
-    reports: list[str] = []
-
-    if area == "backend" and path.suffix == ".py":
-        reports.append(check_python(path, repo))
-    elif area == "frontend":
-        reports.extend(check_frontend(path, repo))
-
-    found = [r for r in reports if r]
+    found = [r for r in check_area(path, repo) if r]
     if not found:
         return 0
 

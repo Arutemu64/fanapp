@@ -10,13 +10,13 @@ local development, which uses your own toolchain.
 Two mechanisms run at session start; they live in different places and run on
 different schedules.
 
-|            | Setup script (`.claude/setup.sh`)                | SessionStart hook (`.claude/hooks/session-start.sh`) |
-| ---------- | ------------------------------------------------ | ---------------------------------------------------- |
-| Attached to| The cloud environment                            | The repository                                       |
-| Configured | Cloud environment UI (**Setup script** field)    | `.claude/settings.json`                              |
-| Runs       | **Once**, at environment creation; result cached | **Every** session (startup + resume)                 |
-| Env vars   | **Not** injected — the environment's variables read as empty | Injected                                 |
-| Use for    | Slow installs that persist on disk               | Work that does not survive the snapshot              |
+|             | Setup script (`.claude/setup.sh`)                            | SessionStart hook (`.claude/hooks/session-start.sh`) |
+| ----------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| Attached to | The cloud environment                                        | The repository                                       |
+| Configured  | Cloud environment UI (**Setup script** field)                | `.claude/settings.json`                              |
+| Runs        | **Once**, at environment creation; result cached             | **Every** session (startup + resume)                 |
+| Env vars    | **Not** injected — the environment's variables read as empty | Injected                                             |
+| Use for     | Slow installs that persist on disk                           | Work that does not survive the snapshot              |
 
 **Rule of thumb:** if a step writes files (a binary, `.venv`, `node_modules`, a
 Docker image layer) it belongs in the setup script; if it starts a process, sets
@@ -38,9 +38,9 @@ The setup script runs the first time a session starts in an environment; the
 filesystem is then snapshotted and reused, and the setup step is skipped on
 later sessions. It re-runs (rebuilding the cache) only when:
 
-* the **Setup script** field changes,
-* the allowed network hosts change, or
-* the cache expires (~7 days).
+- the **Setup script** field changes,
+- the allowed network hosts change, or
+- the cache expires (~7 days).
 
 Resuming an existing session never re-runs it. **A dependency bump on the branch
 does not trigger a rebuild** — which is why dependency installs live in the hook
@@ -57,18 +57,18 @@ does not trigger a rebuild** — which is why dependency installs live in the ho
 
 **`.claude/setup.sh`** — tooling the cloud lacks but a laptop has, plus image
 prepulls (all persist in the snapshot). Every install is best-effort: a
-non-zero exit from the setup script means *no session starts* in this
+non-zero exit from the setup script means _no session starts_ in this
 environment until the field or the cache changes, so a transient apt/PyPI/npm
 failure must not propagate. The script ends by checking
 `just uv node pnpm hadolint` and naming anything missing in the setup log,
 rather than failing the build.
 
-* `just` (apt), an upgraded `uv` (PyPI), Python 3.14 — the base image's `uv` is
+- `just` (apt), an upgraded `uv` (PyPI), Python 3.14 — the base image's `uv` is
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
-* Node 24 via `nvm` (already on the image) — the base image's system Node is
+- Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* Docker image prepulls (`postgres:18.6-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
-* a `hadolint` shim in `/usr/local/bin` — hadolint ships only as a GitHub
+- Docker image prepulls (`postgres:18.6-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
+- a `hadolint` shim in `/usr/local/bin` — hadolint ships only as a GitHub
   release binary (403 here) and is not in apt, so the shim runs the prepulled
   image instead. It bind-mounts the caller's working directory read-only at the
   same path and matches the caller's uid/gid, which is what lets hadolint
@@ -76,7 +76,7 @@ rather than failing the build.
   the native binary does. `just dockerfile-lint` and the pre-commit
   `hadolint` hook therefore both work unchanged, calling a plain `hadolint` the
   same way they do on a laptop where `mise` supplies the real binary.
-* CodeGraph (`@colbymchenry/codegraph`, the code-navigation graph — see
+- CodeGraph (`@colbymchenry/codegraph`, the code-navigation graph — see
   [AGENTS.md](../AGENTS.md) "Code navigation") — installed from the **npm
   registry**, not its recommended `curl|sh` installer, which pulls a runtime
   from GitHub releases this environment blocks (same reason `just`/`uv`/`node`
@@ -93,13 +93,13 @@ rather than failing the build.
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
 does not survive the snapshot:
 
-* `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
+- `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
   without an environment rebuild; near-instant when the lockfile is unchanged.
   Installer output goes to a temp log, because SessionStart stdout is injected
   into Claude's context; only status lines (plus the log tail on failure) reach
   the session. The hook has a 300 s `timeout` so a hung registry can't stall the
   first response for the 600 s default.
-* building/refreshing the CodeGraph index — `codegraph sync` updates an
+- building/refreshing the CodeGraph index — `codegraph sync` updates an
   existing index incrementally so code-navigation queries stay accurate;
   falls back to a full `codegraph init` when no index exists yet, which is
   every fresh session (the setup script only installs the binary, not an
@@ -107,7 +107,7 @@ does not survive the snapshot:
   the same reason as the dependency syncs: the index is per-branch state that
   must track the code a session actually has, not whatever ref happened to be
   checked out when the snapshot was built.
-* per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`, including
+- per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`, including
   activating the nvm-installed Node 24 over the base image's system Node 22).
 
 **`.claude/hooks/session-start-docker.sh`** — a second SessionStart hook,
@@ -115,10 +115,10 @@ registered `asyncRewake`, so it runs in the background instead of delaying the
 first response (nothing needs Docker at startup). Hooks in one matcher group run
 in parallel, so it must not depend on anything `session-start.sh` produces.
 
-* starting `dockerd` — a process, never cached; restarted every session. If the
+- starting `dockerd` — a process, never cached; restarted every session. If the
   daemon never comes up the script exits 2, which wakes Claude with the reason
   rather than leaving `just backend-generate-auto` to fail later.
-* `docker login` to Docker Hub — the environment's variables reach the session
+- `docker login` to Docker Hub — the environment's variables reach the session
   but not the setup script, so this is the only place it can run; see
   [Docker Hub authentication](#docker-hub-authentication). A failed login only
   warns: pulls stay anonymous.
@@ -146,20 +146,20 @@ Docker Hub rate-limit below.)
 The cloud daemon's routine in-session job is autogenerating Alembic migrations
 against a throwaway Postgres (`just backend-generate-auto`). The
 `@pytest.mark.integration` suite runs against a real Postgres via
-testcontainers (see [testing.md](testing.md)); you *can* run it in-session, but
+testcontainers (see [testing.md](testing.md)); you _can_ run it in-session, but
 per AGENTS.md **prefer CI** even here — it's slow, CI runs it regardless, and a
 green run in CI is the gate that matters. The setup script prepulls the images
 either use, so both are a warm pull away; each is baked into the snapshot and on
 disk at session start:
 
-* `postgres:18.6-alpine` — pinned (not a floating minor tag) to match
+- `postgres:18.6-alpine` — pinned (not a floating minor tag) to match
   production (`docker-compose.yml`) exactly; used by
   `just backend-generate-auto`, and shared with the testcontainers integration
   suite (`backend/tests/fixtures/db_provider.py`). One image everywhere avoids
   running against a different Postgres build than production — Alpine's
   musl libc has different collation/locale behavior than glibc-based images,
   so a mismatched variant could hide or fabricate sorting bugs.
-* `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
+- `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
   (`just dockerfile-lint`) runs in-session instead of only in CI. Pinned to the same version
   as `mise.toml` and the `.pre-commit-config.yaml` rev (docs/dependencies.md);
   the `renovate.jsonc` `hadolint` group bumps all three together.
@@ -174,9 +174,9 @@ avoids pulling/running an extra container per session.
 
 Everything else is deliberately **not** prepulled and left to CI:
 
-* the rest of the compose stack (`nats`, db-backup) — not needed for Alembic
+- the rest of the compose stack (`nats`, db-backup) — not needed for Alembic
   autogenerate or the test suite.
-* Dockerfile bases (`uv`, `debian`, `node`, `nginx`) and the project's own
+- Dockerfile bases (`uv`, `debian`, `node`, `nginx`) and the project's own
   `ghcr.io/arutemu64/fanapp-*` images — image builds run in
   `docker-publish.yml`.
 

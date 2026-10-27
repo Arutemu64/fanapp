@@ -26,8 +26,9 @@ Run the gate for what you touched (CI runs these regardless):
 - **Backend** — `just backend-lint` and `just backend-typecheck`
 - **Frontend** — `just frontend-lint` and `just frontend-check`
 - **Dockerfile** — `just dockerfile-lint`
+- **Markdown outside `frontend/`** — `just docs-lint` (`just docs-format` fixes it)
 
-Whether a change needs a *new* test is a judgement call — see
+Whether a change needs a _new_ test is a judgement call — see
 [`docs/testing.md`](docs/testing.md).
 
 ## Language
@@ -37,7 +38,7 @@ User-facing copy is **Russian**; code, comments, docs, and issues/PRs are
 
 ## Commits & pull requests
 
-- We **squash-merge**, so the **PR title** *is* the commit that lands on `main`.
+- We **squash-merge**, so the **PR title** _is_ the commit that lands on `main`.
   It's linted as Conventional Commits — `type(scope): subject` with a lowercase
   subject — by CI. Allowed types and scopes are in [`AGENTS.md`](AGENTS.md)
   ("Commit & PR titles").

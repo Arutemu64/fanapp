@@ -65,6 +65,13 @@ repos:
         files: ^frontend/
         types_or: [ svelte, ts, javascript, css, json ]
 
+      - id: docs-prettier
+        name: docs prettier
+        entry: frontend/node_modules/.bin/prettier --check
+        language: system
+        types: [ markdown ]
+        exclude: ^frontend/
+
       - id: frontend-eslint
         name: frontend eslint
         entry: bash -c 'cd frontend && pnpm exec eslint "${@#frontend/}"' --

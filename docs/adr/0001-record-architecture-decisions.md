@@ -8,9 +8,9 @@
 
 This is a small, largely solo-maintained project with a deliberately opinionated
 architecture (hexagonal layering, DDD aggregates, a transactional outbox, a
-specific DI container, an SPA frontend). The rules for *how* to work within that
+specific DI container, an SPA frontend). The rules for _how_ to work within that
 architecture are well documented in `AGENTS.md` and `docs/*.md`. What is **not**
-captured anywhere is *why* each of those foundational choices was made, and what
+captured anywhere is _why_ each of those foundational choices was made, and what
 was rejected on the way — that reasoning currently lives only in the
 maintainer's memory.
 
@@ -27,7 +27,7 @@ significant decision, using the lightweight Nygard/MADR-style template in
 [`template.md`](template.md) (**Context → Decision → Consequences**).
 
 - ADRs are numbered `NNNN-kebab-title.md` and are **immutable once Accepted**.
-- A superseding decision is a *new* ADR; the old one's status is updated to point
+- A superseding decision is a _new_ ADR; the old one's status is updated to point
   at it.
 - We write an ADR only for architecturally significant choices — new external
   dependency, changed deployment topology, or an expensive-to-reverse pattern —

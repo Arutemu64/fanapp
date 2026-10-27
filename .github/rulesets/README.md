@@ -23,15 +23,15 @@ an emergency and solo-merge escape hatch.
   resolution without blocking a solo maintainer; raise the approval count once the team
   grows.
 - **Squash only** + **linear history** — matches the squash-merge policy in `AGENTS.md`
-  ("the PR title *is* the commit that lands on `main`").
+  ("the PR title _is_ the commit that lands on `main`").
 - **Force pushes blocked** and **deletion restricted**.
 - **Required status checks** — just two: `CI success` and `Validate PR title`. `CI success`
   is an aggregate gate job in `ci.yml` that `needs` every gating job and fails if any of
   them failed or was cancelled (`skipped` and `success` both pass). It exists because the
   individual jobs can't be required directly: `ci.yml` gates backend/frontend/images on
-  changed paths, and a *skipped* matrix job reports a single check under the
+  changed paths, and a _skipped_ matrix job reports a single check under the
   un-interpolated name (`Images (${{ matrix.name }} build)`), not the expanded `Images
-  (backend build)` … contexts — so requiring the expanded names would deadlock any PR
+(backend build)` … contexts — so requiring the expanded names would deadlock any PR
   outside that area. The gate also closes the change-detection bypass: if the `changes` job fails, its
   dependents skip, and without the gate those skipped-but-required checks would let a PR
   merge unvalidated; the gate fails instead. Non-strict (no "up to date before merge") to

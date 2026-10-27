@@ -51,6 +51,7 @@ Fix: add nullable, `UPDATE users SET email = ...`, then `alter_column(nullable=F
 ```
 
 Then one closing line, exactly one of:
+
 - `VERDICT: safe to ship` — nothing above NIT.
 - `VERDICT: N blockers, M majors` — otherwise.
 

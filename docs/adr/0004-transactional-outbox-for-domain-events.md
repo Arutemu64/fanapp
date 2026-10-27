@@ -7,7 +7,7 @@
 ## Context
 
 Aggregate state changes raise domain events that must be published to NATS and
-consumed by FastStream subscribers. Publishing to NATS *after* the database
+consumed by FastStream subscribers. Publishing to NATS _after_ the database
 commits is a **dual write**: if the process dies between the DB commit and the
 publish, the state is persisted but the event is lost — silently. For events
 that guard committed state (a vote created, a broadcast queued), that loss is a

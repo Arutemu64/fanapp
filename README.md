@@ -55,13 +55,13 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Frontend | SvelteKit (Svelte 5 runes), TanStack Query (server state, offline cache in IndexedDB), shadcn-svelte, Tailwind CSS v4, `pnpm` |
-| Backend | FastAPI, SQLAlchemy + Alembic, Dishka (DI), `uv` |
-| Data / infra | PostgreSQL, NATS + FastStream |
-| Jobs | `worker`: FastStream consumers (domain events), NATS JetStream message schedules (periodic syncs), outbox relay |
-| Tooling | Docker Compose, `just` task runner |
+| Layer        | Tech                                                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Frontend     | SvelteKit (Svelte 5 runes), TanStack Query (server state, offline cache in IndexedDB), shadcn-svelte, Tailwind CSS v4, `pnpm` |
+| Backend      | FastAPI, SQLAlchemy + Alembic, Dishka (DI), `uv`                                                                              |
+| Data / infra | PostgreSQL, NATS + FastStream                                                                                                 |
+| Jobs         | `worker`: FastStream consumers (domain events), NATS JetStream message schedules (periodic syncs), outbox relay               |
+| Tooling      | Docker Compose, `just` task runner                                                                                            |
 
 The backend follows clean / hexagonal architecture: pure `core` and `application` layers, with infrastructure behind ports in `adapters`. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) for the full guidelines.
 
@@ -98,7 +98,7 @@ third-party credentials, so you can start exploring immediately:
 
 - `BOT__*`: the placeholder values are format-valid, so the web API starts with
   them. Telegram notifications stay disabled until you set a real bot (create one
-  via [@BotFather](https://t.me/BotFather)); Telegram *login* additionally needs
+  via [@BotFather](https://t.me/BotFather)); Telegram _login_ additionally needs
   `telegram` in `WEB__ENABLED_OAUTH_PROVIDERS` (default `["vk"]`), since a provider
   can be configured yet unreachable from a given host. Email and credentials login
   work without any of this. There is no standalone bot process — the token is used
@@ -183,24 +183,25 @@ Optional, enabled via `.env`:
 
 All commands run from the repo root via `just`.
 
-| Command | What it does |
-|---|---|
-| `just run-infra` / `just stop-infra` | Start / stop the backing services (Postgres, NATS) alone |
-| `just backend-dev` / `just frontend-dev` | Start backend / frontend on the host |
-| `just backend-worker` | Start the FastStream worker (outbox relay, consumers, periodic jobs) on the host |
-| `just backend-migrate` | Apply Alembic migrations |
-| `just backend-seed-demo` | Fill an empty environment with a demo programme and voting (idempotent) |
-| `just backend-generate <name>` | Autogenerate a migration against the running app DB |
-| `just backend-generate-auto <name>` | Autogenerate a migration against a throwaway Postgres (needs Docker) |
-| `just backend-lint` | Sort deps + format + lint + type-check + import rules, backend |
-| `just backend-typecheck` | Run `ty` type checker |
-| `just backend-test` | Backend unit tests (no Docker); `just backend-test-integration` for the integration tier |
-| `just frontend-lint` / `just frontend-check` | Lint / type-check frontend |
-| `just frontend-test` / `just frontend-e2e` | Vitest unit tests / Playwright E2E against a production build |
-| `just frontend-generate-api` | Regenerate the OpenAPI spec and the frontend API client |
-| `just backend-sync tcloud` | Sync tickets from TicketsCloud |
-| `just backend-sync cosplay2` | Sync cosplay data from Cosplay2 |
-| `just deploy` | Server deploy: pull prebuilt images and restart |
+| Command                                      | What it does                                                                             |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `just run-infra` / `just stop-infra`         | Start / stop the backing services (Postgres, NATS) alone                                 |
+| `just backend-dev` / `just frontend-dev`     | Start backend / frontend on the host                                                     |
+| `just backend-worker`                        | Start the FastStream worker (outbox relay, consumers, periodic jobs) on the host         |
+| `just backend-migrate`                       | Apply Alembic migrations                                                                 |
+| `just backend-seed-demo`                     | Fill an empty environment with a demo programme and voting (idempotent)                  |
+| `just backend-generate <name>`               | Autogenerate a migration against the running app DB                                      |
+| `just backend-generate-auto <name>`          | Autogenerate a migration against a throwaway Postgres (needs Docker)                     |
+| `just backend-lint`                          | Sort deps + format + lint + type-check + import rules, backend                           |
+| `just backend-typecheck`                     | Run `ty` type checker                                                                    |
+| `just backend-test`                          | Backend unit tests (no Docker); `just backend-test-integration` for the integration tier |
+| `just frontend-lint` / `just frontend-check` | Lint / type-check frontend                                                               |
+| `just docs-lint` / `just docs-format`        | Check / fix Prettier formatting of Markdown outside `frontend/`                          |
+| `just frontend-test` / `just frontend-e2e`   | Vitest unit tests / Playwright E2E against a production build                            |
+| `just frontend-generate-api`                 | Regenerate the OpenAPI spec and the frontend API client                                  |
+| `just backend-sync tcloud`                   | Sync tickets from TicketsCloud                                                           |
+| `just backend-sync cosplay2`                 | Sync cosplay data from Cosplay2                                                          |
+| `just deploy`                                | Server deploy: pull prebuilt images and restart                                          |
 
 The full list is `just --list`.
 
@@ -214,7 +215,7 @@ own images. See [Running this for your own event](#running-this-for-your-own-eve
 first.
 
 The server runs **prebuilt** GHCR images instead of building from source: only
-the application *build* moves to CI, and the runtime config stays on the host. Once
+the application _build_ moves to CI, and the runtime config stays on the host. Once
 the server is set up, a deploy is:
 
 ```sh
@@ -239,7 +240,7 @@ in the published image.
 > **The images published from this repository are built for the FAN FAN
 > deployment. They are not a reusable product.** The frontend is a static SPA,
 > so its `PUBLIC_*` values are baked into the bundle at build time: the published
-> image carries *this* festival's VAPID public key and Sentry DSN. Point it at
+> image carries _this_ festival's VAPID public key and Sentry DSN. Point it at
 > your own backend and Web Push breaks, and your users' errors are reported into
 > our Sentry project. Both images
 > also ship the festival branding, which is
@@ -250,7 +251,7 @@ So **fork the repository and publish images from your fork**, then deploy those.
 through the four things a fork has to change: branding, Actions variables, a
 build to apply them, and the `image:` names in
 [`docker-compose.prod.yml`](docker-compose.prod.yml) that still point at
-`ghcr.io/arutemu64/…`. After that, `just deploy` pulls *your* images and the rest
+`ghcr.io/arutemu64/…`. After that, `just deploy` pulls _your_ images and the rest
 of this section applies unchanged.
 
 `PUBLIC_API_URL` is the one value you don't have to change: it defaults to the

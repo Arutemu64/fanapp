@@ -11,13 +11,13 @@ login pair (`/auth/login/telegram`, `.../callback`) and an account-linking pair
 (`/me/connections/telegram`, `.../callback`). Which flow a callback belonged to
 was decided **solely by which URL Telegram redirected to**.
 
-That turned out to enforce nothing. Authlib keys its state payload by *provider
-name*, not by route — `StarletteIntegration.get_state_data` reads
+That turned out to enforce nothing. Authlib keys its state payload by _provider
+name_, not by route — `StarletteIntegration.get_state_data` reads
 `session["_state_telegram_{state}"]`. A state minted by the link start resolves
 just as happily inside the login callback, and the `redirect_uri` Authlib replays
 to the token endpoint is the one recorded in that state, so the exchange
 succeeds. The two callbacks were interchangeable given a valid state; the path
-was a convention, not a boundary. Nothing bound the flow's *intent* to anything.
+was a convention, not a boundary. Nothing bound the flow's _intent_ to anything.
 
 Separately, `social_identities.provider_id` held Telegram's **Bot API user id**
 and did two jobs at once: the value matched on at login, and the `chat_id` the

@@ -3,21 +3,27 @@
      Subject lowercase, no period, ≤~70 chars — name the change AND its effect, e.g. "feat(voting): make voting honestly offline-only". -->
 
 ## What & why
+
 <!-- Brief description of the change and why. Link related issue: Closes #123 -->
 
 ## Type of change
+
 - [ ] Backend
 - [ ] Frontend
 - [ ] Docs / infra
 
 ## How tested
+
 <!-- Commands run, manual steps, screenshots for UI changes -->
 
 ## Deploy notes / version impact
+
 <!-- Migrations, new/renamed env vars, manual deploy steps? Suggested bump (MAJOR / MINOR / PATCH) and why. "None" is a valid answer. -->
+
 **Rollback:** <!-- two-way (plain revert is safe) or one-way (say what can't be undone: data, env, client cache) -->
 
 ## Checklist
+
 - [ ] User-facing copy in Russian; code comments in English
 - [ ] Lint & types pass (`just backend-lint` / `just frontend-lint`, `just backend-typecheck` / `just frontend-check`)
 - [ ] UI checked on a narrow screen (mobile-first)

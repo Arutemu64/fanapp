@@ -111,6 +111,12 @@ backend-generate-schedule-template:
 backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
 
+docs-lint:
+    frontend/node_modules/.bin/prettier --check "**/*.md"
+
+docs-format:
+    frontend/node_modules/.bin/prettier --write "**/*.md"
+
 dockerfile-lint:
     hadolint backend/Dockerfile frontend/Dockerfile
 

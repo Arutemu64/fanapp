@@ -2,7 +2,7 @@
 
 The server runs the **prebuilt** GHCR images instead of building from source —
 see [`docker-compose.prod.yml`](../docker-compose.prod.yml). Only the
-application *build* moves to CI; the runtime config stays on the host. To test
+application _build_ moves to CI; the runtime config stays on the host. To test
 the exact same images locally first, build them from your working tree with
 `just run-prod` (no registry needed).
 
@@ -15,7 +15,7 @@ repository and publish images from your fork instead.
 Two things make them deployment-specific. The frontend is a static SPA, so its
 `PUBLIC_*` values are inlined into the bundle at build time (see
 [frontend.md](frontend.md)) from this repository's Actions variables:
-`PUBLIC_VAPID_KEY` must match the private VAPID PEM held by *our* backend, and
+`PUBLIC_VAPID_KEY` must match the private VAPID PEM held by _our_ backend, and
 `PUBLIC_SENTRY_DSN` points at our error-reporting project. And both
 images ship the festival branding, which the [README's license
 section](../README.md#license) excludes from the MIT grant.
@@ -61,11 +61,11 @@ Cosplay2 — is runtime config in `.env` and needs no rebuild.
 Cloning the repo is the simplest way to get all of it, but only three things are
 read at runtime:
 
-| Path | Why |
-| --- | --- |
+| Path                                             | Why                                                                                                                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `docker-compose.yml` + `docker-compose.prod.yml` | Service definitions; `just deploy` passes both. The NATS server config is inlined here as top-level `configs:`, and the `migration` service reads the `alembic.ini` baked into the backend image. |
-| `.env` | All runtime config. Start from `.env.example`. |
-| `secrets/` | VAPID PEM keys, mounted read-only. Ships empty — the keys are yours. |
+| `.env`                                           | All runtime config. Start from `.env.example`.                                                                                                                                                    |
+| `secrets/`                                       | VAPID PEM keys, mounted read-only. Ships empty — the keys are yours.                                                                                                                              |
 
 `backups/` is created by `just deploy` (see [Backups and restore](#backups-and-restore)).
 
@@ -105,9 +105,9 @@ Telegram login then needs one more step that is not in `.env`. In
 [@BotFather](https://t.me/BotFather), open **Bot Settings → Web Login** and
 register, for your domain:
 
-| Kind | Value |
-| --- | --- |
-| Origin | `https://example.com` |
+| Kind         | Value                                                  |
+| ------------ | ------------------------------------------------------ |
+| Origin       | `https://example.com`                                  |
 | Redirect URI | `https://example.com/api/auth/oauth/telegram/callback` |
 
 **One URI, because login and account linking share one callback** — they are told
@@ -174,7 +174,7 @@ orphaned. Delete it with the command below.
 
 To apply a non-editable change in production, delete the affected durables once so
 FastStream recreates them with the new config on the next boot. Deleting a
-*consumer* is safe: it is routing/cursor state, not the stream or its messages,
+_consumer_ is safe: it is routing/cursor state, not the stream or its messages,
 and any un-acked in-flight message is redelivered after recreation (the
 notification consumers are idempotent, which is why this stream tolerates
 redelivery — see [backend.md](backend.md)). The `nats:2.14-alpine` image is the
@@ -312,10 +312,10 @@ deliberately decoupled from the API (see the `depends_on` note in
 [`docker-compose.yml`](../docker-compose.yml)), so the SPA keeps serving while the
 backend is down:
 
-| Monitor | URL | Green means |
-| --- | --- | --- |
-| Site | `https://<domain>/healthz` | NGINX is serving the static SPA |
-| API | `https://<domain>/api/debug/health` | The backend is up (Caddy strips `/api` → backend `/debug/health`) |
+| Monitor | URL                                 | Green means                                                       |
+| ------- | ----------------------------------- | ----------------------------------------------------------------- |
+| Site    | `https://<domain>/healthz`          | NGINX is serving the static SPA                                   |
+| API     | `https://<domain>/api/debug/health` | The backend is up (Caddy strips `/api` → backend `/debug/health`) |
 
 Both are unauthenticated and cheap. Note the site check only confirms NGINX
 returns `200` — not that the SPA bundle boots; for that you'd need synthetic
@@ -357,12 +357,12 @@ tables out of it
 The dumps land in `backups/` next to `docker-compose.yml` on the host (a bind
 mount; `just deploy` and `just run-prod` keep it owner-only):
 
-| Folder | Holds |
-| --- | --- |
-| `backups/last/` | every dump from the last 24h, `<db>-YYYYMMDD-HHMMSS.dump` |
-| `backups/daily/` | the newest dump of each day, kept 7 days |
-| `backups/weekly/` | the newest dump of each ISO week, kept 4 weeks |
-| `backups/monthly/` | the newest dump of each month, kept 6 months |
+| Folder             | Holds                                                     |
+| ------------------ | --------------------------------------------------------- |
+| `backups/last/`    | every dump from the last 24h, `<db>-YYYYMMDD-HHMMSS.dump` |
+| `backups/daily/`   | the newest dump of each day, kept 7 days                  |
+| `backups/weekly/`  | the newest dump of each ISO week, kept 4 weeks            |
+| `backups/monthly/` | the newest dump of each month, kept 6 months              |
 
 The `daily`/`weekly`/`monthly` files are hard links to the dump in `last/`, not
 copies, and each folder has a `<db>-latest.dump` symlink to its newest file.
@@ -417,7 +417,7 @@ encrypted disk.
 
 ### Verify a backup periodically
 
-`docker ps` health only says a dump *ran*, not that it can be *loaded*. Load the
+`docker ps` health only says a dump _ran_, not that it can be _loaded_. Load the
 newest one into a throwaway database — never the live one — and check the row
 counts of a couple of core tables look right. The commands read the database
 user and name from the `db` container's own environment (`POSTGRES_USER`,
@@ -550,14 +550,14 @@ with it, so the timeout always expires first.
 With the relative default you only set the origin-dependent values to match how
 the browser reaches the site:
 
-| `.env` / Caddy | HTTPS (production) | HTTP (local / insecure testing) |
-|---|---|---|
-| Caddy site block | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped) |
-| `WEB__PUBLIC_URL` | `https://example.com/` | `http://localhost/` |
-| `PUBLIC_API_URL` | `/api` (relative — domain-agnostic) | `/api` |
-| `WEB__COOKIE_SECURE` | `True` | `False` |
-| `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
-| `Strict-Transport-Security` | add to the site block (see below) | omit — HSTS needs HTTPS |
+| `.env` / Caddy              | HTTPS (production)                               | HTTP (local / insecure testing) |
+| --------------------------- | ------------------------------------------------ | ------------------------------- |
+| Caddy site block            | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped)        |
+| `WEB__PUBLIC_URL`           | `https://example.com/`                           | `http://localhost/`             |
+| `PUBLIC_API_URL`            | `/api` (relative — domain-agnostic)              | `/api`                          |
+| `WEB__COOKIE_SECURE`        | `True`                                           | `False`                         |
+| `WEB__CORS_ALLOW_ORIGINS`   | unset (same-origin)                              | unset (same-origin)             |
+| `Strict-Transport-Security` | add to the site block (see below)                | omit — HSTS needs HTTPS         |
 
 `Caddyfile.example` already stamps the OWASP hardening headers
 (`X-Content-Type-Options`, anti-framing, `Referrer-Policy`) on every response,
@@ -575,7 +575,7 @@ like an auth bug.
 
 ### Split-origin (optional)
 
-To serve the API on a *different* origin than the site, set `PUBLIC_API_URL` to
+To serve the API on a _different_ origin than the site, set `PUBLIC_API_URL` to
 that absolute URL (e.g. `https://api.example.com`) — this requires a rebuild,
 since `PUBLIC_API_URL` is baked into the bundle at build time — and set
 `WEB__CORS_ALLOW_ORIGINS` to the public app origin exactly (scheme + host, no
@@ -589,7 +589,7 @@ runs **on the host**, where its `reverse_proxy` targets (`127.0.0.1:3000` /
 **single global Caddy container** that fronts several independent stacks on the
 VPS, that no longer holds: inside the container `127.0.0.1` is the container's
 own loopback, so those targets get `connection refused`. `host.docker.internal`
-does not rescue it either — it resolves to the host's *bridge* IP, and the app
+does not rescue it either — it resolves to the host's _bridge_ IP, and the app
 ports are bound to `127.0.0.1` only, a different interface (republishing them on
 `0.0.0.0` to reach them would expose the frontend and API to the internet).
 

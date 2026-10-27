@@ -10,12 +10,12 @@ paths:
 
 ## Commands
 
-| Command | Use |
-| --- | --- |
-| `just backend-generate <name>` | Autogenerate against the running app DB |
-| `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres 18 (needs Docker, no app DB). **Use this in Claude Code on the web.** |
-| `just backend-migrate` | Apply (`alembic upgrade head`) |
-| `just backend-check-migrations` | Fail if ORM models drift from migrations, or any `downgrade()` fails a base→head upgrade/downgrade/upgrade stairway |
+| Command                             | Use                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `just backend-generate <name>`      | Autogenerate against the running app DB                                                                             |
+| `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres 18 (needs Docker, no app DB). **Use this in Claude Code on the web.**     |
+| `just backend-migrate`              | Apply (`alembic upgrade head`)                                                                                      |
+| `just backend-check-migrations`     | Fail if ORM models drift from migrations, or any `downgrade()` fails a base→head upgrade/downgrade/upgrade stairway |
 
 Prefer autogenerate over hand-writing, then **always read the generated file
 before committing**. The three things autogenerate gets wrong here are below.
