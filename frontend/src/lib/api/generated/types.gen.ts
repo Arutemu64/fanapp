@@ -26,6 +26,11 @@ export type AddVoteOutput = {
 
 /**
  * AppSettingsDTO
+ *
+ * Organizer view of AppSettings at GET /settings.
+ *
+ * Flat, with the same field names `UpdateAppSettingsInput` takes, so what the
+ * page reads it can send back as is.
  */
 export type AppSettingsDto = {
 	/**
@@ -36,7 +41,18 @@ export type AppSettingsDto = {
 	 * Festival End
 	 */
 	festival_end: string;
-	quest: QuestConfigDto;
+	/**
+	 * Quest Enabled
+	 */
+	quest_enabled: boolean;
+	/**
+	 * Quest Max Award
+	 */
+	quest_max_award: number;
+	/**
+	 * Quest Cancel Window Minutes
+	 */
+	quest_cancel_window_minutes: number;
 };
 
 /**
@@ -1130,24 +1146,6 @@ export type QuestAwardItemDto = {
 };
 
 /**
- * QuestConfigDTO
- */
-export type QuestConfigDto = {
-	/**
-	 * Enabled
-	 */
-	enabled: boolean;
-	/**
-	 * Max Award
-	 */
-	max_award: number;
-	/**
-	 * Cancel Window Minutes
-	 */
-	cancel_window_minutes: number;
-};
-
-/**
  * QuestHistoryItemDTO
  */
 export type QuestHistoryItemDto = {
@@ -1988,6 +1986,30 @@ export type ValidationProblem = {
  * VotingStatus
  */
 export type VotingStatus = 'open' | 'not_authenticated' | 'no_ticket' | 'disabled';
+
+/**
+ * SSEEventName
+ *
+ * Canonical names for every Server-Sent Event the backend emits.
+ *
+ * Published in the OpenAPI spec as the `GET /events` item's `event` type, so
+ * the generated `SseEventName` union checks the frontend's `SSEEventMap`.
+ *
+ * Naming standard (see docs/backend.md "Realtime (SSE)"):
+ * * snake_case, single token — NO dots. The NATS subject is built as
+ * `sse.broadcast.{event_name}` / `sse.user.{user_id}.{event_name}` and
+ * consumers subscribe with a single-token wildcard (`sse.broadcast.*`).
+ * A dot in the name would split into extra subject tokens and silently
+ * stop matching that wildcard.
+ * * Prefer `<entity>_<event>` for new names.
+ */
+export type SseEventName =
+	| 'connection_established'
+	| 'ping'
+	| 'schedule_updated'
+	| 'notification_created'
+	| 'sync_run_updated'
+	| 'config_updated';
 
 export type DebugData = {
 	body?: never;

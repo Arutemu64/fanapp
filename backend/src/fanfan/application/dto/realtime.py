@@ -6,10 +6,8 @@ from typing import Any
 class SSEEventName(StrEnum):
     """Canonical names for every Server-Sent Event the backend emits.
 
-    This is the single source of truth on the backend side; the frontend
-    mirrors it in `SSEEventMap` (frontend/src/lib/services/events.svelte.ts).
-    The two must be kept in sync by hand — SSE events are not part of the
-    OpenAPI spec, so there is no code generation between them.
+    Published in the OpenAPI spec as the `GET /events` item's `event` type, so
+    the generated `SseEventName` union checks the frontend's `SSEEventMap`.
 
     Naming standard (see docs/backend.md "Realtime (SSE)"):
       * snake_case, single token — NO dots. The NATS subject is built as
@@ -18,7 +16,6 @@ class SSEEventName(StrEnum):
         A dot in the name would split into extra subject tokens and silently
         stop matching that wildcard.
       * Prefer `<entity>_<event>` for new names.
-      * Every value here must have a matching key in the frontend `SSEEventMap`.
     """
 
     CONNECTION_ESTABLISHED = "connection_established"

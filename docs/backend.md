@@ -74,7 +74,7 @@ Everything below this section is detail; these rules alone prevent most mistakes
 ### Add an SSE event
 
 1. Add a member to `SSEEventName` (`application/dto/realtime.py`) — snake_case, single token, **no dots**.
-2. Mirror it in `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`) — the two are kept in sync by hand.
+2. Run `just frontend-generate-api`, then give the new name its payload type in `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`); `pnpm check` fails until you do.
 
 ### Change the schedule-import spreadsheet format
 
@@ -283,13 +283,13 @@ Browser push goes over Server-Sent Events, separate from the domain-event/outbox
 
 An SSE message to every open screen is a **live update**, never a "broadcast": that word is the organizer's hand-written mailing ([GLOSSARY.md](../GLOSSARY.md)). The `sse.broadcast.*` NATS subject keeps its name because it is wire-internal and renaming it buys nothing a reader sees.
 
-**Every SSE event name is a member of the `SSEEventName` `StrEnum`** (`application/dto/realtime.py`) — never a bare string literal. `SSEMessage.event_name` is typed to the enum, so a typo is a type error, not a silently dead event. To add an event: add a member here, then mirror it in the frontend `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`).
+**Every SSE event name is a member of the `SSEEventName` `StrEnum`** (`application/dto/realtime.py`) — never a bare string literal. `SSEMessage.event_name` is typed to the enum, so a typo is a type error, not a silently dead event. To add an event: add a member here, regenerate the API, then give it a payload type in the frontend `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`).
 
 Naming standard for new events:
 
 - **snake_case, single token — no dots.** The subject is built as `sse.broadcast.{event_name}` / `sse.user.{user_id}.{event_name}` and consumers subscribe with a single-token wildcard (`sse.broadcast.*`). A dot in the name splits into extra subject tokens and silently stops matching the wildcard. (`SSEEventName` being a `StrEnum` means it interpolates straight into the subject and into the SSE `event:` field as its value.)
 - Prefer `<entity>_<event>` for new names.
-- The backend enum and frontend `SSEEventMap` are kept in sync **by hand** — SSE events are not part of the OpenAPI spec, so `just frontend-generate-api` does not cover them. Every enum value must have a matching `SSEEventMap` key.
+- The enum is in the OpenAPI spec as the `GET /events` item's `event` type (`document_sse_event_names` in `presentation/web/openapi.py`), so the client gets a generated `SseEventName` union. `SSEEventMap`'s keys are checked against that union both ways, so a missing or stale key fails `pnpm check`. The payloads are still typed by hand on the frontend.
 
 **Liveness heartbeat**: the `/events` route injects a named `ping` event after `HEARTBEAT_INTERVAL_SECONDS` (15s) of stream silence — `ping` is the one `SSEEventName` never published via `RealtimeGateway`. Comment-based keepalives are invisible to the browser `EventSource` API, so the frontend watchdog (`HEARTBEAT_TIMEOUT_MS`, 3x the interval = 45s, in `events.svelte.ts`) relies on these pings to detect silently dead connections (Wi-Fi roaming, NAT timeouts) and reconnect. 15s sits inside the 30s floor of cellular NAT gateway idle timeouts. If you change the interval, keep it below common proxy idle timeouts (60s) and update the frontend timeout to match.
 

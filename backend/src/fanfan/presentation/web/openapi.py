@@ -3,10 +3,14 @@ from typing import Any, override
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+from pydantic import TypeAdapter
 
+from fanfan.application.dto.realtime import SSEEventName
 from fanfan.presentation.web.schemas.error import PROBLEM_JSON_MEDIA_TYPE
 
 API_TITLE = "FAN FAN API"
+SSE_PATH = "/events"
+SSE_MEDIA_TYPE = "text/event-stream"
 
 
 def generate_operation_id(route: APIRoute) -> str:
@@ -61,6 +65,22 @@ def document_errors_as_problem_json(schema: dict[str, Any]) -> None:
             content[PROBLEM_JSON_MEDIA_TYPE] = content.pop("application/json")
 
 
+def document_sse_event_names(schema: dict[str, Any]) -> None:
+    """Type the SSE stream's `event` field as the `SSEEventName` enum.
+
+    FastAPI's item schema leaves `event` a plain string, and nothing on the
+    wire references the enum, so it would never reach the generated client.
+    Publishing it as a component lets the frontend check its event map against
+    it instead of mirroring the names by hand.
+    """
+    name = SSEEventName.__name__
+    enum_schema = TypeAdapter(SSEEventName).json_schema()
+    schema["components"]["schemas"][name] = enum_schema
+    responses = schema["paths"][SSE_PATH]["get"]["responses"]
+    item_schema = responses["200"]["content"][SSE_MEDIA_TYPE]["itemSchema"]
+    item_schema["properties"]["event"] = {"$ref": f"#/components/schemas/{name}"}
+
+
 class FanfanAPI(FastAPI):
     """FastAPI whose schema goes through the post-processing above.
 
@@ -75,4 +95,5 @@ class FanfanAPI(FastAPI):
         schema = super().openapi()
         drop_unreachable_validation_responses(schema)
         document_errors_as_problem_json(schema)
+        document_sse_event_names(schema)
         return schema

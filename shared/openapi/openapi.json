@@ -1308,7 +1308,7 @@
                       "type": "string"
                     },
                     "event": {
-                      "type": "string"
+                      "$ref": "#/components/schemas/SSEEventName"
                     },
                     "id": {
                       "type": "string"
@@ -5269,17 +5269,31 @@
             "format": "date-time",
             "title": "Festival End"
           },
-          "quest": {
-            "$ref": "#/components/schemas/QuestConfigDTO"
+          "quest_enabled": {
+            "type": "boolean",
+            "title": "Quest Enabled"
+          },
+          "quest_max_award": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Quest Max Award"
+          },
+          "quest_cancel_window_minutes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Quest Cancel Window Minutes"
           }
         },
         "type": "object",
         "required": [
           "festival_start",
           "festival_end",
-          "quest"
+          "quest_enabled",
+          "quest_max_award",
+          "quest_cancel_window_minutes"
         ],
-        "title": "AppSettingsDTO"
+        "title": "AppSettingsDTO",
+        "description": "Organizer view of AppSettings at GET /settings.\n\nFlat, with the same field names `UpdateAppSettingsInput` takes, so what the\npage reads it can send back as is."
       },
       "AwardQuestPointsInput": {
         "properties": {
@@ -7075,31 +7089,6 @@
         ],
         "title": "QuestAwardItemDTO"
       },
-      "QuestConfigDTO": {
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
-          },
-          "max_award": {
-            "type": "integer",
-            "minimum": 1.0,
-            "title": "Max Award"
-          },
-          "cancel_window_minutes": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Cancel Window Minutes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "enabled",
-          "max_award",
-          "cancel_window_minutes"
-        ],
-        "title": "QuestConfigDTO"
-      },
       "QuestHistoryItemDTO": {
         "properties": {
           "id": {
@@ -8555,6 +8544,19 @@
           "disabled"
         ],
         "title": "VotingStatus"
+      },
+      "SSEEventName": {
+        "description": "Canonical names for every Server-Sent Event the backend emits.\n\nPublished in the OpenAPI spec as the `GET /events` item's `event` type, so\nthe generated `SseEventName` union checks the frontend's `SSEEventMap`.\n\nNaming standard (see docs/backend.md \"Realtime (SSE)\"):\n  * snake_case, single token — NO dots. The NATS subject is built as\n    `sse.broadcast.{event_name}` / `sse.user.{user_id}.{event_name}` and\n    consumers subscribe with a single-token wildcard (`sse.broadcast.*`).\n    A dot in the name would split into extra subject tokens and silently\n    stop matching that wildcard.\n  * Prefer `<entity>_<event>` for new names.",
+        "enum": [
+          "connection_established",
+          "ping",
+          "schedule_updated",
+          "notification_created",
+          "sync_run_updated",
+          "config_updated"
+        ],
+        "title": "SSEEventName",
+        "type": "string"
       }
     },
     "securitySchemes": {
