@@ -9,9 +9,11 @@
 
 A Valkey container held seven kinds of state: login sessions, email codes, the
 attempt `RateLimiter`, the `Cooldown`, the ALTCHA replay guard, the rendered
-schedule (ADR-0014) and the online-user count. The app serves about 200 users
-and a schedule of about 200 entries. At that load Redis is one more service to
-run, secure, back up and upgrade, for no speed anyone notices. It also ran
+schedule (ADR-0014) and the online-user count. The festival draws
+about 1,000 attendees, so the app's ceiling is about that many users, and the
+schedule holds about 200 entries. At that load every remaining operation is a
+key lookup Postgres serves in well under a millisecond, and Redis is one more
+service to run, secure, back up and upgrade, for no speed anyone notices. It also ran
 `maxmemory-policy allkeys-lru`, so it could evict sessions and rate-limit
 counters under memory pressure.
 
@@ -89,13 +91,35 @@ Keep the remaining state in PostgreSQL and remove the Redis service.
   Postgres connections, which fits under `max_connections=60`.
 - A `schedule_updated` broadcast now sends every connected client to the
   database at once. ADR-0014 measured about 7 ms per uncached read of 200
-  events, so 200 clients cost about 1.4 s of database time spread over the
-  burst. That is acceptable at this scale. Revisit with a cache if the audience
-  grows by an order of magnitude.
+  events. At the 1,000-attendee ceiling, with perhaps 300–500 phones open, a
+  burst costs 2–3.5 s of database time on the 1-CPU limit, so the slowest
+  screens wait a few seconds. That is acceptable for a schedule change; a CPU
+  bump is the first lever if it isn't.
 - The adapters are request-scoped in DI because the test's connection is;
   that costs one small object per request.
 - If the purge job stops, nothing breaks: expired rows are already ignored and
   the tables just grow slowly.
+
+## Revisit when
+
+Each signal points first at a cheaper fix than Redis.
+
+- **Schedule bursts hurt.** `GET /schedule/` p95 stays above about a second
+  after a `schedule_updated`, or the database sits at its CPU limit during
+  bursts. Raise the CPU limit, then cache the rendered schedule in a Postgres
+  row warmed by `PublishScheduleUpdated`. Redis only pays off once several API
+  processes need one shared in-memory cache.
+- **The small pool times out.** SQLAlchemy raises `QueuePool limit ... reached`
+  for `ExpiringSessionFactory`. Raise `EXPIRING_POOL_SIZE` before anything else.
+- **The expiring tables bloat.** Updates leave dead rows that `VACUUM`
+  reclaims ([PostgreSQL: Routine Vacuuming](https://www.postgresql.org/docs/current/routine-vacuuming.html)).
+  If `n_dead_tup` in `pg_stat_user_tables` for `rate_limits` or
+  `auth_sessions` keeps outgrowing autovacuum, tune autovacuum for those
+  tables; Redis is the answer only when the write rate is far past what a
+  1,000-person event produces.
+- **A feature needs per-heartbeat writes.** Presence, live counters or
+  leaderboards updated every few seconds per user are what Redis is built for.
+  Bring it back for that feature, not for the auth state here.
 
 ## Alternatives considered
 
