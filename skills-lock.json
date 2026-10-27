@@ -247,6 +247,12 @@
       "skillPath": "skills/shadcn-svelte/SKILL.md",
       "computedHash": "5f1ba8c333ac739aa6046c963c282fea41cd130d875f10724a25d36db6b20c21"
     },
+    "solid": {
+      "source": "ramziddin/solid-skills",
+      "sourceType": "github",
+      "skillPath": "skills/solid/SKILL.md",
+      "computedHash": "6949aa4c74cf68a489297307515f1e769c3510b68045cbf16f6479403cf0b883"
+    },
     "sqlalchemy-alembic-expert-best-practices-code-review": {
       "source": "wispbit-ai/skills",
       "sourceType": "github",
