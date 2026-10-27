@@ -51,11 +51,17 @@
 	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
 	let festivalStartError = $state('');
 	let festivalEndError = $state('');
-	let savedQuest = $state(untrack(() => ({ ...data.settings.quest })));
-	let questEnabled = $state(untrack(() => data.settings.quest.enabled));
-	let questMaxAward = $state<number | undefined>(untrack(() => data.settings.quest.max_award));
+	let savedQuest = $state(
+		untrack(() => ({
+			enabled: data.settings.quest_enabled,
+			max_award: data.settings.quest_max_award,
+			cancel_window_minutes: data.settings.quest_cancel_window_minutes
+		}))
+	);
+	let questEnabled = $state(untrack(() => data.settings.quest_enabled));
+	let questMaxAward = $state<number | undefined>(untrack(() => data.settings.quest_max_award));
 	let questCancelWindow = $state<number | undefined>(
-		untrack(() => data.settings.quest.cancel_window_minutes)
+		untrack(() => data.settings.quest_cancel_window_minutes)
 	);
 	let questMaxAwardError = $state('');
 	let questCancelWindowError = $state('');

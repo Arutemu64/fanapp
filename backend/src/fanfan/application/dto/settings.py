@@ -3,20 +3,18 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class QuestConfigDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    enabled: bool
-    max_award: int = Field(ge=1)
-    cancel_window_minutes: int = Field(ge=0)
-
-
 class AppSettingsDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    """Organizer view of AppSettings at GET /settings.
+
+    Flat, with the same field names `UpdateAppSettingsInput` takes, so what the
+    page reads it can send back as is.
+    """
 
     festival_start: datetime
     festival_end: datetime
-    quest: QuestConfigDTO
+    quest_enabled: bool
+    quest_max_award: int = Field(ge=1)
+    quest_cancel_window_minutes: int = Field(ge=0)
 
 
 class PublicConfigDTO(BaseModel):
