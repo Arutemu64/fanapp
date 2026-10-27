@@ -1,7 +1,7 @@
 import type {
-	GetScheduleOutput,
 	GetVotingStatusOutput,
 	PublicConfigDto,
+	ScheduleDto,
 	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated/types.gen';
 
@@ -53,16 +53,15 @@ test.describe('offline', { tag: '@critical' }, () => {
 				quest_max_award: 100,
 				schedule_changeover_seconds: 30
 			}),
-			'GET /schedule': json<GetScheduleOutput>({
+			'GET /schedule': json<ScheduleDto>({
+				current_event_id: 'event-1',
 				schedule: [
 					{
 						type: 'event',
 						id: 'event-1',
 						number: 1,
 						title: 'Одиночное дефиле',
-						duration: 300,
-						order: 1,
-						is_current: true,
+						duration_seconds: 300,
 						is_skipped: false,
 						nomination_title: null,
 						position: 1
@@ -172,7 +171,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		api.use({
 			...loggedInAs(),
 			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 1 }),
-			'GET /schedule': json({ schedule: [] }),
+			'GET /schedule': json({ current_event_id: null, schedule: [] }),
 			'PATCH /me/settings': () => {
 				patched = true;
 				return json({});

@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import type { GetScheduleOutput } from '../../src/lib/api/generated/types.gen';
+import type { ScheduleDto } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
@@ -49,16 +49,14 @@ async function focusAndExpectUnobscured(page: Page, eventId: string, offset: num
 		.toBe(true);
 }
 
-const longSchedule: GetScheduleOutput['schedule'] = [
-	{ type: 'block_start', id: 'block-1', title: 'Блок 1', order: 0 },
+const longSchedule: ScheduleDto['schedule'] = [
+	{ type: 'block_start', id: 'block-1', title: 'Блок 1' },
 	...Array.from({ length: 60 }, (_, index) => ({
 		type: 'event' as const,
 		id: `event-${index + 1}`,
 		number: index + 1,
 		title: `Выступление ${index + 1}`,
-		duration: 180,
-		order: index + 1,
-		is_current: false,
+		duration_seconds: 180,
 		is_skipped: false,
 		nomination_title: 'Одиночное дефиле',
 		position: index + 1
@@ -70,7 +68,10 @@ test.describe('native feel', () => {
 		page,
 		api
 	}, testInfo) => {
-		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
+		api.use({
+			...loggedInAs(),
+			'GET /schedule': json({ current_event_id: null, schedule: longSchedule })
+		});
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 		const title = page.getByRole('heading', { level: 1, name: 'Программа' });
@@ -102,7 +103,10 @@ test.describe('native feel', () => {
 	});
 
 	test('reopens a tab with the filters it was left with', async ({ page, api }) => {
-		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
+		api.use({
+			...loggedInAs(),
+			'GET /schedule': json({ current_event_id: null, schedule: longSchedule })
+		});
 		await page.goto('/schedule');
 		const search = page.getByRole('searchbox', { name: 'Поиск по программе' });
 
@@ -121,7 +125,7 @@ test.describe('native feel', () => {
 	test('the back arrow returns to the tab with its filters', async ({ page, api }) => {
 		api.use({
 			...organizer(),
-			'GET /schedule': json({ schedule: longSchedule }),
+			'GET /schedule': json({ current_event_id: null, schedule: longSchedule }),
 			'GET /schedule/changes': json({ schedule_changes: [], next_cursor: null })
 		});
 		await page.goto('/schedule?q=Выступление+5');
@@ -139,7 +143,7 @@ test.describe('native feel', () => {
 	test('forgets the tabs’ filters on logout', async ({ page, api }) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ schedule: longSchedule }),
+			'GET /schedule': json({ current_event_id: null, schedule: longSchedule }),
 			'POST /auth/logout': json({})
 		});
 		await page.goto('/schedule?q=Выступление+5');
@@ -160,7 +164,10 @@ test.describe('native feel', () => {
 	});
 
 	test('keeps a focused control clear of the bars', async ({ page, api }) => {
-		api.use({ ...loggedInAs(), 'GET /schedule': json({ schedule: longSchedule }) });
+		api.use({
+			...loggedInAs(),
+			'GET /schedule': json({ current_event_id: null, schedule: longSchedule })
+		});
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();
 

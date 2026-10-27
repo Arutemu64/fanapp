@@ -62,7 +62,6 @@ def _parse_full_dto(subscription_orm: SubscriptionORM) -> SubscriptionFullDTO:
             id=ScheduleEntryId(subscription_orm.event.id),
             number=subscription_orm.event.number,
             title=subscription_orm.event.title,
-            order=subscription_orm.event.order,
             position=subscription_orm.event.position,
         ),
     )

@@ -66,7 +66,6 @@ def _parse_full_dto(
             type=schedule_change_orm.changed_event.type,
             number=schedule_change_orm.changed_event.number,
             title=schedule_change_orm.changed_event.title,
-            order=schedule_change_orm.changed_event.order,
         )
         if schedule_change_orm.changed_event
         else None,
@@ -75,7 +74,6 @@ def _parse_full_dto(
             type=schedule_change_orm.related_entry.type,
             number=schedule_change_orm.related_entry.number,
             title=schedule_change_orm.related_entry.title,
-            order=schedule_change_orm.related_entry.order,
         )
         if schedule_change_orm.related_entry
         else None,

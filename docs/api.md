@@ -113,6 +113,12 @@ Request bodies, query params, and responses are named too — `UpdateSettingsDat
 
 Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core/vo/`) are emitted as OpenAPI enum schemas, so `frontend-generate-api` regenerates them as string-literal unions. Never hand-copy enum values on the frontend — import the generated union. Permission literals in `lib/utils/permissions.ts` type their constants as the generated `Permission`, so a backend rename/removal makes the stale literal fail `pnpm check` instead of silently breaking permission checks (same drift-guard idea as the error `code` union below). To expose a new enum on the wire, type a DTO field with the enum (not a plain `NewType` str) and run `just frontend-generate-api`.
 
+### Field conventions
+
+- **An ordered list is ordered by the server.** Clients keep the array's order. Internal sort keys (the schedule's float `order`) stay off the wire, so changing how the server orders rows never breaks a client.
+- **A number with a unit names it**: `duration_seconds`, `lead_minutes`.
+- **A value that holds for one row at most is named once at the top**, not flagged on every row: the schedule's `current_event_id`, not a per-event `is_current`. The client derives the per-row flag in its view model (`mergeSubscriptions`).
+
 ## Mutations & Data Recovery
 
 - **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge). A local optimistic value can key off the mutation itself instead (a vote counts `+1` while `isPending` and the refetched row doesn't carry it yet).

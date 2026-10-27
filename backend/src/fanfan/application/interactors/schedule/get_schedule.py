@@ -1,16 +1,9 @@
 import hashlib
 from dataclasses import dataclass
 
-from pydantic import BaseModel
-
-from fanfan.application.dto.schedule import ScheduleEntryDTO
 from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
-
-
-class GetScheduleOutput(BaseModel):
-    schedule: list[ScheduleEntryDTO]
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +24,6 @@ class GetSchedule:
         self.schedule_gateway = schedule_gateway
 
     async def __call__(self) -> RenderedSchedule:
-        entries = await self.schedule_gateway.read_list_schedule()
-        payload = GetScheduleOutput(schedule=entries).model_dump_json()
+        schedule = await self.schedule_gateway.read_schedule()
+        payload = schedule.model_dump_json()
         return RenderedSchedule(etag=_compute_etag(payload), payload=payload)

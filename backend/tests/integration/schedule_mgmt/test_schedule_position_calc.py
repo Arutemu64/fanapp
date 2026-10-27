@@ -19,6 +19,7 @@ def _schedule_event(
     *,
     duration: int,
     is_skipped: bool = False,
+    is_current: bool = False,
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_entry_id(),
@@ -26,7 +27,7 @@ def _schedule_event(
         title=f"Событие {number}",
         duration=duration,
         order=order,
-        is_current=False,
+        is_current=is_current,
         is_skipped=is_skipped,
         nomination_title=None,
     )
@@ -47,7 +48,7 @@ async def test_position_with_fractional_orders(
         await schedule_gateway.add(entry)
     await uow.commit()
 
-    schedule = await schedule_gateway.read_list_schedule()
+    schedule = (await schedule_gateway.read_schedule()).schedule
     by_number = {e.number: e for e in schedule if isinstance(e, ScheduleEventFullDTO)}
 
     assert [e.id for e in schedule] == [
@@ -61,3 +62,43 @@ async def test_position_with_fractional_orders(
     assert by_number[2].position == 2
     assert by_number[4].position == 3
     assert by_number[3].position is None
+
+
+async def test_schedule_names_the_current_event_once(
+    dishka_request: AsyncContainer,
+    uow: UnitOfWork,
+) -> None:
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+
+    first = _schedule_event(1, order=1.0, duration=600)
+    current = _schedule_event(2, order=2.0, duration=900, is_current=True)
+    for entry in (first, current):
+        await schedule_gateway.add(entry)
+    await uow.commit()
+
+    schedule = await schedule_gateway.read_schedule()
+
+    assert schedule.current_event_id == current.id
+    assert schedule.model_dump(mode="json")["schedule"][1] == {
+        "type": "event",
+        "id": str(current.id),
+        "number": 2,
+        "title": "Событие 2",
+        "duration_seconds": 900,
+        "is_skipped": False,
+        "nomination_title": None,
+        "position": 2,
+    }
+
+
+async def test_schedule_without_a_current_event(
+    dishka_request: AsyncContainer,
+    uow: UnitOfWork,
+) -> None:
+    schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
+    await schedule_gateway.add(_schedule_event(1, order=1.0, duration=600))
+    await uow.commit()
+
+    schedule = await schedule_gateway.read_schedule()
+
+    assert schedule.current_event_id is None

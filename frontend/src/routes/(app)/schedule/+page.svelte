@@ -34,6 +34,7 @@
 	import { queryView } from '#lib/utils/queryView.js';
 	import {
 		blockTitleByEventId,
+		EMPTY_SCHEDULE,
 		mergeSubscriptions,
 		scheduleEvents,
 		secondsUntilActs
@@ -71,7 +72,7 @@
 	const queuedSubscriptions = useQueuedSubscriptionChanges();
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
 	let entries: ScheduleEntryWithSubscription[] = $derived(
-		mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
+		mergeSubscriptions(scheduleQuery.data ?? EMPTY_SCHEDULE, subscriptions, queuedSubscriptions)
 	);
 	let schedule: ScheduleEventWithSubscription[] = $derived(scheduleEvents(entries));
 	const configQuery = createQuery(() => getPublicConfigOptions());

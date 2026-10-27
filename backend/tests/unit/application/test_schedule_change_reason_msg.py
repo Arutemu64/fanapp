@@ -43,7 +43,6 @@ def _event(number: int | None, title: str) -> ScheduleChangeEntryDTO:
         type=ScheduleEntryType.EVENT,
         number=number,
         title=title,
-        order=1.0,
     )
 
 

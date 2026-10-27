@@ -20,7 +20,7 @@
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { queryView } from '#lib/utils/queryView.js';
-	import { mergeSubscriptions, scheduleEvents } from '#lib/utils/scheduleData.js';
+	import { EMPTY_SCHEDULE, mergeSubscriptions, scheduleEvents } from '#lib/utils/scheduleData.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
 	import ContactLinks from './components/home/ContactLinks.svelte';
@@ -54,7 +54,7 @@
 	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
 	let schedule = $derived(
 		scheduleEvents(
-			mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions, queuedSubscriptions)
+			mergeSubscriptions(scheduleQuery.data ?? EMPTY_SCHEDULE, subscriptions, queuedSubscriptions)
 		)
 	);
 	let votingStatus = $derived(reachability.current ? votingStatusQuery.data : undefined);

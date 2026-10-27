@@ -1,36 +1,35 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ScheduleEntryDto, SubscriptionFullDto } from '#lib/api/generated/index.js';
+import type { ScheduleDto, SubscriptionFullDto } from '#lib/api/generated/index.js';
 import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 import { mergeSubscriptions, secondsUntilActs } from './scheduleData';
 
-const schedule = [
-	{
-		type: 'event',
-		id: 'a',
-		number: null,
-		title: 'A',
-		duration: 300,
-		order: 1,
-		is_current: false,
-		is_skipped: false,
-		nomination_title: null,
-		position: null
-	},
-	{
-		type: 'event',
-		id: 'b',
-		number: null,
-		title: 'B',
-		duration: 300,
-		order: 2,
-		is_current: false,
-		is_skipped: false,
-		nomination_title: null,
-		position: null
-	}
-] as ScheduleEntryDto[];
+const schedule: ScheduleDto = {
+	current_event_id: null,
+	schedule: [
+		{
+			type: 'event',
+			id: 'a',
+			number: null,
+			title: 'A',
+			duration_seconds: 300,
+			is_skipped: false,
+			nomination_title: null,
+			position: null
+		},
+		{
+			type: 'event',
+			id: 'b',
+			number: null,
+			title: 'B',
+			duration_seconds: 300,
+			is_skipped: false,
+			nomination_title: null,
+			position: null
+		}
+	]
+};
 
 const subscriptionToA = {
 	id: 'sub-a',
@@ -44,6 +43,13 @@ function subscriptionOf(entries: ReturnType<typeof mergeSubscriptions>, id: stri
 }
 
 describe('mergeSubscriptions', () => {
+	it('marks the event the schedule names as current', () => {
+		const merged = mergeSubscriptions({ ...schedule, current_event_id: 'b' }, []);
+
+		const current = merged.filter((entry) => entry.type === 'event' && entry.is_current);
+		expect(current.map((entry) => entry.id)).toEqual(['b']);
+	});
+
 	it("attaches the server's subscriptions by event", () => {
 		const merged = mergeSubscriptions(schedule, [subscriptionToA]);
 
@@ -91,8 +97,7 @@ describe('secondsUntilActs', () => {
 			id,
 			number: null,
 			title: id,
-			duration,
-			order: position ?? 0,
+			duration_seconds: duration,
 			is_current: isCurrent,
 			is_skipped: position === null,
 			nomination_title: null,

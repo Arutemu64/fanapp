@@ -347,16 +347,6 @@ export type GetQuestOutput = {
 };
 
 /**
- * GetScheduleOutput
- */
-export type GetScheduleOutput = {
-	/**
-	 * Schedule
-	 */
-	schedule: Array<ScheduleEntryDto>;
-};
-
-/**
  * GetSubscriptionsOutput
  */
 export type GetSubscriptionsOutput = {
@@ -1187,10 +1177,6 @@ export type ScheduleBlockStartDto = {
 	 * Title
 	 */
 	title: string;
-	/**
-	 * Order
-	 */
-	order: number;
 };
 
 /**
@@ -1210,10 +1196,6 @@ export type ScheduleChangeEntryDto = {
 	 * Title
 	 */
 	title: string;
-	/**
-	 * Order
-	 */
-	order: number;
 };
 
 /**
@@ -1258,6 +1240,22 @@ export type ScheduleChangeFullDto = {
  */
 export type ScheduleChangeType = 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
 
+/**
+ * ScheduleDTO
+ */
+export type ScheduleDto = {
+	/**
+	 * Current Event Id
+	 */
+	current_event_id: string | null;
+	/**
+	 * Schedule
+	 *
+	 * Every entry in running order.
+	 */
+	schedule: Array<ScheduleEntryDto>;
+};
+
 export type ScheduleEntryDto =
 	| ({
 			type: 'event';
@@ -1299,17 +1297,9 @@ export type ScheduleEventFullDto = {
 	 */
 	title: string;
 	/**
-	 * Duration
+	 * Duration Seconds
 	 */
-	duration: number;
-	/**
-	 * Order
-	 */
-	order: number;
-	/**
-	 * Is Current
-	 */
-	is_current: boolean;
+	duration_seconds: number;
 	/**
 	 * Is Skipped
 	 */
@@ -2678,7 +2668,7 @@ export type GetScheduleResponses = {
 	/**
 	 * Schedule retrieved successfully.
 	 */
-	200: GetScheduleOutput;
+	200: ScheduleDto;
 };
 
 export type GetScheduleResponse = GetScheduleResponses[keyof GetScheduleResponses];

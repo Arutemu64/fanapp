@@ -41,7 +41,7 @@ export function isOfflineQuery(queryKey: QueryKey): boolean {
 
 export const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-export const QUERY_CACHE_BUSTER = '7';
+export const QUERY_CACHE_BUSTER = '8';
 
 const QUEST_HISTORY_PAGE_SIZE = 20;
 
