@@ -4,12 +4,18 @@ from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.schedule_change import ScheduleChangeId
+from fanfan.core.vo.schedule_entry import ScheduleEntryId
 
 
 class ScheduleChangeGateway(Protocol):
     async def add(self, change: ScheduleChange) -> None: ...
     async def get_by_id(self, change_id: ScheduleChangeId) -> ScheduleChange | None: ...
     async def delete(self, change: ScheduleChange) -> None: ...
+    async def get_latest_for_event(
+        self, event_id: ScheduleEntryId
+    ) -> ScheduleChange | None:
+        """The newest change whose changed event is ``event_id``."""
+        ...
 
     async def read_schedule_change(
         self, change_id: ScheduleChangeId

@@ -2783,6 +2783,61 @@
         }
       }
     },
+    "/webhooks/festengine": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Process FestEngine webhook",
+        "description": "Turns FestEngine stage events into schedule edits: set current, skip, move. Signed per Standard Webhooks; see docs/backend.md \"FestEngine webhooks\" for the contract.",
+        "operationId": "process_festengine_event",
+        "responses": {
+          "200": {
+            "description": "Event handled, ignored or stale.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FestEngineEventOutput"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A schedule rule refused it.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "System user lacks rights.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown endpoint or unknown act number."
+          },
+          "429": {
+            "description": "Announcement cooldown.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/notifications": {
       "get": {
         "tags": [
@@ -5674,6 +5729,47 @@
           "user"
         ],
         "title": "FeedbackDTO"
+      },
+      "FestEngineAction": {
+        "type": "string",
+        "enum": [
+          "set_current",
+          "skip",
+          "unskip",
+          "move",
+          "unmove"
+        ],
+        "title": "FestEngineAction"
+      },
+      "FestEngineEventOutput": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/FestEngineEventStatus"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/FestEngineAction"
+            },
+            "type": "array",
+            "title": "Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "actions"
+        ],
+        "title": "FestEngineEventOutput"
+      },
+      "FestEngineEventStatus": {
+        "type": "string",
+        "enum": [
+          "updated",
+          "unchanged",
+          "ignored",
+          "stale"
+        ],
+        "title": "FestEngineEventStatus"
       },
       "FindQuestPlayersOutput": {
         "properties": {

@@ -34,6 +34,12 @@ class AnnouncedChangeContext:
 type ChangeFactory = Callable[[AnnouncedChangeContext], ScheduleChange]
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class AnnounceOutcome:
+    user: User
+    applied: bool
+
+
 class ScheduleEditService:
     """Runs one schedule edit transaction: authorize, lock, mutate, commit.
 
@@ -66,11 +72,17 @@ class ScheduleEditService:
         mutate: Callable[[User], Awaitable[ChangeFactory]],
         *,
         already_applied: Callable[[], Awaitable[bool]],
-    ) -> User:
+        actor: User | None = None,
+    ) -> AnnounceOutcome:
         """Edit the schedule and announce it to subscribers.
 
         ``mutate`` applies the domain change and returns a factory for the
-        ``ScheduleChange`` that records it. Returns the acting user.
+        ``ScheduleChange`` that records it. Returns the acting user and whether
+        anything changed.
+
+        ``actor`` replaces the request's user for callers with no session, such
+        as the FestEngine webhook acting as the system user (docs/adr/0048).
+        The actor still needs ``permission``.
 
         ``already_applied`` reports whether the schedule is already in the
         requested state. If so, the edit is a no-op: nothing is written or
@@ -79,11 +91,11 @@ class ScheduleEditService:
         (docs/adr/0034). It runs under the edit lock, so no concurrent edit can
         change the answer, and before the cooldown, so a no-op is never a 429.
         """
-        user = await self._authorize(permission)
+        user = await self._authorize(permission, actor)
         settings = await self.settings_gateway.get()
         await self.schedule_gateway.lock_for_edit()
         if await already_applied():
-            return user
+            return AnnounceOutcome(user=user, applied=False)
         await self._ensure_announcement_cooldown(settings.limits.announcement_timeout)
 
         next_event_before = await self.schedule_gateway.get_next()
@@ -102,7 +114,7 @@ class ScheduleEditService:
         await self.changes_gateway.add(change)
 
         await self.uow.commit()
-        return user
+        return AnnounceOutcome(user=user, applied=True)
 
     async def edit(
         self,
@@ -119,8 +131,10 @@ class ScheduleEditService:
         await self.uow.commit()
         return user
 
-    async def _authorize(self, permission: Permission) -> User:
-        user = await self.current_user_provider.require_user()
+    async def _authorize(
+        self, permission: Permission, actor: User | None = None
+    ) -> User:
+        user = actor or await self.current_user_provider.require_user()
         await self.perm_service.ensure(user=user, permission=permission)
         return user
 

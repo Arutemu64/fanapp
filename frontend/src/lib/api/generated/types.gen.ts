@@ -297,6 +297,27 @@ export type FeedbackDto = {
 };
 
 /**
+ * FestEngineAction
+ */
+export type FestEngineAction = 'set_current' | 'skip' | 'unskip' | 'move' | 'unmove';
+
+/**
+ * FestEngineEventOutput
+ */
+export type FestEngineEventOutput = {
+	status: FestEngineEventStatus;
+	/**
+	 * Actions
+	 */
+	actions: Array<FestEngineAction>;
+};
+
+/**
+ * FestEngineEventStatus
+ */
+export type FestEngineEventStatus = 'updated' | 'unchanged' | 'ignored' | 'stale';
+
+/**
  * FindQuestPlayersOutput
  */
 export type FindQuestPlayersOutput = {
@@ -3467,6 +3488,45 @@ export type ProcessTcloudOrderResponses = {
 
 export type ProcessTcloudOrderResponse =
 	ProcessTcloudOrderResponses[keyof ProcessTcloudOrderResponses];
+
+export type ProcessFestengineEventData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/webhooks/festengine';
+};
+
+export type ProcessFestengineEventErrors = {
+	/**
+	 * A schedule rule refused it.
+	 */
+	400: ProblemDetails;
+	/**
+	 * System user lacks rights.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Unknown endpoint or unknown act number.
+	 */
+	404: unknown;
+	/**
+	 * Announcement cooldown.
+	 */
+	429: ProblemDetails;
+};
+
+export type ProcessFestengineEventError =
+	ProcessFestengineEventErrors[keyof ProcessFestengineEventErrors];
+
+export type ProcessFestengineEventResponses = {
+	/**
+	 * Event handled, ignored or stale.
+	 */
+	200: FestEngineEventOutput;
+};
+
+export type ProcessFestengineEventResponse =
+	ProcessFestengineEventResponses[keyof ProcessFestengineEventResponses];
 
 export type ListUserNotificationsData = {
 	body?: never;

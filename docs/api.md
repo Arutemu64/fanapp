@@ -25,6 +25,10 @@ CI checks both committed artifacts, because a stale one still compiles and would
 
 The general rule when adding to the spec: **a value that is not derived from committed source does not belong in a committed artifact.** `APP_BUILD` (the commit SHA) is the case in point: putting it in `info` would churn the spec, and the generated client with it, on every commit. Keep build- and environment-derived values on a runtime endpoint (`/debug`) instead, and if one has to be in the spec, give it its own test against its own source of truth rather than the byte comparison.
 
+### Webhooks are outside the generated client
+
+`/webhooks/*` serve other systems, not the frontend. The FestEngine webhook's body is read raw to check its signature, so the spec carries no request schema for it; [festengine.md](festengine.md) is its contract.
+
 ## One configured client, one query cache
 
 There is **one** API client: the generated singleton in `client.gen.ts`. The generator's `runtimeConfigPath` points it at `#lib/api/clientConfig.ts`, which sets the base URL and `credentials: 'include'` before any call, so SDK functions and generated query options never take a `client` argument. The client holds configuration only — no user data. Its two response interceptors (reachability, session expiry) are registered by the root layout through `watchApiResponses(queryClient)`, which returns their teardown.

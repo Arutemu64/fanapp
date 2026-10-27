@@ -165,6 +165,9 @@ import type {
 	NewSubscriptionResponses,
 	OauthCallbackData,
 	OauthCallbackErrors,
+	ProcessFestengineEventData,
+	ProcessFestengineEventErrors,
+	ProcessFestengineEventResponses,
 	ProcessTcloudOrderData,
 	ProcessTcloudOrderErrors,
 	ProcessTcloudOrderResponses,
@@ -1204,6 +1207,20 @@ export const processTcloudOrder = <ThrowOnError extends boolean = false>(
 			...options.headers
 		}
 	});
+
+/**
+ * Process FestEngine webhook
+ *
+ * Turns FestEngine stage events into schedule edits: set current, skip, move. Signed per Standard Webhooks; see docs/backend.md "FestEngine webhooks" for the contract.
+ */
+export const processFestengineEvent = <ThrowOnError extends boolean = false>(
+	options?: Options<ProcessFestengineEventData, ThrowOnError>
+): RequestResult<ProcessFestengineEventResponses, ProcessFestengineEventErrors, ThrowOnError> =>
+	(options?.client ?? client).post<
+		ProcessFestengineEventResponses,
+		ProcessFestengineEventErrors,
+		ThrowOnError
+	>({ url: '/webhooks/festengine', ...options });
 
 /**
  * List user notifications

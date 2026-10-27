@@ -8,6 +8,10 @@ Username = NewType("Username", str)
 UserNumber = NewType("UserNumber", int)
 
 
+# Seeded by migration b0fbcd2bb975; cron, CLI, NATS and webhooks act as it (ADR-0010).
+SYSTEM_USER_ID = UserId(UUID("00000000-0000-0000-0000-000000000000"))
+
+
 def generate_user_id() -> UserId:
     return UserId(uuid7())
 

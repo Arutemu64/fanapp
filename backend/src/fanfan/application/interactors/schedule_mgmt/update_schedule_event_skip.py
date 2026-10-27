@@ -33,7 +33,11 @@ class UpdateScheduleEventSkip:
         self.schedule_gateway = schedule_gateway
         self.schedule_edit = schedule_edit
 
-    async def __call__(self, data: UpdateScheduleEventSkipInput) -> None:
+    async def __call__(
+        self, data: UpdateScheduleEventSkipInput, *, actor: User | None = None
+    ) -> bool:
+        """Returns whether the skip state changed."""
+
         async def already_applied() -> bool:
             event = await self.schedule_gateway.get_event(data.event_id)
             return event is not None and event.is_skipped == data.is_skipped
@@ -64,8 +68,11 @@ class UpdateScheduleEventSkip:
 
             return build_change
 
-        user = await self.schedule_edit.announce(
-            Permission.SCHEDULE_MANAGE, mutate, already_applied=already_applied
+        outcome = await self.schedule_edit.announce(
+            Permission.SCHEDULE_MANAGE,
+            mutate,
+            already_applied=already_applied,
+            actor=actor,
         )
 
         logger.info(
@@ -73,6 +80,7 @@ class UpdateScheduleEventSkip:
             extra={
                 "event_id": str(data.event_id),
                 "is_skipped": data.is_skipped,
-                "actor_id": str(user.id),
+                "actor_id": str(outcome.user.id),
             },
         )
+        return outcome.applied

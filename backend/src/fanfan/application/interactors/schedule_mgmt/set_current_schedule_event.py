@@ -32,7 +32,11 @@ class SetCurrentScheduleEvent:
         self.schedule_gateway = schedule_gateway
         self.schedule_edit = schedule_edit
 
-    async def __call__(self, data: SetCurrentScheduleEventInput) -> None:
+    async def __call__(
+        self, data: SetCurrentScheduleEventInput, *, actor: User | None = None
+    ) -> bool:
+        """Returns whether the current event changed."""
+
         async def already_applied() -> bool:
             current_event = await self.schedule_gateway.get_current()
             if current_event is None:
@@ -66,14 +70,18 @@ class SetCurrentScheduleEvent:
 
             return build_change
 
-        user = await self.schedule_edit.announce(
-            Permission.SCHEDULE_MANAGE, mutate, already_applied=already_applied
+        outcome = await self.schedule_edit.announce(
+            Permission.SCHEDULE_MANAGE,
+            mutate,
+            already_applied=already_applied,
+            actor=actor,
         )
 
         logger.info(
             "Schedule event set as current",
             extra={
                 "event_id": str(data.event_id) if data.event_id else None,
-                "actor_id": str(user.id),
+                "actor_id": str(outcome.user.id),
             },
         )
+        return outcome.applied
