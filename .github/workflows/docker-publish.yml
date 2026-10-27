@@ -89,6 +89,8 @@ jobs:
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_DSN={0}', vars.PUBLIC_SENTRY_DSN) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_ENVIRONMENT={0}', vars.PUBLIC_SENTRY_ENVIRONMENT) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_TRACES_SAMPLE_RATE={0}', vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_UMAMI_SCRIPT_URL={0}', vars.PUBLIC_UMAMI_SCRIPT_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_UMAMI_WEBSITE_ID={0}', vars.PUBLIC_UMAMI_WEBSITE_ID) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VK_GROUP_ID={0}', vars.PUBLIC_VK_GROUP_ID) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_URL={0}', vars.SENTRY_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_ORG={0}', vars.SENTRY_ORG) || '' }}

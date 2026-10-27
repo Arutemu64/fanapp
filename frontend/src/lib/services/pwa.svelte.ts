@@ -2,6 +2,8 @@ import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 
 import { createContext } from 'svelte';
 
+import { trackEvent } from './analytics';
+
 const ELEMENT_TAG = 'pwa-install';
 
 class PwaService {
@@ -22,6 +24,7 @@ class PwaService {
 
 		element.addEventListener('pwa-install-available-event', this.#syncState);
 		element.addEventListener('pwa-install-success-event', this.#syncState);
+		element.addEventListener('pwa-install-success-event', this.#trackInstalled);
 		element.addEventListener('pwa-user-choice-result-event', this.#syncState);
 
 		void customElements.whenDefined(ELEMENT_TAG).then(this.#syncState);
@@ -29,6 +32,7 @@ class PwaService {
 		return () => {
 			element.removeEventListener('pwa-install-available-event', this.#syncState);
 			element.removeEventListener('pwa-install-success-event', this.#syncState);
+			element.removeEventListener('pwa-install-success-event', this.#trackInstalled);
 			element.removeEventListener('pwa-user-choice-result-event', this.#syncState);
 			this.#element = null;
 		};
@@ -40,6 +44,8 @@ class PwaService {
 			(navigator as { standalone?: boolean }).standalone === true
 		);
 	}
+
+	readonly #trackInstalled = () => trackEvent('pwa-install');
 
 	readonly #syncState = () => {
 		const el = this.#element;
@@ -68,6 +74,7 @@ class PwaService {
 	}
 
 	showInstallDialog() {
+		trackEvent('pwa-install-open');
 		this.#element?.showDialog(true);
 	}
 }

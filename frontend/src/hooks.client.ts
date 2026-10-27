@@ -3,11 +3,15 @@ import type { HandleClientError } from '@sveltejs/kit/hooks';
 import {
 	PUBLIC_SENTRY_DSN,
 	PUBLIC_SENTRY_ENVIRONMENT,
-	PUBLIC_SENTRY_TRACES_SAMPLE_RATE
+	PUBLIC_SENTRY_TRACES_SAMPLE_RATE,
+	PUBLIC_SITE_URL,
+	PUBLIC_UMAMI_SCRIPT_URL,
+	PUBLIC_UMAMI_WEBSITE_ID
 } from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
 
 import { m } from '#lib/paraglide/messages.js';
+import { startAnalytics } from '#lib/services/analytics.js';
 import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
 
 function isServerSideHttpError(exception: unknown): boolean {
@@ -71,6 +75,12 @@ if (PUBLIC_SENTRY_DSN) {
 		}
 	});
 }
+
+startAnalytics({
+	scriptUrl: PUBLIC_UMAMI_SCRIPT_URL,
+	websiteId: PUBLIC_UMAMI_WEBSITE_ID,
+	siteUrl: PUBLIC_SITE_URL
+});
 
 const PRELOAD_RELOAD_MARKER = 'preload-error-reloaded-at';
 const PRELOAD_RELOAD_WINDOW_MS = 30_000;

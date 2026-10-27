@@ -11,6 +11,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
@@ -44,6 +45,7 @@
 		}
 
 		openingProvider = provider;
+		trackEvent('login-social-start', { provider });
 		if (!session.logoutPending) return;
 
 		event.preventDefault();

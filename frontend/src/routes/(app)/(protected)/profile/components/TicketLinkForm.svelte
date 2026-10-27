@@ -17,6 +17,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
@@ -34,6 +35,7 @@
 	const linkMutation = createMutation(() => ({
 		...linkTicketMutation(),
 		onSuccess: () => {
+			trackEvent('ticket-link');
 			void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
 			return queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
 		}

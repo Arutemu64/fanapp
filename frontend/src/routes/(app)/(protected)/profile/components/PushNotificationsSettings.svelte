@@ -19,6 +19,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { PushDevice, type PushToggleOutcome } from '#lib/services/pushDevice.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
@@ -40,11 +41,17 @@
 
 	const pushSubscribeMutation = createMutation(() => ({
 		...createPushSubscriptionMutation(),
-		onSuccess: refreshUser
+		onSuccess: () => {
+			trackEvent('push-enable');
+			return refreshUser();
+		}
 	}));
 	const pushUnsubscribeMutation = createMutation(() => ({
 		...deletePushSubscriptionMutation(),
-		onSuccess: refreshUser
+		onSuccess: () => {
+			trackEvent('push-disable');
+			return refreshUser();
+		}
 	}));
 	const settingsMutation = createMutation(() => ({
 		...updateCurrentUserSettingsMutation(),

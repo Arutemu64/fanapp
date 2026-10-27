@@ -14,6 +14,7 @@ import {
 	type NewSubscriptionData,
 	type Options
 } from '#lib/api/generated/index.js';
+import { trackEvent } from '#lib/services/analytics.js';
 
 export const QUEUED_WRITES = {
 	subscribe: ['newSubscription'],
@@ -88,15 +89,22 @@ export function registerQueuedWrites(queryClient: QueryClient): void {
 	const refreshSubscriptions = () =>
 		queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
 
+	// Defaults also run for writes replayed after a reload, so the events are tracked here.
 	queryClient.setMutationDefaults(QUEUED_WRITES.subscribe, {
 		...queued,
 		mutationFn: subscribe,
-		onSuccess: refreshSubscriptions
+		onSuccess: () => {
+			trackEvent('event-subscribe');
+			return refreshSubscriptions();
+		}
 	});
 	queryClient.setMutationDefaults(QUEUED_WRITES.unsubscribe, {
 		...queued,
 		mutationFn: unsubscribe,
-		onSuccess: refreshSubscriptions
+		onSuccess: () => {
+			trackEvent('event-unsubscribe');
+			return refreshSubscriptions();
+		}
 	});
 	queryClient.setMutationDefaults(QUEUED_WRITES.award, {
 		...queued,
@@ -105,7 +113,8 @@ export function registerQueuedWrites(queryClient: QueryClient): void {
 	});
 	queryClient.setMutationDefaults(QUEUED_WRITES.feedback, {
 		...queued,
-		...queuedFeedbackOptions()
+		...queuedFeedbackOptions(),
+		onSuccess: () => trackEvent('feedback-send')
 	});
 }
 

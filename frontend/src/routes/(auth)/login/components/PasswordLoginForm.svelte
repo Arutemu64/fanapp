@@ -11,6 +11,7 @@
 	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { trackEvent } from '#lib/services/analytics.js';
 	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
@@ -33,6 +34,7 @@
 	const passwordLoginMutation = createMutation(() => ({
 		...loginMutation(),
 		onSuccess: async () => {
+			trackEvent('login', { method: 'password' });
 			await session.loggedIn();
 			toastService.add(m.login_success(), 'success');
 		}
