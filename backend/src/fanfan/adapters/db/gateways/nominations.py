@@ -89,6 +89,16 @@ class SqlNominationGateway(NominationGateway):
         return _to_model(nomination_orm) if nomination_orm else None
 
     @override
+    async def get_for_update(self, nomination_id: NominationId) -> Nomination | None:
+        stmt = (
+            select(NominationORM)
+            .where(NominationORM.id == nomination_id)
+            .with_for_update()
+        )
+        nomination_orm = await self.session.scalar(stmt)
+        return _to_model(nomination_orm) if nomination_orm else None
+
+    @override
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Nomination | None:
         stmt = (
             select(NominationORM)

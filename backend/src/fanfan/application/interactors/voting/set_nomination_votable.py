@@ -42,7 +42,8 @@ class SetNominationVotable:
             user=current_user, permission=Permission.VOTING_MANAGE
         )
 
-        nomination = await self.nomination_gateway.get(data.nomination_id)
+        # Locked: the save writes every column, so it must not race a sync.
+        nomination = await self.nomination_gateway.get_for_update(data.nomination_id)
         if nomination is None:
             raise NominationNotFound
         if nomination.is_votable == data.is_votable:

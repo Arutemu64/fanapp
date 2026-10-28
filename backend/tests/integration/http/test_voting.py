@@ -120,3 +120,16 @@ async def test_nomination_patch_refuses_null_votable(
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+async def test_nomination_patch_refuses_an_empty_body(
+    dishka_request: AsyncContainer,
+    client: AsyncClient,
+) -> None:
+    participant = await _add_participant(dishka_request)
+
+    response = await client.patch(
+        f"/voting/nominations/{participant.nomination_id}", json={}
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
