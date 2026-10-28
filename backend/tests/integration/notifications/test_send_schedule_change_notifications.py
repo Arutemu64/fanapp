@@ -43,13 +43,13 @@ def _schedule_event(
     order: float,
     *,
     is_current: bool = False,
-    duration: int = 15,
+    duration_seconds: int = 15,
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
-        duration=duration,
+        duration_seconds=duration_seconds,
         order=order,
         is_current=is_current,
         is_skipped=False,
@@ -121,7 +121,9 @@ async def test_reminder_goes_out_once_when_due(
     login(visitor)
     ten_minutes = 600
     events = [
-        _schedule_event(n, f"Событие {n}", n, is_current=n == 1, duration=ten_minutes)
+        _schedule_event(
+            n, f"Событие {n}", n, is_current=n == 1, duration_seconds=ten_minutes
+        )
         for n in range(1, 6)
     ]
     for event in events:
@@ -180,10 +182,12 @@ async def test_own_act_moving_is_announced_and_its_start_too(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(visitor)
     hour = 3600
-    current_event = _schedule_event(1, "Текущее", 1, is_current=True, duration=hour)
-    event_b = _schedule_event(2, "Событие B", 2, duration=hour)
-    event_c = _schedule_event(3, "Событие C", 3, duration=hour)
-    event_d = _schedule_event(4, "Событие D", 4, duration=hour)
+    current_event = _schedule_event(
+        1, "Текущее", 1, is_current=True, duration_seconds=hour
+    )
+    event_b = _schedule_event(2, "Событие B", 2, duration_seconds=hour)
+    event_c = _schedule_event(3, "Событие C", 3, duration_seconds=hour)
+    event_d = _schedule_event(4, "Событие D", 4, duration_seconds=hour)
     for event in (current_event, event_b, event_c, event_d):
         await schedule_gateway.add(event)
     await uow.commit()
@@ -276,7 +280,7 @@ async def test_missing_durations_leave_the_reminder_to_the_running_order(
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
     login(visitor)
     events = [
-        _schedule_event(n, f"Событие {n}", n, is_current=n == 1, duration=0)
+        _schedule_event(n, f"Событие {n}", n, is_current=n == 1, duration_seconds=0)
         for n in range(1, 6)
     ]
     for event in events:

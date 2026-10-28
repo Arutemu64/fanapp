@@ -38,7 +38,7 @@ async def test_edit_changes_the_served_schedule(
                 id=generate_schedule_entry_id(),
                 number=1,
                 title="Событие",
-                duration=15,
+                duration_seconds=15,
                 order=1.0,
                 is_current=False,
                 is_skipped=False,

@@ -40,7 +40,7 @@ class ScheduleBlockStart(BaseScheduleEntry):
 @dataclass(slots=True, kw_only=True, eq=False)
 class ScheduleEvent(BaseScheduleEntry):
     number: int | None
-    duration: int
+    duration_seconds: int
     is_current: bool
     is_skipped: bool
     nomination_title: str | None
@@ -81,12 +81,12 @@ class ScheduleEvent(BaseScheduleEntry):
         self,
         *,
         title: str,
-        duration: int,
+        duration_seconds: int,
         nomination_title: str | None,
         order: float,
     ) -> None:
         self.title = title
-        self.duration = duration
+        self.duration_seconds = duration_seconds
         self.nomination_title = nomination_title
         self.order = order
 

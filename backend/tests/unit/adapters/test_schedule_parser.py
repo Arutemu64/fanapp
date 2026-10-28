@@ -22,11 +22,12 @@ TEMPLATE_PATH = REPO_ROOT / "frontend" / "static" / "schedule-template.xlsx"
 VALID_ENTRY = ScheduleEventRow(
     number=1,
     title="Открытие фестиваля",
-    duration=900,
+    duration_seconds=900,
     nomination_title="Вне конкурса",
 )
 VALID_ROW: dict[str, object] = dict(VALID_ENTRY.model_dump())
 VALID_ROW["type"] = None
+VALID_ROW["duration"] = VALID_ROW.pop("duration_seconds")
 
 
 def valid_row(**overrides: object) -> tuple[object, ...]:
@@ -70,40 +71,40 @@ def test_parses_the_downloadable_template() -> None:
         ScheduleEventRow(
             number=None,
             title="Открытие фестиваля",
-            duration=900,
+            duration_seconds=900,
             nomination_title=None,
         ),
         ScheduleBlockRow(title="Косплей"),
         ScheduleEventRow(
             number=1,
             title="Дефиле «Наруто»",
-            duration=45,
+            duration_seconds=45,
             nomination_title="Одиночное дефиле",
         ),
         ScheduleEventRow(
             number=2,
             title="Сценка «Стальной алхимик»",
-            duration=480,
+            duration_seconds=480,
             nomination_title="Групповое дефиле",
         ),
         ScheduleEventRow(
             number=None,
             title="Перерыв",
-            duration=600,
+            duration_seconds=600,
             nomination_title=None,
         ),
         ScheduleBlockRow(title="Караоке"),
         ScheduleEventRow(
             number=3,
             title="Вокал: «Унесённые призраками»",
-            duration=210,
+            duration_seconds=210,
             nomination_title="Вокал",
         ),
         ScheduleBlockRow(title="Закрытие"),
         ScheduleEventRow(
             number=None,
             title="Награждение и закрытие",
-            duration=1200,
+            duration_seconds=1200,
             nomination_title=None,
         ),
     ]
@@ -128,7 +129,7 @@ def test_accepts_a_sub_minute_duration() -> None:
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=45)])
 
     assert parse_schedule_from_excel(sheet) == [
-        VALID_ENTRY.model_copy(update={"duration": 45})
+        VALID_ENTRY.model_copy(update={"duration_seconds": 45})
     ]
 
 

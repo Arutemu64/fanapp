@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ScheduleEventRow(BaseModel):
     number: int | None
     title: str
-    duration: int
+    duration_seconds: int
     nomination_title: str | None
 
 
@@ -48,7 +48,7 @@ def build_schedule_entry(row: ScheduleRow, order: float) -> ScheduleEntry:
         id=generate_schedule_entry_id(),
         number=row.number,
         title=row.title,
-        duration=row.duration,
+        duration_seconds=row.duration_seconds,
         nomination_title=row.nomination_title,
         order=order,
         is_current=False,
@@ -135,7 +135,7 @@ class ImportSchedule:
                     elif isinstance(row, ScheduleEventRow):
                         existing_entry.update_details(
                             title=row.title,
-                            duration=row.duration,
+                            duration_seconds=row.duration_seconds,
                             nomination_title=row.nomination_title,
                             order=order,
                         )

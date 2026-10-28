@@ -40,14 +40,14 @@ def _schedule_event(
     order: float,
     *,
     is_current: bool = False,
-    duration: int = 15,
+    duration_seconds: int = 15,
     nomination_title: str | None = None,
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
-        duration=duration,
+        duration_seconds=duration_seconds,
         order=order,
         is_current=is_current,
         is_skipped=False,
@@ -75,7 +75,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
         2,
         "Новое текущее событие",
         2,
-        duration=20,
+        duration_seconds=20,
         nomination_title="Номинация",
     )
     await schedule_gateway.add(previous_current_event)

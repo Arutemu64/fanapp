@@ -168,7 +168,7 @@ def _read_event_row(
     return ScheduleEventRow(
         number=number,
         title=_read_text(row["title"], column="title", row=row_index),
-        duration=duration,
+        duration_seconds=duration,
         nomination_title=_read_optional_text(
             row["nomination_title"], column="nomination_title", row=row_index
         ),
