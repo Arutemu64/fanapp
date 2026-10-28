@@ -349,6 +349,23 @@ async def test_keyboard_refusals_are_channel_unavailable(code: int) -> None:
         await notifier.send_notification(_make_notification(user.id))
 
 
+@pytest.mark.parametrize(
+    ("code", "cause", "other_cause"),
+    [(911, "malformed", "bot features"), (912, "bot features", "malformed")],
+)
+async def test_keyboard_refusal_logs_the_fix_for_its_cause(
+    code: int, cause: str, other_cause: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    user = _make_user()
+    client = _StubVkClient(VkApiError(code=code, message="refused"))
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    with pytest.raises(NotificationChannelUnavailable):
+        await notifier.send_notification(_make_notification(user.id))
+    assert cause in caplog.text
+    assert other_cause not in caplog.text
+
+
 async def test_delete_failure_does_not_fail_delivery() -> None:
     user = _make_user()
     client = _StubVkClient(delete_error=VkApiError(code=100500, message="boom"))

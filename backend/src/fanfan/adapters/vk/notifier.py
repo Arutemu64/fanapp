@@ -29,8 +29,11 @@ _USER_REVOKED_CODES = frozenset({900, 901, 902})
 _USER_UNREACHABLE_CODES = frozenset({7, 15, 987, 988, 1021})
 _FLOOD_CODES = frozenset({6, 9})
 _AUTH_CODES = frozenset({5, 27, 28})
-# The keyboard is malformed, or the community has bot features switched off.
-_KEYBOARD_CODES = frozenset({911, 912})
+_KEYBOARD_ERRORS: dict[int, str] = {
+    911: "VK rejected the notification keyboard as malformed",
+    912: "VK refused the notification keyboard — enable bot features "
+    "in the community settings",
+}
 
 _FLOOD_RETRY_AFTER_SECONDS = 1
 
@@ -137,12 +140,8 @@ class VkNotifier(VkNotifierPort):
                 extra={"error_code": error.code},
             )
             raise NotificationChannelUnavailable from error
-        if error.code in _KEYBOARD_CODES:
-            logger.error(
-                "VK refused the notification keyboard — enable bot features "
-                "in the community settings",
-                extra={"error_code": error.code},
-            )
+        if error.code in _KEYBOARD_ERRORS:
+            logger.error(_KEYBOARD_ERRORS[error.code], extra={"error_code": error.code})
             raise NotificationChannelUnavailable from error
         logger.warning(
             "Unhandled VK API error sending notification",
