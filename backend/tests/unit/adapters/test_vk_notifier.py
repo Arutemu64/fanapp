@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any, override
 from urllib.parse import parse_qs
 from uuid import uuid7
@@ -354,8 +355,14 @@ async def test_keyboard_refusals_are_channel_unavailable(code: int) -> None:
     [(911, "malformed", "bot features"), (912, "bot features", "malformed")],
 )
 async def test_keyboard_refusal_logs_the_fix_for_its_cause(
-    code: int, cause: str, other_cause: str, caplog: pytest.LogCaptureFixture
+    code: int,
+    cause: str,
+    other_cause: str,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # Alembic's fileConfig in the migration tests disables existing loggers.
+    monkeypatch.setattr(logging.getLogger(VkNotifier.__module__), "disabled", False)
     user = _make_user()
     client = _StubVkClient(VkApiError(code=code, message="refused"))
     notifier = _notifier(identity=_identity_for(user), client=client)
