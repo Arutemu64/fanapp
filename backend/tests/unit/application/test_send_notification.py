@@ -421,3 +421,29 @@ async def test_vk_is_switched_off_when_the_user_shut_the_community_out() -> None
 
     assert user.settings.receive_vk_notifications is False
     assert user_gateway.saved == [user]
+
+
+class _RevokedTelegramNotifier(TelegramNotifierPort):
+    @override
+    async def send_notification(self, notification: Notification) -> None:
+        raise UserRevokedChannel
+
+
+async def test_telegram_is_switched_off_when_the_user_blocked_the_bot() -> None:
+    user = _make_user(telegram=True)
+    user_gateway = _FakeUserGateway(user)
+    interactor = SendNotification(
+        mailing_gateway=_StubMailingGateway(),
+        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        user_gateway=user_gateway,
+        tg_notifier=_RevokedTelegramNotifier(),
+        push_notifier=FakePushNotifier(),
+        vk_notifier=FakeVkNotifier(),
+        uow=_FakeUow(),
+    )
+
+    with pytest.raises(UserNotReachable):
+        await interactor.send_notification_to_telegram(_INPUT)
+
+    assert user.settings.receive_telegram_notifications is False
+    assert user_gateway.saved == [user]

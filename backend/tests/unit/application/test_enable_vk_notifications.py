@@ -14,7 +14,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.ports.vk_messages import VkMessagesPermission
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.notifications import (
-    VkCheckTooFast,
+    NotificationsCheckTooFast,
     VkMessagesNotAllowed,
 )
 from fanfan.core.exceptions.rate_limit import CooldownActive
@@ -171,7 +171,7 @@ async def test_a_repeated_check_within_the_cooldown_is_refused() -> None:
     user = _user()
     permission = _StubPermission(allowed=True)
 
-    with pytest.raises(VkCheckTooFast):
+    with pytest.raises(NotificationsCheckTooFast):
         await _interactor(
             user,
             identity=_identity(user),

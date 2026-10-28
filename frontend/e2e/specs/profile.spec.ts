@@ -76,6 +76,32 @@ test.describe('profile hub', () => {
 		expect(api.countCalls('PATCH /me/settings')).toBe(0);
 	});
 
+	test('turns Telegram back on once the bot gets through', async ({ page, api }) => {
+		let blocked = true;
+		api.use({
+			...loggedInAs({
+				social_identities: [{ provider: 'telegram' }],
+				settings: {
+					receive_all_announcements: true,
+					receive_telegram_notifications: false,
+					receive_vk_notifications: false
+				}
+			}),
+			'POST /me/connections/telegram/notifications': () =>
+				blocked ? problem('TELEGRAM_BOT_BLOCKED', 409) : { status: 204, body: '' }
+		});
+		await page.goto('/profile/notifications');
+
+		await page.getByRole('switch', { name: /Telegram/ }).click();
+		const dialog = page.getByRole('dialog', { name: 'Уведомления в Telegram' });
+		await dialog.getByRole('button', { name: 'Проверить' }).click();
+		await expect(dialog.getByRole('alert')).toContainText('Бот не может тебе писать');
+
+		blocked = false;
+		await dialog.getByRole('button', { name: 'Проверить' }).click();
+		await expect(dialog).toBeHidden();
+	});
+
 	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {
 		api.use(organizer());
 		await page.goto('/profile');

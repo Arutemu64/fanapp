@@ -1068,6 +1068,7 @@ export type ProblemDetails = {
 		| 'MAILING_CANCELLED'
 		| 'MAILING_NOT_FOUND'
 		| 'NOMINATION_NOT_FOUND'
+		| 'NOTIFICATIONS_CHECK_TOO_FAST'
 		| 'OUTDATED_SCHEDULE_CHANGE'
 		| 'PARTICIPANT_NOT_FOUND'
 		| 'PERMISSION_NOT_ASSIGNABLE'
@@ -1088,6 +1089,7 @@ export type ProblemDetails = {
 		| 'SUBSCRIPTION_ALREADY_EXISTS'
 		| 'SUBSCRIPTION_NOT_FOUND'
 		| 'SYNC_ALREADY_RUNNING'
+		| 'TELEGRAM_BOT_BLOCKED'
 		| 'TEST_NOTIFICATION_TOO_FAST'
 		| 'TICKET_ALREADY_USED'
 		| 'TICKET_BATCH_ALREADY_EXISTS'
@@ -1107,7 +1109,6 @@ export type ProblemDetails = {
 		| 'USER_NOT_AUTHENTICATED'
 		| 'USER_NOT_FOUND'
 		| 'VALIDATION_ERROR'
-		| 'VK_CHECK_TOO_FAST'
 		| 'VK_MESSAGES_NOT_ALLOWED'
 		| 'VOTE_NOT_FOUND'
 		| 'VOTING_DISABLED'
@@ -2819,6 +2820,53 @@ export type EnableVkNotificationsResponses = {
 
 export type EnableVkNotificationsResponse =
 	EnableVkNotificationsResponses[keyof EnableVkNotificationsResponses];
+
+export type EnableTelegramNotificationsData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/me/connections/telegram/notifications';
+};
+
+export type EnableTelegramNotificationsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * No Telegram account is linked.
+	 */
+	404: ProblemDetails;
+	/**
+	 * The bot cannot reach the user, usually because it is blocked.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Checked too recently.
+	 */
+	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type EnableTelegramNotificationsError =
+	EnableTelegramNotificationsErrors[keyof EnableTelegramNotificationsErrors];
+
+export type EnableTelegramNotificationsResponses = {
+	/**
+	 * Telegram notifications turned on.
+	 */
+	204: void;
+};
+
+export type EnableTelegramNotificationsResponse =
+	EnableTelegramNotificationsResponses[keyof EnableTelegramNotificationsResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;

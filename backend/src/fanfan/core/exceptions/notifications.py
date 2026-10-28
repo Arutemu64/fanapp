@@ -48,8 +48,14 @@ class VkMessagesNotAllowed(Conflict, NotificationException):
     code = "VK_MESSAGES_NOT_ALLOWED"
 
 
-class VkCheckTooFast(RateLimited, NotificationException):
-    code = "VK_CHECK_TOO_FAST"
+class TelegramBotBlocked(Conflict, NotificationException):
+    """Telegram notifications cannot be turned on: the bot cannot reach the user."""
+
+    code = "TELEGRAM_BOT_BLOCKED"
+
+
+class NotificationsCheckTooFast(RateLimited, NotificationException):
+    code = "NOTIFICATIONS_CHECK_TOO_FAST"
 
     def __init__(self, retry_after: int) -> None:
         super().__init__(details={"retry_after": retry_after})

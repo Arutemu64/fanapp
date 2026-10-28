@@ -28,7 +28,7 @@ describe('notificationsStatus', () => {
 		expect(notificationsStatus('off', user(['vk']))).toBe('Включены');
 	});
 
-	it('is on through linked Telegram, which has no switch but still delivers', () => {
+	it('is on through linked Telegram with its setting on', () => {
 		expect(notificationsStatus('off', user(['telegram']))).toBe('Включены');
 	});
 

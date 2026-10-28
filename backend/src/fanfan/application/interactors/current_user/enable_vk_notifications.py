@@ -6,7 +6,10 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.ports.vk_messages import VkMessagesPermission
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.exceptions.notifications import VkCheckTooFast, VkMessagesNotAllowed
+from fanfan.core.exceptions.notifications import (
+    NotificationsCheckTooFast,
+    VkMessagesNotAllowed,
+)
 from fanfan.core.exceptions.rate_limit import CooldownActive
 from fanfan.core.exceptions.users import SocialAccountNotLinked
 from fanfan.core.vo.social_identity import SocialProvider
@@ -14,7 +17,7 @@ from fanfan.core.vo.social_identity import SocialProvider
 logger = logging.getLogger(__name__)
 
 # Each check spends a call from the community's API quota, shared with sending.
-VK_CHECK_COOLDOWN_SECONDS = 3
+NOTIFICATIONS_CHECK_COOLDOWN_SECONDS = 3
 
 
 class EnableVkNotifications:
@@ -45,7 +48,7 @@ class EnableVkNotifications:
             raise SocialAccountNotLinked
 
         claim = self.cooldown.claim(
-            f"vk_messages_check:{user.id}", VK_CHECK_COOLDOWN_SECONDS
+            f"vk_messages_check:{user.id}", NOTIFICATIONS_CHECK_COOLDOWN_SECONDS
         )
         try:
             async with claim:
@@ -53,7 +56,7 @@ class EnableVkNotifications:
                     identity.provider_user_id
                 )
         except CooldownActive as e:
-            raise VkCheckTooFast(retry_after=e.details["retry_after"]) from e
+            raise NotificationsCheckTooFast(retry_after=e.details["retry_after"]) from e
         if not allowed:
             raise VkMessagesNotAllowed
 

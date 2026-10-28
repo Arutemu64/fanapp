@@ -251,6 +251,7 @@ const ERROR_MESSAGES = {
 	SOCIAL_ACCOUNT_NOT_LINKED: m.error_social_account_not_linked,
 	SUBSCRIPTION_ALREADY_EXISTS: m.error_subscription_already_exists,
 	SYNC_ALREADY_RUNNING: m.error_sync_already_running,
+	TELEGRAM_BOT_BLOCKED: m.error_telegram_bot_blocked,
 	TICKET_ALREADY_USED: m.error_ticket_already_used,
 	TICKET_BATCH_ALREADY_EXISTS: m.error_ticket_batch_already_exists,
 	TICKET_NOT_FOUND: m.error_ticket_not_found,
@@ -278,7 +279,7 @@ const RETRY_AFTER_CODES = [
 	'TOO_MANY_OTP_ATTEMPTS',
 	'TOO_MANY_LOGIN_ATTEMPTS',
 	'TOO_MANY_LOGIN_CODE_REQUESTS',
-	'VK_CHECK_TOO_FAST'
+	'NOTIFICATIONS_CHECK_TOO_FAST'
 ] as const satisfies readonly ApiErrorCode[];
 
 const _GENERIC_FALLBACK_CODES = [

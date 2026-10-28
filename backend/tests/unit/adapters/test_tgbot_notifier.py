@@ -15,6 +15,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.social_identity import SocialIdentity
@@ -165,13 +166,13 @@ async def test_retry_after_maps_to_notification_retry_after() -> None:
     assert exc.value.retry_after == 9
 
 
-async def test_forbidden_is_unreachable() -> None:
+async def test_a_blocked_bot_revokes_telegram() -> None:
     error = TelegramApiError(
         status=403, description="Forbidden: bot was blocked by the user"
     )
     notifier = _notifier(identity=_identity(), client=_RecordingClient(error=error))
 
-    with pytest.raises(UserNotReachable):
+    with pytest.raises(UserRevokedChannel):
         await notifier.send_notification(_notification())
 
 

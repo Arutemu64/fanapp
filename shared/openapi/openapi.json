@@ -1374,6 +1374,86 @@
         ]
       }
     },
+    "/me/connections/telegram/notifications": {
+      "post": {
+        "tags": [
+          "Current user"
+        ],
+        "summary": "Turn on Telegram notifications",
+        "description": "Sends a confirmation message through the bot to the current user's linked Telegram account and, if it arrives, turns Telegram notifications on. Turning them off goes through the settings endpoint.",
+        "operationId": "enable_telegram_notifications",
+        "responses": {
+          "204": {
+            "description": "Telegram notifications turned on."
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No Telegram account is linked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The bot cannot reach the user, usually because it is blocked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Checked too recently.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
     "/me/ticket": {
       "post": {
         "tags": [
@@ -7955,6 +8035,7 @@
               "MAILING_CANCELLED",
               "MAILING_NOT_FOUND",
               "NOMINATION_NOT_FOUND",
+              "NOTIFICATIONS_CHECK_TOO_FAST",
               "OUTDATED_SCHEDULE_CHANGE",
               "PARTICIPANT_NOT_FOUND",
               "PERMISSION_NOT_ASSIGNABLE",
@@ -7975,6 +8056,7 @@
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
               "SYNC_ALREADY_RUNNING",
+              "TELEGRAM_BOT_BLOCKED",
               "TEST_NOTIFICATION_TOO_FAST",
               "TICKET_ALREADY_USED",
               "TICKET_BATCH_ALREADY_EXISTS",
@@ -7994,7 +8076,6 @@
               "USER_NOT_AUTHENTICATED",
               "USER_NOT_FOUND",
               "VALIDATION_ERROR",
-              "VK_CHECK_TOO_FAST",
               "VK_MESSAGES_NOT_ALLOWED",
               "VOTE_NOT_FOUND",
               "VOTING_DISABLED",

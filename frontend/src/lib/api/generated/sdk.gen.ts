@@ -66,6 +66,9 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerErrors,
 	DrawVotingContestWinnerResponses,
+	EnableTelegramNotificationsData,
+	EnableTelegramNotificationsErrors,
+	EnableTelegramNotificationsResponses,
 	EnableVkNotificationsData,
 	EnableVkNotificationsErrors,
 	EnableVkNotificationsResponses,
@@ -672,6 +675,34 @@ export const enableVkNotifications = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/me/connections/vk/notifications',
+		...options
+	});
+
+/**
+ * Turn on Telegram notifications
+ *
+ * Sends a confirmation message through the bot to the current user's linked Telegram account and, if it arrives, turns Telegram notifications on. Turning them off goes through the settings endpoint.
+ */
+export const enableTelegramNotifications = <ThrowOnError extends boolean = false>(
+	options?: Options<EnableTelegramNotificationsData, ThrowOnError>
+): RequestResult<
+	EnableTelegramNotificationsResponses,
+	EnableTelegramNotificationsErrors,
+	ThrowOnError
+> =>
+	(options?.client ?? client).post<
+		EnableTelegramNotificationsResponses,
+		EnableTelegramNotificationsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/me/connections/telegram/notifications',
 		...options
 	});
 

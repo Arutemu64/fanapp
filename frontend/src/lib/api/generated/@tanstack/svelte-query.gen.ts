@@ -27,6 +27,7 @@ import {
 	deletePushSubscription,
 	deleteSubscription,
 	drawVotingContestWinner,
+	enableTelegramNotifications,
 	enableVkNotifications,
 	findQuestPlayers,
 	getCaptchaChallenge,
@@ -144,6 +145,9 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerError,
 	DrawVotingContestWinnerResponse,
+	EnableTelegramNotificationsData,
+	EnableTelegramNotificationsError,
+	EnableTelegramNotificationsResponse,
 	EnableVkNotificationsData,
 	EnableVkNotificationsError,
 	EnableVkNotificationsResponse,
@@ -914,6 +918,35 @@ export const enableVkNotificationsMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await enableVkNotifications({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Turn on Telegram notifications
+ *
+ * Sends a confirmation message through the bot to the current user's linked Telegram account and, if it arrives, turns Telegram notifications on. Turning them off goes through the settings endpoint.
+ */
+export const enableTelegramNotificationsMutation = (
+	options?: Partial<Options<EnableTelegramNotificationsData>>
+): MutationOptions<
+	EnableTelegramNotificationsResponse,
+	EnableTelegramNotificationsError,
+	Options<EnableTelegramNotificationsData>
+> => {
+	const mutationOptions: MutationOptions<
+		EnableTelegramNotificationsResponse,
+		EnableTelegramNotificationsError,
+		Options<EnableTelegramNotificationsData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await enableTelegramNotifications({
 				...options,
 				...fnOptions,
 				throwOnError: true
