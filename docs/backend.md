@@ -93,7 +93,7 @@ The columns an organizer must supply are named in three coupled places — chang
 Every column must appear in the header. A row is either an **event** or a
 **block start** (ADR-0026), told apart by `type`: blank or `event` for an event,
 `block` for a block start whose `title` names the block. A block row must leave
-`number`, `duration` and `nomination_title` blank (`BLOCK_ROW_WITH_EVENT_DATA`
+`number`, `duration_seconds` and `nomination_title` blank (`BLOCK_ROW_WITH_EVENT_DATA`
 otherwise), and any other `type` is `INVALID_TYPE`. Every event belongs to the
 block row above it. On an event row `number` may be left empty: breaks and other
 filler rows carry no public number, so `ScheduleEntry.number` is `int | None`

@@ -17,7 +17,7 @@ def _schedule_event(
     number: int,
     order: float,
     *,
-    duration: int,
+    duration_seconds: int,
     is_skipped: bool = False,
     is_current: bool = False,
 ) -> ScheduleEvent:
@@ -25,7 +25,7 @@ def _schedule_event(
         id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
-        duration=duration,
+        duration_seconds=duration_seconds,
         order=order,
         is_current=is_current,
         is_skipped=is_skipped,
@@ -39,11 +39,11 @@ async def test_position_with_fractional_orders(
 ) -> None:
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
 
-    first = _schedule_event(1, order=1.0, duration=10)
-    second = _schedule_event(2, order=1.5, duration=20)
-    skipped = _schedule_event(3, order=1.7, duration=99, is_skipped=True)
+    first = _schedule_event(1, order=1.0, duration_seconds=10)
+    second = _schedule_event(2, order=1.5, duration_seconds=20)
+    skipped = _schedule_event(3, order=1.7, duration_seconds=99, is_skipped=True)
     block = ScheduleBlockStart(id=generate_schedule_entry_id(), title="Блок", order=1.8)
-    third = _schedule_event(4, order=2.0, duration=30)
+    third = _schedule_event(4, order=2.0, duration_seconds=30)
     for entry in (first, second, skipped, block, third):
         await schedule_gateway.add(entry)
     await uow.commit()
@@ -70,8 +70,8 @@ async def test_schedule_names_the_current_event_once(
 ) -> None:
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
 
-    first = _schedule_event(1, order=1.0, duration=600)
-    current = _schedule_event(2, order=2.0, duration=900, is_current=True)
+    first = _schedule_event(1, order=1.0, duration_seconds=600)
+    current = _schedule_event(2, order=2.0, duration_seconds=900, is_current=True)
     for entry in (first, current):
         await schedule_gateway.add(entry)
     await uow.commit()
@@ -96,7 +96,7 @@ async def test_schedule_without_a_current_event(
     uow: UnitOfWork,
 ) -> None:
     schedule_gateway = await dishka_request.get(ScheduleEntryGateway)
-    await schedule_gateway.add(_schedule_event(1, order=1.0, duration=600))
+    await schedule_gateway.add(_schedule_event(1, order=1.0, duration_seconds=600))
     await uow.commit()
 
     schedule = await schedule_gateway.read_schedule()

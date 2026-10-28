@@ -15,10 +15,10 @@ from fanfan.core.exceptions.schedule import (
 
 logger = logging.getLogger(__name__)
 
-REQUIRED_COLUMNS = ("type", "number", "title", "duration", "nomination_title")
+REQUIRED_COLUMNS = ("type", "number", "title", "duration_seconds", "nomination_title")
 EVENT_ROW_TYPE = "event"
 BLOCK_ROW_TYPE = "block"
-EVENT_ONLY_COLUMNS = ("number", "duration", "nomination_title")
+EVENT_ONLY_COLUMNS = ("number", "duration_seconds", "nomination_title")
 
 
 def _read_int(value: object, *, column: str, row: int) -> int:
@@ -157,18 +157,20 @@ def _read_event_row(
             )
         seen_numbers.add(number)
 
-    duration = _read_int(row["duration"], column="duration", row=row_index)
-    if duration <= 0:
+    duration_seconds = _read_int(
+        row["duration_seconds"], column="duration_seconds", row=row_index
+    )
+    if duration_seconds <= 0:
         raise InvalidScheduleFile(
             InvalidScheduleFileReason.DURATION_NOT_POSITIVE,
-            column="duration",
+            column="duration_seconds",
             row=row_index,
         )
 
     return ScheduleEventRow(
         number=number,
         title=_read_text(row["title"], column="title", row=row_index),
-        duration=duration,
+        duration_seconds=duration_seconds,
         nomination_title=_read_optional_text(
             row["nomination_title"], column="nomination_title", row=row_index
         ),

@@ -52,7 +52,7 @@ def _schedule_event(
         id=generate_schedule_entry_id(),
         number=number,
         title=f"Событие {number}",
-        duration=15,
+        duration_seconds=15,
         order=order,
         is_current=is_current,
         is_skipped=False,

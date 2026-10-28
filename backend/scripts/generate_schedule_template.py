@@ -10,7 +10,7 @@ COLUMN_WIDTHS = {
     "type": 9,
     "number": 10,
     "title": 38,
-    "duration": 11,
+    "duration_seconds": 18,
     "nomination_title": 26,
 }
 

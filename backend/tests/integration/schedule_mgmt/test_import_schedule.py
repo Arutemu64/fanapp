@@ -31,7 +31,7 @@ def _entry(number: int | None, title: str) -> ScheduleEventRow:
     return ScheduleEventRow(
         number=number,
         title=title,
-        duration=15,
+        duration_seconds=15,
         nomination_title=f"Номинация {number}",
     )
 
@@ -46,7 +46,7 @@ def _schedule_event(number: int | None, title: str, order: float) -> ScheduleEve
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
-        duration=15,
+        duration_seconds=15,
         order=order,
         is_current=False,
         is_skipped=False,
@@ -216,7 +216,7 @@ async def test_import_persists_null_nomination(
     interlude = ScheduleEventRow(
         number=None,
         title="Перерыв",
-        duration=600,
+        duration_seconds=600,
         nomination_title=None,
     )
 

@@ -79,7 +79,7 @@ async def test_seed_leaves_an_existing_programme_untouched(
         id=generate_schedule_entry_id(),
         number=1,
         title="Реальное выступление",
-        duration=300,
+        duration_seconds=300,
         nomination_title=None,
         order=100.0,
         is_current=False,

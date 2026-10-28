@@ -35,7 +35,7 @@ def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
         id=generate_schedule_entry_id(),
         number=number,
         title=title,
-        duration=15,
+        duration_seconds=15,
         order=order,
         is_current=False,
         is_skipped=False,
