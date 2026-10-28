@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -35,6 +35,7 @@ class RateLimitORM(BaseORM):
     """A fixed-window attempt counter."""
 
     __tablename__ = "rate_limits"
+    __table_args__ = (CheckConstraint("hits > 0", name="hits_positive"),)
 
     key: Mapped[str] = mapped_column(Text(), primary_key=True)
     hits: Mapped[int] = mapped_column()

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, override
 
-from sqlalchemy import Index, func, text
+from sqlalchemy import CheckConstraint, Index, func, text
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -54,6 +54,8 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
 
     __table_args__ = (
         Index("ix_users_username_lower", func.lower(username), unique=True),
+        # Mirrors normalize_email(), so case variants can't dodge the unique index.
+        CheckConstraint("email = lower(btrim(email))", name="email_normalized"),
     )
 
     @override

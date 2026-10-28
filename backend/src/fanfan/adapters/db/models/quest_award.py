@@ -13,6 +13,11 @@ class QuestAwardORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "quest_awards"
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
+        # Not the reverse: deleting the canceller sets cancelled_by to NULL.
+        CheckConstraint(
+            "cancelled_by IS NULL OR cancelled_at IS NOT NULL",
+            name="cancelled_by_has_cancelled_at",
+        ),
         Index(
             "ix_quest_awards_user_id_active",
             "user_id",

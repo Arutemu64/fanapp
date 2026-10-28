@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Index, Text, text
+from sqlalchemy import CheckConstraint, DateTime, Index, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,6 +26,7 @@ class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
             postgresql_where="published_at IS NULL",
         ),
         Index("ix_outbox_events_published_at", "published_at"),
+        CheckConstraint("attempts >= 0", name="attempts_not_negative"),
     )
 
     subject: Mapped[str] = mapped_column(Text())

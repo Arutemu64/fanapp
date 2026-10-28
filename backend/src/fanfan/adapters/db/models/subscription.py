@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models import ScheduleEventORM
@@ -11,7 +11,10 @@ from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 class SubscriptionORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "subscriptions"
-    __table_args__ = (UniqueConstraint("event_id", "user_id"),)
+    __table_args__ = (
+        UniqueConstraint("event_id", "user_id"),
+        CheckConstraint("lead_minutes > 0", name="lead_minutes_positive"),
+    )
 
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True

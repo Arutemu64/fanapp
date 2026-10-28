@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, text
+from sqlalchemy import CheckConstraint, ForeignKey, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,6 +13,9 @@ from fanfan.core.vo.mailing import MailingStatus
 
 class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "mailings"
+    __table_args__ = (
+        CheckConstraint("total_count >= 0", name="total_count_not_negative"),
+    )
 
     status: Mapped[MailingStatus] = str_enum_column(
         MailingStatus,

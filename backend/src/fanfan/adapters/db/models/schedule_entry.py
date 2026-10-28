@@ -53,6 +53,7 @@ class ScheduleEntryORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
             "(number IS NULL AND is_current IS FALSE AND is_skipped IS FALSE)",
             name="block_start_has_no_stage_state",
         ),
+        CheckConstraint("duration >= 0", name="duration_not_negative"),
         *OrderMixin.order_table_args(),
     )
     __mapper_args__ = {"polymorphic_on": "type"}  # noqa: RUF012

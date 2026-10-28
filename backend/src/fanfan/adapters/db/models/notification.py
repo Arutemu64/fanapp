@@ -26,6 +26,8 @@ class NotificationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         index=True,
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # No FK on purpose: it only keys the push collapse topic (adapters/push/push.py).
+    # A dangling id still keys it; SET NULL would merge other events' pushes.
     event_id: Mapped[UUID | None] = mapped_column()
 
     __table_args__ = (
