@@ -27,7 +27,6 @@ VALID_ENTRY = ScheduleEventRow(
 )
 VALID_ROW: dict[str, object] = dict(VALID_ENTRY.model_dump())
 VALID_ROW["type"] = None
-VALID_ROW["duration"] = VALID_ROW.pop("duration_seconds")
 
 
 def valid_row(**overrides: object) -> tuple[object, ...]:
@@ -112,7 +111,7 @@ def test_parses_the_downloadable_template() -> None:
 
 def test_column_order_does_not_matter() -> None:
     sheet = build_sheet(
-        ["type", "duration", "number", "nomination_title", "title"],
+        ["type", "duration_seconds", "number", "nomination_title", "title"],
         [(None, 900, 1, "Вне конкурса", "Открытие фестиваля")],
     )
 
@@ -120,13 +119,15 @@ def test_column_order_does_not_matter() -> None:
 
 
 def test_accepts_whole_numbers_stored_as_floats() -> None:
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(number=1.0, duration=900.0)])
+    sheet = build_sheet(
+        REQUIRED_COLUMNS, [valid_row(number=1.0, duration_seconds=900.0)]
+    )
 
     assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
 
 
 def test_accepts_a_sub_minute_duration() -> None:
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=45)])
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration_seconds=45)])
 
     assert parse_schedule_from_excel(sheet) == [
         VALID_ENTRY.model_copy(update={"duration_seconds": 45})
@@ -147,7 +148,7 @@ def test_reports_every_missing_column_at_once() -> None:
         parse_schedule_from_excel(sheet)
 
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.MISSING_COLUMNS
-    assert exc_info.value.details["columns"] == ["duration", "nomination_title"]
+    assert exc_info.value.details["columns"] == ["duration_seconds", "nomination_title"]
 
 
 def test_rejects_an_empty_sheet() -> None:
@@ -224,7 +225,7 @@ def test_rejects_a_block_row_without_a_title() -> None:
 
 @pytest.mark.parametrize(
     ("column", "value"),
-    [("number", 1), ("duration", 60), ("nomination_title", "Х")],
+    [("number", 1), ("duration_seconds", 60), ("nomination_title", "Х")],
 )
 def test_rejects_a_block_row_with_event_cells(column: str, value: object) -> None:
     sheet = build_sheet(REQUIRED_COLUMNS, [block_row("Косплей", **{column: value})])
@@ -240,7 +241,7 @@ def test_rejects_a_block_row_with_event_cells(column: str, value: object) -> Non
     assert exc_info.value.details["row"] == 2
 
 
-@pytest.mark.parametrize("column", ["number", "duration"])
+@pytest.mark.parametrize("column", ["number", "duration_seconds"])
 def test_rejects_a_non_integer_number(column: str) -> None:
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(**{column: "пять"})])
 
@@ -253,18 +254,20 @@ def test_rejects_a_non_integer_number(column: str) -> None:
 
 
 def test_rejects_a_fractional_duration() -> None:
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=7.5)])
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration_seconds=7.5)])
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
         parse_schedule_from_excel(sheet)
 
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.INVALID_NUMBER
-    assert exc_info.value.details["column"] == "duration"
+    assert exc_info.value.details["column"] == "duration_seconds"
 
 
-@pytest.mark.parametrize("duration", [0, -60])
-def test_rejects_a_duration_that_is_not_positive(duration: int) -> None:
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=duration)])
+@pytest.mark.parametrize("duration_seconds", [0, -60])
+def test_rejects_a_duration_that_is_not_positive(duration_seconds: int) -> None:
+    sheet = build_sheet(
+        REQUIRED_COLUMNS, [valid_row(duration_seconds=duration_seconds)]
+    )
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
         parse_schedule_from_excel(sheet)
@@ -273,7 +276,7 @@ def test_rejects_a_duration_that_is_not_positive(duration: int) -> None:
         exc_info.value.details["reason"]
         == InvalidScheduleFileReason.DURATION_NOT_POSITIVE
     )
-    assert exc_info.value.details["column"] == "duration"
+    assert exc_info.value.details["column"] == "duration_seconds"
 
 
 def test_rejects_a_repeated_number() -> None:

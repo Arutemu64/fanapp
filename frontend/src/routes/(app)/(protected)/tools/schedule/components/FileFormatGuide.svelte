@@ -25,7 +25,7 @@
 			description: m.import_column_title_description()
 		},
 		{
-			name: 'duration',
+			name: 'duration_seconds',
 			description: m.import_column_duration_description()
 		},
 		{
