@@ -20,6 +20,12 @@ from fanfan.application.interactors.auth.send_email_confirmation_code import (
 )
 from fanfan.application.interactors.auth.send_login_code_email import SendLoginCodeEmail
 from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
+from fanfan.application.interactors.current_user.enable_telegram_notifications import (
+    EnableTelegramNotifications,
+)
+from fanfan.application.interactors.current_user.enable_vk_notifications import (
+    EnableVkNotifications,
+)
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
 from fanfan.application.interactors.current_user.link_social_account import (
     LinkSocialAccount,
@@ -259,6 +265,8 @@ class InteractorsProvider(Provider):
         GetCurrentUser,
         LinkSocialAccount,
         UnlinkSocialAccount,
+        EnableVkNotifications,
+        EnableTelegramNotifications,
         UpdateCurrentUser,
         SuggestUsername,
         UpdateUserSettings,

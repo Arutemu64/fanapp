@@ -12,18 +12,31 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
+from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
-_USER_UNREACHABLE_CODES = frozenset({7, 15, 901, 902})
+# messages.send error codes: https://dev.vk.com/ru/method/messages.send
+# Blacklisted the community, withdrew consent, privacy settings forbid it.
+_USER_REVOKED_CODES = frozenset({900, 901, 902})
+_USER_UNREACHABLE_CODES = frozenset({7, 15, 987, 988, 1021})
 _FLOOD_CODES = frozenset({6, 9})
 _AUTH_CODES = frozenset({5, 27, 28})
 
 _FLOOD_RETRY_AFTER_SECONDS = 1
+
+# VK drops a repeated non-zero int32 random_id in the same dialog for an hour.
+_INT32_MAX = 2**31 - 1
+
+
+def _random_id_for(notification_id: NotificationId) -> int:
+    """A stable, non-zero int32, so a JetStream redelivery cannot send twice."""
+    return notification_id.int % _INT32_MAX + 1
 
 
 class VkNotifier(VkNotifierPort):
@@ -62,6 +75,7 @@ class VkNotifier(VkNotifierPort):
             message_id = await self.client.send_message(
                 peer_id=social_identity.provider_user_id,
                 message=self._render_message_text(notification),
+                random_id=_random_id_for(notification.id),
             )
         except VkApiError as e:
             self._handle_api_error(e, notification)
@@ -87,6 +101,8 @@ class VkNotifier(VkNotifierPort):
             raise NotificationRetryAfter(
                 retry_after=_FLOOD_RETRY_AFTER_SECONDS
             ) from error
+        if error.code in _USER_REVOKED_CODES:
+            raise UserRevokedChannel from error
         if error.code in _USER_UNREACHABLE_CODES:
             raise UserNotReachable from error
         if error.code in _AUTH_CODES:

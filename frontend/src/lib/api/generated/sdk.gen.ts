@@ -66,6 +66,12 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerErrors,
 	DrawVotingContestWinnerResponses,
+	EnableTelegramNotificationsData,
+	EnableTelegramNotificationsErrors,
+	EnableTelegramNotificationsResponses,
+	EnableVkNotificationsData,
+	EnableVkNotificationsErrors,
+	EnableVkNotificationsResponses,
 	FindQuestPlayersData,
 	FindQuestPlayersErrors,
 	FindQuestPlayersResponses,
@@ -645,6 +651,58 @@ export const startAccountLink = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/me/connections/{provider}',
+		...options
+	});
+
+/**
+ * Turn on VK notifications
+ *
+ * Asks VK whether its community may message the current user's linked VK account and, if so, turns VK notifications on. Turning them off goes through the settings endpoint.
+ */
+export const enableVkNotifications = <ThrowOnError extends boolean = false>(
+	options?: Options<EnableVkNotificationsData, ThrowOnError>
+): RequestResult<EnableVkNotificationsResponses, EnableVkNotificationsErrors, ThrowOnError> =>
+	(options?.client ?? client).post<
+		EnableVkNotificationsResponses,
+		EnableVkNotificationsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/me/connections/vk/notifications',
+		...options
+	});
+
+/**
+ * Turn on Telegram notifications
+ *
+ * Sends a confirmation message through the bot to the current user's linked Telegram account and, if it arrives, turns Telegram notifications on. Turning them off goes through the settings endpoint.
+ */
+export const enableTelegramNotifications = <ThrowOnError extends boolean = false>(
+	options?: Options<EnableTelegramNotificationsData, ThrowOnError>
+): RequestResult<
+	EnableTelegramNotificationsResponses,
+	EnableTelegramNotificationsErrors,
+	ThrowOnError
+> =>
+	(options?.client ?? client).post<
+		EnableTelegramNotificationsResponses,
+		EnableTelegramNotificationsErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/me/connections/telegram/notifications',
 		...options
 	});
 

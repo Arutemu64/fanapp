@@ -1,4 +1,16 @@
+import type { CurrentUserDto } from '#lib/api/generated/index.js';
+
 import { m } from '#lib/paraglide/messages.js';
+
+type ChannelOwner = Pick<CurrentUserDto, 'settings' | 'social_identities'>;
+
+/** Whether a linked Telegram or VK account has its notifications on. */
+export function hasMessengerNotifications(user: ChannelOwner): boolean {
+	const providers = user.social_identities.map((identity) => identity.provider);
+	const telegramOn = providers.includes('telegram') && user.settings.receive_telegram_notifications;
+	const vkOn = providers.includes('vk') && user.settings.receive_vk_notifications;
+	return telegramOn || vkOn;
+}
 const roleLabels: Record<string, () => string> = {
 	visitor: m.role_visitor,
 	participant: m.role_participant,

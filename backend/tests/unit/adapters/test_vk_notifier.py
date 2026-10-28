@@ -14,6 +14,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.social_identity import SocialIdentity
@@ -30,6 +31,7 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 from fanfan.presentation.web.config import WebConfig
 
 VK_USER_ID = 555
+VK_GROUP_ID = 777
 
 
 def _make_user() -> User:
@@ -59,6 +61,7 @@ def _vk_config() -> VkConfig:
         client_id="app",
         client_secret="app-secret",
         group_token="group-token",
+        group_id=VK_GROUP_ID,
     )
 
 
@@ -89,8 +92,9 @@ class _VkTransport:
     tests can assert on the posted form body.
     """
 
-    def __init__(self, *, error_code: int | None = None) -> None:
+    def __init__(self, *, error_code: int | None = None, response: object = 1) -> None:
         self._error_code = error_code
+        self._response = response
         self.requests: list[httpx2.Request] = []
 
     def __call__(self, request: httpx2.Request) -> httpx2.Response:
@@ -100,7 +104,7 @@ class _VkTransport:
                 "error": {"error_code": self._error_code, "error_msg": "boom"}
             }
         else:
-            body = {"response": 1}
+            body = {"response": self._response}
         return httpx2.Response(200, json=body)
 
     def form_body(self, index: int = 0) -> dict[str, str]:
@@ -117,7 +121,9 @@ async def test_client_posts_token_version_and_message() -> None:
     transport = _VkTransport()
     client = _api_client(transport)
 
-    message_id = await client.send_message(peer_id=VK_USER_ID, message="привет")
+    message_id = await client.send_message(
+        peer_id=VK_USER_ID, message="привет", random_id=7
+    )
 
     assert message_id == 1
     sent = transport.form_body()
@@ -125,7 +131,20 @@ async def test_client_posts_token_version_and_message() -> None:
     assert sent["message"] == "привет"
     assert sent["access_token"] == "group-token"
     assert sent["v"] == "5.199"
-    assert sent["random_id"] == "0"
+    assert sent["random_id"] == "7"
+
+
+async def test_client_asks_whether_the_group_may_message_a_user() -> None:
+    transport = _VkTransport(response={"is_allowed": 1})
+    client = _api_client(transport)
+
+    allowed = await client.is_messages_from_group_allowed(user_id=VK_USER_ID)
+
+    assert allowed is True
+    sent = transport.form_body()
+    assert transport.requests[0].url.path.endswith("isMessagesFromGroupAllowed")
+    assert sent["group_id"] == str(VK_GROUP_ID)
+    assert sent["user_id"] == str(VK_USER_ID)
 
 
 async def test_client_deletes_message_only_on_group_side() -> None:
@@ -145,7 +164,7 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
     client = _api_client(_VkTransport(error_code=901))
 
     with pytest.raises(VkApiError) as exc:
-        await client.send_message(peer_id=VK_USER_ID, message="hi")
+        await client.send_message(peer_id=VK_USER_ID, message="hi", random_id=1)
     assert exc.value.code == 901
 
 
@@ -185,8 +204,10 @@ class _StubVkClient(VkApiClient):
         self.deleted: list[int] = []
 
     @override
-    async def send_message(self, *, peer_id: int, message: str) -> int:
-        self.calls.append({"peer_id": peer_id, "message": message})
+    async def send_message(self, *, peer_id: int, message: str, random_id: int) -> int:
+        self.calls.append(
+            {"peer_id": peer_id, "message": message, "random_id": random_id}
+        )
         if self._error is not None:
             raise self._error
         return _SENT_MESSAGE_ID
@@ -287,6 +308,44 @@ async def test_messages_not_allowed_is_unreachable() -> None:
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
+
+
+@pytest.mark.parametrize("code", [900, 901, 902])
+async def test_codes_where_the_user_shut_the_community_out_revoke_vk(
+    code: int,
+) -> None:
+    user = _make_user()
+    client = _StubVkClient(VkApiError(code=code, message="refused"))
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    with pytest.raises(UserRevokedChannel):
+        await notifier.send_notification(_make_notification(user.id))
+
+
+@pytest.mark.parametrize("code", [7, 15, 987, 988, 1021])
+async def test_codes_refusing_this_user_are_unreachable(code: int) -> None:
+    user = _make_user()
+    client = _StubVkClient(VkApiError(code=code, message="refused"))
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    with pytest.raises(UserNotReachable):
+        await notifier.send_notification(_make_notification(user.id))
+
+
+async def test_redelivery_reuses_the_random_id_so_vk_drops_the_duplicate() -> None:
+    user = _make_user()
+    client = _StubVkClient()
+    notifier = _notifier(identity=_identity_for(user), client=client)
+    notification = _make_notification(user.id)
+
+    await notifier.send_notification(notification)
+    await notifier.send_notification(notification)
+    await notifier.send_notification(_make_notification(user.id))
+
+    first, redelivered, other = (call["random_id"] for call in client.calls)
+    assert first == redelivered
+    assert first != other
+    assert 0 < first < 2**31
 
 
 async def test_flood_control_asks_to_retry() -> None:

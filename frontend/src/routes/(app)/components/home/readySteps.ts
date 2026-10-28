@@ -1,6 +1,8 @@
 import type { CurrentUserDto } from '#lib/api/generated/index.js';
 import type { DevicePushState } from '#lib/services/pushDevice.svelte.js';
 
+import { hasMessengerNotifications } from '#lib/utils/users.js';
+
 export type ReadyStepKey = 'account' | 'install' | 'notifications' | 'subscribe' | 'ticket';
 
 export type InstallState = 'available' | 'installed' | 'unavailable';
@@ -52,11 +54,4 @@ export function getNotificationsOn(
 	if (devicePush === 'on') return true;
 	if (devicePush === 'off') return false;
 	return null;
-}
-
-function hasMessengerNotifications(user: CurrentUserDto): boolean {
-	const providers = user.social_identities.map((identity) => identity.provider);
-	const telegramOn = providers.includes('telegram') && user.settings.receive_telegram_notifications;
-	const vkOn = providers.includes('vk') && user.settings.receive_vk_notifications;
-	return telegramOn || vkOn;
 }

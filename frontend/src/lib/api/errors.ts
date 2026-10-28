@@ -248,8 +248,10 @@ const ERROR_MESSAGES = {
 	SAME_EVENTS_ARE_NOT_ALLOWED: m.error_same_events_are_not_allowed,
 	SKIPPED_EVENT_NOT_ALLOWED: m.error_skipped_event_not_allowed,
 	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: m.error_social_account_linked_to_another_user,
+	SOCIAL_ACCOUNT_NOT_LINKED: m.error_social_account_not_linked,
 	SUBSCRIPTION_ALREADY_EXISTS: m.error_subscription_already_exists,
 	SYNC_ALREADY_RUNNING: m.error_sync_already_running,
+	TELEGRAM_BOT_BLOCKED: m.error_telegram_bot_blocked,
 	TICKET_ALREADY_USED: m.error_ticket_already_used,
 	TICKET_BATCH_ALREADY_EXISTS: m.error_ticket_batch_already_exists,
 	TICKET_NOT_FOUND: m.error_ticket_not_found,
@@ -263,6 +265,7 @@ const ERROR_MESSAGES = {
 	USER_NOT_FOUND: m.error_user_not_found,
 	USERNAME_ALREADY_TAKEN: m.error_username_already_taken,
 	USERNAME_PROFANITY: m.error_username_profanity,
+	VK_MESSAGES_NOT_ALLOWED: m.vk_messages_not_allowed,
 	VOTE_NOT_FOUND: m.error_vote_not_found,
 	VOTING_DISABLED: m.error_voting_closed,
 	VOTING_TICKET_REQUIRED: m.error_voting_needs_ticket
@@ -275,7 +278,8 @@ const RETRY_AFTER_CODES = [
 	'TOO_MANY_ATTEMPTS',
 	'TOO_MANY_OTP_ATTEMPTS',
 	'TOO_MANY_LOGIN_ATTEMPTS',
-	'TOO_MANY_LOGIN_CODE_REQUESTS'
+	'TOO_MANY_LOGIN_CODE_REQUESTS',
+	'NOTIFICATIONS_CHECK_TOO_FAST'
 ] as const satisfies readonly ApiErrorCode[];
 
 const _GENERIC_FALLBACK_CODES = [

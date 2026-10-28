@@ -1068,6 +1068,7 @@ export type ProblemDetails = {
 		| 'MAILING_CANCELLED'
 		| 'MAILING_NOT_FOUND'
 		| 'NOMINATION_NOT_FOUND'
+		| 'NOTIFICATIONS_CHECK_TOO_FAST'
 		| 'OUTDATED_SCHEDULE_CHANGE'
 		| 'PARTICIPANT_NOT_FOUND'
 		| 'PERMISSION_NOT_ASSIGNABLE'
@@ -1084,9 +1085,11 @@ export type ProblemDetails = {
 		| 'SCHEDULE_EDIT_TOO_FAST'
 		| 'SKIPPED_EVENT_NOT_ALLOWED'
 		| 'SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER'
+		| 'SOCIAL_ACCOUNT_NOT_LINKED'
 		| 'SUBSCRIPTION_ALREADY_EXISTS'
 		| 'SUBSCRIPTION_NOT_FOUND'
 		| 'SYNC_ALREADY_RUNNING'
+		| 'TELEGRAM_BOT_BLOCKED'
 		| 'TEST_NOTIFICATION_TOO_FAST'
 		| 'TICKET_ALREADY_USED'
 		| 'TICKET_BATCH_ALREADY_EXISTS'
@@ -1106,6 +1109,7 @@ export type ProblemDetails = {
 		| 'USER_NOT_AUTHENTICATED'
 		| 'USER_NOT_FOUND'
 		| 'VALIDATION_ERROR'
+		| 'VK_MESSAGES_NOT_ALLOWED'
 		| 'VOTE_NOT_FOUND'
 		| 'VOTING_DISABLED'
 		| 'VOTING_TICKET_REQUIRED';
@@ -1794,12 +1798,16 @@ export type UpdateUserSettingsInput = {
 	receive_all_announcements?: boolean;
 	/**
 	 * Receive Telegram Notifications
+	 *
+	 * Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`.
 	 */
-	receive_telegram_notifications?: boolean;
+	receive_telegram_notifications?: false;
 	/**
 	 * Receive Vk Notifications
+	 *
+	 * Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`.
 	 */
-	receive_vk_notifications?: boolean;
+	receive_vk_notifications?: false;
 };
 
 /**
@@ -2769,6 +2777,100 @@ export type StartAccountLinkResponses = {
 };
 
 export type StartAccountLinkResponse = StartAccountLinkResponses[keyof StartAccountLinkResponses];
+
+export type EnableVkNotificationsData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/me/connections/vk/notifications';
+};
+
+export type EnableVkNotificationsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * No VK account is linked.
+	 */
+	404: ProblemDetails;
+	/**
+	 * The user has not allowed the community to write yet.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Checked too recently.
+	 */
+	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type EnableVkNotificationsError =
+	EnableVkNotificationsErrors[keyof EnableVkNotificationsErrors];
+
+export type EnableVkNotificationsResponses = {
+	/**
+	 * VK notifications turned on.
+	 */
+	204: void;
+};
+
+export type EnableVkNotificationsResponse =
+	EnableVkNotificationsResponses[keyof EnableVkNotificationsResponses];
+
+export type EnableTelegramNotificationsData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/me/connections/telegram/notifications';
+};
+
+export type EnableTelegramNotificationsErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * No Telegram account is linked.
+	 */
+	404: ProblemDetails;
+	/**
+	 * The bot cannot reach the user, usually because it is blocked.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Checked too recently.
+	 */
+	429: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type EnableTelegramNotificationsError =
+	EnableTelegramNotificationsErrors[keyof EnableTelegramNotificationsErrors];
+
+export type EnableTelegramNotificationsResponses = {
+	/**
+	 * Telegram notifications turned on.
+	 */
+	204: void;
+};
+
+export type EnableTelegramNotificationsResponse =
+	EnableTelegramNotificationsResponses[keyof EnableTelegramNotificationsResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;

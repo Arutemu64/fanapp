@@ -7,6 +7,12 @@ from fastapi import APIRouter, Request
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
+from fanfan.application.interactors.current_user.enable_telegram_notifications import (
+    EnableTelegramNotifications,
+)
+from fanfan.application.interactors.current_user.enable_vk_notifications import (
+    EnableVkNotifications,
+)
 from fanfan.application.interactors.current_user.unlink_social_account import (
     UnlinkSocialAccount,
     UnlinkSocialAccountInput,
@@ -100,3 +106,52 @@ async def unlink_social_account(
     interactor: FromDishka[UnlinkSocialAccount],
 ) -> None:
     await interactor(UnlinkSocialAccountInput(provider=provider))
+
+
+@connections_router.post(
+    "/vk/notifications",
+    status_code=204,
+    summary="Turn on VK notifications",
+    description="Asks VK whether its community may message the current user's linked "
+    "VK account and, if so, turns VK notifications on. Turning them off goes "
+    "through the settings endpoint.",
+    responses={
+        204: {"description": "VK notifications turned on."},
+        404: {"model": ProblemDetails, "description": "No VK account is linked."},
+        409: {
+            "model": ProblemDetails,
+            "description": "The user has not allowed the community to write yet.",
+        },
+        429: {"model": ProblemDetails, "description": "Checked too recently."},
+    },
+)
+@inject
+async def enable_vk_notifications(
+    interactor: FromDishka[EnableVkNotifications],
+) -> None:
+    await interactor()
+
+
+@connections_router.post(
+    "/telegram/notifications",
+    status_code=204,
+    summary="Turn on Telegram notifications",
+    description="Sends a confirmation message through the bot to the current user's "
+    "linked Telegram account and, if it arrives, turns Telegram notifications on. "
+    "Turning them off goes through the settings endpoint.",
+    responses={
+        204: {"description": "Telegram notifications turned on."},
+        404: {"model": ProblemDetails, "description": "No Telegram account is linked."},
+        409: {
+            "model": ProblemDetails,
+            "description": "The bot cannot reach the user, usually because it is "
+            "blocked.",
+        },
+        429: {"model": ProblemDetails, "description": "Checked too recently."},
+    },
+)
+@inject
+async def enable_telegram_notifications(
+    interactor: FromDishka[EnableTelegramNotifications],
+) -> None:
+    await interactor()

@@ -32,6 +32,35 @@ class UserNotReachable(NotificationException):
     code = "USER_NOT_REACHABLE"
 
 
+class UserRevokedChannel(UserNotReachable):
+    """The user shut the channel out (blocked us, withdrew consent).
+
+    Unlike a one-off refusal, sending again cannot succeed until the user acts,
+    so the channel's setting is switched off.
+    """
+
+    code = "USER_REVOKED_CHANNEL"
+
+
+class VkMessagesNotAllowed(Conflict, NotificationException):
+    """VK notifications cannot be turned on: the community may not write yet."""
+
+    code = "VK_MESSAGES_NOT_ALLOWED"
+
+
+class TelegramBotBlocked(Conflict, NotificationException):
+    """Telegram notifications cannot be turned on: the bot cannot reach the user."""
+
+    code = "TELEGRAM_BOT_BLOCKED"
+
+
+class NotificationsCheckTooFast(RateLimited, NotificationException):
+    code = "NOTIFICATIONS_CHECK_TOO_FAST"
+
+    def __init__(self, retry_after: int) -> None:
+        super().__init__(details={"retry_after": retry_after})
+
+
 class NotificationChannelUnavailable(NotificationException):
     code = "NOTIFICATION_CHANNEL_UNAVAILABLE"
 

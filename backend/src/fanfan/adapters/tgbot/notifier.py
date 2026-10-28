@@ -12,6 +12,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.social_identity import SocialProvider
@@ -80,7 +81,8 @@ class TelegramNotifier(TelegramNotifierPort):
             case HTTPStatus.TOO_MANY_REQUESTS if error.retry_after is not None:
                 raise NotificationRetryAfter(retry_after=error.retry_after) from error
             case HTTPStatus.FORBIDDEN:
-                raise UserNotReachable from error
+                # The user blocked the bot or deleted their account.
+                raise UserRevokedChannel from error
             case HTTPStatus.BAD_REQUEST:
                 logger.warning(
                     "Telegram rejected notification as a bad request",

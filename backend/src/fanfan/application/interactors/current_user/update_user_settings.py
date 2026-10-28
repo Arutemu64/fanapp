@@ -1,6 +1,7 @@
 import logging
+from typing import Literal
 
-from pydantic import MISSING
+from pydantic import MISSING, Field
 
 from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.users import UserGateway
@@ -9,11 +10,20 @@ from fanfan.application.services.current_user import CurrentUserProvider
 
 logger = logging.getLogger(__name__)
 
+# Switching a messenger on proves it can write, so only the off switch is here.
+_ON_VIA_CONNECTIONS = (
+    "Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`."
+)
+
 
 class UpdateUserSettingsInput(InputModel):
     receive_all_announcements: bool | MISSING = MISSING
-    receive_telegram_notifications: bool | MISSING = MISSING
-    receive_vk_notifications: bool | MISSING = MISSING
+    receive_telegram_notifications: Literal[False] | MISSING = Field(
+        default=MISSING, description=_ON_VIA_CONNECTIONS
+    )
+    receive_vk_notifications: Literal[False] | MISSING = Field(
+        default=MISSING, description=_ON_VIA_CONNECTIONS
+    )
 
 
 class UpdateUserSettings:

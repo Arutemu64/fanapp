@@ -1,10 +1,16 @@
 <script lang="ts">
-	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$app/env/public';
+	import {
+		PUBLIC_TELEGRAM_BOT_USERNAME,
+		PUBLIC_VAPID_KEY,
+		PUBLIC_VK_GROUP_ID
+	} from '$app/env/public';
 	import { resolve } from '$app/paths';
+	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '#lib/api/generated/index.js';
+	import type { MessageTagProps } from '#lib/types/markup.js';
 
 	import {
 		createPushSubscriptionMutation,
@@ -13,7 +19,11 @@
 		sendTestNotificationMutation,
 		updateCurrentUserSettingsMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { checkPushSubscription } from '#lib/api/generated/index.js';
+	import {
+		checkPushSubscription,
+		enableTelegramNotifications,
+		enableVkNotifications
+	} from '#lib/api/generated/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SwitchRow from '#lib/components/SwitchRow.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -24,9 +34,10 @@
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
+	import { getSocialProviderLabel } from '#lib/utils/users.js';
 
+	import MessengerNotificationsDialog from './MessengerNotificationsDialog.svelte';
 	import SettingsSection from './SettingsSection.svelte';
-	import VkNotificationsModal from './VkNotificationsModal.svelte';
 
 	interface Props {
 		user: CurrentUserDto;
@@ -66,12 +77,22 @@
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
 	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
+	let hasTelegramAccount = $derived(
+		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'telegram')
+	);
+	let receiveTelegram = $derived(
+		hasTelegramAccount && user.settings.receive_telegram_notifications
+	);
+	let showTelegramModal = $state(false);
 	let vkDescription = $derived(
 		hasVkAccount ? m.vk_notifications_on_description() : m.vk_notifications_connect_first()
 	);
 	const pwa = getPwaService();
 	let showVkModal = $state(false);
-	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
+	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/write-${PUBLIC_VK_GROUP_ID}` : null;
+	const telegramBotUrl = PUBLIC_TELEGRAM_BOT_USERNAME
+		? `https://t.me/${PUBLIC_TELEGRAM_BOT_USERNAME}`
+		: null;
 
 	let blockedHint = $derived.by(() => {
 		if (!pwa.isInstalled) {
@@ -138,16 +159,27 @@
 		);
 	}
 
+	// Switching a messenger on goes through its dialog: the server enables it only once it can write.
+	function toggleReceiveTelegram(checked: boolean) {
+		if (checked) {
+			showTelegramModal = true;
+			return;
+		}
+		receiveTelegram = false;
+		updateSettings({ receive_telegram_notifications: false }, () => {
+			receiveTelegram = hasTelegramAccount && user.settings.receive_telegram_notifications;
+		});
+	}
+
 	function toggleReceiveVk(checked: boolean) {
-		receiveVk = checked;
-		updateSettings(
-			{
-				receive_vk_notifications: receiveVk
-			},
-			() => {
-				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
-			}
-		);
+		if (checked) {
+			showVkModal = true;
+			return;
+		}
+		receiveVk = false;
+		updateSettings({ receive_vk_notifications: false }, () => {
+			receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
+		});
 	}
 
 	function sendTestNotification() {
@@ -189,6 +221,18 @@
 					<p class="mt-2 text-sm leading-relaxed text-destructive">{blockedHint}</p>
 				{/if}
 			</SwitchRow>
+
+			{#if hasTelegramAccount}
+				<SwitchRow
+					id="telegram-notifications"
+					title={getSocialProviderLabel('telegram')}
+					description={m.telegram_notifications_on_description()}
+					checked={receiveTelegram}
+					disabled={settingsMutation.isPending}
+					blocked={offlineGate.blocked}
+					onCheckedChange={offlineGate.guard(toggleReceiveTelegram)}
+				/>
+			{/if}
 
 			<SwitchRow
 				id="vk-notifications"
@@ -241,4 +285,47 @@
 	</div>
 </div>
 
-<VkNotificationsModal bind:open={showVkModal} {vkGroupUrl} />
+<MessengerNotificationsDialog
+	bind:open={showVkModal}
+	title={m.vk_modal_title()}
+	intro={m.vk_modal_intro()}
+	chatUrl={vkGroupUrl}
+	chatLabel={m.vk_modal_open_community()}
+	canCheck={hasVkAccount}
+	enable={() => enableVkNotifications({ throwOnError: true })}
+	enabledMessage={m.vk_enabled()}
+>
+	{#snippet steps()}
+		{#if !hasVkAccount}
+			<li>
+				<ParaglideMessage message={m.vk_modal_step_connect}>
+					{#snippet link({ children }: MessageTagProps)}
+						<a href={resolve('profile/account')} class="font-medium text-primary hover:underline"
+							>{@render children?.()}</a
+						>
+					{/snippet}
+				</ParaglideMessage>
+			</li>
+		{/if}
+		<li>{m.vk_modal_step_allow()}</li>
+		{#if hasVkAccount}
+			<li>{m.vk_modal_step_check()}</li>
+		{/if}
+	{/snippet}
+</MessengerNotificationsDialog>
+
+<MessengerNotificationsDialog
+	bind:open={showTelegramModal}
+	title={m.telegram_modal_title()}
+	intro={m.telegram_modal_intro()}
+	chatUrl={telegramBotUrl}
+	chatLabel={m.telegram_modal_open_bot()}
+	canCheck={hasTelegramAccount}
+	enable={() => enableTelegramNotifications({ throwOnError: true })}
+	enabledMessage={m.telegram_enabled()}
+>
+	{#snippet steps()}
+		<li>{m.telegram_modal_step_unblock()}</li>
+		<li>{m.telegram_modal_step_check()}</li>
+	{/snippet}
+</MessengerNotificationsDialog>

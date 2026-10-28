@@ -27,6 +27,8 @@ import {
 	deletePushSubscription,
 	deleteSubscription,
 	drawVotingContestWinner,
+	enableTelegramNotifications,
+	enableVkNotifications,
 	findQuestPlayers,
 	getCaptchaChallenge,
 	getCurrentUser,
@@ -143,6 +145,12 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerError,
 	DrawVotingContestWinnerResponse,
+	EnableTelegramNotificationsData,
+	EnableTelegramNotificationsError,
+	EnableTelegramNotificationsResponse,
+	EnableVkNotificationsData,
+	EnableVkNotificationsError,
+	EnableVkNotificationsResponse,
 	FindQuestPlayersData,
 	FindQuestPlayersError,
 	FindQuestPlayersResponse,
@@ -890,6 +898,64 @@ export const startAccountLinkOptions = (options: Options<StartAccountLinkData>) 
 		},
 		queryKey: startAccountLinkQueryKey(options)
 	});
+
+/**
+ * Turn on VK notifications
+ *
+ * Asks VK whether its community may message the current user's linked VK account and, if so, turns VK notifications on. Turning them off goes through the settings endpoint.
+ */
+export const enableVkNotificationsMutation = (
+	options?: Partial<Options<EnableVkNotificationsData>>
+): MutationOptions<
+	EnableVkNotificationsResponse,
+	EnableVkNotificationsError,
+	Options<EnableVkNotificationsData>
+> => {
+	const mutationOptions: MutationOptions<
+		EnableVkNotificationsResponse,
+		EnableVkNotificationsError,
+		Options<EnableVkNotificationsData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await enableVkNotifications({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Turn on Telegram notifications
+ *
+ * Sends a confirmation message through the bot to the current user's linked Telegram account and, if it arrives, turns Telegram notifications on. Turning them off goes through the settings endpoint.
+ */
+export const enableTelegramNotificationsMutation = (
+	options?: Partial<Options<EnableTelegramNotificationsData>>
+): MutationOptions<
+	EnableTelegramNotificationsResponse,
+	EnableTelegramNotificationsError,
+	Options<EnableTelegramNotificationsData>
+> => {
+	const mutationOptions: MutationOptions<
+		EnableTelegramNotificationsResponse,
+		EnableTelegramNotificationsError,
+		Options<EnableTelegramNotificationsData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await enableTelegramNotifications({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
 
 /**
  * Link ticket

@@ -18,10 +18,12 @@ from fanfan.core.exceptions.notifications import (
     NotificationNotFound,
     NotificationSuperseded,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.user import UserSettings
 from fanfan.core.vo.notification import NotificationId
+from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
@@ -86,7 +88,11 @@ class SendNotification:
         if not settings.receive_telegram_notifications:
             raise UserNotReachable
         await self._end_read_transaction()
-        await self.tg_notifier.send_notification(notification)
+        try:
+            await self.tg_notifier.send_notification(notification)
+        except UserRevokedChannel:
+            await self._switch_off(notification.user_id, SocialProvider.TELEGRAM)
+            raise
 
     async def send_notification_to_push(self, data: SendNotificationInput) -> None:
         notification = await self._get_notification(data)
@@ -99,4 +105,24 @@ class SendNotification:
         if not settings.receive_vk_notifications:
             raise UserNotReachable
         await self._end_read_transaction()
-        await self.vk_notifier.send_notification(notification)
+        try:
+            await self.vk_notifier.send_notification(notification)
+        except UserRevokedChannel:
+            await self._switch_off(notification.user_id, SocialProvider.VK)
+            raise
+
+    async def _switch_off(self, user_id: UserId, channel: SocialProvider) -> None:
+        """Stop sending until the user turns the channel back on, which re-checks it."""
+        user = await self.user_gateway.get_by_id(user_id)
+        if user is None:
+            return
+        if channel is SocialProvider.TELEGRAM:
+            user.update_settings(receive_telegram_notifications=False)
+        else:
+            user.update_settings(receive_vk_notifications=False)
+        await self.user_gateway.save(user)
+        await self.uow.commit()
+        logger.info(
+            "Messenger notifications switched off",
+            extra={"user_id": str(user_id), "provider": channel.value},
+        )

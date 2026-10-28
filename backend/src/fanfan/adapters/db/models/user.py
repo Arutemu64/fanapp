@@ -33,7 +33,7 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     receive_telegram_notifications: Mapped[bool] = mapped_column(
         server_default=text("true")
     )
-    receive_vk_notifications: Mapped[bool] = mapped_column(server_default=text("true"))
+    receive_vk_notifications: Mapped[bool] = mapped_column(server_default=text("false"))
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
     role: Mapped[UserRole] = str_enum_column(

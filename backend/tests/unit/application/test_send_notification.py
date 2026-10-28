@@ -22,6 +22,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationExpired,
     NotificationSuperseded,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.user import User, UserSettings
@@ -101,6 +102,11 @@ class _FakeNotificationGateway(NotificationGateway):
 class _FakeUserGateway(UserGateway):
     def __init__(self, user: User | None) -> None:
         self._user = user
+        self.saved: list[User] = []
+
+    @override
+    async def save(self, user: User) -> None:
+        self.saved.append(user)
 
     @override
     async def get_by_id(
@@ -389,3 +395,55 @@ async def test_missing_user_is_unreachable() -> None:
     with pytest.raises(UserNotReachable):
         await interactor.send_notification_to_telegram(_INPUT)
     assert tg.sent_notifications == []
+
+
+class _RevokedVkNotifier(VkNotifierPort):
+    @override
+    async def send_notification(self, notification: Notification) -> None:
+        raise UserRevokedChannel
+
+
+async def test_vk_is_switched_off_when_the_user_shut_the_community_out() -> None:
+    user = _make_user(vk=True)
+    user_gateway = _FakeUserGateway(user)
+    interactor = SendNotification(
+        mailing_gateway=_StubMailingGateway(),
+        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        user_gateway=user_gateway,
+        tg_notifier=FakeTelegramNotifier(),
+        push_notifier=FakePushNotifier(),
+        vk_notifier=_RevokedVkNotifier(),
+        uow=_FakeUow(),
+    )
+
+    with pytest.raises(UserNotReachable):
+        await interactor.send_notification_to_vk(_INPUT)
+
+    assert user.settings.receive_vk_notifications is False
+    assert user_gateway.saved == [user]
+
+
+class _RevokedTelegramNotifier(TelegramNotifierPort):
+    @override
+    async def send_notification(self, notification: Notification) -> None:
+        raise UserRevokedChannel
+
+
+async def test_telegram_is_switched_off_when_the_user_blocked_the_bot() -> None:
+    user = _make_user(telegram=True)
+    user_gateway = _FakeUserGateway(user)
+    interactor = SendNotification(
+        mailing_gateway=_StubMailingGateway(),
+        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        user_gateway=user_gateway,
+        tg_notifier=_RevokedTelegramNotifier(),
+        push_notifier=FakePushNotifier(),
+        vk_notifier=FakeVkNotifier(),
+        uow=_FakeUow(),
+    )
+
+    with pytest.raises(UserNotReachable):
+        await interactor.send_notification_to_telegram(_INPUT)
+
+    assert user.settings.receive_telegram_notifications is False
+    assert user_gateway.saved == [user]

@@ -52,17 +52,24 @@ class VkApiClient:
             )
         return payload.get("response")
 
-    async def send_message(self, *, peer_id: int, message: str) -> int:
+    async def send_message(self, *, peer_id: int, message: str, random_id: int) -> int:
         return int(
             await self._call_method(
                 "messages.send",
                 {
                     "peer_id": peer_id,
                     "message": message,
-                    "random_id": 0,
+                    "random_id": random_id,
                 },
             )
         )
+
+    async def is_messages_from_group_allowed(self, *, user_id: int) -> bool:
+        response = await self._call_method(
+            "messages.isMessagesFromGroupAllowed",
+            {"group_id": self._config.group_id, "user_id": user_id},
+        )
+        return bool(response["is_allowed"])
 
     async def delete_message(self, *, message_id: int) -> None:
         await self._call_method(
