@@ -144,7 +144,7 @@ services:
       POSTGRES_PASSWORD: "${DB__PASSWORD}"
       POSTGRES_DB: "${DB__NAME}"
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
     shm_size: 128mb
     command:
       - postgres
@@ -185,7 +185,7 @@ services:
         target: /etc/nats/nats.conf
     command: "-c /etc/nats/nats.conf -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     ports:
-      - "127.0.0.1:4222:4222"
+      - "127.0.0.1:${NATS_HOST_PORT:-4222}:4222"
     deploy:
       resources:
         limits:

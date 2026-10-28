@@ -123,7 +123,7 @@ This brings up the frontend, API, worker, Postgres, and NATS. Migrations run aut
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
 
-Both host ports are overridable if 3000/8000 are taken: set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
+Both host ports are overridable if 3000/8000 are taken: set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). To run several stacks on one host, see [docs/deployment.md](docs/deployment.md#several-environments-on-one-host). Update `Caddyfile.example` to match if you use it.
 
 Reach for this when you want the deployed shape: the real images, the real
 Compose network, the reverse-proxy layout. For iterating on code, §3 is faster.

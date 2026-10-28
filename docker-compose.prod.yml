@@ -4,14 +4,14 @@ services:
     build: !reset null
     networks:
       proxy:
-        aliases: [fanapp-frontend]
+        aliases: ["${COMPOSE_PROJECT_NAME:-fanapp}-frontend"]
 
   api:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
     build: !reset null
     networks:
       proxy:
-        aliases: [fanapp-api]
+        aliases: ["${COMPOSE_PROJECT_NAME:-fanapp}-api"]
 
   worker:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}

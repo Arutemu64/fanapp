@@ -622,7 +622,8 @@ handle_path /api* {
 handle { reverse_proxy http://fanapp-frontend:80 }
 ```
 
-The aliases (`fanapp-api`, `fanapp-frontend`) are deliberate: on a shared
+The aliases are `<project>-api` and `<project>-frontend`, where `<project>` is
+`COMPOSE_PROJECT_NAME` from `.env` (default `fanapp`). They are deliberate: on a shared
 network Docker DNS also resolves the bare `api` / `frontend`, and if another
 stack on `proxy` defines a service by the same name, DNS returns both containers
 and round-robins between them silently. The prefixed alias stays unambiguous no
@@ -633,3 +634,71 @@ resolve on the private `backend-network` / `frontend-network` as before.
 The base file's loopback host bindings (`127.0.0.1:3000` / `:8000`) are kept, so
 the SSH-tunnel/debug seam still works; with alias routing the proxy no longer
 depends on them.
+
+## Several environments on one host
+
+Prod, staging and dev can share one VPS and one global Caddy. Each environment
+is its own Compose project: its own deploy directory, `.env`, `secrets/`,
+`backups/`, database and NATS. Compose keeps projects apart by name
+([Docker: project name](https://docs.docker.com/compose/how-tos/project-name/)).
+
+In each extra environment's `.env`, set a distinct project name and free host
+ports:
+
+```sh
+COMPOSE_PROJECT_NAME=fanapp-staging
+FRONTEND_PORT=3010
+API_PORT=8010
+DB_HOST_PORT=5442
+NATS_HOST_PORT=4232
+```
+
+Leave prod's `COMPOSE_PROJECT_NAME` unset, or set it to the name it already
+runs under. A new name means new, empty volumes, so the stack would come up
+without its data. Run `just deploy` from each directory as usual. If you run
+the backend on the host (`just backend-dev`), make `DB__PORT` and `NATS__PORT`
+match the host ports.
+
+Give each environment its own domain, its own VAPID keys, and its own Telegram
+bot, since a bot's Web Login registers one origin (see [Telegram
+login](#telegram-login-register-the-urls-with-botfather)). Pin prod's
+`IMAGE_TAG` and let staging follow `latest`. The `PUBLIC_*` values are baked
+into the image, so a staging deploy of the published image keeps prod's
+`PUBLIC_SITE_URL` and Sentry environment.
+
+One Caddyfile then fronts them all. A snippet takes the project name, and Caddy
+fetches a certificate for each site block that names a domain
+([Caddy: import](https://caddyserver.com/docs/caddyfile/directives/import)):
+
+```caddy
+(fanapp) {
+	# The headers, encode carve-out and request_body cap from Caddyfile.example.
+	handle_path /api* {
+		request_body {
+			max_size 10MB
+		}
+		reverse_proxy http://{args[0]}-api:8000
+	}
+	handle {
+		reverse_proxy http://{args[0]}-frontend:80
+	}
+}
+
+example.com {
+	import fanapp fanapp
+}
+
+staging.example.com {
+	basic_auth {
+		# The hash comes from `caddy hash-password`.
+		tester <password-hash>
+	}
+	import fanapp fanapp-staging
+}
+```
+
+`basic_auth` keeps staging out of search engines and away from attendees.
+
+Memory is the real limit. The limits in [Sizing](#sizing-and-tuning-for-a-small-vps)
+budget one stack for a 2 GB host, so a second stack needs a larger host or
+lower limits of its own.
