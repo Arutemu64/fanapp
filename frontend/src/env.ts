@@ -9,6 +9,7 @@ export const variables = defineEnvVars({
 	PUBLIC_API_URL: { public: true, static: true },
 	PUBLIC_VAPID_KEY: { public: true, static: true },
 	PUBLIC_VK_GROUP_ID: { public: true, static: true },
+	PUBLIC_TELEGRAM_BOT_USERNAME: { public: true, static: true },
 	PUBLIC_TIMEZONE: { public: true, static: true },
 	PUBLIC_SITE_URL: { public: true, static: true }
 });

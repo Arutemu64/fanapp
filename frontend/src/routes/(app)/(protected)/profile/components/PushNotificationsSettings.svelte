@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$app/env/public';
+	import {
+		PUBLIC_TELEGRAM_BOT_USERNAME,
+		PUBLIC_VAPID_KEY,
+		PUBLIC_VK_GROUP_ID
+	} from '$app/env/public';
 	import { resolve } from '$app/paths';
 	import { ParaglideMessage } from '@inlang/paraglide-js-svelte';
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
@@ -86,6 +90,9 @@
 	const pwa = getPwaService();
 	let showVkModal = $state(false);
 	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/write-${PUBLIC_VK_GROUP_ID}` : null;
+	const telegramBotUrl = PUBLIC_TELEGRAM_BOT_USERNAME
+		? `https://t.me/${PUBLIC_TELEGRAM_BOT_USERNAME}`
+		: null;
 
 	let blockedHint = $derived.by(() => {
 		if (!pwa.isInstalled) {
@@ -316,6 +323,8 @@
 	bind:open={showTelegramModal}
 	title={m.telegram_modal_title()}
 	intro={m.telegram_modal_intro()}
+	chatUrl={telegramBotUrl}
+	chatLabel={m.telegram_modal_open_bot()}
 	canCheck={hasTelegramAccount}
 	enable={() => enableTelegramNotifications({ throwOnError: true })}
 	enabledMessage={m.telegram_enabled()}

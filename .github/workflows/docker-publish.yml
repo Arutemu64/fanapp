@@ -92,6 +92,7 @@ jobs:
             ${{ matrix.name == 'frontend' && format('PUBLIC_UMAMI_SCRIPT_URL={0}', vars.PUBLIC_UMAMI_SCRIPT_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_UMAMI_WEBSITE_ID={0}', vars.PUBLIC_UMAMI_WEBSITE_ID) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VK_GROUP_ID={0}', vars.PUBLIC_VK_GROUP_ID) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_TELEGRAM_BOT_USERNAME={0}', vars.PUBLIC_TELEGRAM_BOT_USERNAME) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_URL={0}', vars.SENTRY_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_ORG={0}', vars.SENTRY_ORG) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_PROJECT={0}', vars.SENTRY_PROJECT) || '' }}
