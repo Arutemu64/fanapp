@@ -47,6 +47,9 @@ correct test.
    `dishka_request.get(...)` in the test body — never hidden in a fixture.
 6. **No cleanup code.** Database writes roll back automatically after every
    test. Don't truncate tables or hand-pick unique ids.
+7. **HTTP tests cover critical paths only** (`tests/integration/http/`):
+   one test per user journey the convention can't run without. See
+   [HTTP tests](#http-tests--for-critical-paths).
 
 ## Two layers
 
@@ -54,6 +57,9 @@ correct test.
 | ----------- | -------------------- | -------------------------- | -------------------------------- | ------- |
 | Unit        | `tests/unit/`        | `@pytest.mark.unit`        | none                             | instant |
 | Integration | `tests/integration/` | `@pytest.mark.integration` | real PostgreSQL (testcontainers) | seconds |
+
+HTTP tests (`tests/integration/http/`) sit inside the integration tier and
+carry its marker.
 
 Every test is marked by the directory it lives in: a `pytest_collection_modifyitems`
 hook in `tests/conftest.py` adds `unit` under `tests/unit/` and `integration`
@@ -280,7 +286,10 @@ Consequences:
 ## Container wiring (`tests/integration/conftest.py`)
 
 The session-scoped `dishka` fixture builds a container from the real IoC
-providers plus test overrides:
+providers plus test overrides. `make_test_providers()` holds the list it
+shares with the HTTP container, which swaps `TestDbProvider` and
+`TestSessionProvider` for a cloned database and adds `FastapiProvider` and
+`WebAuthProvider`:
 
 - Real: `InteractorsProvider`, `DbProvider`, `SqlGatewaysProvider`,
   `ExpiringStateProvider`, `ServicesProvider`, `SecurityProvider`, `JinjaProvider`.
@@ -298,6 +307,46 @@ providers plus test overrides:
   `SyncProvider` reads the `EnvConfig` tests never build. Like
   `TestSessionProvider`, it must be registered **after** the provider it
   overrides — Dishka resolves the last provider registered for a type.
+
+## HTTP tests — for critical paths
+
+`tests/integration/http/` drives the assembled app (`build_app` in
+`presentation/web/factory.py`) through `httpx2.AsyncClient` +
+`ASGITransport`, the documented way to test FastAPI from async code
+([FastAPI](https://fastapi.tiangolo.com/advanced/async-tests/)). Every
+middleware, the exception handlers, the session cookie and the production
+Dishka graph run; only the external ports are faked, as in the table above.
+
+They exist for what the lower tiers can't see: the wiring between layers. An
+interactor test proves the rule; a router unit test proves the request
+shape; neither proves that a cookie set by one request authenticates the
+next. Keep the tier thin, because every test up here is slow to run and
+costly to keep ([Fowler](https://martinfowler.com/articles/practical-test-pyramid.html)).
+
+Rules:
+
+1. **Critical paths only.** A path qualifies when the convention breaks
+   without it: sign in and stay signed in, see the schedule change, vote.
+   Write one test per journey, plus one per cross-cutting contract (401 and
+   403 as problem+json, security headers). Everything else goes lower.
+2. **Never repeat an interactor's cases.** Edge cases, permissions per role
+   and rate limits stay in `tests/integration/<feature>/`. Up here, assert
+   on what the client sees: status, headers, cookies, the problem `code`.
+3. **Drive the journey through HTTP.** Seed the world with gateways and the
+   persona fixtures, then make every step of the journey a request.
+   `sign_in(user)` mints a session for flows that only need to be signed in;
+   `test_auth_session.py` is the one place the login form itself runs.
+4. **Each test gets a fresh database.** The `http_container` fixture clones
+   a migrated template (`CREATE DATABASE … TEMPLATE`) and drops it after the
+   test, at about 0.2 s each. The rollback harness above can't serve here:
+   the session store writes off the unit of work, on its own pool, so a
+   shared savepoint would roll the login back with the request that made it.
+   Writes commit for real and nothing needs cleanup.
+5. **Ask for a 404 or 422 lower.** Validation and not-found mapping is unit
+   territory (`tests/unit/presentation/`).
+
+Add a test here when a new journey becomes critical, or when a wiring bug
+escaped the lower tiers. Then name the gap it closes in the test's name.
 
 ## Fixtures
 

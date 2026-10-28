@@ -60,8 +60,12 @@ from tests.fixtures.db_session import TestSessionProvider
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
-@pytest_asyncio.fixture(scope="session")
-async def dishka() -> AsyncGenerator[AsyncContainer]:
+def make_test_providers() -> list[Provider]:
+    """The test container's providers, minus the database and its sessions.
+
+    Shared by the session container below and the per-test HTTP container
+    (`tests/integration/http/conftest.py`), which uses the production pools.
+    """
     fakes_provider = Provider(scope=Scope.REQUEST)
     fakes_provider.provide(
         FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker]
@@ -92,9 +96,8 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
     fakes_provider.provide(
         FakeCaptchaVerifier, provides=AnyOf[CaptchaVerifier, FakeCaptchaVerifier]
     )
-    container = make_async_container(
+    return [
         fakes_provider,
-        TestDbProvider(),
         TestConfigProvider(),
         InteractorsProvider(),
         DbProvider(),
@@ -107,8 +110,16 @@ async def dishka() -> AsyncGenerator[AsyncContainer]:
         JinjaProvider(),
         ProfanityProvider(),
         HtmlProvider(),
-        TestSessionProvider(),
         TestSyncProvider(),
+    ]
+
+
+@pytest_asyncio.fixture(scope="session")
+async def dishka() -> AsyncGenerator[AsyncContainer]:
+    container = make_async_container(
+        TestDbProvider(),
+        *make_test_providers(),
+        TestSessionProvider(),
         skip_validation=True,
     )
     yield container
