@@ -19,8 +19,9 @@ class GetVotingDashboardOutput(BaseModel):
 
 
 class GetVotingDashboard:
-    """Organizer view of the running vote: the voting time range, the leader in
-    each votable nomination, and the size of the prize-draw pool."""
+    """Organizer view of the running vote: the voting time range, every
+    nomination with whether it is in voting and its leader, and the size of the
+    prize-draw pool."""
 
     def __init__(
         self,

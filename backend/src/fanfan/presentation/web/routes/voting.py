@@ -3,6 +3,7 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path, Request, Response
+from pydantic import MISSING
 
 from fanfan.application.interactors.voting.add_vote import (
     AddVote,
@@ -50,7 +51,7 @@ from fanfan.presentation.web.responses import (
     resource_location,
 )
 from fanfan.presentation.web.schemas.error import ProblemDetails
-from fanfan.presentation.web.schemas.voting import SetNominationVotableBody
+from fanfan.presentation.web.schemas.voting import UpdateNominationBody
 from fanfan.presentation.web.security import session_security
 
 voting_router = APIRouter(tags=["Voting"], prefix="/voting")
@@ -165,8 +166,9 @@ async def cancel_vote(
 @voting_router.get(
     "/dashboard",
     summary="Get the organizer voting dashboard",
-    description="Voting time range, the leading participant in each votable "
-    "nomination, and the size of the prize-draw pool. Requires voting:manage.",
+    description="Voting time range, every nomination with whether it is in "
+    "voting and its leading participant, and the size of the prize-draw pool. "
+    "Requires voting:manage.",
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
@@ -203,12 +205,13 @@ async def set_voting_time_range(
     await interactor(data)
 
 
-@voting_router.put(
-    "/nominations/{nomination_id}/votable",
+@voting_router.patch(
+    "/nominations/{nomination_id}",
     status_code=204,
-    summary="Include a nomination in voting",
-    description="Sets whether visitors can see and vote in a nomination; votes "
-    "already cast stay. Idempotent. Requires voting:manage.",
+    summary="Update a nomination",
+    description="JSON Merge Patch. `is_votable` sets whether visitors can see and "
+    "vote in the nomination; votes already cast stay. Requesting the state that "
+    "already holds changes nothing. Requires voting:manage.",
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
@@ -218,18 +221,19 @@ async def set_voting_time_range(
     },
 )
 @inject
-async def set_nomination_votable(
+async def update_nomination(
     nomination_id: Annotated[
         NominationId, Path(description="ID of the nomination to change.")
     ],
-    data: SetNominationVotableBody,
-    interactor: FromDishka[SetNominationVotable],
+    data: UpdateNominationBody,
+    set_votable: FromDishka[SetNominationVotable],
 ) -> None:
-    await interactor(
-        SetNominationVotableInput(
-            nomination_id=nomination_id, is_votable=data.is_votable
+    if data.is_votable is not MISSING:
+        await set_votable(
+            SetNominationVotableInput(
+                nomination_id=nomination_id, is_votable=data.is_votable
+            )
         )
-    )
 
 
 @voting_router.post(

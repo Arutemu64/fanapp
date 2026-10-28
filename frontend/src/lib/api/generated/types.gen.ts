@@ -1463,16 +1463,6 @@ export type SetCurrentScheduleEventBody = {
 };
 
 /**
- * SetNominationVotableBody
- */
-export type SetNominationVotableBody = {
-	/**
-	 * Is Votable
-	 */
-	is_votable: boolean;
-};
-
-/**
  * SetTCloudEventRolesInput
  */
 export type SetTCloudEventRolesInput = {
@@ -1768,6 +1758,16 @@ export type UpdateCurrentUserInput = {
 	 * Avatar Seed
 	 */
 	avatar_seed?: string;
+};
+
+/**
+ * UpdateNominationBody
+ */
+export type UpdateNominationBody = {
+	/**
+	 * Is Votable
+	 */
+	is_votable?: boolean;
 };
 
 /**
@@ -3804,8 +3804,8 @@ export type SetVotingTimeRangeResponses = {
 export type SetVotingTimeRangeResponse =
 	SetVotingTimeRangeResponses[keyof SetVotingTimeRangeResponses];
 
-export type SetNominationVotableData = {
-	body: SetNominationVotableBody;
+export type UpdateNominationData = {
+	body: UpdateNominationBody;
 	path: {
 		/**
 		 * Nomination Id
@@ -3815,10 +3815,10 @@ export type SetNominationVotableData = {
 		nomination_id: string;
 	};
 	query?: never;
-	url: '/voting/nominations/{nomination_id}/votable';
+	url: '/voting/nominations/{nomination_id}';
 };
 
-export type SetNominationVotableErrors = {
+export type UpdateNominationErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -3841,18 +3841,16 @@ export type SetNominationVotableErrors = {
 	default: ProblemDetails;
 };
 
-export type SetNominationVotableError =
-	SetNominationVotableErrors[keyof SetNominationVotableErrors];
+export type UpdateNominationError = UpdateNominationErrors[keyof UpdateNominationErrors];
 
-export type SetNominationVotableResponses = {
+export type UpdateNominationResponses = {
 	/**
 	 * Nomination updated.
 	 */
 	204: void;
 };
 
-export type SetNominationVotableResponse =
-	SetNominationVotableResponses[keyof SetNominationVotableResponses];
+export type UpdateNominationResponse = UpdateNominationResponses[keyof UpdateNominationResponses];
 
 export type DrawVotingContestWinnerData = {
 	body?: never;

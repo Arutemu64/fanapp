@@ -15,8 +15,8 @@
 		getVotingDashboardQueryKey,
 		getVotingStatusQueryKey,
 		listVotingNominationsQueryKey,
-		setNominationVotableMutation,
-		setVotingTimeRangeMutation
+		setVotingTimeRangeMutation,
+		updateNominationMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import FormError from '#lib/components/FormError.svelte';
@@ -60,7 +60,7 @@
 	let canDraw = $derived(poolSize > 0);
 
 	const votableMutation = createMutation(() => ({
-		...setNominationVotableMutation(),
+		...updateNominationMutation(),
 		onSuccess: () =>
 			Promise.all([
 				queryClient.invalidateQueries({ queryKey: getVotingDashboardQueryKey() }),

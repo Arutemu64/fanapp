@@ -74,7 +74,6 @@ import {
 	sendBroadcast,
 	sendTestNotification,
 	setCurrentEvent,
-	setNominationVotable,
 	setTcloudEventRoles,
 	setUserRole,
 	setVotingTimeRange,
@@ -87,6 +86,7 @@ import {
 	unlinkUserTicket,
 	updateCurrentUser,
 	updateCurrentUserSettings,
+	updateNomination,
 	updateScheduleEvent,
 	updateScheduleSettings,
 	updateSettings
@@ -284,9 +284,6 @@ import type {
 	SetCurrentEventData,
 	SetCurrentEventError,
 	SetCurrentEventResponse,
-	SetNominationVotableData,
-	SetNominationVotableError,
-	SetNominationVotableResponse,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesError,
 	SetTcloudEventRolesResponse,
@@ -323,6 +320,9 @@ import type {
 	UpdateCurrentUserSettingsData,
 	UpdateCurrentUserSettingsError,
 	UpdateCurrentUserSettingsResponse,
+	UpdateNominationData,
+	UpdateNominationError,
+	UpdateNominationResponse,
 	UpdateScheduleEventData,
 	UpdateScheduleEventError,
 	UpdateScheduleEventResponse,
@@ -1587,7 +1587,7 @@ export const getVotingDashboardQueryKey = (options?: Options<GetVotingDashboardD
 /**
  * Get the organizer voting dashboard
  *
- * Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
+ * Voting time range, every nomination with whether it is in voting and its leading participant, and the size of the prize-draw pool. Requires voting:manage.
  */
 export const getVotingDashboardOptions = (options?: Options<GetVotingDashboardData>) =>
 	queryOptions<
@@ -1638,24 +1638,24 @@ export const setVotingTimeRangeMutation = (
 };
 
 /**
- * Include a nomination in voting
+ * Update a nomination
  *
- * Sets whether visitors can see and vote in a nomination; votes already cast stay. Idempotent. Requires voting:manage.
+ * JSON Merge Patch. `is_votable` sets whether visitors can see and vote in the nomination; votes already cast stay. Requesting the state that already holds changes nothing. Requires voting:manage.
  */
-export const setNominationVotableMutation = (
-	options?: Partial<Options<SetNominationVotableData>>
+export const updateNominationMutation = (
+	options?: Partial<Options<UpdateNominationData>>
 ): MutationOptions<
-	SetNominationVotableResponse,
-	SetNominationVotableError,
-	Options<SetNominationVotableData>
+	UpdateNominationResponse,
+	UpdateNominationError,
+	Options<UpdateNominationData>
 > => {
 	const mutationOptions: MutationOptions<
-		SetNominationVotableResponse,
-		SetNominationVotableError,
-		Options<SetNominationVotableData>
+		UpdateNominationResponse,
+		UpdateNominationError,
+		Options<UpdateNominationData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await setNominationVotable({
+			const { data } = await updateNomination({
 				...options,
 				...fnOptions,
 				throwOnError: true

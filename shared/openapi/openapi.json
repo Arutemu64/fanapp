@@ -3057,7 +3057,7 @@
           "Voting"
         ],
         "summary": "Get the organizer voting dashboard",
-        "description": "Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.",
+        "description": "Voting time range, every nomination with whether it is in voting and its leading participant, and the size of the prize-draw pool. Requires voting:manage.",
         "operationId": "get_voting_dashboard",
         "responses": {
           "200": {
@@ -3188,14 +3188,14 @@
         ]
       }
     },
-    "/voting/nominations/{nomination_id}/votable": {
-      "put": {
+    "/voting/nominations/{nomination_id}": {
+      "patch": {
         "tags": [
           "Voting"
         ],
-        "summary": "Include a nomination in voting",
-        "description": "Sets whether visitors can see and vote in a nomination; votes already cast stay. Idempotent. Requires voting:manage.",
-        "operationId": "set_nomination_votable",
+        "summary": "Update a nomination",
+        "description": "JSON Merge Patch. `is_votable` sets whether visitors can see and vote in the nomination; votes already cast stay. Requesting the state that already holds changes nothing. Requires voting:manage.",
+        "operationId": "update_nomination",
         "security": [
           {
             "SessionCookie": []
@@ -3220,7 +3220,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetNominationVotableBody"
+                "$ref": "#/components/schemas/UpdateNominationBody"
               }
             }
           }
@@ -8763,20 +8763,6 @@
         ],
         "title": "SetCurrentScheduleEventBody"
       },
-      "SetNominationVotableBody": {
-        "properties": {
-          "is_votable": {
-            "type": "boolean",
-            "title": "Is Votable"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "is_votable"
-        ],
-        "title": "SetNominationVotableBody"
-      },
       "SetTCloudEventRolesInput": {
         "properties": {
           "event_roles": {
@@ -9275,6 +9261,17 @@
         "additionalProperties": false,
         "type": "object",
         "title": "UpdateCurrentUserInput"
+      },
+      "UpdateNominationBody": {
+        "properties": {
+          "is_votable": {
+            "type": "boolean",
+            "title": "Is Votable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateNominationBody"
       },
       "UpdateScheduleEventBody": {
         "properties": {
