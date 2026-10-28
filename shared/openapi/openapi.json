@@ -9216,11 +9216,15 @@
           },
           "receive_telegram_notifications": {
             "type": "boolean",
-            "title": "Receive Telegram Notifications"
+            "const": false,
+            "title": "Receive Telegram Notifications",
+            "description": "Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`."
           },
           "receive_vk_notifications": {
             "type": "boolean",
-            "title": "Receive Vk Notifications"
+            "const": false,
+            "title": "Receive Vk Notifications",
+            "description": "Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`."
           }
         },
         "additionalProperties": false,

@@ -22,7 +22,7 @@ from fanfan.core.exceptions.users import SocialAccountNotLinked
 from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.social_identity import SocialProvider, generate_social_identity_id
-from fanfan.core.vo.user import Username, UserRole, generate_user_id
+from fanfan.core.vo.user import UserId, Username, UserRole, generate_user_id
 
 pytestmark = pytest.mark.asyncio
 
@@ -34,8 +34,8 @@ class _StubCurrentUser(CurrentUserProvider):
         self._user = user
 
     @override
-    async def require_user(self) -> User:
-        return self._user
+    async def require_user_id(self) -> UserId:
+        return self._user.id
 
 
 class _StubIdentities(SocialIdentityGateway):
@@ -50,8 +50,15 @@ class _StubIdentities(SocialIdentityGateway):
 
 
 class _StubUsers(UserGateway):
-    def __init__(self) -> None:
+    """Hands out the stored user, re-read after the messenger check."""
+
+    def __init__(self, user: User) -> None:
+        self._user = user
         self.saved: list[User] = []
+
+    @override
+    async def get_by_id(self, user_id: UserId) -> User | None:
+        return self._user
 
     @override
     async def save(self, user: User) -> None:
@@ -76,14 +83,21 @@ class _StubUow(UnitOfWork):
 
 
 class _Cooldown(Cooldown):
+    """Gives the claim back when the block raises, like PostgresCooldown."""
+
     def __init__(self, *, active: bool = False) -> None:
         self._active = active
+        self.released = False
 
     @asynccontextmanager
     async def _claim(self) -> AsyncGenerator[None]:
         if self._active:
             raise CooldownActive(retry_after=3)
-        yield
+        try:
+            yield
+        except BaseException:
+            self.released = True
+            raise
 
     @override
     def claim(self, key: str, seconds: int) -> AbstractAsyncContextManager[None]:
@@ -121,7 +135,7 @@ def _interactor(
     return EnableVkNotifications(
         current_user_provider=_StubCurrentUser(user),
         social_identity_gateway=_StubIdentities(identity),
-        user_gateway=users or _StubUsers(),
+        user_gateway=users or _StubUsers(user),
         vk_messages_permission=permission,
         cooldown=cooldown or _Cooldown(),
         uow=_StubUow(),
@@ -130,7 +144,7 @@ def _interactor(
 
 async def test_turns_vk_on_once_the_community_may_write() -> None:
     user = _user()
-    users = _StubUsers()
+    users = _StubUsers(user)
     permission = _StubPermission(allowed=True)
 
     await _interactor(
@@ -144,7 +158,7 @@ async def test_turns_vk_on_once_the_community_may_write() -> None:
 
 async def test_refuses_while_the_community_may_not_write() -> None:
     user = _user()
-    users = _StubUsers()
+    users = _StubUsers(user)
 
     with pytest.raises(VkMessagesNotAllowed):
         await _interactor(

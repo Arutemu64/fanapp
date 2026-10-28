@@ -87,3 +87,13 @@ def test_schedule_event_body_takes_exactly_one_change() -> None:
         UpdateScheduleEventBody.model_validate(
             {"is_skipped": True, "place_after_entry_id": str(uuid7())}
         )
+
+
+@pytest.mark.parametrize(
+    "field", ["receive_telegram_notifications", "receive_vk_notifications"]
+)
+def test_messenger_notifications_cannot_be_switched_on_by_patch(field: str) -> None:
+    with pytest.raises(ValidationError):
+        UpdateUserSettingsInput.model_validate({field: True})
+
+    assert UpdateUserSettingsInput.model_validate({field: False})

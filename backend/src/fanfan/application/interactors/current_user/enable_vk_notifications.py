@@ -11,7 +11,7 @@ from fanfan.core.exceptions.notifications import (
     VkMessagesNotAllowed,
 )
 from fanfan.core.exceptions.rate_limit import CooldownActive
-from fanfan.core.exceptions.users import SocialAccountNotLinked
+from fanfan.core.exceptions.users import SocialAccountNotLinked, UserNotFound
 from fanfan.core.vo.social_identity import SocialProvider
 
 logger = logging.getLogger(__name__)
@@ -40,15 +40,17 @@ class EnableVkNotifications:
         self.uow = uow
 
     async def __call__(self) -> None:
-        user = await self.current_user_provider.require_user()
+        user_id = await self.current_user_provider.require_user_id()
         identity = await self.social_identity_gateway.get_by_provider(
-            user_id=user.id, provider=SocialProvider.VK
+            user_id=user_id, provider=SocialProvider.VK
         )
         if identity is None:
             raise SocialAccountNotLinked
+        # Release the row locks before the network call.
+        await self.uow.commit()
 
         claim = self.cooldown.claim(
-            f"vk_messages_check:{user.id}", NOTIFICATIONS_CHECK_COOLDOWN_SECONDS
+            f"vk_messages_check:{user_id}", NOTIFICATIONS_CHECK_COOLDOWN_SECONDS
         )
         try:
             async with claim:
@@ -60,7 +62,10 @@ class EnableVkNotifications:
         if not allowed:
             raise VkMessagesNotAllowed
 
+        user = await self.user_gateway.get_by_id(user_id)
+        if user is None:
+            raise UserNotFound
         user.update_settings(receive_vk_notifications=True)
         await self.user_gateway.save(user)
         await self.uow.commit()
-        logger.info("VK notifications switched on", extra={"user_id": str(user.id)})
+        logger.info("VK notifications switched on", extra={"user_id": str(user_id)})

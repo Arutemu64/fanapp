@@ -1798,12 +1798,16 @@ export type UpdateUserSettingsInput = {
 	receive_all_announcements?: boolean;
 	/**
 	 * Receive Telegram Notifications
+	 *
+	 * Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`.
 	 */
-	receive_telegram_notifications?: boolean;
+	receive_telegram_notifications?: false;
 	/**
 	 * Receive Vk Notifications
+	 *
+	 * Only `false`. Turn it on with `POST /me/connections/{provider}/notifications`.
 	 */
-	receive_vk_notifications?: boolean;
+	receive_vk_notifications?: false;
 };
 
 /**

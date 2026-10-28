@@ -165,7 +165,7 @@
 			showTelegramModal = true;
 			return;
 		}
-		receiveTelegram = checked;
+		receiveTelegram = false;
 		updateSettings({ receive_telegram_notifications: false }, () => {
 			receiveTelegram = hasTelegramAccount && user.settings.receive_telegram_notifications;
 		});
@@ -176,15 +176,10 @@
 			showVkModal = true;
 			return;
 		}
-		receiveVk = checked;
-		updateSettings(
-			{
-				receive_vk_notifications: receiveVk
-			},
-			() => {
-				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
-			}
-		);
+		receiveVk = false;
+		updateSettings({ receive_vk_notifications: false }, () => {
+			receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
+		});
 	}
 
 	function sendTestNotification() {

@@ -16,7 +16,7 @@ from fanfan.core.exceptions.notifications import (
     UserNotReachable,
 )
 from fanfan.core.exceptions.rate_limit import CooldownActive
-from fanfan.core.exceptions.users import SocialAccountNotLinked
+from fanfan.core.exceptions.users import SocialAccountNotLinked, UserNotFound
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.social_identity import SocialProvider
@@ -63,29 +63,44 @@ class EnableTelegramNotifications:
         self.uow = uow
 
     async def __call__(self) -> None:
-        user = await self.current_user_provider.require_user()
+        user_id = await self.current_user_provider.require_user_id()
         identity = await self.social_identity_gateway.get_by_provider(
-            user_id=user.id, provider=SocialProvider.TELEGRAM
+            user_id=user_id, provider=SocialProvider.TELEGRAM
         )
         if identity is None:
             raise SocialAccountNotLinked
 
         claim = self.cooldown.claim(
-            f"telegram_messages_check:{user.id}", NOTIFICATIONS_CHECK_COOLDOWN_SECONDS
+            f"telegram_messages_check:{user_id}", NOTIFICATIONS_CHECK_COOLDOWN_SECONDS
         )
+        # A failed check keeps its cooldown: the claim is given back only when
+        # the block raises, so delivery failures are raised after leaving it.
+        failure: Exception | None = None
         try:
             async with claim:
-                await self.tg_notifier.send_notification(_confirmation(user.id))
+                failure = await self._send_confirmation(user_id)
         except CooldownActive as e:
             raise NotificationsCheckTooFast(retry_after=e.details["retry_after"]) from e
-        except NotificationRetryAfter as e:
-            raise NotificationsCheckTooFast(retry_after=e.retry_after) from e
-        except UserNotReachable as e:
-            raise TelegramBotBlocked from e
+        if failure is not None:
+            raise failure
 
+        # The notifier committed mid-send, so re-read the user before saving.
+        user = await self.user_gateway.get_by_id(user_id)
+        if user is None:
+            raise UserNotFound
         user.update_settings(receive_telegram_notifications=True)
         await self.user_gateway.save(user)
         await self.uow.commit()
         logger.info(
-            "Telegram notifications switched on", extra={"user_id": str(user.id)}
+            "Telegram notifications switched on", extra={"user_id": str(user_id)}
         )
+
+    async def _send_confirmation(self, user_id: UserId) -> Exception | None:
+        """Send the confirmation; return the public error instead of raising it."""
+        try:
+            await self.tg_notifier.send_notification(_confirmation(user_id))
+        except NotificationRetryAfter as e:
+            return NotificationsCheckTooFast(retry_after=e.retry_after)
+        except UserNotReachable:
+            return TelegramBotBlocked()
+        return None
