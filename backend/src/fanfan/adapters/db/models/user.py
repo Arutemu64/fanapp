@@ -1,7 +1,6 @@
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 from sqlalchemy import Index, func, text
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -34,7 +33,6 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         server_default=text("true")
     )
     receive_vk_notifications: Mapped[bool] = mapped_column(server_default=text("true"))
-    settings: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
     role: Mapped[UserRole] = str_enum_column(
         UserRole,

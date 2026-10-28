@@ -160,6 +160,8 @@ services:
       - jit=off
       - -c
       - max_connections=60
+      - -c
+      - shared_preload_libraries=pg_stat_statements
     deploy:
       resources:
         limits:

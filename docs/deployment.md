@@ -479,7 +479,12 @@ The shape of it:
   overstates the page cache available here), `random_page_cost` /
   `effective_io_concurrency` (SSD, not spinning disk), `jit=off` (don't spend the
   single core JIT-compiling OLTP queries), and `max_connections` (tracks the pools
-  below). `shared_buffers` stays at the 128 MB default — ~28% of the container cap,
+  below). `shared_preload_libraries=pg_stat_statements` records per-query
+  statistics; read them from the `pg_stat_statements` view before adding or
+  dropping an index. Its shared memory is sized by `pg_stat_statements.max`
+  (default 5000) and allocated at server start
+  ([PostgreSQL: pg_stat_statements](https://www.postgresql.org/docs/current/pgstatstatements.html)).
+  `shared_buffers` stays at the 128 MB default — ~28% of the container cap,
   matched to `shm_size`.
 - **NATS** caps JetStream at `max_memory_store: 16MB` / `max_file_store: 1GB`
   (the `nats-conf` config) and the one stream at 256 MiB `max_bytes`. Without

@@ -33,7 +33,7 @@ class QuestAwardORM(UUIDPrimaryKeyMixin, BaseORM):
     )
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     cancelled_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL")
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
 
     user: Mapped[UserORM] = relationship(foreign_keys=user_id, lazy="raise")

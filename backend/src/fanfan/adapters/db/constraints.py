@@ -39,7 +39,8 @@ def translate_integrity_error(
 
     Wrap the write that can violate a constraint, e.g.::
 
-        with translate_integrity_error({"uq_votes_user_id": VoteAlreadyExists}):
+        conflicts = {"uq_votes_user_id_participant_id": VoteAlreadyExists}
+        with translate_integrity_error(conflicts):
             self.session.add(vote_orm)
             await self.session.flush()
     """

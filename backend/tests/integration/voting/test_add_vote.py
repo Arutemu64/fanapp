@@ -332,7 +332,7 @@ async def test_reassigning_participant_nomination_updates_existing_vote(
 ) -> None:
     """Cosplay sync can move a participant to a different nomination.
 
-    votes.nomination_id is a denormalised copy backing uq_votes_user_nomination,
+    votes.nomination_id is a denormalised copy backing uq_votes_user_id_nomination_id,
     so ParticipantGateway.save must keep it in lockstep — otherwise the
     constraint (and get_user_vote_by_nomination) would keep enforcing the
     participant's *old* nomination, letting a user cast a second effective

@@ -90,7 +90,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         with translate_integrity_error(
             {
                 "fk_subscriptions_event_id_schedule": EventNotFound,
-                "uq_subscriptions_event_id": SubscriptionAlreadyExists,
+                "uq_subscriptions_event_id_user_id": SubscriptionAlreadyExists,
             }
         ):
             await self.session.flush()

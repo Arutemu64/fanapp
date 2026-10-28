@@ -45,7 +45,6 @@ async def committed_user(engine: AsyncEngine) -> AsyncIterator[UserId]:
                 username=f"lock-{user_id.hex[:8]}",
                 avatar_seed="seed",
                 number=int(user_id.int % 900_000) + 100_000,
-                settings={},
             )
         )
     yield user_id

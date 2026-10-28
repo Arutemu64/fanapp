@@ -15,11 +15,7 @@ from fanfan.core.vo.user import UserRole
 class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "tickets"
     __table_args__ = (
-        UniqueConstraint(
-            "ticketscloud_order_id",
-            "ticketscloud_ticket_id",
-            name="uq_tickets_ticketscloud_sale",
-        ),
+        UniqueConstraint("ticketscloud_order_id", "ticketscloud_ticket_id"),
     )
 
     barcode: Mapped[str] = mapped_column(unique=True)

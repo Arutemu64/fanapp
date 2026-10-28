@@ -60,7 +60,6 @@ def _from_model(model: User) -> UserORM:
         receive_all_announcements=model.settings.receive_all_announcements,
         receive_telegram_notifications=model.settings.receive_telegram_notifications,
         receive_vk_notifications=model.settings.receive_vk_notifications,
-        settings={},
     )
 
 

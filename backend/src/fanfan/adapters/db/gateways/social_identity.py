@@ -35,6 +35,12 @@ def _to_model(orm: SocialIdentityORM) -> SocialIdentity:
     )
 
 
+_LINK_CONFLICTS = {
+    "uq_social_identities_provider_subject": SocialAccountLinkedToAnotherUser,
+    "uq_social_identities_user_id_provider": UserAlreadyHasProviderLinked,
+}
+
+
 class SqlSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -42,12 +48,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
     @override
     async def add(self, social_identity: SocialIdentity) -> None:
         social_identity_orm = _from_model(social_identity)
-        with translate_integrity_error(
-            {
-                "uq_social_identities_provider": SocialAccountLinkedToAnotherUser,
-                "uq_social_identities_user_id": UserAlreadyHasProviderLinked,
-            }
-        ):
+        with translate_integrity_error(_LINK_CONFLICTS):
             self.session.add(social_identity_orm)
             await self.session.flush()
 

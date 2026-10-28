@@ -16,7 +16,7 @@ class VoteORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "votes"
     __table_args__ = (
         UniqueConstraint("user_id", "participant_id"),
-        UniqueConstraint("user_id", "nomination_id", name="uq_votes_user_nomination"),
+        UniqueConstraint("user_id", "nomination_id"),
     )
 
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))

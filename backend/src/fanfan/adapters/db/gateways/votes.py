@@ -50,8 +50,8 @@ class SqlVoteGateway(VoteGateway):
         with translate_integrity_error(
             {
                 "fk_votes_participant_id_participants": ParticipantNotFound,
-                "uq_votes_user_id": VoteAlreadyExists,
-                "uq_votes_user_nomination": VoteAlreadyExists,
+                "uq_votes_user_id_participant_id": VoteAlreadyExists,
+                "uq_votes_user_id_nomination_id": VoteAlreadyExists,
             }
         ):
             self.session.add(vote_orm)
