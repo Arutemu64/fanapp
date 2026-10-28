@@ -34,11 +34,15 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
     ListVotingNominationsOutput,
 )
+from fanfan.application.interactors.voting.set_nomination_votable import (
+    SetNominationVotable,
+    SetNominationVotableInput,
+)
 from fanfan.application.interactors.voting.set_voting_time_range import (
     SetVotingTimeRange,
     SetVotingTimeRangeInput,
 )
-from fanfan.core.vo.nomination import NominationCode
+from fanfan.core.vo.nomination import NominationCode, NominationId
 from fanfan.core.vo.vote import VoteId
 from fanfan.presentation.web.responses import (
     AUTH_RESPONSES,
@@ -46,6 +50,7 @@ from fanfan.presentation.web.responses import (
     resource_location,
 )
 from fanfan.presentation.web.schemas.error import ProblemDetails
+from fanfan.presentation.web.schemas.voting import SetNominationVotableBody
 from fanfan.presentation.web.security import session_security
 
 voting_router = APIRouter(tags=["Voting"], prefix="/voting")
@@ -196,6 +201,35 @@ async def set_voting_time_range(
     interactor: FromDishka[SetVotingTimeRange],
 ) -> None:
     await interactor(data)
+
+
+@voting_router.put(
+    "/nominations/{nomination_id}/votable",
+    status_code=204,
+    summary="Include a nomination in voting",
+    description="Sets whether visitors can see and vote in a nomination; votes "
+    "already cast stay. Idempotent. Requires voting:manage.",
+    dependencies=[session_security],
+    responses={
+        **AUTH_RESPONSES,
+        204: {"description": "Nomination updated."},
+        403: {"model": ProblemDetails, "description": "Missing voting:manage."},
+        404: {"model": ProblemDetails, "description": "Nomination not found."},
+    },
+)
+@inject
+async def set_nomination_votable(
+    nomination_id: Annotated[
+        NominationId, Path(description="ID of the nomination to change.")
+    ],
+    data: SetNominationVotableBody,
+    interactor: FromDishka[SetNominationVotable],
+) -> None:
+    await interactor(
+        SetNominationVotableInput(
+            nomination_id=nomination_id, is_votable=data.is_votable
+        )
+    )
 
 
 @voting_router.post(

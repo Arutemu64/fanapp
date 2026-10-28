@@ -849,6 +849,10 @@ export type NominationContenderDto = {
 	 */
 	title: string;
 	/**
+	 * Is Votable
+	 */
+	is_votable: boolean;
+	/**
 	 * Total Votes
 	 */
 	total_votes: number;
@@ -1456,6 +1460,16 @@ export type SetCurrentScheduleEventBody = {
 	 * Event Id
 	 */
 	event_id: string;
+};
+
+/**
+ * SetNominationVotableBody
+ */
+export type SetNominationVotableBody = {
+	/**
+	 * Is Votable
+	 */
+	is_votable: boolean;
 };
 
 /**
@@ -3789,6 +3803,56 @@ export type SetVotingTimeRangeResponses = {
 
 export type SetVotingTimeRangeResponse =
 	SetVotingTimeRangeResponses[keyof SetVotingTimeRangeResponses];
+
+export type SetNominationVotableData = {
+	body: SetNominationVotableBody;
+	path: {
+		/**
+		 * Nomination Id
+		 *
+		 * ID of the nomination to change.
+		 */
+		nomination_id: string;
+	};
+	query?: never;
+	url: '/voting/nominations/{nomination_id}/votable';
+};
+
+export type SetNominationVotableErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Missing voting:manage.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Nomination not found.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type SetNominationVotableError =
+	SetNominationVotableErrors[keyof SetNominationVotableErrors];
+
+export type SetNominationVotableResponses = {
+	/**
+	 * Nomination updated.
+	 */
+	204: void;
+};
+
+export type SetNominationVotableResponse =
+	SetNominationVotableResponses[keyof SetNominationVotableResponses];
 
 export type DrawVotingContestWinnerData = {
 	body?: never;

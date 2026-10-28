@@ -18,6 +18,7 @@ class NominationContenderDTO(BaseModel):
     id: NominationId
     code: NominationCode
     title: str
+    is_votable: bool
     total_votes: int
 
     leader: ContenderDTO | None

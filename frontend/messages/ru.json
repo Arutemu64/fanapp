@@ -1120,7 +1120,7 @@
 		}
 	],
 	"voting_action": "Голосовать",
-	"voting_admin_description": "Задавай период голосования, следи за лидерами номинаций и разыгрывай приз среди тех, кто проголосовал во всех номинациях.",
+	"voting_admin_description": "Задавай период голосования, выбирай номинации, следи за лидерами и разыгрывай приз среди тех, кто проголосовал во всех номинациях.",
 	"voting_admin_forbidden": "У тебя нет доступа к управлению голосованием",
 	"voting_back_to_nominations": "Назад к номинациям",
 	"voting_cancel_vote": "Отменить голос",
@@ -1160,12 +1160,14 @@
 			}
 		}
 	],
-	"voting_leaders_title": "Лидеры номинаций",
 	"voting_no_nominations_message": "Появятся после импорта косплей-конкурса",
-	"voting_no_nominations_title": "Нет номинаций для голосования",
+	"voting_no_nominations_title": "Номинаций пока нет",
 	"voting_no_votes": "Голосов пока нет",
 	"voting_nomination_load_failed": "Не удалось загрузить номинацию",
 	"voting_nomination_not_found": "Номинация не найдена",
+	"voting_nomination_toggle_failed": "Не удалось изменить номинацию",
+	"voting_nominations_admin_hint": "Зрители голосуют только во включённых номинациях. Голоса в выключенной номинации сохранятся.",
+	"voting_nominations_admin_title": "Номинации",
 	"voting_nominations_empty": "Номинаций пока нет",
 	"voting_nominations_load_failed": "Не удалось загрузить номинации",
 	"voting_nominations_loading": "Загружаем номинации…",

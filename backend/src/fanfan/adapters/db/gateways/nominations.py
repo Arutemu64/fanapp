@@ -84,6 +84,11 @@ class SqlNominationGateway(NominationGateway):
         await self.session.flush()
 
     @override
+    async def get(self, nomination_id: NominationId) -> Nomination | None:
+        nomination_orm = await self.session.get(NominationORM, nomination_id)
+        return _to_model(nomination_orm) if nomination_orm else None
+
+    @override
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Nomination | None:
         stmt = (
             select(NominationORM)
@@ -134,6 +139,7 @@ class SqlNominationGateway(NominationGateway):
                 NominationORM.id,
                 NominationORM.code,
                 NominationORM.title,
+                NominationORM.is_votable,
                 total_votes.label("total_votes"),
                 ranked.c.participant_id,
                 ranked.c.participant_title,
@@ -146,7 +152,6 @@ class SqlNominationGateway(NominationGateway):
                     ranked.c.rank == 1,
                 ),
             )
-            .where(NominationORM.is_votable.is_(True))
             .order_by(NominationORM.title)
         )
 
@@ -167,6 +172,7 @@ class SqlNominationGateway(NominationGateway):
                     id=NominationId(row.id),
                     code=NominationCode(row.code),
                     title=row.title,
+                    is_votable=row.is_votable,
                     total_votes=row.total_votes,
                     leader=leader,
                 )
@@ -196,7 +202,8 @@ class SqlNominationGateway(NominationGateway):
         self, nomination_code: NominationCode, user_id: UserId | None = None
     ) -> NominationVotingDTO | None:
         stmt = _select_nomination_voting_dto(user_id).where(
-            NominationORM.code == nomination_code
+            NominationORM.code == nomination_code,
+            NominationORM.is_votable.is_(True),
         )
 
         result = (await self.session.execute(stmt)).first()

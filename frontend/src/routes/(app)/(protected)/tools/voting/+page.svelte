@@ -2,15 +2,20 @@
 	import Award from '@lucide/svelte/icons/award';
 	import Gift from '@lucide/svelte/icons/gift';
 	import Users from '@lucide/svelte/icons/users';
-	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 
-	import type { NominationContenderDto, UserBaseDto } from '#lib/api/generated/index.js';
+	import type { UserBaseDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		drawVotingContestWinnerMutation,
+		getVotingDashboardOptions,
+		getVotingDashboardQueryKey,
 		getVotingStatusQueryKey,
+		listVotingNominationsQueryKey,
+		setNominationVotableMutation,
 		setVotingTimeRangeMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
@@ -21,6 +26,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '#lib/utils/formatters.js';
@@ -33,7 +39,9 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
+	const dashboardQuery = createQuery(() => getVotingDashboardOptions());
+	let dashboard = $derived(dashboardQuery.data ?? data.dashboard);
+	let nominations = $derived(dashboard.nominations);
 
 	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_starts_at)));
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_ends_at)));
@@ -42,13 +50,39 @@
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() })
 	}));
 
-	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
+	// Writable derived: a draw reports a fresher pool size until the next refetch.
+	let poolSize = $derived(dashboard.contest_pool_size);
 	const drawMutation = createMutation(() => drawVotingContestWinnerMutation());
 	let winner = $state<UserBaseDto | null>(null);
 	let hasDrawn = $state(false);
 	let drawError = $state('');
 
 	let canDraw = $derived(poolSize > 0);
+
+	const votableMutation = createMutation(() => ({
+		...setNominationVotableMutation(),
+		onSuccess: () =>
+			Promise.all([
+				queryClient.invalidateQueries({ queryKey: getVotingDashboardQueryKey() }),
+				queryClient.invalidateQueries({ queryKey: listVotingNominationsQueryKey() })
+			])
+	}));
+	// Requested state per nomination ID, shown on the switch until the refetch lands.
+	const pendingVotable = new SvelteMap<string, boolean>();
+
+	async function setVotable(nominationId: string, isVotable: boolean) {
+		pendingVotable.set(nominationId, isVotable);
+		try {
+			await votableMutation.mutateAsync({
+				path: { nomination_id: nominationId },
+				body: { is_votable: isVotable }
+			});
+		} catch (error) {
+			toastService.error(error, m.voting_nomination_toggle_failed());
+		} finally {
+			pendingVotable.delete(nominationId);
+		}
+	}
 
 	function toLocalInput(iso: string | null): string {
 		if (!iso) return '';
@@ -204,12 +238,28 @@
 		{/if}
 	</ToolSection>
 
-	<ToolSection title={m.voting_leaders_title()} icon={Award}>
+	<ToolSection title={m.voting_nominations_admin_title()} icon={Award}>
 		{#if nominations.length > 0}
+			<p class="text-sm leading-5 text-muted-foreground">
+				{m.voting_nominations_admin_hint()}
+			</p>
 			<ul class="flex flex-col gap-3">
 				{#each nominations as nomination (nomination.id)}
+					{const switchId = $derived(`nomination-votable-${nomination.id}`)}
 					<li class="border-b border-border pb-3 last:border-0 last:pb-0">
-						<p class="text-sm font-medium text-foreground">{nomination.title}</p>
+						<div class="flex min-h-11 items-center justify-between gap-3">
+							<label for={switchId} class="text-sm font-medium text-foreground">
+								{nomination.title}
+							</label>
+							<Switch
+								id={switchId}
+								bind:checked={
+									() => pendingVotable.get(nomination.id) ?? nomination.is_votable,
+									(isVotable: boolean) => void setVotable(nomination.id, isVotable)
+								}
+								disabled={pendingVotable.has(nomination.id)}
+							/>
+						</div>
 						{#if nomination.leader}
 							<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
 								<span class="text-sm text-muted-foreground">

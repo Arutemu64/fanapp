@@ -204,6 +204,9 @@ import type {
 	SetCurrentEventData,
 	SetCurrentEventErrors,
 	SetCurrentEventResponses,
+	SetNominationVotableData,
+	SetNominationVotableErrors,
+	SetNominationVotableResponses,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesErrors,
 	SetTcloudEventRolesResponses,
@@ -1207,6 +1210,34 @@ export const setVotingTimeRange = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/voting/time-range',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Include a nomination in voting
+ *
+ * Sets whether visitors can see and vote in a nomination; votes already cast stay. Idempotent. Requires voting:manage.
+ */
+export const setNominationVotable = <ThrowOnError extends boolean = false>(
+	options: Options<SetNominationVotableData, ThrowOnError>
+): RequestResult<SetNominationVotableResponses, SetNominationVotableErrors, ThrowOnError> =>
+	(options.client ?? client).put<
+		SetNominationVotableResponses,
+		SetNominationVotableErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/voting/nominations/{nomination_id}/votable',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',

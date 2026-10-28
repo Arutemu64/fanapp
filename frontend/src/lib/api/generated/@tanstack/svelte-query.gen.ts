@@ -74,6 +74,7 @@ import {
 	sendBroadcast,
 	sendTestNotification,
 	setCurrentEvent,
+	setNominationVotable,
 	setTcloudEventRoles,
 	setUserRole,
 	setVotingTimeRange,
@@ -283,6 +284,9 @@ import type {
 	SetCurrentEventData,
 	SetCurrentEventError,
 	SetCurrentEventResponse,
+	SetNominationVotableData,
+	SetNominationVotableError,
+	SetNominationVotableResponse,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesError,
 	SetTcloudEventRolesResponse,
@@ -1623,6 +1627,35 @@ export const setVotingTimeRangeMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await setVotingTimeRange({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Include a nomination in voting
+ *
+ * Sets whether visitors can see and vote in a nomination; votes already cast stay. Idempotent. Requires voting:manage.
+ */
+export const setNominationVotableMutation = (
+	options?: Partial<Options<SetNominationVotableData>>
+): MutationOptions<
+	SetNominationVotableResponse,
+	SetNominationVotableError,
+	Options<SetNominationVotableData>
+> => {
+	const mutationOptions: MutationOptions<
+		SetNominationVotableResponse,
+		SetNominationVotableError,
+		Options<SetNominationVotableData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await setNominationVotable({
 				...options,
 				...fnOptions,
 				throwOnError: true

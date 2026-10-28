@@ -143,7 +143,7 @@ async def test_nomination_without_votes_has_no_leader(
     assert contender.total_votes == 0
 
 
-async def test_excludes_non_votable_nominations(
+async def test_lists_every_nomination_with_its_votable_flag(
     dishka_request: AsyncContainer,
     voting_manager: User,
     login: Callable[[User], None],
@@ -153,6 +153,7 @@ async def test_excludes_non_votable_nominations(
     interactor = await dishka_request.get(GetVotingDashboard)
     login(voting_manager)
 
+    votable = await _add_nomination(nomination_gateway, cosplay2_id=4021)
     non_votable = await _add_nomination(
         nomination_gateway, cosplay2_id=4020, is_votable=False
     )
@@ -160,7 +161,9 @@ async def test_excludes_non_votable_nominations(
 
     result = await interactor()
 
-    assert all(n.id != non_votable.id for n in result.nominations)
+    flags = {n.id: n.is_votable for n in result.nominations}
+    assert flags[votable.id] is True
+    assert flags[non_votable.id] is False
 
 
 async def test_reports_contest_pool_size(

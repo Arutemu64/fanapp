@@ -3188,6 +3188,100 @@
         ]
       }
     },
+    "/voting/nominations/{nomination_id}/votable": {
+      "put": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "Include a nomination in voting",
+        "description": "Sets whether visitors can see and vote in a nomination; votes already cast stay. Idempotent. Requires voting:manage.",
+        "operationId": "set_nomination_votable",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "nomination_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the nomination to change.",
+              "title": "Nomination Id"
+            },
+            "description": "ID of the nomination to change."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetNominationVotableBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Nomination updated."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing voting:manage.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nomination not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/voting/contest/draw": {
       "post": {
         "tags": [
@@ -7702,6 +7796,10 @@
             "type": "string",
             "title": "Title"
           },
+          "is_votable": {
+            "type": "boolean",
+            "title": "Is Votable"
+          },
           "total_votes": {
             "type": "integer",
             "title": "Total Votes",
@@ -7723,6 +7821,7 @@
           "id",
           "code",
           "title",
+          "is_votable",
           "total_votes",
           "leader"
         ],
@@ -8663,6 +8762,20 @@
           "event_id"
         ],
         "title": "SetCurrentScheduleEventBody"
+      },
+      "SetNominationVotableBody": {
+        "properties": {
+          "is_votable": {
+            "type": "boolean",
+            "title": "Is Votable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "is_votable"
+        ],
+        "title": "SetNominationVotableBody"
       },
       "SetTCloudEventRolesInput": {
         "properties": {

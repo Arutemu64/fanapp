@@ -3,12 +3,14 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.dto.input import InputModel
+from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
+from fanfan.core.exceptions.nominations import NominationNotFound
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.vote import Vote
@@ -30,6 +32,7 @@ class AddVote:
     def __init__(
         self,
         participant_gateway: ParticipantGateway,
+        nomination_gateway: NominationGateway,
         vote_gateway: VoteGateway,
         uow: UnitOfWork,
         vote_service: VotingService,
@@ -37,6 +40,7 @@ class AddVote:
         ticket_gateway: TicketGateway,
     ) -> None:
         self.participant_gateway = participant_gateway
+        self.nomination_gateway = nomination_gateway
         self.vote_gateway = vote_gateway
         self.uow = uow
         self.vote_service = vote_service
@@ -54,6 +58,11 @@ class AddVote:
         participant = await self.participant_gateway.get(data.participant_id)
         if participant is None:
             raise ParticipantNotFound
+
+        nomination = await self.nomination_gateway.get(participant.nomination_id)
+        if nomination is None:
+            raise NominationNotFound
+        nomination.ensure_votable()
 
         if await self.vote_gateway.get_user_vote_by_nomination(
             nomination_id=participant.nomination_id, user_id=current_user.id
