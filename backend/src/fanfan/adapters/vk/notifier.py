@@ -12,9 +12,9 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
-from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.config import WebConfig
@@ -22,10 +22,9 @@ from fanfan.presentation.web.config import WebConfig
 logger = logging.getLogger(__name__)
 
 # messages.send error codes: https://dev.vk.com/ru/method/messages.send
-_NO_PERMISSION_CODE = 901
-_USER_UNREACHABLE_CODES = frozenset(
-    {7, 15, 900, _NO_PERMISSION_CODE, 902, 987, 988, 1021}
-)
+# Blacklisted the community, withdrew consent, privacy settings forbid it.
+_USER_REVOKED_CODES = frozenset({900, 901, 902})
+_USER_UNREACHABLE_CODES = frozenset({7, 15, 987, 988, 1021})
 _FLOOD_CODES = frozenset({6, 9})
 _AUTH_CODES = frozenset({5, 27, 28})
 
@@ -79,20 +78,10 @@ class VkNotifier(VkNotifierPort):
                 random_id=_random_id_for(notification.id),
             )
         except VkApiError as e:
-            if e.code == _NO_PERMISSION_CODE:
-                await self._record_messages_allowed(social_identity, allowed=False)
             self._handle_api_error(e, notification)
             raise
 
-        await self._record_messages_allowed(social_identity, allowed=True)
         await self._delete_group_copy(message_id=message_id, notification=notification)
-
-    async def _record_messages_allowed(
-        self, social_identity: SocialIdentity, *, allowed: bool
-    ) -> None:
-        if social_identity.record_messages_allowed(allowed=allowed):
-            await self.social_identity_gateway.save(social_identity)
-            await self.uow.commit()
 
     async def _delete_group_copy(
         self, *, message_id: int, notification: Notification
@@ -112,6 +101,8 @@ class VkNotifier(VkNotifierPort):
             raise NotificationRetryAfter(
                 retry_after=_FLOOD_RETRY_AFTER_SECONDS
             ) from error
+        if error.code in _USER_REVOKED_CODES:
+            raise UserRevokedChannel from error
         if error.code in _USER_UNREACHABLE_CODES:
             raise UserNotReachable from error
         if error.code in _AUTH_CODES:

@@ -4,12 +4,11 @@ import { m } from '#lib/paraglide/messages.js';
 
 type ChannelOwner = Pick<CurrentUserDto, 'settings' | 'social_identities'>;
 
-/** Whether Telegram or VK will deliver to the user. VK also needs the community allowed to write. */
+/** Whether a linked Telegram or VK account has its notifications on. */
 export function hasMessengerNotifications(user: ChannelOwner): boolean {
-	const telegram = user.social_identities.find((identity) => identity.provider === 'telegram');
-	const vk = user.social_identities.find((identity) => identity.provider === 'vk');
-	const telegramOn = telegram !== undefined && user.settings.receive_telegram_notifications;
-	const vkOn = vk?.messages_allowed === true && user.settings.receive_vk_notifications;
+	const providers = user.social_identities.map((identity) => identity.provider);
+	const telegramOn = providers.includes('telegram') && user.settings.receive_telegram_notifications;
+	const vkOn = providers.includes('vk') && user.settings.receive_vk_notifications;
 	return telegramOn || vkOn;
 }
 const roleLabels: Record<string, () => string> = {

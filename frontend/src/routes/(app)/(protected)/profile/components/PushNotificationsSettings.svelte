@@ -7,7 +7,6 @@
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '#lib/api/generated/index.js';
 
 	import {
-		checkVkMessagesAllowedMutation,
 		createPushSubscriptionMutation,
 		deletePushSubscriptionMutation,
 		getCurrentUserQueryKey,
@@ -59,18 +58,13 @@
 		onSuccess: refreshUser
 	}));
 	const testMutation = createMutation(() => sendTestNotificationMutation());
-	const vkCheckMutation = createMutation(() => ({
-		...checkVkMessagesAllowedMutation(),
-		onSuccess: refreshUser
-	}));
 
 	const offlineGate = offlineWriteGate();
 
 	const toastService = getToastService();
-	let vkIdentity = $derived(
-		user.social_identities.find((socialIdentity) => socialIdentity.provider === 'vk')
+	let hasVkAccount = $derived(
+		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
-	let hasVkAccount = $derived(vkIdentity !== undefined);
 	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
 	let vkDescription = $derived(
 		hasVkAccount ? m.vk_notifications_on_description() : m.vk_notifications_connect_first()
@@ -78,7 +72,6 @@
 	const pwa = getPwaService();
 	let showVkModal = $state(false);
 	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/write-${PUBLIC_VK_GROUP_ID}` : null;
-	let vkMessagesBlocked = $derived(receiveVk && vkIdentity?.messages_allowed === false);
 
 	let blockedHint = $derived.by(() => {
 		if (!pwa.isInstalled) {
@@ -106,22 +99,8 @@
 		}
 	});
 
-	// VK never tells us when the user allows messages, so ask on open and on return from the chat.
-	function checkVkMessages() {
-		if (hasVkAccount && navigator.onLine && !vkCheckMutation.isPending) {
-			vkCheckMutation.mutate({});
-		}
-	}
-
-	function onVisibilityChange() {
-		if (document.visibilityState === 'visible') {
-			checkVkMessages();
-		}
-	}
-
 	onMount(() => {
 		void pushDevice.refresh();
-		checkVkMessages();
 	});
 
 	const toggleFailureCopy: Record<Exclude<PushToggleOutcome, 'enabled' | 'disabled'>, string> = {
@@ -159,7 +138,12 @@
 		);
 	}
 
+	// Switching on goes through the dialog: the server enables VK only once the community may write.
 	function toggleReceiveVk(checked: boolean) {
+		if (checked) {
+			showVkModal = true;
+			return;
+		}
 		receiveVk = checked;
 		updateSettings(
 			{
@@ -220,22 +204,7 @@
 				blocked={offlineGate.blocked}
 				onCheckedChange={offlineGate.guard(toggleReceiveVk)}
 			>
-				{#if vkMessagesBlocked}
-					<p class="mt-2 text-sm leading-relaxed text-destructive">
-						{m.vk_messages_not_allowed()}
-					</p>
-				{/if}
 				<div class="flex flex-wrap gap-x-4">
-					{#if vkMessagesBlocked && vkGroupUrl}
-						<a
-							href={vkGroupUrl}
-							target="_blank"
-							rel="noopener"
-							class="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
-						>
-							{m.vk_allow_messages()}
-						</a>
-					{/if}
 					{#if !hasVkAccount}
 						<a
 							href={resolve('profile/account')}
@@ -277,6 +246,4 @@
 	</div>
 </div>
 
-<svelte:document onvisibilitychange={onVisibilityChange} />
-
-<VkNotificationsModal bind:open={showVkModal} {vkGroupUrl} />
+<VkNotificationsModal bind:open={showVkModal} {vkGroupUrl} {hasVkAccount} />

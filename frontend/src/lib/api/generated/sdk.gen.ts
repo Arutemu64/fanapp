@@ -36,9 +36,6 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionErrors,
 	CheckPushSubscriptionResponses,
-	CheckVkMessagesAllowedData,
-	CheckVkMessagesAllowedErrors,
-	CheckVkMessagesAllowedResponses,
 	ClearCurrentEventData,
 	ClearCurrentEventErrors,
 	ClearCurrentEventResponses,
@@ -69,6 +66,9 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerErrors,
 	DrawVotingContestWinnerResponses,
+	EnableVkNotificationsData,
+	EnableVkNotificationsErrors,
+	EnableVkNotificationsResponses,
 	FindQuestPlayersData,
 	FindQuestPlayersErrors,
 	FindQuestPlayersResponses,
@@ -652,16 +652,16 @@ export const startAccountLink = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Check VK community messages
+ * Turn on VK notifications
  *
- * Asks VK whether its community may message the current user's linked VK account, stores the answer and returns it. Repeated calls within a few seconds return the stored answer without asking VK.
+ * Asks VK whether its community may message the current user's linked VK account and, if so, turns VK notifications on. Turning them off goes through the settings endpoint.
  */
-export const checkVkMessagesAllowed = <ThrowOnError extends boolean = false>(
-	options?: Options<CheckVkMessagesAllowedData, ThrowOnError>
-): RequestResult<CheckVkMessagesAllowedResponses, CheckVkMessagesAllowedErrors, ThrowOnError> =>
+export const enableVkNotifications = <ThrowOnError extends boolean = false>(
+	options?: Options<EnableVkNotificationsData, ThrowOnError>
+): RequestResult<EnableVkNotificationsResponses, EnableVkNotificationsErrors, ThrowOnError> =>
 	(options?.client ?? client).post<
-		CheckVkMessagesAllowedResponses,
-		CheckVkMessagesAllowedErrors,
+		EnableVkNotificationsResponses,
+		EnableVkNotificationsErrors,
 		ThrowOnError
 	>({
 		security: [
@@ -671,7 +671,7 @@ export const checkVkMessagesAllowed = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/me/connections/vk/messages-check',
+		url: '/me/connections/vk/notifications',
 		...options
 	});
 

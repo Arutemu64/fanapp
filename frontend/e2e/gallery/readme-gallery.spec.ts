@@ -124,7 +124,7 @@ test('profile', async ({ page, api }) => {
 		...loggedInAs({
 			username: 'ПушистыйПингвин42',
 			ticket: { id: 'ticket-1', barcode: '4600000000017', role: 'visitor' },
-			social_identities: [{ provider: 'telegram', messages_allowed: null }]
+			social_identities: [{ provider: 'telegram' }]
 		})
 	});
 	await page.goto('/profile');

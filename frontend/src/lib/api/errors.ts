@@ -264,6 +264,7 @@ const ERROR_MESSAGES = {
 	USER_NOT_FOUND: m.error_user_not_found,
 	USERNAME_ALREADY_TAKEN: m.error_username_already_taken,
 	USERNAME_PROFANITY: m.error_username_profanity,
+	VK_MESSAGES_NOT_ALLOWED: m.vk_messages_not_allowed,
 	VOTE_NOT_FOUND: m.error_vote_not_found,
 	VOTING_DISABLED: m.error_voting_closed,
 	VOTING_TICKET_REQUIRED: m.error_voting_needs_ticket
@@ -276,7 +277,8 @@ const RETRY_AFTER_CODES = [
 	'TOO_MANY_ATTEMPTS',
 	'TOO_MANY_OTP_ATTEMPTS',
 	'TOO_MANY_LOGIN_ATTEMPTS',
-	'TOO_MANY_LOGIN_CODE_REQUESTS'
+	'TOO_MANY_LOGIN_CODE_REQUESTS',
+	'VK_CHECK_TOO_FAST'
 ] as const satisfies readonly ApiErrorCode[];
 
 const _GENERIC_FALLBACK_CODES = [

@@ -22,4 +22,3 @@ class SocialIdentityORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     )
     subject: Mapped[str] = mapped_column()
     provider_user_id: Mapped[int] = mapped_column(BigInteger)
-    messages_allowed: Mapped[bool | None] = mapped_column(default=None)

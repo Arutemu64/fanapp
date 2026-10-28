@@ -8,8 +8,6 @@ from fanfan.core.vo.user import UserId
 class SocialIdentityGateway(Protocol):
     async def add(self, social_identity: SocialIdentity) -> None: ...
 
-    async def save(self, social_identity: SocialIdentity) -> None: ...
-
     async def get_by_provider(
         self,
         user_id: UserId,

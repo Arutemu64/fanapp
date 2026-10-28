@@ -17,7 +17,6 @@ import {
 	changeCurrentUserEmail,
 	changeCurrentUserPassword,
 	checkPushSubscription,
-	checkVkMessagesAllowed,
 	clearCurrentEvent,
 	confirmEmailCode,
 	countUnreadNotifications,
@@ -28,6 +27,7 @@ import {
 	deletePushSubscription,
 	deleteSubscription,
 	drawVotingContestWinner,
+	enableVkNotifications,
 	findQuestPlayers,
 	getCaptchaChallenge,
 	getCurrentUser,
@@ -114,9 +114,6 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionError,
 	CheckPushSubscriptionResponse,
-	CheckVkMessagesAllowedData,
-	CheckVkMessagesAllowedError,
-	CheckVkMessagesAllowedResponse,
 	ClearCurrentEventData,
 	ClearCurrentEventError,
 	ClearCurrentEventResponse,
@@ -147,6 +144,9 @@ import type {
 	DrawVotingContestWinnerData,
 	DrawVotingContestWinnerError,
 	DrawVotingContestWinnerResponse,
+	EnableVkNotificationsData,
+	EnableVkNotificationsError,
+	EnableVkNotificationsResponse,
 	FindQuestPlayersData,
 	FindQuestPlayersError,
 	FindQuestPlayersResponse,
@@ -896,24 +896,24 @@ export const startAccountLinkOptions = (options: Options<StartAccountLinkData>) 
 	});
 
 /**
- * Check VK community messages
+ * Turn on VK notifications
  *
- * Asks VK whether its community may message the current user's linked VK account, stores the answer and returns it. Repeated calls within a few seconds return the stored answer without asking VK.
+ * Asks VK whether its community may message the current user's linked VK account and, if so, turns VK notifications on. Turning them off goes through the settings endpoint.
  */
-export const checkVkMessagesAllowedMutation = (
-	options?: Partial<Options<CheckVkMessagesAllowedData>>
+export const enableVkNotificationsMutation = (
+	options?: Partial<Options<EnableVkNotificationsData>>
 ): MutationOptions<
-	CheckVkMessagesAllowedResponse,
-	CheckVkMessagesAllowedError,
-	Options<CheckVkMessagesAllowedData>
+	EnableVkNotificationsResponse,
+	EnableVkNotificationsError,
+	Options<EnableVkNotificationsData>
 > => {
 	const mutationOptions: MutationOptions<
-		CheckVkMessagesAllowedResponse,
-		CheckVkMessagesAllowedError,
-		Options<CheckVkMessagesAllowedData>
+		EnableVkNotificationsResponse,
+		EnableVkNotificationsError,
+		Options<EnableVkNotificationsData>
 	> = {
 		mutationFn: async (fnOptions) => {
-			const { data } = await checkVkMessagesAllowed({
+			const { data } = await enableVkNotifications({
 				...options,
 				...fnOptions,
 				throwOnError: true

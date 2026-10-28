@@ -17,7 +17,7 @@ from fanfan.core.vo.user import (
 class UserSettings:
     receive_all_announcements: bool = False
     receive_telegram_notifications: bool = True
-    receive_vk_notifications: bool = True
+    receive_vk_notifications: bool = False
 
 
 @dataclass(slots=True, kw_only=True)

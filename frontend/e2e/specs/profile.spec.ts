@@ -41,7 +41,7 @@ test.describe('profile hub', () => {
 	});
 
 	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
-		api.use(loggedInAs({ social_identities: [{ provider: 'vk', messages_allowed: true }] }));
+		api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
 		await page.goto('/profile');
 
 		await expect(page.getByRole('main').getByRole('link', { name: /Уведомления/ })).toContainText(
@@ -49,15 +49,31 @@ test.describe('profile hub', () => {
 		);
 	});
 
-	test('tells a VK user the community cannot write to them yet', async ({ page, api }) => {
+	test('turns VK on only once the community may write', async ({ page, api }) => {
+		let allowed = false;
 		api.use({
-			...loggedInAs({ social_identities: [{ provider: 'vk', messages_allowed: false }] }),
-			'POST /me/connections/vk/messages-check': json({ messages_allowed: false })
+			...loggedInAs({
+				social_identities: [{ provider: 'vk' }],
+				settings: {
+					receive_all_announcements: true,
+					receive_telegram_notifications: true,
+					receive_vk_notifications: false
+				}
+			}),
+			'POST /me/connections/vk/notifications': () =>
+				allowed ? { status: 204, body: '' } : problem('VK_MESSAGES_NOT_ALLOWED', 409)
 		});
 		await page.goto('/profile/notifications');
 
-		await expect(page.getByText('Сообщество пока не может тебе писать')).toBeVisible();
-		expect(api.countCalls('POST /me/connections/vk/messages-check')).toBeGreaterThan(0);
+		await page.getByRole('switch', { name: /ВКонтакте/ }).click();
+		const dialog = page.getByRole('dialog', { name: 'Уведомления во ВКонтакте' });
+		await dialog.getByRole('button', { name: 'Проверить' }).click();
+		await expect(dialog.getByRole('alert')).toContainText('Сообщество пока не может тебе писать');
+
+		allowed = true;
+		await dialog.getByRole('button', { name: 'Проверить' }).click();
+		await expect(dialog).toBeHidden();
+		expect(api.countCalls('PATCH /me/settings')).toBe(0);
 	});
 
 	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {

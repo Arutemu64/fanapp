@@ -1294,24 +1294,17 @@
         }
       }
     },
-    "/me/connections/vk/messages-check": {
+    "/me/connections/vk/notifications": {
       "post": {
         "tags": [
           "Current user"
         ],
-        "summary": "Check VK community messages",
-        "description": "Asks VK whether its community may message the current user's linked VK account, stores the answer and returns it. Repeated calls within a few seconds return the stored answer without asking VK.",
-        "operationId": "check_vk_messages_allowed",
+        "summary": "Turn on VK notifications",
+        "description": "Asks VK whether its community may message the current user's linked VK account and, if so, turns VK notifications on. Turning them off goes through the settings endpoint.",
+        "operationId": "enable_vk_notifications",
         "responses": {
-          "200": {
-            "description": "The current answer; null if never checked.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VkMessagesStatusDTO"
-                }
-              }
-            }
+          "204": {
+            "description": "VK notifications turned on."
           },
           "401": {
             "description": "Not authenticated.",
@@ -1335,6 +1328,26 @@
           },
           "404": {
             "description": "No VK account is linked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The user has not allowed the community to write yet.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Checked too recently.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7981,6 +7994,8 @@
               "USER_NOT_AUTHENTICATED",
               "USER_NOT_FOUND",
               "VALIDATION_ERROR",
+              "VK_CHECK_TOO_FAST",
+              "VK_MESSAGES_NOT_ALLOWED",
               "VOTE_NOT_FOUND",
               "VOTING_DISABLED",
               "VOTING_TICKET_REQUIRED"
@@ -9345,24 +9360,11 @@
         "properties": {
           "provider": {
             "$ref": "#/components/schemas/SocialProvider"
-          },
-          "messages_allowed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Messages Allowed",
-            "description": "Whether the provider lets the app message this account, as last checked; null before the first check. Only VK records it."
           }
         },
         "type": "object",
         "required": [
-          "provider",
-          "messages_allowed"
+          "provider"
         ],
         "title": "UserSocialIdentityDTO"
       },
@@ -9507,26 +9509,6 @@
           "errors"
         ],
         "title": "ValidationProblem"
-      },
-      "VkMessagesStatusDTO": {
-        "properties": {
-          "messages_allowed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Messages Allowed"
-          }
-        },
-        "type": "object",
-        "required": [
-          "messages_allowed"
-        ],
-        "title": "VkMessagesStatusDTO"
       },
       "VotingStatus": {
         "type": "string",

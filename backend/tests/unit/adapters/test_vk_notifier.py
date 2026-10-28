@@ -14,6 +14,7 @@ from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
+    UserRevokedChannel,
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.social_identity import SocialIdentity
@@ -170,7 +171,6 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
 class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
-        self.saved: list[SocialIdentity] = []
 
     @override
     async def get_by_provider(
@@ -179,10 +179,6 @@ class _StubSocialIdentityGateway(SocialIdentityGateway):
         provider: SocialProvider,
     ) -> SocialIdentity | None:
         return self._identity
-
-    @override
-    async def save(self, social_identity: SocialIdentity) -> None:
-        self.saved.append(social_identity)
 
 
 _SENT_MESSAGE_ID = 42
@@ -237,11 +233,10 @@ def _notifier(
     identity: SocialIdentity | None,
     client: _StubVkClient,
     uow: _StubUow | None = None,
-    gateway: _StubSocialIdentityGateway | None = None,
 ) -> VkNotifier:
     return VkNotifier(
         client=client,
-        social_identity_gateway=gateway or _StubSocialIdentityGateway(identity),
+        social_identity_gateway=_StubSocialIdentityGateway(identity),
         uow=uow or _StubUow(),
         web_config=_web_config(),
     )
@@ -255,7 +250,7 @@ async def test_ends_lookup_transaction_before_sending() -> None:
 
     await notifier.send_notification(_make_notification(user.id))
 
-    assert uow.commits >= 1
+    assert uow.commits == 1
     assert len(client.calls) == 1
 
 
@@ -315,7 +310,19 @@ async def test_messages_not_allowed_is_unreachable() -> None:
         await notifier.send_notification(_make_notification(user.id))
 
 
-@pytest.mark.parametrize("code", [900, 902, 987, 988, 1021])
+@pytest.mark.parametrize("code", [900, 901, 902])
+async def test_codes_where_the_user_shut_the_community_out_revoke_vk(
+    code: int,
+) -> None:
+    user = _make_user()
+    client = _StubVkClient(VkApiError(code=code, message="refused"))
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    with pytest.raises(UserRevokedChannel):
+        await notifier.send_notification(_make_notification(user.id))
+
+
+@pytest.mark.parametrize("code", [7, 15, 987, 988, 1021])
 async def test_codes_refusing_this_user_are_unreachable(code: int) -> None:
     user = _make_user()
     client = _StubVkClient(VkApiError(code=code, message="refused"))
@@ -339,44 +346,6 @@ async def test_redelivery_reuses_the_random_id_so_vk_drops_the_duplicate() -> No
     assert first == redelivered
     assert first != other
     assert 0 < first < 2**31
-
-
-async def test_successful_send_records_that_messages_are_allowed() -> None:
-    user = _make_user()
-    identity = _identity_for(user)
-    gateway = _StubSocialIdentityGateway(identity)
-    notifier = _notifier(identity=identity, client=_StubVkClient(), gateway=gateway)
-
-    await notifier.send_notification(_make_notification(user.id))
-
-    assert identity.messages_allowed is True
-    assert gateway.saved == [identity]
-
-
-async def test_known_permission_is_not_rewritten_on_every_send() -> None:
-    user = _make_user()
-    identity = _identity_for(user)
-    identity.messages_allowed = True
-    gateway = _StubSocialIdentityGateway(identity)
-    notifier = _notifier(identity=identity, client=_StubVkClient(), gateway=gateway)
-
-    await notifier.send_notification(_make_notification(user.id))
-
-    assert gateway.saved == []
-
-
-async def test_missing_permission_is_recorded() -> None:
-    user = _make_user()
-    identity = _identity_for(user)
-    gateway = _StubSocialIdentityGateway(identity)
-    client = _StubVkClient(VkApiError(code=901, message="not allowed"))
-    notifier = _notifier(identity=identity, client=client, gateway=gateway)
-
-    with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
-
-    assert identity.messages_allowed is False
-    assert gateway.saved == [identity]
 
 
 async def test_flood_control_asks_to_retry() -> None:

@@ -1107,6 +1107,8 @@ export type ProblemDetails = {
 		| 'USER_NOT_AUTHENTICATED'
 		| 'USER_NOT_FOUND'
 		| 'VALIDATION_ERROR'
+		| 'VK_CHECK_TOO_FAST'
+		| 'VK_MESSAGES_NOT_ALLOWED'
 		| 'VOTE_NOT_FOUND'
 		| 'VOTING_DISABLED'
 		| 'VOTING_TICKET_REQUIRED';
@@ -1934,12 +1936,6 @@ export type UserSettingsDto = {
  */
 export type UserSocialIdentityDto = {
 	provider: SocialProvider;
-	/**
-	 * Messages Allowed
-	 *
-	 * Whether the provider lets the app message this account, as last checked; null before the first check. Only VK records it.
-	 */
-	messages_allowed: boolean | null;
 };
 
 /**
@@ -2023,16 +2019,6 @@ export type ValidationProblem = {
 	 */
 	errors: Array<ValidationErrorDetail>;
 	[key: string]: unknown;
-};
-
-/**
- * VkMessagesStatusDTO
- */
-export type VkMessagesStatusDto = {
-	/**
-	 * Messages Allowed
-	 */
-	messages_allowed: boolean | null;
 };
 
 /**
@@ -2787,14 +2773,14 @@ export type StartAccountLinkResponses = {
 
 export type StartAccountLinkResponse = StartAccountLinkResponses[keyof StartAccountLinkResponses];
 
-export type CheckVkMessagesAllowedData = {
+export type EnableVkNotificationsData = {
 	body?: never;
 	path?: never;
 	query?: never;
-	url: '/me/connections/vk/messages-check';
+	url: '/me/connections/vk/notifications';
 };
 
-export type CheckVkMessagesAllowedErrors = {
+export type EnableVkNotificationsErrors = {
 	/**
 	 * Not authenticated.
 	 */
@@ -2808,23 +2794,31 @@ export type CheckVkMessagesAllowedErrors = {
 	 */
 	404: ProblemDetails;
 	/**
+	 * The user has not allowed the community to write yet.
+	 */
+	409: ProblemDetails;
+	/**
+	 * Checked too recently.
+	 */
+	429: ProblemDetails;
+	/**
 	 * Unexpected error.
 	 */
 	default: ProblemDetails;
 };
 
-export type CheckVkMessagesAllowedError =
-	CheckVkMessagesAllowedErrors[keyof CheckVkMessagesAllowedErrors];
+export type EnableVkNotificationsError =
+	EnableVkNotificationsErrors[keyof EnableVkNotificationsErrors];
 
-export type CheckVkMessagesAllowedResponses = {
+export type EnableVkNotificationsResponses = {
 	/**
-	 * The current answer; null if never checked.
+	 * VK notifications turned on.
 	 */
-	200: VkMessagesStatusDto;
+	204: void;
 };
 
-export type CheckVkMessagesAllowedResponse =
-	CheckVkMessagesAllowedResponses[keyof CheckVkMessagesAllowedResponses];
+export type EnableVkNotificationsResponse =
+	EnableVkNotificationsResponses[keyof EnableVkNotificationsResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;

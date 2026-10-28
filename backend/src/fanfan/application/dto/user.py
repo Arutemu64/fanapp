@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 from fanfan.core.vo.permission import (
     Permission,
@@ -72,14 +72,6 @@ class UserSettingsDTO(BaseModel):
 
 class UserSocialIdentityDTO(BaseModel):
     provider: SocialProvider
-    messages_allowed: bool | None = Field(
-        description="Whether the provider lets the app message this account, as "
-        "last checked; null before the first check. Only VK records it."
-    )
-
-
-class VkMessagesStatusDTO(BaseModel):
-    messages_allowed: bool | None
 
 
 class CurrentUserDTO(UserBaseDTO):
