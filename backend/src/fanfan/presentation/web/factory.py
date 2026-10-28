@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+from dishka import AsyncContainer
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -10,6 +11,7 @@ from fanfan.adapters.config.parsers import get_config
 from fanfan.common.version import APP_VERSION
 from fanfan.main.common import init
 from fanfan.main.di import create_web_container
+from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.exceptions import add_exception_handlers
 from fanfan.presentation.web.middlewares import (
     BindRequestContextMiddleware,
@@ -34,7 +36,17 @@ def create_app() -> FastAPI:
     init(service_name="web")
 
     config = get_config()
-    container = create_web_container()
+    return build_app(create_web_container(), config.web, debug=config.debug.enabled)
+
+
+def build_app(
+    container: AsyncContainer, web_config: WebConfig, *, debug: bool = False
+) -> FastAPI:
+    """Assemble the app around a ready container.
+
+    Split from `create_app` so the HTTP tests run the real middleware stack
+    on their own container (docs/testing.md "HTTP tests").
+    """
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
@@ -43,7 +55,7 @@ def create_app() -> FastAPI:
 
     app = FanfanAPI(
         lifespan=lifespan,
-        debug=config.debug.enabled,
+        debug=debug,
         title=API_TITLE,
         description=API_DESCRIPTION,
         contact=API_CONTACT,
@@ -53,7 +65,7 @@ def create_app() -> FastAPI:
 
     setup_dishka(container=container, app=app)
 
-    app.add_middleware(RefreshSessionCookieMiddleware, web_config=config.web)
+    app.add_middleware(RefreshSessionCookieMiddleware, web_config=web_config)
 
     app.add_middleware(CatchUnexpectedErrorsMiddleware)
 
@@ -63,15 +75,15 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         SessionMiddleware,
-        secret_key=config.web.secret_key.get_secret_value(),
+        secret_key=web_config.secret_key.get_secret_value(),
         max_age=OAUTH_STATE_TTL_SECONDS,
         same_site="lax",
-        https_only=config.web.cookie_secure,
+        https_only=web_config.cookie_secure,
     )
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=config.web.cors_origins(),
+        allow_origins=web_config.cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
