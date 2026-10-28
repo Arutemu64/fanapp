@@ -33,11 +33,13 @@ async def test_setting_time_range_persists_and_broadcasts(
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
 
-    await interactor(SetVotingTimeRangeInput(voting_start=start, voting_end=end))
+    await interactor(
+        SetVotingTimeRangeInput(voting_starts_at=start, voting_ends_at=end)
+    )
 
     settings = await settings_gateway.get()
-    assert settings.voting_start == start
-    assert settings.voting_end == end
+    assert settings.voting_starts_at == start
+    assert settings.voting_ends_at == end
     assert [
         (user_id, message.event_name) for user_id, message in realtime.published
     ] == [(None, SSEEventName.CONFIG_UPDATED)]
@@ -52,7 +54,9 @@ async def test_no_op_when_range_unchanged_does_not_broadcast(
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(voting_manager)
 
-    await interactor(SetVotingTimeRangeInput(voting_start=None, voting_end=None))
+    await interactor(
+        SetVotingTimeRangeInput(voting_starts_at=None, voting_ends_at=None)
+    )
 
     assert realtime.published == []
 
@@ -68,7 +72,7 @@ async def test_requires_voting_manage(
     with pytest.raises(AccessDenied):
         await interactor(
             SetVotingTimeRangeInput(
-                voting_start=datetime(2026, 8, 22, 12, 0, tzinfo=UTC),
-                voting_end=datetime(2026, 8, 22, 18, 0, tzinfo=UTC),
+                voting_starts_at=datetime(2026, 8, 22, 12, 0, tzinfo=UTC),
+                voting_ends_at=datetime(2026, 8, 22, 18, 0, tzinfo=UTC),
             )
         )

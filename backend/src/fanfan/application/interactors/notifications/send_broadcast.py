@@ -6,6 +6,7 @@ from pydantic.types import UuidVersion
 from pydantic_core import PydanticCustomError
 
 from fanfan.application.commands.notifications import ProcessBroadcastCommand
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -32,7 +33,7 @@ def _within_utf16_limit(body: str) -> str:
     return body
 
 
-class SendBroadcastInput(BaseModel):
+class SendBroadcastInput(InputModel):
     mailing_id: Annotated[
         MailingId,
         UuidVersion(7),

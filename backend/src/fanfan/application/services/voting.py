@@ -11,8 +11,8 @@ from fanfan.core.vo.vote import VotingStatus
 @dataclass(frozen=True, slots=True)
 class VotingState:
     status: VotingStatus
-    voting_start: datetime | None
-    voting_end: datetime | None
+    voting_starts_at: datetime | None
+    voting_ends_at: datetime | None
 
 
 class VotingService:
@@ -21,11 +21,11 @@ class VotingService:
 
     async def get_voting_window(self) -> tuple[datetime | None, datetime | None]:
         settings = await self.settings_gateway.get()
-        return settings.voting_start, settings.voting_end
+        return settings.voting_starts_at, settings.voting_ends_at
 
     async def get_voting_state(self, user: User, ticket: Ticket | None) -> VotingState:
         settings = await self.settings_gateway.get()
-        start, end = settings.voting_start, settings.voting_end
+        start, end = settings.voting_starts_at, settings.voting_ends_at
         if ticket is None or ticket.used_by_user_id != user.id:
             return VotingState(VotingStatus.NO_TICKET, start, end)
         if not settings.is_voting_open(now=datetime.now(UTC)):

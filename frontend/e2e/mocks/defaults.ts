@@ -18,20 +18,20 @@ const now = Date.now();
 export const baselineHandlers: Handlers = {
 	'GET /debug/health': json<HealthCheckOutput>({ status: 'healthy' }),
 	'GET /config': json<PublicConfigDto>({
-		festival_start: new Date(now + DAY_MS).toISOString(),
-		festival_end: new Date(now + 3 * DAY_MS).toISOString(),
+		festival_starts_at: new Date(now + DAY_MS).toISOString(),
+		festival_ends_at: new Date(now + 3 * DAY_MS).toISOString(),
 		quest_enabled: false,
 		quest_max_award: 100,
 		schedule_changeover_seconds: 30
 	}),
 	'GET /me': problem('USER_NOT_AUTHENTICATED', 401),
-	'GET /schedule': json<ScheduleDto>({ current_event_id: null, schedule: [] }),
+	'GET /schedule': json<ScheduleDto>({ current_event_id: null, entries: [] }),
 	'GET /schedule/subscriptions': json({ subscriptions: [] }),
 	'GET /voting/status': json<GetVotingStatusOutput>({
 		can_vote: false,
 		status: 'not_authenticated',
-		voting_start: null,
-		voting_end: null
+		voting_starts_at: null,
+		voting_ends_at: null
 	}),
 	'GET /notifications': json<ListUserNotificationsOutput>({ next_cursor: null, notifications: [] }),
 	'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({

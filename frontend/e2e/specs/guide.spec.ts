@@ -39,8 +39,8 @@ test.describe('guide articles', () => {
 	}) => {
 		api.use({
 			'GET /config': json({
-				festival_start: '2027-04-01T09:00:00+03:00',
-				festival_end: '2027-04-01T19:00:00+03:00',
+				festival_starts_at: '2027-04-01T09:00:00+03:00',
+				festival_ends_at: '2027-04-01T19:00:00+03:00',
 				quest_enabled: false,
 				quest_max_award: 100,
 				schedule_changeover_seconds: 30
@@ -56,8 +56,8 @@ test.describe('guide articles', () => {
 	test('after the festival Home keeps only the ways to stay in touch', async ({ page, api }) => {
 		api.use({
 			'GET /config': json({
-				festival_start: '2020-04-01T09:00:00+03:00',
-				festival_end: '2020-04-01T19:00:00+03:00',
+				festival_starts_at: '2020-04-01T09:00:00+03:00',
+				festival_ends_at: '2020-04-01T19:00:00+03:00',
 				quest_enabled: false,
 				quest_max_award: 100,
 				schedule_changeover_seconds: 30

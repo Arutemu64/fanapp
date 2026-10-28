@@ -268,7 +268,7 @@ class SendScheduleChangeNotifications:
             current_event_position = cast("int", current_event.position)
             settings = await self.app_settings_gateway.get()
             seconds_ahead = _seconds_ahead_by_position(
-                (await self.schedule_gateway.read_schedule()).schedule,
+                (await self.schedule_gateway.read_schedule()).entries,
                 current_event_position,
                 settings.schedule.changeover_seconds,
             )

@@ -13,6 +13,11 @@ _ETAG_HEADERS = {
         "schema": {"type": "string"},
         "description": "Schedule version; send it back in If-None-Match.",
     },
+    "Cache-Control": {
+        "schema": {"type": "string"},
+        "description": "`no-cache`: a client may store the schedule but must "
+        "revalidate it with If-None-Match before reuse.",
+    },
 }
 
 

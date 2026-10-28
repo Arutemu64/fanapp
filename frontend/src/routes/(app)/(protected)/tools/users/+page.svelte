@@ -35,7 +35,7 @@
 
 	const usersQuery = createInfiniteQuery(() => {
 		const query: NonNullable<ListUsersData['query']> = { limit: USERS_PAGE_SIZE };
-		if (filters.search) query.search = filters.search;
+		if (filters.search) query.q = filters.search;
 		if (filters.role) query.role = filters.role;
 		if (filters.hasTicket !== null) query.has_ticket = filters.hasTicket;
 		return {

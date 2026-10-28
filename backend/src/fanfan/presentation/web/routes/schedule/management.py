@@ -3,6 +3,7 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path
+from pydantic import MISSING
 
 from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
     MoveScheduleEvent,
@@ -48,7 +49,7 @@ management_router = APIRouter(
     },
 )
 @inject
-async def set_event_as_current(
+async def set_current_event(
     data: SetCurrentScheduleEventBody,
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
@@ -66,7 +67,7 @@ async def set_event_as_current(
     },
 )
 @inject
-async def uncheck_current_event(
+async def clear_current_event(
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
     await interactor(SetCurrentScheduleEventInput(event_id=None))
@@ -100,13 +101,14 @@ async def update_schedule_event(
     skip: FromDishka[UpdateScheduleEventSkip],
     move: FromDishka[MoveScheduleEvent],
 ) -> None:
-    if data.is_skipped is not None:
+    if data.is_skipped is not MISSING:
         await skip(
             UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=data.is_skipped)
         )
         return
-    await move(
-        MoveScheduleEventInput(
-            event_id=event_id, place_after_entry_id=data.place_after_entry_id
+    if data.place_after_entry_id is not MISSING:
+        await move(
+            MoveScheduleEventInput(
+                event_id=event_id, place_after_entry_id=data.place_after_entry_id
+            )
         )
-    )

@@ -47,15 +47,15 @@ test.describe('offline', { tag: '@critical' }, () => {
 		const hour = 3_600_000;
 		api.use({
 			'GET /config': json<PublicConfigDto>({
-				festival_start: new Date(Date.now() - hour).toISOString(),
-				festival_end: new Date(Date.now() + 24 * hour).toISOString(),
+				festival_starts_at: new Date(Date.now() - hour).toISOString(),
+				festival_ends_at: new Date(Date.now() + 24 * hour).toISOString(),
 				quest_enabled: false,
 				quest_max_award: 100,
 				schedule_changeover_seconds: 30
 			}),
 			'GET /schedule': json<ScheduleDto>({
 				current_event_id: 'event-1',
-				schedule: [
+				entries: [
 					{
 						type: 'event',
 						id: 'event-1',
@@ -71,8 +71,8 @@ test.describe('offline', { tag: '@critical' }, () => {
 			'GET /voting/status': json<GetVotingStatusOutput>({
 				can_vote: false,
 				status: 'not_authenticated',
-				voting_start: new Date(Date.now() - hour).toISOString(),
-				voting_end: new Date(Date.now() + 24 * hour).toISOString()
+				voting_starts_at: new Date(Date.now() - hour).toISOString(),
+				voting_ends_at: new Date(Date.now() + 24 * hour).toISOString()
 			})
 		});
 		await page.clock.install();
@@ -101,8 +101,8 @@ test.describe('offline', { tag: '@critical' }, () => {
 				return json({
 					can_vote: false,
 					status: 'not_authenticated',
-					voting_start: null,
-					voting_end: null
+					voting_starts_at: null,
+					voting_ends_at: null
 				});
 			}
 		});
@@ -171,7 +171,7 @@ test.describe('offline', { tag: '@critical' }, () => {
 		api.use({
 			...loggedInAs(),
 			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 1 }),
-			'GET /schedule': json({ current_event_id: null, schedule: [] }),
+			'GET /schedule': json({ current_event_id: null, entries: [] }),
 			'PATCH /me/settings': () => {
 				patched = true;
 				return json({});

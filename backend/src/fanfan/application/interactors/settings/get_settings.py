@@ -25,4 +25,11 @@ class GetSettings:
             user=current_user, permission=Permission.SETTINGS_MANAGE
         )
 
-        return AppSettingsDTO.model_validate(await self.app_settings_gateway.get())
+        settings = await self.app_settings_gateway.get()
+        return AppSettingsDTO(
+            festival_starts_at=settings.festival_starts_at,
+            festival_ends_at=settings.festival_ends_at,
+            quest_enabled=settings.quest.enabled,
+            quest_max_award=settings.quest.max_award,
+            quest_cancel_window_minutes=settings.quest.cancel_window_minutes,
+        )

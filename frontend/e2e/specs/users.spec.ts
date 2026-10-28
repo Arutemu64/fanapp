@@ -12,7 +12,7 @@ const ANNA: UserListItemDto = {
 	role: 'participant',
 	email: 'anna@example.com',
 	avatar_seed: 'annaSeed0001',
-	ticket_number: 'FAN-ABC123',
+	ticket_barcode: 'FAN-ABC123',
 	created_at: '2026-10-10T12:00:00Z'
 };
 
@@ -22,7 +22,7 @@ const BORIS: UserListItemDto = {
 	role: 'visitor',
 	email: null,
 	avatar_seed: 'borisSeed001',
-	ticket_number: null,
+	ticket_barcode: null,
 	created_at: '2026-10-09T12:00:00Z'
 };
 
@@ -100,7 +100,7 @@ test.describe('organizer user directory', () => {
 			...organizer(),
 			[`GET /users/${ANNA.id}`]: () => json<UserDetailsDto>(details),
 			[`DELETE /users/${ANNA.id}/ticket`]: () => {
-				details = { ...details, ticket_number: null };
+				details = { ...details, ticket_barcode: null };
 				return { status: 204, body: '' };
 			}
 		});

@@ -1,10 +1,11 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request, Response
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 from starlette import status
 
 from fanfan.application.dto.captcha import CaptchaChallengeDTO
+from fanfan.application.dto.input import InputModel
 from fanfan.application.interactors.auth.get_captcha_challenge import (
     GetCaptchaChallenge,
     GetCaptchaChallengeInput,
@@ -24,7 +25,7 @@ from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.utils import get_client_ip
 
 
-class RequestLoginCodeBody(BaseModel):
+class RequestLoginCodeBody(InputModel):
     email: EmailStr
     captcha_token: str | None = Field(default=None, max_length=4096)
 

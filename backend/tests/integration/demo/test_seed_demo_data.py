@@ -47,8 +47,8 @@ async def test_seed_populates_schedule_and_voting(
     assert await nomination_gateway.count_votable() == len(DEMO_NOMINATIONS)
 
     settings = await settings_gateway.get()
-    assert settings.voting_start is not None
-    assert settings.voting_end is not None
+    assert settings.voting_starts_at is not None
+    assert settings.voting_ends_at is not None
 
 
 async def test_seed_is_idempotent(

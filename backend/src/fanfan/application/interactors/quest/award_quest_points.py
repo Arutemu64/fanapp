@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from pydantic.types import UuidVersion
 
 from fanfan.application.commands.notifications import CreateNotificationCommand
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.quest_awards import QuestAwardGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -22,7 +23,7 @@ from fanfan.core.vo.user import USER_NUMBER_MAX, USER_NUMBER_MIN, UserNumber
 logger = logging.getLogger(__name__)
 
 
-class AwardQuestPointsInput(BaseModel):
+class AwardQuestPointsInput(InputModel):
     award_id: Annotated[
         QuestAwardId,
         UuidVersion(7),

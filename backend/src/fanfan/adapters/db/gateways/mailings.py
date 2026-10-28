@@ -46,7 +46,7 @@ def _parse_dto(orm: MailingORM) -> MailingDTO:
         status=orm.status,
         created_by=parse_user_ref(orm.by_user) if orm.by_user else None,
         body=orm.body,
-        roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
+        roles=[UserRole(r) for r in orm.roles or []],
         total_count=orm.total_count,
         created_at=orm.created_at,
     )

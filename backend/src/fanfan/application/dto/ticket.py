@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.dto.user import UserRefDTO
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserRole
@@ -21,6 +22,6 @@ class TicketListItemDTO(BaseModel):
     created_at: datetime
 
 
-class TCloudEventRoleDTO(BaseModel):
+class TCloudEventRoleDTO(InputModel):
     event_id: str = Field(max_length=100)
     role: UserRole

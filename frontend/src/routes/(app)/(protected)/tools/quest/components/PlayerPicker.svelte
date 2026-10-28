@@ -43,7 +43,7 @@
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const searchQuery = createQuery(() => ({
-		...findQuestPlayersOptions({ query: { search: searchTerm } }),
+		...findQuestPlayersOptions({ query: { q: searchTerm } }),
 		enabled: searchTerm !== ''
 	}));
 	let players = $derived(searchQuery.data?.players ?? []);

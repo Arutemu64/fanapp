@@ -14,14 +14,14 @@ import {
 	watchQueuedWrites
 } from './writeQueue';
 
-const { deleteSubscription, newSubscription } = vi.hoisted(() => ({
+const { deleteSubscription, createSubscription } = vi.hoisted(() => ({
 	deleteSubscription: vi.fn(),
-	newSubscription: vi.fn()
+	createSubscription: vi.fn()
 }));
 vi.mock('#lib/api/generated/index.js', async (importOriginal) => ({
 	...(await importOriginal<object>()),
 	deleteSubscription,
-	newSubscription
+	createSubscription
 }));
 
 const SUBSCRIBE = { body: { event_id: 'event-1', lead_minutes: 15 } };
@@ -41,7 +41,7 @@ describe('write queue', () => {
 		queryClient = new QueryClient({ defaultOptions: { mutations: { networkMode: 'always' } } });
 		registerQueuedWrites(queryClient);
 		queryClient.mount();
-		newSubscription.mockResolvedValue({ data: { subscription_id: 'sub-1' } });
+		createSubscription.mockResolvedValue({ data: { subscription_id: 'sub-1' } });
 	});
 
 	afterEach(() => {
@@ -58,17 +58,17 @@ describe('write queue', () => {
 		const [waiting] = pendingWrites(queryClient);
 		expect(waiting?.state.isPaused).toBe(true);
 		expect(waiting && shouldPersistMutation(waiting)).toBe(true);
-		expect(newSubscription).not.toHaveBeenCalled();
+		expect(createSubscription).not.toHaveBeenCalled();
 
 		onlineManager.setOnline(true);
 		await vi.waitFor(() => expect(pendingWrites(queryClient)).toHaveLength(0));
-		expect(newSubscription).toHaveBeenCalledOnce();
+		expect(createSubscription).toHaveBeenCalledOnce();
 	});
 
 	it('pauses a write that got no answer instead of failing it', async () => {
-		newSubscription.mockRejectedValueOnce(await droppedConnectionError());
+		createSubscription.mockRejectedValueOnce(await droppedConnectionError());
 		const sent = subscribeObserver(queryClient).mutate(SUBSCRIBE);
-		await vi.waitFor(() => expect(newSubscription).toHaveBeenCalledOnce());
+		await vi.waitFor(() => expect(createSubscription).toHaveBeenCalledOnce());
 		onlineManager.setOnline(false);
 
 		onlineManager.setOnline(true);
@@ -76,7 +76,7 @@ describe('write queue', () => {
 	});
 
 	it('counts a replayed subscribe the server already has as done', async () => {
-		newSubscription.mockRejectedValueOnce({ code: 'SUBSCRIPTION_ALREADY_EXISTS' });
+		createSubscription.mockRejectedValueOnce({ code: 'SUBSCRIPTION_ALREADY_EXISTS' });
 
 		await expect(subscribeObserver(queryClient).mutate(SUBSCRIBE)).resolves.toBeNull();
 	});
@@ -100,7 +100,7 @@ describe('write queue', () => {
 		onlineManager.setOnline(true);
 
 		expect(pendingWrites(queryClient)).toHaveLength(0);
-		expect(newSubscription).not.toHaveBeenCalled();
+		expect(createSubscription).not.toHaveBeenCalled();
 	});
 
 	it('reports the outcome of a write that waited, and only that one', async () => {
@@ -126,7 +126,7 @@ describe('write queue', () => {
 			sent.push('unsubscribe');
 			return { data: undefined };
 		});
-		newSubscription.mockImplementation(() => {
+		createSubscription.mockImplementation(() => {
 			sent.push('subscribe');
 			return Promise.resolve({ data: { subscription_id: 'sub-2' } });
 		});
@@ -143,12 +143,12 @@ describe('write queue', () => {
 	});
 
 	it('keeps a subscribe that may have landed instead of cancelling it', async () => {
-		newSubscription.mockRejectedValueOnce(await droppedConnectionError());
+		createSubscription.mockRejectedValueOnce(await droppedConnectionError());
 		vi.useFakeTimers();
 		try {
 			void subscribeObserver(queryClient).mutate(SUBSCRIBE);
 			await vi.advanceTimersByTimeAsync(0);
-			expect(newSubscription).toHaveBeenCalledOnce();
+			expect(createSubscription).toHaveBeenCalledOnce();
 			onlineManager.setOnline(false);
 			await vi.advanceTimersByTimeAsync(1000);
 			expect(pendingWrites(queryClient)[0]?.state.isPaused).toBe(true);

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, Request, Response
 
 from fanfan.application.interactors.subscriptions.create_subscription import (
     CreateSubscription,
@@ -13,12 +13,16 @@ from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
     DeleteSubscriptionInput,
 )
-from fanfan.application.interactors.subscriptions.get_subscriptions import (
-    GetSubscriptions,
-    GetSubscriptionsOutput,
+from fanfan.application.interactors.subscriptions.list_subscriptions import (
+    ListSubscriptions,
+    ListSubscriptionsOutput,
 )
 from fanfan.core.vo.subscription import SubscriptionId
-from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.responses import (
+    AUTH_RESPONSES,
+    location_header,
+    resource_location,
+)
 from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.security import session_security
 
@@ -37,9 +41,9 @@ subscriptions_router = APIRouter(
     "and cacheable offline.",
 )
 @inject
-async def get_subscriptions(
-    interactor: FromDishka[GetSubscriptions],
-) -> GetSubscriptionsOutput:
+async def list_subscriptions(
+    interactor: FromDishka[ListSubscriptions],
+) -> ListSubscriptionsOutput:
     return await interactor()
 
 
@@ -50,7 +54,10 @@ async def get_subscriptions(
     description="Subscribes the current user to a specific schedule event. "
     "Prevents duplicate subscriptions.",
     responses={
-        201: {"description": "Subscription created successfully."},
+        201: {
+            "description": "Subscription created successfully.",
+            "headers": location_header("The created subscription."),
+        },
         404: {"model": ProblemDetails, "description": "Event ID does not exist."},
         409: {
             "model": ProblemDetails,
@@ -59,11 +66,17 @@ async def get_subscriptions(
     },
 )
 @inject
-async def new_subscription(
+async def create_subscription(
     data: CreateSubscriptionInput,
+    request: Request,
+    response: Response,
     interactor: FromDishka[CreateSubscription],
 ) -> CreateSubscriptionOutput:
-    return await interactor(data)
+    created = await interactor(data)
+    response.headers["Location"] = resource_location(
+        request, f"/schedule/subscriptions/{created.subscription_id}"
+    )
+    return created
 
 
 @subscriptions_router.delete(

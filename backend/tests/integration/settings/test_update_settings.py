@@ -32,9 +32,9 @@ async def test_public_field_change_broadcasts_config_updated(
     login(settings_editor)
 
     new_end = DEFAULT_FESTIVAL_END + timedelta(hours=1)
-    await interactor(UpdateAppSettingsInput(festival_end=new_end))
+    await interactor(UpdateAppSettingsInput(festival_ends_at=new_end))
 
-    assert (await settings_gateway.get()).festival_end == new_end
+    assert (await settings_gateway.get()).festival_ends_at == new_end
     assert [
         (user_id, message.event_name) for user_id, message in realtime.published
     ] == [(None, SSEEventName.CONFIG_UPDATED)]
@@ -49,10 +49,10 @@ async def test_festival_end_before_start_is_rejected(
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     login(settings_editor)
 
-    original_end = (await settings_gateway.get()).festival_end
+    original_end = (await settings_gateway.get()).festival_ends_at
     before_start = datetime(2020, 1, 1, tzinfo=UTC)
 
     with pytest.raises(InvalidFestivalTimeRange):
-        await interactor(UpdateAppSettingsInput(festival_end=before_start))
+        await interactor(UpdateAppSettingsInput(festival_ends_at=before_start))
 
-    assert (await settings_gateway.get()).festival_end == original_end
+    assert (await settings_gateway.get()).festival_ends_at == original_end

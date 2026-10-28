@@ -60,14 +60,14 @@ A user-triggered write is a `createMutation` over the generated `…Mutation()` 
 	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import {
-		getSubscriptionsQueryKey,
-		newSubscriptionMutation
+		listSubscriptionsQueryKey,
+		createSubscriptionMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 
 	const queryClient = useQueryClient();
 	const subscribeMutation = createMutation(() => ({
-		...newSubscriptionMutation(),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
+		...createSubscriptionMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: listSubscriptionsQueryKey() })
 	}));
 
 	function handleSubmit() {
@@ -117,18 +117,30 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 - **An ordered list is ordered by the server.** Clients keep the array's order. Internal sort keys (the schedule's float `order`) stay off the wire, so changing how the server orders rows never breaks a client.
 - **A number with a unit names it**: `duration_seconds`, `lead_minutes`.
+- **A `PATCH` body is a JSON Merge Patch** ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396.html)): a missing field is left alone and `null` clears the value. A field that can't be cleared refuses `null` with a 422, so its type is `x?: T`, never `x?: T | null`. On the backend that is `x: T | MISSING = MISSING` (Pydantic's sentinel); `model_dump()` leaves missing fields out. A write that replaces a whole value (the voting window) is a `PUT`.
 - **A value that holds for one row at most is named once at the top**, not flagged on every row: the schedule's `current_event_id`, not a per-event `is_current`. The client derives the per-row flag in its view model (`mergeSubscriptions`).
+
+### Where we differ from the Zalando guidelines
+
+The API follows the [Zalando RESTful API guidelines](https://opensource.zalando.com/restful-api-guidelines/) except where a rule fights the generated client or this app's single first-party consumer:
+
+- **Enum values are lowercase** (rule 240 asks for UPPER_SNAKE), and **enums are closed** (rule 112 asks for `examples`): the closed unions feed the `code`, `Permission` and `SseEventName` drift guards.
+- **Validation errors are 422** (rule 150 prefers 400): RFC 9110 defines 422 for this, and the error copy maps on it.
+- **Pages are `{<items>, next_cursor}`** (rule 248 asks for `items`, `next` links), per ADR-0023; the staff directories keep a `total` (rule 254).
+- **Durations are integers with a unit suffix** (rule 127 asks for ISO 8601).
+- **Request bodies declare `additionalProperties: false`** (rule 111): unknown input fields are refused, as rule 109 asks.
+- **A few routes are actions** (rules 138, 141): auth, the notification read markers, imports, draws, cancels and the push lookups, which keep a bearer capability out of the URL.
 
 ## Mutations & Data Recovery
 
-- **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge). A local optimistic value can key off the mutation itself instead (a vote counts `+1` while `isPending` and the refetched row doesn't carry it yet).
+- **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: listSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge). A local optimistic value can key off the mutation itself instead (a vote counts `+1` while `isPending` and the refetched row doesn't carry it yet).
 - **No SvelteKit invalidation**: loads hold no data, so nothing calls `depends`/`invalidate`/`invalidateAll`/`refreshAll` — the last two would also re-run the root load and replace the cache.
 - **Return Checking** (plain SDK calls only): success payload, error payload, and response metadata come back on the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
 - **A plain SDK call never throws** (`throwOnError` is off on the client): every failure, a dropped connection included, comes back as `error`. So don't wrap one in `try/catch` to handle API failures; that `catch` can't fire for them. The generated query and mutation options are the opposite: they pass `throwOnError: true`, so failures arrive as `query.error` / `onError` (or a rejected `mutateAsync`).
 
 ### Client-generated IDs for creates without a natural key
 
-A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcasts` sends to everyone again), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
+A lost response followed by a second press must not create the row twice. Where a natural key already turns a repeat into a 409 (one vote per nomination, one subscription per event), the server keeps generating the ID. Where nothing would catch the repeat and a duplicate does harm (`POST /notifications/broadcasts` sends to everyone again; `POST /ticket-batches` makes a second batch whose barcodes the organizer never saw), the **client** sends the ID ([ADR-0034](adr/0034-client-generated-ids-for-unkeyed-creates.md)):
 
 - **Generate a UUIDv7 with `uuidv7()` from `#lib/utils/uuidv7`** when the form opens. The server rejects any other version with a 422.
 - **Keep it across submits; draw a new one only once the intent is settled**: on success, or on the endpoint's "already exists" 409.
@@ -141,12 +153,12 @@ A `PATCH` that sets a state needs no ID: requesting the state that already holds
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.
 
 - **The status resource is an existing list endpoint, not a per-run one.** `GET /sync/sources` already reports each source's latest run, including the active one, so a dedicated `GET /sync/runs/{id}` would exist only to satisfy the convention. Add a per-run endpoint if something genuinely needs to poll one run by id — not before.
-- **Prefer SSE over polling for progress.** The root layout maps each `SSEEventName` to the query keys it invalidates (here `sync_run_updated` → `getSyncSourcesQueryKey()`), and a reconnect after a gap invalidates the whole cache, so an update missed while the stream was down self-heals rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
+- **Prefer SSE over polling for progress.** The root layout maps each `SSEEventName` to the query keys it invalidates (here `sync_run_updated` → `listSyncSourcesQueryKey()`), and a reconnect after a gap invalidates the whole cache, so an update missed while the stream was down self-heals rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
 - **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
 
 ## Inbound webhooks
 
-`/api/webhooks/*` are server-to-server and not called by the frontend. TicketsCloud authenticates with a secret path segment; FestEngine signs per Standard Webhooks. The FestEngine payload contract and event mapping are in [backend.md](backend.md) "FestEngine webhook".
+`/api/webhooks/*` are server-to-server and not called by the frontend. TicketsCloud authenticates with a secret path segment, which the uvicorn access log and Sentry events redact (`adapters/debug/redaction.py`); FestEngine signs per Standard Webhooks. The FestEngine payload contract and event mapping are in [backend.md](backend.md) "FestEngine webhook".
 
 ## Russian Localization & Error Handling
 

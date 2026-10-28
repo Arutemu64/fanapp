@@ -1,7 +1,8 @@
 import logging
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
@@ -17,7 +18,7 @@ from fanfan.core.vo.email import Email
 logger = logging.getLogger(__name__)
 
 
-class LoginWithCodeInput(BaseModel):
+class LoginWithCodeInput(InputModel):
     email: EmailStr
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$", repr=False)
 

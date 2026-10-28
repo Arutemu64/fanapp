@@ -11,7 +11,7 @@ export function isVotingWindowOpen(
 
 export function isVotingOpenNow(state: GetVotingStatusOutput | undefined, now: number): boolean {
 	if (state === undefined || state.status === 'disabled') return false;
-	return isVotingWindowOpen(state.voting_start, state.voting_end, now);
+	return isVotingWindowOpen(state.voting_starts_at, state.voting_ends_at, now);
 }
 
 export function hasVotingEnded(end: string | null | undefined, now: number): boolean {

@@ -49,7 +49,7 @@ async function focusAndExpectUnobscured(page: Page, eventId: string, offset: num
 		.toBe(true);
 }
 
-const longSchedule: ScheduleDto['schedule'] = [
+const longSchedule: ScheduleDto['entries'] = [
 	{ type: 'block_start', id: 'block-1', title: 'Блок 1' },
 	...Array.from({ length: 60 }, (_, index) => ({
 		type: 'event' as const,
@@ -70,7 +70,7 @@ test.describe('native feel', () => {
 	}, testInfo) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ current_event_id: null, schedule: longSchedule })
+			'GET /schedule': json({ current_event_id: null, entries: longSchedule })
 		});
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();
@@ -105,7 +105,7 @@ test.describe('native feel', () => {
 	test('reopens a tab with the filters it was left with', async ({ page, api }) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ current_event_id: null, schedule: longSchedule })
+			'GET /schedule': json({ current_event_id: null, entries: longSchedule })
 		});
 		await page.goto('/schedule');
 		const search = page.getByRole('searchbox', { name: 'Поиск по программе' });
@@ -125,7 +125,7 @@ test.describe('native feel', () => {
 	test('the back arrow returns to the tab with its filters', async ({ page, api }) => {
 		api.use({
 			...organizer(),
-			'GET /schedule': json({ current_event_id: null, schedule: longSchedule }),
+			'GET /schedule': json({ current_event_id: null, entries: longSchedule }),
 			'GET /schedule/changes': json({ schedule_changes: [], next_cursor: null })
 		});
 		await page.goto('/schedule?q=Выступление+5');
@@ -143,7 +143,7 @@ test.describe('native feel', () => {
 	test('forgets the tabs’ filters on logout', async ({ page, api }) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ current_event_id: null, schedule: longSchedule }),
+			'GET /schedule': json({ current_event_id: null, entries: longSchedule }),
 			'POST /auth/logout': json({})
 		});
 		await page.goto('/schedule?q=Выступление+5');
@@ -166,7 +166,7 @@ test.describe('native feel', () => {
 	test('keeps a focused control clear of the bars', async ({ page, api }) => {
 		api.use({
 			...loggedInAs(),
-			'GET /schedule': json({ current_event_id: null, schedule: longSchedule })
+			'GET /schedule': json({ current_event_id: null, entries: longSchedule })
 		});
 		await page.goto('/schedule');
 		await expect(page.getByText('Выступление 60')).toBeAttached();

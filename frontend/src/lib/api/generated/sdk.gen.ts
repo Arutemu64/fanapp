@@ -18,9 +18,9 @@ import type {
 	AwardQuestPointsData,
 	AwardQuestPointsErrors,
 	AwardQuestPointsResponses,
-	CancelMailingData,
-	CancelMailingErrors,
-	CancelMailingResponses,
+	CancelBroadcastData,
+	CancelBroadcastErrors,
+	CancelBroadcastResponses,
 	CancelQuestAwardData,
 	CancelQuestAwardErrors,
 	CancelQuestAwardResponses,
@@ -36,6 +36,9 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionErrors,
 	CheckPushSubscriptionResponses,
+	ClearCurrentEventData,
+	ClearCurrentEventErrors,
+	ClearCurrentEventResponses,
 	ConfirmEmailCodeData,
 	ConfirmEmailCodeErrors,
 	ConfirmEmailCodeResponses,
@@ -45,7 +48,14 @@ import type {
 	CreatePushSubscriptionData,
 	CreatePushSubscriptionErrors,
 	CreatePushSubscriptionResponses,
+	CreateSubscriptionData,
+	CreateSubscriptionErrors,
+	CreateSubscriptionResponses,
+	CreateTicketBatchData,
+	CreateTicketBatchErrors,
+	CreateTicketBatchResponses,
 	DebugData,
+	DebugErrors,
 	DebugResponses,
 	DeletePushSubscriptionData,
 	DeletePushSubscriptionErrors,
@@ -59,9 +69,6 @@ import type {
 	FindQuestPlayersData,
 	FindQuestPlayersErrors,
 	FindQuestPlayersResponses,
-	GenerateTicketsData,
-	GenerateTicketsErrors,
-	GenerateTicketsResponses,
 	GetCaptchaChallengeData,
 	GetCaptchaChallengeErrors,
 	GetCaptchaChallengeResponses,
@@ -69,6 +76,7 @@ import type {
 	GetCurrentUserErrors,
 	GetCurrentUserResponses,
 	GetPublicConfigData,
+	GetPublicConfigErrors,
 	GetPublicConfigResponses,
 	GetQuestData,
 	GetQuestErrors,
@@ -77,6 +85,7 @@ import type {
 	GetQuestPlayerResponses,
 	GetQuestResponses,
 	GetScheduleData,
+	GetScheduleErrors,
 	GetScheduleResponses,
 	GetScheduleSettingsData,
 	GetScheduleSettingsErrors,
@@ -84,12 +93,6 @@ import type {
 	GetSettingsData,
 	GetSettingsErrors,
 	GetSettingsResponses,
-	GetSubscriptionsData,
-	GetSubscriptionsErrors,
-	GetSubscriptionsResponses,
-	GetSyncSourcesData,
-	GetSyncSourcesErrors,
-	GetSyncSourcesResponses,
 	GetTcloudEventRolesData,
 	GetTcloudEventRolesErrors,
 	GetTcloudEventRolesResponses,
@@ -103,11 +106,13 @@ import type {
 	GetVotingNominationErrors,
 	GetVotingNominationResponses,
 	GetVotingStatusData,
+	GetVotingStatusErrors,
 	GetVotingStatusResponses,
 	GrantUserPermissionData,
 	GrantUserPermissionErrors,
 	GrantUserPermissionResponses,
 	HealthCheckData,
+	HealthCheckErrors,
 	HealthCheckResponses,
 	ImportScheduleData,
 	ImportScheduleErrors,
@@ -122,6 +127,7 @@ import type {
 	ListFeedbackErrors,
 	ListFeedbackResponses,
 	ListOauthProvidersData,
+	ListOauthProvidersErrors,
 	ListOauthProvidersResponses,
 	ListQuestAwardsData,
 	ListQuestAwardsErrors,
@@ -132,6 +138,12 @@ import type {
 	ListScheduleChangesData,
 	ListScheduleChangesErrors,
 	ListScheduleChangesResponses,
+	ListSubscriptionsData,
+	ListSubscriptionsErrors,
+	ListSubscriptionsResponses,
+	ListSyncSourcesData,
+	ListSyncSourcesErrors,
+	ListSyncSourcesResponses,
 	ListTicketsData,
 	ListTicketsErrors,
 	ListTicketsResponses,
@@ -142,6 +154,7 @@ import type {
 	ListUsersErrors,
 	ListUsersResponses,
 	ListVotingNominationsData,
+	ListVotingNominationsErrors,
 	ListVotingNominationsResponses,
 	LoginData,
 	LoginErrors,
@@ -149,19 +162,18 @@ import type {
 	LoginWithCodeData,
 	LoginWithCodeErrors,
 	LoginWithCodeResponses,
-	LogoutUserData,
-	LogoutUserResponses,
+	LogoutData,
+	LogoutErrors,
+	LogoutResponses,
 	MarkAllNotificationsReadData,
 	MarkAllNotificationsReadErrors,
 	MarkAllNotificationsReadResponses,
 	MarkNotificationsReadData,
 	MarkNotificationsReadErrors,
 	MarkNotificationsReadResponses,
-	NewSubscriptionData,
-	NewSubscriptionErrors,
-	NewSubscriptionResponses,
 	OauthCallbackData,
 	OauthCallbackErrors,
+	OauthCallbackResponses,
 	ProcessFestengineEventData,
 	ProcessFestengineEventErrors,
 	ProcessFestengineEventResponses,
@@ -183,9 +195,9 @@ import type {
 	SendTestNotificationData,
 	SendTestNotificationErrors,
 	SendTestNotificationResponses,
-	SetEventAsCurrentData,
-	SetEventAsCurrentErrors,
-	SetEventAsCurrentResponses,
+	SetCurrentEventData,
+	SetCurrentEventErrors,
+	SetCurrentEventResponses,
 	SetTcloudEventRolesData,
 	SetTcloudEventRolesErrors,
 	SetTcloudEventRolesResponses,
@@ -197,9 +209,12 @@ import type {
 	SetVotingTimeRangeResponses,
 	StartAccountLinkData,
 	StartAccountLinkErrors,
+	StartAccountLinkResponses,
 	StartSocialLoginData,
 	StartSocialLoginErrors,
+	StartSocialLoginResponses,
 	StreamEventsData,
+	StreamEventsErrors,
 	StreamEventsResponses,
 	SubmitFeedbackData,
 	SubmitFeedbackErrors,
@@ -207,9 +222,6 @@ import type {
 	SuggestUsernameData,
 	SuggestUsernameErrors,
 	SuggestUsernameResponses,
-	UncheckCurrentEventData,
-	UncheckCurrentEventErrors,
-	UncheckCurrentEventResponses,
 	UndoScheduleChangeData,
 	UndoScheduleChangeErrors,
 	UndoScheduleChangeResponses,
@@ -259,8 +271,8 @@ export type Options<
  */
 export const debug = <ThrowOnError extends boolean = false>(
 	options?: Options<DebugData, ThrowOnError>
-): RequestResult<DebugResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<DebugResponses, unknown, ThrowOnError>({
+): RequestResult<DebugResponses, DebugErrors, ThrowOnError> =>
+	(options?.client ?? client).get<DebugResponses, DebugErrors, ThrowOnError>({
 		url: '/debug',
 		...options
 	});
@@ -270,8 +282,8 @@ export const debug = <ThrowOnError extends boolean = false>(
  */
 export const healthCheck = <ThrowOnError extends boolean = false>(
 	options?: Options<HealthCheckData, ThrowOnError>
-): RequestResult<HealthCheckResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<HealthCheckResponses, unknown, ThrowOnError>({
+): RequestResult<HealthCheckResponses, HealthCheckErrors, ThrowOnError> =>
+	(options?.client ?? client).get<HealthCheckResponses, HealthCheckErrors, ThrowOnError>({
 		url: '/debug/health',
 		...options
 	});
@@ -371,10 +383,10 @@ export const loginWithCode = <ThrowOnError extends boolean = false>(
  *
  * Clears session cookie and deletes the server-side session; also emits Clear-Site-Data so the browser drops cookies itself.
  */
-export const logoutUser = <ThrowOnError extends boolean = false>(
-	options?: Options<LogoutUserData, ThrowOnError>
-): RequestResult<LogoutUserResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).post<LogoutUserResponses, unknown, ThrowOnError>({
+export const logout = <ThrowOnError extends boolean = false>(
+	options?: Options<LogoutData, ThrowOnError>
+): RequestResult<LogoutResponses, LogoutErrors, ThrowOnError> =>
+	(options?.client ?? client).post<LogoutResponses, LogoutErrors, ThrowOnError>({
 		url: '/auth/logout',
 		...options
 	});
@@ -386,11 +398,12 @@ export const logoutUser = <ThrowOnError extends boolean = false>(
  */
 export const listOauthProviders = <ThrowOnError extends boolean = false>(
 	options?: Options<ListOauthProvidersData, ThrowOnError>
-): RequestResult<ListOauthProvidersResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<ListOauthProvidersResponses, unknown, ThrowOnError>({
-		url: '/auth/oauth/providers',
-		...options
-	});
+): RequestResult<ListOauthProvidersResponses, ListOauthProvidersErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		ListOauthProvidersResponses,
+		ListOauthProvidersErrors,
+		ThrowOnError
+	>({ url: '/auth/oauth/providers', ...options });
 
 /**
  * Start social login
@@ -399,8 +412,8 @@ export const listOauthProviders = <ThrowOnError extends boolean = false>(
  */
 export const startSocialLogin = <ThrowOnError extends boolean = false>(
 	options: Options<StartSocialLoginData, ThrowOnError>
-): RequestResult<unknown, StartSocialLoginErrors, ThrowOnError> =>
-	(options.client ?? client).get<unknown, StartSocialLoginErrors, ThrowOnError>({
+): RequestResult<StartSocialLoginResponses, StartSocialLoginErrors, ThrowOnError> =>
+	(options.client ?? client).get<StartSocialLoginResponses, StartSocialLoginErrors, ThrowOnError>({
 		url: '/auth/oauth/{provider}/start',
 		...options
 	});
@@ -412,8 +425,8 @@ export const startSocialLogin = <ThrowOnError extends boolean = false>(
  */
 export const oauthCallback = <ThrowOnError extends boolean = false>(
 	options: Options<OauthCallbackData, ThrowOnError>
-): RequestResult<unknown, OauthCallbackErrors, ThrowOnError> =>
-	(options.client ?? client).get<unknown, OauthCallbackErrors, ThrowOnError>({
+): RequestResult<OauthCallbackResponses, OauthCallbackErrors, ThrowOnError> =>
+	(options.client ?? client).get<OauthCallbackResponses, OauthCallbackErrors, ThrowOnError>({
 		url: '/auth/oauth/{provider}/callback',
 		...options
 	});
@@ -425,8 +438,8 @@ export const oauthCallback = <ThrowOnError extends boolean = false>(
  */
 export const getPublicConfig = <ThrowOnError extends boolean = false>(
 	options?: Options<GetPublicConfigData, ThrowOnError>
-): RequestResult<GetPublicConfigResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<GetPublicConfigResponses, unknown, ThrowOnError>({
+): RequestResult<GetPublicConfigResponses, GetPublicConfigErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetPublicConfigResponses, GetPublicConfigErrors, ThrowOnError>({
 		url: '/config',
 		...options
 	});
@@ -622,8 +635,8 @@ export const unlinkSocialAccount = <ThrowOnError extends boolean = false>(
  */
 export const startAccountLink = <ThrowOnError extends boolean = false>(
 	options: Options<StartAccountLinkData, ThrowOnError>
-): RequestResult<unknown, StartAccountLinkErrors, ThrowOnError> =>
-	(options.client ?? client).get<unknown, StartAccountLinkErrors, ThrowOnError>({
+): RequestResult<StartAccountLinkResponses, StartAccountLinkErrors, ThrowOnError> =>
+	(options.client ?? client).get<StartAccountLinkResponses, StartAccountLinkErrors, ThrowOnError>({
 		security: [
 			{
 				in: 'cookie',
@@ -711,7 +724,7 @@ export const updateSettings = <ThrowOnError extends boolean = false>(
 export const streamEvents = <ThrowOnError extends boolean = false>(
 	options?: Options<StreamEventsData, ThrowOnError, unknown>
 ): Promise<ServerSentEventsResult<StreamEventsResponses>> =>
-	(options?.client ?? client).sse.get<StreamEventsResponses, unknown, ThrowOnError>({
+	(options?.client ?? client).sse.get<StreamEventsResponses, StreamEventsErrors, ThrowOnError>({
 		url: '/events',
 		...options
 	});
@@ -723,8 +736,8 @@ export const streamEvents = <ThrowOnError extends boolean = false>(
  */
 export const getSchedule = <ThrowOnError extends boolean = false>(
 	options?: Options<GetScheduleData, ThrowOnError>
-): RequestResult<GetScheduleResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<GetScheduleResponses, unknown, ThrowOnError>({
+): RequestResult<GetScheduleResponses, GetScheduleErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetScheduleResponses, GetScheduleErrors, ThrowOnError>({
 		url: '/schedule',
 		...options
 	});
@@ -811,12 +824,12 @@ export const updateScheduleSettings = <ThrowOnError extends boolean = false>(
  *
  * Clears the currently active event from the schedule. Subject to rate limiting. If no event is current, nothing is announced.
  */
-export const uncheckCurrentEvent = <ThrowOnError extends boolean = false>(
-	options?: Options<UncheckCurrentEventData, ThrowOnError>
-): RequestResult<UncheckCurrentEventResponses, UncheckCurrentEventErrors, ThrowOnError> =>
+export const clearCurrentEvent = <ThrowOnError extends boolean = false>(
+	options?: Options<ClearCurrentEventData, ThrowOnError>
+): RequestResult<ClearCurrentEventResponses, ClearCurrentEventErrors, ThrowOnError> =>
 	(options?.client ?? client).delete<
-		UncheckCurrentEventResponses,
-		UncheckCurrentEventErrors,
+		ClearCurrentEventResponses,
+		ClearCurrentEventErrors,
 		ThrowOnError
 	>({
 		security: [
@@ -835,26 +848,24 @@ export const uncheckCurrentEvent = <ThrowOnError extends boolean = false>(
  *
  * Updates the schedule state to mark a specific event as active. Validates timing and event status. If that event is already current, nothing is changed or announced.
  */
-export const setEventAsCurrent = <ThrowOnError extends boolean = false>(
-	options: Options<SetEventAsCurrentData, ThrowOnError>
-): RequestResult<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError> =>
-	(options.client ?? client).put<SetEventAsCurrentResponses, SetEventAsCurrentErrors, ThrowOnError>(
-		{
-			security: [
-				{
-					in: 'cookie',
-					name: 'session_id',
-					type: 'apiKey'
-				}
-			],
-			url: '/schedule/current',
-			...options,
-			headers: {
-				'Content-Type': 'application/json',
-				...options.headers
+export const setCurrentEvent = <ThrowOnError extends boolean = false>(
+	options: Options<SetCurrentEventData, ThrowOnError>
+): RequestResult<SetCurrentEventResponses, SetCurrentEventErrors, ThrowOnError> =>
+	(options.client ?? client).put<SetCurrentEventResponses, SetCurrentEventErrors, ThrowOnError>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
 			}
+		],
+		url: '/schedule/current',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
 		}
-	);
+	});
 
 /**
  * Update a schedule event
@@ -937,10 +948,14 @@ export const undoScheduleChange = <ThrowOnError extends boolean = false>(
  *
  * Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.
  */
-export const getSubscriptions = <ThrowOnError extends boolean = false>(
-	options?: Options<GetSubscriptionsData, ThrowOnError>
-): RequestResult<GetSubscriptionsResponses, GetSubscriptionsErrors, ThrowOnError> =>
-	(options?.client ?? client).get<GetSubscriptionsResponses, GetSubscriptionsErrors, ThrowOnError>({
+export const listSubscriptions = <ThrowOnError extends boolean = false>(
+	options?: Options<ListSubscriptionsData, ThrowOnError>
+): RequestResult<ListSubscriptionsResponses, ListSubscriptionsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		ListSubscriptionsResponses,
+		ListSubscriptionsErrors,
+		ThrowOnError
+	>({
 		security: [
 			{
 				in: 'cookie',
@@ -957,10 +972,14 @@ export const getSubscriptions = <ThrowOnError extends boolean = false>(
  *
  * Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
  */
-export const newSubscription = <ThrowOnError extends boolean = false>(
-	options: Options<NewSubscriptionData, ThrowOnError>
-): RequestResult<NewSubscriptionResponses, NewSubscriptionErrors, ThrowOnError> =>
-	(options.client ?? client).post<NewSubscriptionResponses, NewSubscriptionErrors, ThrowOnError>({
+export const createSubscription = <ThrowOnError extends boolean = false>(
+	options: Options<CreateSubscriptionData, ThrowOnError>
+): RequestResult<CreateSubscriptionResponses, CreateSubscriptionErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		CreateSubscriptionResponses,
+		CreateSubscriptionErrors,
+		ThrowOnError
+	>({
 		security: [
 			{
 				in: 'cookie',
@@ -1007,8 +1026,8 @@ export const deleteSubscription = <ThrowOnError extends boolean = false>(
  */
 export const getVotingStatus = <ThrowOnError extends boolean = false>(
 	options?: Options<GetVotingStatusData, ThrowOnError>
-): RequestResult<GetVotingStatusResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<GetVotingStatusResponses, unknown, ThrowOnError>({
+): RequestResult<GetVotingStatusResponses, GetVotingStatusErrors, ThrowOnError> =>
+	(options?.client ?? client).get<GetVotingStatusResponses, GetVotingStatusErrors, ThrowOnError>({
 		url: '/voting/status',
 		...options
 	});
@@ -1020,11 +1039,12 @@ export const getVotingStatus = <ThrowOnError extends boolean = false>(
  */
 export const listVotingNominations = <ThrowOnError extends boolean = false>(
 	options?: Options<ListVotingNominationsData, ThrowOnError>
-): RequestResult<ListVotingNominationsResponses, unknown, ThrowOnError> =>
-	(options?.client ?? client).get<ListVotingNominationsResponses, unknown, ThrowOnError>({
-		url: '/voting/nominations',
-		...options
-	});
+): RequestResult<ListVotingNominationsResponses, ListVotingNominationsErrors, ThrowOnError> =>
+	(options?.client ?? client).get<
+		ListVotingNominationsResponses,
+		ListVotingNominationsErrors,
+		ThrowOnError
+	>({ url: '/voting/nominations', ...options });
 
 /**
  * Get voting nomination details
@@ -1111,12 +1131,12 @@ export const getVotingDashboard = <ThrowOnError extends boolean = false>(
 /**
  * Set voting time range
  *
- * Sets the time range during which visitors can vote. Requires voting:manage.
+ * Replaces the time range during which visitors can vote; both bounds null closes voting. Requires voting:manage.
  */
 export const setVotingTimeRange = <ThrowOnError extends boolean = false>(
 	options: Options<SetVotingTimeRangeData, ThrowOnError>
 ): RequestResult<SetVotingTimeRangeResponses, SetVotingTimeRangeErrors, ThrowOnError> =>
-	(options.client ?? client).patch<
+	(options.client ?? client).put<
 		SetVotingTimeRangeResponses,
 		SetVotingTimeRangeErrors,
 		ThrowOnError
@@ -1128,7 +1148,7 @@ export const setVotingTimeRange = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/voting/dashboard',
+		url: '/voting/time-range',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
@@ -1375,10 +1395,10 @@ export const sendBroadcast = <ThrowOnError extends boolean = false>(
  *
  * Cancels a mailing: marks it cancelled and deletes its still-undelivered notifications. Messages already delivered to a device cannot be recalled.
  */
-export const cancelMailing = <ThrowOnError extends boolean = false>(
-	options: Options<CancelMailingData, ThrowOnError>
-): RequestResult<CancelMailingResponses, CancelMailingErrors, ThrowOnError> =>
-	(options.client ?? client).post<CancelMailingResponses, CancelMailingErrors, ThrowOnError>({
+export const cancelBroadcast = <ThrowOnError extends boolean = false>(
+	options: Options<CancelBroadcastData, ThrowOnError>
+): RequestResult<CancelBroadcastResponses, CancelBroadcastErrors, ThrowOnError> =>
+	(options.client ?? client).post<CancelBroadcastResponses, CancelBroadcastErrors, ThrowOnError>({
 		security: [
 			{
 				in: 'cookie',
@@ -1387,54 +1407,6 @@ export const cancelMailing = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/notifications/broadcasts/{mailing_id}/cancel',
-		...options
-	});
-
-/**
- * Unsubscribe from push notifications
- *
- * Removes a push subscription endpoint for the authenticated user.
- */
-export const deletePushSubscription = <ThrowOnError extends boolean = false>(
-	options: Options<DeletePushSubscriptionData, ThrowOnError>
-): RequestResult<DeletePushSubscriptionResponses, DeletePushSubscriptionErrors, ThrowOnError> =>
-	(options.client ?? client).delete<
-		DeletePushSubscriptionResponses,
-		DeletePushSubscriptionErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/push',
-		...options
-	});
-
-/**
- * Check push subscription
- *
- * Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.
- */
-export const checkPushSubscription = <ThrowOnError extends boolean = false>(
-	options: Options<CheckPushSubscriptionData, ThrowOnError>
-): RequestResult<CheckPushSubscriptionResponses, CheckPushSubscriptionErrors, ThrowOnError> =>
-	(options.client ?? client).get<
-		CheckPushSubscriptionResponses,
-		CheckPushSubscriptionErrors,
-		ThrowOnError
-	>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/push',
 		...options
 	});
 
@@ -1458,7 +1430,63 @@ export const createPushSubscription = <ThrowOnError extends boolean = false>(
 				type: 'apiKey'
 			}
 		],
-		url: '/push',
+		url: '/push-subscriptions',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Check push subscription
+ *
+ * Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed. Read-only; a POST only to keep the endpoint out of the URL.
+ */
+export const checkPushSubscription = <ThrowOnError extends boolean = false>(
+	options: Options<CheckPushSubscriptionData, ThrowOnError>
+): RequestResult<CheckPushSubscriptionResponses, CheckPushSubscriptionErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		CheckPushSubscriptionResponses,
+		CheckPushSubscriptionErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/push-subscriptions/lookup',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
+ * Unsubscribe from push notifications
+ *
+ * Removes a push subscription endpoint for the authenticated user.
+ */
+export const deletePushSubscription = <ThrowOnError extends boolean = false>(
+	options: Options<DeletePushSubscriptionData, ThrowOnError>
+): RequestResult<DeletePushSubscriptionResponses, DeletePushSubscriptionErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		DeletePushSubscriptionResponses,
+		DeletePushSubscriptionErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/push-subscriptions/remove',
 		...options,
 		headers: {
 			'Content-Type': 'application/json',
@@ -1531,30 +1559,6 @@ export const listTickets = <ThrowOnError extends boolean = false>(
 	});
 
 /**
- * Generate tickets
- *
- * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes.
- */
-export const generateTickets = <ThrowOnError extends boolean = false>(
-	options: Options<GenerateTicketsData, ThrowOnError>
-): RequestResult<GenerateTicketsResponses, GenerateTicketsErrors, ThrowOnError> =>
-	(options.client ?? client).post<GenerateTicketsResponses, GenerateTicketsErrors, ThrowOnError>({
-		security: [
-			{
-				in: 'cookie',
-				name: 'session_id',
-				type: 'apiKey'
-			}
-		],
-		url: '/tickets/generate',
-		...options,
-		headers: {
-			'Content-Type': 'application/json',
-			...options.headers
-		}
-	});
-
-/**
  * Get TicketsCloud event roles
  *
  * Returns which role a ticket bought for each TicketsCloud event grants, and whether TicketsCloud is configured for this deployment. An event left out grants the visitor role. Requires 'tickets:manage'.
@@ -1607,14 +1611,42 @@ export const setTcloudEventRoles = <ThrowOnError extends boolean = false>(
 	});
 
 /**
+ * Generate a batch of tickets
+ *
+ * Generates a batch of new tickets for the given role. Requires the 'tickets:manage' permission. Returns the created barcodes. The client supplies the batch ID, so repeating the same request returns the existing batch instead of generating another.
+ */
+export const createTicketBatch = <ThrowOnError extends boolean = false>(
+	options: Options<CreateTicketBatchData, ThrowOnError>
+): RequestResult<CreateTicketBatchResponses, CreateTicketBatchErrors, ThrowOnError> =>
+	(options.client ?? client).post<
+		CreateTicketBatchResponses,
+		CreateTicketBatchErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/ticket-batches',
+		...options,
+		headers: {
+			'Content-Type': 'application/json',
+			...options.headers
+		}
+	});
+
+/**
  * List sync sources with their last run
  *
  * Returns every vendor sync source, whether it is configured for this deployment, and its most recent run. Requires the 'sync:run' permission.
  */
-export const getSyncSources = <ThrowOnError extends boolean = false>(
-	options?: Options<GetSyncSourcesData, ThrowOnError>
-): RequestResult<GetSyncSourcesResponses, GetSyncSourcesErrors, ThrowOnError> =>
-	(options?.client ?? client).get<GetSyncSourcesResponses, GetSyncSourcesErrors, ThrowOnError>({
+export const listSyncSources = <ThrowOnError extends boolean = false>(
+	options?: Options<ListSyncSourcesData, ThrowOnError>
+): RequestResult<ListSyncSourcesResponses, ListSyncSourcesErrors, ThrowOnError> =>
+	(options?.client ?? client).get<ListSyncSourcesResponses, ListSyncSourcesErrors, ThrowOnError>({
 		security: [
 			{
 				in: 'cookie',

@@ -13,13 +13,13 @@ pytestmark = pytest.mark.unit
 def test_voting_boundaries_require_an_offset() -> None:
     with pytest.raises(ValidationError) as exc_info:
         SetVotingTimeRangeInput(
-            voting_start=datetime(2026, 8, 22, 12, 0),  # noqa: DTZ001
-            voting_end=datetime(2026, 8, 22, 18, 0),  # noqa: DTZ001
+            voting_starts_at=datetime(2026, 8, 22, 12, 0),  # noqa: DTZ001
+            voting_ends_at=datetime(2026, 8, 22, 18, 0),  # noqa: DTZ001
         )
 
     assert {error["loc"] for error in exc_info.value.errors()} == {
-        ("voting_start",),
-        ("voting_end",),
+        ("voting_starts_at",),
+        ("voting_ends_at",),
     }
 
 
@@ -27,14 +27,14 @@ def test_voting_boundaries_accept_aware_instants() -> None:
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
 
-    parsed = SetVotingTimeRangeInput(voting_start=start, voting_end=end)
+    parsed = SetVotingTimeRangeInput(voting_starts_at=start, voting_ends_at=end)
 
-    assert parsed.voting_start == start
-    assert parsed.voting_end == end
+    assert parsed.voting_starts_at == start
+    assert parsed.voting_ends_at == end
 
 
 def test_voting_range_can_be_cleared_with_nulls() -> None:
-    parsed = SetVotingTimeRangeInput(voting_start=None, voting_end=None)
+    parsed = SetVotingTimeRangeInput(voting_starts_at=None, voting_ends_at=None)
 
-    assert parsed.voting_start is None
-    assert parsed.voting_end is None
+    assert parsed.voting_starts_at is None
+    assert parsed.voting_ends_at is None

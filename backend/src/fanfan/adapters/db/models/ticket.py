@@ -40,6 +40,9 @@ class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     ticketscloud_ticket_id: Mapped[str | None] = mapped_column(index=True)
     ticketscloud_order_id: Mapped[str | None]
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    batch_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ticket_batches.id", ondelete="SET NULL"), index=True
+    )
 
     used_by_user: Mapped[UserORM | None] = relationship(
         foreign_keys=used_by_user_id,

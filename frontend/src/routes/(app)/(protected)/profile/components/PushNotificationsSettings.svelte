@@ -87,14 +87,14 @@
 		vapidKey: PUBLIC_VAPID_KEY,
 		backend: {
 			async isRegistered(endpoint) {
-				const { data } = await checkPushSubscription({ query: { endpoint } });
+				const { data } = await checkPushSubscription({ body: { endpoint } });
 				return data?.subscribed ?? false;
 			},
 			async register(registration) {
 				await pushSubscribeMutation.mutateAsync({ body: registration });
 			},
 			async unregister(endpoint) {
-				await pushUnsubscribeMutation.mutateAsync({ query: { endpoint } });
+				await pushUnsubscribeMutation.mutateAsync({ body: { endpoint } });
 			}
 		}
 	});

@@ -289,7 +289,7 @@ class SqlScheduleEntryGateway(ScheduleEntryGateway):
         )
         return ScheduleDTO(
             current_event_id=current_event_id,
-            schedule=[
+            entries=[
                 _parse_entry_dto(entry_orm, position=position)
                 for entry_orm, position in results
             ],

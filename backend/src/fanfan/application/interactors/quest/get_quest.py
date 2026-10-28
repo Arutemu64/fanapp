@@ -11,7 +11,7 @@ LEADERBOARD_SIZE = 10
 class GetQuestOutput(BaseModel):
     points: int
     rank: int | None
-    leaderboard: list[LeaderboardEntryDTO]
+    leaderboard_entries: list[LeaderboardEntryDTO]
     own_entry: LeaderboardEntryDTO | None
 
 
@@ -36,7 +36,7 @@ class GetQuest:
         )
         if own is None:
             return GetQuestOutput(
-                points=0, rank=None, leaderboard=leaderboard, own_entry=None
+                points=0, rank=None, leaderboard_entries=leaderboard, own_entry=None
             )
 
         own_entry = None
@@ -45,6 +45,6 @@ class GetQuest:
         return GetQuestOutput(
             points=own.player.points,
             rank=own.rank,
-            leaderboard=leaderboard,
+            leaderboard_entries=leaderboard,
             own_entry=own_entry,
         )

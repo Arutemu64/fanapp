@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.uow import UnitOfWork
@@ -13,7 +14,7 @@ from fanfan.core.services.email_login import (
 from fanfan.core.vo.email import Email
 
 
-class ConfirmEmailCodeInput(BaseModel):
+class ConfirmEmailCodeInput(InputModel):
     code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$", repr=False)
 
 

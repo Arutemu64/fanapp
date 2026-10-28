@@ -4,7 +4,7 @@
 	import type { SyncRunStatus, SyncSource, SyncSourceStatusDto } from '#lib/api/generated/index.js';
 
 	import {
-		getSyncSourcesQueryKey,
+		listSyncSourcesQueryKey,
 		requestSyncMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
@@ -25,7 +25,7 @@
 
 	const syncMutation = createMutation(() => ({
 		...requestSyncMutation(),
-		onSettled: () => queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() })
+		onSettled: () => queryClient.invalidateQueries({ queryKey: listSyncSourcesQueryKey() })
 	}));
 
 	const SOURCE_LABELS: Record<SyncSource, string> = {

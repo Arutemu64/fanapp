@@ -3,10 +3,22 @@ from typing import Any, override
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+from pydantic import TypeAdapter
 
+from fanfan.application.dto.realtime import SSEEventName
 from fanfan.presentation.web.schemas.error import PROBLEM_JSON_MEDIA_TYPE
 
 API_TITLE = "FAN FAN API"
+API_DESCRIPTION = (
+    "Backend of the FAN FAN anime convention companion app: the programme, "
+    "voting, notifications, the quest and the staff tools. Errors are RFC 9457 "
+    "problem details; map them by `code`."
+)
+API_CONTACT = {"name": "FAN FAN", "url": "https://github.com/Arutemu64/fanapp"}
+# Every integer here (counts, seconds, six-digit numbers) fits in 32 bits.
+INTEGER_FORMAT = "int32"
+SSE_PATH = "/events"
+SSE_MEDIA_TYPE = "text/event-stream"
 
 
 def generate_operation_id(route: APIRoute) -> str:
@@ -61,6 +73,47 @@ def document_errors_as_problem_json(schema: dict[str, Any]) -> None:
             content[PROBLEM_JSON_MEDIA_TYPE] = content.pop("application/json")
 
 
+def document_sse_event_names(schema: dict[str, Any]) -> None:
+    """Type the SSE stream's `event` field as the `SSEEventName` enum.
+
+    FastAPI's item schema leaves `event` a plain string, and nothing on the
+    wire references the enum, so it would never reach the generated client.
+    Publishing it as a component lets the frontend check its event map against
+    it instead of mirroring the names by hand.
+    """
+    name = SSEEventName.__name__
+    enum_schema = TypeAdapter(SSEEventName).json_schema()
+    schema["components"]["schemas"][name] = enum_schema
+    responses = schema["paths"][SSE_PATH]["get"]["responses"]
+    item_schema = responses["200"]["content"][SSE_MEDIA_TYPE]["itemSchema"]
+    item_schema["properties"]["event"] = {"$ref": f"#/components/schemas/{name}"}
+
+
+def document_integer_formats(node: Any) -> None:  # noqa: ANN401 - raw JSON tree
+    """Give every integer schema a format (Zalando rule 171)."""
+    if isinstance(node, dict):
+        if node.get("type") == "integer" and "format" not in node:
+            node["format"] = INTEGER_FORMAT
+        for value in node.values():
+            document_integer_formats(value)
+    elif isinstance(node, list):
+        for item in node:
+            document_integer_formats(item)
+
+
+def document_default_error(schema: dict[str, Any]) -> None:
+    """Cover undocumented errors (500, 503, ...) with a `default` problem response.
+
+    Zalando rule 151: standard errors may share one `default` response.
+    """
+    problem_ref = {"$ref": "#/components/schemas/ProblemDetails"}
+    for operation in iter_operations(schema):
+        operation["responses"]["default"] = {
+            "description": "Unexpected error.",
+            "content": {PROBLEM_JSON_MEDIA_TYPE: {"schema": problem_ref}},
+        }
+
+
 class FanfanAPI(FastAPI):
     """FastAPI whose schema goes through the post-processing above.
 
@@ -75,4 +128,7 @@ class FanfanAPI(FastAPI):
         schema = super().openapi()
         drop_unreachable_validation_responses(schema)
         document_errors_as_problem_json(schema)
+        document_sse_event_names(schema)
+        document_default_error(schema)
+        document_integer_formats(schema)
         return schema

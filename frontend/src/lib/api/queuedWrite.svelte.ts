@@ -2,8 +2,8 @@ import { useMutationState } from '@tanstack/svelte-query';
 import { untrack } from 'svelte';
 
 import type {
+	CreateSubscriptionData,
 	DeleteSubscriptionData,
-	NewSubscriptionData,
 	Options
 } from '#lib/api/generated/index.js';
 import type { QueuedSubscriptionChanges } from '#lib/utils/scheduleData.js';
@@ -24,7 +24,7 @@ export function handOffWhenQueued(
 export function useQueuedSubscriptionChanges(): QueuedSubscriptionChanges {
 	const subscribing = useMutationState({
 		filters: { mutationKey: QUEUED_WRITES.subscribe, status: 'pending' },
-		select: (mutation) => (mutation.state.variables as Options<NewSubscriptionData>).body
+		select: (mutation) => (mutation.state.variables as Options<CreateSubscriptionData>).body
 	});
 	const unsubscribing = useMutationState({
 		filters: { mutationKey: QUEUED_WRITES.unsubscribe, status: 'pending' },

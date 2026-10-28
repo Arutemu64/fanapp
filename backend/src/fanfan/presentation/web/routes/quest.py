@@ -91,9 +91,9 @@ async def list_quest_history(
 @inject
 async def find_quest_players(
     interactor: FromDishka[FindQuestPlayers],
-    search: Annotated[str, Query(min_length=1, max_length=64)],
+    q: Annotated[str, Query(min_length=1, max_length=64, description="Search term.")],
 ) -> FindQuestPlayersOutput:
-    return await interactor(FindQuestPlayersInput(search=search))
+    return await interactor(FindQuestPlayersInput(search=q))
 
 
 @quest_router.get(

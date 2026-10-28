@@ -9,15 +9,15 @@ import { expect, json, test } from '../fixtures';
 const CLOSED: GetVotingStatusOutput = {
 	can_vote: false,
 	status: 'disabled',
-	voting_start: null,
-	voting_end: null
+	voting_starts_at: null,
+	voting_ends_at: null
 };
 
 const OPEN: GetVotingStatusOutput = {
 	can_vote: true,
 	status: 'open',
-	voting_start: null,
-	voting_end: null
+	voting_starts_at: null,
+	voting_ends_at: null
 };
 
 const NOMINATION: NominationVotingDto = {

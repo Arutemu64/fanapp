@@ -1,5 +1,9 @@
-from pydantic import BaseModel
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
+from fanfan.application.interactors.push_sub.create_push_subscription import (
+    PUSH_ENDPOINT_MAX_LENGTH,
+)
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
@@ -9,8 +13,8 @@ from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.push_sub import PushSubscriptionNotFound
 
 
-class DeletePushSubscriptionInput(BaseModel):
-    endpoint: str
+class DeletePushSubscriptionInput(InputModel):
+    endpoint: str = Field(max_length=PUSH_ENDPOINT_MAX_LENGTH)
 
 
 class DeletePushSubscription:

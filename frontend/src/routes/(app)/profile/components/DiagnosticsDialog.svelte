@@ -99,7 +99,7 @@
 		let serverRegistered: boolean | null = null;
 		if (subscription && user && reachability.current) {
 			const { data } = await checkPushSubscription({
-				query: { endpoint: subscription.endpoint },
+				body: { endpoint: subscription.endpoint },
 				signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 			});
 			serverRegistered = data?.subscribed ?? null;

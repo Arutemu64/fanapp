@@ -10,9 +10,9 @@
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 	import {
+		clearCurrentEventMutation,
 		getScheduleQueryKey,
-		setEventAsCurrentMutation,
-		uncheckCurrentEventMutation,
+		setCurrentEventMutation,
 		updateScheduleEventMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -64,11 +64,11 @@
 	}
 
 	const markCurrentMutation = createMutation(() => ({
-		...setEventAsCurrentMutation(),
+		...setCurrentEventMutation(),
 		onSuccess: reloadSchedule
 	}));
 	const unmarkCurrentMutation = createMutation(() => ({
-		...uncheckCurrentEventMutation(),
+		...clearCurrentEventMutation(),
 		onSuccess: reloadSchedule
 	}));
 	const skipMutation = createMutation(() => ({

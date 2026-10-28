@@ -78,12 +78,12 @@
 				{#if stale}
 					<StaleDataNotice message={m.quest_cached_notice()} {cachedAt} />
 				{/if}
-				{#if standings.leaderboard.length === 0}
+				{#if standings.leaderboard_entries.length === 0}
 					<EmptyState message={m.quest_leaderboard_empty()} />
 				{:else}
 					<Card.Root class="w-full max-w-none gap-0 overflow-hidden p-0">
 						<ol class="divide-y divide-border">
-							{#each standings.leaderboard as entry (entry.player.id)}
+							{#each standings.leaderboard_entries as entry (entry.player.id)}
 								<LeaderboardRow {entry} isOwn={entry.player.id === user?.id} />
 							{/each}
 						</ol>

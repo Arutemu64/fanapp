@@ -9,6 +9,8 @@ from sentry_sdk.integrations.httpx2 import Httpx2Integration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.types import Event
 
+from fanfan.adapters.debug.redaction import redact_secret_paths
+
 ExpectedErrorPredicate = Callable[[BaseException], bool]
 
 UVICORN_SHUTDOWN_TIMEOUT_LOG = (
@@ -51,7 +53,12 @@ def _drop_expected_errors(
 
 
 def _scrub_sensitive_data(event: Event) -> Event:
-    """Scrub potential PII from Sentry events before sending."""
+    """Scrub potential PII and secret URL segments from Sentry events."""
+    request = event.get("request", {})
+    url = request.get("url")
+    if isinstance(url, str):
+        request["url"] = redact_secret_paths(url)
+
     if event.get("request", {}).get("headers"):
         headers = cast("dict[str, str]", event["request"]["headers"])
         sensitive = ["cookie", "authorization", "x-api-key", "x-auth-token"]
@@ -90,6 +97,8 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917
             before_send=lambda event, hint: _drop_expected_errors(
                 event, hint, is_expected_error
             ),
+            # Sampled transactions carry the request URL too.
+            before_send_transaction=lambda event, _hint: _scrub_sensitive_data(event),
             integrations=[
                 AsyncioIntegration(),
                 FastApiIntegration(failed_request_status_codes={*range(500, 600)}),

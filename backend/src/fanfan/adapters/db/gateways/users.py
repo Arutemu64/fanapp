@@ -96,7 +96,7 @@ def _parse_list_item_dto(orm: UserORM) -> UserListItemDTO:
         role=orm.role,
         email=orm.email,
         avatar_seed=orm.avatar_seed,
-        ticket_number=orm.ticket.barcode if orm.ticket else None,
+        ticket_barcode=orm.ticket.barcode if orm.ticket else None,
         created_at=orm.created_at,
     )
 
@@ -108,7 +108,7 @@ def _parse_details_dto(orm: UserORM) -> UserDetailsDTO:
         role=orm.role,
         email=orm.email,
         avatar_seed=orm.avatar_seed,
-        ticket_number=orm.ticket.barcode if orm.ticket else None,
+        ticket_barcode=orm.ticket.barcode if orm.ticket else None,
         created_at=orm.created_at,
         social_links=[
             UserSocialLinkDTO(

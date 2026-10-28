@@ -35,8 +35,8 @@
 
 	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
 
-	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
-	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
+	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_starts_at)));
+	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_ends_at)));
 	const timeRangeMutation = createMutation(() => ({
 		...setVotingTimeRangeMutation(),
 		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() })
@@ -64,8 +64,8 @@
 		timeRangeMutation.mutate(
 			{
 				body: {
-					voting_start: fromLocalInput(votingStart),
-					voting_end: fromLocalInput(votingEnd)
+					voting_starts_at: fromLocalInput(votingStart),
+					voting_ends_at: fromLocalInput(votingEnd)
 				}
 			},
 			{

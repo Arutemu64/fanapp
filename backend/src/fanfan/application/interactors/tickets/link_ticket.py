@@ -1,7 +1,8 @@
 import logging
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -15,7 +16,7 @@ from fanfan.core.vo.ticket import normalize_ticket_barcode
 logger = logging.getLogger(__name__)
 
 
-class LinkTicketInput(BaseModel):
+class LinkTicketInput(InputModel):
     barcode: str = Field(max_length=128)
 
 

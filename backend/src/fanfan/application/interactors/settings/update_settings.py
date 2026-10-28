@@ -1,7 +1,9 @@
 import logging
+from typing import Annotated
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import MISSING, AwareDatetime, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -15,12 +17,14 @@ from fanfan.core.vo.permission import Permission
 logger = logging.getLogger(__name__)
 
 
-class UpdateAppSettingsInput(BaseModel):
-    festival_start: AwareDatetime | None = None
-    festival_end: AwareDatetime | None = None
-    quest_enabled: bool | None = None
-    quest_max_award: int | None = Field(default=None, ge=1, le=10_000)
-    quest_cancel_window_minutes: int | None = Field(default=None, ge=0, le=1440)
+class UpdateAppSettingsInput(InputModel):
+    festival_starts_at: AwareDatetime | MISSING = MISSING
+    festival_ends_at: AwareDatetime | MISSING = MISSING
+    quest_enabled: bool | MISSING = MISSING
+    quest_max_award: Annotated[int, Field(ge=1, le=10_000)] | MISSING = MISSING
+    quest_cancel_window_minutes: Annotated[int, Field(ge=0, le=1440)] | MISSING = (
+        MISSING
+    )
 
 
 class UpdateSettings:
@@ -41,7 +45,7 @@ class UpdateSettings:
         self.realtime = realtime
 
     async def __call__(self, data: UpdateAppSettingsInput) -> None:
-        data_to_update = data.model_dump(exclude_unset=True)
+        data_to_update = data.model_dump()
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SETTINGS_MANAGE
@@ -53,11 +57,11 @@ class UpdateSettings:
         update_flag = False
         public_config_changed = False
 
-        festival_start = data_to_update.get("festival_start")
-        festival_end = data_to_update.get("festival_end")
-        if festival_start is not None or festival_end is not None:
-            new_start = festival_start or settings.festival_start
-            new_end = festival_end or settings.festival_end
+        festival_starts_at = data_to_update.get("festival_starts_at")
+        festival_ends_at = data_to_update.get("festival_ends_at")
+        if festival_starts_at is not None or festival_ends_at is not None:
+            new_start = festival_starts_at or settings.festival_starts_at
+            new_end = festival_ends_at or settings.festival_ends_at
             settings.set_festival_schedule(start=new_start, end=new_end)
             update_flag = True
             public_config_changed = True

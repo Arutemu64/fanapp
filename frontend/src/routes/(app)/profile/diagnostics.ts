@@ -50,7 +50,7 @@ export const CACHE_LABELS: Record<string, () => string> = {
 	getCurrentUser: m.nav_profile,
 	getPublicConfig: m.tool_settings,
 	getSchedule: m.nav_schedule,
-	getSubscriptions: m.diag_subscriptions,
+	listSubscriptions: m.diag_subscriptions,
 	listUserNotifications: m.notifications_title,
 	getQuest: m.quest_title,
 	listQuestHistory: m.diag_quest_history

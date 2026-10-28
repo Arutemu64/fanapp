@@ -4,7 +4,7 @@ import { PUBLIC_API_URL } from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
 import { createContext } from 'svelte';
 
-import type { NotificationDto } from '#lib/api/generated/index.js';
+import type { NotificationDto, SseEventName } from '#lib/api/generated/index.js';
 
 import {
 	isReachable,
@@ -35,16 +35,22 @@ interface SyncRunUpdatedPayload {
 	status: string;
 }
 
-interface SSEEventMap {
+// Keys must equal the generated SseEventName union: a new backend event fails
+// here until it has a payload type, and a removed one fails as an extra key.
+type EventPayloads<
+	T extends Record<SseEventName, unknown> & Record<Exclude<keyof T, SseEventName>, never>
+> = T;
+
+type SSEEventMap = EventPayloads<{
 	connection_established: EventsHandshakePayload;
 	schedule_updated: undefined;
 	notification_created: NotificationDto;
 	sync_run_updated: SyncRunUpdatedPayload;
 	config_updated: undefined;
 	ping: undefined;
-}
+}>;
 
-export type SSEEventName = keyof SSEEventMap;
+export type SSEEventName = SseEventName;
 
 const ALL_SSE_EVENTS = Object.keys({
 	connection_established: true,

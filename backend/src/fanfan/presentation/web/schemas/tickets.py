@@ -1,9 +1,11 @@
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from fanfan.application.dto.input import InputModel
 
 
-class TicketListQuery(BaseModel):
+class TicketListQuery(InputModel):
     """Query string of GET /tickets, read as one model
     (https://fastapi.tiangolo.com/tutorial/query-param-models/)."""
 
@@ -16,4 +18,4 @@ class TicketListQuery(BaseModel):
             "the first page.",
         ),
     ] = None
-    search: Annotated[str | None, Field(max_length=100)] = None
+    q: Annotated[str | None, Field(max_length=100, description="Search term.")] = None

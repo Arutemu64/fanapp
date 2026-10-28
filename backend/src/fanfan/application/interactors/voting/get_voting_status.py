@@ -11,8 +11,8 @@ from fanfan.core.vo.vote import VotingStatus
 class GetVotingStatusOutput(BaseModel):
     can_vote: bool
     status: VotingStatus
-    voting_start: datetime | None
-    voting_end: datetime | None
+    voting_starts_at: datetime | None
+    voting_ends_at: datetime | None
 
 
 class GetVotingStatus:
@@ -33,14 +33,14 @@ class GetVotingStatus:
             return GetVotingStatusOutput(
                 can_vote=False,
                 status=VotingStatus.NOT_AUTHENTICATED,
-                voting_start=start,
-                voting_end=end,
+                voting_starts_at=start,
+                voting_ends_at=end,
             )
         ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         state = await self.voting_service.get_voting_state(current_user, ticket)
         return GetVotingStatusOutput(
             can_vote=state.status == VotingStatus.OPEN,
             status=state.status,
-            voting_start=state.voting_start,
-            voting_end=state.voting_end,
+            voting_starts_at=state.voting_starts_at,
+            voting_ends_at=state.voting_ends_at,
         )

@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
@@ -13,7 +14,7 @@ PUSH_ENDPOINT_MAX_LENGTH = 2048
 PUSH_KEY_MAX_LENGTH = 256
 
 
-class CreatePushSubscriptionInput(BaseModel):
+class CreatePushSubscriptionInput(InputModel):
     endpoint: str = Field(max_length=PUSH_ENDPOINT_MAX_LENGTH)
     p256dh: str = Field(max_length=PUSH_KEY_MAX_LENGTH)
     auth: str = Field(max_length=PUSH_KEY_MAX_LENGTH)

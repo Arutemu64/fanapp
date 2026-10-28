@@ -14,15 +14,15 @@ import {
 } from './identity.js';
 
 const getCurrentUser = vi.hoisted(() => vi.fn());
-const logoutUser = vi.hoisted(() => vi.fn());
-vi.mock('#lib/api/generated/index.js', () => ({ getCurrentUser, logoutUser }));
+const logout = vi.hoisted(() => vi.fn());
+vi.mock('#lib/api/generated/index.js', () => ({ getCurrentUser, logout }));
 
 const USER = { id: '1', username: 'neko' } as CurrentUserDto;
 
 beforeEach(() => {
 	vi.stubGlobal('localStorage', fakeStorage());
 	getCurrentUser.mockReset();
-	logoutUser.mockReset();
+	logout.mockReset();
 	getCurrentUser.mockResolvedValue({ data: USER, response: { ok: true, status: 200 } });
 });
 
@@ -30,21 +30,21 @@ describe('flushPendingLogout', () => {
 	it('sends nothing when no logout is pending', async () => {
 		await flushPendingLogout();
 
-		expect(logoutUser).not.toHaveBeenCalled();
+		expect(logout).not.toHaveBeenCalled();
 	});
 
 	it('clears the intent once the revoke succeeds', async () => {
-		logoutUser.mockResolvedValue({ response: { ok: true, status: 204 } });
+		logout.mockResolvedValue({ response: { ok: true, status: 204 } });
 		markLogoutPending();
 
 		await flushPendingLogout();
 
-		expect(logoutUser).toHaveBeenCalledOnce();
+		expect(logout).toHaveBeenCalledOnce();
 		expect(isLogoutPending()).toBe(false);
 	});
 
 	it('clears the intent on a 401, since the session is already gone', async () => {
-		logoutUser.mockResolvedValue({ response: { ok: false, status: 401 } });
+		logout.mockResolvedValue({ response: { ok: false, status: 401 } });
 		markLogoutPending();
 
 		await flushPendingLogout();
@@ -53,7 +53,7 @@ describe('flushPendingLogout', () => {
 	});
 
 	it('keeps the intent on a 5xx, so the next reconnect retries', async () => {
-		logoutUser.mockResolvedValue({ response: { ok: false, status: 503 } });
+		logout.mockResolvedValue({ response: { ok: false, status: 503 } });
 		markLogoutPending();
 
 		await flushPendingLogout();
@@ -62,7 +62,7 @@ describe('flushPendingLogout', () => {
 	});
 
 	it('keeps the intent while the backend gives no answer, so the next reconnect retries', async () => {
-		logoutUser.mockResolvedValue({ error: new TypeError('Failed to fetch'), response: undefined });
+		logout.mockResolvedValue({ error: new TypeError('Failed to fetch'), response: undefined });
 		markLogoutPending();
 
 		await flushPendingLogout();

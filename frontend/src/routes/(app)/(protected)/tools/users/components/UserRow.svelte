@@ -15,7 +15,7 @@
 
 	let { user }: Props = $props();
 
-	let details = $derived(user.ticket_number ?? user.email ?? m.user_row_no_contacts());
+	let details = $derived(user.ticket_barcode ?? user.email ?? m.user_row_no_contacts());
 </script>
 
 <a
@@ -28,7 +28,7 @@
 			<span class="min-w-0 text-sm font-medium wrap-anywhere text-foreground">{user.username}</span>
 			<Badge variant="secondary" class="shrink-0">{getRoleLabel(user.role)}</Badge>
 		</span>
-		<span class={['truncate text-xs text-muted-foreground', user.ticket_number && 'font-mono']}>
+		<span class={['truncate text-xs text-muted-foreground', user.ticket_barcode && 'font-mono']}>
 			{details}
 		</span>
 	</span>

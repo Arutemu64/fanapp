@@ -4,7 +4,7 @@
 	import type { MailingDto, MailingStatus, UserRole } from '#lib/api/generated/index.js';
 
 	import {
-		cancelMailingMutation,
+		cancelBroadcastMutation,
 		listBroadcastsInfiniteOptions,
 		listBroadcastsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
@@ -26,7 +26,7 @@
 	const queryClient = useQueryClient();
 
 	const cancelMutation = createMutation(() => ({
-		...cancelMailingMutation(),
+		...cancelBroadcastMutation(),
 		onSuccess: () => toastService.add(m.broadcast_cancelled(), 'success'),
 		onError: (error) => toastService.error(error, m.broadcast_cancel_failed()),
 		onSettled: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })

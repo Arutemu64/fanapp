@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.schedule_entries import (
     ScheduleEntryGateway,
 )
@@ -20,7 +21,7 @@ from fanfan.core.vo.subscription import SubscriptionId, generate_subscription_id
 logger = logging.getLogger(__name__)
 
 
-class CreateSubscriptionInput(BaseModel):
+class CreateSubscriptionInput(InputModel):
     event_id: ScheduleEntryId
     lead_minutes: Annotated[int, Field(ge=1, le=240)]
 

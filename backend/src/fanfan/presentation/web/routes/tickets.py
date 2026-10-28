@@ -33,6 +33,12 @@ tickets_router = APIRouter(
     dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
+ticket_batches_router = APIRouter(
+    tags=["Tickets"],
+    prefix="/ticket-batches",
+    dependencies=[session_security],
+    responses=AUTH_RESPONSES,
+)
 
 
 @tickets_router.get(
@@ -55,31 +61,8 @@ async def list_tickets(
 ) -> ListTicketsOutput:
     data = ListTicketsInput(
         pagination=CursorPagination.from_token(limit=query.limit, cursor=query.cursor),
-        ticket_filter=TicketListFilter(search=query.search),
+        ticket_filter=TicketListFilter(search=query.q),
     )
-    return await interactor(data)
-
-
-@tickets_router.post(
-    "/generate",
-    summary="Generate tickets",
-    description=(
-        "Generates a batch of new tickets for the given role. Requires the "
-        "'tickets:manage' permission. Returns the created barcodes."
-    ),
-    responses={
-        200: {"description": "Tickets generated successfully."},
-        409: {
-            "model": ProblemDetails,
-            "description": "A generated barcode collided; retry the request.",
-        },
-    },
-)
-@inject
-async def generate_tickets(
-    data: GenerateTicketsInput,
-    interactor: FromDishka[GenerateTickets],
-) -> GenerateTicketsOutput:
     return await interactor(data)
 
 
@@ -120,3 +103,29 @@ async def set_tcloud_event_roles(
     interactor: FromDishka[SetTCloudEventRoles],
 ) -> None:
     await interactor(data)
+
+
+@ticket_batches_router.post(
+    "",
+    status_code=201,
+    summary="Generate a batch of tickets",
+    description=(
+        "Generates a batch of new tickets for the given role. Requires the "
+        "'tickets:manage' permission. Returns the created barcodes. The client "
+        "supplies the batch ID, so repeating the same request returns the "
+        "existing batch instead of generating another."
+    ),
+    responses={
+        201: {"description": "Tickets generated, or an identical batch replayed."},
+        409: {
+            "model": ProblemDetails,
+            "description": "The batch ID belongs to a different batch.",
+        },
+    },
+)
+@inject
+async def create_ticket_batch(
+    data: GenerateTicketsInput,
+    interactor: FromDishka[GenerateTickets],
+) -> GenerateTicketsOutput:
+    return await interactor(data)

@@ -1,7 +1,8 @@
 import logging
 
-from pydantic import AwareDatetime, BaseModel
+from pydantic import AwareDatetime
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
@@ -14,9 +15,9 @@ from fanfan.core.vo.permission import Permission
 logger = logging.getLogger(__name__)
 
 
-class SetVotingTimeRangeInput(BaseModel):
-    voting_start: AwareDatetime | None
-    voting_end: AwareDatetime | None
+class SetVotingTimeRangeInput(InputModel):
+    voting_starts_at: AwareDatetime | None
+    voting_ends_at: AwareDatetime | None
 
 
 class SetVotingTimeRange:
@@ -49,18 +50,20 @@ class SetVotingTimeRange:
             raise AppSettingsNotFound
 
         if (
-            settings.voting_start == data.voting_start
-            and settings.voting_end == data.voting_end
+            settings.voting_starts_at == data.voting_starts_at
+            and settings.voting_ends_at == data.voting_ends_at
         ):
             return
 
-        settings.set_voting_time_range(start=data.voting_start, end=data.voting_end)
+        settings.set_voting_time_range(
+            start=data.voting_starts_at, end=data.voting_ends_at
+        )
         await self.settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(
             "Voting time range updated: %s – %s",
-            data.voting_start,
-            data.voting_end,
+            data.voting_starts_at,
+            data.voting_ends_at,
             extra={"actor_id": str(current_user.id)},
         )
 

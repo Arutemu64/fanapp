@@ -3,9 +3,10 @@ from typing import Annotated
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Form, Request, Response
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import EmailStr, Field
 from starlette import status
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.interactors.auth.authenticate_user import (
     AuthenticateUser,
     AuthenticateUserInput,
@@ -18,7 +19,7 @@ from fanfan.presentation.web.schemas.error import ProblemDetails
 from fanfan.presentation.web.utils import get_client_ip
 
 
-class EmailPasswordLoginForm(BaseModel):
+class EmailPasswordLoginForm(InputModel):
     email: EmailStr
     password: str = Field(max_length=PASSWORD_MAX_LENGTH, repr=False)
 

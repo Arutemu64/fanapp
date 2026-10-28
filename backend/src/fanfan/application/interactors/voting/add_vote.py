@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
@@ -17,7 +18,7 @@ from fanfan.core.vo.vote import VoteId
 logger = logging.getLogger(__name__)
 
 
-class AddVoteInput(BaseModel):
+class AddVoteInput(InputModel):
     participant_id: ParticipantId
 
 

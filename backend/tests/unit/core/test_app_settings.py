@@ -20,16 +20,16 @@ pytestmark = pytest.mark.unit
 def test_voting_is_closed_by_default() -> None:
     settings = AppSettings()
 
-    assert settings.voting_start is None
-    assert settings.voting_end is None
+    assert settings.voting_starts_at is None
+    assert settings.voting_ends_at is None
     assert settings.is_voting_open(now=datetime.now(UTC)) is False
 
 
 def test_festival_defaults() -> None:
     settings = AppSettings()
 
-    assert settings.festival_start == DEFAULT_FESTIVAL_START
-    assert settings.festival_end == DEFAULT_FESTIVAL_END
+    assert settings.festival_starts_at == DEFAULT_FESTIVAL_START
+    assert settings.festival_ends_at == DEFAULT_FESTIVAL_END
 
 
 def test_set_festival_schedule_updates_values() -> None:
@@ -39,8 +39,8 @@ def test_set_festival_schedule_updates_values() -> None:
 
     settings.set_festival_schedule(start=new_start, end=new_end)
 
-    assert settings.festival_start == new_start
-    assert settings.festival_end == new_end
+    assert settings.festival_starts_at == new_start
+    assert settings.festival_ends_at == new_end
 
 
 def test_set_festival_schedule_rejects_reversed_range() -> None:
@@ -67,8 +67,8 @@ def test_set_voting_time_range_updates_values() -> None:
 
     settings.set_voting_time_range(start=start, end=end)
 
-    assert settings.voting_start == start
-    assert settings.voting_end == end
+    assert settings.voting_starts_at == start
+    assert settings.voting_ends_at == end
 
 
 def test_is_voting_open_inside_range() -> None:
@@ -151,18 +151,18 @@ def test_set_voting_time_range_rejects_partial_end_only() -> None:
         )
 
 
-def test_announcement_timeout_has_default() -> None:
+def test_announcement_cooldown_has_default() -> None:
     settings = AppSettings()
 
-    assert settings.limits.announcement_timeout == 10
+    assert settings.limits.announcement_cooldown_seconds == 10
 
 
-def test_update_limits_updates_announcement_timeout() -> None:
+def test_update_limits_updates_announcement_cooldown() -> None:
     settings = AppSettings()
 
-    settings.update_limits(announcement_timeout=30)
+    settings.update_limits(announcement_cooldown_seconds=30)
 
-    assert settings.limits.announcement_timeout == 30
+    assert settings.limits.announcement_cooldown_seconds == 30
 
 
 def test_unmapped_tcloud_event_grants_visitor() -> None:

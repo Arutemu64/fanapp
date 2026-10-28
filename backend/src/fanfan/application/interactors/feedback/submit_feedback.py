@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.feedback import FeedbackGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -11,7 +12,7 @@ from fanfan.core.vo.feedback import FeedbackId, generate_feedback_id
 logger = logging.getLogger(__name__)
 
 
-class SubmitFeedbackInput(BaseModel):
+class SubmitFeedbackInput(InputModel):
     text: str = Field(min_length=1, max_length=2000)
 
 

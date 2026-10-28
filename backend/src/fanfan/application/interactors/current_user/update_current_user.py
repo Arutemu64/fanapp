@@ -1,7 +1,9 @@
 import logging
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import MISSING, Field
 
+from fanfan.application.dto.input import InputModel
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.profanity_filter import ProfanityFilter
 from fanfan.application.ports.uow import UnitOfWork
@@ -14,11 +16,12 @@ from fanfan.core.vo.user import AVATAR_SEED_PATTERN, Username
 logger = logging.getLogger(__name__)
 
 
-class UpdateCurrentUserInput(BaseModel):
-    username: str | None = Field(
-        None, min_length=3, max_length=25, pattern=USERNAME_PATTERN
-    )
-    avatar_seed: str | None = Field(None, pattern=AVATAR_SEED_PATTERN)
+class UpdateCurrentUserInput(InputModel):
+    username: (
+        Annotated[str, Field(min_length=3, max_length=25, pattern=USERNAME_PATTERN)]
+        | MISSING
+    ) = MISSING
+    avatar_seed: Annotated[str, Field(pattern=AVATAR_SEED_PATTERN)] | MISSING = MISSING
 
 
 class UpdateCurrentUser:

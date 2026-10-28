@@ -3,21 +3,21 @@ import type { Mutation, QueryClient } from '@tanstack/svelte-query';
 import { getApiErrorCode, gotNoApiAnswer } from '#lib/api/errors.js';
 import {
 	awardQuestPointsMutation,
-	getSubscriptionsQueryKey,
 	listQuestAwardsQueryKey,
+	listSubscriptionsQueryKey,
 	submitFeedbackMutation
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import {
+	createSubscription,
+	type CreateSubscriptionData,
 	deleteSubscription,
 	type DeleteSubscriptionData,
-	newSubscription,
-	type NewSubscriptionData,
 	type Options
 } from '#lib/api/generated/index.js';
 import { trackEvent } from '#lib/services/analytics.js';
 
 export const QUEUED_WRITES = {
-	subscribe: ['newSubscription'],
+	subscribe: ['createSubscription'],
 	unsubscribe: ['deleteSubscription'],
 	award: ['awardQuestPoints'],
 	feedback: ['submitFeedback']
@@ -34,9 +34,9 @@ export function queuedWriteKind(mutation: Mutation): QueuedWriteKind | null {
 	return typeof key === 'string' ? (KIND_BY_KEY.get(key) ?? null) : null;
 }
 
-async function subscribe(variables: Options<NewSubscriptionData>) {
+async function subscribe(variables: Options<CreateSubscriptionData>) {
 	try {
-		const { data } = await newSubscription({ ...variables, throwOnError: true });
+		const { data } = await createSubscription({ ...variables, throwOnError: true });
 		return data;
 	} catch (error) {
 		if (getApiErrorCode(error) === 'SUBSCRIPTION_ALREADY_EXISTS') return null;
@@ -87,7 +87,7 @@ export function registerQueuedWrites(queryClient: QueryClient): void {
 		retry: (_failureCount: number, error: unknown) => gotNoApiAnswer(error)
 	} as const;
 	const refreshSubscriptions = () =>
-		queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
+		queryClient.invalidateQueries({ queryKey: listSubscriptionsQueryKey() });
 
 	// Defaults also run for writes replayed after a reload, so the events are tracked here.
 	queryClient.setMutationDefaults(QUEUED_WRITES.subscribe, {
@@ -136,7 +136,7 @@ export function cancelQueuedSubscribe(queryClient: QueryClient, eventId: string)
 	const queued = mutationCache
 		.findAll({ mutationKey: QUEUED_WRITES.subscribe })
 		.find((mutation) => {
-			const variables = mutation.state.variables as Options<NewSubscriptionData> | undefined;
+			const variables = mutation.state.variables as Options<CreateSubscriptionData> | undefined;
 			const neverSent = mutation.state.isPaused && mutation.state.failureCount === 0;
 			return neverSent && variables?.body.event_id === eventId;
 		});

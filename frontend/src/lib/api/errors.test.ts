@@ -53,7 +53,7 @@ describe('getApiErrorDetail', () => {
 	it('points a schedule-file error at the cell to fix', () => {
 		const error = {
 			code: 'INVALID_SCHEDULE_FILE',
-			reason: 'EMPTY_CELL',
+			reason: 'empty_cell',
 			column: 'C',
 			row: 4
 		};
@@ -62,7 +62,7 @@ describe('getApiErrorDetail', () => {
 
 	it('falls back to the generic schedule-file copy for an unknown reason', () => {
 		const unknown = { code: 'INVALID_SCHEDULE_FILE', reason: 'NEW_REASON' };
-		const unreadable = { code: 'INVALID_SCHEDULE_FILE', reason: 'UNREADABLE_FILE' };
+		const unreadable = { code: 'INVALID_SCHEDULE_FILE', reason: 'unreadable_file' };
 		expect(getApiErrorDetail(unknown)).toBe(getApiErrorDetail(unreadable));
 	});
 });
