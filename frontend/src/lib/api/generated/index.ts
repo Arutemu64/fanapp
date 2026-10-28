@@ -9,6 +9,7 @@ export {
 	changeCurrentUserEmail,
 	changeCurrentUserPassword,
 	checkPushSubscription,
+	checkVkMessagesAllowed,
 	clearCurrentEvent,
 	confirmEmailCode,
 	countUnreadNotifications,
@@ -132,6 +133,11 @@ export type {
 	CheckPushSubscriptionOutput,
 	CheckPushSubscriptionResponse,
 	CheckPushSubscriptionResponses,
+	CheckVkMessagesAllowedData,
+	CheckVkMessagesAllowedError,
+	CheckVkMessagesAllowedErrors,
+	CheckVkMessagesAllowedResponse,
+	CheckVkMessagesAllowedResponses,
 	ClearCurrentEventData,
 	ClearCurrentEventError,
 	ClearCurrentEventErrors,
@@ -590,5 +596,6 @@ export type {
 	UserTicketDto,
 	ValidationErrorDetail,
 	ValidationProblem,
+	VkMessagesStatusDto,
 	VotingStatus
 } from './types.gen';

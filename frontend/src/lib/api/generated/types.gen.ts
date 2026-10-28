@@ -1084,6 +1084,7 @@ export type ProblemDetails = {
 		| 'SCHEDULE_EDIT_TOO_FAST'
 		| 'SKIPPED_EVENT_NOT_ALLOWED'
 		| 'SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER'
+		| 'SOCIAL_ACCOUNT_NOT_LINKED'
 		| 'SUBSCRIPTION_ALREADY_EXISTS'
 		| 'SUBSCRIPTION_NOT_FOUND'
 		| 'SYNC_ALREADY_RUNNING'
@@ -1933,6 +1934,12 @@ export type UserSettingsDto = {
  */
 export type UserSocialIdentityDto = {
 	provider: SocialProvider;
+	/**
+	 * Messages Allowed
+	 *
+	 * Whether the provider lets the app message this account, as last checked; null before the first check. Only VK records it.
+	 */
+	messages_allowed: boolean | null;
 };
 
 /**
@@ -2016,6 +2023,16 @@ export type ValidationProblem = {
 	 */
 	errors: Array<ValidationErrorDetail>;
 	[key: string]: unknown;
+};
+
+/**
+ * VkMessagesStatusDTO
+ */
+export type VkMessagesStatusDto = {
+	/**
+	 * Messages Allowed
+	 */
+	messages_allowed: boolean | null;
 };
 
 /**
@@ -2769,6 +2786,45 @@ export type StartAccountLinkResponses = {
 };
 
 export type StartAccountLinkResponse = StartAccountLinkResponses[keyof StartAccountLinkResponses];
+
+export type CheckVkMessagesAllowedData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: '/me/connections/vk/messages-check';
+};
+
+export type CheckVkMessagesAllowedErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Access denied.
+	 */
+	403: ProblemDetails;
+	/**
+	 * No VK account is linked.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type CheckVkMessagesAllowedError =
+	CheckVkMessagesAllowedErrors[keyof CheckVkMessagesAllowedErrors];
+
+export type CheckVkMessagesAllowedResponses = {
+	/**
+	 * The current answer; null if never checked.
+	 */
+	200: VkMessagesStatusDto;
+};
+
+export type CheckVkMessagesAllowedResponse =
+	CheckVkMessagesAllowedResponses[keyof CheckVkMessagesAllowedResponses];
 
 export type LinkTicketData = {
 	body: LinkTicketInput;

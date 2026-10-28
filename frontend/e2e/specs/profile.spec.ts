@@ -41,12 +41,23 @@ test.describe('profile hub', () => {
 	});
 
 	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
-		api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
+		api.use(loggedInAs({ social_identities: [{ provider: 'vk', messages_allowed: true }] }));
 		await page.goto('/profile');
 
 		await expect(page.getByRole('main').getByRole('link', { name: /Уведомления/ })).toContainText(
 			'Включены'
 		);
+	});
+
+	test('tells a VK user the community cannot write to them yet', async ({ page, api }) => {
+		api.use({
+			...loggedInAs({ social_identities: [{ provider: 'vk', messages_allowed: false }] }),
+			'POST /me/connections/vk/messages-check': json({ messages_allowed: false })
+		});
+		await page.goto('/profile/notifications');
+
+		await expect(page.getByText('Сообщество пока не может тебе писать')).toBeVisible();
+		expect(api.countCalls('POST /me/connections/vk/messages-check')).toBeGreaterThan(0);
 	});
 
 	test('links an organizer to the toolbox and keeps the tab lit there', async ({ page, api }) => {

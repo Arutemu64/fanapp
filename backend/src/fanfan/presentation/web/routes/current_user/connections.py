@@ -7,6 +7,10 @@ from fastapi import APIRouter, Request
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
+from fanfan.application.dto.user import VkMessagesStatusDTO
+from fanfan.application.interactors.current_user.check_vk_messages_allowed import (
+    CheckVkMessagesAllowed,
+)
 from fanfan.application.interactors.current_user.unlink_social_account import (
     UnlinkSocialAccount,
     UnlinkSocialAccountInput,
@@ -100,3 +104,21 @@ async def unlink_social_account(
     interactor: FromDishka[UnlinkSocialAccount],
 ) -> None:
     await interactor(UnlinkSocialAccountInput(provider=provider))
+
+
+@connections_router.post(
+    "/vk/messages-check",
+    summary="Check VK community messages",
+    description="Asks VK whether its community may message the current user's linked "
+    "VK account, stores the answer and returns it. Repeated calls within a few "
+    "seconds return the stored answer without asking VK.",
+    responses={
+        200: {"description": "The current answer; null if never checked."},
+        404: {"model": ProblemDetails, "description": "No VK account is linked."},
+    },
+)
+@inject
+async def check_vk_messages_allowed(
+    interactor: FromDishka[CheckVkMessagesAllowed],
+) -> VkMessagesStatusDTO:
+    return await interactor()

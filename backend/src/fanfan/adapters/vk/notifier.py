@@ -14,16 +14,30 @@ from fanfan.core.exceptions.notifications import (
     UserNotReachable,
 )
 from fanfan.core.models.notification import Notification
+from fanfan.core.models.social_identity import SocialIdentity
+from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
-_USER_UNREACHABLE_CODES = frozenset({7, 15, 901, 902})
+# messages.send error codes: https://dev.vk.com/ru/method/messages.send
+_NO_PERMISSION_CODE = 901
+_USER_UNREACHABLE_CODES = frozenset(
+    {7, 15, 900, _NO_PERMISSION_CODE, 902, 987, 988, 1021}
+)
 _FLOOD_CODES = frozenset({6, 9})
 _AUTH_CODES = frozenset({5, 27, 28})
 
 _FLOOD_RETRY_AFTER_SECONDS = 1
+
+# VK drops a repeated non-zero int32 random_id in the same dialog for an hour.
+_INT32_MAX = 2**31 - 1
+
+
+def _random_id_for(notification_id: NotificationId) -> int:
+    """A stable, non-zero int32, so a JetStream redelivery cannot send twice."""
+    return notification_id.int % _INT32_MAX + 1
 
 
 class VkNotifier(VkNotifierPort):
@@ -62,12 +76,23 @@ class VkNotifier(VkNotifierPort):
             message_id = await self.client.send_message(
                 peer_id=social_identity.provider_user_id,
                 message=self._render_message_text(notification),
+                random_id=_random_id_for(notification.id),
             )
         except VkApiError as e:
+            if e.code == _NO_PERMISSION_CODE:
+                await self._record_messages_allowed(social_identity, allowed=False)
             self._handle_api_error(e, notification)
             raise
 
+        await self._record_messages_allowed(social_identity, allowed=True)
         await self._delete_group_copy(message_id=message_id, notification=notification)
+
+    async def _record_messages_allowed(
+        self, social_identity: SocialIdentity, *, allowed: bool
+    ) -> None:
+        if social_identity.record_messages_allowed(allowed=allowed):
+            await self.social_identity_gateway.save(social_identity)
+            await self.uow.commit()
 
     async def _delete_group_copy(
         self, *, message_id: int, notification: Notification

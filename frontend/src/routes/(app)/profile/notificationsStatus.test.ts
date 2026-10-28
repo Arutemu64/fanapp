@@ -6,10 +6,14 @@ import { notificationsStatus } from './notificationsStatus';
 
 function user(
 	providers: SocialProvider[],
-	settings: { receive_vk_notifications?: boolean; receive_telegram_notifications?: boolean } = {}
+	settings: { receive_vk_notifications?: boolean; receive_telegram_notifications?: boolean } = {},
+	messagesAllowed: boolean | null = true
 ) {
 	return {
-		social_identities: providers.map((provider) => ({ provider })),
+		social_identities: providers.map((provider) => ({
+			provider,
+			messages_allowed: provider === 'vk' ? messagesAllowed : null
+		})),
 		settings: {
 			receive_all_announcements: true,
 			receive_vk_notifications: true,
@@ -36,6 +40,11 @@ describe('notificationsStatus', () => {
 		expect(notificationsStatus('off', user(['vk'], { receive_vk_notifications: false }))).toBe(
 			'Выключены'
 		);
+	});
+
+	it('is off through VK until the community may write to the user', () => {
+		expect(notificationsStatus('off', user(['vk'], {}, false))).toBe('Выключены');
+		expect(notificationsStatus('off', user(['vk'], {}, null))).toBe('Выключены');
 	});
 
 	it('ignores a setting that is on for an unlinked account', () => {

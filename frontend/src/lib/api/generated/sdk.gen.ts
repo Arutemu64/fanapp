@@ -36,6 +36,9 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionErrors,
 	CheckPushSubscriptionResponses,
+	CheckVkMessagesAllowedData,
+	CheckVkMessagesAllowedErrors,
+	CheckVkMessagesAllowedResponses,
 	ClearCurrentEventData,
 	ClearCurrentEventErrors,
 	ClearCurrentEventResponses,
@@ -645,6 +648,30 @@ export const startAccountLink = <ThrowOnError extends boolean = false>(
 			}
 		],
 		url: '/me/connections/{provider}',
+		...options
+	});
+
+/**
+ * Check VK community messages
+ *
+ * Asks VK whether its community may message the current user's linked VK account, stores the answer and returns it. Repeated calls within a few seconds return the stored answer without asking VK.
+ */
+export const checkVkMessagesAllowed = <ThrowOnError extends boolean = false>(
+	options?: Options<CheckVkMessagesAllowedData, ThrowOnError>
+): RequestResult<CheckVkMessagesAllowedResponses, CheckVkMessagesAllowedErrors, ThrowOnError> =>
+	(options?.client ?? client).post<
+		CheckVkMessagesAllowedResponses,
+		CheckVkMessagesAllowedErrors,
+		ThrowOnError
+	>({
+		security: [
+			{
+				in: 'cookie',
+				name: 'session_id',
+				type: 'apiKey'
+			}
+		],
+		url: '/me/connections/vk/messages-check',
 		...options
 	});
 

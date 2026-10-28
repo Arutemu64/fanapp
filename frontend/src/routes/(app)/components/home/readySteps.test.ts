@@ -99,7 +99,7 @@ describe('getNotificationsOn', () => {
 
 	it('counts a linked messenger with notifications on, whatever the device says', () => {
 		const telegram = member({
-			social_identities: [{ provider: 'telegram' }]
+			social_identities: [{ provider: 'telegram', messages_allowed: null }]
 		});
 
 		expect(getNotificationsOn(telegram, 'off')).toBe(true);
@@ -107,7 +107,7 @@ describe('getNotificationsOn', () => {
 
 	it('ignores a linked messenger whose notifications are off', () => {
 		const vkMuted = member({
-			social_identities: [{ provider: 'vk' }],
+			social_identities: [{ provider: 'vk', messages_allowed: true }],
 			settings: {
 				receive_all_announcements: true,
 				receive_telegram_notifications: true,
@@ -116,5 +116,13 @@ describe('getNotificationsOn', () => {
 		});
 
 		expect(getNotificationsOn(vkMuted, 'off')).toBe(false);
+	});
+
+	it('ignores VK until the community may write to the user', () => {
+		const vkNotAllowed = member({
+			social_identities: [{ provider: 'vk', messages_allowed: false }]
+		});
+
+		expect(getNotificationsOn(vkNotAllowed, 'off')).toBe(false);
 	});
 });

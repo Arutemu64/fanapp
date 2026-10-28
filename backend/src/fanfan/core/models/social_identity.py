@@ -26,6 +26,11 @@ class SocialIdentity(AggregateRoot):
     lists `sub` in its discovery document's `claims_supported` and `id` not at
     all, and `id` arrives only with the `profile` scope — which Telegram drops
     outright when the bot is switched to EdDSA or ES256K signing in BotFather.
+
+    `messages_allowed` is the last answer the provider gave to "may we message
+    this account?", or None before anyone asked. Only VK records it: a VK
+    community can write only to users who allowed it, and the API cannot list
+    them, so VK asks apps to keep that state themselves (docs/backend.md).
     """
 
     id: SocialIdentityId
@@ -33,3 +38,11 @@ class SocialIdentity(AggregateRoot):
     provider: SocialProvider
     subject: str
     provider_user_id: int
+    messages_allowed: bool | None = None
+
+    def record_messages_allowed(self, *, allowed: bool) -> bool:
+        """Store the provider's answer; return whether it changed."""
+        if self.messages_allowed is allowed:
+            return False
+        self.messages_allowed = allowed
+        return True

@@ -248,6 +248,7 @@ const ERROR_MESSAGES = {
 	SAME_EVENTS_ARE_NOT_ALLOWED: m.error_same_events_are_not_allowed,
 	SKIPPED_EVENT_NOT_ALLOWED: m.error_skipped_event_not_allowed,
 	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: m.error_social_account_linked_to_another_user,
+	SOCIAL_ACCOUNT_NOT_LINKED: m.error_social_account_not_linked,
 	SUBSCRIPTION_ALREADY_EXISTS: m.error_subscription_already_exists,
 	SYNC_ALREADY_RUNNING: m.error_sync_already_running,
 	TICKET_ALREADY_USED: m.error_ticket_already_used,

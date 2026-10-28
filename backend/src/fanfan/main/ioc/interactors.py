@@ -20,6 +20,9 @@ from fanfan.application.interactors.auth.send_email_confirmation_code import (
 )
 from fanfan.application.interactors.auth.send_login_code_email import SendLoginCodeEmail
 from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
+from fanfan.application.interactors.current_user.check_vk_messages_allowed import (
+    CheckVkMessagesAllowed,
+)
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
 from fanfan.application.interactors.current_user.link_social_account import (
     LinkSocialAccount,
@@ -259,6 +262,7 @@ class InteractorsProvider(Provider):
         GetCurrentUser,
         LinkSocialAccount,
         UnlinkSocialAccount,
+        CheckVkMessagesAllowed,
         UpdateCurrentUser,
         SuggestUsername,
         UpdateUserSettings,

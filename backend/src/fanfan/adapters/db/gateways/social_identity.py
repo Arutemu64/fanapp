@@ -22,6 +22,7 @@ def _from_model(model: SocialIdentity) -> SocialIdentityORM:
         provider=model.provider,
         subject=model.subject,
         provider_user_id=model.provider_user_id,
+        messages_allowed=model.messages_allowed,
     )
 
 
@@ -32,6 +33,7 @@ def _to_model(orm: SocialIdentityORM) -> SocialIdentity:
         provider=orm.provider,
         subject=orm.subject,
         provider_user_id=orm.provider_user_id,
+        messages_allowed=orm.messages_allowed,
     )
 
 
@@ -50,6 +52,11 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         ):
             self.session.add(social_identity_orm)
             await self.session.flush()
+
+    @override
+    async def save(self, social_identity: SocialIdentity) -> None:
+        await self.session.merge(_from_model(social_identity))
+        await self.session.flush()
 
     @override
     async def get_by_provider(

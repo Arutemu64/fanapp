@@ -144,7 +144,10 @@ def _parse_current_user_dto(orm: UserORM) -> CurrentUserDTO:
             receive_vk_notifications=orm.receive_vk_notifications,
         ),
         social_identities=[
-            UserSocialIdentityDTO(provider=social_identity.provider)
+            UserSocialIdentityDTO(
+                provider=social_identity.provider,
+                messages_allowed=social_identity.messages_allowed,
+            )
             for social_identity in orm.social_identities
         ],
     )

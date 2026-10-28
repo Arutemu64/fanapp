@@ -1294,6 +1294,73 @@
         }
       }
     },
+    "/me/connections/vk/messages-check": {
+      "post": {
+        "tags": [
+          "Current user"
+        ],
+        "summary": "Check VK community messages",
+        "description": "Asks VK whether its community may message the current user's linked VK account, stores the answer and returns it. Repeated calls within a few seconds return the stored answer without asking VK.",
+        "operationId": "check_vk_messages_allowed",
+        "responses": {
+          "200": {
+            "description": "The current answer; null if never checked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VkMessagesStatusDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No VK account is linked.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
     "/me/ticket": {
       "post": {
         "tags": [
@@ -7891,6 +7958,7 @@
               "SCHEDULE_EDIT_TOO_FAST",
               "SKIPPED_EVENT_NOT_ALLOWED",
               "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER",
+              "SOCIAL_ACCOUNT_NOT_LINKED",
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
               "SYNC_ALREADY_RUNNING",
@@ -9277,11 +9345,24 @@
         "properties": {
           "provider": {
             "$ref": "#/components/schemas/SocialProvider"
+          },
+          "messages_allowed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Messages Allowed",
+            "description": "Whether the provider lets the app message this account, as last checked; null before the first check. Only VK records it."
           }
         },
         "type": "object",
         "required": [
-          "provider"
+          "provider",
+          "messages_allowed"
         ],
         "title": "UserSocialIdentityDTO"
       },
@@ -9426,6 +9507,26 @@
           "errors"
         ],
         "title": "ValidationProblem"
+      },
+      "VkMessagesStatusDTO": {
+        "properties": {
+          "messages_allowed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Messages Allowed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages_allowed"
+        ],
+        "title": "VkMessagesStatusDTO"
       },
       "VotingStatus": {
         "type": "string",

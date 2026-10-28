@@ -17,6 +17,7 @@ import {
 	changeCurrentUserEmail,
 	changeCurrentUserPassword,
 	checkPushSubscription,
+	checkVkMessagesAllowed,
 	clearCurrentEvent,
 	confirmEmailCode,
 	countUnreadNotifications,
@@ -113,6 +114,9 @@ import type {
 	CheckPushSubscriptionData,
 	CheckPushSubscriptionError,
 	CheckPushSubscriptionResponse,
+	CheckVkMessagesAllowedData,
+	CheckVkMessagesAllowedError,
+	CheckVkMessagesAllowedResponse,
 	ClearCurrentEventData,
 	ClearCurrentEventError,
 	ClearCurrentEventResponse,
@@ -890,6 +894,35 @@ export const startAccountLinkOptions = (options: Options<StartAccountLinkData>) 
 		},
 		queryKey: startAccountLinkQueryKey(options)
 	});
+
+/**
+ * Check VK community messages
+ *
+ * Asks VK whether its community may message the current user's linked VK account, stores the answer and returns it. Repeated calls within a few seconds return the stored answer without asking VK.
+ */
+export const checkVkMessagesAllowedMutation = (
+	options?: Partial<Options<CheckVkMessagesAllowedData>>
+): MutationOptions<
+	CheckVkMessagesAllowedResponse,
+	CheckVkMessagesAllowedError,
+	Options<CheckVkMessagesAllowedData>
+> => {
+	const mutationOptions: MutationOptions<
+		CheckVkMessagesAllowedResponse,
+		CheckVkMessagesAllowedError,
+		Options<CheckVkMessagesAllowedData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await checkVkMessagesAllowed({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
 
 /**
  * Link ticket

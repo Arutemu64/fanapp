@@ -59,6 +59,12 @@ class UserAlreadyHasProviderLinked(Conflict, UserException):
     code = "USER_ALREADY_HAS_PROVIDER_LINKED"
 
 
+class SocialAccountNotLinked(NotFound, UserException):
+    """The user has no account of the requested provider linked."""
+
+    code = "SOCIAL_ACCOUNT_NOT_LINKED"
+
+
 class CannotRemoveLastSignInMethod(Conflict, UserException):
     """Unlinking would leave the user with no way to sign back in.
 
