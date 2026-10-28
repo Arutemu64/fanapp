@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 import httpx2
@@ -52,7 +53,14 @@ class VkApiClient:
             )
         return payload.get("response")
 
-    async def send_message(self, *, peer_id: int, message: str, random_id: int) -> int:
+    async def send_message(
+        self,
+        *,
+        peer_id: int,
+        message: str,
+        random_id: int,
+        keyboard: dict[str, Any],
+    ) -> int:
         return int(
             await self._call_method(
                 "messages.send",
@@ -60,6 +68,9 @@ class VkApiClient:
                     "peer_id": peer_id,
                     "message": message,
                     "random_id": random_id,
+                    "keyboard": json.dumps(keyboard, ensure_ascii=False),
+                    # The link lives in the keyboard; a snippet card would repeat it.
+                    "dont_parse_links": 1,
                 },
             )
         )

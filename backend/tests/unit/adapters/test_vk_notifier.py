@@ -1,3 +1,4 @@
+import json
 from typing import Any, override
 from urllib.parse import parse_qs
 from uuid import uuid7
@@ -33,6 +34,8 @@ from fanfan.presentation.web.config import WebConfig
 VK_USER_ID = 555
 VK_GROUP_ID = 777
 
+_KEYBOARD: dict[str, Any] = {"inline": True, "buttons": []}
+
 
 def _make_user() -> User:
     return User(
@@ -43,12 +46,14 @@ def _make_user() -> User:
     )
 
 
-def _make_notification(user_id: UserId) -> Notification:
+def _make_notification(
+    user_id: UserId, *, body: str = "Тело <b>уведомления</b>"
+) -> Notification:
     return Notification(
         id=generate_notification_id(),
         user_id=user_id,
         title="Внимание",
-        body="Тело <b>уведомления</b>",
+        body=body,
         type=NotificationType.DEFAULT,
         path="/schedule",
         mailing_id=None,
@@ -122,7 +127,7 @@ async def test_client_posts_token_version_and_message() -> None:
     client = _api_client(transport)
 
     message_id = await client.send_message(
-        peer_id=VK_USER_ID, message="привет", random_id=7
+        peer_id=VK_USER_ID, message="привет", random_id=7, keyboard=_KEYBOARD
     )
 
     assert message_id == 1
@@ -132,6 +137,8 @@ async def test_client_posts_token_version_and_message() -> None:
     assert sent["access_token"] == "group-token"
     assert sent["v"] == "5.199"
     assert sent["random_id"] == "7"
+    assert json.loads(sent["keyboard"]) == _KEYBOARD
+    assert sent["dont_parse_links"] == "1"
 
 
 async def test_client_asks_whether_the_group_may_message_a_user() -> None:
@@ -164,7 +171,9 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
     client = _api_client(_VkTransport(error_code=901))
 
     with pytest.raises(VkApiError) as exc:
-        await client.send_message(peer_id=VK_USER_ID, message="hi", random_id=1)
+        await client.send_message(
+            peer_id=VK_USER_ID, message="hi", random_id=1, keyboard=_KEYBOARD
+        )
     assert exc.value.code == 901
 
 
@@ -204,9 +213,21 @@ class _StubVkClient(VkApiClient):
         self.deleted: list[int] = []
 
     @override
-    async def send_message(self, *, peer_id: int, message: str, random_id: int) -> int:
+    async def send_message(
+        self,
+        *,
+        peer_id: int,
+        message: str,
+        random_id: int,
+        keyboard: dict[str, Any],
+    ) -> int:
         self.calls.append(
-            {"peer_id": peer_id, "message": message, "random_id": random_id}
+            {
+                "peer_id": peer_id,
+                "message": message,
+                "random_id": random_id,
+                "keyboard": keyboard,
+            }
         )
         if self._error is not None:
             raise self._error
@@ -266,8 +287,66 @@ async def test_sends_plain_text_to_linked_user() -> None:
     assert sent["peer_id"] == VK_USER_ID
     assert "<b>" not in sent["message"]
     assert "уведомления" in sent["message"]
-    assert "https://app.example/schedule" in sent["message"]
+    assert "https://app.example/schedule" not in sent["message"]
     assert client.deleted == [_SENT_MESSAGE_ID]
+
+
+async def test_attaches_a_link_button_named_after_the_destination() -> None:
+    user = _make_user()
+    client = _StubVkClient()
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    await notifier.send_notification(_make_notification(user.id))
+
+    assert client.calls[0]["keyboard"] == {
+        "inline": True,
+        "buttons": [
+            [
+                {
+                    "action": {
+                        "type": "open_link",
+                        "link": "https://app.example/schedule",
+                        "label": "📅 Открыть программу",
+                    }
+                }
+            ]
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        pytest.param(
+            'Подробнее <a href="https://fan.example/a?x=1&amp;y=2">тут</a>',
+            "Подробнее тут (https://fan.example/a?x=1&y=2)",
+            id="named_link",
+        ),
+        pytest.param(
+            '<a href="https://fan.example">https://fan.example</a>',
+            "https://fan.example",
+            id="bare_link",
+        ),
+    ],
+)
+async def test_keeps_link_targets_in_plain_text(body: str, expected: str) -> None:
+    user = _make_user()
+    client = _StubVkClient()
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    await notifier.send_notification(_make_notification(user.id, body=body))
+
+    assert expected in client.calls[0]["message"]
+
+
+@pytest.mark.parametrize("code", [911, 912])
+async def test_keyboard_refusals_are_channel_unavailable(code: int) -> None:
+    user = _make_user()
+    client = _StubVkClient(VkApiError(code=code, message="bot features off"))
+    notifier = _notifier(identity=_identity_for(user), client=client)
+
+    with pytest.raises(NotificationChannelUnavailable):
+        await notifier.send_notification(_make_notification(user.id))
 
 
 async def test_delete_failure_does_not_fail_delivery() -> None:

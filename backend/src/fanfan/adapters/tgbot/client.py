@@ -43,6 +43,8 @@ class TelegramApiClient:
                 "chat_id": chat_id,
                 "text": text,
                 "parse_mode": "HTML",
+                # The link lives in the button; a preview card would repeat it.
+                "link_preview_options": {"is_disabled": True},
                 "reply_markup": reply_markup,
             },
         )

@@ -143,7 +143,22 @@ async def test_sends_html_with_escaped_title_and_deep_link_button() -> None:
     assert "КАФЕ A&amp;B" in call["text"]
     assert "Тело <b>уведомления</b>" in call["text"]
     button = call["reply_markup"]["inline_keyboard"][0][0]
-    assert button["url"] == "https://app.example/schedule"
+    assert button == {
+        "text": "📅 Открыть программу",
+        "url": "https://app.example/schedule",
+        "style": "primary",
+    }
+
+
+async def test_button_without_a_known_path_opens_the_app() -> None:
+    client = _RecordingClient()
+    notifier = _notifier(identity=_identity(), client=client)
+
+    await notifier.send_notification(_notification(path=None))
+
+    button = client.calls[0]["reply_markup"]["inline_keyboard"][0][0]
+    assert button["text"] == "🌐 Открыть приложение"
+    assert button["url"] == "https://app.example/"
 
 
 async def test_unlinked_user_is_unreachable() -> None:
@@ -241,6 +256,7 @@ async def test_client_posts_json_to_the_token_path() -> None:
         "chat_id": 7,
         "text": "hi",
         "parse_mode": "HTML",
+        "link_preview_options": {"is_disabled": True},
         "reply_markup": {"inline_keyboard": []},
     }
 
