@@ -129,6 +129,14 @@ Re-register the URI whenever the domain changes; the app derives it from the
 incoming request, so a mismatch surfaces as Telegram refusing the login rather
 than as an error on our side.
 
+### VK notifications: turn on bot features
+
+VK notifications carry a link button, and VK accepts keyboards only from a
+community with bot features on. In the community, open **Управление →
+Сообщения → Настройки для бота** and turn on **Возможности ботов**. Without it
+every send fails with error 912, and the worker logs "VK refused the
+notification keyboard" and drops the message.
+
 ## Deploying
 
 ```sh

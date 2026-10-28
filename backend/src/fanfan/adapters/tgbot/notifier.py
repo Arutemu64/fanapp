@@ -3,6 +3,7 @@ import logging
 from http import HTTPStatus
 from typing import Any, override
 
+from fanfan.adapters.notification_button import button_label_for
 from fanfan.adapters.rate_limiter import RateLimiter
 from fanfan.adapters.tgbot.client import TelegramApiClient, TelegramApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
@@ -54,8 +55,12 @@ class TelegramNotifier(TelegramNotifierPort):
         return f"<b>🔔 {title}</b>\n\n{notification.body}"
 
     def _build_reply_markup(self, notification: Notification) -> dict[str, Any]:
-        url = self.web_config.build_url(notification.path or "/")
-        return {"inline_keyboard": [[{"text": "🌐 Открыть приложение", "url": url}]]}
+        button = {
+            "text": button_label_for(notification.path),
+            "url": self.web_config.build_url(notification.path or "/"),
+            "style": "primary",
+        }
+        return {"inline_keyboard": [[button]]}
 
     @override
     async def send_notification(self, notification: Notification) -> None:

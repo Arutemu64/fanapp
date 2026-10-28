@@ -1,9 +1,11 @@
 import html
 import logging
-from typing import override
+import re
+from typing import Any, override
 
 import nh3
 
+from fanfan.adapters.notification_button import button_label_for
 from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.notifier import VkNotifierPort
@@ -27,11 +29,28 @@ _USER_REVOKED_CODES = frozenset({900, 901, 902})
 _USER_UNREACHABLE_CODES = frozenset({7, 15, 987, 988, 1021})
 _FLOOD_CODES = frozenset({6, 9})
 _AUTH_CODES = frozenset({5, 27, 28})
+_KEYBOARD_ERRORS: dict[int, str] = {
+    911: "VK rejected the notification keyboard as malformed",
+    912: "VK refused the notification keyboard — enable bot features "
+    "in the community settings",
+}
 
 _FLOOD_RETRY_AFTER_SECONDS = 1
 
 # VK drops a repeated non-zero int32 random_id in the same dialog for an hour.
 _INT32_MAX = 2**31 - 1
+
+
+# The sanitizer emits exactly this shape: ``href`` is the only attribute it keeps.
+_LINK = re.compile(r'<a href="([^"]*)">(.*?)</a>', re.DOTALL)
+
+
+def _link_as_text(match: re.Match[str]) -> str:
+    href = str(match.group(1))
+    text = str(match.group(2))
+    if text == href:
+        return href
+    return f"{text} ({href})"
 
 
 def _random_id_for(notification_id: NotificationId) -> int:
@@ -52,14 +71,22 @@ class VkNotifier(VkNotifierPort):
         self.uow = uow
         self.web_config = web_config
 
-    def _render_message_text(self, notification: Notification) -> str:
-        body = html.unescape(
-            nh3.clean(notification.body.replace("<br>", "\n"), tags=set())
-        )
-        url = self.web_config.build_url(notification.path or "/")
-        return (
-            f"🔔 {notification.title.upper()}\n\n{body}\n\n🌐 Открыть приложение: {url}"
-        )
+    @staticmethod
+    def _render_message_text(notification: Notification) -> str:
+        # VK shows no markup, so a link keeps its target as visible text.
+        body = _LINK.sub(_link_as_text, notification.body)
+        body = html.unescape(nh3.clean(body, tags=set()))
+        return f"🔔 {notification.title.upper()}\n\n{body}"
+
+    def _build_keyboard(self, notification: Notification) -> dict[str, Any]:
+        button = {
+            "action": {
+                "type": "open_link",
+                "link": self.web_config.build_url(notification.path or "/"),
+                "label": button_label_for(notification.path),
+            }
+        }
+        return {"inline": True, "buttons": [[button]]}
 
     @override
     async def send_notification(self, notification: Notification) -> None:
@@ -76,6 +103,7 @@ class VkNotifier(VkNotifierPort):
                 peer_id=social_identity.provider_user_id,
                 message=self._render_message_text(notification),
                 random_id=_random_id_for(notification.id),
+                keyboard=self._build_keyboard(notification),
             )
         except VkApiError as e:
             self._handle_api_error(e, notification)
@@ -111,6 +139,9 @@ class VkNotifier(VkNotifierPort):
                 "cannot deliver notifications via VK",
                 extra={"error_code": error.code},
             )
+            raise NotificationChannelUnavailable from error
+        if error.code in _KEYBOARD_ERRORS:
+            logger.error(_KEYBOARD_ERRORS[error.code], extra={"error_code": error.code})
             raise NotificationChannelUnavailable from error
         logger.warning(
             "Unhandled VK API error sending notification",
