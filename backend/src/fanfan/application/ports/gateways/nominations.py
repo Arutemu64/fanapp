@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from fanfan.application.dto.nomination import NominationVotingDTO
-from fanfan.application.dto.voting import NominationContenderDTO
+from fanfan.application.dto.voting import VotingDashboardNominationDTO
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode, NominationId
 from fanfan.core.vo.user import UserId
@@ -14,7 +14,9 @@ class NominationGateway(Protocol):
     async def save(self, nomination: Nomination) -> None: ...
     async def count_votable(self) -> int: ...
 
-    async def read_voting_contenders(self) -> list[NominationContenderDTO]: ...
+    async def read_dashboard_nominations(
+        self,
+    ) -> list[VotingDashboardNominationDTO]: ...
     async def list_cosplay2_ids(self) -> list[int]: ...
     async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None: ...
 

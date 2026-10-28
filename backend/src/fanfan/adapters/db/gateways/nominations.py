@@ -6,7 +6,7 @@ from sqlalchemy.orm import undefer
 
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
 from fanfan.application.dto.nomination import NominationVoteDTO, NominationVotingDTO
-from fanfan.application.dto.voting import ContenderDTO, NominationContenderDTO
+from fanfan.application.dto.voting import ContenderDTO, VotingDashboardNominationDTO
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode, NominationId
@@ -106,7 +106,7 @@ class SqlNominationGateway(NominationGateway):
         return await self.session.scalar(stmt) or 0
 
     @override
-    async def read_voting_contenders(self) -> list[NominationContenderDTO]:
+    async def read_dashboard_nominations(self) -> list[VotingDashboardNominationDTO]:
         votes_count = func.count(VoteORM.id)
         ranked = (
             select(
@@ -157,7 +157,7 @@ class SqlNominationGateway(NominationGateway):
 
         rows = (await self.session.execute(stmt)).all()
 
-        contenders: list[NominationContenderDTO] = []
+        nominations: list[VotingDashboardNominationDTO] = []
         for row in rows:
             if row.participant_id is not None and row.votes_count > 0:
                 leader = ContenderDTO(
@@ -167,8 +167,8 @@ class SqlNominationGateway(NominationGateway):
                 )
             else:
                 leader = None
-            contenders.append(
-                NominationContenderDTO(
+            nominations.append(
+                VotingDashboardNominationDTO(
                     id=NominationId(row.id),
                     code=NominationCode(row.code),
                     title=row.title,
@@ -177,7 +177,7 @@ class SqlNominationGateway(NominationGateway):
                     leader=leader,
                 )
             )
-        return contenders
+        return nominations
 
     @override
     async def save(self, nomination: Nomination) -> None:

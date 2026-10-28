@@ -255,6 +255,7 @@
 	"error_mailing_cancelled": "Рассылка уже отменена",
 	"error_mailing_not_found": "Рассылка не найдена",
 	"error_no_access": "Нет доступа к этому действию.",
+	"error_nomination_not_votable": "В этой номинации голосование закрыто.",
 	"error_outdated_schedule_change": "Программа уже изменилась, обнови страницу",
 	"error_permission_not_assignable": "Полный доступ выдаётся только через сервер",
 	"error_push_subscription_already_exists": "Это устройство уже подключено к пуш-уведомлениям",

@@ -12,7 +12,7 @@ class ContenderDTO(BaseModel):
     votes_count: int
 
 
-class NominationContenderDTO(BaseModel):
+class VotingDashboardNominationDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: NominationId

@@ -12,6 +12,7 @@ from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.exceptions.nominations import NominationNotVotable
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import (
     VoteAlreadyExists,
@@ -220,7 +221,7 @@ async def test_add_vote_in_non_votable_nomination_raises_access_denied(
     await participant_gateway.add(participant)
     await uow.commit()
 
-    with pytest.raises(VotingDisabled):
+    with pytest.raises(NominationNotVotable):
         await interactor(AddVoteInput(participant_id=participant.id))
     assert (
         await vote_gateway.get_user_vote_by_nomination(

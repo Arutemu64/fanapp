@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from fanfan.core.exceptions.votes import VotingDisabled
+from fanfan.core.exceptions.nominations import NominationNotVotable
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.nomination import NominationId
 
@@ -16,4 +16,4 @@ class Nomination(AggregateRoot):
 
     def ensure_votable(self) -> None:
         if not self.is_votable:
-            raise VotingDisabled
+            raise NominationNotVotable

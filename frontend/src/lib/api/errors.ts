@@ -236,6 +236,7 @@ const ERROR_MESSAGES = {
 	MAILING_ALREADY_EXISTS: m.error_mailing_already_exists,
 	MAILING_CANCELLED: m.error_mailing_cancelled,
 	MAILING_NOT_FOUND: m.error_mailing_not_found,
+	NOMINATION_NOT_VOTABLE: m.error_nomination_not_votable,
 	OUTDATED_SCHEDULE_CHANGE: m.error_outdated_schedule_change,
 	PERMISSION_NOT_ASSIGNABLE: m.error_permission_not_assignable,
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: m.error_push_subscription_already_exists,

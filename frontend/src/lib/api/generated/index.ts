@@ -415,7 +415,6 @@ export type {
 	MarkNotificationsReadInput,
 	MarkNotificationsReadResponse,
 	MarkNotificationsReadResponses,
-	NominationContenderDto,
 	NominationVoteDto,
 	NominationVotingDto,
 	NotificationDto,
@@ -609,5 +608,6 @@ export type {
 	UserTicketDto,
 	ValidationErrorDetail,
 	ValidationProblem,
+	VotingDashboardNominationDto,
 	VotingStatus
 } from './types.gen';

@@ -7098,7 +7098,7 @@
           },
           "nominations": {
             "items": {
-              "$ref": "#/components/schemas/NominationContenderDTO"
+              "$ref": "#/components/schemas/VotingDashboardNominationDTO"
             },
             "type": "array",
             "title": "Nominations"
@@ -7781,52 +7781,6 @@
         ],
         "title": "MarkNotificationsReadInput"
       },
-      "NominationContenderDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "is_votable": {
-            "type": "boolean",
-            "title": "Is Votable"
-          },
-          "total_votes": {
-            "type": "integer",
-            "title": "Total Votes",
-            "format": "int32"
-          },
-          "leader": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ContenderDTO"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "code",
-          "title",
-          "is_votable",
-          "total_votes",
-          "leader"
-        ],
-        "title": "NominationContenderDTO"
-      },
       "NominationVoteDTO": {
         "properties": {
           "id": {
@@ -8134,6 +8088,7 @@
               "MAILING_CANCELLED",
               "MAILING_NOT_FOUND",
               "NOMINATION_NOT_FOUND",
+              "NOMINATION_NOT_VOTABLE",
               "NOTIFICATIONS_CHECK_TOO_FAST",
               "OUTDATED_SCHEDULE_CHANGE",
               "PARTICIPANT_NOT_FOUND",
@@ -9704,6 +9659,52 @@
           "errors"
         ],
         "title": "ValidationProblem"
+      },
+      "VotingDashboardNominationDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "is_votable": {
+            "type": "boolean",
+            "title": "Is Votable"
+          },
+          "total_votes": {
+            "type": "integer",
+            "title": "Total Votes",
+            "format": "int32"
+          },
+          "leader": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContenderDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "is_votable",
+          "total_votes",
+          "leader"
+        ],
+        "title": "VotingDashboardNominationDTO"
       },
       "VotingStatus": {
         "type": "string",

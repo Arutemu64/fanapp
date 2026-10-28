@@ -102,7 +102,7 @@ async def test_attendee_cannot_vote_once_an_organizer_takes_the_nomination_out(
     )
 
     assert cast.status_code == HTTPStatus.FORBIDDEN
-    assert cast.json()["code"] == "VOTING_DISABLED"
+    assert cast.json()["code"] == "NOMINATION_NOT_VOTABLE"
 
 
 async def test_nomination_patch_refuses_null_votable(

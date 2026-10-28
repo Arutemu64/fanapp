@@ -459,7 +459,7 @@ export type GetVotingDashboardOutput = {
 	/**
 	 * Nominations
 	 */
-	nominations: Array<NominationContenderDto>;
+	nominations: Array<VotingDashboardNominationDto>;
 };
 
 /**
@@ -833,33 +833,6 @@ export type MarkNotificationsReadInput = {
 };
 
 /**
- * NominationContenderDTO
- */
-export type NominationContenderDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Code
-	 */
-	code: string;
-	/**
-	 * Title
-	 */
-	title: string;
-	/**
-	 * Is Votable
-	 */
-	is_votable: boolean;
-	/**
-	 * Total Votes
-	 */
-	total_votes: number;
-	leader: ContenderDto | null;
-};
-
-/**
  * NominationVoteDTO
  */
 export type NominationVoteDto = {
@@ -1072,6 +1045,7 @@ export type ProblemDetails = {
 		| 'MAILING_CANCELLED'
 		| 'MAILING_NOT_FOUND'
 		| 'NOMINATION_NOT_FOUND'
+		| 'NOMINATION_NOT_VOTABLE'
 		| 'NOTIFICATIONS_CHECK_TOO_FAST'
 		| 'OUTDATED_SCHEDULE_CHANGE'
 		| 'PARTICIPANT_NOT_FOUND'
@@ -2038,6 +2012,33 @@ export type ValidationProblem = {
 	 */
 	errors: Array<ValidationErrorDetail>;
 	[key: string]: unknown;
+};
+
+/**
+ * VotingDashboardNominationDTO
+ */
+export type VotingDashboardNominationDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Code
+	 */
+	code: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Is Votable
+	 */
+	is_votable: boolean;
+	/**
+	 * Total Votes
+	 */
+	total_votes: number;
+	leader: ContenderDto | null;
 };
 
 /**
