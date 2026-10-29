@@ -79,6 +79,7 @@ export {
 	unlinkUserTicket,
 	updateCurrentUser,
 	updateCurrentUserSettings,
+	updateNomination,
 	updateScheduleEvent,
 	updateScheduleSettings,
 	updateSettings
@@ -414,7 +415,6 @@ export type {
 	MarkNotificationsReadInput,
 	MarkNotificationsReadResponse,
 	MarkNotificationsReadResponses,
-	NominationContenderDto,
 	NominationVoteDto,
 	NominationVotingDto,
 	NotificationDto,
@@ -572,6 +572,12 @@ export type {
 	UpdateCurrentUserSettingsErrors,
 	UpdateCurrentUserSettingsResponse,
 	UpdateCurrentUserSettingsResponses,
+	UpdateNominationBody,
+	UpdateNominationData,
+	UpdateNominationError,
+	UpdateNominationErrors,
+	UpdateNominationResponse,
+	UpdateNominationResponses,
 	UpdateScheduleEventBody,
 	UpdateScheduleEventData,
 	UpdateScheduleEventError,
@@ -602,5 +608,6 @@ export type {
 	UserTicketDto,
 	ValidationErrorDetail,
 	ValidationProblem,
+	VotingDashboardNominationDto,
 	VotingStatus
 } from './types.gen';

@@ -12,6 +12,7 @@ from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.exceptions.nominations import NominationNotVotable
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import (
     VoteAlreadyExists,
@@ -180,6 +181,54 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
         is None
     )
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+
+
+async def test_add_vote_in_non_votable_nomination_raises_access_denied(
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(AddVote)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
+    login(visitor_with_ticket)
+
+    settings = await settings_gateway.get_for_update()
+    settings.set_voting_time_range(
+        start=datetime(2020, 1, 1, tzinfo=UTC),
+        end=datetime(2099, 1, 1, tzinfo=UTC),
+    )
+    await settings_gateway.save(settings)
+
+    nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=1090,
+        code="add-vote-non-votable-test",
+        title="Тестовая номинация add-vote-non-votable-test",
+        is_votable=False,
+    )
+    participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2090,
+        title="Тестовый участник вне голосования",
+        nomination_id=nomination.id,
+        voting_number=1,
+    )
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(participant)
+    await uow.commit()
+
+    with pytest.raises(NominationNotVotable):
+        await interactor(AddVoteInput(participant_id=participant.id))
+    assert (
+        await vote_gateway.get_user_vote_by_nomination(
+            nomination_id=nomination.id, user_id=visitor_with_ticket.id
+        )
+        is None
+    )
 
 
 async def test_add_vote_for_missing_participant_raises_not_found(

@@ -243,6 +243,9 @@ import type {
 	UpdateCurrentUserSettingsData,
 	UpdateCurrentUserSettingsErrors,
 	UpdateCurrentUserSettingsResponses,
+	UpdateNominationData,
+	UpdateNominationErrors,
+	UpdateNominationResponses,
 	UpdateScheduleEventData,
 	UpdateScheduleEventErrors,
 	UpdateScheduleEventResponses,
@@ -1165,7 +1168,7 @@ export const cancelVote = <ThrowOnError extends boolean = false>(
 /**
  * Get the organizer voting dashboard
  *
- * Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
+ * Voting time range, every nomination with whether it is in voting and its leading participant, and the size of the prize-draw pool. Requires voting:manage.
  */
 export const getVotingDashboard = <ThrowOnError extends boolean = false>(
 	options?: Options<GetVotingDashboardData, ThrowOnError>
@@ -1213,6 +1216,32 @@ export const setVotingTimeRange = <ThrowOnError extends boolean = false>(
 			...options.headers
 		}
 	});
+
+/**
+ * Update a nomination
+ *
+ * JSON Merge Patch. `is_votable` sets whether visitors can see and vote in the nomination; votes already cast stay. Requesting the state that already holds changes nothing. Requires voting:manage.
+ */
+export const updateNomination = <ThrowOnError extends boolean = false>(
+	options: Options<UpdateNominationData, ThrowOnError>
+): RequestResult<UpdateNominationResponses, UpdateNominationErrors, ThrowOnError> =>
+	(options.client ?? client).patch<UpdateNominationResponses, UpdateNominationErrors, ThrowOnError>(
+		{
+			security: [
+				{
+					in: 'cookie',
+					name: 'session_id',
+					type: 'apiKey'
+				}
+			],
+			url: '/voting/nominations/{nomination_id}',
+			...options,
+			headers: {
+				'Content-Type': 'application/json',
+				...options.headers
+			}
+		}
+	);
 
 /**
  * Draw a random voting-contest winner

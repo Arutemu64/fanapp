@@ -6,7 +6,7 @@ from sqlalchemy.orm import undefer
 
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
 from fanfan.application.dto.nomination import NominationVoteDTO, NominationVotingDTO
-from fanfan.application.dto.voting import ContenderDTO, NominationContenderDTO
+from fanfan.application.dto.voting import ContenderDTO, VotingDashboardNominationDTO
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode, NominationId
@@ -84,6 +84,21 @@ class SqlNominationGateway(NominationGateway):
         await self.session.flush()
 
     @override
+    async def get(self, nomination_id: NominationId) -> Nomination | None:
+        nomination_orm = await self.session.get(NominationORM, nomination_id)
+        return _to_model(nomination_orm) if nomination_orm else None
+
+    @override
+    async def get_for_update(self, nomination_id: NominationId) -> Nomination | None:
+        stmt = (
+            select(NominationORM)
+            .where(NominationORM.id == nomination_id)
+            .with_for_update()
+        )
+        nomination_orm = await self.session.scalar(stmt)
+        return _to_model(nomination_orm) if nomination_orm else None
+
+    @override
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Nomination | None:
         stmt = (
             select(NominationORM)
@@ -101,7 +116,7 @@ class SqlNominationGateway(NominationGateway):
         return await self.session.scalar(stmt) or 0
 
     @override
-    async def read_voting_contenders(self) -> list[NominationContenderDTO]:
+    async def read_dashboard_nominations(self) -> list[VotingDashboardNominationDTO]:
         votes_count = func.count(VoteORM.id)
         ranked = (
             select(
@@ -134,6 +149,7 @@ class SqlNominationGateway(NominationGateway):
                 NominationORM.id,
                 NominationORM.code,
                 NominationORM.title,
+                NominationORM.is_votable,
                 total_votes.label("total_votes"),
                 ranked.c.participant_id,
                 ranked.c.participant_title,
@@ -146,13 +162,12 @@ class SqlNominationGateway(NominationGateway):
                     ranked.c.rank == 1,
                 ),
             )
-            .where(NominationORM.is_votable.is_(True))
             .order_by(NominationORM.title)
         )
 
         rows = (await self.session.execute(stmt)).all()
 
-        contenders: list[NominationContenderDTO] = []
+        nominations: list[VotingDashboardNominationDTO] = []
         for row in rows:
             if row.participant_id is not None and row.votes_count > 0:
                 leader = ContenderDTO(
@@ -162,16 +177,17 @@ class SqlNominationGateway(NominationGateway):
                 )
             else:
                 leader = None
-            contenders.append(
-                NominationContenderDTO(
+            nominations.append(
+                VotingDashboardNominationDTO(
                     id=NominationId(row.id),
                     code=NominationCode(row.code),
                     title=row.title,
+                    is_votable=row.is_votable,
                     total_votes=row.total_votes,
                     leader=leader,
                 )
             )
-        return contenders
+        return nominations
 
     @override
     async def save(self, nomination: Nomination) -> None:
@@ -196,7 +212,8 @@ class SqlNominationGateway(NominationGateway):
         self, nomination_code: NominationCode, user_id: UserId | None = None
     ) -> NominationVotingDTO | None:
         stmt = _select_nomination_voting_dto(user_id).where(
-            NominationORM.code == nomination_code
+            NominationORM.code == nomination_code,
+            NominationORM.is_votable.is_(True),
         )
 
         result = (await self.session.execute(stmt)).first()

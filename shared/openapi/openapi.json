@@ -3057,7 +3057,7 @@
           "Voting"
         ],
         "summary": "Get the organizer voting dashboard",
-        "description": "Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.",
+        "description": "Voting time range, every nomination with whether it is in voting and its leading participant, and the size of the prize-draw pool. Requires voting:manage.",
         "operationId": "get_voting_dashboard",
         "responses": {
           "200": {
@@ -3186,6 +3186,100 @@
             "SessionCookie": []
           }
         ]
+      }
+    },
+    "/voting/nominations/{nomination_id}": {
+      "patch": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "Update a nomination",
+        "description": "JSON Merge Patch. `is_votable` sets whether visitors can see and vote in the nomination; votes already cast stay. Requesting the state that already holds changes nothing. Requires voting:manage.",
+        "operationId": "update_nomination",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "nomination_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the nomination to change.",
+              "title": "Nomination Id"
+            },
+            "description": "ID of the nomination to change."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNominationBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Nomination updated."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing voting:manage.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nomination not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/voting/contest/draw": {
@@ -7004,7 +7098,7 @@
           },
           "nominations": {
             "items": {
-              "$ref": "#/components/schemas/NominationContenderDTO"
+              "$ref": "#/components/schemas/VotingDashboardNominationDTO"
             },
             "type": "array",
             "title": "Nominations"
@@ -7687,47 +7781,6 @@
         ],
         "title": "MarkNotificationsReadInput"
       },
-      "NominationContenderDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "code": {
-            "type": "string",
-            "title": "Code"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "total_votes": {
-            "type": "integer",
-            "title": "Total Votes",
-            "format": "int32"
-          },
-          "leader": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ContenderDTO"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "code",
-          "title",
-          "total_votes",
-          "leader"
-        ],
-        "title": "NominationContenderDTO"
-      },
       "NominationVoteDTO": {
         "properties": {
           "id": {
@@ -8035,6 +8088,7 @@
               "MAILING_CANCELLED",
               "MAILING_NOT_FOUND",
               "NOMINATION_NOT_FOUND",
+              "NOMINATION_NOT_VOTABLE",
               "NOTIFICATIONS_CHECK_TOO_FAST",
               "OUTDATED_SCHEDULE_CHANGE",
               "PARTICIPANT_NOT_FOUND",
@@ -9163,6 +9217,17 @@
         "type": "object",
         "title": "UpdateCurrentUserInput"
       },
+      "UpdateNominationBody": {
+        "properties": {
+          "is_votable": {
+            "type": "boolean",
+            "title": "Is Votable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateNominationBody"
+      },
       "UpdateScheduleEventBody": {
         "properties": {
           "is_skipped": {
@@ -9594,6 +9659,52 @@
           "errors"
         ],
         "title": "ValidationProblem"
+      },
+      "VotingDashboardNominationDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "is_votable": {
+            "type": "boolean",
+            "title": "Is Votable"
+          },
+          "total_votes": {
+            "type": "integer",
+            "title": "Total Votes",
+            "format": "int32"
+          },
+          "leader": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContenderDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "is_votable",
+          "total_votes",
+          "leader"
+        ],
+        "title": "VotingDashboardNominationDTO"
       },
       "VotingStatus": {
         "type": "string",

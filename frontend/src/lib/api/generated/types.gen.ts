@@ -459,7 +459,7 @@ export type GetVotingDashboardOutput = {
 	/**
 	 * Nominations
 	 */
-	nominations: Array<NominationContenderDto>;
+	nominations: Array<VotingDashboardNominationDto>;
 };
 
 /**
@@ -833,29 +833,6 @@ export type MarkNotificationsReadInput = {
 };
 
 /**
- * NominationContenderDTO
- */
-export type NominationContenderDto = {
-	/**
-	 * Id
-	 */
-	id: string;
-	/**
-	 * Code
-	 */
-	code: string;
-	/**
-	 * Title
-	 */
-	title: string;
-	/**
-	 * Total Votes
-	 */
-	total_votes: number;
-	leader: ContenderDto | null;
-};
-
-/**
  * NominationVoteDTO
  */
 export type NominationVoteDto = {
@@ -1068,6 +1045,7 @@ export type ProblemDetails = {
 		| 'MAILING_CANCELLED'
 		| 'MAILING_NOT_FOUND'
 		| 'NOMINATION_NOT_FOUND'
+		| 'NOMINATION_NOT_VOTABLE'
 		| 'NOTIFICATIONS_CHECK_TOO_FAST'
 		| 'OUTDATED_SCHEDULE_CHANGE'
 		| 'PARTICIPANT_NOT_FOUND'
@@ -1757,6 +1735,16 @@ export type UpdateCurrentUserInput = {
 };
 
 /**
+ * UpdateNominationBody
+ */
+export type UpdateNominationBody = {
+	/**
+	 * Is Votable
+	 */
+	is_votable?: boolean;
+};
+
+/**
  * UpdateScheduleEventBody
  *
  * One change per request: each is its own announcement and undo step.
@@ -2024,6 +2012,33 @@ export type ValidationProblem = {
 	 */
 	errors: Array<ValidationErrorDetail>;
 	[key: string]: unknown;
+};
+
+/**
+ * VotingDashboardNominationDTO
+ */
+export type VotingDashboardNominationDto = {
+	/**
+	 * Id
+	 */
+	id: string;
+	/**
+	 * Code
+	 */
+	code: string;
+	/**
+	 * Title
+	 */
+	title: string;
+	/**
+	 * Is Votable
+	 */
+	is_votable: boolean;
+	/**
+	 * Total Votes
+	 */
+	total_votes: number;
+	leader: ContenderDto | null;
 };
 
 /**
@@ -3789,6 +3804,54 @@ export type SetVotingTimeRangeResponses = {
 
 export type SetVotingTimeRangeResponse =
 	SetVotingTimeRangeResponses[keyof SetVotingTimeRangeResponses];
+
+export type UpdateNominationData = {
+	body: UpdateNominationBody;
+	path: {
+		/**
+		 * Nomination Id
+		 *
+		 * ID of the nomination to change.
+		 */
+		nomination_id: string;
+	};
+	query?: never;
+	url: '/voting/nominations/{nomination_id}';
+};
+
+export type UpdateNominationErrors = {
+	/**
+	 * Not authenticated.
+	 */
+	401: ProblemDetails;
+	/**
+	 * Missing voting:manage.
+	 */
+	403: ProblemDetails;
+	/**
+	 * Nomination not found.
+	 */
+	404: ProblemDetails;
+	/**
+	 * Request validation error.
+	 */
+	422: ValidationProblem;
+	/**
+	 * Unexpected error.
+	 */
+	default: ProblemDetails;
+};
+
+export type UpdateNominationError = UpdateNominationErrors[keyof UpdateNominationErrors];
+
+export type UpdateNominationResponses = {
+	/**
+	 * Nomination updated.
+	 */
+	204: void;
+};
+
+export type UpdateNominationResponse = UpdateNominationResponses[keyof UpdateNominationResponses];
 
 export type DrawVotingContestWinnerData = {
 	body?: never;

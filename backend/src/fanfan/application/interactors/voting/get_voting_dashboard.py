@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.voting import NominationContenderDTO
+from fanfan.application.dto.voting import VotingDashboardNominationDTO
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -15,12 +15,13 @@ class GetVotingDashboardOutput(BaseModel):
     voting_starts_at: datetime | None
     voting_ends_at: datetime | None
     contest_pool_size: int
-    nominations: list[NominationContenderDTO]
+    nominations: list[VotingDashboardNominationDTO]
 
 
 class GetVotingDashboard:
-    """Organizer view of the running vote: the voting time range, the leader in
-    each votable nomination, and the size of the prize-draw pool."""
+    """Organizer view of the running vote: the voting time range, every
+    nomination with whether it is in voting and its leader, and the size of the
+    prize-draw pool."""
 
     def __init__(
         self,
@@ -43,12 +44,12 @@ class GetVotingDashboard:
         )
 
         settings = await self.app_settings_gateway.get()
-        contenders = await self.nomination_gateway.read_voting_contenders()
+        nominations = await self.nomination_gateway.read_dashboard_nominations()
         contest_pool_size = await self.user_gateway.count_voting_contest_pool()
 
         return GetVotingDashboardOutput(
             voting_starts_at=settings.voting_starts_at,
             voting_ends_at=settings.voting_ends_at,
             contest_pool_size=contest_pool_size,
-            nominations=contenders,
+            nominations=nominations,
         )

@@ -78,3 +78,58 @@ async def test_attendee_cannot_open_voting(
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.headers["content-type"] == "application/problem+json"
+
+
+async def test_attendee_cannot_vote_once_an_organizer_takes_the_nomination_out(
+    dishka_request: AsyncContainer,
+    client: AsyncClient,
+    voting_manager: User,
+    visitor_with_ticket: User,
+    sign_in: Callable[[User], Awaitable[None]],
+) -> None:
+    participant = await _add_participant(dishka_request)
+    await sign_in(voting_manager)
+    await client.put("/voting/time-range", json=OPEN_VOTING)
+    taken_out = await client.patch(
+        f"/voting/nominations/{participant.nomination_id}",
+        json={"is_votable": False},
+    )
+    assert taken_out.status_code == HTTPStatus.NO_CONTENT
+
+    await sign_in(visitor_with_ticket)
+    cast = await client.post(
+        "/voting/votes", json={"participant_id": str(participant.id)}
+    )
+
+    assert cast.status_code == HTTPStatus.FORBIDDEN
+    assert cast.json()["code"] == "NOMINATION_NOT_VOTABLE"
+
+
+async def test_nomination_patch_refuses_null_votable(
+    dishka_request: AsyncContainer,
+    client: AsyncClient,
+    voting_manager: User,
+    sign_in: Callable[[User], Awaitable[None]],
+) -> None:
+    participant = await _add_participant(dishka_request)
+    await sign_in(voting_manager)
+
+    response = await client.patch(
+        f"/voting/nominations/{participant.nomination_id}",
+        json={"is_votable": None},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+async def test_nomination_patch_refuses_an_empty_body(
+    dishka_request: AsyncContainer,
+    client: AsyncClient,
+) -> None:
+    participant = await _add_participant(dishka_request)
+
+    response = await client.patch(
+        f"/voting/nominations/{participant.nomination_id}", json={}
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY

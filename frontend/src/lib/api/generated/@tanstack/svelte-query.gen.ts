@@ -86,6 +86,7 @@ import {
 	unlinkUserTicket,
 	updateCurrentUser,
 	updateCurrentUserSettings,
+	updateNomination,
 	updateScheduleEvent,
 	updateScheduleSettings,
 	updateSettings
@@ -319,6 +320,9 @@ import type {
 	UpdateCurrentUserSettingsData,
 	UpdateCurrentUserSettingsError,
 	UpdateCurrentUserSettingsResponse,
+	UpdateNominationData,
+	UpdateNominationError,
+	UpdateNominationResponse,
 	UpdateScheduleEventData,
 	UpdateScheduleEventError,
 	UpdateScheduleEventResponse,
@@ -1583,7 +1587,7 @@ export const getVotingDashboardQueryKey = (options?: Options<GetVotingDashboardD
 /**
  * Get the organizer voting dashboard
  *
- * Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
+ * Voting time range, every nomination with whether it is in voting and its leading participant, and the size of the prize-draw pool. Requires voting:manage.
  */
 export const getVotingDashboardOptions = (options?: Options<GetVotingDashboardData>) =>
 	queryOptions<
@@ -1623,6 +1627,35 @@ export const setVotingTimeRangeMutation = (
 	> = {
 		mutationFn: async (fnOptions) => {
 			const { data } = await setVotingTimeRange({
+				...options,
+				...fnOptions,
+				throwOnError: true
+			});
+			return data;
+		}
+	};
+	return mutationOptions;
+};
+
+/**
+ * Update a nomination
+ *
+ * JSON Merge Patch. `is_votable` sets whether visitors can see and vote in the nomination; votes already cast stay. Requesting the state that already holds changes nothing. Requires voting:manage.
+ */
+export const updateNominationMutation = (
+	options?: Partial<Options<UpdateNominationData>>
+): MutationOptions<
+	UpdateNominationResponse,
+	UpdateNominationError,
+	Options<UpdateNominationData>
+> => {
+	const mutationOptions: MutationOptions<
+		UpdateNominationResponse,
+		UpdateNominationError,
+		Options<UpdateNominationData>
+	> = {
+		mutationFn: async (fnOptions) => {
+			const { data } = await updateNomination({
 				...options,
 				...fnOptions,
 				throwOnError: true

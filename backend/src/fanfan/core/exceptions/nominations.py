@@ -1,4 +1,4 @@
-from fanfan.core.exceptions.base import AppException, NotFound
+from fanfan.core.exceptions.base import AccessDenied, AppException, NotFound
 
 
 class NominationException(AppException):
@@ -7,3 +7,7 @@ class NominationException(AppException):
 
 class NominationNotFound(NotFound, NominationException):
     code = "NOMINATION_NOT_FOUND"
+
+
+class NominationNotVotable(AccessDenied, NominationException):
+    code = "NOMINATION_NOT_VOTABLE"

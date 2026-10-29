@@ -12,12 +12,13 @@ class ContenderDTO(BaseModel):
     votes_count: int
 
 
-class NominationContenderDTO(BaseModel):
+class VotingDashboardNominationDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: NominationId
     code: NominationCode
     title: str
+    is_votable: bool
     total_votes: int
 
     leader: ContenderDTO | None
