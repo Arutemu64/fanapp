@@ -14,6 +14,7 @@ dependencies = [
     "altcha>=2.3.0",
     "authlib>=1.9.1",
     "click>=8.5.0",
+    "cosplay2py>=0.3.0,<0.4",
     "dishka-faststream>=0.7.0",
     "dishka>=1.10.1",
     "fastapi>=0.143.0",
@@ -63,6 +64,10 @@ build-backend = "uv_build"
 [tool.uv]
 required-version = "==0.13.0"
 exclude-newer = "7 days"
+
+[tool.uv.exclude-newer-package]
+# First adopted release was published on 2026-10-30.
+cosplay2py = "0 days"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

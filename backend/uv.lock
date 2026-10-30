@@ -6,6 +6,9 @@ requires-python = ">=3.14"
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P7D"
 
+[options.exclude-newer-package]
+cosplay2py = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+
 [[package]]
 name = "adaptix"
 version = "3.0.0b12"
@@ -255,6 +258,20 @@ wheels = [
 ]
 
 [[package]]
+name = "cosplay2py"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "httpx2" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/07/7d/6e83dd5fb667ef6604711ae10a32059a1167965a8669758133689e0f8745/cosplay2py-0.3.0.tar.gz", hash = "sha256:e465af9c12e870a603cb5faa7d3dbcb943a95549d60df47aed7bf178dd4a26f9", size = 36540, upload-time = "2026-10-30T17:23:07.46Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/e1/811a4857d6db73c18d42f49b277728d3b97d0a6986fc1f240e2ca52c7904/cosplay2py-0.3.0-py3-none-any.whl", hash = "sha256:ed0ad22f6c8ca50bf8b04d8e488ca6fa05464cadad6a12c5c4868af14e334b25", size = 43708, upload-time = "2026-10-30T17:23:06.307Z" },
+]
+
+[[package]]
 name = "coverage"
 version = "7.15.3"
 source = { registry = "https://pypi.org/simple" }
@@ -412,6 +429,7 @@ dependencies = [
     { name = "altcha" },
     { name = "authlib" },
     { name = "click" },
+    { name = "cosplay2py" },
     { name = "dishka" },
     { name = "dishka-faststream" },
     { name = "fastapi" },
@@ -462,6 +480,7 @@ requires-dist = [
     { name = "altcha", specifier = ">=2.3.0" },
     { name = "authlib", specifier = ">=1.9.1" },
     { name = "click", specifier = ">=8.5.0" },
+    { name = "cosplay2py", specifier = ">=0.3.0,<0.4" },
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "dishka-faststream", specifier = ">=0.7.0" },
     { name = "fastapi", specifier = ">=0.143.0" },

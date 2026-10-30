@@ -1,11 +1,9 @@
 from collections.abc import AsyncIterable
 
-import httpx2
-from adaptix import Retort
+from cosplay2py import AsyncCosplay2
 from dishka import Provider, Scope, provide
 
 from fanfan.adapters.api.base import DEFAULT_TIMEOUT
-from fanfan.adapters.api.cosplay2.client import Cosplay2Client
 from fanfan.adapters.api.cosplay2.config import Cosplay2Config
 from fanfan.adapters.api.cosplay2.exceptions import NoCosplay2ConfigProvided
 from fanfan.adapters.api.cosplay2.source import Cosplay2Source
@@ -26,15 +24,12 @@ class Cosplay2Provider(Provider):
 
     @provide(scope=Scope.APP)
     async def get_cosplay2_client(
-        self, config: Cosplay2Config, retort: Retort
-    ) -> AsyncIterable[Cosplay2Client]:
-        headers = {
-            "X-API-Key": config.api_key,
-            "X-API-Secret": config.api_secret.get_secret_value(),
-        }
-        async with httpx2.AsyncClient(
+        self, config: Cosplay2Config
+    ) -> AsyncIterable[AsyncCosplay2]:
+        async with AsyncCosplay2(
             base_url=config.build_api_base_url(),
-            headers=headers,
+            api_key=config.api_key,
+            api_secret=config.api_secret.get_secret_value(),
             timeout=DEFAULT_TIMEOUT,
         ) as client:
-            yield Cosplay2Client(client=client, retort=retort)
+            yield client
