@@ -38,8 +38,7 @@ an emergency and solo-merge escape hatch.
   avoid re-run churn; revisit with a merge queue if PR volume grows. This is the documented
   pattern for conditional/matrix jobs — see
   <https://devopsdirective.com/posts/2025/08/github-actions-required-checks-for-conditional-jobs/>.
-- `Frontend (e2e)` is deliberately **not** gated — `ci.yml` wants a browser tier to prove
-  stable under CI timing first, so it is excluded from the gate's `needs`.
+- `Frontend (e2e)` is included in the gate; browser failures block merging.
 
 Requiring only the gate means the sole thing to keep in sync is the gate's `needs` list in
 `ci.yml`: a new required job missing from it is silently ungated. The two `context` names

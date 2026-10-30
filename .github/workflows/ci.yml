@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -43,6 +45,7 @@ jobs:
           persist-credentials: false
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
+        if: github.event_name == 'pull_request'
         with:
           filters: |
             backend:
@@ -71,7 +74,7 @@ jobs:
   backend:
     name: Backend (lint, types, tests)
     needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     defaults:
@@ -85,6 +88,7 @@ jobs:
           persist-credentials: false
 
       - name: Install uv
+        # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.13.0"
@@ -92,42 +96,42 @@ jobs:
           cache-dependency-glob: backend/uv.lock
 
       - name: Install dependencies
-        run: uv sync --all-groups --frozen
+        run: uv sync --all-groups --locked
 
       - name: Ruff lint
         if: ${{ !cancelled() }}
-        run: uv run ruff check src/fanfan tests scripts --respect-gitignore
+        run: uv run --locked ruff check src/fanfan tests scripts --respect-gitignore
 
       - name: Ruff format check
         if: ${{ !cancelled() }}
-        run: uv run ruff format --check src/fanfan tests scripts --respect-gitignore
+        run: uv run --locked ruff format --check src/fanfan tests scripts --respect-gitignore
 
       - name: Dependency sort check (uv-sort)
         if: ${{ !cancelled() }}
-        run: uv run uv-sort --check
+        run: uv run --locked uv-sort --check
 
       - name: Type check (ty)
         if: ${{ !cancelled() }}
-        run: uv run ty check
+        run: uv run --locked ty check
 
       - name: Import boundaries (import-linter)
         if: ${{ !cancelled() }}
-        run: uv run lint-imports
+        run: uv run --locked lint-imports
 
       - name: Tests
         if: ${{ !cancelled() }}
-        run: uv run pytest tests --cov --cov-report=term-missing
+        run: uv run --locked pytest tests --cov --cov-report=term-missing
 
       - name: Coverage summary
         if: ${{ !cancelled() }}
         run: |
           if [ -f .coverage ]; then
             {
-              echo "## Backend coverage: $(uv run coverage report --format=total)%"
+              echo "## Backend coverage: $(uv run --locked coverage report --format=total)%"
               echo ""
               echo "<details><summary>Per-file coverage</summary>"
               echo ""
-              uv run coverage report --format=markdown
+              uv run --locked coverage report --format=markdown
               echo ""
               echo "</details>"
             } >> "$GITHUB_STEP_SUMMARY"
@@ -136,7 +140,7 @@ jobs:
   frontend:
     name: Frontend (lint, types, tests)
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
@@ -153,6 +157,7 @@ jobs:
           version: 12.10.1
 
       - name: Install Node
+        # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24.21.0
@@ -181,7 +186,7 @@ jobs:
   frontend-e2e:
     name: Frontend (e2e)
     needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
@@ -198,6 +203,7 @@ jobs:
           version: 12.10.1
 
       - name: Install Node
+        # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24.21.0
@@ -227,7 +233,7 @@ jobs:
   root:
     name: Markdown and YAML (prettier)
     needs: changes
-    if: needs.changes.outputs.root == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.root == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -241,6 +247,7 @@ jobs:
           version: 12.10.1
 
       - name: Install Node
+        # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24.21.0
@@ -257,7 +264,7 @@ jobs:
   dockerfiles:
     name: Dockerfiles (hadolint)
     needs: changes
-    if: needs.changes.outputs.dockerfiles == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.dockerfiles == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -274,6 +281,7 @@ jobs:
     name: Images (${{ matrix.name }} build)
     needs: changes
     if: |
+      github.event_name != 'pull_request' ||
       needs.changes.outputs.backend == 'true' ||
       needs.changes.outputs.frontend == 'true' ||
       needs.changes.outputs.dockerfiles == 'true'
@@ -308,6 +316,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase cache ref
+        id: cache
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}-${{ matrix.name }}
+        run: echo "ref=${IMAGE,,}:buildcache" >> "$GITHUB_OUTPUT"
+
       - name: Build ${{ matrix.name }} image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
@@ -315,7 +329,7 @@ jobs:
           target: ${{ matrix.target }}
           platforms: linux/amd64
           push: false
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}-${{ matrix.name }}:buildcache
+          cache-from: type=registry,ref=${{ steps.cache.outputs.ref }}
 
   secrets:
     name: Secrets (gitleaks)
@@ -327,6 +341,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Install gitleaks
         run: |
@@ -334,12 +349,20 @@ jobs:
             | sudo tar -xz -C /usr/local/bin gitleaks
 
       - name: Scan for secrets
-        run: gitleaks dir . --redact --no-banner
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          range="$HEAD_SHA"
+          if [ -n "$BASE_SHA" ]; then
+            range="$BASE_SHA..$HEAD_SHA"
+          fi
+          gitleaks git . --log-opts="$range" --redact --no-banner
 
   workflows:
     name: Workflows (actionlint, zizmor)
     needs: changes
-    if: needs.changes.outputs.workflows == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -361,10 +384,103 @@ jobs:
   ci-ok:
     name: CI success
     if: always()
-    needs: [changes, backend, frontend, root, dockerfiles, images, secrets, workflows]
+    needs: [changes, backend, frontend, frontend-e2e, root, dockerfiles, images, secrets, workflows]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Fail if any required job failed or was cancelled
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: exit 1
+
+  publish:
+    needs: ci-ok
+    if: github.event_name != 'pull_request'
+    name: Build and push (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      REGISTRY: ghcr.io
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            image: ${{ github.repository }}-backend
+            target: ""
+          - name: frontend
+            context: ./frontend
+            image: ${{ github.repository }}-frontend
+            target: prod
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase image ref
+        id: image
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ matrix.image }}
+        run: echo "ref=${IMAGE,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ matrix.image }}
+          tags: |
+            type=sha
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Read release version
+        id: version
+        run: |
+          version=$(python3 -c 'import tomllib; print(tomllib.load(open("backend/pyproject.toml", "rb"))["project"]["version"])')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: ${{ matrix.context }}
+          target: ${{ matrix.target }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_SITE_URL={0}', vars.PUBLIC_SITE_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_TIMEZONE={0}', vars.PUBLIC_TIMEZONE) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_VAPID_KEY={0}', vars.PUBLIC_VAPID_KEY) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_DSN={0}', vars.PUBLIC_SENTRY_DSN) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_ENVIRONMENT={0}', vars.PUBLIC_SENTRY_ENVIRONMENT) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_TRACES_SAMPLE_RATE={0}', vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_UMAMI_SCRIPT_URL={0}', vars.PUBLIC_UMAMI_SCRIPT_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_UMAMI_WEBSITE_ID={0}', vars.PUBLIC_UMAMI_WEBSITE_ID) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_VK_GROUP_ID={0}', vars.PUBLIC_VK_GROUP_ID) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_TELEGRAM_BOT_USERNAME={0}', vars.PUBLIC_TELEGRAM_BOT_USERNAME) || '' }}
+            ${{ matrix.name == 'frontend' && format('SENTRY_URL={0}', vars.SENTRY_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('SENTRY_ORG={0}', vars.SENTRY_ORG) || '' }}
+            ${{ matrix.name == 'frontend' && format('SENTRY_PROJECT={0}', vars.SENTRY_PROJECT) || '' }}
+            ${{ matrix.name == 'frontend' && format('APP_VERSION={0}', steps.version.outputs.version) || '' }}
+            APP_BUILD=${{ github.sha }}
+          secrets: |
+            ${{ matrix.name == 'frontend' && format('sentry_auth_token={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
+          cache-from: type=registry,ref=${{ steps.image.outputs.ref }}:buildcache
+          cache-to: type=registry,ref=${{ steps.image.outputs.ref }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
