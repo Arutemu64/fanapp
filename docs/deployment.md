@@ -295,8 +295,9 @@ specific build — which is also how you roll back — by setting `IMAGE_TAG` in
 IMAGE_TAG=sha-1a2b3c4
 ```
 
-Every push to `main` publishes a `sha-<short-sha>` tag, and every `v*` tag
-publishes that release, so any past build is reachable by tag.
+After all CI checks pass, a push to `main` publishes a `sha-<short-sha>` tag,
+and a `v*` tag publishes that release. Past successful builds remain reachable
+by tag.
 
 ## Monitoring
 
@@ -641,3 +642,15 @@ resolve on the private `backend-network` / `frontend-network` as before.
 The base file's loopback host bindings (`127.0.0.1:3000` / `:8000`) are kept, so
 the SSH-tunnel/debug seam still works; with alias routing the proxy no longer
 depends on them.
+
+## CI image publishing
+
+`.github/workflows/ci.yml` validates and publishes the same commit. Main pushes,
+`v*` tags, and manual runs execute all checks; publishing starts only after
+`CI success`, including browser tests. PRs use path filters and never publish.
+Only the publishing job has `packages: write`. Main runs update `latest`; tags
+also produce version tags. Manual runs validate the selected ref before publishing.
+
+Both image jobs lowercase their registry cache references so CI reads the cache
+written by publishing. The images are rebuilt for publishing with production
+build arguments and the Sentry upload secret.

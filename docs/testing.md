@@ -455,12 +455,16 @@ frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e
 includes it. CI installs it and always runs it, so a missing browser there fails
 the job instead of silently dropping the project.
 
-**Runs in CI, not yet a required check.** `ci.yml` has a `frontend-e2e` job (its
-own job — it needs a browser and builds the app, unlike the plain `pnpm` steps),
-gated on the frontend paths filter. It downloads browsers on every run rather than
-caching them, per [Playwright's CI guide](https://playwright.dev/docs/ci), and runs
-two workers on the 4-vCPU runner (the guide's default is one, for stability;
-`playwright.config.ts` records why we raised it and when to drop back).
-It isn't marked required in branch protection yet: let a browser tier prove stable
-under CI timing first, then gate it. Like the backend integration suite, treat it
-as a tool to _see_ a UI change work, not a local gate you must run before pushing.
+**Required in CI.** `ci.yml` runs `frontend-e2e` on frontend PR changes and on
+all main pushes, release tags, and manual runs. `CI success` waits for this job,
+so browser failures block merging and publishing. It installs browsers per run,
+per [Playwright's CI guide](https://playwright.dev/docs/ci), and uses two workers.
+Run it locally when useful; CI remains the required gate.
+
+Backend CI uses `uv sync --locked` and `uv run --locked` so stale lockfiles fail
+without being rewritten ([uv lockfile semantics](https://docs.astral.sh/uv/concepts/projects/sync/)).
+Gitleaks scans the PR commit range, including secrets removed by later commits.
+Main pushes, release tags, and manual runs scan all history reachable from the
+checked commit. The checkout fetches full history for these scans.
+`.gitleaksignore` exempts one synthetic token example in a historical vendored
+skill by its exact finding fingerprint.
