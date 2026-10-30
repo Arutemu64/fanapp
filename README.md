@@ -304,7 +304,6 @@ morning, automerging the ones that break loudly in CI (see
 - [`docs/testing.md`](docs/testing.md): backend test layers and fixtures, what is real vs faked, frontend unit tests
 - [`docs/deployment.md`](docs/deployment.md): server setup, deploys and rollbacks, reverse proxy
 - [`docs/dependencies.md`](docs/dependencies.md): shared version pins and Renovate
-- [`docs/claude-cloud.md`](docs/claude-cloud.md): Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md): architecture decision records
 
 ## Security
@@ -334,7 +333,7 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 
 Fork the code freely; swap in your own branding.
 
-**Vendored third-party agent skills**, under `.agents/skills/`,
-`.claude/skills/`, `.cline/` and `.gemini/`. Each keeps its
+**Vendored third-party agent skills**, under `.agents/skills/` and
+`.gemini/`. Each keeps its
 upstream license and copyright; `skills-lock.json` records the source repository
 for every one of them.

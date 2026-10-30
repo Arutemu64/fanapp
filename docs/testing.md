@@ -99,23 +99,6 @@ run → _Summary_) — a headline total plus a collapsible per-file table. It's
 reporting only: there is no third-party upload, no token, and **no
 `--cov-fail-under` gate**, so a dip in coverage never fails a PR on its own.
 
-### Running them on Claude Code on the web
-
-Cloud sessions **have** a Docker daemon (the SessionStart hook starts `dockerd`),
-so you _can_ run the integration suite in-session — but per AGENTS.md **prefer
-CI** (`.github/workflows/ci.yml`): it's slow, CI runs it regardless, and a green
-run there is the gate that counts. The daemon's routine in-session job is
-migration autogenerate (`just backend-generate-auto`); reach for
-`just backend-test-integration` locally only when it helps, e.g. debugging a
-failure. The setup script prepulls the testcontainers image
-(`postgres:18.6-alpine` — pinned, and shared with Alembic autogenerate and
-production) and the hook sets
-`TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures already stop
-their own containers in `finally:` blocks, so the Ryuk reaper isn't needed), so
-the suite runs without a cold image pull when you do need it. Provisioning
-details — setup script vs. hook, image prepull, Docker Hub auth, network access —
-are in [claude-cloud.md](claude-cloud.md).
-
 ## Unit tests — for `core/`
 
 Pure domain logic (`core/models/`, `core/vo/`, `core/services/`, `core/utils/`)

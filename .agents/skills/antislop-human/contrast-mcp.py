@@ -8,12 +8,12 @@ import sys
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "antislop-contrast"
-SERVER_VERSION = "3.2.20"
+SERVER_VERSION = "3.2.24"
 
 TOOLS = [
     {
         "name": "check_contrast",
-        "description": "Compute the WCAG contrast ratio between two hex colors and the pass or fail verdict for normal text and large text (24px+, or about 18.66px+ bold). Use this instead of guessing whether a color pairing meets AA.",
+        "description": "Compute the WCAG contrast ratio between two hex colors and the pass or fail verdict for normal and large text. Use this instead of guessing whether a color pairing meets AA.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -40,15 +40,16 @@ def relative_luminance(hex_color):
 
 
 def contrast_ratio(fg, bg):
+    """The unrounded WCAG ratio. Callers decide what to print, never what to compare."""
     l1, l2 = relative_luminance(fg), relative_luminance(bg)
     lighter, darker = max(l1, l2), min(l1, l2)
     return (lighter + 0.05) / (darker + 0.05)
 
 
 def check_contrast(fg, bg):
+    # The threshold is read from the raw ratio: 4.498:1 fails 4.5:1 even though it
+    # displays as 4.50 once rounded, and a rounded verdict would report the opposite.
     ratio = contrast_ratio(fg, bg)
-    # Verdicts from the unrounded ratio: WCAG thresholds are not rounded, so a
-    # 4.496 ratio fails 4.5 even though it displays as 4.50.
     return {
         "foreground": fg,
         "background": bg,
