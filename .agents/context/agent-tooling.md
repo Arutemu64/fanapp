@@ -15,6 +15,7 @@ Skills are managed with `npx skills` and pinned in `skills-lock.json`. The `fanf
 `npx skills update` overwrites local edits, so re-apply these after one until upstream carries them:
 
 - `antislop` (R-25) and `antislop-human` (guide, `contrast-check.py`, `contrast-mcp.py`): WCAG large text is 24px, or about 18.66px bold, not "18px+". Compare the unrounded contrast ratio, since 4.499:1 fails 4.5:1 ([W3C, Understanding 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)).
+- `antislop-human/references/A11Y-PATTERNS.md`: the fallback focus trap filters disabled, hidden, inert and non-tabbable controls on each Tab keypress, and handles dialogs with no tab stops.
 - `setup-matt-pocock-skills` writes its config to `.agents/context/`, not upstream's `docs/agents/`.
 
 ## CodeGraph

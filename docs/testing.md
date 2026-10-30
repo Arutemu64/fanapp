@@ -442,16 +442,14 @@ backend-seed-demo`), which is opt-in, not the default a session reaches for.
 
 **Same Chromium everywhere.** Each Playwright version needs its own browser
 builds ([docs](https://playwright.dev/docs/browsers)), so every environment runs
-the build the pinned `@playwright/test` expects. A web session's session-start
-hook installs it (headless shell only, a no-op once present). It does not use the
-base image's pre-baked Chromium, which follows the image's schedule rather than
-our pin. CI installs it per run. On a fresh laptop, install it once:
-`pnpm --dir frontend exec playwright install chromium`, and again after a
-Playwright bump.
+the build the pinned `@playwright/test` expects. CI installs it per run.
+In a fresh local or web environment, install it explicitly with
+`pnpm --dir frontend exec playwright install chromium`, and repeat after a
+Playwright bump. The environment's preinstalled Chromium may not match our pin.
 
 **iOS Safari.** Chromium can't stand in for WebKit, and the app is mobile-first
 with an iPhone-heavy audience, so there is also a `mobile-webkit` (iPhone 14)
-project. WebKit is opt-in (no hook installs it), so the config runs it only where Playwright's
+project. WebKit is opt-in outside CI, so the config runs it only where Playwright's
 WebKit build for the pinned version is installed — `just
 frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e2e`
 includes it. CI installs it and always runs it, so a missing browser there fails

@@ -29,29 +29,47 @@ Trap keyboard focus inside a modal dialog so Tab/Shift+Tab cycle through its foc
 
 ```javascript
 function trapFocus(modal, onClose) {
-  const focusable = modal.querySelectorAll(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-  );
-  if (focusable.length === 0) return () => {};
+  const previousTabIndex = modal.getAttribute('tabindex');
+  modal.setAttribute('tabindex', '-1');
 
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
+  function getTabStops() {
+    return Array.from(modal.querySelectorAll(
+      'button, a[href], area[href], input, select, textarea, [tabindex], [contenteditable="true"]'
+    )).filter((element) => {
+      const style = getComputedStyle(element);
+      return element.tabIndex >= 0 &&
+        !element.matches(':disabled') &&
+        !element.closest('[hidden], [inert]') &&
+        element.getClientRects().length > 0 &&
+        style.visibility !== 'hidden' && style.visibility !== 'collapse';
+    });
+  }
 
   function onKeydown(e) {
     if (e.key === 'Escape') return onClose();
     if (e.key !== 'Tab') return;
-    if (e.shiftKey && document.activeElement === first) {
+    // Controls may have been added, hidden or disabled since the last keypress.
+    const focusable = getTabStops();
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (!focusable.length) {
       e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
+      modal.focus();
+    } else if (!focusable.includes(active) ||
+      (e.shiftKey && active === first) || (!e.shiftKey && active === last)) {
       e.preventDefault();
-      first.focus();
+      (e.shiftKey ? last : first).focus();
     }
   }
 
   modal.addEventListener('keydown', onKeydown);
-  first.focus();
-  return () => modal.removeEventListener('keydown', onKeydown);
+  (getTabStops()[0] || modal).focus();
+  return () => {
+    modal.removeEventListener('keydown', onKeydown);
+    if (previousTabIndex === null) modal.removeAttribute('tabindex');
+    else modal.setAttribute('tabindex', previousTabIndex);
+  };
 }
 ```
 
@@ -62,7 +80,7 @@ const release = trapFocus(dialog, () => dialog.close());
 dialog.addEventListener('close', release, { once: true });
 ```
 
-The native `<dialog>` element handles focus trapping automatically, prefer it when browser support allows.
+Prefer a native `<dialog>` opened with `showModal()`, or the project's dialog component, for production use. Those also handle background interaction. This minimal fallback assumes tab stops use the natural DOM order; avoid positive `tabindex` values, custom radio groups, and shadow DOM in it.
 
 ---
 
