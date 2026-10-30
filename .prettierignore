@@ -5,5 +5,3 @@ frontend/
 # Vendored skills, pinned in skills-lock.json. Reformatting them fights upstream updates.
 .agents/skills/*
 !.agents/skills/fanfan-*/
-.claude/skills/*
-!.claude/skills/fanfan-*/

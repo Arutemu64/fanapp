@@ -47,8 +47,8 @@ pnpm e2e specs/voting.spec.ts           # one file
 ```
 
 **Browser:** the suite runs on the Chromium build the pinned `@playwright/test`
-expects. A Claude Code web session's session-start hook installs it; CI installs
-it per run. On a fresh laptop, install it once (and again after a Playwright bump,
+expects. CI installs it per run. On a fresh laptop, install it once
+(and again after a Playwright bump,
 since each version needs its own build):
 
 ```sh

@@ -13,15 +13,15 @@ mismatch unexplained.
 
 ## The shared pins
 
-| Dependency                   | Pinned in                                                                                                                                                         |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `postgres:18.6-alpine`       | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py`                                                            |
-| `uv`                         | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
-| `hadolint`                   | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim                                                                      |
-| `gitleaks`                   | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job)                                                                                   |
-| `pnpm`                       | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input)               |
-| `node`                       | `mise.toml`, `frontend/Dockerfile`, `.claude/setup.sh`, CI (`setup-node`)                                                                                         |
-| `python` (exact runtime pin) | `mise.toml`, `backend/.python-version`                                                                                                                            |
+| Dependency                   | Pinned in                                                                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postgres:18.6-alpine`       | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py`                                        |
+| `uv`                         | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, CI (`setup-uv` input) |
+| `hadolint`                   | `mise.toml`, `.pre-commit-config.yaml` (`rev`)                                                                                                |
+| `gitleaks`                   | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job)                                                               |
+| `pnpm`                       | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), CI (`pnpm/action-setup` input)               |
+| `node`                       | `mise.toml`, `frontend/Dockerfile`, CI (`setup-node`)                                                                                         |
+| `python` (exact runtime pin) | `mise.toml`, `backend/.python-version`                                                                                                        |
 
 Prefer an exact pin over a floating tag so every consumer resolves identically.
 
@@ -41,19 +41,7 @@ replace`); raising it is a deliberate human edit when a minor is dropped.
 `just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
 above: `mise.toml` is its only exact-pin site, so there is nothing to keep in
 lockstep and it needs no Renovate group — the built-in `mise` manager bumps it
-directly as a normal review PR. The cloud setup (`.claude/setup.sh`) installs it
-with `apt-get install just`, which cannot pin a version: that is the one
-cloud-install exception left untracked, unlike the uv, pnpm and node pins in the
-same script, which are exact and Renovate-tracked.
-
-`codegraph` (`CODEGRAPH_VERSION` in `.claude/setup.sh`) is the same
-single-site case, cloud-only and not in the table above, but pinned rather
-than left to float: it has no `mise.toml` entry (locally it is opt-in, per
-AGENTS.md "Code navigation"), and the install is cached in the environment
-snapshot for days at a time, so an unpinned `npm install -g` would let a
-breaking CLI/index-format change onto every session in that window with no
-review. Unlike `just`, it does have a Renovate regex manager (below) — single
-site needs no group, just its own review PR.
+directly as a normal review PR.
 
 ## How Renovate enforces it
 
@@ -69,11 +57,7 @@ site needs no group, just its own review PR.
   chases the patch and never re-tightens onto a lagging `.python-version`.
 - **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
-  `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
-  `.claude/setup.sh` shim; the uv, pnpm and node pins in `.claude/setup.sh`
-  (the `npm install -g pnpm@…` and `NODE_VERSION=…` lines the session actually
-  runs — distinct from the postgres prepull literal in that file, which
-  are cache hints, not functional pins, so they are left untracked); the uv pin
+  `backend/tests/fixtures/db_provider.py`; the uv pin
   in `backend/pyproject.toml`; and the uv version in the `backend/Dockerfile`
   builder tag, which the `dockerfile` manager is switched off for (next
   bullet).
