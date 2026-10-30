@@ -65,6 +65,11 @@ const clean = DOMPurify.sanitize(userInput);
 // Always check authorization, not just authentication
 app.patch('/api/tasks/:id', authenticate, async (req, res) => {
   const task = await taskService.findById(req.params.id);
+  if (!task) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Task not found' }
+    });
+  }
 
   // Check that the authenticated user owns this resource
   if (task.ownerId !== req.user.id) {
@@ -159,7 +164,7 @@ The `range() !== 'unicast'` check covers loopback, link-local `169.254.169.254` 
 import { z } from 'zod';
 
 const CreateTaskSchema = z.object({
-  title: z.string().min(1).max(200).trim(),
+  title: z.string().max(200).trim().min(1),
   description: z.string().max(2000).optional(),
   priority: z.enum(['low', 'medium', 'high']).default('medium'),
   dueDate: z.string().datetime().optional(),

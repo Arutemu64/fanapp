@@ -206,23 +206,12 @@
       "versioningTemplate": "docker"
     },
     {
-      "description": "Shared pin (docs/dependencies.md): hadolint image tag in the cloud setup script — both the prepull list and the Docker-backed shim it installs (hadolint has no native install channel in that environment). Feeds the 'hadolint' group above so it bumps together with mise.toml and the .pre-commit-config.yaml rev.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
-      "matchStrings": ["hadolint/hadolint:(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"],
-      "depNameTemplate": "hadolint/hadolint",
-      "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version. The CI setup-uv input needs no manager here — the github-actions manager reads supported 'uses ... with' version inputs itself (https://docs.renovatebot.com/modules/manager/github-actions/) and reports that line as 'astral-sh/uv', which the uv group above matches. Same for the pnpm input to pnpm/action-setup ('pnpm') and node-version to setup-node ('node').",
+      "description": "Shared uv pin in backend/pyproject.toml [tool.uv] required-version. Feeds the uv group alongside the Docker builder and CI setup-uv pins.",
       "customType": "regex",
       "managerFilePatterns": [
-        "/^\\.claude/setup\\.sh$/",
         "/^backend/pyproject\\.toml$/"
       ],
       "matchStrings": [
-        "uv==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"",
         "required-version = \"==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
       ],
       "depNameTemplate": "uv",
@@ -236,33 +225,6 @@
       "matchStrings": ["ghcr\\.io/astral-sh/uv:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[-\\s]"],
       "depNameTemplate": "astral-sh/uv",
       "datasourceTemplate": "github-releases",
-      "versioningTemplate": "npm"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): pnpm installed via `npm install -g pnpm@X.Y.Z` in the cloud setup script. This is a functional pin — the session runs this pnpm — unlike the postgres prepull literal in the same file, which is a cache hint backed by the real pins in docker-compose.yml and the test fixtures. No built-in manager reads a shell script, so without this manager the line stays invisible to Renovate and drifts behind the other pnpm sites. Feeds the 'pnpm' group above via depName 'pnpm'.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
-      "matchStrings": ["pnpm@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
-      "depNameTemplate": "pnpm",
-      "datasourceTemplate": "npm",
-      "versioningTemplate": "npm"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): Node runtime installed via nvm in the cloud setup script, held in a single NODE_VERSION literal the `nvm install`/`nvm alias` lines both reference. Functional pin — the session runs this Node — with the same shell-script invisibility as the pnpm line above, so it needs its own manager. Feeds the 'node' group above via depName 'node'; datasource node-version matches how the mise and setup-node sites in that group are extracted.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
-      "matchStrings": ["NODE_VERSION=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
-      "depNameTemplate": "node",
-      "datasourceTemplate": "node-version",
-      "versioningTemplate": "node"
-    },
-    {
-      "description": "Pin (docs/dependencies.md): CodeGraph CLI installed via `npm install -g @colbymchenry/codegraph@X.Y.Z` in the cloud setup script. Single-site, so no group like uv/pnpm/node above — it just gets its own review PR, same shell-script invisibility as the pnpm/node lines otherwise leaves it unbumped.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
-      "matchStrings": ["CODEGRAPH_VERSION=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
-      "depNameTemplate": "@colbymchenry/codegraph",
-      "datasourceTemplate": "npm",
       "versioningTemplate": "npm"
     }
   ]

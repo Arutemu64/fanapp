@@ -1,4 +1,4 @@
-exclude: '^(\.agent|\.agents|\.claude)/'
+exclude: '^(\.agent|\.agents)/'
 
 default_install_hook_types: [pre-commit, pre-push]
 

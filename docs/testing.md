@@ -99,23 +99,6 @@ run → _Summary_) — a headline total plus a collapsible per-file table. It's
 reporting only: there is no third-party upload, no token, and **no
 `--cov-fail-under` gate**, so a dip in coverage never fails a PR on its own.
 
-### Running them on Claude Code on the web
-
-Cloud sessions **have** a Docker daemon (the SessionStart hook starts `dockerd`),
-so you _can_ run the integration suite in-session — but per AGENTS.md **prefer
-CI** (`.github/workflows/ci.yml`): it's slow, CI runs it regardless, and a green
-run there is the gate that counts. The daemon's routine in-session job is
-migration autogenerate (`just backend-generate-auto`); reach for
-`just backend-test-integration` locally only when it helps, e.g. debugging a
-failure. The setup script prepulls the testcontainers image
-(`postgres:18.6-alpine` — pinned, and shared with Alembic autogenerate and
-production) and the hook sets
-`TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures already stop
-their own containers in `finally:` blocks, so the Ryuk reaper isn't needed), so
-the suite runs without a cold image pull when you do need it. Provisioning
-details — setup script vs. hook, image prepull, Docker Hub auth, network access —
-are in [claude-cloud.md](claude-cloud.md).
-
 ## Unit tests — for `core/`
 
 Pure domain logic (`core/models/`, `core/vo/`, `core/services/`, `core/utils/`)
@@ -459,16 +442,14 @@ backend-seed-demo`), which is opt-in, not the default a session reaches for.
 
 **Same Chromium everywhere.** Each Playwright version needs its own browser
 builds ([docs](https://playwright.dev/docs/browsers)), so every environment runs
-the build the pinned `@playwright/test` expects. A web session's session-start
-hook installs it (headless shell only, a no-op once present). It does not use the
-base image's pre-baked Chromium, which follows the image's schedule rather than
-our pin. CI installs it per run. On a fresh laptop, install it once:
-`pnpm --dir frontend exec playwright install chromium`, and again after a
-Playwright bump.
+the build the pinned `@playwright/test` expects. CI installs it per run.
+In a fresh local or web environment, install it explicitly with
+`pnpm --dir frontend exec playwright install chromium`, and repeat after a
+Playwright bump. The environment's preinstalled Chromium may not match our pin.
 
 **iOS Safari.** Chromium can't stand in for WebKit, and the app is mobile-first
 with an iPhone-heavy audience, so there is also a `mobile-webkit` (iPhone 14)
-project. WebKit is opt-in (no hook installs it), so the config runs it only where Playwright's
+project. WebKit is opt-in outside CI, so the config runs it only where Playwright's
 WebKit build for the pinned version is installed — `just
 frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e2e`
 includes it. CI installs it and always runs it, so a missing browser there fails

@@ -7,8 +7,7 @@ Usage:
     python3 contrast-check.py --selftest
 
 Prints the contrast ratio and a PASS/FAIL verdict for normal text (4.5:1)
-and large text (3:1; 24px+, or about 18.66px+ bold, per antislop R-25).
-Verdicts use the unrounded ratio; it is rounded only for display. Exit code 0 only when both
+and large text (3:1, 24px+, or about 18.66px+ bold (WCAG's 18pt / 14pt bold) per antislop R-25). Exit code 0 only when both
 verdicts pass, so scripts can chain on it.
 
 --selftest parses the reference table out of the SKILL.md next to this script
@@ -123,11 +122,12 @@ def selftest():
     failures = 0
     for row in rows:
         color_a, color_b = parse_pairing(row["pairing"])
-        computed = contrast_ratio(color_a, color_b)
-        # Verdicts from the unrounded ratio, as main() does: WCAG thresholds are
-        # not rounded, so 4.499 fails 4.5. Only the displayed ratio is rounded.
-        expected_normal = "Pass" if computed >= 4.5 else "Fail"
-        expected_large = "Pass" if computed >= 3.0 else "Fail"
+        # The verdicts read the unrounded ratio, exactly as main() does. Rounding first
+        # turns a 4.498:1 pairing into a displayed 4.50 that would pass 4.5:1 on paper.
+        raw = contrast_ratio(color_a, color_b)
+        computed = round(raw, 2)
+        expected_normal = "Pass" if raw >= 4.5 else "Fail"
+        expected_large = "Pass" if raw >= 3.0 else "Fail"
         if f"{computed:.2f}" != f"{row['ratio']:.2f}":
             failures += 1
             print(f"selftest: {row['pairing']}: table says {row['ratio']}, the formula says {computed:.2f}")
