@@ -1,8 +1,9 @@
 import logging
 from typing import override
 
-from fanfan.adapters.api.cosplay2.client import Cosplay2Client
-from fanfan.adapters.api.cosplay2.dto.requests import RequestStatus
+from cosplay2py import AsyncCosplay2
+from cosplay2py.models import RequestStatus
+
 from fanfan.application.ports.sources.cosplay import (
     CosplaySource,
     ExternalNomination,
@@ -20,12 +21,12 @@ class Cosplay2Source(CosplaySource):
     recognizes as participants.
     """
 
-    def __init__(self, client: Cosplay2Client) -> None:
+    def __init__(self, client: AsyncCosplay2) -> None:
         self.client = client
 
     @override
     async def fetch_nominations(self) -> list[ExternalNomination]:
-        topics = await self.client.get_topics_list()
+        topics = await self.client.topics.get_list()
         return [
             ExternalNomination(
                 external_id=topic.id,
@@ -37,7 +38,7 @@ class Cosplay2Source(CosplaySource):
 
     @override
     async def fetch_participants(self) -> list[ExternalParticipant]:
-        requests = await self.client.get_all_requests()
+        requests = await self.client.topics.get_all_requests()
 
         participants: list[ExternalParticipant] = []
         for request in requests:
