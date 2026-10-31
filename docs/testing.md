@@ -13,9 +13,7 @@ Vitest ([Frontend](#frontend) below).
 > call, write the test.
 >
 > The **existing** suite is not optional: CI runs `pytest tests` and
-> `pnpm test`, so a change that breaks a test is broken. And `just
-backend-lint` + `just backend-typecheck` (or `just frontend-lint` + `just
-frontend-check`) still run after every change.
+> `pnpm test`, so a change that breaks a test is broken. And `just backend-check` (or `just frontend-check`) still run after every change.
 
 Everything from here to [Frontend](#frontend) describes the **backend** suite.
 

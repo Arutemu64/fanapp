@@ -62,6 +62,8 @@ jobs:
               - '**/*.yaml'
               - '.prettierrc'
               - '.prettierignore'
+              - 'justfile'
+              - 'mise.toml'
               - '.github/workflows/ci.yml'
             dockerfiles:
               - '**/Dockerfile'
@@ -231,7 +233,7 @@ jobs:
           retention-days: 7
 
   root:
-    name: Markdown and YAML (prettier)
+    name: Root files (prettier, just)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.root == 'true'
     runs-on: ubuntu-24.04
@@ -257,6 +259,22 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
+
+      - name: Install pinned Just
+        run: |
+          just_version="$(python3 -c 'import tomllib; print(tomllib.load(open("mise.toml", "rb"))["tools"]["just"])')"
+          just_archive="just-${just_version}-x86_64-unknown-linux-musl.tar.gz"
+          just_url="https://github.com/casey/just/releases/download/${just_version}"
+          just_dir="$(mktemp -d)"
+          cd "$just_dir"
+          curl --fail --silent --show-error --location "$just_url/$just_archive" --output "$just_archive"
+          curl --fail --silent --show-error --location "$just_url/SHA256SUMS" --output SHA256SUMS
+          sha256sum --check --ignore-missing SHA256SUMS
+          tar -xzf "$just_archive" just
+          echo "$just_dir" >> "$GITHUB_PATH"
+
+      - name: Check Just formatting and syntax
+        run: just --fmt --check
 
       - name: Check formatting (prettier)
         run: frontend/node_modules/.bin/prettier --check "**/*.{md,yml,yaml}"

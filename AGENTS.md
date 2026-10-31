@@ -8,7 +8,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Users are teens an
 - Never ship user-facing English. All copy is Russian and lives in `frontend/messages/ru.json` ([docs/frontend.md](docs/frontend.md) §6). Code comments and docstrings are English.
 - Never keep user-scoped state in a frontend module singleton unless `Session` resets it on every identity change. Modules outlive login and logout, so the next person on a shared phone would see the last account's data.
 - Never change an env var without updating `.env.example` in the same change. The backend ignores unknown keys, so drift fails silently.
-- Never call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`, `just root-lint` after Markdown or YAML outside `frontend/`. A bug fix, or a change with clear inputs and outputs, starts with a failing test ([Anthropic](https://www.anthropic.com/engineering/claude-code-best-practices)); otherwise [docs/testing.md](docs/testing.md) decides whether a change needs a test.
+- Never call work done with a failing gate: `just backend-check` after Python, `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`, `just root-lint` after Markdown or YAML outside `frontend/`. A bug fix, or a change with clear inputs and outputs, starts with a failing test ([Anthropic](https://www.anthropic.com/engineering/claude-code-best-practices)); otherwise [docs/testing.md](docs/testing.md) decides whether a change needs a test.
 - Never block on the integration suite (`just backend-test-integration`). It is slow and CI runs it. Run it locally only when it helps, for example when debugging.
 - Never write a migration that assumes an empty table. Add a column nullable, backfill it, then tighten. The `fanfan-migrations` skill has the procedure.
 - Never edit `backend/pyproject.toml` `version` unless asked by name. Suggest a bump instead ([docs/dependencies.md](docs/dependencies.md) "Versioning the app").
@@ -42,12 +42,12 @@ SvelteKit (Svelte 5) + shadcn-svelte + Tailwind v4 with `pnpm`. FastAPI + Postgr
 
 | Command                                                                             | Does                                                                     |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `just bootstrap`                                                                    | Local setup: `.env`, secrets, VAPID keys                                 |
-| `just run-dev` / `just run-prod`                                                    | Full stack in Docker Compose                                             |
+| `just setup`                                                                        | Install dependencies; bootstrap `.env`, secrets, VAPID keys              |
+| `just dev` / `just run-prod`                                                        | Full stack in Docker Compose                                             |
 | `just run-infra` + `just backend-dev` / `just frontend-dev` / `just backend-worker` | Services in Docker, app on the host                                      |
-| `just backend-seed-demo`                                                            | Demo programme and voting for an empty environment                       |
-| `just backend-lint` / `just backend-typecheck`                                      | Format, ruff, `ty`, import-linter / `ty` alone                           |
-| `just frontend-lint` / `just frontend-check`                                        | Prettier and ESLint / `svelte-check`                                     |
+| `just demo` / `just backend-seed-demo`                                              | Demo programme and voting for an empty environment                       |
+| `just backend-check` / `just backend-typecheck`                                     | Check format, ruff, `ty`, import-linter / `ty` alone                     |
+| `just frontend-check` / `just frontend-typecheck`                                   | Check Prettier, ESLint and types / types alone                           |
 | `just backend-test` / `just backend-test-integration`                               | pytest unit / integration (needs Docker)                                 |
 | `just frontend-test` / `just frontend-e2e`                                          | Vitest / Playwright against a production build, backend mocked           |
 | `just backend-generate-auto <name>`                                                 | Autogenerate a migration against a throwaway Postgres; review the result |
