@@ -14,12 +14,13 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 FROM base AS dev
 
+# prepare needs the message catalog and SvelteKit configuration.
+COPY . .
+
 RUN --mount=type=cache,target=/pnpm/store \
 	pnpm install --frozen-lockfile
 
 ENV NODE_ENV=development
-
-COPY . .
 
 EXPOSE 3000
 
@@ -27,10 +28,10 @@ CMD ["sh", "-c", "pnpm exec svelte-kit sync && pnpm dev --host 0.0.0.0"]
 
 FROM base AS build
 
+COPY . .
+
 RUN --mount=type=cache,target=/pnpm/store \
 	pnpm install --frozen-lockfile
-
-COPY . .
 
 ARG PUBLIC_API_URL
 ARG PUBLIC_SITE_URL

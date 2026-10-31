@@ -100,7 +100,7 @@ It installs host dependencies too, so editor tooling and local checks are ready.
 `just bootstrap` remains available when you only need to create configuration.
 
 No external credentials are needed. Fresh configuration disables social login;
-use email login and read the code in the worker logs (`docker compose logs worker`).
+use email login and read the code in the API logs (`docker compose logs api`).
 SMTP is optional: without it, emails are logged instead of sent. Telegram and VK
 placeholders let the app start but do not enable working integrations. To use
 social login, supply real credentials and set `WEB__ENABLED_OAUTH_PROVIDERS`
@@ -142,8 +142,7 @@ just backend-worker
 just frontend-dev
 ```
 
-The worker is required for email login codes, notifications and other background
-work. All three processes reload on save. Use `just backend-seed-demo` to seed
+The worker is required for notifications and other background work. All three processes reload on save. Use `just backend-seed-demo` to seed
 this setup and `just stop-infra` to stop its containers while keeping data.
 
 Host processes read the root `.env`; no frontend env file is needed.

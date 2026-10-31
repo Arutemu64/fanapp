@@ -90,7 +90,7 @@ def main() -> None:
     print(
         "\n"
         "Bootstrap complete. No external credentials needed for local development.\n"
-        "Email login/confirmation codes appear in the worker logs.\n"
+        "Email login/confirmation codes appear in the API logs.\n"
         "\n"
         "Optional integrations (configure in .env when needed):\n"
         "  • BOT__TOKEN / BOT__CLIENT_ID / BOT__CLIENT_SECRET — "

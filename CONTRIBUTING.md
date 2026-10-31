@@ -16,7 +16,7 @@ just dev         # full stack in Docker with hot reload; includes migrations and
 ```
 
 Open http://localhost:3000. No external credentials are required: use email login
-and read its code in the worker logs (`docker compose logs worker`). In another
+and read its code in the API logs (`docker compose logs api`). In another
 terminal, run `just demo` to populate an empty database with programme and voting
 data. Setup preserves existing configuration; demo seeding is safe to repeat.
 
