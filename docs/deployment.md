@@ -37,8 +37,9 @@ From a fork, five things need to change:
    crawlers drop relative image URLs (see [frontend.md](frontend.md) §2). Left
    unset, links still work but unfurl without a preview image.
 3. **A build.** A variable change alone does not trigger a publish — run
-   [`docker-publish.yml`](../.github/workflows/docker-publish.yml) manually from
-   the Actions tab afterwards, or push to `main`.
+   [`CI`](../.github/workflows/ci.yml) manually from the Actions tab afterwards,
+   selecting the `main` branch, or push to `main`. Both images publish and
+   update `latest` only after all required checks pass.
 4. **Image names.** The `image:` lines in
    [`docker-compose.prod.yml`](../docker-compose.prod.yml) name
    `ghcr.io/arutemu64/…`; point them at your fork's packages.

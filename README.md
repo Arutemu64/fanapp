@@ -211,9 +211,10 @@ just deploy                   # pull the images and restart; builds nothing on t
 To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
 
 Those images come from
-[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml),
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml),
 which builds the backend and frontend and pushes them to the GitHub Container
-Registry on pushes to `main` (moving the `latest` tag) and on `v*` tags. The
+Registry after all required checks pass on pushes to `main` (moving the `latest`
+tag), `v*` tags, and manual runs. The
 `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build
 (source-map upload); it is consumed in a discarded build stage and never ends up
 in the published image.
