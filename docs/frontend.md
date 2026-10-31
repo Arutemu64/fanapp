@@ -148,7 +148,7 @@ We own these files, so upstream fixes don't arrive on their own, and `shadcn-sve
 
    For the floor upstream builds against, see the dependency ranges in its `docs/package.json`. If a change does need a bump, make it in the same PR: `pnpm up <pkg>@<version>` with the oldest version that has what you need, clear of the release-age window, and update every pinned site per [docs/dependencies.md](dependencies.md). If no such version has cleared the window yet, hold that hunk back with a TODO rather than adding a `minimumReleaseAgeExclude` entry.
 
-7. Run `just frontend-lint`, `just frontend-check` and `just frontend-test`, and let CI run E2E. If the change is visible, look at the affected screens.
+7. Run `just frontend-check` and `just frontend-test`, and let CI run E2E. If the change is visible, look at the affected screens.
 
 ### Z-Index Scale
 
@@ -366,7 +366,7 @@ Generic patterns (skeletons for >~300ms loads, empty-state layouts, error-recove
 
 ## 11. Linting, Formatting & Imports
 
-Stock SvelteKit flat-config tooling (`frontend/eslint.config.js`, `frontend/.prettierrc`); run via `just frontend-lint` (Prettier `--check` + ESLint); auto-format with `pnpm --dir frontend format`.
+Stock SvelteKit flat-config tooling (`frontend/eslint.config.js`, `frontend/.prettierrc`); run via `just frontend-lint` (Prettier `--check` + ESLint); auto-format with `just frontend-format`. `just frontend-check` runs lint and type checks together.
 
 - **Prettier** owns formatting (tabs, single quotes, `printWidth` 100, `endOfLine` `lf`). `prettier-plugin-svelte` formats `.svelte`; `prettier-plugin-tailwindcss` sorts class lists against `src/app.css`. `eslint-config-prettier` disables conflicting ESLint formatting rules — don't re-add them.
 - **Editor baseline**: the repo-root `.editorconfig` mirrors these per tree (frontend tabs/width 2, Python 4-space/88-col, YAML 2-space) and pins `end_of_line = lf`, so editors match the formatters before a commit. `.gitattributes` enforces LF in the repo itself.

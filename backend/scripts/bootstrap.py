@@ -89,18 +89,20 @@ def main() -> None:
 
     print(
         "\n"
-        "Bootstrap complete. Still set by hand in .env "
-        "(real credentials, can't generate):\n"
-        "  • BOT__TOKEN / BOT__CLIENT_ID / BOT__CLIENT_SECRET — "
-        "create a bot via @BotFather\n"
-        "  • PUSH__SUBSCRIBER — your contact email for Web Push\n"
+        "Bootstrap complete. No external credentials needed for local development.\n"
+        "Email login/confirmation codes appear in the worker logs.\n"
         "\n"
-        "Optional:\n"
+        "Optional integrations (configure in .env when needed):\n"
+        "  • BOT__TOKEN / BOT__CLIENT_ID / BOT__CLIENT_SECRET — "
+        "create a bot via @BotFather; enable Telegram OAuth separately\n"
+        "  • PUSH__SUBSCRIBER — your contact email for Web Push\n"
         "  • MAIL__* — SMTP credentials. Unset = emails are logged, not sent (email\n"
         "    login/confirmation codes appear in the app logs).\n"
         "\n"
         "Then start the full environment:\n"
-        "  just run-dev"
+        "  just dev\n"
+        "Then, in another terminal, load demo programme and voting data:\n"
+        "  just demo"
     )
 
 

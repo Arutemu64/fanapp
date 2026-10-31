@@ -82,92 +82,73 @@ The backend follows clean / hexagonal architecture: pure `core` and `application
 
 ## Getting started
 
-### 1. Configure
+### Default: develop in Docker
+
+Install the tools listed above (or run `mise install`), then:
 
 ```sh
-just bootstrap
+just setup       # install backend/frontend dependencies and bootstrap .env + VAPID keys
+just dev         # start the full stack with hot reload
 ```
 
-This creates `.env` from the template, fills the generated secrets (DB /
-NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
-(`secrets/private_key.pem`, `secrets/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
-idempotent: re-run anytime, and it never overwrites values you've already set.
+Open http://localhost:3000. The API is at http://localhost:8000.
+Compose starts the frontend, API, worker, Postgres and NATS, and applies migrations.
+Stop the stack with Ctrl+C; database volumes are kept.
 
-Both the web API and the bootstrap defaults are designed to boot with no real
-third-party credentials, so you can start exploring immediately:
+`just setup` can be rerun: bootstrap preserves existing configuration and secrets.
+It installs host dependencies too, so editor tooling and local checks are ready.
+`just bootstrap` remains available when you only need to create configuration.
 
-- `BOT__*`: the placeholder values are format-valid, so the web API starts with
-  them. Telegram notifications stay disabled until you set a real bot (create one
-  via [@BotFather](https://t.me/BotFather)); Telegram _login_ additionally needs
-  `telegram` in `WEB__ENABLED_OAUTH_PROVIDERS` (default `["vk"]`), since a provider
-  can be configured yet unreachable from a given host. Email and credentials login
-  work without any of this. There is no standalone bot process — the token is used
-  only for the notifier (Bot API) and OAuth login.
-- `MAIL__*` (SMTP): optional. Leave unset and outgoing emails are logged instead
-  of sent (email login/confirmation codes appear in the app logs).
-- `PUSH__SUBSCRIBER`: your contact email for Web Push.
+No external credentials are needed. Fresh configuration disables social login;
+use email login and read the code in the worker logs (`docker compose logs worker`).
+SMTP is optional: without it, emails are logged instead of sent. Telegram and VK
+placeholders let the app start but do not enable working integrations. To use
+social login, supply real credentials and set `WEB__ENABLED_OAUTH_PROVIDERS`
+(for example, `["vk"]`). Set `PUSH__SUBSCRIBER` to your contact email before
+using Web Push outside local development.
 
-The optional integration blocks stay commented out.
-
-Local (non-Docker) frontend dev reads this same root `.env`. There is no separate frontend env file.
-
-### 2. Run everything in Docker
+To populate an empty local database, run this in another terminal once the app starts:
 
 ```sh
-just run-dev      # dev: hot-reload via Compose --watch
-just run-prod     # prod: includes ops profile (pgbackup)
+just demo        # demo programme, participants and voting; safe to rerun
 ```
 
-This brings up the frontend, API, worker, Postgres, and NATS. Migrations run automatically via the `migration` service.
+Existing `.env` files are kept as-is. If an older local setup shows an unconfigured
+social login button, set `WEB__ENABLED_OAUTH_PROVIDERS=[]` in that file.
 
-- Frontend: http://localhost:3000
-- API: http://localhost:8000
+`just run-dev` remains an alias for the same Docker workflow. Use `just run-prod`
+to build and test production images locally, including the backup service.
+Use `just dev --build` to rebuild development images. Production builds rebuild
+by default; `just run-prod --no-build` reuses existing images. These are explicit
+flags; arbitrary Compose arguments are not accepted. Deployment is covered separately below.
 
-Both host ports are overridable if 3000/8000 are taken: set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
+Set `FRONTEND_PORT` / `API_PORT` in `.env` if the default ports are taken.
+Update `WEB__PUBLIC_URL` and `PUBLIC_SITE_URL` to match the frontend address.
 
-Reach for this when you want the deployed shape: the real images, the real
-Compose network, the reverse-proxy layout. For iterating on code, §3 is faster.
+### Advanced: run app processes on the host
 
-### 3. Run the app on the host, infra in Docker (recommended for day-to-day work)
-
-Postgres and NATS stay containerised; the API and the frontend run
-natively. Reload is faster than any file sync, and breakpoints, profilers and
-your editor's language server all attach to a real local process instead of one
-inside a container.
-
-Install dependencies once:
+After `just setup`, start the backing services and apply migrations:
 
 ```sh
-just backend-install
-just frontend-install
+just run-infra
+just backend-migrate
 ```
 
-Then, per session:
+Then run each app process in its own terminal:
 
 ```sh
-just run-infra           # Postgres and NATS on 127.0.0.1 (detached)
-just backend-migrate     # apply DB migrations
-just backend-dev         # FastAPI on :8000 (WEB__PORT)
-just backend-worker      # FastStream worker — outbox relay, domain events, periodic jobs
-just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
+just backend-dev
+just backend-worker
+just frontend-dev
 ```
 
-> [!IMPORTANT]
-> `backend-worker` is not optional. The worker runs the **outbox
-> relay**, so without it aggregate domain events written on commit never leave
-> the database, and it is also what handles them once they do. Skip it and
-> event-driven features (email login codes, Web Push broadcasts, notifications)
-> silently do nothing while the API still returns success. `just run-dev` (§2) starts all of these for you.
+The worker is required for email login codes, notifications and other background
+work. All three processes reload on save. Use `just backend-seed-demo` to seed
+this setup and `just stop-infra` to stop its containers while keeping data.
 
-Each host process holds a terminal, so run them in separate ones (`just dev`
-prints the list). All three reload on save. `just stop-infra` stops the
-containers and keeps the volumes, so your data survives.
-
-This works because `DB__HOST` / `NATS__HOST` in `.env` are
-`localhost`, not the Compose service names: `docker-compose.yml` overrides all
-three per service via `environment:`, which outranks `env_file:`, so containers
-always reach `db` / `nats` regardless. One `.env`, with no second copy
-to keep in sync. See the SERVICE HOSTNAMES note in `.env.example`.
+Host processes read the root `.env`; no frontend env file is needed.
+`DB__HOST` and `NATS__HOST` stay `localhost` there. Compose overrides them with
+its service names when running the app in containers.
 
 ## External integrations
 
@@ -185,25 +166,28 @@ Optional, enabled via `.env`:
 
 All commands run from the repo root via `just`.
 
-| Command                                      | What it does                                                                             |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `just run-infra` / `just stop-infra`         | Start / stop the backing services (Postgres, NATS) alone                                 |
-| `just backend-dev` / `just frontend-dev`     | Start backend / frontend on the host                                                     |
-| `just backend-worker`                        | Start the FastStream worker (outbox relay, consumers, periodic jobs) on the host         |
-| `just backend-migrate`                       | Apply Alembic migrations                                                                 |
-| `just backend-seed-demo`                     | Fill an empty environment with a demo programme and voting (idempotent)                  |
-| `just backend-generate <name>`               | Autogenerate a migration against the running app DB                                      |
-| `just backend-generate-auto <name>`          | Autogenerate a migration against a throwaway Postgres (needs Docker)                     |
-| `just backend-lint`                          | Sort deps + format + lint + type-check + import rules, backend                           |
-| `just backend-typecheck`                     | Run `ty` type checker                                                                    |
-| `just backend-test`                          | Backend unit tests (no Docker); `just backend-test-integration` for the integration tier |
-| `just frontend-lint` / `just frontend-check` | Lint / type-check frontend                                                               |
-| `just root-lint` / `just root-format`        | Check / fix Prettier formatting of Markdown and YAML outside `frontend/`                 |
-| `just frontend-test` / `just frontend-e2e`   | Vitest unit tests / Playwright E2E against a production build                            |
-| `just frontend-generate-api`                 | Regenerate the OpenAPI spec and the frontend API client                                  |
-| `just backend-sync tcloud`                   | Sync tickets from TicketsCloud                                                           |
-| `just backend-sync cosplay2`                 | Sync cosplay data from Cosplay2                                                          |
-| `just deploy`                                | Server deploy: pull prebuilt images and restart                                          |
+| Command                                    | What it does                                                                             |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `just setup`                               | Install locked dependencies and bootstrap local configuration                            |
+| `just dev`                                 | Start the full Docker development stack with hot reload                                  |
+| `just demo`                                | Seed demo data in the running Docker development stack                                   |
+| `just run-infra` / `just stop-infra`       | Start / stop the backing services (Postgres, NATS) alone                                 |
+| `just backend-dev` / `just frontend-dev`   | Start backend / frontend on the host                                                     |
+| `just backend-worker`                      | Start the FastStream worker (outbox relay, consumers, periodic jobs) on the host         |
+| `just backend-migrate`                     | Apply Alembic migrations                                                                 |
+| `just backend-seed-demo`                   | Fill an empty environment with a demo programme and voting (idempotent)                  |
+| `just backend-generate <name>`             | Autogenerate a migration against the running app DB                                      |
+| `just backend-generate-auto <name>`        | Autogenerate a migration against a throwaway Postgres (needs Docker)                     |
+| `just backend-check`                       | Check formatting, lint, types and import rules without fixing files                      |
+| `just backend-typecheck`                   | Run `ty` type checker                                                                    |
+| `just backend-test`                        | Backend unit tests (no Docker); `just backend-test-integration` for the integration tier |
+| `just frontend-check`                      | Check formatting, lint and types, frontend                                               |
+| `just root-lint` / `just root-format`      | Check / fix Prettier formatting of Markdown and YAML outside `frontend/`                 |
+| `just frontend-test` / `just frontend-e2e` | Vitest unit tests / Playwright E2E against a production build                            |
+| `just frontend-generate-api`               | Regenerate the OpenAPI spec and the frontend API client                                  |
+| `just backend-sync tcloud`                 | Sync tickets from TicketsCloud                                                           |
+| `just backend-sync cosplay2`               | Sync cosplay data from Cosplay2                                                          |
+| `just deploy`                              | Server deploy: pull prebuilt images and restart                                          |
 
 The full list is `just --list`.
 

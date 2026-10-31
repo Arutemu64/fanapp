@@ -7,29 +7,55 @@ the guides under [`docs/`](docs/). **Where this file and `AGENTS.md` disagree,
 
 ## Getting started
 
-You'll need [`just`](https://github.com/casey/just), Docker, `uv` (backend) and
-`pnpm` (frontend). Then:
+Install Docker and the tools pinned in [`mise.toml`](mise.toml) (`mise install`
+if you use mise). From the repository root:
 
 ```bash
-just bootstrap    # .env + generated secrets + VAPID keys (idempotent)
-just run-dev      # full stack via Docker Compose
+just setup       # install dependencies, create .env and generate local secrets
+just dev         # full stack in Docker with hot reload; includes migrations and worker
 ```
 
-To run one side on the host, start the backing services with `just run-infra`
-and use `just backend-dev` / `just frontend-dev`. The full command list is in
-[`AGENTS.md`](AGENTS.md) ("Stack & commands").
+Open http://localhost:3000. No external credentials are required: use email login
+and read its code in the worker logs (`docker compose logs worker`). In another
+terminal, run `just demo` to populate an empty database with programme and voting
+data. Setup preserves existing configuration; demo seeding is safe to repeat.
+
+For host processes with Docker backing services, follow the
+[advanced setup](README.md#advanced-run-app-processes-on-the-host).
+Optional Git hooks: `just backend-setup-hooks`.
+
+## Finding and maintaining commands
+
+Run `just` to list commands by group, or `just --group checks --list` to show
+only checks. Existing names such as `run-dev` and `backend-lint` remain aliases.
+
+Keep recipes in the root `justfile`. Use native [aliases](https://just.systems/man/en/aliases.html)
+for alternate names and [dependencies](https://just.systems/man/en/dependencies.html)
+for ordered steps, so checks share one invocation. Use `quote()` for text arguments
+passed to the shell. Format changes with `just --fmt` and verify with
+`just --fmt --check` (using the version pinned in `mise.toml`). CI runs this check
+when the task file or tool pins change.
+
+Routine Python commands and hooks use `uv run --locked`: update `uv.lock`
+explicitly when changing dependencies. `just dev --build` rebuilds development
+images; `just run-prod --no-build` skips rebuilding production images.
 
 ## Before you push
 
-Run the gate for what you touched (CI runs these regardless):
+Run the check for what you touched. These commands do not fix source files:
 
-- **Backend** — `just backend-lint` and `just backend-typecheck`
-- **Frontend** — `just frontend-lint` and `just frontend-check`
+- **Backend** — `just backend-check` (format, lint, types and import boundaries)
+- **Frontend** — `just frontend-check` (format, lint and types)
 - **Dockerfile** — `just dockerfile-lint`
-- **Markdown or YAML outside `frontend/`** — `just root-lint` (`just root-format` fixes it)
+- **Markdown or YAML outside `frontend/`** — `just root-lint`
 
-Whether a change needs a _new_ test is a judgement call — see
-[`docs/testing.md`](docs/testing.md).
+To fix formatting, use `just backend-format`, `just frontend-format` or
+`just root-format`. `just backend-fix` also applies Ruff fixes and sorts dependencies.
+For types alone, use `just backend-typecheck` or `just frontend-typecheck`.
+`just backend-lint` remains a check-only alias for the full backend gate.
+
+Run the tests relevant to your change (`just backend-test`, `just frontend-test`,
+or `just frontend-e2e`). See [`docs/testing.md`](docs/testing.md) for when to add tests.
 
 ## Language
 

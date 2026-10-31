@@ -41,7 +41,9 @@ replace`); raising it is a deliberate human edit when a minor is dropped.
 `just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
 above: `mise.toml` is its only exact-pin site, so there is nothing to keep in
 lockstep and it needs no Renovate group — the built-in `mise` manager bumps it
-directly as a normal review PR.
+directly as a normal review PR. The root CI job reads this pin with Python
+`tomllib`, downloads the matching release with checksum verification, and runs
+`just --fmt --check`. Changes to `justfile` or `mise.toml` trigger that job.
 
 ## How Renovate enforces it
 
