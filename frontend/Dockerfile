@@ -4,7 +4,7 @@ FROM node:24.21.0-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
 # renovate: datasource=npm depName=pnpm versioning=npm
-ENV PNPM_VERSION=12.15.0
+ENV PNPM_VERSION=12.16.1
 
 RUN npm install -g pnpm@${PNPM_VERSION}
 
