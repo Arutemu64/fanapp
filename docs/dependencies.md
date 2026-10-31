@@ -125,7 +125,7 @@ reads from GitHub releases.
 
 So `ci.yml` has an `images` job that builds both images (without pushing) on any
 change to `backend/**`, `frontend/**` or a `Dockerfile`. Before it existed the
-only real build ran in `docker-publish.yml` _after_ merge, which meant a broken
+only real build ran in the publishing workflow _after_ merge, which meant a broken
 build was discovered as a red `main` that could no longer publish. **Review a
 shared-pin PR against the table above rather than trusting the diff to be
 complete** — the `images` job catches a drifted pin only when the drift actually
