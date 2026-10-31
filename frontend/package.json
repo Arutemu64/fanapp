@@ -33,7 +33,7 @@
 		"@eslint/js": "10.0.1",
 		"@hey-api/openapi-ts": "0.99.0",
 		"@iconify-json/simple-icons": "1.2.100",
-		"@inlang/paraglide-js": "2.29.0",
+		"@inlang/paraglide-js": "2.29.3",
 		"@inlang/paraglide-js-svelte": "1.0.4",
 		"@inlang/plugin-message-format": "4.5.4",
 		"@internationalized/date": "3.12.4",
