@@ -28,7 +28,7 @@
 		"e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit"
 	},
 	"devDependencies": {
-		"@axe-core/playwright": "4.13.0",
+		"@axe-core/playwright": "4.14.0",
 		"@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
 		"@eslint/js": "10.0.1",
 		"@hey-api/openapi-ts": "0.99.0",
