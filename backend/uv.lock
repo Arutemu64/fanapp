@@ -638,7 +638,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.17.2" },
     { name = "testcontainers", specifier = ">=4.15.0" },
-    { name = "ty", specifier = ">=0.0.79" },
+    { name = "ty", specifier = ">=0.0.91" },
     { name = "types-authlib", specifier = ">=1.8.0.20260911" },
     { name = "uv-sort", specifier = ">=0.8.0" },
     { name = "vulture", specifier = ">=2.16" },
