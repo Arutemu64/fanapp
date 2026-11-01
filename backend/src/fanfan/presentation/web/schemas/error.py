@@ -10,7 +10,15 @@ VALIDATION_ERROR_CODE = "VALIDATION_ERROR"
 PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
 
 
-class ProblemDetails(BaseModel):
+class _ProblemDetails(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    type: str
+    title: str
+    status: int
+
+
+class ProblemDetails(_ProblemDetails):
     """An RFC 9457 problem details object; every error response is one.
 
     `code` is our extension member and what the client branches on: a closed
@@ -19,11 +27,6 @@ class ProblemDetails(BaseModel):
     …) sit beside these at the top level, as RFC 9457 §3.2 extensions do.
     """
 
-    model_config = ConfigDict(extra="allow")
-
-    type: str
-    title: str
-    status: int
     code: str
 
 
@@ -36,12 +39,12 @@ class ValidationErrorDetail(BaseModel):
     ctx: dict[str, ValidationContextValue] = Field(default_factory=dict)
 
 
-class ValidationProblem(ProblemDetails):
+class ValidationProblem(_ProblemDetails):
     code: Literal["VALIDATION_ERROR"]
     errors: list[ValidationErrorDetail]
 
 
-class InvalidScheduleFileProblem(ProblemDetails):
+class InvalidScheduleFileProblem(_ProblemDetails):
     """ProblemDetails narrowed to INVALID_SCHEDULE_FILE, for the import route's docs.
 
     Gives the frontend a typed `reason` union to check its copy against, as the
