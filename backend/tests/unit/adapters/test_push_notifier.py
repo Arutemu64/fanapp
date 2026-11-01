@@ -15,10 +15,6 @@ from pydantic import HttpUrl, SecretStr
 from fanfan.adapters.push.client import MessageData, PushUrgency, WebPushClient
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.push.push import PushNotifier
-from fanfan.application.ports.gateways.push_subscriptions import (
-    PushSubscriptionGateway,
-)
-from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -31,6 +27,7 @@ from fanfan.core.vo.schedule_entry import generate_schedule_entry_id
 from fanfan.core.vo.user import UserId
 from fanfan.main.generate_vapid import write_vapid_keys
 from fanfan.presentation.web.config import WebConfig
+from tests.fakes.ports import StubPushSubscriptionGateway, StubUnitOfWork
 
 pytestmark = pytest.mark.unit
 
@@ -187,7 +184,7 @@ class _RecordingClient(WebPushClient):
         return httpx2.Response(self._status, headers=self._headers)
 
 
-class _StubGateway(PushSubscriptionGateway):
+class _StubGateway(StubPushSubscriptionGateway):
     def __init__(self, subs: list[PushSubscription]) -> None:
         self._subs = subs
         self.deleted: list[PushSubscription] = []
@@ -204,7 +201,7 @@ class _StubGateway(PushSubscriptionGateway):
         self.deleted.append(model)
 
 
-class _StubUow(UnitOfWork):
+class _StubUow(StubUnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 

@@ -9,15 +9,11 @@ from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
     SendNotificationInput,
 )
-from fanfan.application.ports.gateways.mailings import MailingGateway
-from fanfan.application.ports.gateways.notifications import NotificationGateway
-from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import (
     PushNotifierPort,
     TelegramNotifierPort,
     VkNotifierPort,
 )
-from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationExpired,
     NotificationSuperseded,
@@ -33,6 +29,12 @@ from tests.fakes.notifier import (
     FakePushNotifier,
     FakeTelegramNotifier,
     FakeVkNotifier,
+)
+from tests.fakes.ports import (
+    StubMailingGateway,
+    StubNotificationGateway,
+    StubUnitOfWork,
+    StubUserGateway,
 )
 
 pytestmark = pytest.mark.unit
@@ -72,7 +74,7 @@ def _make_notification(
     )
 
 
-class _FakeNotificationGateway(NotificationGateway):
+class _FakeNotificationGateway(StubNotificationGateway):
     def __init__(
         self, notification: Notification | None, *, superseded: bool = False
     ) -> None:
@@ -99,7 +101,7 @@ class _FakeNotificationGateway(NotificationGateway):
         return self._notification
 
 
-class _FakeUserGateway(UserGateway):
+class _FakeUserGateway(StubUserGateway):
     def __init__(self, user: User | None) -> None:
         self._user = user
         self.saved: list[User] = []
@@ -116,7 +118,7 @@ class _FakeUserGateway(UserGateway):
         return self._user
 
 
-class _StubMailingGateway(MailingGateway):
+class _StubMailingGateway(StubMailingGateway):
     @override
     async def get(
         self,
@@ -128,7 +130,7 @@ class _StubMailingGateway(MailingGateway):
         raise AssertionError(msg)
 
 
-class _FakeUow(UnitOfWork):
+class _FakeUow(StubUnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
