@@ -88,7 +88,7 @@ def test_unexpected_error_is_logged(
         client.get("/boom")
 
     [record] = [r for r in caplog.records if r.levelno == logging.ERROR]
-    assert record.exc_info is not None
+    assert record.exc_info
     assert isinstance(record.exc_info[1], RuntimeError)
 
 
