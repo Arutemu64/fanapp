@@ -11,14 +11,6 @@ PROBLEM_JSON_MEDIA_TYPE = "application/problem+json"
 
 
 class _ProblemDetails(BaseModel):
-    """An RFC 9457 problem details object; every error response is one.
-
-    `code` is our extension member and what the client branches on: a closed
-    set, stamped into the spec as an enum. `type` is derived from it, so the two
-    never disagree. Problem-specific members (`retry_after`, `reason`, `errors`,
-    …) sit beside these at the top level, as RFC 9457 §3.2 extensions do.
-    """
-
     model_config = ConfigDict(extra="allow")
 
     type: str
@@ -27,6 +19,14 @@ class _ProblemDetails(BaseModel):
 
 
 class ProblemDetails(_ProblemDetails):
+    """An RFC 9457 problem details object; every error response is one.
+
+    `code` is our extension member and what the client branches on: a closed
+    set, stamped into the spec as an enum. `type` is derived from it, so the two
+    never disagree. Problem-specific members (`retry_after`, `reason`, `errors`,
+    …) sit beside these at the top level, as RFC 9457 §3.2 extensions do.
+    """
+
     code: str
 
 
