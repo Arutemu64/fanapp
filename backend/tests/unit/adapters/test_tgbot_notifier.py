@@ -9,8 +9,6 @@ from pydantic import SecretStr
 from fanfan.adapters.tgbot.client import TelegramApiClient, TelegramApiError
 from fanfan.adapters.tgbot.config import TelegramConfig
 from fanfan.adapters.tgbot.notifier import TelegramNotifier, TelegramRateLimiter
-from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
-from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -23,6 +21,7 @@ from fanfan.core.vo.notification import NotificationType, generate_notification_
 from fanfan.core.vo.social_identity import SocialProvider, generate_social_identity_id
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
+from tests.fakes.ports import StubSocialIdentityGateway, StubUnitOfWork
 
 pytestmark = pytest.mark.unit
 
@@ -83,7 +82,7 @@ class _RecordingClient(TelegramApiClient):
             raise self._error
 
 
-class _StubSocialIdentityGateway(SocialIdentityGateway):
+class _StubSocialIdentityGateway(StubSocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
@@ -96,7 +95,7 @@ class _StubSocialIdentityGateway(SocialIdentityGateway):
         return self._identity
 
 
-class _StubUow(UnitOfWork):
+class _StubUow(StubUnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 

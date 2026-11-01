@@ -10,8 +10,6 @@ import pytest
 from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.adapters.vk.notifier import VkNotifier
-from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
-from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -31,6 +29,7 @@ from fanfan.core.vo.social_identity import (
 )
 from fanfan.core.vo.user import UserId, Username, UserRole
 from fanfan.presentation.web.config import WebConfig
+from tests.fakes.ports import StubSocialIdentityGateway, StubUnitOfWork
 
 VK_USER_ID = 555
 VK_GROUP_ID = 777
@@ -178,7 +177,7 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
     assert exc.value.code == 901
 
 
-class _StubSocialIdentityGateway(SocialIdentityGateway):
+class _StubSocialIdentityGateway(StubSocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
@@ -241,7 +240,7 @@ class _StubVkClient(VkApiClient):
             raise self._delete_error
 
 
-class _StubUow(UnitOfWork):
+class _StubUow(StubUnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 

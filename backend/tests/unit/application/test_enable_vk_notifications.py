@@ -8,9 +8,6 @@ from fanfan.application.interactors.current_user.enable_vk_notifications import 
     EnableVkNotifications,
 )
 from fanfan.application.ports.cooldown import Cooldown
-from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
-from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.ports.vk_messages import VkMessagesPermission
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.notifications import (
@@ -23,6 +20,7 @@ from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.social_identity import SocialProvider, generate_social_identity_id
 from fanfan.core.vo.user import UserId, Username, UserRole, generate_user_id
+from tests.fakes.ports import StubSocialIdentityGateway, StubUnitOfWork, StubUserGateway
 
 pytestmark = pytest.mark.asyncio
 
@@ -38,7 +36,7 @@ class _StubCurrentUser(CurrentUserProvider):
         return self._user.id
 
 
-class _StubIdentities(SocialIdentityGateway):
+class _StubIdentities(StubSocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
@@ -49,7 +47,7 @@ class _StubIdentities(SocialIdentityGateway):
         return self._identity
 
 
-class _StubUsers(UserGateway):
+class _StubUsers(StubUserGateway):
     """Hands out the stored user, re-read after the messenger check."""
 
     def __init__(self, user: User) -> None:
@@ -76,7 +74,7 @@ class _StubPermission(VkMessagesPermission):
         return self._allowed
 
 
-class _StubUow(UnitOfWork):
+class _StubUow(StubUnitOfWork):
     @override
     async def commit(self) -> None:
         pass
