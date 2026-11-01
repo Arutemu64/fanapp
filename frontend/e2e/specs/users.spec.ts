@@ -63,7 +63,7 @@ test.describe('organizer user directory', () => {
 		await expect(boris).toBeFocused();
 		await expect(boris).not.toHaveAttribute('tabindex');
 
-		await page.getByRole('button', { name: 'Роль' }).click();
+		await page.getByRole('combobox', { name: 'Роль' }).click();
 		await page.getByRole('option', { name: 'Участник' }).click();
 
 		await expect(page).toHaveURL(/role=participant/);
