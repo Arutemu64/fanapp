@@ -185,11 +185,11 @@ importers:
         specifier: 10.76.2
         version: 10.76.2(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@sveltejs/kit@3.1.0(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.2(@typescript-eslint/types@8.71.2))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))(typescript@6.0.3)(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)))(rollup@4.62.4)(supports-color@7.2.0)(svelte@5.57.2(@typescript-eslint/types@8.71.2))(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1))
       '@tanstack/svelte-query':
-        specifier: 6.3.3
-        version: 6.3.3(svelte@5.57.2(@typescript-eslint/types@8.71.2))
+        specifier: 6.3.4
+        version: 6.3.4(svelte@5.57.2(@typescript-eslint/types@8.71.2))
       '@tanstack/svelte-query-persist-client':
-        specifier: 6.3.3
-        version: 6.3.3(@tanstack/svelte-query@6.3.3(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))
+        specifier: 6.3.4
+        version: 6.3.4(@tanstack/svelte-query@6.3.4(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))
       altcha:
         specifier: 3.5.0
         version: 3.5.0
@@ -1901,20 +1901,20 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
 
-  '@tanstack/query-core@5.104.3':
-    resolution: {integrity: sha512-DZY9TuJAOgU3UyHUhXb4CcTYEHNZszlwkPg4VViIwTxOKzLprPUU+rbaPZQd3srqkGOtpaDdKpW972UV/LKlcg==}
+  '@tanstack/query-core@5.104.4':
+    resolution: {integrity: sha512-nU4Yrb8Sjn0DeVb7PKG9uiepNavys3yoxy1FX0hViY4/P6Ng/mBje2SMl7i9812rtyHKtHyqiaC/td6GkI8StA==}
 
-  '@tanstack/query-persist-client-core@5.104.3':
-    resolution: {integrity: sha512-6nhc/QbMpkKeuAM81SFSdcsJ9B8dm3fGHPODbau2cRSDyqcXiSl7sXQM7POVktch/YdgIGYPIQyZOQQaRarHMA==}
+  '@tanstack/query-persist-client-core@5.104.4':
+    resolution: {integrity: sha512-jnKIZWoHJOuYFoUAiXQozupLvCDrn7qEpNfQ1NPvLnzDW8D6mD5029yqu3syPspt+88buTfiSLNyfoabZdGsGA==}
 
-  '@tanstack/svelte-query-persist-client@6.3.3':
-    resolution: {integrity: sha512-nnw35Lmxthk2KIC1E4cDdO3i5+st3mqVbIZJN0PW5eJCGKEGtDyTk6sOOTfQmcmMLplVNihZJnWA9da01xvtlQ==}
+  '@tanstack/svelte-query-persist-client@6.3.4':
+    resolution: {integrity: sha512-E9yRBP6vC9MV9aWjTT4W5NZNfMfb7WDqlwNDIVyp1hrJmiLTFzh3J9DG2Xk65cb+dM2c5JLAXNKRJ/L6Szu9WQ==}
     peerDependencies:
-      '@tanstack/svelte-query': ^6.3.3
+      '@tanstack/svelte-query': ^6.3.4
       svelte: ^5.25.0
 
-  '@tanstack/svelte-query@6.3.3':
-    resolution: {integrity: sha512-yPCaSm53NGgFM8gLgJUPZNrTMGNqjcJ8eguh0zFrqqmJDNr6lxhgqN2szmsrgViJ64DC9NYnOminmLlw8IxgXw==}
+  '@tanstack/svelte-query@6.3.4':
+    resolution: {integrity: sha512-PGh1+qdwx2296wX9+CwA2W9qZZL4jj7MVbqSR0MoGipn0lFZWQ10oXLmDUd6uFdC0SekekcKwLKeQ5x136chGA==}
     peerDependencies:
       svelte: ^5.25.0
 
@@ -4973,21 +4973,21 @@ snapshots:
       tailwindcss: 4.3.3
       vite: 8.3.4(@types/node@26.6.5)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.1)
 
-  '@tanstack/query-core@5.104.3': {}
+  '@tanstack/query-core@5.104.4': {}
 
-  '@tanstack/query-persist-client-core@5.104.3':
+  '@tanstack/query-persist-client-core@5.104.4':
     dependencies:
-      '@tanstack/query-core': 5.104.3
+      '@tanstack/query-core': 5.104.4
 
-  '@tanstack/svelte-query-persist-client@6.3.3(@tanstack/svelte-query@6.3.3(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))':
+  '@tanstack/svelte-query-persist-client@6.3.4(@tanstack/svelte-query@6.3.4(svelte@5.57.2(@typescript-eslint/types@8.71.2)))(svelte@5.57.2(@typescript-eslint/types@8.71.2))':
     dependencies:
-      '@tanstack/query-persist-client-core': 5.104.3
-      '@tanstack/svelte-query': 6.3.3(svelte@5.57.2(@typescript-eslint/types@8.71.2))
+      '@tanstack/query-persist-client-core': 5.104.4
+      '@tanstack/svelte-query': 6.3.4(svelte@5.57.2(@typescript-eslint/types@8.71.2))
       svelte: 5.57.2(@typescript-eslint/types@8.71.2)
 
-  '@tanstack/svelte-query@6.3.3(svelte@5.57.2(@typescript-eslint/types@8.71.2))':
+  '@tanstack/svelte-query@6.3.4(svelte@5.57.2(@typescript-eslint/types@8.71.2))':
     dependencies:
-      '@tanstack/query-core': 5.104.3
+      '@tanstack/query-core': 5.104.4
       svelte: 5.57.2(@typescript-eslint/types@8.71.2)
 
   '@tybys/wasm-util@0.10.3':
