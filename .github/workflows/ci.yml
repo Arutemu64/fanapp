@@ -39,18 +39,20 @@ jobs:
       root: ${{ steps.filter.outputs.root }}
       dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
       workflows: ${{ steps.filter.outputs.workflows }}
+      renovate: ${{ steps.filter.outputs.renovate }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         with:
           filters: |
             backend:
               - 'backend/**'
               - 'shared/**'
+              - 'scripts/**'
               - '.github/workflows/ci.yml'
             frontend:
               - 'frontend/**'
@@ -68,10 +70,46 @@ jobs:
             dockerfiles:
               - '**/Dockerfile'
               - '.hadolint.yaml'
+              - 'mise.toml'
+              - '.github/workflows/ci.yml'
+            renovate:
+              - 'renovate.jsonc'
+              - '.github/renovate/**'
+              - 'scripts/**'
               - '.github/workflows/ci.yml'
             workflows:
               - '.github/workflows/**'
               - '.pre-commit-config.yaml'
+
+  dependencies:
+    name: Dependency configuration
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check shared toolchain pins
+        run: python3 scripts/check_toolchain.py
+
+      - name: Test dependency checks
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+
+      - name: Install Node for Renovate validation
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.renovate == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # Renovate 44 supports Node 24; the application uses Node 26.
+          node-version-file: .github/renovate/mise.toml
+          package-manager-cache: false
+
+      - name: Validate Renovate configuration
+        if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.renovate == 'true'
+        run: |
+          renovate_version="$(python3 -c 'import tomllib; print(tomllib.load(open(".github/renovate/mise.toml", "rb"))["tools"]["npm:renovate"])')"
+          npm exec --yes --package="renovate@$renovate_version" -- renovate-config-validator --strict renovate.jsonc
 
   backend:
     name: Backend (lint, types, tests)
@@ -93,7 +131,7 @@ jobs:
         # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
-          version: "0.13.5"
+          version-file: backend/pyproject.toml
           enable-cache: true
           cache-dependency-glob: backend/uv.lock
 
@@ -102,11 +140,11 @@ jobs:
 
       - name: Ruff lint
         if: ${{ !cancelled() }}
-        run: uv run --locked ruff check src/fanfan tests scripts --respect-gitignore
+        run: uv run --locked ruff check src/fanfan tests scripts ../scripts --respect-gitignore
 
       - name: Ruff format check
         if: ${{ !cancelled() }}
-        run: uv run --locked ruff format --check src/fanfan tests scripts --respect-gitignore
+        run: uv run --locked ruff format --check src/fanfan tests scripts ../scripts --respect-gitignore
 
       - name: Dependency sort check (uv-sort)
         if: ${{ !cancelled() }}
@@ -156,13 +194,13 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          version: 12.15.0
+          package_json_file: frontend/package.json
 
       - name: Install Node
         # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 26.12.1
+          node-version-file: mise.toml
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -202,13 +240,13 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          version: 12.15.0
+          package_json_file: frontend/package.json
 
       - name: Install Node
         # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 26.12.1
+          node-version-file: mise.toml
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -246,13 +284,13 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          version: 12.15.0
+          package_json_file: frontend/package.json
 
       - name: Install Node
         # zizmor: ignore[cache-poisoning] Test-only cache; publishing rebuilds in Docker without this cache.
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 26.12.1
+          node-version-file: mise.toml
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -290,10 +328,21 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install pinned Hadolint
+        run: |
+          hadolint_version="$(python3 -c 'import tomllib; print(tomllib.load(open("mise.toml", "rb"))["tools"]["hadolint"])')"
+          hadolint_url="https://github.com/hadolint/hadolint/releases/download/v${hadolint_version}"
+          hadolint_dir="$(mktemp -d)"
+          cd "$hadolint_dir"
+          curl --fail --silent --show-error --location "$hadolint_url/hadolint-linux-x86_64" --output hadolint-linux-x86_64
+          curl --fail --silent --show-error --location "$hadolint_url/checksums.sha256" --output checksums.sha256
+          sha256sum --check --ignore-missing checksums.sha256
+          chmod +x hadolint-linux-x86_64
+          mv hadolint-linux-x86_64 hadolint
+          echo "$hadolint_dir" >> "$GITHUB_PATH"
+
       - name: Lint Dockerfiles
-        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
-        with:
-          recursive: true
+        run: hadolint backend/Dockerfile frontend/Dockerfile
 
   images:
     name: Images (${{ matrix.name }} build)
@@ -402,7 +451,19 @@ jobs:
   ci-ok:
     name: CI success
     if: always()
-    needs: [changes, backend, frontend, frontend-e2e, root, dockerfiles, images, secrets, workflows]
+    needs:
+      [
+        changes,
+        dependencies,
+        backend,
+        frontend,
+        frontend-e2e,
+        root,
+        dockerfiles,
+        images,
+        secrets,
+        workflows,
+      ]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

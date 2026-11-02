@@ -1,205 +1,139 @@
 # Dependency Pinning & Renovate
 
-The rule: **one external dependency, one pinned version, everywhere.** When the
-same Docker image or tool is pinned in more than one file, every site names the
-_same exact_ version and they all move together in a single change. A floating
-tag or a stray unpinned install (`pip install --upgrade uv`) silently
-reintroduces drift, and drift here means a test, a migration or a lint gate runs
-against a different build than production.
+Use one authoritative version per tool. Consumers read that file when their
+installer supports it. Keep remaining exact pins equal, including image digests,
+and change them in one PR. `just check-toolchain` enforces this offline before
+project dependencies are installed.
 
-If two sites genuinely cannot share a version (different platform or major
-requirements), say why in a comment **at each site** rather than leaving the
-mismatch unexplained.
+## Shared pins
 
-## The shared pins
+| Dependency | Authoritative declaration | Other consumers                                                                           |
+| ---------- | ------------------------- | ----------------------------------------------------------------------------------------- |
+| Python     | `mise.toml`               | `backend/.python-version`, read by uv in CI and Docker                                    |
+| Node       | `mise.toml`               | Frontend Dockerfile; CI uses `node-version-file: mise.toml`                               |
+| pnpm       | `mise.toml`               | Frontend `packageManager` and Dockerfile `PNPM_VERSION`; CI reads `frontend/package.json` |
+| uv         | `mise.toml`               | Backend `[tool.uv] required-version` and Dockerfile; CI reads `backend/pyproject.toml`    |
+| Postgres   | `docker-compose.yml`      | Migration generator and integration fixture, including the digest                         |
+| hadolint   | `mise.toml`               | Pre-commit hook; CI downloads the mise version with checksum verification                 |
+| gitleaks   | `.pre-commit-config.yaml` | CI `GITLEAKS_VERSION`                                                                     |
 
-| Dependency                   | Pinned in                                                                                                                                     |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `postgres:18.6-alpine`       | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py`                                        |
-| `uv`                         | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, CI (`setup-uv` input) |
-| `hadolint`                   | `mise.toml`, `.pre-commit-config.yaml` (`rev`)                                                                                                |
-| `gitleaks`                   | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job)                                                               |
-| `pnpm`                       | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), CI (`pnpm/action-setup` input)               |
-| `node`                       | `mise.toml`, `frontend/Dockerfile`, CI (`setup-node`)                                                                                         |
-| `python` (exact runtime pin) | `mise.toml`, `backend/.python-version`                                                                                                        |
+`just` also has one pin in `mise.toml`, read by CI. Renovate's validator and its
+Node runtime live together in `.github/renovate/mise.toml`. Renovate 44 declares
+Node `^24.11.0` support, so this tool uses Node 24 independently of the Node 26
+application. Both the CI validator step and `just renovate-check` read that
+isolated toolchain. Keep its runtime rule in Renovate aligned with upstream's
+[engines](https://github.com/renovatebot/renovate/blob/main/package.json) when
+upgrading the validator.
 
-Prefer an exact pin over a floating tag so every consumer resolves identically.
+`requires-python` is a compatibility floor, so it stays at `>=3.14` while runtime
+patch pins move. `uv_build` is a bounded build requirement, not an exact runtime
+pin. Its floor travels with uv updates because Astral releases them together;
+the checker does not confuse either requirement with an equality pin.
 
-`backend/pyproject.toml`'s `requires-python` is deliberately **not** a lockstep
-site. It is a compatibility floor — the minimum interpreter the code needs
-([PEP 621](https://packaging.python.org/en/latest/specifications/pyproject-toml/#requires-python)
-defines it as version _requirements_, not the build you run) — so it stays at
-the minor (`>=3.14`) while the two exact pins above move per patch. Pinning it to
-the latest patch is what turned a trailing `.python-version` from harmless drift
-into a hard failure: [PR #565](https://github.com/Arutemu64/fanapp/pull/565)
-raised `requires-python` to `>=3.14.7` while `.python-version` — read by the
-pyenv/docker datasource, which lags the CPython release the other sites read —
-was still `3.14.6`, and every `uv run`/`uv sync` then rejected it. Renovate keeps
-the floor frozen (the `python floor` rule in `renovate.jsonc`, `rangeStrategy:
-replace`); raising it is a deliberate human edit when a minor is dropped.
+## Check and update pins
 
-`just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
-above: `mise.toml` is its only exact-pin site, so there is nothing to keep in
-lockstep and it needs no Renovate group — the built-in `mise` manager bumps it
-directly as a normal review PR. The root CI job reads this pin with Python
-`tomllib`, downloads the matching release with checksum verification, and runs
-`just --fmt --check`. Changes to `justfile` or `mise.toml` trigger that job.
+Run these from the repository root:
 
-## How Renovate enforces it
+```sh
+just check-toolchain
+just test-dependencies
+just renovate-check
+```
 
-[`renovate.jsonc`](../renovate.jsonc) automates the bump-together part:
+`check-toolchain` and its regression tests use only Python 3.11+ and the standard
+library. They run before installation in the required `Dependency configuration`
+CI job. `CI success` waits for that job. The same check runs as a local prek hook
+on every commit. It checks every occurrence of each registered version declaration
+and fails when a file or expected pin disappears. Each error names the file and
+expected value. Workflow syntax is checked by actionlint; the consistency checker
+focuses on the version declarations listed above.
 
-- **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
-  `python`) consolidate each shared pin into a single PR, so no site is left
-  behind. A shared pin whose sites are read by different managers — and so by
-  different datasources — needs its group most: the exact `python` pin is read
-  twice (mise, pyenv) and would otherwise arrive as two PRs that can settle on
-  different versions. The `requires-python` floor (pep621) is matched by the same
-  group but frozen by a follow-on `rangeStrategy: replace` rule, so it never
-  chases the patch and never re-tightens onto a lagging `.python-version`.
-- **`customManagers`** (regex) cover the pins the built-in managers cannot see:
-  the Postgres image literals in `backend/scripts/generate_migration.py` and
-  `backend/tests/fixtures/db_provider.py`; the uv pin
-  in `backend/pyproject.toml`; and the uv version in the `backend/Dockerfile`
-  builder tag, which the `dockerfile` manager is switched off for (next
-  bullet).
-- **The uv builder image is aged through GitHub releases, not GHCR.** GHCR
-  returns no release timestamps
-  ([Renovate docs](https://docs.renovatebot.com/key-concepts/minimum-release-age/)),
-  and since Renovate 42 `minimumReleaseAgeBehaviour` defaults to
-  `timestamp-required`, which holds an update without a timestamp forever. So
-  the `dockerfile` manager would never raise `ghcr.io/astral-sh/uv` at all. A
-  regex manager reads the same `FROM` tag as `astral-sh/uv` from GitHub
-  releases instead, with the datasource and versioning the `setup-uv` input
-  already uses, so the two always pick the same version. `timestamp-optional`
-  for the image would not fix it: with no age check the image jumps to the
-  newest tag while the aged sites stay one release behind.
-- **`uv_build` is matched as `uv-build`.** The `pep621` manager normalizes
-  PyPI names per PEP 503 before rules see them, and `matchPackageNames` matches
-  that normalized `packageName`, so the `uv_build` spelling from `pyproject.toml`
-  never joined the `uv` group and its floor drifted in a branch of its own.
-- **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
-  annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
-  only, so a pin like `ENV PNPM_VERSION` in `frontend/Dockerfile` is invisible
-  to it and drifts behind the other sites. It carries a
-  `# renovate: datasource=npm depName=pnpm versioning=npm` comment instead, read
-  by the first-party `customManagers:dockerfileVersions` preset. Renovate's own
-  [regex-manager docs](https://docs.renovatebot.com/modules/manager/regex/)
-  prefer this to a bespoke rule — one manager covers every annotated line
-  instead of one rule per pin, and the annotation documents the constraint in
-  the file a reader is already looking at. The comment must sit on the line
-  **directly above** the `ENV`/`ARG`; a blank line between them breaks the
-  match.
-- **Version inputs to setup actions need no custom manager.** The
-  `github-actions` manager reads supported `uses … with` inputs itself, so the
-  `setup-uv`, `pnpm/action-setup` and `setup-node` version inputs in `ci.yml`
-  are extracted natively — as `astral-sh/uv`, `pnpm` and `node`, which is why
-  the `uv` group matches `astral-sh/uv` as well as `uv`. Adding a regex manager
-  for one of those lines gives the same string two owners with two datasources,
-  and then two disagreeing answers about the latest version. The pnpm input
-  still has to _exist_ in the workflow, though: action-setup v6 cannot read
-  `packageManager` from the subdirectory `frontend/package.json`
-  ([pnpm/action-setup#227](https://github.com/pnpm/action-setup/issues/227)).
-- Third-party GitHub Actions are pinned to commit SHAs with a full `# vX.Y.Z`
-  comment (`helpers:pinGitHubActionDigestsToSemver`). A floating `# vX` comment
-  only gets `digest` updates, which Renovate ages against the newest `vX.y.z`
-  ([docs](https://docs.renovatebot.com/key-concepts/minimum-release-age/#digest-updates)),
-  so an action that releases more often than every 7 days never clears
-  `minimumReleaseAge` and its PR waits on `renovate/stability-days` forever.
+The validator is based on the explicit site registry in
+[Airflow's toolchain check](https://github.com/apache/airflow/blob/main/scripts/ci/prek/check_go_version_in_sync.py).
+[Squareone](https://github.com/lsst-sqre/squareone/blob/main/packages/repo-scripts/src/validate-docker-versions.js)
+also compares package-manager pins with Dockerfiles. Here exact patch equality
+and missing-site failures follow this application's reproducibility policy.
 
-**Adding a new pin site for an already-tracked dependency means extending the
-matching group or custom manager in the same change** — otherwise Renovate bumps
-the other sites and silently reintroduces the drift this rule exists to prevent.
+When adding a pin site, extend `scripts/check_toolchain.py` and Renovate's manager
+coverage together. Add a regression test that changes or removes the new site.
+Compatibility ranges and action versions have their own version streams; do not
+add them to an unrelated equality group.
 
-### The backstop: CI builds the images
+## Renovate policy
 
-Grouping is best-effort, not a guarantee. A group only carries the sites that
-had an update _when Renovate cut the branch_, and its members come from
-different datasources (PyPI, GitHub releases, the GHCR tag list) that learn
-about a release at different moments — so a member can be left at the old
-version in an otherwise correct-looking PR. [PR #360](https://github.com/Arutemu64/fanapp/pull/360)
-did exactly that: it moved four of the five `uv` sites to `0.11.30` and left the
-`ghcr.io/astral-sh/uv` builder tag in `backend/Dockerfile` at `0.11.29`, which
-`[tool.uv] required-version` then rejected inside the image build.
-[PR #643](https://github.com/Arutemu64/fanapp/pull/643) repeated it for
-`0.12.23`; the GHCR timestamp gap above was the cause, and the builder tag now
-reads from GitHub releases.
+Renovate opens one PR per dependency. Shared-pin groups are the exception: they
+keep the copies of one tool together. Groups are best-effort: different managers
+can see releases at different times. The required consistency check rejects an
+incomplete update. Docker builds separately check that the images still build.
 
-So `ci.yml` has an `images` job that builds both images (without pushing) on any
-change to `backend/**`, `frontend/**` or a `Dockerfile`. Before it existed the
-only real build ran in the publishing workflow _after_ merge, which meant a broken
-build was discovered as a red `main` that could no longer publish. **Review a
-shared-pin PR against the table above rather than trusting the diff to be
-complete** — the `images` job catches a drifted pin only when the drift actually
-breaks a build.
+- Native managers handle mise, package manifests, workflows, hooks and images.
+- `customManagers:dockerfileVersions` reads annotated `ARG`/`ENV` pins. Keep the
+  annotation immediately above `PNPM_VERSION`.
+- Custom regex managers cover Postgres literals, CI's gitleaks version and uv's
+  `required-version`. Postgres extraction captures the tag and digest separately.
+- The native Docker manager owns the uv image's tag **and** digest. A release-only
+  regex could update its tag while retaining the old image digest.
+- [`renovate-config-validator --strict`](https://docs.renovatebot.com/config-validation/)
+  runs on pull requests and main pushes when its config, isolated toolchain,
+  validation scripts or CI workflow change. Manual CI runs also validate it.
+  Unrelated automatic builds and release tags skip the validator installation.
+  Extraction tests ensure each custom manager still recognizes its declarations.
+  Change detection uses [paths-filter's push support](https://github.com/dorny/paths-filter/blob/v4.0.3/README.md#supported-workflows).
 
-### One PR per dependency
+All external base/service images are pinned to multi-platform OCI digests.
+Renovate tracks both their readable tags and digests via `docker:pinDigests`, as
+recommended by its [upgrade guidance](https://docs.renovatebot.com/upgrade-best-practices/).
+The Postgres fixtures use the same digest as Compose. Application deployment
+images remain selected by the release or build identifier; see the versioning
+section below.
 
-Bumps are **not** batched into weekly grouped PRs. This repo is public and every
-CI job runs on a standard GitHub-hosted runner, which GitHub does not meter, so
-batching saves nothing and costs atomicity: a grouped branch passes or fails as a
-whole, Renovate cannot split it afterwards, and one bad bump then holds back
-every other update in the batch. One PR per dependency means one revertable
-commit per dependency instead.
+### Review and release age
 
-The six shared-pin groups are the exception, and they are not an economy
-measure — they exist so that every site of one pin moves in lockstep.
+Frontend tooling automerges on minor/patch updates after 14 days. Stable frontend
+runtime dependencies automerge on patch updates after the same delay. Frameworks,
+CSS, component libraries, icons, translations, Markdown processing, date handling
+and Workbox require review because their output ships to users. 0.x frontend
+runtime dependencies also require review.
 
-### What automerges, and what only looks like tooling
+Backend dev tools automerge on minor/patch updates. Stable backend runtime
+dependencies automerge on patch updates; runtime minor/major and 0.x updates
+require review.
 
-Dev tooling automerges on minor/patch because it fails loudly in CI. That
-argument does not extend to everything in `frontend/package.json`
-`devDependencies`: SvelteKit convention puts `svelte`, `@sveltejs/*`, `vite`,
-`tailwindcss` and the shadcn-svelte component substrate (`bits-ui`,
-`shadcn-svelte`, `tailwind-variants`, `tailwind-merge`, `clsx`, `mode-watcher`,
-`tw-animate-css`, `@lucide/svelte`) there, but their output ships in the bundle,
-and a CSS or component-substrate minor can move the layout with every gate green. Those
-are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
-`svelte-check`, `vitest` and `@hey-api/openapi-ts` keep automerging.
+All lock-file refreshes require review. Most Python requirements use open-ended
+`>=` floors, so `uv lock --upgrade` can select major or breaking 0.x releases
+without changing those floors. A lock-file-maintenance PR cannot inherit
+per-package patch-only review guarantees.
 
-Runtime dependencies automerge on **patch only**. 0.x packages stay on review
-PRs, since any 0.x release may break. Database and service images, majors and
-the shipped-bundle list never automerge.
+Reviewed updates normally wait seven days. pnpm's `minimumReleaseAge` and uv's
+`exclude-newer` apply that delay during resolution. Backend updates, including
+automerges, retain their existing seven-day exception so Renovate and uv use the
+same window. Making only Renovate wait 14 days lets uv lock a newer release inside
+that window and can strand the PR on `renovate/artifacts`.
 
-**Release age: 7 days for a reviewed PR, 14 for an automerge.** Renovate
-recommends 14 days once third-party deps automerge
-([upgrade best practices](https://docs.renovatebot.com/upgrade-best-practices/)),
-so the frontend dev tooling, frontend runtime patch and GitHub Action rules
-carry it. The global 7 days stays for reviewed PRs and matches pnpm's
-`minimumReleaseAge` and uv's `exclude-newer`. Backend deps stay at 7 even when
-they automerge: Renovate bumps a `>=` floor and uv relocks it, so with Renovate
-at 14 uv could lock a newer release still inside Renovate's window, and the PR
-would stick on `renovate/artifacts` (PR #310). The frontend has no such gap
-because its versions are pinned exactly. 7 days is already the
-"conservative" tier ([cooldowns.dev](https://cooldowns.dev/)), more than
-double Dependabot's 3-day default. Shared-pin groups must keep a single age:
-the Action rule skips the setup actions' version inputs, and pre-commit hooks
-stay at 7, because a longer age on one site would split its group across two
-versions.
+GitHub Actions and pre-commit hooks automerge minor/patch updates after 14 days.
+Shared hadolint and gitleaks groups use 14 days at every pin site. Major runtime,
+framework and image updates require review.
 
-Lock file maintenance automerges with Renovate's own release age switched off:
-Renovate cannot age a lock file refresh, and the `timestamp-required` default
-then holds the PR forever. pnpm's `minimumReleaseAge` and uv's `exclude-newer`
-enforce the same 7 days while relocking, so the cooldown still applies.
+**uv is the timestamp exception.** GHCR supplies no release timestamp, so the
+whole uv group has `minimumReleaseAge: null` and `automerge: false`. A uniform
+policy allows native tag/digest updates without holding its other pins at a
+different target. Review the release before merging; the consistency gate rejects
+incomplete groups. This replaces the old GitHub-release regex workaround.
+
+Lock maintenance also sets Renovate's age to `null`: the package manager resolves
+that refresh, so only its own cooldown can enforce release age. Refreshes remain
+review-only. See [Renovate's release-age limitations](https://docs.renovatebot.com/key-concepts/minimum-release-age/).
 
 ### Schedule
 
-Renovate works in one window, Monday 00:00–05:59 Moscow time, with
-`updateNotScheduled: false`. Outside it Renovate still _runs_ — Mend
-schedules jobs every few hours and on repository webhooks, and no repo setting
-changes that — but it neither opens nor re-pushes branches. Without the flag,
-every merge to `main` rebased every open automerge PR and re-ran its CI. Security
-updates ignore the window (`vulnerabilityAlerts` defaults to no schedule).
+The update window is Monday 00:00–05:59 Moscow time, with
+`updateNotScheduled: false`. Outside it Renovate neither opens nor re-pushes
+ordinary update branches. Security updates retain Renovate's schedule bypass.
+Actions use commit SHAs with full `# vX.Y.Z` comments so release aging follows
+specific releases.
 
-### Rule order matters
-
-`packageRules` are applied in order and a later rule overrides an earlier one.
-Two consequences to keep in mind when editing:
-
-- The shipped-bundle carve-out must stay **below** the `devDependencies` and
-  runtime-patch automerge rules it carves out of, or it silently does nothing.
-- The shared-pin groups stay **last**, so nothing above them can claim a pinned
-  dependency for a different `groupName`.
+Later package rules override earlier ones. Keep the shipped-output exclusions
+below generic automerge rules, and shared-pin policy below manager defaults.
 
 ## Versioning the app
 

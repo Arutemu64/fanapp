@@ -27,6 +27,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: check-toolchain
+        name: shared toolchain consistency
+        entry: python3 scripts/check_toolchain.py
+        language: system
+        always_run: true
+        pass_filenames: false
+
       - id: ruff-check
         name: ruff check
         entry: uv run --locked --directory backend ruff check --fix src/fanfan tests scripts
