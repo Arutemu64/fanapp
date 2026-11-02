@@ -103,6 +103,7 @@ jobs:
         with:
           # Renovate 44 supports Node 24; the application uses Node 26.
           node-version-file: .github/renovate/mise.toml
+          package-manager-cache: false
 
       - name: Validate Renovate configuration
         if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.renovate == 'true'
