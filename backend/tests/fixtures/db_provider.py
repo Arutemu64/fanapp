@@ -16,7 +16,10 @@ class TestDbProvider(Provider):
 
     @provide
     def get_db_config(self) -> Iterable[DatabaseConfig]:
-        postgres = PostgresContainer("postgres:18.6-alpine", driver="psycopg")
+        postgres = PostgresContainer(
+            "postgres:18.6-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5",
+            driver="psycopg",
+        )
         if os.name == "nt":
             postgres.get_container_host_ip = lambda: "127.0.0.1"
         try:

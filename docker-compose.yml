@@ -137,7 +137,7 @@ services:
       - backend-network
 
   db:
-    image: postgres:18.6-alpine
+    image: postgres:18.6-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
     volumes:
       - db-data:/var/lib/postgresql
     environment:
@@ -178,7 +178,7 @@ services:
       - backend-network
 
   nats:
-    image: nats:2.14-alpine
+    image: nats:2.14-alpine@sha256:127c5ccbc538a93f53ebb19461dc193130df386c2d6dab8199661a28a30d85bd
     volumes:
       - nats-data:/data
     configs:
@@ -205,7 +205,7 @@ services:
       - backend-network
 
   pgbackup:
-    image: prodrigestivill/postgres-backup-local:18-alpine
+    image: prodrigestivill/postgres-backup-local:18-alpine@sha256:5519b121b9f3058dc6f116927f8131a6f67951542dbf2cdacfd193f42daaa7a3
     depends_on:
       db:
         condition: service_healthy

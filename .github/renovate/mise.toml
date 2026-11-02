@@ -1,0 +1,5 @@
+# Renovate 44 requires Node ^24.11.0; the application builds with Node 26.
+# https://github.com/renovatebot/renovate/blob/main/package.json
+[tools]
+node = "24.21.0"
+"npm:renovate" = "44.205.1"

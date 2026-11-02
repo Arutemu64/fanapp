@@ -79,8 +79,25 @@ frontend-lint:
 backend-import-lint:
     cd backend && uv run --locked lint-imports
 
+# Check shared version declarations without installing project dependencies.
 [group("checks")]
-root-lint:
+check-toolchain:
+    python3 scripts/check_toolchain.py
+
+[group("tests")]
+test-dependencies:
+    python3 -m unittest discover -s scripts -p 'test_*.py'
+
+[group("checks")]
+renovate-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    renovate_version="$(python3 -c 'import tomllib; print(tomllib.load(open(".github/renovate/mise.toml", "rb"))["tools"]["npm:renovate"])')"
+    renovate_node="$(python3 -c 'import tomllib; print(tomllib.load(open(".github/renovate/mise.toml", "rb"))["tools"]["node"])')"
+    npm exec --yes --package="node@$renovate_node" -- npm exec --yes --package="renovate@$renovate_version" -- renovate-config-validator --strict renovate.jsonc
+
+[group("checks")]
+root-lint: check-toolchain
     frontend/node_modules/.bin/prettier --check "**/*.{md,yml,yaml}"
 
 [group("checks")]
@@ -228,5 +245,7 @@ _backups-dir:
 
 _backend-lint:
     cd backend && uv run --locked uv-sort --check
+    cd backend && uv run --locked ruff check ../scripts
+    cd backend && uv run --locked ruff format --check ../scripts
     cd backend && uv run --locked ruff format --check src/fanfan tests scripts --respect-gitignore
     cd backend && uv run --locked ruff check src/fanfan tests scripts --respect-gitignore

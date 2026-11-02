@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-FROM node:26.12.1-alpine AS base
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+FROM node:26.12.1-alpine@sha256:40cd011b55415bc894e45b02fdd5a5dfde056921b7d23a64c74f80497af48797 AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
@@ -69,7 +69,7 @@ ARG APP_BUILD
 RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
 	pnpm exec svelte-kit sync && pnpm build
 
-FROM nginx:1.31-alpine-slim AS prod
+FROM nginx:1.31-alpine-slim@sha256:f45171d36c76a8b2f5ef97108a3a8a2294248a6578a0a180edc2d78f7d2edc26 AS prod
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build /usr/share/nginx/html

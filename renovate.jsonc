@@ -7,7 +7,8 @@
     ":enablePreCommit",
     "helpers:pinGitHubActionDigestsToSemver",
     "abandonments:recommended",
-    "customManagers:dockerfileVersions"
+    "customManagers:dockerfileVersions",
+    "docker:pinDigests"
   ],
   "configMigration": true,
   "ignorePaths": [
@@ -29,7 +30,7 @@
   "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": true,
-    "automerge": true,
+    "automerge": false,
     "schedule": ["* 0-5 * * 1"],
     "minimumReleaseAge": null
   },
@@ -47,7 +48,7 @@
       "automerge": true
     },
     {
-      "description": "Auto-merge patch bumps of runtime deps (frontend 'dependencies', backend [project] dependencies) after 14 days — the age Renovate recommends once third-party deps automerge, to give registries time to pull a malicious release (https://docs.renovatebot.com/upgrade-best-practices/). The backend half is held back to 7 days by the pep621 rule below. 0.x packages (fastapi, adaptix, …) are excluded because any 0.x release may break (https://docs.renovatebot.com/key-concepts/automerge/); a regex matchCurrentVersion compares the locked version, so this holds for the backend's '>=' floors too. Sits above the shipped-bundle carve-out so that rule still keeps its runtime members (clsx, tailwind-merge, …) on review PRs. Database and service images are untouched: they are docker deps, not these depTypes.",
+      "description": "Automerge stable runtime patches after 14 days on the frontend and 7 days on the backend, aligned with uv. Keep 0.x runtime releases on review PRs.",
       "matchDepTypes": ["dependencies", "project.dependencies"],
       "matchUpdateTypes": ["patch"],
       "matchCurrentVersion": "!/^0/",
@@ -55,7 +56,7 @@
       "automerge": true
     },
     {
-      "description": "Carve-out from the rule above: SvelteKit convention puts the framework, bundler, CSS engine and the shadcn-svelte component substrate in devDependencies, but their output ships in the bundle, so 'breaks loudly in CI' does not hold for them — a Tailwind or bits-ui/shadcn minor can move the layout, and an icon-pack minor can redraw a glyph, with every gate green. shadcn-svelte components are vendored as source, but the CLI's tailwind.css and the class-generation utilities (tailwind-variants, tailwind-merge, clsx) plus tw-animate-css and mode-watcher still ship. These get a review PR like any other shipped dependency. Everything else in devDependencies (eslint, prettier, typescript, svelte-check, vitest, @hey-api/openapi-ts) keeps automerging.",
+      "description": "Review changes whose code or generated output ships to users, including service workers, translations and Markdown preprocessing.",
       "matchFileNames": ["frontend/package.json"],
       "matchPackageNames": [
         "svelte",
@@ -72,20 +73,24 @@
         "tw-animate-css",
         "@lucide/svelte",
         "unplugin-icons",
-        "@iconify-json/**"
+        "@iconify-json/**",
+        "workbox-*",
+        "@inlang/**",
+        "@internationalized/date",
+        "mdsvex"
       ],
       "minimumReleaseAge": "7 days",
       "automerge": false
     },
     {
-      "description": "Auto-merge backend dev-group tools (ruff, ty, pytest, import-linter, etc.) on minor/patch. The depType is 'dependency-groups' — the name Renovate's pep621 manager gives the whole PEP 735 [dependency-groups] table (https://docs.renovatebot.com/modules/manager/pep621/) — not the group's own name 'dev', which never matched.",
+      "description": "Automerge backend dev-group tools on minor/patch updates. The pep621 rule keeps their release age aligned with uv.",
       "matchFileNames": ["backend/pyproject.toml"],
       "matchDepTypes": ["dependency-groups"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },
     {
-      "description": "Backend deps keep the global 7 days even where they automerge, overriding the 14 days on the runtime rule above. Renovate bumps a '>=' floor to the newest release past its age, then uv relocks under its own exclude-newer (backend/pyproject.toml, 7 days); with Renovate at 14, uv can lock a newer 8–13-day-old release, which Renovate rejects as a pending version and the PR sticks on renovate/artifacts (the #310 failure). Raising exclude-newer to 14 instead would hold every backend resolution, reviewed PRs and local `uv add` included, to 14 days.",
+      "description": "Keep backend updates on the same 7-day window as uv exclude-newer. A longer Renovate window can reject newer releases selected by uv while relocking.",
       "matchManagers": ["pep621"],
       "minimumReleaseAge": "7 days"
     },
@@ -96,7 +101,7 @@
       "automerge": true
     },
     {
-      "description": "Age automerged actions 14 days, like the other unreviewed merges: an action runs in CI with the workflow's token, the tj-actions attack's target. Scoped to the 'action'/'workflow' depTypes so it skips the setup-uv/setup-node/pnpm version inputs ('uses-with'), which belong to the uv, node and pnpm shared-pin groups — aging them longer than their mise and pyproject sites would split each group across two target versions. pre-commit hooks stay at 7 days for the same reason: gitleaks and hadolint are shared pins too.",
+      "description": "Age automerged actions 14 days. Version-file inputs avoid duplicate runtime and package-manager pins.",
       "matchManagers": ["github-actions"],
       "matchDepTypes": ["action", "workflow"],
       "minimumReleaseAge": "14 days"
@@ -105,18 +110,15 @@
       "description": "Auto-merge pre-commit hook bumps on minor/patch.",
       "matchManagers": ["pre-commit"],
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true
+      "automerge": true,
+      "minimumReleaseAge": "14 days"
     },
     {
-      "description": "Shared pin (docs/dependencies.md): keep every uv pin identical. Groups the PyPI pin (setup.sh, pyproject [tool.uv]), the setup-uv 'version' input in CI and the Docker builder image (both read as 'astral-sh/uv' GitHub releases — see the rule below), and the mise toolchain pin into one PR so they always bump together. uv_build rides along: Astral releases it from the same repo under the same version numbers, so with rangeStrategy 'bump' its floor in [build-system] requires would otherwise move in a PR of its own and leave the two disagreeing. It is matched as 'uv-build': the pep621 manager PEP 503-normalizes packageName (normalizePythonDepName in Renovate), so the 'uv_build' spelling in pyproject never matched and the floor got a renovate/uv_build-0.x branch of its own.",
+      "description": "Keep exact uv pins together. The native Docker manager owns both GHCR tags and digests. GHCR has no release timestamp, so the entire group is review-only with no cooldown; CI rejects incomplete updates.",
       "groupName": "uv",
-      "matchPackageNames": ["uv", "astral-sh/uv", "uv-build"]
-    },
-    {
-      "description": "The backend/Dockerfile builder image is tracked by the 'astral-sh/uv' regex manager below, not by the dockerfile manager. GHCR returns no release timestamps (https://docs.renovatebot.com/key-concepts/minimum-release-age/), and since Renovate 42 the default minimumReleaseAgeBehaviour 'timestamp-required' holds such an update forever, so the uv group shipped without the image and its bumped [tool.uv] required-version broke the image build (PR #643). Turning on 'timestamp-optional' for the image instead is no fix: with no age check it jumps to the newest tag while the aged sites stay a release behind, the same mismatch the other way round.",
-      "matchManagers": ["dockerfile"],
-      "matchPackageNames": ["ghcr.io/astral-sh/uv"],
-      "enabled": false
+      "matchPackageNames": ["uv", "uv-build", "astral-sh/uv", "ghcr.io/astral-sh/uv"],
+      "minimumReleaseAge": null,
+      "automerge": false
     },
     {
       "description": "Shared pin (docs/dependencies.md): keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR. postgres-backup-local's '18-alpine' tag must track the postgres major, so it rides in the same group.",
@@ -124,7 +126,7 @@
       "matchDepNames": ["postgres", "prodrigestivill/postgres-backup-local"]
     },
     {
-      "description": "Group Node runtime pins (mise, frontend Dockerfile, the setup-node 'node-version' input in CI) so the runtime version bumps in a single reviewable PR.",
+      "description": "Keep the mise runtime and Docker image version together; CI reads mise.toml directly.",
       "groupName": "node",
       "matchDepNames": ["node"]
     },
@@ -134,19 +136,21 @@
       "matchDepNames": ["python"]
     },
     {
-      "description": "Shared pin (docs/dependencies.md): keep every pnpm binary pin identical — mise.toml, package.json 'packageManager', and the 'version' input to pnpm/action-setup in CI, which the github-actions manager extracts natively as 'pnpm'. One grouped PR. Matching by depName excludes the pnpm/action-setup action itself, a separate version stream.",
+      "description": "Keep mise, packageManager and the annotated Dockerfile pin together; CI reads frontend/package.json directly.",
       "groupName": "pnpm",
       "matchDepNames": ["pnpm"]
     },
     {
       "description": "Shared pin (docs/dependencies.md): keep the hadolint binary pin identical across the pre-commit hook (.pre-commit-config.yaml rev) and mise.toml. Excludes hadolint/hadolint-action, a separate action version stream.",
       "groupName": "hadolint",
-      "matchPackageNames": ["hadolint", "hadolint/hadolint"]
+      "matchPackageNames": ["hadolint", "hadolint/hadolint"],
+      "minimumReleaseAge": "14 days"
     },
     {
       "description": "Shared pin (docs/dependencies.md): keep the gitleaks pin identical across the pre-commit hook (.pre-commit-config.yaml rev) and GITLEAKS_VERSION in the CI 'secrets' job. Both read the same .gitleaks.toml, so a version skew would let the local hook and CI disagree about what counts as a secret — the one drift this pair must never develop.",
       "groupName": "gitleaks",
-      "matchPackageNames": ["gitleaks/gitleaks"]
+      "matchPackageNames": ["gitleaks/gitleaks"],
+      "minimumReleaseAge": "14 days"
     },
     {
       "description": "Major runtime/image and framework bumps are review-only: no automerge, explicit label so they surface on the dashboard.",
@@ -180,6 +184,13 @@
       "matchFileNames": ["backend/pyproject.toml"],
       "matchDepNames": ["python"],
       "rangeStrategy": "replace"
+    },
+    {
+      "description": "Renovate 44 requires Node ^24.11.0. Keep its validator runtime separate from the Node 26 application.",
+      "matchFileNames": [".github/renovate/mise.toml"],
+      "matchDepNames": ["node"],
+      "groupName": "renovate validator runtime",
+      "allowedVersions": "^24.11.0"
     }
   ],
   "customManagers": [
@@ -200,32 +211,22 @@
         "/^backend/scripts/generate_migration\\.py$/",
         "/^backend/tests/fixtures/db_provider\\.py$/"
       ],
-      "matchStrings": ["postgres:(?<currentValue>[^\"]+)\""],
+      "matchStrings": [
+        "postgres:(?<currentValue>[^\"@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
       "depNameTemplate": "postgres",
       "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
+      "versioningTemplate": "docker",
+      "autoReplaceStringTemplate": "postgres:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}\""
     },
     {
       "description": "Shared uv pin in backend/pyproject.toml [tool.uv] required-version. Feeds the uv group alongside the Docker builder and CI setup-uv pins.",
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^backend/pyproject\\.toml$/"
-      ],
-      "matchStrings": [
-        "required-version = \"==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
-      ],
+      "managerFilePatterns": ["/^backend/pyproject\\.toml$/"],
+      "matchStrings": ["required-version = \"==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""],
       "depNameTemplate": "uv",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "pep440"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): the uv version in the backend/Dockerfile builder tag (ghcr.io/astral-sh/uv:X.Y.Z or X.Y.Z-<base>, in a FROM or a COPY --from; the match stops at the version, so switching the base variant or to uv's documented COPY --from install keeps the pin tracked), read from GitHub releases rather than the GHCR tag list so minimumReleaseAge can age it (see the dockerfile disable rule above). Datasource, packageName and versioning mirror how the github-actions manager reads the setup-uv input (known-actions/github-releases.ts in Renovate), so the two sites always agree on the target version. Feeds the 'uv' group above.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^backend/Dockerfile$/"],
-      "matchStrings": ["ghcr\\.io/astral-sh/uv:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)[-\\s]"],
-      "depNameTemplate": "astral-sh/uv",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "npm"
     }
   ]
 }
