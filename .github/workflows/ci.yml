@@ -31,7 +31,7 @@ env:
 jobs:
   changes:
     name: Detect changed areas
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
@@ -84,7 +84,7 @@ jobs:
   dependencies:
     name: Dependency configuration
     needs: changes
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -115,7 +115,7 @@ jobs:
     name: Backend (lint, types, tests)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 25
     defaults:
       run:
@@ -181,7 +181,7 @@ jobs:
     name: Frontend (lint, types, tests)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     defaults:
       run:
@@ -227,7 +227,7 @@ jobs:
     name: Frontend (e2e)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     defaults:
       run:
@@ -274,7 +274,7 @@ jobs:
     name: Root files (prettier, just)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.root == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -321,7 +321,7 @@ jobs:
     name: Dockerfiles (hadolint)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.dockerfiles == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -352,7 +352,7 @@ jobs:
       needs.changes.outputs.backend == 'true' ||
       needs.changes.outputs.frontend == 'true' ||
       needs.changes.outputs.dockerfiles == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -400,7 +400,7 @@ jobs:
 
   secrets:
     name: Secrets (gitleaks)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
       GITLEAKS_VERSION: 8.30.1
@@ -430,7 +430,7 @@ jobs:
     name: Workflows (actionlint, zizmor)
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.workflows == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -464,7 +464,7 @@ jobs:
         secrets,
         workflows,
       ]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Fail if any required job failed or was cancelled
@@ -475,7 +475,7 @@ jobs:
     needs: ci-ok
     if: github.event_name != 'pull_request'
     name: Build and push (${{ matrix.name }})
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     env:
       REGISTRY: ghcr.io
