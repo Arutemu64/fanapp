@@ -330,16 +330,16 @@ wheels = [
 
 [[package]]
 name = "cosplay2py"
-version = "0.3.0"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "httpx2" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/07/7d/6e83dd5fb667ef6604711ae10a32059a1167965a8669758133689e0f8745/cosplay2py-0.3.0.tar.gz", hash = "sha256:e465af9c12e870a603cb5faa7d3dbcb943a95549d60df47aed7bf178dd4a26f9", size = 36540, upload-time = "2026-10-30T17:23:07.46Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/ac/b76da66e8d0ce59991d5089a6ccc4460c1239234222897c6b71d0bda7fca/cosplay2py-0.5.0.tar.gz", hash = "sha256:d2b740975398cd6001b03cfbf1f24d8eb101c82f1a50ef16db8ff54f0edd7ec6", size = 42198, upload-time = "2026-11-04T14:54:34.682Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/e1/811a4857d6db73c18d42f49b277728d3b97d0a6986fc1f240e2ca52c7904/cosplay2py-0.3.0-py3-none-any.whl", hash = "sha256:ed0ad22f6c8ca50bf8b04d8e488ca6fa05464cadad6a12c5c4868af14e334b25", size = 43708, upload-time = "2026-10-30T17:23:06.307Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/9f/1de0ae36779ec75897ab685bf013c8cf0cff8a09585e0c9dba246a0b0f14/cosplay2py-0.5.0-py3-none-any.whl", hash = "sha256:9fa87e130ec73d5e713e715991b81c8c741b512898c42802bf9e455893a4e677", size = 49642, upload-time = "2026-11-04T14:54:33.398Z" },
 ]
 
 [[package]]
@@ -602,7 +602,7 @@ requires-dist = [
     { name = "altcha", specifier = ">=2.3.0" },
     { name = "authlib", specifier = ">=1.9.2" },
     { name = "click", specifier = ">=8.5.0" },
-    { name = "cosplay2py", specifier = ">=0.3.0,<0.4" },
+    { name = "cosplay2py", specifier = ">=0.5.0,<0.6" },
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "dishka-faststream", specifier = ">=0.7.0" },
     { name = "fastapi", specifier = ">=0.162.0" },
