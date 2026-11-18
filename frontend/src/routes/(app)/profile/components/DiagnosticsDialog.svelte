@@ -177,7 +177,7 @@
 </script>
 
 <Dialog.Root bind:open>
-	<Dialog.Content class="sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:overflow-y-auto">
+	<Dialog.Content>
 		<Dialog.Header>
 			<Dialog.Title class="flex items-center gap-2">
 				<Stethoscope class="size-5 text-muted-foreground" />

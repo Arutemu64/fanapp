@@ -176,7 +176,7 @@ The boot splash (`#app-splash`, `z-index: 9999` in `app.html`) sits off this lad
 
 ### Dark Mode
 
-Theming is wired via `@custom-variant dark` in `app.css` with `.dark` on `<html>` (toggled by the theme service / `mode-watcher`). Project rules:
+The `dark:` variant in `app.css` follows the `.dark` class on `<html>`. The HTML shell and theme service keep that class, `color-scheme`, and `theme-color` in sync. Selecting Авто clears the saved override. The `storage` event applies preference changes in other tabs.
 
 - **Neutrals ride the semantic tokens.** Surfaces and text use `bg-background`/`bg-card`/`bg-muted`, `text-foreground`/`text-muted-foreground`, `border-border` — one token is already correct in both modes, so they take **no** `dark:` override. Don't reach for raw `gray-*` + a `dark:gray-*` pair; that's the pattern the shadcn migration removed.
 - **The semantic `--primary` is brand-wired and mode-aware** — watermelon `--color-primary-600` in light, the lighter `-400` in dark (so `text-primary` clears AA on the dark surface; `--primary-foreground` flips white→dark to stay AA on the fill). Because it switches by mode itself, `bg-primary`/`text-primary` take **no** `dark:` override.
@@ -188,6 +188,7 @@ Contrast targets and dark-mode mechanics → `accessibility` / `ui-ux-pro-max`.
 ## 4. Mobile Layout & Forms
 
 - **Mobile-First**: Design for narrow mobile screens first. Keep content inside standard layout containers.
+- Let the browser set the root font size. The shell opts into OS text scaling where supported. The verification code uses one input with six cells that fit the available width. Bottom navigation labels wrap within their tabs.
 - **Bottom Spacing**: Add bottom padding/spacing to pages to prevent fixed mobile bottom navigation tabs from covering active controls.
 - **Glass surfaces**: only the navigation layer is translucent (the top bar and the bottom-nav pill) — content never is, the split Apple draws for Liquid Glass. Each pairs a tint with `backdrop-blur-*` and swaps to an opaque fill under the `reduced-transparency:` variant (`app.css`). An ancestor with `view-transition-name` ([CSS View Transitions §2.1.1](https://drafts.csswg.org/css-view-transitions-1/)), `filter`, `opacity < 1` or a `mask` is a [Backdrop Root](https://drafts.csswg.org/filter-effects-2/#backdrop-root) and silently blurs nothing beneath it — put the blur on the named element itself.
 - **Touch & Inputs**: Generic mobile rules (≥44px touch targets, semantic input `type`, `autocomplete`, password show/hide) live in `ui-ux-pro-max` — apply them; not restated here.
@@ -221,7 +222,9 @@ Every user-facing string lives in `frontend/messages/ru.json` and is used as a t
 
 ## 7. Modal Conventions
 
-Two overlay families, by intent: informational and form modals use the shadcn `Dialog` (`#lib/components/ui/dialog`); confirmations that gate an action use `AlertDialog` (`#lib/components/ui/alert-dialog`) — see "Confirmations" below. Both are driven by `bind:open`. Follow these structural rules:
+Informational and form modals use the shadcn `Dialog` (`#lib/components/ui/dialog`). Confirmations use `AlertDialog` (`#lib/components/ui/alert-dialog`). Both are driven by `bind:open`.
+
+The shared `Dialog` caps its height to the dynamic viewport in both layouts. The body scrolls on short screens and the close button stays fixed within the dialog.
 
 **Below `sm` a `Dialog` is a bottom sheet.** `dialog-content.svelte` itself lays it out against the bottom edge, full width, with its body scrolling when it outgrows the screen (the close button stays put); from `sm` up it is the centred dialog. While an on-screen keyboard is open the sheet stays anchored and pads its content above the keyboard, sizing the strip from `window.visualViewport` (`#lib/utils/keyboardInset.ts`): Mobile Safari only shrinks the visual viewport, and the `interactive-widget` viewport key that would resize the page instead is Chrome-only. It closes the usual ways (X, backdrop tap, Escape); there is deliberately no swipe-to-dismiss, nor a drag handle that would promise one, since a hand-rolled JS drag is the part of a sheet most prone to jank and the layout is what carries the native feel. Every `Dialog` gets this for free — write a modal once, as below. `AlertDialog` stays centred on purpose (see "Confirmations"). We don't use shadcn's `Drawer`: it is built on `vaul-svelte`, which is still a `1.0.0-next` pre-release last published in March 2025 and ports a Vaul that its author has marked unmaintained, and it would split every modal into a `Dialog`/`Drawer` pair. `Sheet` (side panel) remains available in the registry if one is ever needed.
 

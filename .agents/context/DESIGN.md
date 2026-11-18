@@ -111,7 +111,7 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 - **Style:** shadcn `Input`, `--radius`-derived corners, light border on surface. Lay fields out with `Field.FieldGroup` + `Field.Field` (`FieldLabel`, control, `FieldError`/`FieldDescription`), not raw `div` + `Label`.
 - **Focus:** Border + ring shift to the ring token (shadcn default).
 - **Error:** `data-invalid` on the `Field` + `aria-invalid` on the control → destructive border and `FieldError` text. Never colour alone; pair with a message.
-- **OTP (signature):** `InputOTP` — six individual `h-11 w-11` (44px, `sm:h-12`) center-aligned `text-lg font-bold` digit boxes with auto-advance, backspace-back, and paste-to-fill. Error state sets `aria-invalid`.
+- **OTP (signature):** `InputOTP` presents one input as six centered, bold digit boxes. They share the available width and keep the `h-11` (`sm:h-12`) input height as text scales. The input supports auto-advance, backspace, and paste. Error state sets `aria-invalid`.
 
 ### Cards / Containers
 

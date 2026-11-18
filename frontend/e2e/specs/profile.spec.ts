@@ -8,6 +8,27 @@ const BLANK_PNG =
 	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC';
 
 test.describe('profile hub', () => {
+	test('keeps the theme and its controls in sync across tabs', async ({ page, context }) => {
+		const otherTab = await context.newPage();
+		await page.emulateMedia({ colorScheme: 'dark' });
+		await otherTab.emulateMedia({ colorScheme: 'dark' });
+		await page.goto('/profile');
+		await otherTab.goto('/profile');
+
+		const light = otherTab.getByRole('button', { name: 'Светлая' });
+		await expect(otherTab.getByRole('button', { name: 'Авто' })).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
+		await page.getByRole('button', { name: 'Светлая' }).click();
+		await expect(light).toHaveAttribute('aria-pressed', 'true');
+		await expect(otherTab.locator('html')).toHaveCSS('color-scheme', 'light');
+
+		await page.getByRole('button', { name: 'Авто' }).click();
+		await expect(light).toHaveAttribute('aria-pressed', 'false');
+		await expect(otherTab.locator('html')).toHaveClass('dark');
+	});
+
 	test('offers a guest the login entry point, returning to the hub', async ({ page }) => {
 		await page.goto('/profile');
 

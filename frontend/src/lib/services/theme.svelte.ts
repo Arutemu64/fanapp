@@ -1,55 +1,67 @@
+import { readStorage, removeStorage, writeStorage } from '#lib/utils/safeStorage.js';
+
 import { trackEvent } from './analytics';
-import { Persisted } from './persisted.svelte';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-function parseThemeMode(raw: string): ThemeMode | undefined {
-	return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : undefined;
-}
-
+const THEME_MODE_KEY = 'theme-mode';
 const THEME_COLOR_LIGHT = '#ffffff';
 const THEME_COLOR_DARK = '#0a0a0a';
 
-function applyTheme(mode: ThemeMode): void {
-	const isDark =
-		mode === 'dark' ||
-		(mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+function readThemeMode(): ThemeMode {
+	const stored = readStorage('local', THEME_MODE_KEY);
+	return stored === 'light' || stored === 'dark' ? stored : 'system';
+}
+
+function applyTheme(mode: ThemeMode, prefersDark: boolean): void {
+	const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
 	document.documentElement.classList.toggle('dark', isDark);
 
-	document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-
-	const meta = document.querySelector('meta[name="theme-color"]');
-	if (meta) meta.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
+	document
+		.querySelector('meta[name="color-scheme"]')
+		?.setAttribute('content', mode === 'system' ? 'light dark' : mode);
+	document
+		.querySelector('meta[name="theme-color"]')
+		?.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
 }
 
 class ThemeService {
-	readonly #mode = new Persisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
+	readonly #prefersDark: MediaQueryList;
+	#mode = $state(readThemeMode());
 
 	get mode(): ThemeMode {
-		return this.#mode.current;
+		return this.#mode;
 	}
 
 	constructor() {
-		applyTheme(this.#mode.current);
+		this.#prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+		applyTheme(this.#mode, this.#prefersDark.matches);
 
-		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-			if (this.#mode.current === 'system') applyTheme('system');
+		this.#prefersDark.addEventListener('change', ({ matches }) => {
+			if (this.#mode === 'system') applyTheme(this.#mode, matches);
+		});
+		window.addEventListener('storage', ({ key }) => {
+			if (key !== THEME_MODE_KEY && key !== null) return;
+			const stored = readThemeMode();
+			if (stored === this.#mode) return;
+			this.#mode = stored;
+			applyTheme(stored, this.#prefersDark.matches);
 		});
 	}
 
 	setMode(mode: ThemeMode): void {
-		this.#mode.current = mode;
-		applyTheme(mode);
+		this.#mode = mode;
+		if (mode === 'system') {
+			removeStorage('local', THEME_MODE_KEY);
+		} else {
+			writeStorage('local', THEME_MODE_KEY, mode);
+		}
+		applyTheme(mode, this.#prefersDark.matches);
 		trackEvent('theme-change', { mode });
 	}
 }
 
 let instance: ThemeService | null = null;
-
-export function setThemeService(): ThemeService {
-	instance = new ThemeService();
-	return instance;
-}
 
 export function getThemeService(): ThemeService {
 	instance ??= new ThemeService();

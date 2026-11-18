@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="text-scale" content="scale" />
 		<title>ФАН ФАН</title>
 		<link rel="manifest" href="/manifest.json" />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -35,6 +36,7 @@
 		/>
 		<meta name="twitter:image" content="%sveltekit.env.PUBLIC_SITE_URL%/og-image.png" />
 		<meta name="twitter:image:alt" content="ФАН ФАН — приложение-компаньон фестиваля" />
+		<meta name="color-scheme" content="light dark" />
 		<script>
 			(function () {
 				var m = null;
@@ -44,7 +46,9 @@
 				var isDark =
 					m === 'dark' ||
 					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-				document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+				if (m === 'dark' || m === 'light') {
+					document.querySelector('meta[name="color-scheme"]').content = m;
+				}
 				if (isDark) {
 					document.documentElement.classList.add('dark');
 					var meta = document.querySelector('meta[name="theme-color"]');
@@ -53,14 +57,39 @@
 			})();
 		</script>
 		<style>
+			:root {
+				color-scheme: light dark;
+			}
+			:root:has(> head > meta[name='color-scheme'][content='light']) {
+				color-scheme: light;
+			}
+			:root:has(> head > meta[name='color-scheme'][content='dark']) {
+				color-scheme: dark;
+			}
 			#app-splash {
 				position: fixed;
 				inset: 0;
 				z-index: 9999;
 				display: flex;
+				flex-direction: column;
 				align-items: center;
 				justify-content: center;
-				background: var(--background, #ffffff);
+				padding: 1rem;
+				background: var(--background, light-dark(#ffffff, #0a0a0a));
+				color: var(--foreground, light-dark(#0a0a0a, #fafafa));
+			}
+			.app-splash__recovery {
+				text-align: center;
+			}
+			.app-splash__recovery button {
+				min-height: 44px;
+				padding: 0.5rem 1rem;
+				border: 1px solid currentColor;
+				border-radius: 999px;
+				background: transparent;
+				color: inherit;
+				font: inherit;
+				cursor: pointer;
 			}
 			.app-splash__mark {
 				width: 4rem;
@@ -98,19 +127,107 @@
 				white-space: nowrap;
 			}
 		</style>
+		<script>
+			const watchAppStartup = (() => {
+				const startup = new AbortController();
+				const failedPreloads = new Set();
+				window.addEventListener(
+					'error',
+					({ target }) => {
+						if (target instanceof HTMLLinkElement && target.rel === 'modulepreload') {
+							failedPreloads.add(target.href);
+						}
+					},
+					{ capture: true, signal: startup.signal }
+				);
+
+				let reloading = false;
+				async function reloadPage() {
+					if (reloading) return;
+					reloading = true;
+					// WebKit can reuse a failed module preload across reloads.
+					const refresh = new AbortController();
+					const timeout = setTimeout(() => refresh.abort(), 2_000);
+					await Promise.allSettled(
+						Array.from(failedPreloads, async (url) => {
+							const response = await fetch(url, { cache: 'reload', signal: refresh.signal });
+							await response.arrayBuffer();
+						})
+					);
+					clearTimeout(timeout);
+					if (!startup.signal.aborted) location.reload();
+				}
+
+				// Share the reload guard with hooks.client.ts, which loads after the entry imports.
+				function canReloadAutomatically() {
+					if (!navigator.onLine) return false;
+					const key = 'preload-error-reloaded-at';
+					const now = Date.now();
+					try {
+						if (now - Number(sessionStorage.getItem(key)) < 30_000) return false;
+						sessionStorage.setItem(key, String(now));
+						return true;
+					} catch {
+						return false;
+					}
+				}
+
+				return (splash) => {
+					const label = splash.querySelector('[role="status"]');
+					const recovery = splash.querySelector('.app-splash__recovery');
+					const retry = recovery.querySelector('button');
+					const showLoading = setTimeout(() => (label.textContent = 'Загружаем…'), 400);
+					retry.addEventListener('click', reloadPage);
+
+					window.addEventListener(
+						'unhandledrejection',
+						(event) => {
+							if (!splash.isConnected || event.defaultPrevented) return;
+							const reason = event.reason?.message ?? event.reason;
+							if (
+								typeof reason !== 'string' ||
+								!/dynamically imported module|Importing a module script failed/i.test(reason)
+							)
+								return;
+							event.preventDefault();
+							if (reloading) return;
+							if (canReloadAutomatically()) {
+								void reloadPage();
+								return;
+							}
+							clearTimeout(showLoading);
+							label.textContent = '';
+							splash.querySelector('img').hidden = true;
+							recovery.hidden = false;
+							retry.focus();
+						},
+						{ signal: startup.signal }
+					);
+
+					const observer = new MutationObserver(() => {
+						if (splash.isConnected) return;
+						observer.disconnect();
+						startup.abort();
+						clearTimeout(showLoading);
+					});
+					observer.observe(splash.parentNode, { childList: true });
+				};
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 
 	<body class="bg-background" data-sveltekit-preload-data="hover">
-		<div id="app-splash" role="status" aria-live="polite">
+		<div id="app-splash">
 			<img class="app-splash__mark" src="/favicon.svg" alt="" width="64" height="64" />
-			<span class="app-splash__label"></span>
+			<span class="app-splash__label" role="status"></span>
+			<div class="app-splash__recovery" hidden>
+				<p id="app-splash-error">Не удалось открыть приложение.</p>
+				<button type="button" aria-describedby="app-splash-error">Обновить страницу</button>
+			</div>
 		</div>
 		<script>
-			setTimeout(function () {
-				var label = document.querySelector('#app-splash .app-splash__label');
-				if (label) label.textContent = 'Загружаем…';
-			}, 400);
+			watchAppStartup(document.getElementById('app-splash'));
 		</script>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>

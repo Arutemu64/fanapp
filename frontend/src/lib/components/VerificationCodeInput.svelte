@@ -38,19 +38,20 @@
 		readonly={busy}
 		aria-invalid={error ? true : undefined}
 		aria-describedby={hintId}
+		class="grid w-full max-w-74 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-1 sm:max-w-80"
 		{onValueChange}
 		{onComplete}
 	>
 		{#snippet children({ cells }: { cells: PinInputCell[] })}
-			<InputOTP.Group>
+			<InputOTP.Group class="grid grid-cols-3">
 				{#each cells.slice(0, 3) as cell, index (index)}
-					<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
+					<InputOTP.Slot {cell} class="w-full sm:text-xl" />
 				{/each}
 			</InputOTP.Group>
-			<InputOTP.Separator />
-			<InputOTP.Group>
+			<InputOTP.Separator class="[&_svg:not([class*='size-'])]:size-3" />
+			<InputOTP.Group class="grid grid-cols-3">
 				{#each cells.slice(3, 6) as cell, index (index + 3)}
-					<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
+					<InputOTP.Slot {cell} class="w-full sm:text-xl" />
 				{/each}
 			</InputOTP.Group>
 		{/snippet}
