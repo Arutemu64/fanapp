@@ -224,6 +224,10 @@ Specs carry tags via the describe details object, filtered with `--grep`:
 - `@critical` — core user journeys that must never break (boot, voting, casting a
   vote, notifications, realtime, offline, the auth gate).
 - `@a11y` — the axe scans.
+- `@desktop` — include this interaction on desktop Chromium in PRs as well as on mobile.
+  Desktop PRs also include all `@smoke` and `@a11y` cases.
+- `@desktop-only` and `@mobile-chromium-only` — run a scenario on that single
+  project in PRs. The full matrix runs on main, tags, and manual runs.
 
 ```sh
 pnpm e2e --grep @smoke                 # quick gate

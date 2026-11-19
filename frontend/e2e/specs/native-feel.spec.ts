@@ -63,7 +63,7 @@ const longSchedule: ScheduleDto['entries'] = [
 	}))
 ];
 
-test.describe('native feel', () => {
+test.describe('native feel', { tag: '@desktop' }, () => {
 	test('keeps the navigation label within its tab at 200% text size', async ({ page }) => {
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto('/');

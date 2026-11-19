@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 	});
 });
 
-test.describe('in an Android in-app browser', () => {
+test.describe('in an Android in-app browser', { tag: '@mobile-chromium-only' }, () => {
 	test.use({ userAgent: TELEGRAM_ANDROID, viewport: { width: 412, height: 915 } });
 
 	test('offers install and explains how to leave the WebView', async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('in an Android in-app browser', () => {
 	});
 });
 
-test.describe('in a desktop browser that cannot install', () => {
+test.describe('in a desktop browser that cannot install', { tag: '@desktop-only' }, () => {
 	test.use({ userAgent: FIREFOX_DESKTOP });
 
 	test('hides the install row', async ({ page }) => {

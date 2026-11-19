@@ -61,14 +61,18 @@ test.describe('profile hub', () => {
 		await expect(main.getByRole('button', { name: 'Выйти' })).toBeVisible();
 	});
 
-	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
-		api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
-		await page.goto('/profile');
+	test(
+		'counts linked VK as a notification channel on the hub',
+		{ tag: '@mobile-chromium-only' },
+		async ({ page, api }) => {
+			api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
+			await page.goto('/profile');
 
-		await expect(page.getByRole('main').getByRole('link', { name: /Уведомления/ })).toContainText(
-			'Включены'
-		);
-	});
+			await expect(page.getByRole('main').getByRole('link', { name: /Уведомления/ })).toContainText(
+				'Включены'
+			);
+		}
+	);
 
 	test('turns VK on only once the community may write', async ({ page, api }) => {
 		let allowed = false;
@@ -151,28 +155,29 @@ test.describe('profile hub', () => {
 });
 
 test.describe('profile settings on a phone', () => {
-	test('links a ticket from the keyboard and shows a miss under the field', async ({
-		page,
-		api
-	}) => {
-		let sentBarcode: unknown;
-		api.use({
-			...loggedInAs(),
-			'POST /me/ticket': (route) => {
-				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
-				return problem('TICKET_NOT_FOUND', 404);
-			}
-		});
-		await page.goto('/profile/ticket');
+	test(
+		'links a ticket from the keyboard and shows a miss under the field',
+		{ tag: '@desktop' },
+		async ({ page, api }) => {
+			let sentBarcode: unknown;
+			api.use({
+				...loggedInAs(),
+				'POST /me/ticket': (route) => {
+					sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
+					return problem('TICKET_NOT_FOUND', 404);
+				}
+			});
+			await page.goto('/profile/ticket');
 
-		const field = page.getByLabel('Номер билета');
-		await field.fill('fan-7k4q9m');
-		await field.press('Enter');
+			const field = page.getByLabel('Номер билета');
+			await field.fill('fan-7k4q9m');
+			await field.press('Enter');
 
-		await expect(field).toHaveAttribute('aria-invalid', 'true');
-		await expect(page.getByRole('alert')).toHaveText('Билет не найден');
-		expect(sentBarcode).toBe('fan-7k4q9m');
-	});
+			await expect(field).toHaveAttribute('aria-invalid', 'true');
+			await expect(page.getByRole('alert')).toHaveText('Билет не найден');
+			expect(sentBarcode).toBe('fan-7k4q9m');
+		}
+	);
 
 	test('links a ticket from a screenshot picked in the scanner', async ({ page, api }) => {
 		let sentBarcode: unknown;
@@ -319,7 +324,7 @@ test.describe('avatar', () => {
 	});
 });
 
-test.describe('account dialogs start fresh on reopen', () => {
+test.describe('account dialogs start fresh on reopen', { tag: '@desktop' }, () => {
 	test('edit profile drops an unsaved username', async ({ page, api }) => {
 		api.use(loggedInAs());
 		await page.goto('/profile/account');

@@ -4,6 +4,8 @@ import { existsSync } from 'node:fs';
 const PORT = 4173;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
+const isPullRequest = process.env.GITHUB_EVENT_NAME === 'pull_request';
+
 function runWebkit(): boolean {
 	if (process.env.CI) return true;
 	return existsSync(webkit.executablePath());
@@ -38,16 +40,20 @@ export default defineConfig({
 	projects: [
 		{
 			name: 'mobile-chromium',
+			grepInvert: isPullRequest ? /@desktop-only\b/ : undefined,
 			use: { ...devices['Pixel 7'] }
 		},
 		{
 			name: 'desktop-chromium',
+			grep: isPullRequest ? /@(desktop|desktop-only|smoke|a11y)(?:\s|$)/ : undefined,
+			grepInvert: isPullRequest ? /@mobile-chromium-only\b/ : undefined,
 			use: { ...devices['Desktop Chrome'] }
 		},
 		...(runWebkit()
 			? [
 					{
 						name: 'mobile-webkit',
+						grepInvert: isPullRequest ? /@(desktop-only|mobile-chromium-only)\b/ : undefined,
 						use: { ...devices['iPhone 14'] },
 						testIgnore: 'scanner.spec.ts'
 					}

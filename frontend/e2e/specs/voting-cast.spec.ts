@@ -38,27 +38,31 @@ function nomination(voted: boolean): GetVotingNominationOutput {
 }
 
 test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
-	test('casts a vote and reflects it after the refetch', async ({ page, api }) => {
-		api.use(loggedInAs());
-		api.use({
-			'GET /voting/status': json(OPEN),
-			'GET /voting/nominations/best-cosplay': () =>
-				json(nomination(api.countCalls('POST /voting/votes') > 0)),
-			'POST /voting/votes': json<AddVoteOutput>({ vote_id: VOTE_ID }, 201)
-		});
+	test(
+		'casts a vote and reflects it after the refetch',
+		{ tag: '@desktop' },
+		async ({ page, api }) => {
+			api.use(loggedInAs());
+			api.use({
+				'GET /voting/status': json(OPEN),
+				'GET /voting/nominations/best-cosplay': () =>
+					json(nomination(api.countCalls('POST /voting/votes') > 0)),
+				'POST /voting/votes': json<AddVoteOutput>({ vote_id: VOTE_ID }, 201)
+			});
 
-		await page.goto('/voting/best-cosplay');
+			await page.goto('/voting/best-cosplay');
 
-		const voteButton = page.getByRole('button', { name: 'Голосовать за Косплей на Аи-тян' });
-		await expect(voteButton).toBeVisible();
-		await voteButton.click();
+			const voteButton = page.getByRole('button', { name: 'Голосовать за Косплей на Аи-тян' });
+			await expect(voteButton).toBeVisible();
+			await voteButton.click();
 
-		await expect(page.getByText('Голос учтён')).toBeVisible();
-		await expect(page.getByText('Твой голос')).toBeVisible();
-		await expect(page.getByRole('button', { name: 'Отменить голос' })).toBeVisible();
+			await expect(page.getByText('Голос учтён')).toBeVisible();
+			await expect(page.getByText('Твой голос')).toBeVisible();
+			await expect(page.getByRole('button', { name: 'Отменить голос' })).toBeVisible();
 
-		expect(api.countCalls('POST /voting/votes')).toBe(1);
-	});
+			expect(api.countCalls('POST /voting/votes')).toBe(1);
+		}
+	);
 
 	test('holds the counted vote until the refetch lands', async ({ page, api }) => {
 		let release = () => {};
