@@ -27,6 +27,34 @@ async function openEmailStep(page: Page) {
 }
 
 test.describe('email login', { tag: '@critical' }, () => {
+	test('fits all code digits at a larger browser font size', async ({
+		page,
+		context,
+		api,
+		browserName
+	}) => {
+		// eslint-disable-next-line playwright/no-skipped-test -- CDP is available only in Chromium
+		test.skip(browserName !== 'chromium', 'Changing the browser default font size requires CDP');
+		api.use({ 'POST /auth/request-login-code': { status: 204 } });
+		await page.setViewportSize({ width: 320, height: 700 });
+		const cdp = await context.newCDPSession(page);
+		await cdp.send('Page.setFontSizes', { fontSizes: { standard: 32 } });
+
+		const email = await openEmailStep(page);
+		await email.fill('ann@example.com');
+		await email.press('Enter');
+		await expect(page.getByLabel('Код подтверждения')).toBeFocused();
+		await expect(page.locator('html')).toHaveCSS('font-size', '32px');
+		await expect(page.locator('[data-slot="input-otp-slot"]')).toHaveCount(6);
+		const cellsFit = await page.locator('[data-slot="input-otp-slot"]').evaluateAll((cells) =>
+			cells.every((cell) => {
+				const { left, right } = cell.getBoundingClientRect();
+				return left >= 0 && right <= document.documentElement.clientWidth;
+			})
+		);
+		expect(cellsFit).toBe(true);
+	});
+
 	test('validates on submit, not while typing', async ({ page }) => {
 		const email = await openEmailStep(page);
 		await expect(email).toBeFocused();

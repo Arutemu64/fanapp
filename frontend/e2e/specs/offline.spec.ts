@@ -9,6 +9,25 @@ import { expect, test } from '../fixtures';
 import { json } from '../mocks/api';
 import { loggedInAs } from '../mocks/personas';
 
+test.describe('installed app shell', () => {
+	test.use({ serviceWorkers: 'allow' });
+
+	test('opens the map from the installed service worker while offline', async ({
+		page,
+		context,
+		api
+	}) => {
+		await page.goto('/');
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
+		await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+		api.use({ 'GET /me': (route) => route.abort(), 'GET /debug/health': (route) => route.abort() });
+		await context.setOffline(true);
+		await page.goto('/map');
+
+		await expect(page.getByRole('heading', { level: 1, name: 'Карта' })).toBeVisible();
+	});
+});
+
 test.describe('offline', { tag: '@critical' }, () => {
 	test('voting shows the online-only state when the network is down', async ({ page, api }) => {
 		api.use({

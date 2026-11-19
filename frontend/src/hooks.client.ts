@@ -111,7 +111,7 @@ addEventListener('vite:preloadError', (event) => {
 });
 
 addEventListener('unhandledrejection', (event) => {
-	if (!isStaleChunkError(event.reason)) return;
+	if (event.defaultPrevented || !isStaleChunkError(event.reason)) return;
 	recoverFromStaleChunk(() => event.preventDefault());
 });
 

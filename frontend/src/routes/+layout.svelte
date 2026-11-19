@@ -38,7 +38,7 @@
 	import { startReachabilityMonitor } from '#lib/services/reachabilityMonitor.js';
 	import { setSession } from '#lib/services/session.js';
 	import { browserSessionRouter } from '#lib/services/sessionRouter.js';
-	import { setThemeService } from '#lib/services/theme.svelte.js';
+	import { getThemeService } from '#lib/services/theme.svelte.js';
 	import { setToastService } from '#lib/services/toasts.svelte.js';
 	import { registerServiceWorker } from '#lib/utils/serviceWorker.js';
 
@@ -59,7 +59,7 @@
 	});
 	const toastService = setToastService();
 	const pwa = setPwaService();
-	setThemeService();
+	getThemeService();
 	const appUpdate = setAppUpdateService();
 
 	beforeNavigate((navigation) => {

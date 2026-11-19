@@ -15,9 +15,11 @@ just frontend-e2e        # headless
 just frontend-e2e-ui     # Playwright UI, for debugging a spec (local)
 ```
 
-The config builds the app and serves it with `vite preview` automatically — a
-production build is required because the service worker and offline caching are
-inert in `vite dev` (docs/offline.md).
+Playwright builds the app and serves the adapter's `build/` directory with
+`e2e/preview.config.ts`. The server serves `200.html` directly for precaching
+and as the fallback for SPA routes. The offline navigation test enables the
+service worker. The rest of the suite blocks it to keep requests visible to the
+API mocks.
 
 ### A faster loop
 
@@ -31,7 +33,7 @@ overrides; without them the diagnostics test fails:
 ```sh
 cd frontend && PUBLIC_SENTRY_DSN= \
 	APP_VERSION=1.0.0 APP_BUILD=0123456789abcdef0123456789abcdef01234567 \
-	pnpm build && pnpm preview --port 4173 --strictPort
+	pnpm build && pnpm preview --config e2e/preview.config.ts --host 127.0.0.1 --port 4173 --strictPort
 ```
 
 Then narrow the run ([CLI flags](https://playwright.dev/docs/test-cli)):
@@ -152,10 +154,10 @@ await page.goto('/voting');
 await expect(page.getByText('Раздел доступен только онлайн')).toBeVisible();
 ```
 
-The build ships a real service worker, so a cache-backed page can also be tested
-across a genuine online→offline edge (load online to populate the cache, then
-fail the reads and reload to assert the stale notice) — that's the tier only a
-real build reaches.
+The installed app shell test enables the service worker, loads Home, and waits
+for the worker to control the page. It then calls `context.setOffline(true)`
+and opens the map through a fresh document navigation. API requests can still
+be aborted independently to exercise the app's offline states.
 
 ### Realtime (SSE)
 

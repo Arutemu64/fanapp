@@ -77,7 +77,7 @@
 				</span>
 				<span
 					class={[
-						'whitespace-nowrap transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
+						'w-full text-center wrap-anywhere hyphens-auto transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
 						active
 							? 'font-semibold text-primary-800 dark:text-primary-300'
 							: 'text-gray-600 group-hover:text-foreground dark:text-muted-foreground'
