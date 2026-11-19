@@ -439,7 +439,10 @@ backend-seed-demo`), which is opt-in, not the default a session reaches for.
 
 **Same Chromium everywhere.** Each Playwright version needs its own browser
 builds ([docs](https://playwright.dev/docs/browsers)), so every environment runs
-the build the pinned `@playwright/test` expects. CI installs it per run.
+the build the pinned `@playwright/test` expects. CI uses the matching
+[Playwright container](https://playwright.dev/docs/docker), which includes the
+browsers and their Linux libraries. The workflow reads the image version from
+`frontend/package.json`.
 In a fresh local or web environment, install it explicitly with
 `pnpm --dir frontend exec playwright install chromium`, and repeat after a
 Playwright bump. The environment's preinstalled Chromium may not match our pin.
@@ -449,8 +452,7 @@ with an iPhone-heavy audience, so there is also a `mobile-webkit` (iPhone 14)
 project. WebKit is opt-in outside CI, so the config runs it only where Playwright's
 WebKit build for the pinned version is installed — `just
 frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e2e`
-includes it. CI installs it and always runs it, so a missing browser there fails
-the job instead of silently dropping the project.
+includes it. CI always runs it using the WebKit build in the container.
 
 **Required in CI.** `ci.yml` runs `frontend-e2e` on frontend PR changes and on
 all main pushes, release tags, and manual runs. PRs run mobile Chromium and WebKit broadly. Desktop Chromium runs smoke,
@@ -459,12 +461,10 @@ VK profile label run once on mobile Chromium, and the desktop install fallback r
 once on desktop Chromium. Main, tag, and manual runs exercise the full matrix.
 Set `GITHUB_EVENT_NAME=pull_request` locally to reproduce the PR selection.
 
-Playwright splits the selected cases across two runners, each with two workers. Both shards must pass for `CI success`
-to allow merging and publishing. Each uploads its own HTML report as
-`playwright-report-1` or `playwright-report-2`. To reproduce a shard with all
-CI browser projects installed, run `CI=true pnpm e2e --shard=1/2` or
-`CI=true pnpm e2e --shard=2/2` from `frontend/`. See
-[Playwright sharding](https://playwright.dev/docs/test-sharding).
+The e2e job uses two Playwright workers on one runner and uploads the HTML
+report as `playwright-report`. The job must pass for `CI success` to allow
+merging and publishing. With both browser builds installed, run
+`CI=true pnpm e2e` from `frontend/` to reproduce the full matrix.
 
 Backend CI uses `uv sync --locked` and `uv run --locked` so stale lockfiles fail
 without being rewritten ([uv lockfile semantics](https://docs.astral.sh/uv/concepts/projects/sync/)).
