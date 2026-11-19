@@ -12,6 +12,8 @@ The `@sveltejs/mcp` 0.1.x CLI accepts only a major for `--svelte-version` (`5`).
 
 Skills are managed with `npx skills` and pinned in `skills-lock.json`. The `fanfan-*` skills are local to this repo.
 
+[Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance) is installed at `.agents/skills/modern-web-guidance/`. The upstream project uses the [Apache 2.0 license](../skills/modern-web-guidance/LICENSE). Its guides use [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and include material derived from MDN and W3C, WHATWG, and IETF specifications. [Upstream license notice](https://github.com/GoogleChrome/modern-web-guidance#license)
+
 `npx skills update` overwrites local edits, so re-apply these after one until upstream carries them:
 
 - `antislop` (R-25) and `antislop-human` (guide, `contrast-check.py`, `contrast-mcp.py`): WCAG large text is 24px, or about 18.66px bold, not "18px+". Compare the unrounded contrast ratio, since 4.499:1 fails 4.5:1 ([W3C, Understanding 1.4.3](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum)).

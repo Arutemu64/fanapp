@@ -69,26 +69,24 @@
 		bind:ref
 		data-slot="dialog-content"
 		class={cn(
-			'fixed z-50 grid w-full gap-6 bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none data-open:animate-in data-closed:animate-out',
+			'fixed z-50 flex w-full flex-col bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none data-open:animate-in data-closed:animate-out',
 			// Phones: a bottom sheet — thumb-reachable, clear of the home indicator, and
 			// scrolling its body (below) when taller than the screen. The easing is iOS's
 			// sheet curve (the one Vaul uses).
-			'max-sm:inset-x-0 max-sm:bottom-0 max-sm:flex max-sm:max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] max-sm:flex-col max-sm:rounded-t-2xl max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-sm:duration-250 max-sm:ease-[cubic-bezier(0.32,0.72,0,1)] max-sm:data-open:slide-in-from-bottom max-sm:data-closed:slide-out-to-bottom',
+			'max-sm:inset-x-0 max-sm:bottom-0 max-sm:max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] max-sm:rounded-t-2xl max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-sm:duration-250 max-sm:ease-[cubic-bezier(0.32,0.72,0,1)] max-sm:data-open:slide-in-from-bottom max-sm:data-closed:slide-out-to-bottom',
 			// Keyboard open on a phone: pad the content clear of it (the inset replaces
 			// the home-indicator inset, which the keyboard covers anyway), and cap the
 			// height so the sheet's top stays inside what is still visible.
 			coveredByKeyboard > 0 &&
 				'max-sm:max-h-[calc(var(--visible-height)+var(--keyboard-inset)-1rem)] max-sm:pb-[calc(1.5rem+var(--keyboard-inset))]',
 			// sm and up: a centred dialog.
-			'sm:top-1/2 sm:left-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:duration-100 sm:data-open:fade-in-0 sm:data-open:zoom-in-95 sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95',
+			'sm:top-1/2 sm:left-1/2 sm:max-h-[calc(100dvh-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:duration-100 sm:data-open:fade-in-0 sm:data-open:zoom-in-95 sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95',
 			className
 		)}
 		style={keyboardStyle}
 		{...restProps}
 	>
-		<div
-			class="contents max-sm:-m-1 max-sm:grid max-sm:min-h-0 max-sm:gap-6 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:p-1"
-		>
+		<div class="-m-1 grid min-h-0 gap-6 overflow-y-auto overscroll-contain p-1">
 			{@render children?.()}
 		</div>
 		{#if showCloseButton}

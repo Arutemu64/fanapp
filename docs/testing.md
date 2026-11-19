@@ -409,12 +409,11 @@ and the boundaries.
 
 **What it's for.** The surface Vitest can't reach (node-only, ADR-0011): SPA
 routing and guards, the service worker, offline / PWA behaviour, and real DOM
-interaction. It drives a **production `vite preview` build**, not `vite dev` —
-the SW and offline caching are inert in dev (docs/offline.md), so only a real
-build exercises them. Aborting the relevant reads simulates a dead network and
-exercises the offline surface (stale notices, online-only states, queued logout)
-against that build — a mocked route still fulfils under `context.setOffline`, so
-failing the read is what reaches the offline path.
+interaction. Playwright serves the adapter's production `build/` output so the
+offline navigation test can install and exercise the worker. Other tests block
+the worker to keep browser requests visible to Playwright's mocks. Abort mocked
+API reads to exercise stale notices, online-only states, and queued logout.
+Mocked routes can still fulfil requests under `context.setOffline`.
 
 Two guards ride along on every spec: an **accessibility** scan
 (`@axe-core/playwright`, WCAG 2.0/2.1/2.2 A/AA, light and dark theme) on key

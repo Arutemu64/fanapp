@@ -64,6 +64,25 @@ const longSchedule: ScheduleDto['entries'] = [
 ];
 
 test.describe('native feel', { tag: '@desktop' }, () => {
+	test('keeps the navigation label within its tab at 200% text size', async ({ page }) => {
+		await page.setViewportSize({ width: 320, height: 700 });
+		await page.goto('/');
+		await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+		const voting = page
+			.getByRole('navigation', { name: 'Разделы' })
+			.getByRole('link', { name: 'Голосование' });
+		await expect(voting).toBeVisible();
+		const fits = await voting.getByText('Голосование').evaluate(async (label) => {
+			await document.fonts.ready;
+			const tab = label.closest('a')?.getBoundingClientRect();
+			const text = document.createRange();
+			text.selectNodeContents(label);
+			const { left, right } = text.getBoundingClientRect();
+			return tab !== undefined && left >= tab.left && right <= tab.right;
+		});
+		expect(fits).toBe(true);
+	});
+
 	test('hides the top bar on scroll and keeps a tab where it was left', async ({
 		page,
 		api
@@ -204,6 +223,20 @@ test.describe('native feel', { tag: '@desktop' }, () => {
 		await expect
 			.poll(() => page.evaluate(() => document.documentElement.dataset.navTransition))
 			.toBeUndefined();
+	});
+
+	test('keeps the focused Save button visible in a short centered dialog', async ({
+		page,
+		api
+	}) => {
+		api.use(loggedInAs());
+		await page.setViewportSize({ width: 740, height: 320 });
+		const dialog = await openEditProfile(page);
+
+		const save = dialog.getByRole('button', { name: 'Сохранить' });
+		await save.focus();
+		await expect(save).toBeInViewport({ ratio: 1 });
+		await expect(dialog.getByRole('button', { name: 'Закрыть' })).toBeInViewport({ ratio: 1 });
 	});
 
 	test('lays a dialog out as a bottom sheet on phones and centred on desktop', async ({

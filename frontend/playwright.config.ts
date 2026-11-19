@@ -21,12 +21,13 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
 	use: {
 		baseURL: BASE_URL,
+		serviceWorkers: 'block',
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure'
 	},
 	webServer: {
-		command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
-		url: BASE_URL,
+		command: `pnpm build && pnpm preview --config e2e/preview.config.ts --host 127.0.0.1 --port ${PORT} --strictPort`,
+		url: `${BASE_URL}/200.html`,
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,
 		env: {
