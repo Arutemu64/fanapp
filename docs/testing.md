@@ -454,10 +454,18 @@ includes it. CI installs it and always runs it, so a missing browser there fails
 the job instead of silently dropping the project.
 
 **Required in CI.** `ci.yml` runs `frontend-e2e` on frontend PR changes and on
-all main pushes, release tags, and manual runs. `CI success` waits for this job,
-so browser failures block merging and publishing. It installs browsers per run,
-per [Playwright's CI guide](https://playwright.dev/docs/ci), and uses two workers.
-Run it locally when useful; CI remains the required gate.
+all main pushes, release tags, and manual runs. PRs run mobile Chromium and WebKit broadly. Desktop Chromium runs smoke,
+accessibility, and selected desktop interactions. The Android install fallback and
+VK profile label run once on mobile Chromium, and the desktop install fallback runs
+once on desktop Chromium. Main, tag, and manual runs exercise the full matrix.
+Set `GITHUB_EVENT_NAME=pull_request` locally to reproduce the PR selection.
+
+Playwright splits the selected cases across two runners, each with two workers. Both shards must pass for `CI success`
+to allow merging and publishing. Each uploads its own HTML report as
+`playwright-report-1` or `playwright-report-2`. To reproduce a shard with all
+CI browser projects installed, run `CI=true pnpm e2e --shard=1/2` or
+`CI=true pnpm e2e --shard=2/2` from `frontend/`. See
+[Playwright sharding](https://playwright.dev/docs/test-sharding).
 
 Backend CI uses `uv sync --locked` and `uv run --locked` so stale lockfiles fail
 without being rewritten ([uv lockfile semantics](https://docs.astral.sh/uv/concepts/projects/sync/)).

@@ -63,7 +63,7 @@ const longSchedule: ScheduleDto['entries'] = [
 	}))
 ];
 
-test.describe('native feel', () => {
+test.describe('native feel', { tag: '@desktop' }, () => {
 	test('hides the top bar on scroll and keeps a tab where it was left', async ({
 		page,
 		api

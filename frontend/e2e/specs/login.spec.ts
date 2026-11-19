@@ -103,12 +103,16 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await expect(page.getByRole('alert')).toHaveText('Попробуй ещё раз через 42 сек.');
 	});
 
-	test('the on-screen back returns focus to the control that opened the step', async ({ page }) => {
-		await openEmailStep(page);
-		await page.getByRole('button', { name: 'Назад' }).click();
+	test(
+		'the on-screen back returns focus to the control that opened the step',
+		{ tag: '@desktop' },
+		async ({ page }) => {
+			await openEmailStep(page);
+			await page.getByRole('button', { name: 'Назад' }).click();
 
-		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeFocused();
-	});
+			await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeFocused();
+		}
+	);
 
 	test('a code that lands after leaving the step does not reopen the flow', async ({
 		page,
@@ -149,27 +153,28 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await expect(leave).toHaveCount(0);
 	});
 
-	test('a rejected code is cleared and announced, with focus kept in the field', async ({
-		page,
-		api
-	}) => {
-		api.use({
-			'POST /auth/request-login-code': { status: 204 },
-			'POST /auth/login-with-code': problem('INVALID_OTP_CODE', 400)
-		});
-		const email = await openEmailStep(page);
-		await email.fill('ann@example.com');
-		await email.press('Enter');
+	test(
+		'a rejected code is cleared and announced, with focus kept in the field',
+		{ tag: '@desktop' },
+		async ({ page, api }) => {
+			api.use({
+				'POST /auth/request-login-code': { status: 204 },
+				'POST /auth/login-with-code': problem('INVALID_OTP_CODE', 400)
+			});
+			const email = await openEmailStep(page);
+			await email.fill('ann@example.com');
+			await email.press('Enter');
 
-		const code = page.getByLabel('Код подтверждения');
-		await expect(code).toBeFocused();
+			const code = page.getByLabel('Код подтверждения');
+			await expect(code).toBeFocused();
 
-		await code.pressSequentially('a12b3456');
+			await code.pressSequentially('a12b3456');
 
-		await expect(page.getByRole('alert')).toHaveText('Неверный или устаревший код');
-		await expect(code).toHaveValue('');
-		await expect(code).toBeFocused();
-	});
+			await expect(page.getByRole('alert')).toHaveText('Неверный или устаревший код');
+			await expect(code).toHaveValue('');
+			await expect(code).toBeFocused();
+		}
+	);
 });
 
 test('password login offers the code as the way out', async ({ page }) => {

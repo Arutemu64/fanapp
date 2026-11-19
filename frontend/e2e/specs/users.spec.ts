@@ -72,27 +72,31 @@ test.describe('organizer user directory', () => {
 		expect(listRequests.at(-1)?.get('role')).toBe('participant');
 	});
 
-	test('a superuser grants a permission from the user card', async ({ page, api }) => {
-		let details = ANNA_DETAILS;
-		let grants = 0;
-		api.use({
-			...organizer(),
-			[`GET /users/${ANNA.id}`]: () => json<UserDetailsDto>(details),
-			[`PUT /users/${ANNA.id}/permissions/users%3Aread`]: () => {
-				grants += 1;
-				details = { ...details, permissions: [...details.permissions, 'users:read'] };
-				return { status: 204, body: '' };
-			}
-		});
-		await page.goto(`/tools/users/${ANNA.id}`);
+	test(
+		'a superuser grants a permission from the user card',
+		{ tag: '@desktop' },
+		async ({ page, api }) => {
+			let details = ANNA_DETAILS;
+			let grants = 0;
+			api.use({
+				...organizer(),
+				[`GET /users/${ANNA.id}`]: () => json<UserDetailsDto>(details),
+				[`PUT /users/${ANNA.id}/permissions/users%3Aread`]: () => {
+					grants += 1;
+					details = { ...details, permissions: [...details.permissions, 'users:read'] };
+					return { status: 204, body: '' };
+				}
+			});
+			await page.goto(`/tools/users/${ANNA.id}`);
 
-		const usersRead = page.getByRole('switch', { name: 'Просмотр пользователей' });
-		await expect(usersRead).not.toBeChecked();
-		await usersRead.click();
+			const usersRead = page.getByRole('switch', { name: 'Просмотр пользователей' });
+			await expect(usersRead).not.toBeChecked();
+			await usersRead.click();
 
-		await expect(usersRead).toBeChecked();
-		expect(grants).toBe(1);
-	});
+			await expect(usersRead).toBeChecked();
+			expect(grants).toBe(1);
+		}
+	);
 
 	test('an organizer unlinks a ticket and is told the role stays', async ({ page, api }) => {
 		let details = ANNA_DETAILS;
