@@ -4,3 +4,6 @@ allowBuilds:
   sharp: true
 
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  # Renovate security update: @sveltejs/adapter-static@4.0.1
+  - "@sveltejs/adapter-static@4.0.1"
