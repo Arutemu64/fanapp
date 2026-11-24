@@ -46,6 +46,18 @@ class ToolchainTests(unittest.TestCase):
     def test_repository_pins_agree(self) -> None:
         self.assertEqual(check(self.root), [])
 
+    def test_playwright_image_must_match_the_runner(self) -> None:
+        package = json.loads((self.root / "frontend/package.json").read_text())
+        version = package["devDependencies"]["@playwright/test"]
+        self.replace(
+            ".github/workflows/ci.yml",
+            f"mcr.microsoft.com/playwright:v{version}-",
+            "mcr.microsoft.com/playwright:v0.0.0-",
+        )
+        self.assertTrue(
+            any("0.0.0" in error and version in error for error in check(self.root))
+        )
+
     def test_python_patch_drift_fails(self) -> None:
         (self.root / "backend/.python-version").write_text("3.14.1\n")
         self.assertTrue(

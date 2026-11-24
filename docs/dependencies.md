@@ -13,6 +13,7 @@ project dependencies are installed.
 | Node       | `mise.toml`               | Frontend Dockerfile; CI uses `node-version-file: mise.toml`                               |
 | pnpm       | `mise.toml`               | Frontend `packageManager` and Dockerfile `PNPM_VERSION`; CI reads `frontend/package.json` |
 | uv         | `mise.toml`               | Backend `[tool.uv] required-version` and Dockerfile; CI reads `backend/pyproject.toml`    |
+| Playwright | `frontend/package.json`   | The `frontend-e2e` job uses the image matching `@playwright/test`                         |
 | Postgres   | `docker-compose.yml`      | Migration generator and integration fixture, including the digest                         |
 | hadolint   | `mise.toml`               | Pre-commit hook; CI downloads the mise version with checksum verification                 |
 | gitleaks   | `.pre-commit-config.yaml` | CI `GITLEAKS_VERSION`                                                                     |

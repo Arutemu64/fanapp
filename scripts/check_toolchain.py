@@ -42,6 +42,13 @@ SITES = (
     ),
     PinSite("pnpm", "frontend/Dockerfile", r"(?m)^ENV PNPM_VERSION=([^\s]+)"),
     PinSite("uv", "backend/Dockerfile", r"ghcr\.io/astral-sh/uv:([^\s]+)"),
+    PinSite(
+        "playwright",
+        ".github/workflows/ci.yml",
+        r"(?m)^  frontend-e2e:[ \t]*\n(?:    .*\n|[ \t]*\n)*?"
+        rf"^    container: mcr\.microsoft\.com/playwright:v({VERSION})-"
+        r"[\w.-]+@sha256:[a-f0-9]{64}[ \t]*(?:#.*)?$",
+    ),
     POSTGRES_SOURCE,
     PinSite(
         "postgres", "backend/scripts/generate_migration.py", r'postgres:([^"\s]+)"'
@@ -109,6 +116,12 @@ def source_versions(root: Path) -> dict[str, str]:
     versions = {}
     for tool in ("python", "node", "pnpm", "uv", "hadolint"):
         versions[tool] = normalize(tool, read_version(root, "mise.toml", "tools", tool))
+    versions["playwright"] = normalize(
+        "playwright",
+        read_version(
+            root, "frontend/package.json", "devDependencies", "@playwright/test"
+        ),
+    )
     postgres = read_matches(root, POSTGRES_SOURCE)[0]
     versions["postgres"] = postgres
     versions["postgres-backup-local"] = postgres.split(".", 1)[0]
