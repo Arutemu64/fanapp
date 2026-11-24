@@ -439,7 +439,7 @@ backend-seed-demo`), which is opt-in, not the default a session reaches for.
 
 **Same Chromium everywhere.** Each Playwright version needs its own browser
 builds ([docs](https://playwright.dev/docs/browsers)), so every environment runs
-the build the pinned `@playwright/test` expects. CI installs it per run.
+the build the pinned `@playwright/test` expects. CI uses the version-matched Playwright container image.
 In a fresh local or web environment, install it explicitly with
 `pnpm --dir frontend exec playwright install chromium`, and repeat after a
 Playwright bump. The environment's preinstalled Chromium may not match our pin.
@@ -449,13 +449,13 @@ with an iPhone-heavy audience, so there is also a `mobile-webkit` (iPhone 14)
 project. WebKit is opt-in outside CI, so the config runs it only where Playwright's
 WebKit build for the pinned version is installed — `just
 frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e2e`
-includes it. CI installs it and always runs it, so a missing browser there fails
+includes it. CI includes WebKit in its image and always runs it, so a missing browser there fails
 the job instead of silently dropping the project.
 
 **Required in CI.** `ci.yml` runs `frontend-e2e` on frontend PR changes and on
 all main pushes, release tags, and manual runs. `CI success` waits for this job,
-so browser failures block merging and publishing. It installs browsers per run,
-per [Playwright's CI guide](https://playwright.dev/docs/ci), and uses two workers.
+so browser failures block merging and publishing. It uses two workers. Desktop Chromium covers the shell, responsive layout,
+notifications and accessibility. Mobile Chromium and WebKit run the broader journeys.
 Run it locally when useful; CI remains the required gate.
 
 Backend CI uses `uv sync --locked` and `uv run --locked` so stale lockfiles fail

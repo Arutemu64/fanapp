@@ -225,6 +225,7 @@ jobs:
 
   frontend-e2e:
     name: Frontend (e2e)
+    container: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f
     needs: changes
     if: github.event_name != 'pull_request' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-24.04
@@ -255,9 +256,6 @@ jobs:
 
       - name: Type check the e2e suite
         run: pnpm e2e:typecheck
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps --only-shell chromium webkit
 
       - name: Run E2E tests
         run: pnpm e2e
