@@ -7,16 +7,20 @@ project dependencies are installed.
 
 ## Shared pins
 
-| Dependency | Authoritative declaration | Other consumers                                                                           |
-| ---------- | ------------------------- | ----------------------------------------------------------------------------------------- |
-| Python     | `mise.toml`               | `backend/.python-version`, read by uv in CI and Docker                                    |
-| Node       | `mise.toml`               | Frontend Dockerfile; CI uses `node-version-file: mise.toml`                               |
-| pnpm       | `mise.toml`               | Frontend `packageManager` and Dockerfile `PNPM_VERSION`; CI reads `frontend/package.json` |
-| uv         | `mise.toml`               | Backend `[tool.uv] required-version` and Dockerfile; CI reads `backend/pyproject.toml`    |
-| Playwright | `frontend/package.json`   | The `frontend-e2e` job uses the image matching `@playwright/test`                         |
-| Postgres   | `docker-compose.yml`      | Migration generator and integration fixture, including the digest                         |
-| hadolint   | `mise.toml`               | Pre-commit hook; CI downloads the mise version with checksum verification                 |
-| gitleaks   | `.pre-commit-config.yaml` | CI `GITLEAKS_VERSION`                                                                     |
+| Dependency | Authoritative declaration | Other consumers                                                                        |
+| ---------- | ------------------------- | -------------------------------------------------------------------------------------- |
+| Python     | `backend/.python-version` | mise, uv in CI and Docker                                                              |
+| Node       | `mise.toml`               | Frontend Dockerfile; CI uses `node-version-file: mise.toml`                            |
+| pnpm       | `mise.toml`               | Frontend `packageManager`, read by CI and Docker                                       |
+| uv         | `mise.toml`               | Backend `[tool.uv] required-version` and Dockerfile; CI reads `backend/pyproject.toml` |
+| Playwright | `frontend/package.json`   | The `frontend-e2e` job uses the image matching `@playwright/test`                      |
+| Postgres   | `docker-compose.yml`      | Migration generator and integration fixture, including the digest                      |
+| hadolint   | `mise.toml`               | Pre-commit hook; CI downloads the mise version with checksum verification              |
+| gitleaks   | `.pre-commit-config.yaml` | CI `GITLEAKS_VERSION`                                                                  |
+
+The root `.python-version` symlink points to `backend/.python-version`. mise
+reads it through [native Python version-file discovery](https://mise.jdx.dev/lang/python.html#version-files).
+Renovate updates the backend file through its pyenv manager.
 
 `just` also has one pin in `mise.toml`, read by CI. Renovate's validator and its
 Node runtime live together in `.github/renovate/mise.toml`. Renovate 44 declares
@@ -62,19 +66,17 @@ add them to an unrelated equality group.
 
 ## Renovate policy
 
-Renovate opens one PR per dependency. Shared-pin groups are the exception: they
-keep the copies of one tool together. Groups are best-effort: different managers
+Renovate opens individual dependency PRs and groups known monorepos through
+`config:recommended`. Local groups keep the copies of one tool together. Groups are best-effort: different managers
 can see releases at different times. The required consistency check rejects an
 incomplete update. Docker builds separately check that the images still build.
 
 - Native managers handle mise, package manifests, workflows, hooks and images.
-- `customManagers:dockerfileVersions` reads annotated `ARG`/`ENV` pins. Keep the
-  annotation immediately above `PNPM_VERSION`.
 - Custom regex managers cover Postgres literals, CI's gitleaks version and uv's
   `required-version`. Postgres extraction captures the tag and digest separately.
 - The native Docker manager owns the uv image's tag **and** digest. A release-only
   regex could update its tag while retaining the old image digest.
-- [`renovate-config-validator --strict`](https://docs.renovatebot.com/config-validation/)
+- [`renovate-config-validator --strict --no-global`](https://docs.renovatebot.com/config-validation/)
   runs on pull requests and main pushes when its config, isolated toolchain,
   validation scripts or CI workflow change. Manual CI runs also validate it.
   Unrelated automatic builds and release tags skip the validator installation.
@@ -90,11 +92,11 @@ section below.
 
 ### Review and release age
 
-Frontend tooling automerges on minor/patch updates after 14 days. Stable frontend
-runtime dependencies automerge on patch updates after the same delay. Frameworks,
-CSS, component libraries, icons, translations, Markdown processing, date handling
-and Workbox require review because their output ships to users. 0.x frontend
-runtime dependencies also require review.
+Only the frontend development tools named in the automerge rule qualify for
+minor and patch automerge after 14 days. New dev dependencies, including
+generators that produce shipped code, require review by default. Stable frontend
+runtime dependencies qualify for patch automerge after 14 days. Runtime
+dependencies on 0.x require review.
 
 Backend dev tools automerge on minor/patch updates. Stable backend runtime
 dependencies automerge on patch updates; runtime minor/major and 0.x updates
@@ -127,14 +129,13 @@ review-only. See [Renovate's release-age limitations](https://docs.renovatebot.c
 
 ### Schedule
 
-The update window is Monday 00:00–05:59 Moscow time, with
-`updateNotScheduled: false`. Outside it Renovate neither opens nor re-pushes
-ordinary update branches. Security updates retain Renovate's schedule bypass.
-Actions use commit SHAs with full `# vX.Y.Z` comments so release aging follows
-specific releases.
+Renovate opens ordinary update branches on Monday 00:00–05:59 Moscow time.
+It can refresh existing branches throughout the week. Security updates retain
+Renovate's schedule bypass. Actions use commit SHAs with full `# vX.Y.Z`
+comments so release aging follows specific releases.
 
-Later package rules override earlier ones. Keep the shipped-output exclusions
-below generic automerge rules, and shared-pin policy below manager defaults.
+Later package rules override earlier ones. Keep shared-pin policy below manager
+defaults.
 
 ## Versioning the app
 

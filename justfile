@@ -94,7 +94,7 @@ renovate-check:
     set -euo pipefail
     renovate_version="$(python3 -c 'import tomllib; print(tomllib.load(open(".github/renovate/mise.toml", "rb"))["tools"]["npm:renovate"])')"
     renovate_node="$(python3 -c 'import tomllib; print(tomllib.load(open(".github/renovate/mise.toml", "rb"))["tools"]["node"])')"
-    npm exec --yes --package="node@$renovate_node" -- npm exec --yes --package="renovate@$renovate_version" -- renovate-config-validator --strict renovate.jsonc
+    npm exec --yes --package="node@$renovate_node" -- npm exec --yes --package="renovate@$renovate_version" -- renovate-config-validator --strict --no-global renovate.jsonc
 
 [group("checks")]
 root-lint: check-toolchain
