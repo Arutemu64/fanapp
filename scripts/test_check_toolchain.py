@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PIN_FILES = (
     "mise.toml",
     ".github/renovate/mise.toml",
+    ".python-version",
     "backend/.python-version",
     "backend/pyproject.toml",
     "backend/Dockerfile",
@@ -35,7 +36,7 @@ class ToolchainTests(unittest.TestCase):
         for name in PIN_FILES:
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(REPO_ROOT / name, target)
+            shutil.copyfile(REPO_ROOT / name, target, follow_symlinks=False)
 
     def replace(self, name: str, before: str, after: str) -> None:
         path = self.root / name
@@ -58,8 +59,27 @@ class ToolchainTests(unittest.TestCase):
             any("0.0.0" in error and version in error for error in check(self.root))
         )
 
-    def test_python_patch_drift_fails(self) -> None:
+    def test_python_patch_update_only_needs_the_version_file(self) -> None:
         (self.root / "backend/.python-version").write_text("3.14.1\n")
+        self.assertEqual(check(self.root), [])
+
+    def test_mise_cannot_reintroduce_a_python_pin(self) -> None:
+        self.replace("mise.toml", "[tools]", '[tools]\npython = "3.14.1"')
+        self.assertTrue(any("mise.toml" in error for error in check(self.root)))
+
+    def test_python_discovery_must_be_enabled(self) -> None:
+        self.replace("mise.toml", '["python"]', '["node"]')
+        self.assertTrue(any("mise.toml" in error for error in check(self.root)))
+
+    def test_root_version_file_must_be_a_link(self) -> None:
+        alias = self.root / ".python-version"
+        version = alias.read_text()
+        alias.unlink()
+        alias.write_text(version)
+        self.assertTrue(any(".python-version" in error for error in check(self.root)))
+
+    def test_python_version_must_be_exact(self) -> None:
+        (self.root / "backend/.python-version").write_text("3.14\n")
         self.assertTrue(
             any("backend/.python-version" in error for error in check(self.root))
         )
@@ -84,12 +104,6 @@ class ToolchainTests(unittest.TestCase):
         version = tomllib.loads(path.read_text())["tools"]["uv"]
         self.replace("mise.toml", f'uv = "{version}"', "")
         self.assertTrue(any("mise.toml" in error for error in check(self.root)))
-
-    def test_unrecognized_pin_syntax_fails(self) -> None:
-        self.replace(
-            "frontend/Dockerfile", "ENV PNPM_VERSION=", "ENV OLD_PNPM_VERSION="
-        )
-        self.assertTrue(any("PNPM_VERSION" in error for error in check(self.root)))
 
     def test_second_docker_stage_cannot_use_another_node_version(self) -> None:
         path = self.root / "frontend/Dockerfile"

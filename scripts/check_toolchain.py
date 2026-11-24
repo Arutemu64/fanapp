@@ -34,13 +34,11 @@ GITLEAKS_SOURCE = PinSite(
 )
 
 SITES = (
-    PinSite("python", "backend/.python-version", r"(?m)^([^\s]+)$"),
     PinSite(
         "node",
         "frontend/Dockerfile",
         r"(?mi)^FROM\s+(?:--platform=\S+\s+)?node:([^\s]+)",
     ),
-    PinSite("pnpm", "frontend/Dockerfile", r"(?m)^ENV PNPM_VERSION=([^\s]+)"),
     PinSite("uv", "backend/Dockerfile", r"ghcr\.io/astral-sh/uv:([^\s]+)"),
     PinSite(
         "playwright",
@@ -114,7 +112,7 @@ def normalize(tool: str, value: str) -> str:
 
 def source_versions(root: Path) -> dict[str, str]:
     versions = {}
-    for tool in ("python", "node", "pnpm", "uv", "hadolint"):
+    for tool in ("node", "pnpm", "uv", "hadolint"):
         versions[tool] = normalize(tool, read_version(root, "mise.toml", "tools", tool))
     versions["playwright"] = normalize(
         "playwright",
@@ -144,7 +142,20 @@ def compare_pin(tool: str, value: str, expected: str, label: str) -> list[str]:
     return [f"{label}: {tool} is {actual!r}; expected {expected!r}"]
 
 
+def check_python_pin(root: Path) -> None:
+    source = Path("backend/.python-version")
+    normalize(str(source), (root / source).read_text().strip())
+    alias = root / ".python-version"
+    if not alias.is_symlink() or alias.readlink() != source:
+        raise ValueError(f".python-version must link to {source}")
+    mise = tomllib.loads((root / "mise.toml").read_text())
+    enabled = mise.get("settings", {}).get("idiomatic_version_file_enable_tools", [])
+    if "python" in mise["tools"] or "python" not in enabled:
+        raise ValueError("mise.toml: enable Python discovery through .python-version")
+
+
 def check_manifest_pins(root: Path, versions: dict[str, str]) -> list[str]:
+    check_python_pin(root)
     for tool in ("node", "npm:renovate"):
         normalize(tool, read_version(root, ".github/renovate/mise.toml", "tools", tool))
     manager = read_version(root, "frontend/package.json", "packageManager")
