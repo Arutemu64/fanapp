@@ -10,13 +10,8 @@ beforeEach(() => {
 });
 
 describe('safeStorage', () => {
-	it('reads and writes through to the real storage', () => {
-		expect(writeStorage('local', 'k', 'v')).toBe(true);
-		expect(readStorage('local', 'k')).toBe('v');
-	});
-
 	it('keeps local and session storage separate', () => {
-		writeStorage('local', 'k', 'local');
+		expect(writeStorage('local', 'k', 'local')).toBe(true);
 		writeStorage('session', 'k', 'session');
 		expect(readStorage('local', 'k')).toBe('local');
 		expect(readStorage('session', 'k')).toBe('session');

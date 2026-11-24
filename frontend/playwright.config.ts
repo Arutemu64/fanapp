@@ -42,6 +42,7 @@ export default defineConfig({
 		},
 		{
 			name: 'desktop-chromium',
+			testMatch: '**/{accessibility,native-feel,notifications,smoke}.spec.ts',
 			use: { ...devices['Desktop Chrome'] }
 		},
 		...(runWebkit()

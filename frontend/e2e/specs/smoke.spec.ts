@@ -18,12 +18,14 @@ test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 		).toBeVisible();
 	});
 
-	test('shows the account surface for a logged-in visitor', async ({ page, api }) => {
+	test('offers a signed-in visitor a link to attach their ticket', async ({ page, api }) => {
 		api.use(loggedInAs());
 		await page.goto('/');
 
 		await expect(page.locator('#app-splash')).toHaveCount(0);
-		await expect(page.getByRole('link', { name: 'Войти' })).toHaveCount(0);
+		const ticket = page.getByRole('link', { name: /Привязать билет/ });
+		await expect(ticket).toBeVisible();
+		await expect(ticket).toHaveAttribute('href', '/profile/ticket');
 	});
 });
 

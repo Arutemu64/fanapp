@@ -114,6 +114,11 @@
       "minimumReleaseAge": "14 days"
     },
     {
+      "groupName": "playwright",
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "minimumReleaseAge": "14 days"
+    },
+    {
       "description": "Keep exact uv pins together. The native Docker manager owns both GHCR tags and digests. GHCR has no release timestamp, so the entire group is review-only with no cooldown; CI rejects incomplete updates.",
       "groupName": "uv",
       "matchPackageNames": ["uv", "uv-build", "astral-sh/uv", "ghcr.io/astral-sh/uv"],

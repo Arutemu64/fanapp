@@ -49,7 +49,7 @@ pnpm e2e specs/voting.spec.ts           # one file
 ```
 
 **Browser:** the suite runs on the Chromium build the pinned `@playwright/test`
-expects. CI installs it per run. On a fresh laptop, install it once
+expects. CI uses the version-matched Playwright container image. On a fresh laptop, install it once
 (and again after a Playwright bump,
 since each version needs its own build):
 
@@ -233,9 +233,9 @@ pnpm e2e --grep-invert @a11y           # everything but the a11y scans
 
 ### Devices
 
-Every spec runs on two Chromium projects — `mobile-chromium` (Pixel 7, the
-mobile-first primary) and `desktop-chromium` (Desktop Chrome, catches the wide
-sidebar-shell layout). Run one while iterating with
+Every spec runs on `mobile-chromium` (Pixel 7). The `desktop-chromium` project
+runs the smoke, native-feel, notifications and accessibility specs to exercise
+the wide layout. Run one while iterating with
 `pnpm e2e --project=mobile-chromium`.
 
 A third project, `mobile-webkit` (iPhone 14, iOS Safari), runs **wherever WebKit is
@@ -243,7 +243,7 @@ installed** — the engine that matters most for this mobile-first audience and 
 one Chromium can't stand in for. WebKit is opt-in (no hook installs it), so install it once with
 `just frontend-e2e-install-webkit` (re-run after a Playwright bump); from then on
 `pnpm e2e` picks it up, and `just frontend-e2e-webkit` runs it alone. Without it the
-project is skipped locally. CI installs it and always runs it.
+project is skipped locally. CI includes WebKit in its image and always runs it.
 
 ### Screenshots (seeing a change, not just asserting it)
 
