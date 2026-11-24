@@ -34,6 +34,8 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ### Screenshots
 
+The gallery shows the forest-green Spring 2027 edition with sample festival data.
+
 <table>
   <tr>
     <th>Schedule</th>
@@ -308,8 +310,7 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 
 - `backend/src/fanfan/common/static/logo.png`
 - `frontend/static/icons/`
-- `frontend/static/favicon.svg`, `frontend/static/favicon.ico`
-- `frontend/src/lib/assets/logo.svg`
+- `frontend/static/favicon.ico` and `frontend/static/og-image.png`
 - `frontend/src/lib/data/maps.ts` (floor plans traced from the festival's maps)
 - `frontend/src/routes/(app)/components/home/main.webp`
 - `docs/assets/readme-header.webp`

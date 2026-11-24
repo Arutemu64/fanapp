@@ -51,7 +51,6 @@
 
 	const SCROLL_DELTA_PX = 6;
 	let navbarHidden = $state(false);
-	let contentScrolled = $state(false);
 	let navbarHeight = $state(0);
 	let chromeHeight = $state(0);
 	let lastScrollTop = 0;
@@ -83,15 +82,9 @@
 		lastScrollTop = window.scrollY;
 	}
 
-	function syncChromeToScroll() {
-		revealNavbar();
-		contentScrolled = window.scrollY > 0;
-	}
-
 	// Browsers fire scroll at most once per frame, so no rAF throttle is needed (MDN).
 	function handleScroll() {
 		const top = window.scrollY;
-		contentScrolled = top > 0;
 		const maxTop = document.documentElement.scrollHeight - window.innerHeight;
 		if (top < 0 || top > maxTop) return;
 		const delta = top - lastScrollTop;
@@ -116,7 +109,7 @@
 		}
 		if (isQueryOnlyNavigation(navigation, to)) return;
 		if (navigation.type !== 'popstate') restoreTabScroll(to);
-		syncChromeToScroll();
+		revealNavbar();
 	});
 
 	function isQueryOnlyNavigation(navigation: AfterNavigate, to: string): boolean {
@@ -198,7 +191,7 @@
 			style:transition-timing-function={chromeEasing}
 		>
 			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} {contentScrolled} lastSearches={tabMemory.lastSearches} />
+				<AppNavbar {user} lastSearches={tabMemory.lastSearches} />
 			</div>
 			<ConnectionBanner />
 		</div>

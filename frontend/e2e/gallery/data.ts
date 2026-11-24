@@ -8,7 +8,7 @@ import type {
 	SubscriptionFullDto
 } from '../../src/lib/api/generated/types.gen';
 
-export const GALLERY_NOW = new Date('2026-10-17T15:00:00+03:00');
+export const GALLERY_NOW = new Date('2027-03-13T15:00:00+03:00');
 
 const MINUTE_MS = 60_000;
 

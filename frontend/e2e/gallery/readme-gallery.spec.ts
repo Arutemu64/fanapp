@@ -1,7 +1,7 @@
 import type { Browser, BrowserContextOptions, Page } from '@playwright/test';
 
-import { writeFile } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { readFile, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 
 import type { ListQuestHistoryOutput } from '../../src/lib/api/generated/types.gen';
 import type { Handlers } from '../mocks/api';
@@ -183,18 +183,11 @@ async function captureHome(
 	return png;
 }
 
-test('header', async ({ browser }, testInfo) => {
+test('header', async ({ browser }) => {
 	const shots = {
 		desktop: await captureHome(browser, LAPTOP),
 		phone: await captureHome(browser, IPHONE, IPHONE_INSETS)
 	};
-
-	const screens: Record<string, string> = {};
-	for (const [screen, png] of Object.entries(shots)) {
-		const path = testInfo.outputPath(`${screen}.png`);
-		await writeFile(path, png);
-		screens[screen] = pathToFileURL(path).href;
-	}
 
 	const context = await browser.newContext({
 		viewport: { width: 1920, height: 1080 },
@@ -203,10 +196,28 @@ test('header', async ({ browser }, testInfo) => {
 		hasTouch: false
 	});
 	const page = await context.newPage();
-	await page.goto(new URL('device-frames.html', import.meta.url).href);
-	await page.evaluate(async (urls) => {
-		await (window as unknown as DeviceFramesWindow).frameScreens(urls);
-	}, screens);
+	const frameHtml = await readFile(new URL('device-frames.html', import.meta.url), 'utf8');
+	for (const subset of ['latin', 'cyrillic']) {
+		const font = `onest-${subset}-wght-normal.woff2`;
+		const path = new URL(
+			`../../node_modules/@fontsource-variable/onest/files/${font}`,
+			import.meta.url
+		);
+		await page.route(`**/${font}`, (route) => route.fulfill({ path: fileURLToPath(path) }));
+	}
+	await page.route('**/device-frames.html', (route) =>
+		route.fulfill({ contentType: 'text/html', body: frameHtml })
+	);
+	await page.goto('/device-frames.html');
+	await page.evaluate(
+		async (urls) => {
+			await (window as unknown as DeviceFramesWindow).frameScreens(urls);
+		},
+		{
+			desktop: `data:image/png;base64,${shots.desktop.toString('base64')}`,
+			phone: `data:image/png;base64,${shots.phone.toString('base64')}`
+		}
+	);
 	const png = await page.locator('#stage').screenshot({ omitBackground: true });
 	await writeWebp(page, png, HEADER_OUT);
 	await context.close();

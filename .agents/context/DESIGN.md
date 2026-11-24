@@ -8,7 +8,7 @@
 
 FAN FAN is the entire anime festival, thumb-first, in seconds. The user is a tired teen between events, one-handed, on flaky con-venue wifi, looking up what's next or casting a vote. The interface gets out of the way: bottom-anchored navigation on phones, a left sidebar on desktop, a single scannable column of content capped at `max-w-5xl`, and generous 44px tap targets everywhere. The tool disappears into the task.
 
-The personality is **clear, lively, calm-under-load**. Vibrance comes from the watermelon palette — crimson-pink primary, cyan-teal secondary, pulled straight from the FAN FAN key art — and it is the _only_ flourish. Color does the emotional work in primary actions, active nav, unseen-badges, and state moments; the layout itself stays quiet, near-flat, and uncluttered. Surfaces separate by border and tonal layering, not by drop shadows. Density is low by intent: one primary thing per screen, breathing room around it, so a glance is enough.
+The personality is **clear, lively, calm-under-load**. Vibrance comes from the spring palette — forest-green primary, blossom-pink secondary, pulled straight from the FAN FAN key art — and it is the _only_ flourish. Color does the emotional work in primary actions, active nav, unseen-badges, and state moments; the layout itself stays quiet, near-flat, and uncluttered. Surfaces separate by border and tonal layering, not by drop shadows. Density is low by intent: one primary thing per screen, breathing room around it, so a glance is enough.
 
 This system explicitly rejects three things. It is not **childish or cartoonish** — the audience is young but wants to be taken seriously, so no sticker overload and no comic-book energy. It is not **generic AI slop** — no cream/sand body background, no tiny uppercase tracked eyebrows over every section, no identical icon-card grids, no gradient text. And it is not **cluttered** — no wall of information, no cramming; phone-first means hierarchy and air.
 
@@ -22,34 +22,32 @@ This system explicitly rejects three things. It is not **childish or cartoonish*
 
 ## 2. Colors
 
-A watermelon duo over a cool gray neutral field: warm crimson-pink for action and identity, cool cyan-teal for support, everything else quiet gray until a state needs to speak.
+Spring 2027 uses forest green for actions and headings and blossom pink for secondary accents.
 
 ### Primary
 
-- **Watermelon Crimson** (`#d61450`, `primary-600`): The action and identity color. Primary buttons, active bottom-nav and sidebar items, unseen-notification dots, focus outlines, and key timestamps/links. Shades 600+ are darkened so white text on the fill clears AA (≥4.5:1). The light end (`primary-50`–`100`) tints selected/hover backgrounds; `primary-400`–`500` light up active icons in dark mode.
+- **Forest Green** (`#1e5b3a`, `primary-600`): The action and identity color. Primary buttons, active bottom-nav and sidebar items, unseen-notification dots, focus outlines, and key timestamps/links. Shades 600+ are darkened so white text on the fill clears AA (≥4.5:1). The light end (`primary-50`–`100`) tints selected/hover backgrounds; `primary-400`–`500` light up active icons in dark mode.
 
 ### Secondary
 
-- **Cyan-Teal Rind** (`#0c9fb8`, `secondary-500`): Support accent for secondary emphasis, complementary chips/highlights, and the occasional informational moment. Never competes with primary for the same action; it is the cooler counterweight that keeps the crimson from going one-note.
+- **Blossom Pink** (`#c62e5a`, `secondary-600`) adds a small accent to secondary controls and the festival wordmark.
 
 ### Tertiary — semantic status
 
-- **Success / Warning / Info** are semantic tokens (`--success`, `--warning`, `--info` in `app.css`), not raw palette classes. Success is festival green (from the rind), warning is key-art amber (offline/stale/caution), info is the cyan-teal secondary hue (DESIGN's "occasional informational moment"). Error reuses the existing `--destructive`. Each token doubles as a readable text colour on its own `/10` tint and as a solid fill with its `-foreground`, and flips value between light and dark, so call sites use `text-success` / `bg-warning/10` / `border-info/30` with **no `dark:` override**. Used only as semantic accents on state — success (voted, live, linked), warning (offline/stale/destructive-confirm), info (sync/status) — never as decoration.
+- **Success / Warning / Info** are semantic tokens (`--success`, `--warning`, `--info` in `app.css`), not raw palette classes. Success is green, warning is key-art amber (offline/stale/caution), info is blue-green. Error reuses the existing `--destructive`. Each token doubles as a readable text colour on its own `/10` tint and as a solid fill with its `-foreground`, and flips value between light and dark, so call sites use `text-success` / `bg-warning/10` / `border-info/30` with **no `dark:` override**. Used only as semantic accents on state — success (voted, live, linked), warning (offline/stale/destructive-confirm), info (sync/status) — never as decoration.
 - **Medal** tokens (`--medal-gold` / `--medal-silver` / `--medal-bronze`, text in `--medal-foreground`) fill the quest leaderboard's top-three rank pills and nothing else. They are fills, not text colours, and stay the same in both themes, because the metal should look like metal on either surface. A podium place is the state they mark.
 
 ### Neutral
 
-- **Ink** (`#111827`, `gray-900` / white in dark): Headings and high-emphasis text.
-- **Muted** (`#6b7280` light / `#9ca3af` dark, `gray-500`/`gray-400`): Body copy, descriptions, idle nav icons, secondary labels.
-- **Surface** (`#ffffff` light / `#1f2937` dark, `gray-800`; navbar/sidebar use `gray-900`): Cards, panels, sheets.
-- **App Background** (`#f9fafb` light / `#030712` dark, `gray-50`/`gray-950`): The recessed field behind surfaces; one tonal step below surface, never the same value.
-- **Border** (`#e5e7eb` light / `#374151` dark, `gray-200`/`gray-700`): Card outlines, dividers, the sidebar edge and the navbar's scrolled hairline. The primary depth tool in place of shadow.
+- **Ink** and **Muted** use green-tinted neutrals on white. Page titles use forest green.
+- **Surface** and **App Background** share white in light mode. In dark mode, cards sit one tonal step above the page.
+- **Border** separates cards, rows and the sidebar. The top header has no divider at rest or on scroll.
 
 ### Named Rules
 
 **The Color-Earns-Its-Place Rule.** Saturated color appears only on action, active state, or semantic state — primary button, current nav item, unseen badge, success/warning/error. Inactive and resting elements stay gray. If a color is decorative, remove it.
 
-**The Two-Layer Rule.** App background and surface are always one tonal step apart (`gray-50` field, `white` surface; `gray-950` field, `gray-800`/`gray-900` surface). Never paint a surface the same value as its background — separation is the depth.
+**Home hero.** Let the photograph fill the rounded card. Apply the dark overlay across the full image so labels remain readable as the crop changes.
 
 ## 3. Typography
 
@@ -79,7 +77,7 @@ Both are self-hosted via Fontsource with Cyrillic subsets — all copy is Russia
 
 ## 4. Elevation
 
-This system is **near-flat by default**. Depth is conveyed by tonal layering (a recessed `gray-50`/`gray-950` background under a `white`/`gray-800` surface) and by 1px borders — not by drop shadows. The result reads calm and modern rather than lifted.
+Card outlines and spacing give white surfaces their edges. Dark surfaces also use tonal layering.
 
 ### Shadow Vocabulary
 
@@ -94,13 +92,13 @@ This system is **near-flat by default**. Depth is conveyed by tonal layering (a 
 
 ## 5. Components
 
-shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component substrate; these are the project's tuned defaults and the vocabulary every new screen must match. The semantic `--primary` is wired to the **watermelon brand** in `app.css` (`--color-primary-600` in light, the lighter `-400` in dark), so `bg-primary` / `text-primary` — the default `<Button>`, links, active nav, checked controls, `primary/10` accent tiles — all render on-brand. `--primary-foreground` is white in light / dark in dark so text clears AA on the fill either way.
+shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component substrate; these are the project's tuned defaults and the vocabulary every new screen must match. The semantic `--primary` is wired to the **forest-green brand** in `app.css` (`--color-primary-600` in light, the lighter `-400` in dark), so `bg-primary` / `text-primary` — the default `<Button>`, links, active nav, checked controls, `primary/10` accent tiles — all render on-brand. `--primary-foreground` is white in light / dark in dark so text clears AA on the fill either way.
 
 ### Buttons
 
 - **Shape:** A pill that squares off to a 10px corner while pressed — the [Material 3 Expressive](https://m3.material.io/components/buttons/overview) round button and its press morph. Set once in `button.svelte`; don't add a radius at the call site. Labels stay Onest 14px / 500 (M3 Label Large), with 16px side padding and an 8px icon–label gap (24px past 56px tall); the morph replaces upstream's 1px press nudge. A button that holds a concentric circle in its end (the schedule's current-event bar) keeps the pill while pressed.
 - **Sizing:** The base already meets the thumb-first 44px tap target (default/icon 44px, sm 40px, lg 48px; `xs` 24px is a dense desktop-only opt-in), so a plain `<Button>` needs no `min-h-11`. Non-negotiable on a phone-first app — set in `button.svelte`'s `tv()` base, one rung above upstream shadcn.
-- **Primary:** the default `<Button>` (`variant="default"`) — watermelon fill via the semantic `--primary`, full-width in stacked action groups.
+- **Primary:** the default `<Button>` (`variant="default"`) — forest-green fill via the semantic `--primary`, full-width in stacked action groups.
 - **Secondary / Ghost / Destructive:** `variant="outline"` (bordered) for the secondary action in a stack; `variant="ghost"` for tertiary ("back"); `variant="destructive"` reserved for destructive confirms.
 - **Tonal (repeated actions):** `variant="tonal"` — a brand-tinted fill for an action that repeats down a list (the per-participant «Голосовать»). A column of solid fills would bury the page's one primary action, and a labelled button beats an icon here: no icon reads as "vote" on its own ([NN/g, Icon Usability](https://www.nngroup.com/articles/icon-usability/)).
 - **Floating (over scrolling content):** `variant="floating"` — the bottom-nav pill's glass (`background/85` + blur, opaque under reduce-transparency) for a button that hovers over the page, like the schedule's current-event bar. `outline` is near-transparent in dark mode, so content would read through a floating outline button.
@@ -133,12 +131,12 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 
 ### Navigation
 
-- **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; the active label is `primary-800` (`primary-300` in dark), not the token, and idle is `gray-600` in light (`muted-foreground` in dark), with foreground on hover. Those shades are picked for the glass's worst backdrop, a dark photo or white content scrolled under it, not for a white page: the tokens fell below AA there (numbers in `AppBottomNav.svelte`). Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
-- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop. The sidebar keeps a permanent 1px right border: in light mode it and the page share one surface colour, so the line is the only edge between them; in dark mode the sidebar's `card` is a step lighter than the page's `background`, and the line reinforces that step. The top navbar's bottom hairline shows only once content has scrolled under it, the iOS / Material 3 scroll-edge behaviour; at the top of a page it would separate nothing.
+- **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; the active label is `primary-800` (`primary-300` in dark), not the token, and idle is `gray-600` in light (`muted-foreground` in dark), with foreground on hover. Those shades are picked for the glass's worst backdrop, a dark photo or white content scrolled under it, not for a white page: the tokens fell below AA there (see `AppBottomNav.svelte`). Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
+- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop. The sidebar keeps a permanent 1px right border: in light mode it and the page share one surface colour, so the line is the only edge between them; in dark mode the sidebar's `card` is a step lighter than the page's `background`, and the line reinforces that step. The top navbar stays borderless as content scrolls under it.
 
 ### Icons
 
-- **Set:** Lucide (`@lucide/svelte`), the library the vendored shadcn-svelte components already import, so app icons and component chrome share one stroke weight and corner style. It is chosen for consistency, not character: identity comes from the watermelon colour and Unbounded, and icons stay quiet next to them.
+- **Set:** Lucide (`@lucide/svelte`), the library the vendored shadcn-svelte components already import, so app icons and component chrome share one stroke weight and corner style. It is chosen for consistency, not character: identity comes from the forest-green colour and Unbounded, and icons stay quiet next to them.
 - **Use:** an icon earns its place by naming its content (calendar for Программа, map pin for Карта). A labelled button beats a lone icon when no glyph reads unambiguously (see Tonal buttons).
 
 ### Empty & Loading States
@@ -153,8 +151,8 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 
 - **Do** keep every primary task one-handed and one-glance: bottom nav on mobile, ≥44px tap targets, a single `max-w-5xl` column.
 - **Do** treat a wide screen as a rearrangement of the phone layout, never a second design: at `lg`/`xl` a page may put the same components side by side (Home's supporting column, the map's plan beside its list, the voting grid), but it never shows content, controls or navigation that phones don't get. Extra panes come only where the width earns them, Material 3's canonical layouts at expanded widths and up ([Android, window size classes](https://developer.android.com/develop/ui/compose/layouts/adaptive/window-size-classes)). Behaviour that must switch with the bottom nav ↔ sidebar swap matches `DESKTOP_MEDIA_QUERY` (`#lib/constants/layout`, kept equal to `--breakpoint-md` in `app.css` by a unit test), never a hardcoded width.
-- **Do** let color earn its place — saturated watermelon only on action, active state, and semantic state; gray at rest.
-- **Do** separate surfaces with a border and a tonal step (`gray-50` field under `white` surface) before reaching for any shadow.
+- **Do** let color earn its place — saturated forest green only on action, active state, and semantic state; gray at rest.
+- **Do** separate surfaces with a subtle border before reaching for any shadow.
 - **Do** use Inter for all interface text; reserve Unbounded for the wordmark and rare identity moments.
 - **Do** pair every state with text/icon, not color alone (active nav = solid icon + primary; error = red border + message).
 - **Do** ship skeletons for loading, teaching empty states, and calm cached/offline notices — resilience is first-class.
