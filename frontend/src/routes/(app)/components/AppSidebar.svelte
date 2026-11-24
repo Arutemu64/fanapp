@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import logo from '#lib/assets/logo.svg';
 	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -25,7 +24,13 @@
 	class="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
 >
 	<a href={resolve('')} class="mb-6 flex items-center justify-center ps-0">
-		<img src={logo} alt={m.app_name()} class="h-11 w-auto dark:invert" />
+		<img
+			src="/icons/wordmark.png"
+			width="561"
+			height="198"
+			alt={m.app_name()}
+			class="h-16 w-auto max-w-full dark:rounded-lg dark:bg-white dark:px-2"
+		/>
 	</a>
 	<div class="flex flex-col gap-1">
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}

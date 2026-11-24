@@ -16,18 +16,14 @@
 
 	interface Props {
 		user: CurrentUserDto | null;
-		contentScrolled: boolean;
 		lastSearches: Readonly<Record<string, string>>;
 	}
 
-	let { user, contentScrolled, lastSearches }: Props = $props();
+	let { user, lastSearches }: Props = $props();
 </script>
 
 <header
-	class={[
-		'flex items-center justify-between gap-2 border-b bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] transition-colors duration-300 select-none [-webkit-touch-callout:none] sm:px-6 reduced-transparency:bg-background',
-		contentScrolled ? 'border-border/50' : 'border-transparent'
-	]}
+	class="flex items-center justify-between gap-2 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] select-none [-webkit-touch-callout:none] sm:px-6 reduced-transparency:bg-background"
 >
 	<div class="flex min-h-11 min-w-0 flex-1 items-center gap-1">
 		{#if back}
@@ -42,7 +38,7 @@
 			</Button>
 		{/if}
 		{#if pageTitle}
-			<h1 class="line-clamp-2 text-headline wrap-break-word text-foreground">
+			<h1 class="line-clamp-2 text-headline wrap-break-word text-primary-600 dark:text-primary-200">
 				{pageTitle}
 			</h1>
 		{/if}
