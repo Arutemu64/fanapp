@@ -7,3 +7,5 @@ minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   # Renovate security update: @sveltejs/adapter-static@4.0.1
   - '@sveltejs/adapter-static@4.0.1'
+  # Renovate security update: @sveltejs/kit@3.1.1
+  - '@sveltejs/kit@3.1.1'
