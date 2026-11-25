@@ -39,7 +39,7 @@ class EnvConfig(BaseSettings):
     )
 
     web: WebConfig
-    timezone: TimeZoneName = "Europe/Moscow"
+    timezone: TimeZoneName = TimeZoneName("Europe/Moscow")
 
     db: DatabaseConfig
     nats: NatsConfig

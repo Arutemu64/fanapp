@@ -31,7 +31,7 @@ class OrderMixin:
     @classmethod
     def order(cls) -> Mapped[float]:
         order_sequence = Sequence(f"{cls.__tablename__}_order_seq", start=1)
-        return mapped_column(  # ty: ignore[unsound-return-statement]
+        return mapped_column(  # ty: ignore[unsound-return]
             nullable=False,
             server_default=order_sequence.next_value(),
         )
