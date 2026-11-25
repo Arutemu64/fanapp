@@ -1,76 +1,49 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-
-	import UserAvatar from '#lib/components/UserAvatar.svelte';
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
-	import { handleNavItemClick, hasUpdateDot, isNavItemActive, tabHref } from '#lib/utils/nav.js';
+
+	import AppNavLink from './AppNavLink.svelte';
 
 	interface Props {
+		activeIndex: number;
 		activeUrl: string;
 		avatarSeed: string | null;
 		lastSearches: Readonly<Record<string, string>>;
 		scrollToTop: () => void;
 	}
 
-	let { activeUrl, avatarSeed, lastSearches, scrollToTop }: Props = $props();
+	let { activeIndex, activeUrl, avatarSeed, lastSearches, scrollToTop }: Props = $props();
 
-	const appUpdate = getAppUpdateService();
+	let indicatorShift = $derived(`0 calc(${Math.max(activeIndex, 0)} * (100% + var(--spacing)))`);
+	const indicatorHeight = `calc((100% + var(--spacing)) / ${PRIMARY_NAV_ITEMS.length} - var(--spacing))`;
 </script>
 
-<nav
-	aria-label={m.nav_aria_label()}
-	class="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
->
-	<a href={resolve('')} class="mb-6 flex items-center justify-center ps-0">
-		<img
-			src="/icons/wordmark.png"
-			width="561"
-			height="198"
-			alt={m.app_name()}
-			class="h-16 w-auto max-w-full dark:rounded-lg dark:bg-white dark:px-2"
-		/>
-	</a>
-	<div class="flex flex-col gap-1">
-		{#each PRIMARY_NAV_ITEMS as item (item.href)}
-			{const { label, href, outlineIcon: Icon } = $derived(item)}
-			{const active = $derived(isNavItemActive(activeUrl, item))}
-			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
-			<a
-				href={tabHref(href, lastSearches)}
-				aria-current={active ? 'page' : undefined}
+<div class="sticky top-0 hidden h-dvh shrink-0 items-start py-4 ps-4 md:flex lg:ps-6">
+	<nav
+		aria-label={m.nav_aria_label()}
+		class="max-h-full w-26 overflow-x-hidden overflow-y-auto rounded-2xl bg-card p-2 shadow-xs ring-1 ring-foreground/10"
+	>
+		<div class="relative grid auto-rows-fr gap-1">
+			<span
+				aria-hidden="true"
 				class={[
-					'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-					active
-						? 'bg-primary/10 text-primary-700 dark:text-primary'
-						: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+					'pointer-events-none absolute inset-x-0 top-0 rounded-full bg-primary/12 transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none dark:bg-primary/20',
+					activeIndex === -1 && 'opacity-0'
 				]}
-				onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}
-			>
-				{#if href === 'profile' && avatarSeed}
-					<UserAvatar
-						seed={avatarSeed}
-						class="size-5 {active
-							? 'ring-2 ring-primary-700 dark:ring-primary'
-							: 'ring-1 ring-border'}"
-					/>
-				{:else}
-					<Icon
-						class={[
-							'size-5 shrink-0 transition-colors',
-							active
-								? 'text-primary-700 dark:text-primary'
-								: 'text-muted-foreground group-hover:text-foreground'
-						]}
-					/>
-				{/if}
-				<span>{label()}</span>
-				{#if updateDot}
-					<span aria-hidden="true" class="ms-auto size-2 rounded-full bg-primary"></span>
-					<span class="sr-only">{m.nav_update_available()}</span>
-				{/if}
-			</a>
-		{/each}
-	</div>
-</nav>
+				style:height={indicatorHeight}
+				style:translate={indicatorShift}
+			></span>
+			{#each PRIMARY_NAV_ITEMS as item, index (item.href)}
+				<AppNavLink
+					{item}
+					layout="sidebar"
+					active={index === activeIndex}
+					{activeUrl}
+					{avatarSeed}
+					{lastSearches}
+					{scrollToTop}
+				/>
+			{/each}
+		</div>
+	</nav>
+</div>

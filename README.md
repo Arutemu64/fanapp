@@ -3,7 +3,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](#license)
 
-![The FAN FAN app on festival day: the home page on a laptop and a phone, with the act on stage over the key art, what's next, open voting and the remaining setup steps](docs/assets/readme-header.webp)
+![FAN FAN Home on festival day, with a vertical navigation rail on the laptop and a bottom bar on the phone](docs/assets/readme-header.webp)
 
 Companion web app for the **FAN FAN** Russian anime convention. It gives attendees the event schedule, voting, notifications, and ticket-linked profiles from their phone, and gives organizers the tools to run all of it. Audience is teen to young-adult and non-technical, so the UI is mobile-first and all user-facing copy is in Russian.
 
@@ -19,7 +19,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ## Features
 
-- **Home**: changes with the festival: a countdown before it, the act on stage and what's next during it, thanks and a feedback prompt after. An "open voting" card shows while voting runs, and a setup list (account, ticket, subscriptions, notifications, install) shows each person only the steps they still have. Below them sits the festival guide: the address and doors time, the rules, a page per festival activity, and social links. The activity pages are Markdown files in `frontend/src/content/guide/`, compiled with mdsvex, so adding or rewording one is a file edit ([ADR-0028](docs/adr/0028-mdsvex-for-guide-articles.md)).
+- **Home** changes with the festival. Before it starts, the hero shows a countdown, the doors and start times, and the venue. During the festival, Home shows the act on stage and what's next. Afterwards it thanks attendees and offers a feedback link. An open voting card appears while voting runs, and the setup list shows each person the steps they still have (account, ticket, subscriptions, notifications, install). The festival guide groups entry rules, tickets and activities into compact cards, followed by social links. Guide articles live in `frontend/src/content/guide/` as Markdown compiled with mdsvex ([ADR-0028](docs/adr/0028-mdsvex-for-guide-articles.md)).
 - **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
 - **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
@@ -34,7 +34,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ### Screenshots
 
-The gallery shows the forest-green Spring 2027 edition with sample festival data.
+The gallery shows the forest-green Spring 2027 edition with sample festival data. The same five destinations appear in a vertical rail on desktop and a bottom bar on phones, with labels beneath the icons and a sliding highlight for the active destination.
 
 <table>
   <tr>
