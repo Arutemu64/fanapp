@@ -1,10 +1,9 @@
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
 
 import httpx2
 import pytest
-from adaptix import Retort
+from pydantic import BaseModel
 
 from fanfan.adapters.api.base import (
     MAX_ATTEMPTS,
@@ -16,8 +15,7 @@ from fanfan.adapters.api.ticketscloud.client import TCloudClient
 from fanfan.adapters.api.ticketscloud.dto.order import OrderStatus
 
 
-@dataclass
-class _Payload:
+class _Payload(BaseModel):
     value: int
 
 
@@ -65,7 +63,7 @@ def _client(handler: _ScriptedHandler) -> BaseApiClient:
         transport=httpx2.MockTransport(handler),
         base_url="https://vendor.test/",
     )
-    return BaseApiClient(client=http, retort=Retort())
+    return BaseApiClient(client=http)
 
 
 @pytest.fixture(autouse=True)
@@ -167,7 +165,7 @@ def _tcloud_client(handler: _ScriptedHandler) -> TCloudClient:
         transport=httpx2.MockTransport(handler),
         base_url="https://vendor.test/",
     )
-    return TCloudClient(client=http, retort=Retort())
+    return TCloudClient(client=http)
 
 
 async def test_get_order_unwraps_data_envelope() -> None:

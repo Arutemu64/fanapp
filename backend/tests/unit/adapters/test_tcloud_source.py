@@ -42,7 +42,7 @@ class FakeTCloudClient(TCloudClient):
 
     Subclasses the real client so `ty` verifies these signatures against the
     ones the source calls. `__init__` does not call super(): there is no httpx
-    pool or retort here, and the overrides replace every use of them.
+    pool here, and the overrides handle every request.
     """
 
     def __init__(

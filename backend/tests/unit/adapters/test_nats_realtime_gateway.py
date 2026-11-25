@@ -8,7 +8,6 @@ import pytest
 
 from fanfan.adapters.nats.factory import NATSClient
 from fanfan.adapters.nats.realtime_gateway import NatsRealtimeGateway
-from fanfan.adapters.serialization import create_retort
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.core.vo.user import UserId
 
@@ -48,7 +47,7 @@ class StubNatsClient:
 
 
 def _gateway(nc: StubNatsClient) -> NatsRealtimeGateway:
-    return NatsRealtimeGateway(nc=cast("NATSClient", nc), retort=create_retort())
+    return NatsRealtimeGateway(nc=cast("NATSClient", nc))
 
 
 def _subscribe(

@@ -7,15 +7,6 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [[package]]
-name = "adaptix"
-version = "3.0.0b12"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5d/82/aa17eb2968cf7c78caf4915ca62397214f196dc1bef07e4d81bfb4c4abc5/adaptix-3.0.0b12.tar.gz", hash = "sha256:906053a39ff509f0aa4ca9faa07dffa205bd90fa41d9774cd849d3454565b0ea", size = 128634, upload-time = "2026-04-04T17:31:01.084Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/66/abcca849b17e4a3adf5116e58c51471f37264a190cee2c67f1ba57782a7f/adaptix-3.0.0b12-py3-none-any.whl", hash = "sha256:8156f0549b96fcd193d13efca7bfbda39b3d6389085556d930e204c09f9ae6ed", size = 188651, upload-time = "2026-04-04T17:30:59.17Z" },
-]
-
-[[package]]
 name = "aiosmtplib"
 version = "5.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -542,7 +533,6 @@ name = "fanfan"
 version = "2.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "adaptix" },
     { name = "aiosmtplib" },
     { name = "alembic" },
     { name = "altcha" },
@@ -593,7 +583,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adaptix", specifier = ">=3.0.0b12" },
     { name = "aiosmtplib", specifier = ">=5.1.3" },
     { name = "alembic", specifier = ">=1.20.1" },
     { name = "altcha", specifier = ">=2.4.0" },

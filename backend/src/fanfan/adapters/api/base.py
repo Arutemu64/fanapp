@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import httpx2
-from adaptix import Retort
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +20,12 @@ RETRY_AFTER_MAX_DELAY = 60.0
 
 
 class BaseApiClient:
-    def __init__(self, client: httpx2.AsyncClient, retort: Retort) -> None:
+    def __init__(self, client: httpx2.AsyncClient) -> None:
         self._client = client
-        self._retort = retort
 
-    async def _get[T](self, path: str, model: type[T], **params: Any) -> T:
+    async def _get[T: BaseModel](self, path: str, model: type[T], **params: Any) -> T:
         response = await self._request_with_retry(path, params)
-        return self._retort.load(response.json(), model)
+        return model.model_validate_json(response.content, strict=True)
 
     async def _request_with_retry(
         self, path: str, params: dict[str, Any]

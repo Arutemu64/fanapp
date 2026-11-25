@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from enum import StrEnum
+
+from pydantic import BaseModel
 
 from fanfan.adapters.api.ticketscloud.dto.pagination import Pagination
 
@@ -11,14 +12,12 @@ class RefundStatus(StrEnum):
     REJECTED = "rejected"
 
 
-@dataclass(slots=True, frozen=True)
-class Refund:
+class Refund(BaseModel, frozen=True):
     id: str
     order: str
     tickets: list[str]
 
 
-@dataclass(slots=True, frozen=True)
-class RefundsResponse:
+class RefundsResponse(BaseModel, frozen=True):
     data: list[Refund]
     pagination: Pagination
