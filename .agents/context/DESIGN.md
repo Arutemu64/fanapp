@@ -61,7 +61,7 @@ Both are self-hosted via Fontsource with Cyrillic subsets — all copy is Russia
 ### Hierarchy
 
 - **Display** (Unbounded, 700, ~1.5rem+, line-height 1.15): Brand wordmark and rare identity moments only. Never body, never data.
-- **Headline** (Unbounded, 600, 1.5rem, line-height 1.375): Page titles (in navbar), error-card titles. `text-headline` at every width; a long title wraps to two lines rather than truncating.
+- **Headline** (Unbounded, 600, 1.5rem, line-height 1.375): Page titles and error-card titles. `text-headline` at every width; long titles wrap in full.
 - **Section** (Unbounded, 600, 1.125rem, line-height 1.375): Section and card-group headings. `text-section` at every width.
 - **Title** (Onest, 600, 1rem, line-height 1.4): Card headings, notification titles, list-item leads.
 - **Body** (Onest, 400, 1rem, line-height 1.6): Descriptions and prose. `text-body`; 14px (`text-sm`) is for secondary text only — helper lines, a subtitle under a heading, metadata rows. Cap prose at 65–75ch (the `max-w-5xl` single column already enforces this on phones).
@@ -132,7 +132,7 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 ### Navigation
 
 - **Mobile — Bottom Nav:** A floating glass pill with five links with 24px icons and visible labels in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges and above the home indicator. The active icon and semibold label use `primary-800` in light mode and `primary-300` in dark mode. A `primary/12` capsule (`/20` in dark mode) slides between tabs in 300ms and moves instantly under reduced motion. The bar uses `background/85` and 16px blur, with an opaque surface under reduced transparency. Floating controls offset from `--bottom-nav-clearance` in `app.css`.
-- **Desktop — Sidebar + Navbar:** At `md:` and up, the primary links sit in a compact 104px dock inset from the top and left edges. The dock stays in place during page scroll, and its links scroll within it on short viewports. Each link stacks a 24px icon above a visible 12px label. A vertical pill highlights the active link with the same 300ms transition as the bottom bar. It moves instantly under reduced motion. The borderless top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell.
+- **Desktop — Sidebar + Navbar:** At `md:` and up, the primary links sit in a compact 104px dock inset from the top and left edges. The dock stays in place during page scroll, and its links scroll within it on short viewports. Each link stacks a 24px icon above a visible 12px label. A vertical pill highlights the active link with the same 300ms transition as the bottom bar. It moves instantly under reduced motion. The borderless top navbar carries the tab title and notification bell. On nested pages, the title starts the scrolling content and a leading back arrow appears in the navbar on phones and desktops.
 
 ### Icons
 

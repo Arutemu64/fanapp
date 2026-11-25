@@ -5,22 +5,22 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
 	import { cn } from '#lib/utils.js';
-	import { handleNavItemClick, hasUpdateDot, tabHref } from '#lib/utils/nav.js';
+	import { handleNavItemClick, hasUpdateDot, navItemCurrent, tabHref } from '#lib/utils/nav.js';
 
 	interface Props {
 		item: PrimaryNavItem;
 		layout: 'sidebar' | 'bottom';
-		active: boolean;
 		activeUrl: string;
 		avatarSeed: string | null;
 		lastSearches: Readonly<Record<string, string>>;
 		scrollToTop: () => void;
 	}
 
-	let { item, layout, active, activeUrl, avatarSeed, lastSearches, scrollToTop }: Props = $props();
+	let { item, layout, activeUrl, avatarSeed, lastSearches, scrollToTop }: Props = $props();
 
 	const appUpdate = getAppUpdateService();
 	let { href, label, outlineIcon: Icon } = $derived(item);
+	let active = $derived(navItemCurrent(activeUrl, item));
 	let isBottom = $derived(layout === 'bottom');
 	let updateDot = $derived(hasUpdateDot(href, appUpdate.available));
 	const activeColor = 'text-primary-800 dark:text-primary-300';
@@ -31,7 +31,7 @@
 
 <a
 	href={tabHref(href, lastSearches)}
-	aria-current={active ? 'page' : undefined}
+	aria-current={active}
 	class={[
 		'relative flex-col items-center justify-center rounded-full',
 		isBottom

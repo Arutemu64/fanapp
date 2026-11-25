@@ -15,7 +15,7 @@
 	import { DESKTOP_MEDIA_QUERY } from '#lib/constants/layout.js';
 	import { PRIMARY_NAV_ITEMS, TAB_ROOTS } from '#lib/data/nav.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
-	import { isNavItemActive } from '#lib/utils/nav.js';
+	import { navItemCurrent } from '#lib/utils/nav.js';
 	import { resolvePath } from '#lib/utils/paths.js';
 
 	import type { LayoutProps } from './$types';
@@ -30,7 +30,7 @@
 
 	let activeUrl = $derived(page.url.pathname);
 	let activeIndex = $derived(
-		PRIMARY_NAV_ITEMS.findIndex((item) => isNavItemActive(activeUrl, item))
+		PRIMARY_NAV_ITEMS.findIndex((item) => navItemCurrent(activeUrl, item))
 	);
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
@@ -212,6 +212,11 @@
 			<div
 				class="mx-auto w-full max-w-5xl grow p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] has-[>[data-fill-column]]:flex has-[>[data-fill-column]]:flex-col md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
+				{#if page.data.back && page.data.title}
+					<h1 class="mb-4 text-headline wrap-anywhere text-primary-600 dark:text-primary-200">
+						{page.data.title}
+					</h1>
+				{/if}
 				{@render children()}
 			</div>
 		</main>

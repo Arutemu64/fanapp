@@ -133,7 +133,7 @@ test.describe('profile hub', () => {
 		const nav = page.getByRole('navigation', { name: 'Разделы' });
 		await expect(nav.getByRole('link', { name: 'Профиль' })).toHaveAttribute(
 			'aria-current',
-			'page'
+			'location'
 		);
 	});
 

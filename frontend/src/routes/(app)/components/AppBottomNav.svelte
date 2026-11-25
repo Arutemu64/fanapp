@@ -35,16 +35,8 @@
 			style:translate={indicatorShift}
 		></span>
 
-		{#each PRIMARY_NAV_ITEMS as item, index (item.href)}
-			<AppNavLink
-				{item}
-				layout="bottom"
-				active={index === activeIndex}
-				{activeUrl}
-				{avatarSeed}
-				{lastSearches}
-				{scrollToTop}
-			/>
+		{#each PRIMARY_NAV_ITEMS as item (item.href)}
+			<AppNavLink {item} layout="bottom" {activeUrl} {avatarSeed} {lastSearches} {scrollToTop} />
 		{/each}
 	</div>
 </nav>
