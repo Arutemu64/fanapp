@@ -1,5 +1,4 @@
 import asyncio
-import json
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from typing import Any, cast
 from uuid import uuid4
@@ -17,8 +16,8 @@ type Handler = Callable[[Any], Awaitable[None]]
 
 
 class StubMsg:
-    def __init__(self, payload: dict[str, Any]) -> None:
-        self.data = json.dumps(payload).encode()
+    def __init__(self, payload: bytes) -> None:
+        self.data = payload
 
 
 class StubSubscription:
@@ -36,14 +35,18 @@ class StubNatsClient:
     def __init__(self) -> None:
         self.handlers: dict[str, Handler] = {}
         self.subscribe_calls: list[str] = []
+        self.published: list[tuple[str, bytes]] = []
 
     async def subscribe(self, subject: str, cb: Handler) -> StubSubscription:
         self.subscribe_calls.append(subject)
         self.handlers[subject] = cb
         return StubSubscription(self, subject)
 
-    async def deliver(self, subject: str, message: SSEMessage) -> None:
-        await self.handlers[subject](StubMsg({"event_name": message.event_name}))
+    async def publish(self, subject: str, payload: bytes) -> None:
+        self.published.append((subject, payload))
+
+    async def deliver(self, subject: str, payload: bytes) -> None:
+        await self.handlers[subject](StubMsg(payload))
 
 
 def _gateway(nc: StubNatsClient) -> NatsRealtimeGateway:
@@ -69,9 +72,7 @@ async def test_broadcast_reaches_every_stream_through_one_subscription() -> None
     first_pending = asyncio.ensure_future(_next(first))
     second_pending = asyncio.ensure_future(_next(second))
     await asyncio.sleep(0)
-    await nc.deliver(
-        "sse.broadcast.*", SSEMessage(event_name=SSEEventName.SCHEDULE_UPDATED)
-    )
+    await nc.deliver("sse.broadcast.*", b'{"event_name":"schedule_updated"}')
 
     assert (await first_pending).event_name == SSEEventName.SCHEDULE_UPDATED
     assert (await second_pending).event_name == SSEEventName.SCHEDULE_UPDATED
@@ -90,7 +91,7 @@ async def test_closed_stream_stops_receiving_and_drops_its_user_subscription() -
     await asyncio.sleep(0)
     await nc.deliver(
         f"sse.user.{user_id}.*",
-        SSEMessage(event_name=SSEEventName.NOTIFICATION_CREATED),
+        b'{"event_name":"notification_created"}',
     )
     assert (await pending).event_name == SSEEventName.NOTIFICATION_CREATED
 
@@ -98,6 +99,25 @@ async def test_closed_stream_stops_receiving_and_drops_its_user_subscription() -
 
     assert f"sse.user.{user_id}.*" not in nc.handlers
     assert "sse.broadcast.*" in nc.handlers
-    await nc.deliver(
-        "sse.broadcast.*", SSEMessage(event_name=SSEEventName.SCHEDULE_UPDATED)
+    await nc.deliver("sse.broadcast.*", b'{"event_name":"schedule_updated"}')
+
+
+async def test_published_notification_data_reaches_subscriber() -> None:
+    nc = StubNatsClient()
+    gateway = _gateway(nc)
+    message = SSEMessage(
+        event_name=SSEEventName.NOTIFICATION_CREATED,
+        data={"notification": {"id": 42, "title": "Напоминание"}},
     )
+    stream = _subscribe(gateway)
+    pending = asyncio.ensure_future(_next(stream))
+    await asyncio.sleep(0)
+
+    await gateway.publish(message)
+    [(subject, payload)] = nc.published
+    assert subject == "sse.broadcast.notification_created"
+    assert isinstance(payload, bytes)
+    await nc.deliver("sse.broadcast.*", payload)
+
+    assert await pending == message
+    await stream.aclose()
