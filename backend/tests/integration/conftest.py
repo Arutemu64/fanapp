@@ -38,7 +38,6 @@ from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
 from fanfan.main.ioc.security import SecurityProvider
-from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.sync import SyncProvider
 from tests.fakes.captcha import FakeCaptchaVerifier
@@ -106,7 +105,6 @@ def make_test_providers() -> list[Provider]:
         SqlGatewaysProvider(),
         SyncProvider(),
         SecurityProvider(),
-        SerializationProvider(),
         JinjaProvider(),
         ProfanityProvider(),
         HtmlProvider(),

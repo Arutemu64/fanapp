@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from enum import StrEnum
+
+from pydantic import BaseModel
 
 from fanfan.adapters.api.ticketscloud.dto.pagination import Pagination
 from fanfan.adapters.api.ticketscloud.dto.ticket import Ticket
@@ -13,20 +14,17 @@ class OrderStatus(StrEnum):
     IN_PROGRESS = "in_progress"
 
 
-@dataclass(slots=True, frozen=True)
-class Order:
+class Order(BaseModel, frozen=True):
     id: str
     status: OrderStatus
     event: str
     tickets: list[Ticket]
 
 
-@dataclass(slots=True, frozen=True)
-class OrderResponse:
+class OrderResponse(BaseModel, frozen=True):
     data: Order
 
 
-@dataclass(slots=True, frozen=True)
-class OrdersResponse:
+class OrdersResponse(BaseModel, frozen=True):
     data: list[Order]
     pagination: Pagination

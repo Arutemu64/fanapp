@@ -8,7 +8,6 @@ description = "Backend for the FAN FAN convention companion web app: HTTP API an
 license = "MIT"
 requires-python = ">=3.14"
 dependencies = [
-    "adaptix>=3.0.0b12",
     "aiosmtplib>=5.1.3",
     "alembic>=1.20.1",
     "altcha>=2.4.0",

@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass(slots=True, frozen=True)
-class Ticket:
+class Ticket(BaseModel, frozen=True):
     id: str
     barcode: str | None

@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass(slots=True, frozen=True)
-class Pagination:
+class Pagination(BaseModel, frozen=True):
     page: int
     page_size: int
     total: int
