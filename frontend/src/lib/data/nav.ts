@@ -5,7 +5,7 @@ import Calendar from '@lucide/svelte/icons/calendar';
 import CircleUser from '@lucide/svelte/icons/circle-user';
 import House from '@lucide/svelte/icons/house';
 import MapIcon from '@lucide/svelte/icons/map';
-import ThumbsUp from '@lucide/svelte/icons/thumbs-up';
+import Vote from '@lucide/svelte/icons/vote';
 
 import { m } from '#lib/paraglide/messages.js';
 import { resolvePath } from '#lib/utils/paths.js';
@@ -33,7 +33,7 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
 		solidIcon: Calendar
 	},
 	{ label: m.nav_map, href: 'map', outlineIcon: MapIcon, solidIcon: MapIcon },
-	{ label: m.nav_voting, href: 'voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
+	{ label: m.nav_voting, href: 'voting', outlineIcon: Vote, solidIcon: Vote },
 	{
 		label: m.nav_profile,
 		href: 'profile',

@@ -57,7 +57,7 @@ const restrictedClassExemptions = [
 	{
 		files: [
 			'src/routes/(app)/components/home/HeroCard.svelte',
-			'src/routes/(app)/components/AppBottomNav.svelte',
+			'src/routes/(app)/components/AppNavLink.svelte',
 			'src/routes/(app)/(protected)/tools/components/OnlineNowCard.svelte',
 			'src/lib/components/VerificationCodeInput.svelte'
 		],

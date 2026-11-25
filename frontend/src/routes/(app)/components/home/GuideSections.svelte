@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Ticket from '@lucide/svelte/icons/ticket';
 
-	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import MenuRow from '#lib/components/MenuRow.svelte';
 	import { guideArticles } from '#lib/data/guideArticles.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -21,13 +20,14 @@
 	let showTickets = $derived(phase === 'before');
 </script>
 
-{#snippet articleRows(articles: typeof guideArticles)}
+{#snippet articleCards(articles: typeof guideArticles)}
 	{#each articles as article (article.slug)}
 		<MenuRow
 			href={`guide/${article.slug}`}
 			label={article.title}
 			description={article.description}
 			icon={article.icon}
+			variant="card"
 		/>
 	{/each}
 {/snippet}
@@ -37,8 +37,8 @@
 		<h2 id="guide-important" class="px-1 text-section text-foreground">
 			{m.guide_important_heading()}
 		</h2>
-		<MenuGroup>
-			{@render articleRows(importantArticles)}
+		<div class="grid gap-2 min-[22rem]:grid-cols-2">
+			{@render articleCards(importantArticles)}
 			{#if showTickets}
 				<MenuRow
 					externalHref="https://fancom.info/pages/Tickets"
@@ -47,17 +47,18 @@
 					label={m.guide_tickets()}
 					description={m.guide_tickets_description()}
 					icon={Ticket}
+					variant="card"
 				/>
 			{/if}
-		</MenuGroup>
+		</div>
 	</section>
 
 	<section aria-labelledby="guide-activities" class="flex flex-col gap-3">
 		<h2 id="guide-activities" class="px-1 text-section text-foreground">
 			{m.guide_activities_heading()}
 		</h2>
-		<MenuGroup>
-			{@render articleRows(activityArticles)}
-		</MenuGroup>
+		<div class="grid gap-2 min-[22rem]:grid-cols-2 xl:grid-cols-3">
+			{@render articleCards(activityArticles)}
+		</div>
 	</section>
 </div>

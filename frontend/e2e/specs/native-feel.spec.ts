@@ -99,7 +99,9 @@ test.describe('native feel', () => {
 		await expect(home).toHaveAttribute('aria-current', 'page');
 	});
 
-	test('keeps the navigation label within its tab at 200% text size', async ({ page }) => {
+	test('keeps the navigation icon and visible label within its tab at 200% text size', async ({
+		page
+	}) => {
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto('/');
 		await page.addStyleTag({ content: 'html { font-size: 200%; }' });
@@ -107,15 +109,24 @@ test.describe('native feel', () => {
 			.getByRole('navigation', { name: 'Разделы' })
 			.getByRole('link', { name: 'Голосование' });
 		await expect(voting).toBeVisible();
-		const fits = await voting.getByText('Голосование').evaluate(async (label) => {
-			await document.fonts.ready;
-			const tab = label.closest('a')?.getBoundingClientRect();
-			const text = document.createRange();
-			text.selectNodeContents(label);
-			const { left, right } = text.getBoundingClientRect();
+		await expect(voting).toHaveAccessibleName('Голосование');
+		const fits = await voting.locator('svg').evaluate((icon) => {
+			const tab = icon.closest('a')?.getBoundingClientRect();
+			const { left, right } = icon.getBoundingClientRect();
 			return tab !== undefined && left >= tab.left && right <= tab.right;
 		});
 		expect(fits).toBe(true);
+		const label = voting.getByText('Голосование', { exact: true });
+		await expect(label).toBeVisible();
+		const labelFits = await label.evaluate(async (element) => {
+			await document.fonts.ready;
+			const tab = element.closest('a')?.getBoundingClientRect();
+			const text = document.createRange();
+			text.selectNodeContents(element);
+			const { left, right } = text.getBoundingClientRect();
+			return tab !== undefined && left >= tab.left && right <= tab.right;
+		});
+		expect(labelFits).toBe(true);
 	});
 
 	test('hides the top bar on scroll and keeps a tab where it was left', async ({

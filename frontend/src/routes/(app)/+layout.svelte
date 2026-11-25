@@ -13,8 +13,9 @@
 
 	import SkipLink from '#lib/components/SkipLink.svelte';
 	import { DESKTOP_MEDIA_QUERY } from '#lib/constants/layout.js';
-	import { TAB_ROOTS } from '#lib/data/nav.js';
+	import { PRIMARY_NAV_ITEMS, TAB_ROOTS } from '#lib/data/nav.js';
 	import { currentUserOptions } from '#lib/services/identity.js';
+	import { navItemCurrent } from '#lib/utils/nav.js';
 	import { resolvePath } from '#lib/utils/paths.js';
 
 	import type { LayoutProps } from './$types';
@@ -28,6 +29,9 @@
 	let { children }: LayoutProps = $props();
 
 	let activeUrl = $derived(page.url.pathname);
+	let activeIndex = $derived(
+		PRIMARY_NAV_ITEMS.findIndex((item) => navItemCurrent(activeUrl, item))
+	);
 	const userQuery = createQuery(() => currentUserOptions());
 	let user = $derived(userQuery.data ?? null);
 
@@ -175,6 +179,7 @@
 	<SkipLink />
 
 	<AppSidebar
+		{activeIndex}
 		{activeUrl}
 		avatarSeed={user?.avatar_seed ?? null}
 		lastSearches={tabMemory.lastSearches}
@@ -218,6 +223,7 @@
 	</div>
 
 	<AppBottomNav
+		{activeIndex}
 		{activeUrl}
 		avatarSeed={user?.avatar_seed ?? null}
 		lastSearches={tabMemory.lastSearches}
