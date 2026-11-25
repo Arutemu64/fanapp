@@ -97,7 +97,7 @@ possibly-missing-import = "error"
 possibly-unresolved-reference = "error"
 redundant-condition-strict = "error"
 unsound-assignment = "error"
-unsound-return-statement = "error"
+unsound-return = "error"
 unsound-yield = "error"
 unsupported-dynamic-base = "error"
 
