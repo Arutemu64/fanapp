@@ -16,11 +16,11 @@
 >
 	<div class="flex w-full max-w-sm flex-col gap-3">
 		<img
-			src="/icons/wordmark.png"
+			src="/icons/wordmark.svg"
 			width="561"
 			height="198"
 			alt={m.app_name()}
-			class="mx-auto mb-5 h-12 w-auto dark:rounded-lg dark:bg-white dark:px-2"
+			class="mx-auto mb-5 h-12 w-auto"
 		/>
 
 		{@render children()}

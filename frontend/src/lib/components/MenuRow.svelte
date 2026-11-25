@@ -24,6 +24,7 @@
 		description?: string;
 		fullDescription?: boolean;
 		icon: Component;
+		variant?: 'card';
 		tone?: 'muted' | 'primary';
 		value?: string;
 		chevron?: boolean;
@@ -32,7 +33,8 @@
 	let props: Props = $props();
 
 	let Icon = $derived(props.icon);
-	let showChevron = $derived(props.chevron ?? props.href !== undefined);
+	let isCard = $derived(props.variant === 'card');
+	let showChevron = $derived(props.chevron ?? (!isCard && props.href !== undefined));
 	let opensNewTab = $derived(props.externalHref !== undefined && props.newTab);
 </script>
 
@@ -40,6 +42,7 @@
 	<Item.Media
 		class={[
 			'size-9 rounded-lg',
+			isCard && 'max-sm:size-7',
 			props.tone === 'primary'
 				? 'bg-primary/10 text-primary-700 dark:text-primary'
 				: 'bg-muted text-muted-foreground'
@@ -47,16 +50,23 @@
 	>
 		<Icon class="size-5" aria-hidden="true" />
 	</Item.Media>
-	<Item.Content>
-		<Item.Title class="text-base">{props.label}</Item.Title>
+	<Item.Content class={isCard ? 'min-w-0 self-start max-sm:contents' : undefined}>
+		<Item.Title class={isCard ? 'line-clamp-none wrap-anywhere' : 'text-base'}>
+			{props.label}
+		</Item.Title>
 		{#if props.description}
-			<Item.Description class={[props.fullDescription && 'line-clamp-none']}>
+			<Item.Description
+				class={[
+					(props.fullDescription || isCard) && 'line-clamp-none',
+					isCard && 'max-sm:col-span-full max-sm:row-start-2'
+				]}
+			>
 				{props.description}
 			</Item.Description>
 		{/if}
 	</Item.Content>
 	{#if props.value || showChevron || opensNewTab}
-		<Item.Actions>
+		<Item.Actions class={isCard ? 'max-sm:col-start-3 max-sm:row-start-1' : undefined}>
 			{#if props.value}
 				<span class="text-sm text-muted-foreground">{props.value}</span>
 			{/if}
@@ -70,7 +80,13 @@
 	{/if}
 {/snippet}
 
-<Item.Root class="rounded-none">
+<Item.Root
+	variant={isCard ? 'outline' : undefined}
+	size={isCard ? 'sm' : undefined}
+	class={isCard
+		? 'h-full flex-nowrap rounded-2xl bg-card max-sm:grid max-sm:grid-cols-[auto_minmax(0,1fr)_auto] max-sm:gap-2'
+		: 'rounded-none'}
+>
 	{#snippet child({ props: itemProps })}
 		{#if props.href !== undefined}
 			<a href={resolvePath(props.href)} {...itemProps}>
