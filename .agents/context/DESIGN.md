@@ -61,7 +61,7 @@ Both are self-hosted via Fontsource with Cyrillic subsets — all copy is Russia
 ### Hierarchy
 
 - **Display** (Unbounded, 700, ~1.5rem+, line-height 1.15): Brand wordmark and rare identity moments only. Never body, never data.
-- **Headline** (Unbounded, 600, 1.5rem, line-height 1.375): Page titles (in navbar), error-card titles. `text-headline` at every width; a long title wraps to two lines rather than truncating.
+- **Headline** (Unbounded, 600, 1.5rem, line-height 1.375): Page titles and error-card titles. `text-headline` at every width; long titles wrap in full.
 - **Section** (Unbounded, 600, 1.125rem, line-height 1.375): Section and card-group headings. `text-section` at every width.
 - **Title** (Onest, 600, 1rem, line-height 1.4): Card headings, notification titles, list-item leads.
 - **Body** (Onest, 400, 1rem, line-height 1.6): Descriptions and prose. `text-body`; 14px (`text-sm`) is for secondary text only — helper lines, a subtitle under a heading, metadata rows. Cap prose at 65–75ch (the `max-w-5xl` single column already enforces this on phones).
@@ -132,7 +132,7 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 ### Navigation
 
 - **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; the active label is `primary-800` (`primary-300` in dark), not the token, and idle is `gray-600` in light (`muted-foreground` in dark), with foreground on hover. Those shades are picked for the glass's worst backdrop, a dark photo or white content scrolled under it, not for a white page: the tokens fell below AA there (see `AppBottomNav.svelte`). Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
-- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop. The sidebar keeps a permanent 1px right border: in light mode it and the page share one surface colour, so the line is the only edge between them; in dark mode the sidebar's `card` is a step lighter than the page's `background`, and the line reinforces that step. The top navbar stays borderless as content scrolls under it.
+- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; the top navbar carries the tab title and notification bell. On nested pages, the title starts the scrolling content and a leading back arrow appears in the navbar on phones and desktops. Bottom nav is hidden on desktop. The sidebar keeps a permanent 1px right border: in light mode it and the page share one surface colour, so the line is the only edge between them; in dark mode the sidebar's `card` is a step lighter than the page's `background`, and the line reinforces that step. The top navbar stays borderless as content scrolls under it.
 
 ### Icons
 

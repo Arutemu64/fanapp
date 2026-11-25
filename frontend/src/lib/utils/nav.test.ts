@@ -7,7 +7,7 @@ import {
 	handleNavItemClick,
 	hasUpdateDot,
 	isActivePath,
-	isNavItemActive,
+	navItemCurrent,
 	tabHref,
 	toAppPath
 } from './nav';
@@ -26,23 +26,23 @@ describe('isActivePath', () => {
 	});
 });
 
-describe('isNavItemActive', () => {
+describe('navItemCurrent', () => {
 	const profile = { href: 'profile', nestedRoots: ['feedback', 'tools'] } as const;
 
 	it.each([
-		['/profile', true],
-		['/profile/ticket', true],
-		['/feedback', true],
-		['/tools/users/42', true],
-		['/toolsets', false],
-		['/schedule', false]
+		['/profile', 'page'],
+		['/profile/ticket', 'location'],
+		['/feedback', 'location'],
+		['/tools/users/42', 'location'],
+		['/toolsets', undefined],
+		['/schedule', undefined]
 	])('%s -> %s', (activeUrl, expected) => {
-		expect(isNavItemActive(activeUrl, profile)).toBe(expected);
+		expect(navItemCurrent(activeUrl, profile)).toBe(expected);
 	});
 
 	it('falls back to the item href alone without nested roots', () => {
-		expect(isNavItemActive('/map', { href: 'map' })).toBe(true);
-		expect(isNavItemActive('/feedback', { href: 'map' })).toBe(false);
+		expect(navItemCurrent('/map', { href: 'map' })).toBe('page');
+		expect(navItemCurrent('/feedback', { href: 'map' })).toBeUndefined();
 	});
 });
 

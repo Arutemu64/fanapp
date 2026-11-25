@@ -7,12 +7,13 @@ export function isActivePath(activeUrl: string, href: string): boolean {
 	return activeUrl === href || activeUrl.startsWith(`${href}/`);
 }
 
-export function isNavItemActive(
+export function navItemCurrent(
 	activeUrl: string,
 	item: { href: Path; nestedRoots?: readonly Path[] }
-): boolean {
+): 'page' | 'location' | undefined {
+	if (activeUrl === resolvePath(item.href)) return 'page';
 	const roots = [item.href, ...(item.nestedRoots ?? [])];
-	return roots.some((root) => isActivePath(activeUrl, resolvePath(root)));
+	return roots.some((root) => isActivePath(activeUrl, resolvePath(root))) ? 'location' : undefined;
 }
 
 export function tabHref(href: Path, lastSearches: Readonly<Record<string, string>>): string {

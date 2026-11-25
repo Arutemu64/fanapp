@@ -5,7 +5,7 @@
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
-	import { handleNavItemClick, hasUpdateDot, isNavItemActive, tabHref } from '#lib/utils/nav.js';
+	import { handleNavItemClick, hasUpdateDot, navItemCurrent, tabHref } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
@@ -21,7 +21,7 @@
 
 <nav
 	aria-label={m.nav_aria_label()}
-	class="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
+	class="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-card p-4 md:flex"
 >
 	<a href={resolve('')} class="mb-6 flex items-center justify-center ps-0">
 		<img
@@ -35,11 +35,11 @@
 	<div class="flex flex-col gap-1">
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{const { label, href, outlineIcon: Icon } = $derived(item)}
-			{const active = $derived(isNavItemActive(activeUrl, item))}
+			{const active = $derived(navItemCurrent(activeUrl, item))}
 			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
 			<a
 				href={tabHref(href, lastSearches)}
-				aria-current={active ? 'page' : undefined}
+				aria-current={active}
 				class={[
 					'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
 					active

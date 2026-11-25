@@ -207,6 +207,11 @@
 			<div
 				class="mx-auto w-full max-w-5xl grow p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] has-[>[data-fill-column]]:flex has-[>[data-fill-column]]:flex-col md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
+				{#if page.data.back && page.data.title}
+					<h1 class="mb-4 text-headline wrap-anywhere text-primary-600 dark:text-primary-200">
+						{page.data.title}
+					</h1>
+				{/if}
 				{@render children()}
 			</div>
 		</main>

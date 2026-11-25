@@ -3,7 +3,7 @@
 	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getAppUpdateService } from '#lib/services/appUpdate.svelte.js';
-	import { handleNavItemClick, hasUpdateDot, isNavItemActive, tabHref } from '#lib/utils/nav.js';
+	import { handleNavItemClick, hasUpdateDot, navItemCurrent, tabHref } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
@@ -17,7 +17,7 @@
 	const appUpdate = getAppUpdateService();
 
 	let activeIndex = $derived(
-		PRIMARY_NAV_ITEMS.findIndex((item) => isNavItemActive(activeUrl, item))
+		PRIMARY_NAV_ITEMS.findIndex((item) => navItemCurrent(activeUrl, item))
 	);
 	let indicatorShift = $derived(`${Math.max(activeIndex, 0) * 100}% 0`);
 </script>
@@ -42,11 +42,11 @@
 
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{const { label, href, outlineIcon: Icon } = $derived(item)}
-			{const active = $derived(isNavItemActive(activeUrl, item))}
+			{const active = $derived(navItemCurrent(activeUrl, item))}
 			{const updateDot = $derived(hasUpdateDot(href, appUpdate.available))}
 			<a
 				href={tabHref(href, lastSearches)}
-				aria-current={active ? 'page' : undefined}
+				aria-current={active}
 				class="group relative inline-flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-3xs font-medium tracking-tighter transition-colors min-[22.5rem]:text-2xs min-[25rem]:text-xs min-[25rem]:tracking-tight"
 				onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}
 			>

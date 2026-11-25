@@ -64,6 +64,41 @@ const longSchedule: ScheduleDto['entries'] = [
 ];
 
 test.describe('native feel', () => {
+	test('shows the full detail title in the content at 200% text size', async ({ page }) => {
+		await page.setViewportSize({ width: 320, height: 568 });
+		await page.goto('/guide/authors');
+		await page.addStyleTag({ content: 'html { font-size: 200%; }' });
+		const title = page.getByRole('main').getByRole('heading', { level: 1 });
+		await expect(title).toHaveText('Аллея авторов и косплееров');
+		expect(
+			await title.evaluate(
+				(el) => el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth
+			)
+		).toBe(true);
+	});
+
+	test('scrolls the sidebar to the final link on a short screen', async ({ page }) => {
+		await page.setViewportSize({ width: 844, height: 256 });
+		await page.goto('/guide/authors');
+		const nav = page.getByRole('navigation', { name: 'Разделы' });
+		await nav.getByRole('link', { name: 'Голосование' }).focus();
+		await page.keyboard.press('Tab');
+		const profile = nav.getByRole('link', { name: 'Профиль' });
+		await expect(profile).toBeFocused();
+		await expect(profile).toBeInViewport({ ratio: 1 });
+		expect(await nav.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+	});
+
+	test('distinguishes the current page from its parent tab', async ({ page }) => {
+		await page.goto('/guide/authors');
+		const home = page
+			.getByRole('navigation', { name: 'Разделы' })
+			.getByRole('link', { name: 'Главная' });
+		await expect(home).toHaveAttribute('aria-current', 'location');
+		await home.click();
+		await expect(home).toHaveAttribute('aria-current', 'page');
+	});
+
 	test('keeps the navigation label within its tab at 200% text size', async ({ page }) => {
 		await page.setViewportSize({ width: 320, height: 700 });
 		await page.goto('/');

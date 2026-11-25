@@ -37,8 +37,8 @@
 				<ArrowLeft class="size-5" />
 			</Button>
 		{/if}
-		{#if pageTitle}
-			<h1 class="line-clamp-2 text-headline wrap-break-word text-primary-600 dark:text-primary-200">
+		{#if pageTitle && !back}
+			<h1 class="text-headline wrap-anywhere text-primary-600 dark:text-primary-200">
 				{pageTitle}
 			</h1>
 		{/if}
