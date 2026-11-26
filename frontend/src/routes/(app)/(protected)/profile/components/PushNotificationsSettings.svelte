@@ -300,9 +300,9 @@
 			<li>
 				<ParaglideMessage message={m.vk_modal_step_connect}>
 					{#snippet link({ children }: MessageTagProps)}
-						<a href={resolve('profile/account')} class="font-medium text-primary hover:underline"
-							>{@render children?.()}</a
-						>
+						<a href={resolve('profile/account')} class="font-medium text-primary hover:underline">
+							{@render children?.()}
+						</a>
 					{/snippet}
 				</ParaglideMessage>
 			</li>

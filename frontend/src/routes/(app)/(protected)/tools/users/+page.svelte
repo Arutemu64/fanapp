@@ -135,9 +135,9 @@
 			<Select.Root type="single" value={roleValue} onValueChange={onRoleChange}>
 				<Select.Trigger class="w-full" aria-label={m.common_role()}>{roleLabel}</Select.Trigger>
 				<Select.Content>
-					<Select.Item value={ALL} label={m.users_filter_role_all()}
-						>{m.users_filter_role_all()}</Select.Item
-					>
+					<Select.Item value={ALL} label={m.users_filter_role_all()}>
+						{m.users_filter_role_all()}
+					</Select.Item>
 					{#each USER_ROLES as role (role)}
 						<Select.Item value={role} label={getRoleLabel(role)}>
 							{getRoleLabel(role)}

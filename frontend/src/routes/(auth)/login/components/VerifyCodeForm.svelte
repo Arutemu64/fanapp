@@ -149,9 +149,9 @@
 	<Alert.Root variant="success">
 		<Alert.Description>
 			<ParaglideMessage message={m.login_code_sent_to} inputs={{ email }}>
-				{#snippet address({ children }: MessageTagProps)}<span class="font-medium"
-						>{@render children?.()}</span
-					>{/snippet}
+				{#snippet address({ children }: MessageTagProps)}<span class="font-medium">
+						{@render children?.()}
+					</span>{/snippet}
 			</ParaglideMessage>
 		</Alert.Description>
 	</Alert.Root>

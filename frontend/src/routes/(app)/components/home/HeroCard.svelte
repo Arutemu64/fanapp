@@ -133,8 +133,9 @@
 				>
 					<MapPin class="size-4 shrink-0" aria-hidden="true" />
 					{m.home_venue()}
-					<span class="sr-only">({m.home_open_in_yandex_maps()}, {m.guide_opens_in_new_tab()})</span
-					>
+					<span class="sr-only">
+						({m.home_open_in_yandex_maps()}, {m.guide_opens_in_new_tab()})
+					</span>
 				</a>
 			</div>
 		{:else if phase === 'during' && featured}
@@ -158,9 +159,9 @@
 						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 p-1.5 text-center"
 					>
 						<span class="text-xs font-bold tracking-widest uppercase">№</span>
-						<span class="font-display text-base leading-none font-bold tabular-nums"
-							>{featuredNumber}</span
-						>
+						<span class="font-display text-base leading-none font-bold tabular-nums">
+							{featuredNumber}
+						</span>
 					</div>
 				{/if}
 				<div class="min-w-0">

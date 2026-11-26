@@ -57,9 +57,9 @@
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>{m.common_cancel()}</AlertDialog.Cancel>
-			<AlertDialog.Action variant="destructive" onclick={handleLogout}
-				>{m.logout_action()}</AlertDialog.Action
-			>
+			<AlertDialog.Action variant="destructive" onclick={handleLogout}>
+				{m.logout_action()}
+			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

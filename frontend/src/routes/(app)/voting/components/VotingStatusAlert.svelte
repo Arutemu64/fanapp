@@ -40,9 +40,9 @@
 		<Alert.Description class="flex items-center gap-1">
 			<span>{getStatusMessage(votingState.status)}</span>
 			{#if votingState.status === 'no_ticket'}
-				<a href={resolve('profile/ticket')} class="font-medium underline"
-					>{m.ticket_link_action()}</a
-				>
+				<a href={resolve('profile/ticket')} class="font-medium underline">
+					{m.ticket_link_action()}
+				</a>
 			{/if}
 		</Alert.Description>
 	</Alert.Root>

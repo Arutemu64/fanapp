@@ -258,8 +258,9 @@
 		<Field.FieldGroup class="gap-4">
 			<Field.Field orientation="horizontal">
 				<Field.FieldContent>
-					<Field.FieldLabel for="quest-enabled">{m.settings_quest_enabled_label()}</Field.FieldLabel
-					>
+					<Field.FieldLabel for="quest-enabled">
+						{m.settings_quest_enabled_label()}
+					</Field.FieldLabel>
 					<Field.FieldDescription>{m.settings_quest_enabled_hint()}</Field.FieldDescription>
 				</Field.FieldContent>
 				<Switch

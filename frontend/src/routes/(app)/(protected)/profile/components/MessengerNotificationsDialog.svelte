@@ -110,9 +110,9 @@
 					{m.messenger_check()}
 				</Button>
 			{:else}
-				<Button variant="outline" class="w-full" onclick={() => (open = false)}
-					>{m.common_got_it()}</Button
-				>
+				<Button variant="outline" class="w-full" onclick={() => (open = false)}>
+					{m.common_got_it()}
+				</Button>
 			{/if}
 		</Dialog.Footer>
 	</Dialog.Content>

@@ -139,15 +139,16 @@
 					</Select.Trigger>
 					<Select.Content>
 						{#each USER_ROLES as role (role)}
-							<Select.Item value={role} label={getRoleLabel(role)}>{getRoleLabel(role)}</Select.Item
-							>
+							<Select.Item value={role} label={getRoleLabel(role)}>
+								{getRoleLabel(role)}
+							</Select.Item>
 						{/each}
 					</Select.Content>
 				</Select.Root>
 				{#if pickedRole !== profile.role}
-					<Button onclick={saveRole} disabled={roleMutation.isPending}
-						>{m.access_save_role()}</Button
-					>
+					<Button onclick={saveRole} disabled={roleMutation.isPending}>
+						{m.access_save_role()}
+					</Button>
 				{/if}
 			</div>
 			<p class="text-xs text-muted-foreground">
@@ -169,8 +170,9 @@
 				{#each ASSIGNABLE_PERMISSIONS as permission (permission)}
 					{const id = $derived(`permission-${permission.replace(':', '-')}`)}
 					<li class="flex min-h-11 items-center justify-between gap-3 py-2">
-						<label for={id} class="text-sm text-foreground">{PERMISSION_LABELS[permission]()}</label
-						>
+						<label for={id} class="text-sm text-foreground">
+							{PERMISSION_LABELS[permission]()}
+						</label>
 						<Switch
 							{id}
 							bind:checked={
