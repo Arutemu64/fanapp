@@ -1,0 +1,12 @@
+# Fanapp loads these skills from .agents/skills.
+[plugins."mattpocock-skills@mattpocock"]
+enabled = false
+
+[mcp_servers.svelte]
+command = "npx"
+args = ["-y", "@sveltejs/mcp"]
+env_vars = ["HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy"]
+startup_timeout_sec = 30
+
+[mcp_servers.svelte.env]
+NODE_USE_ENV_PROXY = "1"

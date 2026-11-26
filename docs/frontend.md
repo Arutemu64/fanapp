@@ -1,7 +1,7 @@
 # Frontend & SvelteKit Guidelines
 
 > [!NOTE]
-> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (Svelte 5 runes and event syntax, accessibility, UX, responsive + dark-mode mechanics) lives in the `svelte-code-writer`, `svelte-core-bestpractices`, `ui-ux-pro-max`, `accessibility` and `core-web-vitals` skills — load those (AGENTS.md, "Load before you edit"). **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here. What only this repo knows belongs _here_ — or in a code comment next to the constraint it explains. A `fanfan-*` skill is for the narrow remainder that fits neither: knowledge with no single file to live beside, like the Russian glossary or the migration traps.
+> This guide covers FAN FAN's frontend decisions, including scales, tokens, component wiring, and conventions. Use the skills listed for your task in [AGENTS.md](../AGENTS.md#task-guides). Record app-wide decisions in this guide and constraints beside the code they govern. Use `fanfan-*` skills for project workflows that span files, such as Russian copy and migrations.
 
 ## 1. Client Rendering (SPA) & State Isolation
 
@@ -185,7 +185,7 @@ The `dark:` variant in `app.css` follows the `.dark` class on `<html>`. The HTML
 
 The Spring 2027 palette pairs forest-green actions and headings with pale leaf surfaces. Blossom pink marks secondary accents. Keep the light page white and the top header borderless at every scroll position. The home photo fills the rounded card edge to edge. Its dark overlay carries white text over the original key art. Check small text over the brightest crop at phone and desktop widths. [WCAG text contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
 
-Contrast targets and dark-mode mechanics → `accessibility` / `ui-ux-pro-max`.
+Use the [WCAG contrast guidance](../.agents/skills/antislop-human/references/WCAG.md) and the [dark-mode guide](../.agents/skills/modern-web-guidance/guides/visual-design/dark-mode.md).
 
 ## 4. Mobile Layout & Forms
 
@@ -358,7 +358,7 @@ Project a11y bindings — keep wired, don't regress:
 - **Toast a11y**: `svelte-sonner` owns the toast region's ARIA (`aria-live`, roles) and does not steal focus. Its built-in labels default to English (`Notifications`, `Close toast`), so the `Sonner` wrapper overrides `containerAriaLabel` and `closeButtonAriaLabel` with Russian. Trigger toasts through the toast service (§8) rather than hand-rolling toast markup, so that contract holds.
 - **Reduced motion**: a global `@media (prefers-reduced-motion: reduce)` rule in `app.css` near-instantly finishes all CSS animations/transitions and disables `scroll-smooth`. A JS `scrollTo`/`scrollIntoView` with an explicit `behavior` is not covered: pick `instant` under `prefersReducedMotion.current`, as the shell and the schedule do. CSS-only motion is covered automatically. JS-driven Svelte transitions are **not** affected by that rule — gate them on `prefersReducedMotion.current` from `svelte/motion` instead (see the `HeroCard` countdown; `svelte-sonner` manages its own toast motion). Neither are View Transition pseudo-elements, which `*` doesn't match: the page transitions skip themselves in JS under reduced motion, and `app.css` carries a separate `::view-transition-*` rule as a backstop.
 
-Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon-only buttons, heading hierarchy, color-not-sole-signal — lives in `ui-ux-pro-max`. Load it; don't restate here.
+Use the [Antislop accessibility patterns](../.agents/skills/antislop-human/references/A11Y-PATTERNS.md) for keyboard, focus, and screen-reader audits. Use the [Core Web Vitals reference](../.agents/skills/antislop-ui/references/CORE-WEB-VITALS.md) when measuring page performance.
 
 ## 10. Loading, Empty & Error States
 

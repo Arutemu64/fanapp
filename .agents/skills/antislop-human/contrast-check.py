@@ -7,8 +7,8 @@ Usage:
     python3 contrast-check.py --selftest
 
 Prints the contrast ratio and a PASS/FAIL verdict for normal text (4.5:1)
-and large text (3:1, 24px+, or about 18.66px+ bold (WCAG's 18pt / 14pt bold) per antislop R-25). Exit code 0 only when both
-verdicts pass, so scripts can chain on it.
+and large text (3:1, 24px+, or about 18.66px+ bold (WCAG's 18pt / 14pt bold) per antislop R-25).
+Exit code 0 only when both verdicts pass, so scripts can chain on it.
 
 --selftest parses the reference table out of the SKILL.md next to this script
 (the skill doc is the source of truth, not a list copied into this script) and

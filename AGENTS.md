@@ -8,58 +8,60 @@ Companion web app for the "FAN FAN" Russian anime convention. Users are teens an
 - Never ship user-facing English. All copy is Russian and lives in `frontend/messages/ru.json` ([docs/frontend.md](docs/frontend.md) §6). Code comments and docstrings are English.
 - Never keep user-scoped state in a frontend module singleton unless `Session` resets it on every identity change. Modules outlive login and logout, so the next person on a shared phone would see the last account's data.
 - Never change an env var without updating `.env.example` in the same change. The backend ignores unknown keys, so drift fails silently.
-- Never call work done with a failing gate: `just backend-check` after Python, `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`, `just root-lint` after Markdown or YAML outside `frontend/`. A bug fix, or a change with clear inputs and outputs, starts with a failing test ([Anthropic](https://www.anthropic.com/engineering/claude-code-best-practices)); otherwise [docs/testing.md](docs/testing.md) decides whether a change needs a test.
-- Never block on the integration suite (`just backend-test-integration`). It is slow and CI runs it. Run it locally only when it helps, for example when debugging.
 - Never write a migration that assumes an empty table. Add a column nullable, backfill it, then tighten. The `fanfan-migrations` skill has the procedure.
 - Never edit `backend/pyproject.toml` `version` unless asked by name. Suggest a bump instead ([docs/dependencies.md](docs/dependencies.md) "Versioning the app").
 
-## Load before you edit
+## Task guides
 
-Load the skills and read the guide before implementing. This file wins over a skill: skills are generic, and where one conflicts with a repo rule, follow the rule.
+Read the relevant guide and load the listed skills for the work at hand. Fanapp's rules take precedence.
 
-| Working on                               | Load                                                                                                                                          | Read                                                                                   |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Any code                                 | `solid` (the lint limits below replace its hard numbers)                                                                                      | "Code" below                                                                           |
-| Backend / FastAPI                        | `fastapi`, `clean-ddd-hexagonal`                                                                                                              | [docs/backend.md](docs/backend.md) "Rules at a glance"                                 |
-| ORM models, migrations, SQL              | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review`, `supabase-postgres-best-practices`                               | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management"              |
-| `.svelte`, `.svelte.ts`                  | `svelte-code-writer`, `svelte-core-bestpractices`; run `svelte-autofixer` on each file                                                        | [docs/frontend.md](docs/frontend.md)                                                   |
-| UI components                            | `shadcn-svelte`, `web-component-design` (ignore its React and CSS-in-JS examples)                                                             | [docs/frontend.md](docs/frontend.md) §3, §7–8                                          |
-| Styling, layout                          | `ui-ux-pro-max`, `mobile-native`                                                                                                              | [docs/frontend.md](docs/frontend.md) §3–4, [DESIGN.md](.agents/context/DESIGN.md)      |
-| Design review before shipping UI         | `antislop`, `antislop-ui`, `antislop-human`, `accessibility`, `core-web-vitals`                                                               | [DESIGN.md](.agents/context/DESIGN.md)                                                 |
-| Russian copy                             | `ux-copy`, `fanfan-russian-copy`                                                                                                              | [redpolitika.md](.agents/redpolitika.md), [PRODUCT.md](.agents/context/PRODUCT.md)     |
-| Offline, service worker, push            | —                                                                                                                                             | [docs/offline.md](docs/offline.md)                                                     |
-| API contracts, endpoints, DTOs           | `api-and-interface-design` (we use snake_case, lowercase enums, RFC 9457, keyset cursors)                                                     | [docs/api.md](docs/api.md)                                                             |
-| TanStack Query                           | `tanstack-query-best-practices` (React-based; ADR-0021 and ADR-0022 win)                                                                      | [docs/frontend.md](docs/frontend.md) §2, [docs/offline.md](docs/offline.md)            |
-| Tests                                    | `python-testing-patterns`, `vitest`, `playwright-best-practices`, `e2e-testing-patterns` (locate by role and Russian name, not `data-testid`) | [docs/testing.md](docs/testing.md)                                                     |
-| Auth, user input, webhooks               | `security-and-hardening`                                                                                                                      | [docs/backend.md](docs/backend.md)                                                     |
-| Docker, deployment                       | `docker-expert`                                                                                                                               | [docs/dependencies.md](docs/dependencies.md), [docs/deployment.md](docs/deployment.md) |
-| Docs, ADRs                               | `documentation-writer`                                                                                                                        | [docs/adr/README.md](docs/adr/README.md)                                               |
-| Agent tooling (hooks, subagents, skills) | `writing-for-agents`                                                                                                                          | [agent-tooling.md](.agents/context/agent-tooling.md)                                   |
+- For **backend work**, use `fastapi` and `clean-ddd-hexagonal`. [Backend rules](docs/backend.md)
+- For **database work**, use `fanfan-migrations` for schema and database enum changes, `sqlalchemy-alembic-expert-best-practices-code-review` for ORM work, and `supabase-postgres-best-practices` for SQL. [Backend persistence](docs/backend.md)
+- For **Svelte files**, load `svelte-code-writer` and `svelte-core-bestpractices` for `.svelte` and `.svelte.ts`. Run `svelte-autofixer` on each edited file. [Frontend guide](docs/frontend.md)
+- For **UI work**, use `shadcn-svelte` for components, `ui-ux-pro-max` for design and layout, and `mobile-native` for mobile interactions. Review UI with `antislop`, `antislop-ui`, and `antislop-human`. [Frontend guide](docs/frontend.md) · [Design direction](.agents/context/DESIGN.md)
+- For **Russian copy**, use `ux-copy` and `fanfan-russian-copy`. [Editorial policy](.agents/redpolitika.md) · [Product](.agents/context/PRODUCT.md)
+- For **API contracts and DTOs**, use `api-and-interface-design`. [Fanapp API conventions](docs/api.md)
+- For **Svelte Query, cache persistence, service workers, and push**, follow the project guides. [Query and mutation patterns](docs/api.md) · [Offline guide](docs/offline.md)
+- For **tests**, use `python-testing-patterns` for Python, `vitest` for frontend unit tests, and `playwright-best-practices` for E2E. Locate UI elements by role and Russian name. [Testing guide](docs/testing.md)
+- For **auth, user input, and webhooks**, use `security-and-hardening`. [Backend guide](docs/backend.md)
+- For **Docker and deployment**, use `docker-expert`. [Dependencies](docs/dependencies.md) · [Deployment](docs/deployment.md)
+- For **docs and ADRs**, use `documentation-writer`. [ADR index](docs/adr/README.md)
+- For **agent tooling**, use `writing-for-agents`. [Agent tooling guide](.agents/context/agent-tooling.md)
 
-## Stack & commands
+## Agent skills
 
-SvelteKit (Svelte 5) + shadcn-svelte + Tailwind v4 with `pnpm`. FastAPI + PostgreSQL (SQLAlchemy, Alembic) + NATS (FastStream) with `uv`. Run `just` from the repo root.
+Matt Pocock's skills are configured. Use the paths below whenever a skill refers to `docs/agents/`.
 
-| Command                                                                             | Does                                                                     |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `just setup`                                                                        | Install dependencies; bootstrap `.env`, secrets, VAPID keys              |
-| `just dev` / `just run-prod`                                                        | Full stack in Docker Compose                                             |
-| `just run-infra` + `just backend-dev` / `just frontend-dev` / `just backend-worker` | Services in Docker, app on the host                                      |
-| `just demo` / `just backend-seed-demo`                                              | Demo programme and voting for an empty environment                       |
-| `just backend-check` / `just backend-typecheck`                                     | Check format, ruff, `ty`, import-linter / `ty` alone                     |
-| `just frontend-check` / `just frontend-typecheck`                                   | Check Prettier, ESLint and types / types alone                           |
-| `just backend-test` / `just backend-test-integration`                               | pytest unit / integration (needs Docker)                                 |
-| `just frontend-test` / `just frontend-e2e`                                          | Vitest / Playwright against a production build, backend mocked           |
-| `just backend-generate-auto <name>`                                                 | Autogenerate a migration against a throwaway Postgres; review the result |
-| `just backend-check-migrations`                                                     | Fail on model/migration drift or a broken `downgrade()`                  |
-| `just frontend-generate-api`                                                        | Regenerate the OpenAPI spec and the hey-api client                       |
-| `just readme-gallery`                                                               | Re-capture the README screenshots                                        |
+### Issue tracker
 
-The justfile lists the rest. Autogenerate emits renames as drop + create and misses enum-member changes.
+Track issues and specs in GitHub Issues. [Issue tracker workflow](.agents/context/issue-tracker.md)
+
+### Triage labels
+
+Use the five default triage labels. [Triage labels](.agents/context/triage-labels.md)
+
+### Domain docs
+
+Fanapp uses one root glossary and one ADR directory. [Domain docs](.agents/context/domain.md)
+
+## Commands and checks
+
+Run `just` at the repository root to list recipes. [Development setup](CONTRIBUTING.md#getting-started) · [Command maintenance](CONTRIBUTING.md#finding-and-maintaining-commands)
+
+Resolve failures in the relevant gate before calling work done.
+
+- Backend Python runs `just backend-check`.
+- Frontend work runs `just frontend-check`.
+- Dockerfile changes run `just dockerfile-lint`.
+- Markdown and YAML outside `frontend/` run `just root-lint`.
+
+Start bug fixes and changes with clear inputs and outputs with a failing test. Run the backend integration suite locally when it helps diagnose a problem. CI already runs it. [Testing guide](docs/testing.md)
 
 ## Code navigation
 
-Backend layers live in `backend/src/fanfan/`: `core/` (domain), `application/` (use cases, ports), `adapters/` (infrastructure), `presentation/` (HTTP, NATS, CLI), `main/` (entrypoints, DI). Frontend code lives in `frontend/src/` (`routes/`, `lib/`) and its copy in `frontend/messages/ru.json`. Agent material lives in `.agents/`. With `.codegraph/` present, use `codegraph_explore` first and run `codegraph sync` after editing. Locally CodeGraph is opt-in; don't install it unless asked.
+Backend layers live in `backend/src/fanfan/`. The domain is in `core/`, use cases and ports in `application/`, infrastructure in `adapters/`, transports in `presentation/`, and entrypoints and DI in `main/`. SvelteKit routes and libraries are in `frontend/src/`. Agent guidance lives in `.agents/`.
+
+Use `codegraph_explore` first in indexed checkouts with CodeGraph available. Run `codegraph sync` after edits there. [Agent tooling guide](.agents/context/agent-tooling.md#codegraph)
 
 ## Code
 

@@ -1,6 +1,6 @@
 ---
 name: fanfan-migrations
-description: Generating and reviewing Alembic migrations in this repo. Use when adding or changing a SQLAlchemy model under backend/src/fanfan/adapters/db/models/, writing or reviewing a migration under adapters/db/migrations/versions/, adding a member to an enum backed by a database column (Permission, UserRole, UserFlagName, ...), or when the model-drift check fails.
+description: Write or review Fanapp Alembic migrations, change SQLAlchemy models or database enums, or fix a model-drift failure.
 paths:
   - "backend/src/fanfan/adapters/db/models/**"
   - "backend/src/fanfan/adapters/db/migrations/**"
@@ -13,7 +13,7 @@ paths:
 | Command                             | Use                                                                                                                 |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `just backend-generate <name>`      | Autogenerate against the running app DB                                                                             |
-| `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres 18 (needs Docker, no app DB). **Use this in Claude Code on the web.**     |
+| `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres 18 when the app database is unavailable. Requires Docker.                 |
 | `just backend-migrate`              | Apply (`alembic upgrade head`)                                                                                      |
 | `just backend-check-migrations`     | Fail if ORM models drift from migrations, or any `downgrade()` fails a base→head upgrade/downgrade/upgrade stairway |
 

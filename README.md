@@ -318,7 +318,5 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 
 Fork the code freely; swap in your own branding.
 
-**Vendored third-party agent skills**, under `.agents/skills/` and
-`.gemini/`. Each keeps its
-upstream license and copyright; `skills-lock.json` records the source repository
-for every one of them.
+**Vendored third-party agent skills** live under `.agents/skills/`. Each keeps its
+upstream license and copyright. `skills-lock.json` records each source repository.
