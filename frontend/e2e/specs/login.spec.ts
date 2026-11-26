@@ -20,8 +20,8 @@ const CAPTCHA_CHALLENGE = {
 	signature: 'f43d43a355226d46303581c2f1b09278be5b5e1482d291efd5c799387c6f058e'
 };
 
-async function openEmailStep(page: Page) {
-	await page.goto('/login');
+async function openEmailStep(page: Page, url = '/login') {
+	await page.goto(url);
 	await page.getByRole('button', { name: 'Войти по почте' }).click();
 	return page.getByLabel('Почта');
 }
@@ -72,12 +72,15 @@ test.describe('email login', { tag: '@critical' }, () => {
 		api
 	}) => {
 		api.use({ 'POST /auth/request-login-code': { status: 204 } });
-		const email = await openEmailStep(page);
+		const loginUrl = '/login?next=%2Fmap%3Ffloor%3D2';
+		const email = await openEmailStep(page, loginUrl);
+		await expect(page).toHaveURL(loginUrl);
 		await email.fill('ann@example.com');
 		await email.press('Enter');
 
 		const code = page.getByLabel('Код подтверждения');
 		await expect(code).toBeFocused();
+		await expect(page).toHaveURL(loginUrl);
 		await expect(page.getByRole('status')).toContainText('ann@example.com');
 
 		await page.goBack();
@@ -85,7 +88,7 @@ test.describe('email login', { tag: '@critical' }, () => {
 		await expect(email).toBeFocused();
 
 		await page.goBack();
-		await expect(page).toHaveURL('/login');
+		await expect(page).toHaveURL(loginUrl);
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
 	});
 

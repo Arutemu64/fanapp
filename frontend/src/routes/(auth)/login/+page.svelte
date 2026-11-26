@@ -34,16 +34,18 @@
 		failed: { message: m.login_failed(), type: 'error' }
 	} as const;
 
+	let loginUrl = $derived(resolve(page.url.search ? `login?${page.url.search.slice(1)}` : 'login'));
+
 	function showEmailLogin() {
-		void goto('', { shallow: true, state: { loginStep: 'email' } });
+		void goto(loginUrl, { shallow: true, state: { loginStep: 'email' } });
 	}
 
 	function showPasswordLogin() {
-		void goto('', { shallow: true, state: { loginStep: 'password' } });
+		void goto(loginUrl, { shallow: true, state: { loginStep: 'password' } });
 	}
 
 	function showCodeStep(sentTo: string) {
-		void goto('', {
+		void goto(loginUrl, {
 			shallow: true,
 			state: { loginStep: 'code', loginCodeEmail: sentTo }
 		});

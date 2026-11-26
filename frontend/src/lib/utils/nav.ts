@@ -1,4 +1,4 @@
-import type { Path } from '$app/types';
+import type { Path, ResolvedPathname } from '$app/types';
 
 import { resolvePath } from '#lib/utils/paths.js';
 
@@ -16,9 +16,13 @@ export function navItemCurrent(
 	return roots.some((root) => isActivePath(activeUrl, resolvePath(root))) ? 'location' : undefined;
 }
 
-export function tabHref(href: Path, lastSearches: Readonly<Record<string, string>>): string {
+export function tabHref(
+	href: Path,
+	lastSearches: Readonly<Record<string, string>>
+): ResolvedPathname {
 	const root = resolvePath(href);
-	return `${root}${lastSearches[root] ?? ''}`;
+	const search = lastSearches[root];
+	return search ? resolvePath(`${href}?${search.slice(1)}`) : root;
 }
 
 export function handleNavItemClick(

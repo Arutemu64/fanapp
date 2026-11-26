@@ -58,7 +58,7 @@
 	let resultsSummary = $derived(m.users_count({ count: total }));
 
 	function applyFilters(next: UserFilters) {
-		void goto(`${resolve('tools/users')}${buildUserFiltersQuery(next)}`, {
+		void goto(resolve(`tools/users${buildUserFiltersQuery(next)}`), {
 			replace: true,
 			reset: false
 		});

@@ -16,7 +16,7 @@ export function parseMapSelection(params: Pick<URLSearchParams, 'get'>): MapSele
 	return { floorId: floor.id, placeNumber: isOnFloor ? place : null };
 }
 
-export function buildMapSelectionQuery(selection: MapSelection): string {
+export function buildMapSelectionQuery(selection: MapSelection): '' | `?${string}` {
 	const params = new URLSearchParams();
 	if (selection.floorId !== defaultFloorId) {
 		params.set('floor', selection.floorId);

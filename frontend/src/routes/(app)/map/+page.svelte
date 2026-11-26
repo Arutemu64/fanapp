@@ -53,7 +53,7 @@
 	);
 
 	function select(next: MapSelection) {
-		void goto(`${resolve('map')}${buildMapSelectionQuery(next)}`, {
+		void goto(resolve(`map${buildMapSelectionQuery(next)}`), {
 			replace: true,
 			reset: false
 		});

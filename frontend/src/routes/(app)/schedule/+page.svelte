@@ -103,7 +103,7 @@
 
 	function applyFilters(next: ScheduleFilters) {
 		trackFilterChange(next);
-		return goto(`${resolve('schedule')}${buildScheduleFiltersQuery(next)}`, {
+		return goto(resolve(`schedule${buildScheduleFiltersQuery(next)}`), {
 			replace: true,
 			reset: false
 		});
