@@ -26,7 +26,7 @@ export function parseUserFilters(params: Pick<URLSearchParams, 'get'>): UserFilt
 	};
 }
 
-export function buildUserFiltersQuery(filters: UserFilters): string {
+export function buildUserFiltersQuery(filters: UserFilters): '' | `?${string}` {
 	const params = new URLSearchParams();
 	const search = filters.search.trim();
 	if (search) {

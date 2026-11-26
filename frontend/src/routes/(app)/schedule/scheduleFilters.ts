@@ -10,7 +10,7 @@ export function parseScheduleFilters(params: Pick<URLSearchParams, 'get'>): Sche
 	};
 }
 
-export function buildScheduleFiltersQuery(filters: ScheduleFilters): string {
+export function buildScheduleFiltersQuery(filters: ScheduleFilters): '' | `?${string}` {
 	const params = new URLSearchParams();
 	const search = filters.search.trim();
 	if (search) {

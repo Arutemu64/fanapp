@@ -127,7 +127,7 @@
 				<a
 					href={yandexMapsUrl}
 					target="_blank"
-					rel="noopener noreferrer"
+					rel="external noopener noreferrer"
 					onclick={() => trackEvent('outbound-link', { target: 'yandex-maps' })}
 					class="-mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-white underline underline-offset-4"
 				>

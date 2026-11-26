@@ -54,7 +54,7 @@
 		"eslint-plugin-better-tailwindcss": "4.11.0",
 		"eslint-plugin-perfectionist": "5.13.0",
 		"eslint-plugin-playwright": "2.12.2",
-		"eslint-plugin-svelte": "3.23.0",
+		"eslint-plugin-svelte": "3.24.1",
 		"globals": "17.14.0",
 		"knip": "6.45.1",
 		"mdsvex": "0.12.8",
