@@ -16,7 +16,6 @@ from fanfan.main.ioc.mail import MailProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
 from fanfan.main.ioc.push import PushProvider
 from fanfan.main.ioc.security import SecurityProvider
-from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.stream import StreamProvider
 from fanfan.main.ioc.sync import SyncProvider
@@ -36,7 +35,6 @@ def get_common_providers() -> list[Provider]:
         ExpiringStateProvider(),
         TCloudProvider(),
         SecurityProvider(),
-        SerializationProvider(),
         ServicesProvider(),
         SqlGatewaysProvider(),
         StreamProvider(),

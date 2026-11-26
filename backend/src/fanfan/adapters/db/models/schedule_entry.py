@@ -85,7 +85,7 @@ class ScheduleEventORM(ScheduleEntryORM):
     def position(cls) -> Mapped[int | None]:
         ranked = cls.ranking_subquery()
         stmt = select(ranked.c.position).where(cls.id == ranked.c.id)
-        return column_property(  # ty: ignore[unsound-return-statement]
+        return column_property(
             stmt.scalar_subquery(),
             expire_on_flush=True,
             deferred=True,

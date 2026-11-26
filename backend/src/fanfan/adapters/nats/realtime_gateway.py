@@ -1,12 +1,11 @@
 import asyncio
-import json
 import logging
 from collections.abc import AsyncIterator
 from typing import override
 
-from adaptix import Retort
 from nats.aio.msg import Msg
 from nats.aio.subscription import Subscription
+from pydantic import TypeAdapter
 
 from fanfan.adapters.nats.factory import NATSClient
 from fanfan.application.dto.realtime import SSEMessage
@@ -15,7 +14,13 @@ from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
+_MESSAGE_ADAPTER = TypeAdapter(SSEMessage)
+
 SSE_QUEUE_MAXSIZE = 100
+
+
+def _decode(msg: Msg) -> SSEMessage:
+    return _MESSAGE_ADAPTER.validate_json(msg.data, strict=True)
 
 
 def _offer(
@@ -35,16 +40,15 @@ def _offer(
 
 
 class NatsRealtimeGateway(RealtimeGateway):
-    def __init__(self, nc: NATSClient, retort: Retort) -> None:
+    def __init__(self, nc: NATSClient) -> None:
         self.nc = nc
-        self.retort = retort
         self._broadcast_queues: dict[asyncio.Queue[SSEMessage], UserId | None] = {}
         self._broadcast_subscription: Subscription | None = None
         self._broadcast_subscribe_lock = asyncio.Lock()
 
     @override
     async def publish(self, message: SSEMessage, user_id: UserId | None = None) -> None:
-        payload = json.dumps(self.retort.dump(message)).encode()
+        payload = _MESSAGE_ADAPTER.dump_json(message)
 
         if user_id:
             await self.nc.publish(
@@ -58,17 +62,13 @@ class NatsRealtimeGateway(RealtimeGateway):
             payload=payload,
         )
 
-    def _decode(self, msg: Msg) -> SSEMessage:
-        data = json.loads(msg.data.decode()) if msg.data else {}
-        return self.retort.load(data, SSEMessage)
-
     async def _ensure_broadcast_subscription(self) -> None:
         async with self._broadcast_subscribe_lock:
             if self._broadcast_subscription is not None:
                 return
 
             async def broadcast_handler(msg: Msg) -> None:
-                message = self._decode(msg)
+                message = _decode(msg)
                 for queue, queue_user_id in self._broadcast_queues.items():
                     _offer(queue, message, user_id=queue_user_id)
 
@@ -82,7 +82,7 @@ class NatsRealtimeGateway(RealtimeGateway):
             queue: asyncio.Queue[SSEMessage] = asyncio.Queue(maxsize=SSE_QUEUE_MAXSIZE)
 
             async def user_handler(msg: Msg) -> None:
-                _offer(queue, self._decode(msg), user_id=user_id)
+                _offer(queue, _decode(msg), user_id=user_id)
 
             await self._ensure_broadcast_subscription()
             self._broadcast_queues[queue] = user_id

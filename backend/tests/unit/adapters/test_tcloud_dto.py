@@ -2,7 +2,6 @@ import pytest
 
 from fanfan.adapters.api.ticketscloud.dto.order import OrdersResponse, OrderStatus
 from fanfan.adapters.api.ticketscloud.dto.refund import RefundsResponse
-from fanfan.adapters.serialization import create_retort
 
 pytestmark = pytest.mark.unit
 
@@ -58,7 +57,7 @@ REFUNDS_PAYLOAD = {
 
 
 def test_orders_response_loads_documented_payload() -> None:
-    response = create_retort().load(ORDERS_PAYLOAD, OrdersResponse)
+    response = OrdersResponse.model_validate(ORDERS_PAYLOAD)
 
     order = response.data[0]
     assert order.id == "5d39c3108cd381a4891e07e0"
@@ -68,7 +67,7 @@ def test_orders_response_loads_documented_payload() -> None:
 
 
 def test_refunds_response_loads_documented_payload() -> None:
-    response = create_retort().load(REFUNDS_PAYLOAD, RefundsResponse)
+    response = RefundsResponse.model_validate(REFUNDS_PAYLOAD)
 
     refund = response.data[0]
     assert refund.order == "5b57281886e704000b424741"

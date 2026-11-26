@@ -1,7 +1,6 @@
 from collections.abc import AsyncIterable
 
 import httpx2
-from adaptix import Retort
 from dishka import Provider, Scope, provide
 
 from fanfan.adapters.api.base import DEFAULT_TIMEOUT
@@ -26,7 +25,7 @@ class TCloudProvider(Provider):
 
     @provide(scope=Scope.APP)
     async def get_tcloud_client(
-        self, config: TCloudConfig, retort: Retort
+        self, config: TCloudConfig
     ) -> AsyncIterable[TCloudClient]:
         headers = {"Authorization": f"key {config.api_key.get_secret_value()}"}
         async with httpx2.AsyncClient(
@@ -34,4 +33,4 @@ class TCloudProvider(Provider):
             headers=headers,
             timeout=DEFAULT_TIMEOUT,
         ) as client:
-            yield TCloudClient(client=client, retort=retort)
+            yield TCloudClient(client=client)

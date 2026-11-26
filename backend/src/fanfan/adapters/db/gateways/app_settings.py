@@ -1,6 +1,6 @@
 from typing import override
 
-from adaptix import Retort
+from pydantic import TypeAdapter
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,19 +9,21 @@ from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.core.exceptions.settings import AppSettingsNotFound
 from fanfan.core.models.app_settings import AppSettings
 
-
-def _from_model(model: AppSettings, retort: Retort) -> AppSettingsORM:
-    return AppSettingsORM(id=1, config=retort.dump(model))
+_SETTINGS_ADAPTER = TypeAdapter(AppSettings)
 
 
-def _to_model(orm: AppSettingsORM, retort: Retort) -> AppSettings:
-    return retort.load(orm.config, AppSettings)
+def _from_model(model: AppSettings) -> AppSettingsORM:
+    config = _SETTINGS_ADAPTER.dump_python(model, mode="json", exclude={"_events"})
+    return AppSettingsORM(id=1, config=config)
+
+
+def _to_model(orm: AppSettingsORM) -> AppSettings:
+    return _SETTINGS_ADAPTER.validate_python(orm.config)
 
 
 class SqlAppSettingsGateway(AppSettingsGateway):
-    def __init__(self, session: AsyncSession, retort: Retort) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.retort = retort
 
     @override
     async def get(self) -> AppSettings:
@@ -37,8 +39,8 @@ class SqlAppSettingsGateway(AppSettingsGateway):
         settings_orm = await self.session.scalar(stmt)
         if settings_orm is None:
             raise AppSettingsNotFound
-        return _to_model(settings_orm, self.retort)
+        return _to_model(settings_orm)
 
     @override
     async def save(self, settings: AppSettings) -> None:
-        await self.session.merge(_from_model(settings, self.retort))
+        await self.session.merge(_from_model(settings))
