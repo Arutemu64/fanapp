@@ -96,7 +96,7 @@
 			<a
 				href={props.externalHref}
 				target={props.newTab ? '_blank' : undefined}
-				rel={props.newTab ? 'noopener noreferrer' : undefined}
+				rel="external {props.newTab ? 'noopener noreferrer' : ''}"
 				{...itemProps}
 				onclick={props.onclick}
 			>
