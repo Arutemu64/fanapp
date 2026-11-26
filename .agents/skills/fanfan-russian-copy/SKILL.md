@@ -1,6 +1,6 @@
 ---
 name: fanfan-russian-copy
-description: Repo mechanics for the app's Russian user-facing copy — plural forms, ё, two-file emails, the copy-tells scanner. Use when writing or changing any user-visible string — labels, buttons, placeholders, error messages, toasts, empty states, notification and email text, manifest shortcut names. Voice, register and terminology live in .agents/redpolitika.md (read automatically by the ux-copy / redaktura skills); this skill covers only what those don't.
+description: Write or review Fanapp's Russian interface, notification, and email text. Use for message placement, plurals, ё, and copy checks.
 ---
 
 # FAN FAN Russian copy — mechanics
