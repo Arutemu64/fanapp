@@ -71,8 +71,10 @@
 				{#snippet link({ children }: MessageTagProps)}
 					<a
 						href={resolve('profile/notifications')}
-						class="font-medium text-primary hover:underline">{@render children?.()}</a
+						class="font-medium text-primary hover:underline"
 					>
+						{@render children?.()}
+					</a>
 				{/snippet}
 			</ParaglideMessage>
 		</p>

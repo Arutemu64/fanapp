@@ -33,7 +33,9 @@
 			y="71"
 			text-anchor="middle"
 			class="fill-primary font-mono text-xs font-semibold"
-			letter-spacing="0.5">1234567890123456</text
+			letter-spacing="0.5"
 		>
+			1234567890123456
+		</text>
 	</svg>
 </div>

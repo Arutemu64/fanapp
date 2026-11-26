@@ -62,9 +62,9 @@
 
 	<p class="mt-3 text-xs leading-relaxed text-muted-foreground">
 		<ParaglideMessage message={m.import_guide_columns}>
-			{#snippet col({ children }: MessageTagProps)}<span class="font-mono"
-					>{@render children?.()}</span
-				>{/snippet}
+			{#snippet col({ children }: MessageTagProps)}<span class="font-mono">
+					{@render children?.()}
+				</span>{/snippet}
 		</ParaglideMessage>
 	</p>
 
@@ -72,12 +72,12 @@
 		<CircleAlert class="size-5 shrink-0" />
 		<Alert.Description>
 			<ParaglideMessage message={m.import_guide_replaces}>
-				{#snippet strong({ children }: MessageTagProps)}<span class="font-semibold"
-						>{@render children?.()}</span
-					>{/snippet}
-				{#snippet col({ children }: MessageTagProps)}<span class="font-mono"
-						>{@render children?.()}</span
-					>{/snippet}
+				{#snippet strong({ children }: MessageTagProps)}<span class="font-semibold">
+						{@render children?.()}
+					</span>{/snippet}
+				{#snippet col({ children }: MessageTagProps)}<span class="font-mono">
+						{@render children?.()}
+					</span>{/snippet}
 			</ParaglideMessage>
 		</Alert.Description>
 	</Alert.Root>

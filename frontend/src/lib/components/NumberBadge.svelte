@@ -14,7 +14,7 @@
 	]}
 >
 	<span class="text-xs font-bold tracking-widest text-primary uppercase"> № </span>
-	<span class="font-display text-base leading-none font-bold text-foreground tabular-nums"
-		>{number}</span
-	>
+	<span class="font-display text-base leading-none font-bold text-foreground tabular-nums">
+		{number}
+	</span>
 </div>

@@ -131,11 +131,11 @@
 								<Item.Title class="line-clamp-none max-w-full text-base">
 									<Username username={user.username} class="min-w-0" />
 								</Item.Title>
-								<Item.Description
-									>{m.profile_menu_account_description({
+								<Item.Description>
+									{m.profile_menu_account_description({
 										role: getRoleLabel(user.role)
-									})}</Item.Description
-								>
+									})}
+								</Item.Description>
 							</Item.Content>
 							<Item.Actions>
 								<ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />

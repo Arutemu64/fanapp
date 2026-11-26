@@ -103,19 +103,21 @@
 				{#snippet link({ children }: MessageTagProps)}
 					<a
 						href={resolve('profile/notifications')}
-						class="font-medium text-primary hover:underline">{@render children?.()}</a
+						class="font-medium text-primary hover:underline"
 					>
+						{@render children?.()}
+					</a>
 				{/snippet}
 			</ParaglideMessage>
 		</p>
 
 		<Dialog.Footer class="flex flex-row justify-end gap-2">
-			<Button type="button" variant="outline" onclick={() => (open = false)}
-				>{m.common_cancel()}</Button
-			>
-			<Button type="button" onclick={handleSubmit} disabled={subscribeMutation.isPending}
-				>{m.common_subscribe()}</Button
-			>
+			<Button type="button" variant="outline" onclick={() => (open = false)}>
+				{m.common_cancel()}
+			</Button>
+			<Button type="button" onclick={handleSubmit} disabled={subscribeMutation.isPending}>
+				{m.common_subscribe()}
+			</Button>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

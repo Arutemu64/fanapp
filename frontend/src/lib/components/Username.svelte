@@ -12,6 +12,6 @@
 	const words = $derived(splitUsernameWords(username));
 </script>
 
-<span class={cn('wrap-anywhere', className)}
-	>@{#each words as word, index (index)}{#if index > 0}<wbr />{/if}{word}{/each}</span
->
+<span class={cn('wrap-anywhere', className)}>
+	@{#each words as word, index (index)}{#if index > 0}<wbr />{/if}{word}{/each}
+</span>

@@ -87,8 +87,10 @@
 				type="button"
 				variant="destructive"
 				onclick={handleUnsubscribe}
-				disabled={unsubscribeMutation.isPending}>{m.common_unsubscribe()}</Button
+				disabled={unsubscribeMutation.isPending}
 			>
+				{m.common_unsubscribe()}
+			</Button>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

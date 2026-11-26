@@ -59,8 +59,9 @@
 			<AlertDialog.Action
 				variant="destructive"
 				onclick={() => unlinkMutation.mutate({ path: { user_id: userId } })}
-				>{m.common_unlink()}</AlertDialog.Action
 			>
+				{m.common_unlink()}
+			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>
