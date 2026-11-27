@@ -12,7 +12,7 @@ ALEMBIC_INI = BACKEND_DIR / "alembic.ini"
 MIGRATIONS_DIR = BACKEND_DIR / "src" / "fanfan" / "adapters" / "db" / "migrations"
 
 # Keep the immutable reference whole so Renovate can update its tag and digest.
-POSTGRES_IMAGE = "postgres:18.6-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5"  # noqa: E501
+POSTGRES_IMAGE = "postgres:18.7-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71"  # noqa: E501
 
 EXPECTED_ARGC = 2
 

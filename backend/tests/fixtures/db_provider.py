@@ -17,7 +17,7 @@ class TestDbProvider(Provider):
     @provide
     def get_db_config(self) -> Iterable[DatabaseConfig]:
         postgres = PostgresContainer(
-            "postgres:18.6-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5",
+            "postgres:18.7-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71",
             driver="psycopg",
         )
         if os.name == "nt":
