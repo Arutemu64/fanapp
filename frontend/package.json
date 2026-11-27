@@ -32,7 +32,7 @@
 		"@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
 		"@eslint/js": "10.0.1",
 		"@hey-api/openapi-ts": "0.99.0",
-		"@iconify-json/simple-icons": "1.2.103",
+		"@iconify-json/simple-icons": "1.2.104",
 		"@inlang/paraglide-js": "3.2.2",
 		"@inlang/paraglide-js-svelte": "1.0.5",
 		"@inlang/plugin-message-format": "4.6.0",
