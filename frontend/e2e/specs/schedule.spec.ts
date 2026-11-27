@@ -17,6 +17,32 @@ const schedule: ScheduleDto['entries'] = [
 ];
 
 test.describe('schedule', { tag: '@critical' }, () => {
+	test('jumps to the current event when a search hides it', async ({ page, api }) => {
+		api.use({
+			'GET /schedule': json({ current_event_id: 'event-1', entries: schedule })
+		});
+		await page.goto('/schedule');
+
+		const search = page.getByRole('searchbox', { name: 'Поиск по программе' });
+		const currentEvent = page.getByRole('heading', { name: 'Выступление 1', exact: true });
+		const jump = page.getByRole('button', {
+			name: /Сейчас на сцене.*Выступление 1/,
+			includeHidden: true
+		});
+		const bar = jump.locator('..');
+
+		await expect(currentEvent).toBeInViewport();
+		await expect(bar).toHaveCSS('opacity', '0');
+		await search.fill('Выступление 2');
+		await expect(currentEvent).toHaveCount(0);
+		await expect(bar).toHaveCSS('opacity', '1');
+
+		await jump.click();
+		await expect(search).toHaveValue('');
+		await expect(currentEvent).toBeInViewport();
+		await expect(bar).toHaveCSS('opacity', '0');
+	});
+
 	test('keeps the scope selected when the pressed option is tapped again', async ({
 		page,
 		api

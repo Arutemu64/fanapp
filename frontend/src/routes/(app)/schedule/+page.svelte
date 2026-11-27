@@ -182,56 +182,39 @@
 		return applyFilters({ search: '', onlySubscribed: false });
 	}
 
-	let pageRoot: HTMLDivElement | null = null;
+	let currentRow: HTMLDivElement | null = null;
 	let isCurrentRowOnScreen = $state(false);
 
-	function capturePageRoot(node: HTMLDivElement) {
-		pageRoot = node;
-
-		return () => {
-			if (pageRoot === node) {
-				pageRoot = null;
-			}
-		};
-	}
-
-	function findEventRow(eventId: string) {
-		return pageRoot?.querySelector<HTMLElement>(`[data-event-id="${eventId}"]`) ?? null;
-	}
-
-	async function scrollToCurrentEvent() {
-		if (!currentEvent) return;
-
-		if (isCurrentEventFiltered) {
-			await resetFilters();
-			await tick();
-		}
-
-		findEventRow(currentEvent.id)?.scrollIntoView({
-			block: 'center',
-			behavior: prefersReducedMotion.current ? 'instant' : 'smooth'
-		});
-	}
-
-	$effect(() => {
-		const eventId = currentEvent?.id;
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- read only to track the filters
-		groupedSchedule;
-		if (!eventId || !pageRoot) return;
-
-		const row = findEventRow(eventId);
-		if (!row) {
-			isCurrentRowOnScreen = false;
-			return;
-		}
+	function observeCurrentRow(row: HTMLDivElement) {
+		currentRow = row;
+		isCurrentRowOnScreen = false;
 
 		const observer = new IntersectionObserver((observed) => {
 			isCurrentRowOnScreen = observed.some((entry) => entry.isIntersecting);
 		});
 		observer.observe(row);
 
-		return () => observer.disconnect();
-	});
+		return () => {
+			observer.disconnect();
+			observer.takeRecords();
+			if (currentRow === row) {
+				currentRow = null;
+				isCurrentRowOnScreen = false;
+			}
+		};
+	}
+
+	async function scrollToCurrentEvent() {
+		if (isCurrentEventFiltered) {
+			await resetFilters();
+			await tick();
+		}
+
+		currentRow?.scrollIntoView({
+			block: 'center',
+			behavior: prefersReducedMotion.current ? 'instant' : 'smooth'
+		});
+	}
 </script>
 
 <svelte:head>
@@ -248,7 +231,7 @@
 	{/snippet}
 
 	{#snippet ready({ stale, cachedAt }: ReadyView<unknown>)}
-		<div {@attach capturePageRoot} class="flex flex-col gap-4">
+		<div class="flex flex-col gap-4">
 			{#if stale}
 				<StaleDataNotice message={m.schedule_cached_notice()} {cachedAt} />
 			{/if}
@@ -302,6 +285,7 @@
 					{#if node.kind === 'interlude'}
 						<div
 							data-event-id={node.event.id}
+							{@attach node.event.id === currentEvent?.id ? observeCurrentRow : undefined}
 							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
 						>
 							<EventCard
@@ -384,7 +368,11 @@
 
 				<div class="divide-y divide-border">
 					{#each nomination.events as event (event.id)}
-						<div data-event-id={event.id} class="scroll-mt-28 **:scroll-mt-28">
+						<div
+							data-event-id={event.id}
+							{@attach event.id === currentEvent?.id ? observeCurrentRow : undefined}
+							class="scroll-mt-28 **:scroll-mt-28"
+						>
 							<EventCard
 								{event}
 								{currentEvent}
