@@ -1,7 +1,7 @@
 [tools]
 # Application runtime; Renovate uses .github/renovate/mise.toml for Node 24.
 node = "26.13.1"
-pnpm = "12.22.0"
+pnpm = "12.23.0"
 uv = "0.13.10"
 just = "1.59.0"
 hadolint = "2.15.1"
