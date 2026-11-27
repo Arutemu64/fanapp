@@ -113,6 +113,12 @@ automerges, retain their existing seven-day exception so Renovate and uv use the
 same window. Making only Renovate wait 14 days lets uv lock a newer release inside
 that window and can strand the PR on `renovate/artifacts`.
 
+`internalChecksFilter: "strict"` delays automatic branch and PR creation until
+the update passes its release-age check. The Dependency Dashboard lists waiting
+updates under **Pending Status Checks**. Checking a box there requests immediate
+PR creation and bypasses the cooldown. [Renovate's minimum release age guide](https://docs.renovatebot.com/key-concepts/minimum-release-age/)
+describes the filter and the dashboard override.
+
 GitHub Actions and pre-commit hooks automerge minor/patch updates after 14 days.
 Shared hadolint and gitleaks groups use 14 days at every pin site. Major runtime,
 framework and image updates require review.
