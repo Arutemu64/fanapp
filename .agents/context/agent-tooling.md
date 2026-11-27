@@ -10,6 +10,22 @@ The Codex server uses the environment's HTTP proxy settings to fetch Svelte docu
 
 The `@sveltejs/mcp` 0.1.x CLI accepts only a major for `--svelte-version` (`5`).
 
+## Svelte runtime diagnostics
+
+Use Svelte DevTools to trace reactivity or compare render profiles. Install the locked frontend dependencies with `just frontend-install` and start the frontend with `SVELTE_DEVTOOLS=1 just frontend-dev`. Open the app and reproduce the interaction in a browser. For the standalone panel, open `/.svelte-devtools/` on the same origin and enter the pairing code from the frontend terminal. [Svelte DevTools setup](https://github.com/sveltejs/vite-devtools-svelte#setup)
+
+If the first panel shows an authorization error after pairing, click **Retry**. [Upstream pairing issue](https://github.com/sveltejs/vite-devtools-svelte/issues/262)
+
+For a host dev server, the project Codex config starts `svelte-devtools` with the installed frontend package. Open a new Codex session in the trusted checkout and use `list_dev_servers` to find fanapp. For Docker, start with `SVELTE_DEVTOOLS=1 just dev --build` after installing the dependency. Register the relay inside the frontend container so it can discover the server and read its rotating token. Run this from the checkout root and open a new Codex session there.
+
+```sh
+codex mcp add svelte-devtools-docker -- docker compose \
+  -f docker-compose.yml -f docker-compose.dev.yml --profile core \
+  exec -T frontend pnpm exec vite-devtools-svelte mcp
+```
+
+Use local demo data. Record the same action with the same data before and after a change, then compare the sessions. Start with render counts and hotspots, inspect individual reactive scopes as needed, and check capture coverage before drawing conclusions. Keep captures in memory unless you need to preserve them. [MCP tool reference](https://sveltejs.github.io/vite-devtools-svelte/mcp/)
+
 ## Vendored skills
 
 Update vendored skills with `npx skills update --project`. `skills-lock.json` records their sources. The `fanfan-*` skills are local to Fanapp.

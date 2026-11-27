@@ -3,18 +3,25 @@ import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import adapter from '@sveltejs/adapter-static';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { svelteDevtools } from '@sveltejs/vite-devtools-svelte';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { mdsvex } from 'mdsvex';
 import { fileURLToPath } from 'node:url';
 import Icons from 'unplugin-icons/vite';
-import { loadEnv } from 'vite';
+import { type ConfigEnv, loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
 
 const rootDir = fileURLToPath(new URL('..', import.meta.url));
 
-export default defineConfig(({ mode }) => {
+function svelteDevtoolsEnabled({ command, isPreview }: ConfigEnv, setting: string | undefined) {
+	return command === 'serve' && !isPreview && !process.env.VITEST && setting === '1';
+}
+
+export default defineConfig((config) => {
+	const { mode } = config;
 	const env = loadEnv(mode, rootDir, '');
+	const enableSvelteDevtools = svelteDevtoolsEnabled(config, env.SVELTE_DEVTOOLS);
 
 	const sentryUpload = {
 		org: env.SENTRY_ORG,
@@ -47,6 +54,7 @@ export default defineConfig(({ mode }) => {
 			}),
 			enhancedImages(),
 			mdsvex({ extensions: ['.md'] }),
+			enableSvelteDevtools && svelteDevtools(),
 			sveltekit({
 				preprocess: vitePreprocess(),
 				env: { dir: '..' },
@@ -76,8 +84,8 @@ export default defineConfig(({ mode }) => {
 		},
 		resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,
 		server: {
-			host: true,
-			allowedHosts: true,
+			host: enableSvelteDevtools ? '127.0.0.1' : true,
+			allowedHosts: enableSvelteDevtools ? undefined : true,
 			port: Number(env.FRONTEND_PORT ?? 3000),
 			strictPort: true,
 			proxy: {
