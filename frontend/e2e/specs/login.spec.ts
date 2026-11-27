@@ -195,7 +195,12 @@ test.describe('email login', { tag: '@critical' }, () => {
 		const code = page.getByLabel('Код подтверждения');
 		await expect(code).toBeFocused();
 
-		await code.pressSequentially('a12b3456');
+		const cells = page.locator('[data-slot="input-otp-slot"]');
+		await expect(cells.first()).toHaveAttribute('data-active', 'true');
+		await expect(cells.nth(1)).toHaveAttribute('data-active', 'false');
+		await code.pressSequentially('a1');
+		await expect(cells.nth(1)).toHaveAttribute('data-active', 'true');
+		await code.pressSequentially('2b3456');
 
 		await expect(page.getByRole('alert')).toHaveText('Неверный или устаревший код');
 		await expect(code).toHaveValue('');
