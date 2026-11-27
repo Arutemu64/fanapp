@@ -1,20 +1,29 @@
+import assert from 'node:assert/strict';
+
 import type { ScheduleDto } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 
-const schedule: ScheduleDto['entries'] = [
-	{ type: 'block_start', id: 'block-1', title: 'Блок 1' },
-	...[1, 2].map((number) => ({
-		type: 'event' as const,
-		id: `event-${number}`,
-		number,
-		title: `Выступление ${number}`,
-		duration_seconds: 180,
-		is_skipped: false,
-		nomination_title: 'Одиночное дефиле',
-		position: number
-	}))
-];
+function scheduleWithEvents(eventCount: number): ScheduleDto['entries'] {
+	return [
+		{ type: 'block_start', id: 'block-1', title: 'Блок 1' },
+		...Array.from({ length: eventCount }, (_, index) => {
+			const number = index + 1;
+			return {
+				type: 'event' as const,
+				id: `event-${number}`,
+				number,
+				title: `Выступление ${number}`,
+				duration_seconds: 180,
+				is_skipped: false,
+				nomination_title: 'Одиночное дефиле',
+				position: number
+			};
+		})
+	];
+}
+
+const schedule = scheduleWithEvents(2);
 
 test.describe('schedule', { tag: '@critical' }, () => {
 	test('jumps to the current event when a search hides it', async ({ page, api }) => {
@@ -39,6 +48,32 @@ test.describe('schedule', { tag: '@critical' }, () => {
 
 		await jump.click();
 		await expect(search).toHaveValue('');
+		await expect(currentEvent).toBeInViewport();
+		await expect(bar).toHaveCSS('opacity', '0');
+	});
+
+	test('scrolls to the current event when its row is off-screen', async ({ page, api }) => {
+		api.use({
+			'GET /schedule': json({ current_event_id: 'event-12', entries: scheduleWithEvents(16) })
+		});
+		await page.goto('/schedule');
+
+		const currentEvent = page.getByRole('heading', { name: 'Выступление 12', exact: true });
+		const jump = page.getByRole('button', {
+			name: /Сейчас на сцене.*Выступление 12/,
+			includeHidden: true
+		});
+		const bar = jump.locator('..');
+
+		await expect(currentEvent).toBeAttached();
+		await expect(currentEvent).not.toBeInViewport();
+		await expect(jump).toBeInViewport({ ratio: 1 });
+		await expect(bar).toHaveCSS('opacity', '1');
+
+		// Tap without Playwright scrolling the sticky button into view first.
+		const bounds = await jump.boundingBox();
+		assert(bounds, 'The current-event jump button has no bounding box');
+		await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
 		await expect(currentEvent).toBeInViewport();
 		await expect(bar).toHaveCSS('opacity', '0');
 	});
