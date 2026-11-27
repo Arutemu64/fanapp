@@ -110,4 +110,15 @@ describe('settleIdentityForBoot', () => {
 
 		expect(queryClient.getQueryData(currentUserOptions().queryKey)).toEqual(USER);
 	});
+
+	it('leaves identity unknown when re-checking a restored guest fails', async () => {
+		const queryClient = new QueryClient();
+		const { queryKey } = currentUserOptions();
+		queryClient.setQueryData(queryKey, null);
+		getCurrentUser.mockResolvedValue({ error: {}, response: { status: 500 } });
+
+		await settleIdentityForBoot(queryClient);
+
+		expect(queryClient.getQueryData(queryKey)).toBeUndefined();
+	});
 });

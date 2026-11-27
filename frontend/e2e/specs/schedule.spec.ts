@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import type { ScheduleDto } from '../../src/lib/api/generated/types.gen';
 
-import { expect, json, loggedInAs, test } from '../fixtures';
+import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
 function scheduleWithEvents(eventCount: number): ScheduleDto['entries'] {
 	return [
@@ -26,6 +26,39 @@ function scheduleWithEvents(eventCount: number): ScheduleDto['entries'] {
 const schedule = scheduleWithEvents(2);
 
 test.describe('schedule', { tag: '@critical' }, () => {
+	test('shows the program while identity is loading and adds staff controls once it arrives', async ({
+		page,
+		api
+	}) => {
+		const identity = Promise.withResolvers<undefined>();
+		api.use({
+			...organizer(),
+			'GET /schedule': json({ current_event_id: null, entries: schedule })
+		});
+		await page.route('**/api/me', async (route) => {
+			await identity.promise;
+			await route.fallback();
+		});
+
+		const now = Date.now();
+		await page.clock.install({ time: now });
+		// Hold the boot deadline while checking that the public request starts.
+		await page.clock.pauseAt(now + 60_000);
+		const scheduleResponse = page.waitForResponse('**/api/schedule');
+		const changes = page.getByRole('link', { name: 'Изменения программы' });
+		try {
+			await page.goto('/schedule', { waitUntil: 'commit' });
+			await scheduleResponse;
+			await page.clock.resume();
+			await expect(page.getByRole('heading', { name: 'Выступление 1' })).toBeVisible();
+			await expect(changes).toHaveCount(0);
+			expect(api.countCalls('GET /schedule/subscriptions')).toBe(0);
+		} finally {
+			identity.resolve(undefined);
+		}
+		await expect(changes).toHaveAttribute('href', '/schedule/changes');
+	});
+
 	test('jumps to the current event when a search hides it', async ({ page, api }) => {
 		api.use({
 			'GET /schedule': json({ current_event_id: 'event-1', entries: schedule })

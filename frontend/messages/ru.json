@@ -242,6 +242,7 @@
 	"error_email_already_exists": "Этот адрес уже используется",
 	"error_email_delivery_failed": "Не удалось отправить код. Попробуй позже.",
 	"error_event_not_found": "Выступление не найдено",
+	"error_identity_check_failed": "Не удалось проверить, выполнен ли вход.",
 	"error_incorrect_password": "Неверный текущий пароль",
 	"error_invalid_credentials": "Неверная почта или пароль",
 	"error_invalid_email": "Неверный адрес почты",

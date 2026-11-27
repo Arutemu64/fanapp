@@ -55,7 +55,6 @@ export const load: LayoutLoad = async () => {
 	});
 	await restored;
 
-	await settleIdentityForBoot(queryClient);
-
-	return { queryClient };
+	const identityReady = settleIdentityForBoot(queryClient);
+	return { queryClient, identityReady };
 };

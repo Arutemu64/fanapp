@@ -12,7 +12,6 @@
 
 	let pageTitle = $derived(page.data.title);
 	let back = $derived(page.data.back);
-	let actions = $derived(page.data.actions ?? []);
 
 	interface Props {
 		user: CurrentUserDto | null;
@@ -20,6 +19,7 @@
 	}
 
 	let { user, lastSearches }: Props = $props();
+	let actions = $derived(page.data.actions?.filter((action) => action.visibleFor?.(user) ?? true));
 </script>
 
 <header
@@ -44,7 +44,7 @@
 		{/if}
 	</div>
 
-	{#each actions as action (action.href)}
+	{#each actions ?? [] as action (action.href)}
 		<Button href={resolvePath(action.href)} variant="ghost" size="icon" aria-label={action.label}>
 			<action.icon class="size-5" />
 		</Button>
