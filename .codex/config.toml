@@ -10,3 +10,9 @@ startup_timeout_sec = 30
 
 [mcp_servers.svelte.env]
 NODE_USE_ENV_PROXY = "1"
+
+[mcp_servers.svelte-devtools]
+command = "pnpm"
+args = ["exec", "vite-devtools-svelte", "mcp"]
+cwd = "../frontend"
+env_vars = ["XDG_CACHE_HOME", "VITE_DEVTOOLS_SVELTE_REGISTRY"]

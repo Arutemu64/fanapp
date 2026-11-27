@@ -24,6 +24,9 @@ For host processes with Docker backing services, follow the
 [advanced setup](README.md#advanced-run-app-processes-on-the-host).
 Optional Git hooks: `just backend-setup-hooks`.
 
+For runtime Svelte inspection in the browser or through MCP, see
+[Svelte DevTools](.agents/context/agent-tooling.md#svelte-runtime-diagnostics).
+
 ## Finding and maintaining commands
 
 Run `just` to list commands by group, or `just --group checks --list` to show
