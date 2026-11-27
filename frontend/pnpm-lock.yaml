@@ -243,8 +243,8 @@ importers:
         specifier: 3.12.4
         version: 3.12.4
       '@lucide/svelte':
-        specifier: 1.75.0
-        version: 1.75.0(svelte@5.58.0(@typescript-eslint/types@8.71.2))
+        specifier: 1.77.0
+        version: 1.77.0(svelte@5.58.0(@typescript-eslint/types@8.71.2))
       '@playwright/test':
         specifier: 1.65.1
         version: 1.65.1
@@ -865,8 +865,8 @@ packages:
   '@lix-js/sdk@0.20.1':
     resolution: {integrity: sha512-oscOFP8Cr1My6Wh2KVYC9+aJ1mHs+d7vnD+7PPJaA4L+Y1FR37Sm99SrFGfvUizaj/XtRi2GlDF2IOFt9iXMNQ==}
 
-  '@lucide/svelte@1.75.0':
-    resolution: {integrity: sha512-iGFP2m718jy26FrCXMxSbzz8WCDL4kx5lWN2jeXg1jzM0GcSLoQ9ygzDF++bpUjw5WHXNVCw90lBh0mvTAih+Q==}
+  '@lucide/svelte@1.77.0':
+    resolution: {integrity: sha512-gXjmQ4VK3Mh/M11Nn/XCeln3XZByR4MxX5o+NMfr/Wg9MQs+BffvXTnW+0WvmjV1u58TXJhXvgJZHrMASUnqow==}
     peerDependencies:
       svelte: ^5
 
@@ -4103,7 +4103,7 @@ snapshots:
       binaryen: 130.0.0
       fflate: 0.8.3
 
-  '@lucide/svelte@1.75.0(svelte@5.58.0(@typescript-eslint/types@8.71.2))':
+  '@lucide/svelte@1.77.0(svelte@5.58.0(@typescript-eslint/types@8.71.2))':
     dependencies:
       svelte: 5.58.0(@typescript-eslint/types@8.71.2)
 

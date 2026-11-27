@@ -37,7 +37,7 @@
 		"@inlang/paraglide-js-svelte": "1.0.5",
 		"@inlang/plugin-message-format": "4.6.0",
 		"@internationalized/date": "3.12.4",
-		"@lucide/svelte": "1.75.0",
+		"@lucide/svelte": "1.77.0",
 		"@playwright/test": "1.65.1",
 		"@sveltejs/adapter-static": "4.0.1",
 		"@sveltejs/enhanced-img": "1.0.1",
