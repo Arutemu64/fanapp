@@ -46,9 +46,9 @@ export default defineConfig(({ mode }) => {
 				emitTsDeclarations: true
 			}),
 			enhancedImages(),
+			mdsvex({ extensions: ['.md'] }),
 			sveltekit({
-				extensions: ['.svelte', '.md'],
-				preprocess: [mdsvex({ extensions: ['.md'] }), vitePreprocess()],
+				preprocess: vitePreprocess(),
 				env: { dir: '..' },
 				adapter: adapter({ fallback: '200.html' }),
 				serviceWorker: { register: false }
