@@ -9,6 +9,8 @@
 	let {
 		ref = $bindable(null),
 		cell,
+		// Deviates from upstream: keep forwarding a caller's custom cell snippet.
+		child: customChild,
 		class: className,
 		...restProps
 	}: InputOTPPrimitive.CellProps = $props();
@@ -28,10 +30,18 @@
 	)}
 	{...restProps}
 >
-	{cell.char}
-	{#if cell.hasFakeCaret}
-		<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-			<div class="h-4 w-px animate-caret-blink bg-foreground duration-1000"></div>
-		</div>
-	{/if}
+	{#snippet child({ props })}
+		{#if customChild}
+			{@render customChild({ props })}
+		{:else}
+			<div {...props} data-active={cell.isActive}>
+				{cell.char}
+				{#if cell.hasFakeCaret}
+					<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+						<div class="h-4 w-px animate-caret-blink bg-foreground duration-1000"></div>
+					</div>
+				{/if}
+			</div>
+		{/if}
+	{/snippet}
 </InputOTPPrimitive.Cell>

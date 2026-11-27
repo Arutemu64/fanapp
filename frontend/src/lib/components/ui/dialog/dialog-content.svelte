@@ -11,8 +11,8 @@
 	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
 	import { keyboardInset } from '#lib/utils/keyboardInset.js';
 
+	import DialogOverlay from './dialog-overlay.svelte';
 	import DialogPortal from './dialog-portal.svelte';
-	import * as Dialog from './index.js';
 
 	let {
 		ref = $bindable(null),
@@ -64,7 +64,7 @@
 </script>
 
 <DialogPortal {...portalProps}>
-	<Dialog.Overlay />
+	<DialogOverlay />
 	<DialogPrimitive.Content
 		bind:ref
 		data-slot="dialog-content"
