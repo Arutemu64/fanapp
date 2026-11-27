@@ -49,7 +49,9 @@ The query renders the cached copy at once and refetches in the background (stale
 
 ### 2. Loads guard, prefetch, and only sometimes wait
 
-A `load` keeps three jobs: permission guards (reading identity from the cache, `queryClient.getQueryData(currentUserOptions().queryKey)`), the navbar data (`title`, `back`, `actions`), and starting the page's fetch early — SvelteKit preloads a route's data on hover/tap, so `void queryClient.query(getScheduleOptions()).catch(() => {})` there puts the request on the wire before the page mounts. A load **awaits** a query only when the page can't render without it — a form seeded once from it (festival settings, the voting dashboard), a navbar title (a nomination), a staff card whose load maps a 404 (a user) — through `queryForLoad(queryClient, options)` (`#lib/api`), which runs the request at once and once only — no retries, no pausing for reachability — and rejects with a `TimeoutError` after `FIRST_PAINT_TIMEOUT_MS`, so a stalled server or a dropped connection can't hang the navigation; the load turns that failure into an error page with `throwApiError(apiError, fallback)`.
+A `load` can guard the route, provide navbar data (`title`, `back`, `actions`), and start the page's fetch early. Public loads can prefetch as soon as the cache is restored. For example, `void queryClient.query(getScheduleOptions()).catch(() => {})` starts fetching on hover or tap when SvelteKit preloads the route. Set `visibleFor` on a navbar action to evaluate its visibility against the live user query. See the frontend guide for loads whose decisions require identity. [Access control](frontend.md#access-control-dont-duplicate-guards)
+
+A load **awaits** a query when the page needs the result to render, such as the initial values for festival settings, a nomination title, or a staff card that maps a missing user to a 404. Use `queryForLoad(queryClient, options)` (`#lib/api`) for a single immediate attempt with a `TimeoutError` after `FIRST_PAINT_TIMEOUT_MS`. Use `throwApiError(apiError, fallback)` to turn a load failure into an error page.
 
 ### 3. Writes go through `createMutation`
 

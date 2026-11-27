@@ -46,8 +46,18 @@ export function currentUserOptions() {
 }
 
 export async function settleIdentityForBoot(queryClient: QueryClient): Promise<void> {
-	await queryForLoad(queryClient, {
-		...currentUserOptions(),
-		staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
-	}).catch(() => {});
+	const options = currentUserOptions();
+	if (isLogoutPending()) {
+		queryClient.setQueryData(options.queryKey, null);
+		return;
+	}
+
+	const cachedUser = queryClient.getQueryData(options.queryKey);
+	if (cachedUser) return;
+	if (cachedUser === null) {
+		// A social login can return with a new cookie and a saved guest result.
+		queryClient.removeQueries({ queryKey: options.queryKey, exact: true });
+	}
+
+	await queryForLoad(queryClient, options).catch(() => {});
 }

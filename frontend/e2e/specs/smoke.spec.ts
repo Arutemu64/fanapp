@@ -1,4 +1,6 @@
-import { expect, loggedInAs, test } from '../fixtures';
+import type { Route } from '@playwright/test';
+
+import { expect, json, loggedInAs, test } from '../fixtures';
 
 const ENTRY_MODULE = /\/_app\/immutable\/entry\/start\.[^/]+\.js$/;
 const UNAVAILABLE_ENTRY = { status: 503, headers: { 'cache-control': 'no-store' } };
@@ -26,6 +28,49 @@ test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 		const ticket = page.getByRole('link', { name: /Привязать билет/ });
 		await expect(ticket).toBeVisible();
 		await expect(ticket).toHaveAttribute('href', '/profile/ticket');
+	});
+});
+
+test.describe('session check recovery', { tag: '@critical' }, () => {
+	test('retries the protected destination after a session check fails on a reachable server', async ({
+		page,
+		api
+	}) => {
+		api.use({ 'GET /me': json({}, 500) });
+		await page.goto('/notifications');
+
+		await expect(page.getByText('Не удалось проверить, выполнен ли вход.')).toBeVisible();
+		await expect(page).toHaveURL('/notifications');
+		expect(api.countCalls('GET /notifications')).toBe(0);
+
+		api.use(loggedInAs());
+		await page.getByRole('button', { name: 'Попробовать снова' }).click();
+
+		await expect(page.getByRole('heading', { name: 'Уведомления' })).toBeVisible();
+		await expect(page).toHaveURL('/notifications');
+	});
+
+	test('keeps the login return path when the session check times out', async ({ page, api }) => {
+		const pendingIdentity = Promise.withResolvers<Route>();
+		api.use(loggedInAs());
+		await page.route('**/api/me', pendingIdentity.resolve, { times: 1 });
+
+		const loginUrl = '/login?next=%2Fmap%3Ffloor%3D2';
+		await page.goto(loginUrl, { waitUntil: 'commit' });
+		const identityRequest = await pendingIdentity.promise;
+		try {
+			await expect(page.getByText('Не удалось проверить, выполнен ли вход.')).toBeVisible({
+				timeout: 10_000
+			});
+			await expect(page).toHaveURL(loginUrl);
+			await expect(page.getByRole('button', { name: 'Войти по почте' })).toHaveCount(0);
+		} finally {
+			await identityRequest.fulfill({ status: 500, json: {} });
+		}
+		await page.getByRole('button', { name: 'Попробовать снова' }).click();
+
+		await expect(page.getByRole('heading', { level: 1, name: 'Карта' })).toBeVisible();
+		await expect(page).toHaveURL('/map?floor=2');
 	});
 });
 
