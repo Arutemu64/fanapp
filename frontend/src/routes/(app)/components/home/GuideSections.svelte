@@ -28,6 +28,7 @@
 			description={article.description}
 			icon={article.icon}
 			variant="card"
+			chevron
 		/>
 	{/each}
 {/snippet}
