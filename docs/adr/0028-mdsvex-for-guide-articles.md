@@ -16,9 +16,9 @@ numbered message key, and nobody could read or review an article as a whole.
 
 ## Decision
 
-We will write guide articles as Markdown files in `frontend/src/content/guide/`
-and compile them with [mdsvex](https://mdsvex.pngwn.at) (0.12.x, Svelte 5
-peer range) as a Svelte preprocessor.
+We write guide articles as Markdown files in `frontend/src/content/guide/`.
+The [mdsvex](https://mdsvex.com/) Vite plugin compiles `.md` files to Svelte
+components. Register it before `sveltekit()` in `frontend/vite.config.ts`.
 
 - Frontmatter carries `title`, `description`, `icon` (a key into `ICONS` in
   `#lib/data/guideArticles.ts`) and `order`. The file name is the URL slug
@@ -39,8 +39,7 @@ peer range) as a Svelte preprocessor.
 - A content change still needs a build and deploy, as any copy change does.
 - The articles are plain content: no Svelte components inside them, so a page
   that needs interactivity is a route, not an article.
-- mdsvex bundles older unified/remark dependencies; it is a dev dependency used
-  at build time only, so none of it reaches the client.
+- mdsvex runs at build time. The client receives the compiled articles.
 - Articles bypass the copy-tells scan in `fanfan-russian-copy`, which greps
   `ru.json` and the email templates; run it by hand over `src/content/`.
 
