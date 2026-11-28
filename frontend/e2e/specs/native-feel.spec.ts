@@ -77,6 +77,32 @@ test.describe('native feel', () => {
 		).toBe(true);
 	});
 
+	test('fits the selected desktop voting label at a 13px minimum font size', async ({
+		page,
+		api
+	}) => {
+		api.use({ 'GET /voting/nominations': json({ nominations: [] }) });
+		await page.setViewportSize({ width: 844, height: 700 });
+		await page.goto('/voting');
+		await page.addStyleTag({
+			content: '.text-nav-label { font-size: max(13px, var(--text-nav-label)); }'
+		});
+		const voting = page
+			.getByRole('navigation', { name: 'Разделы' })
+			.getByRole('link', { name: 'Голосование' });
+		await expect(voting).toHaveAttribute('aria-current', 'page');
+		const label = voting.getByText('Голосование', { exact: true });
+		const fits = await label.evaluate(async (element) => {
+			await document.fonts.ready;
+			const bounds = element.getBoundingClientRect();
+			const text = document.createRange();
+			text.selectNodeContents(element);
+			const { left, right } = text.getBoundingClientRect();
+			return text.getClientRects().length === 1 && left >= bounds.left && right <= bounds.right;
+		});
+		expect(fits).toBe(true);
+	});
+
 	test('scrolls the sidebar to the final link on a short screen', async ({ page }) => {
 		await page.setViewportSize({ width: 844, height: 256 });
 		await page.goto('/guide/authors');
