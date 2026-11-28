@@ -25,7 +25,7 @@
 	let updateDot = $derived(hasUpdateDot(href, appUpdate.available));
 	const activeColor = 'text-primary-800 dark:text-primary-300';
 	let bottomColor = $derived(
-		active ? activeColor : 'text-gray-600 group-hover:text-foreground dark:text-muted-foreground'
+		active ? activeColor : 'text-muted-foreground group-hover:text-foreground'
 	);
 </script>
 
@@ -43,7 +43,7 @@
 		!isBottom &&
 			(active
 				? ['font-semibold', activeColor]
-				: 'font-medium text-gray-600 hover:bg-accent hover:text-accent-foreground dark:text-muted-foreground dark:hover:text-accent-foreground')
+				: 'font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground')
 	]}
 	onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}
 >

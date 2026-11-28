@@ -63,7 +63,7 @@
 			</span>
 		</span>
 
-		<LocateFixed class="size-5 shrink-0 text-primary" aria-hidden="true" />
+		<LocateFixed data-icon="inline-end" class="text-primary" aria-hidden="true" />
 	</Button>
 </div>
 
