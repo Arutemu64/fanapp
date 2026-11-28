@@ -7,25 +7,55 @@ the guides under [`docs/`](docs/). **Where this file and `AGENTS.md` disagree,
 
 ## Getting started
 
-Install Docker and the tools pinned in [`mise.toml`](mise.toml) (`mise install`
-if you use mise). From the repository root:
-
-```bash
-just setup       # install dependencies, create .env and generate local secrets
-just dev         # full stack in Docker with hot reload; includes migrations and worker
-```
-
-Open http://localhost:3000. No external credentials are required: use email login
-and read its code in the API logs (`docker compose logs api`). In another
-terminal, run `just demo` to populate an empty database with programme and voting
-data. Setup preserves existing configuration; demo seeding is safe to repeat.
-
-For host processes with Docker backing services, follow the
-[advanced setup](README.md#advanced-run-app-processes-on-the-host).
-Optional Git hooks: `just backend-setup-hooks`.
+Follow the [README quickstart](README.md#getting-started) to install the tools and
+start the full stack in Docker. To install the optional Git hooks, run
+`just backend-setup-hooks`.
 
 For runtime Svelte inspection in the browser or through MCP, see
 [Svelte DevTools](.agents/context/agent-tooling.md#svelte-runtime-diagnostics).
+
+### Run app processes on the host
+
+After `just setup`, start the backing services in Docker and apply migrations.
+
+```sh
+just run-infra
+just backend-migrate
+```
+
+Run each app process in its own terminal.
+
+```sh
+just backend-dev
+just backend-worker
+just frontend-dev
+```
+
+The worker handles notifications and background jobs. Run `just backend-seed-demo`
+to load sample data and `just stop-infra` to stop the backing services while keeping
+that data. Host processes read the root `.env`, with `DB__HOST` and `NATS__HOST`
+set to `localhost`.
+
+### Local configuration
+
+`just bootstrap` prepares `.env` from [`.env.example`](.env.example) when missing
+and preserves existing configured values. With no SMTP configured, email login
+codes appear in the API logs. Run this to read the logs from another terminal.
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+  --profile core logs api
+```
+
+Fresh configuration sets `WEB__ENABLED_OAUTH_PROVIDERS=[]`. Use the same setting
+if an older `.env` shows an unconfigured social login button. Enable providers
+only after supplying real credentials.
+
+If the default ports are taken, set `FRONTEND_PORT` or `API_PORT` in `.env`.
+When changing the frontend port, update `WEB__PUBLIC_URL` and `PUBLIC_SITE_URL`
+to match. See the [deployment guide](docs/deployment.md) for production
+configuration and the [backend guide](docs/backend.md#anti-corruption-layers-vendor-sync)
+for external data sync.
 
 ## Finding and maintaining commands
 
