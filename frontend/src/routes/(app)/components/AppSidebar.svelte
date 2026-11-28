@@ -21,7 +21,7 @@
 <div class="sticky top-0 hidden h-dvh shrink-0 items-start py-4 ps-4 pe-2 md:flex lg:ps-6">
 	<nav
 		aria-label={m.nav_aria_label()}
-		class="max-h-full w-26 overflow-x-hidden overflow-y-auto rounded-2xl bg-card p-2 shadow-xs inset-ring-1 inset-ring-foreground/10"
+		class="max-h-full w-30 overflow-x-hidden overflow-y-auto rounded-2xl bg-card p-2 shadow-xs inset-ring-1 inset-ring-foreground/10"
 	>
 		<div class="relative grid auto-rows-fr gap-1">
 			<span
