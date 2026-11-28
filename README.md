@@ -69,7 +69,7 @@ The backend follows clean / hexagonal architecture: pure `core` and `application
 
 ## Requirements
 
-- Python 3.14 and [`uv`](https://docs.astral.sh/uv/)
+- Python 3.15 and [`uv`](https://docs.astral.sh/uv/)
 - Node.js 24 (LTS) and [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)

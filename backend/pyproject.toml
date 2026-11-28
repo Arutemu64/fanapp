@@ -6,7 +6,7 @@ authors = [
 ]
 description = "Backend for the FAN FAN convention companion web app: HTTP API and background workers"
 license = "MIT"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 dependencies = [
     "aiosmtplib>=5.1.3",
     "alembic>=1.20.1",
