@@ -1,4 +1,4 @@
-# FAN FAN
+# FAN FAN companion app
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](#license)
