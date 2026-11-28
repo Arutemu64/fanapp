@@ -30,8 +30,8 @@ isolated toolchain. Keep its runtime rule in Renovate aligned with upstream's
 [engines](https://github.com/renovatebot/renovate/blob/main/package.json) when
 upgrading the validator.
 
-`requires-python` is a compatibility floor, so it stays at `>=3.14` while runtime
-patch pins move. `uv_build` is a bounded build requirement, not an exact runtime
+`requires-python` sets the supported Python minor (`>=3.15`) and stays fixed
+for patch releases. `uv_build` is a bounded build requirement, not an exact runtime
 pin. Its floor travels with uv updates because Astral releases them together;
 the checker does not confuse either requirement with an equality pin.
 
