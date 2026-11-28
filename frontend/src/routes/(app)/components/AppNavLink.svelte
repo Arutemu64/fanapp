@@ -33,13 +33,13 @@
 	href={tabHref(href, lastSearches)}
 	aria-current={active}
 	class={[
-		'relative flex-col items-center justify-center rounded-full',
+		'relative flex-col items-center justify-center',
 		isBottom
 			? [
-					'group inline-flex min-w-0 gap-0.5 py-1 text-nav-label font-medium @max-[18em]:py-3.5',
+					'group inline-flex min-w-0 gap-0.5 rounded-full py-1 text-nav-label font-medium @max-[18em]:py-3.5',
 					active && 'px-2 @max-[18em]:px-1'
 				]
-			: 'flex min-h-15 gap-1 p-2 text-center text-nav-label transition-colors motion-reduce:transition-none',
+			: 'flex min-h-15 gap-1 rounded-lg p-2 text-center text-nav-label transition-colors motion-reduce:transition-none [@media(height<26rem)]:min-h-11 [@media(height<26rem)]:gap-0 [@media(height<26rem)]:py-0.5',
 		!isBottom &&
 			(active
 				? ['font-semibold', activeColor]

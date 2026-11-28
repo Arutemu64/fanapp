@@ -42,7 +42,7 @@
 	--font-display: 'Unbounded Variable', 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
 
 	/* Compact navigation labels can wrap on narrow screens. */
-	--text-nav-label: 0.6875rem;
+	--text-nav-label: 0.75rem;
 	--text-nav-label--line-height: 1.2;
 	--text-3xs: 0.625rem;
 	--text-3xs--line-height: calc(0.875 / 0.625);

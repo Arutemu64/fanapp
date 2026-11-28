@@ -10,6 +10,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
+	import { scrollY } from 'svelte/reactivity/window';
 
 	import SkipLink from '#lib/components/SkipLink.svelte';
 	import { DESKTOP_MEDIA_QUERY } from '#lib/constants/layout.js';
@@ -190,12 +191,15 @@
 		<div
 			bind:offsetHeight={chromeHeight}
 			onfocusin={revealNavbar}
-			class="sticky z-(--z-chrome) backdrop-blur-md transition-[top] [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
+			class="sticky z-(--z-chrome) backdrop-blur-md transition-[top] [view-transition-name:top-chrome] motion-reduce:transition-none md:mx-auto md:w-full md:max-w-5xl md:px-6 lg:px-8 reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
 			style:transition-timing-function={chromeEasing}
 		>
-			<div bind:offsetHeight={navbarHeight}>
+			<div
+				bind:offsetHeight={navbarHeight}
+				class={['md:border-b', (scrollY.current ?? 0) > 0 ? 'border-border' : 'border-transparent']}
+			>
 				<AppNavbar {user} lastSearches={tabMemory.lastSearches} />
 			</div>
 			<ConnectionBanner />

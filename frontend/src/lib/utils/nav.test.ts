@@ -49,7 +49,7 @@ describe('navItemCurrent', () => {
 describe('handleNavItemClick', () => {
 	function clickEvent() {
 		const preventDefault = vi.fn();
-		return { event: { preventDefault } as unknown as MouseEvent, preventDefault };
+		return { event: { button: 0, preventDefault } as unknown as MouseEvent, preventDefault };
 	}
 
 	it('scrolls to top instead of navigating on a re-tap of the current root', () => {
@@ -58,6 +58,21 @@ describe('handleNavItemClick', () => {
 		handleNavItemClick(event, resolve('schedule'), 'schedule', scrollToTop);
 		expect(preventDefault).toHaveBeenCalledOnce();
 		expect(scrollToTop).toHaveBeenCalledOnce();
+	});
+
+	it.each([
+		{ ctrlKey: true },
+		{ metaKey: true },
+		{ shiftKey: true },
+		{ altKey: true },
+		{ button: 1 }
+	])('preserves native link activation for %o', (modifiers) => {
+		const { event, preventDefault } = clickEvent();
+		Object.assign(event, modifiers);
+		const scrollToTop = vi.fn();
+		handleNavItemClick(event, resolve('schedule'), 'schedule', scrollToTop);
+		expect(preventDefault).not.toHaveBeenCalled();
+		expect(scrollToTop).not.toHaveBeenCalled();
 	});
 
 	it('navigates from a nested page of the same tab', () => {

@@ -90,7 +90,7 @@
 	<div
 		transition:slide={{ duration: 200 }}
 		class={[
-			'flex min-h-11 items-center gap-2.5 border-b px-4 py-2 text-sm sm:px-6',
+			'flex min-h-11 items-center gap-2.5 border-b px-4 py-2 text-sm sm:px-6 md:mt-2 md:rounded-lg md:border md:px-4',
 			phase === 'offline' && 'border-warning/30 bg-warning/10 text-warning',
 			phase === 'catching-up' && 'border-info/30 bg-info/10 text-info',
 			phase === 'restored' && 'border-success/30 bg-success/10 text-success'
