@@ -23,6 +23,16 @@
 	}
 }
 
+@utility bottom-nav-insets {
+	padding-left: max(0.5rem, env(safe-area-inset-left));
+	padding-right: max(0.5rem, env(safe-area-inset-right));
+
+	@media (width >= 25rem) {
+		padding-left: max(0.75rem, env(safe-area-inset-left));
+		padding-right: max(0.75rem, env(safe-area-inset-right));
+	}
+}
+
 @theme {
 	--breakpoint-md: 48rem;
 }
@@ -31,8 +41,9 @@
 	--font-sans: 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-display: 'Unbounded Variable', 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
 
-	--text-2xs: 0.6875rem;
-	--text-2xs--line-height: calc(1 / 0.6875);
+	/* Compact navigation labels can wrap on narrow screens. */
+	--text-nav-label: 0.6875rem;
+	--text-nav-label--line-height: 1.2;
 	--text-3xs: 0.625rem;
 	--text-3xs--line-height: calc(0.875 / 0.625);
 
@@ -208,7 +219,7 @@
 	--sidebar-ring: var(--ring);
 
 	--bottom-nav-gap: max(0.75rem, calc(env(safe-area-inset-bottom) - 0.75rem));
-	--bottom-nav-clearance: calc(var(--bottom-nav-gap) + 4rem);
+	--bottom-nav-clearance: calc(var(--bottom-nav-gap) + var(--bottom-nav-height, 4rem));
 
 	--bottom-accessory-clearance: 0px;
 	--toast-top-offset: calc(env(safe-area-inset-top) + 4rem);

@@ -35,12 +35,15 @@
 	class={[
 		'relative flex-col items-center justify-center rounded-full',
 		isBottom
-			? 'group inline-flex min-w-0 gap-0.5 text-3xs font-medium tracking-tighter min-[22.5rem]:text-2xs min-[25rem]:text-xs min-[25rem]:tracking-tight'
-			: 'flex min-h-15 gap-1 px-1 py-2 text-center text-xs leading-tight transition-colors motion-reduce:transition-none',
+			? [
+					'group inline-flex min-w-0 gap-0.5 py-1 text-nav-label font-medium @max-[18em]:py-3.5',
+					active && 'px-2 @max-[18em]:px-1'
+				]
+			: 'flex min-h-15 gap-1 p-2 text-center text-nav-label transition-colors motion-reduce:transition-none',
 		!isBottom &&
 			(active
 				? ['font-semibold', activeColor]
-				: 'font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground')
+				: 'font-medium text-gray-600 hover:bg-accent hover:text-accent-foreground dark:text-muted-foreground dark:hover:text-accent-foreground')
 	]}
 	onclick={(event: MouseEvent) => handleNavItemClick(event, activeUrl, href, scrollToTop)}
 >
@@ -70,18 +73,15 @@
 		{#if updateDot}
 			<span
 				aria-hidden="true"
-				class={[
-					'absolute -top-0.5 -right-1 size-2.5 rounded-full border-2 bg-primary',
-					isBottom ? 'border-background' : 'border-card'
-				]}
+				class="absolute -top-0.5 -right-1 size-2.5 rounded-full border-2 border-background bg-primary"
 			></span>
 		{/if}
 	</span>
 	<span
 		class={[
-			'w-full wrap-anywhere',
+			'w-full wrap-anywhere hyphens-auto',
 			isBottom && [
-				'text-center hyphens-auto transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
+				'text-center transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
 				active && 'font-semibold',
 				bottomColor
 			]

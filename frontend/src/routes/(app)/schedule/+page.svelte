@@ -183,24 +183,12 @@
 	}
 
 	let currentRow: HTMLDivElement | null = null;
-	let isCurrentRowOnScreen = $state(false);
 
-	function observeCurrentRow(row: HTMLDivElement) {
+	function registerCurrentRow(row: HTMLDivElement) {
 		currentRow = row;
-		isCurrentRowOnScreen = false;
-
-		const observer = new IntersectionObserver((observed) => {
-			isCurrentRowOnScreen = observed.some((entry) => entry.isIntersecting);
-		});
-		observer.observe(row);
 
 		return () => {
-			observer.disconnect();
-			observer.takeRecords();
-			if (currentRow === row) {
-				currentRow = null;
-				isCurrentRowOnScreen = false;
-			}
+			if (currentRow === row) currentRow = null;
 		};
 	}
 
@@ -231,7 +219,10 @@
 	{/snippet}
 
 	{#snippet ready({ stale, cachedAt }: ReadyView<unknown>)}
-		<div class="flex flex-col gap-4">
+		<div
+			data-fill-column
+			class="flex grow flex-col gap-4 pb-(--bottom-accessory-clearance) md:pb-0"
+		>
 			{#if stale}
 				<StaleDataNotice message={m.schedule_cached_notice()} {cachedAt} />
 			{/if}
@@ -285,7 +276,7 @@
 					{#if node.kind === 'interlude'}
 						<div
 							data-event-id={node.event.id}
-							{@attach node.event.id === currentEvent?.id ? observeCurrentRow : undefined}
+							{@attach node.event.id === currentEvent?.id ? registerCurrentRow : undefined}
 							class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40 **:scroll-mt-28"
 						>
 							<EventCard
@@ -314,11 +305,7 @@
 			</div>
 
 			{#if currentEvent}
-				<CurrentEventBar
-					event={currentEvent}
-					hidden={isCurrentRowOnScreen}
-					onjump={scrollToCurrentEvent}
-				/>
+				<CurrentEventBar event={currentEvent} onjump={scrollToCurrentEvent} />
 			{/if}
 		</div>
 	{/snippet}
@@ -370,7 +357,7 @@
 					{#each nomination.events as event (event.id)}
 						<div
 							data-event-id={event.id}
-							{@attach event.id === currentEvent?.id ? observeCurrentRow : undefined}
+							{@attach event.id === currentEvent?.id ? registerCurrentRow : undefined}
 							class="scroll-mt-28 **:scroll-mt-28"
 						>
 							<EventCard

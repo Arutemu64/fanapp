@@ -90,6 +90,7 @@ test('schedule', async ({ page }) => {
 	await expect(
 		page.getByRole('heading', { name: 'Эдвард Элрик — Стальной алхимик' })
 	).toBeVisible();
+	await expect(page.getByText('Сейчас на сцене', { exact: true })).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'schedule');
 });
@@ -113,8 +114,9 @@ test('notifications', async ({ page, api }) => {
 });
 
 test('map', async ({ page }) => {
-	await page.goto('/map');
-	await expect(page.getByRole('img', { name: 'Карта 1 этажа' })).toBeVisible();
+	await page.goto('/map?place=1');
+	const plan = page.getByRole('img', { name: 'Карта 1 этажа' });
+	await expect(plan.locator('[data-point="1"][data-selected]')).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'map');
 });

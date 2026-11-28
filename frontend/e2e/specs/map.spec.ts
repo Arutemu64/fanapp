@@ -38,6 +38,7 @@ test.describe('map', () => {
 
 		await expect(plan.locator('[data-selected]')).toHaveCount(4);
 		await expect(plan.locator('[data-point="7"][data-selected]')).toHaveCount(4);
+		await expect(plan.locator('[data-point="8"]')).toHaveCSS('opacity', '1');
 		await expect(page.getByRole('status').filter({ hasText: 'Фотозона' })).toBeVisible();
 		await expect(page.getByRole('button', { name: /Фотозона/ })).toHaveAttribute(
 			'aria-pressed',
