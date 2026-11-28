@@ -592,7 +592,7 @@ requires-dist = [
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "dishka-faststream", specifier = ">=0.7.0" },
     { name = "fastapi", specifier = ">=0.165.0" },
-    { name = "faststream", extras = ["cli", "nats"], specifier = ">=0.7.8" },
+    { name = "faststream", extras = ["cli", "nats"], specifier = ">=0.7.9" },
     { name = "httptools", specifier = ">=0.9.0" },
     { name = "httpx2", specifier = ">=2.16.2" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
@@ -669,16 +669,16 @@ wheels = [
 
 [[package]]
 name = "faststream"
-version = "0.7.8"
+version = "0.7.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "fast-depends", extra = ["pydantic"] },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/87/b6/d15b1c88f1adc3bf11e4e23f8a057e489e2e60a47f7d4b821a3ae264f4c2/faststream-0.7.8.tar.gz", hash = "sha256:9e367d9ba8b59eeafad19f46641b11f20d23a7ed75ea27b2503856a8ae0c075a", size = 392145, upload-time = "2026-10-22T20:50:29.387Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/8f/b371519905144ae5b92e43eec6aa7b023fc99e1f142779069d91fada4b46/faststream-0.7.9.tar.gz", hash = "sha256:f88a1e4b3aa2d205702e3445ed524ae9f89165f1020b0d27d22aefbaa8ee1e66", size = 395448, upload-time = "2026-11-21T11:37:53.908Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/79/daae6f842665756f5fa45683d4762333348c4ad4dba2e9d9f37644717d74/faststream-0.7.8-py3-none-any.whl", hash = "sha256:ffe412278cf116216078dcf29dcec93274994a98d036be2bc388071dff7e259e", size = 618852, upload-time = "2026-10-22T20:50:27.388Z" },
+    { url = "https://files.pythonhosted.org/packages/81/62/d2b129f2f1822645c6e06e08a4b9c678a9ee5fdde07e377af253326a66dd/faststream-0.7.9-py3-none-any.whl", hash = "sha256:63f3375c7450f91fc97748996a49c966f7933c74f0814a4657ddf6dee5ec0401", size = 623363, upload-time = "2026-11-21T11:37:52.26Z" },
 ]
 
 [package.optional-dependencies]
