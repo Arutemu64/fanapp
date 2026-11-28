@@ -91,12 +91,21 @@
 			<div class="min-w-0 flex-1">
 				<h3
 					class={[
-						'text-base leading-snug font-semibold text-foreground',
+						'text-base leading-snug font-semibold wrap-anywhere text-foreground',
 						isSkipped && 'line-through'
 					]}
 				>
 					{event.title}
 				</h3>
+
+				{#if untilLabel}
+					<span
+						class="mt-1 flex items-start gap-1.5 text-base leading-snug font-semibold text-foreground"
+					>
+						<Hourglass class="mt-0.5 size-4 shrink-0" />
+						{untilLabel}
+					</span>
+				{/if}
 
 				{#if event.is_current || isSkipped}
 					<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -105,12 +114,7 @@
 								variant="outline"
 								class="inline-flex items-center gap-1.5 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
 							>
-								<span class="relative flex size-2" aria-hidden="true">
-									<span
-										class="absolute inline-flex size-full animate-ping-brief rounded-full bg-success opacity-75"
-									></span>
-									<span class="relative inline-flex size-2 rounded-full bg-success"></span>
-								</span>
+								<span class="size-2 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
 								{m.common_now()}
 							</Badge>
 						{/if}
@@ -128,25 +132,24 @@
 				{/if}
 
 				<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-					<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+					<span
+						class="inline-flex items-start gap-1 text-sm leading-snug font-medium text-muted-foreground"
+					>
 						<Clock class="mt-px size-3.5 shrink-0" />
 						{formatDuration(event.duration_seconds)}
 					</span>
 
-					{#if untilLabel}
-						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
-							<Hourglass class="mt-px size-3.5 shrink-0" />
-							{untilLabel}
-						</span>
-					{/if}
-
 					{#if event.user_subscription}
-						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+						<span
+							class="inline-flex items-start gap-1 text-sm leading-snug font-medium text-muted-foreground"
+						>
 							<BellRing class="mt-px size-3.5 shrink-0" />
 							{m.subscribe_reminder({ count: event.user_subscription.lead_minutes })}
 						</span>
 						{#if event.user_subscription.queued}
-							<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+							<span
+								class="inline-flex items-start gap-1 text-sm leading-snug font-medium text-muted-foreground"
+							>
 								<CloudOff class="mt-px size-3.5 shrink-0" />
 								{m.subscribe_queued_badge()}
 							</span>

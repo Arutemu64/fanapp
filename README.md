@@ -46,10 +46,10 @@ The gallery shows the forest-green Spring 2027 edition with sample festival data
     <th>Quest</th>
   </tr>
   <tr>
-    <td><img src="docs/assets/readme-gallery/schedule.webp" width="150" alt="Schedule: performances grouped by block, the one on stage now highlighted, a bell to subscribe to each"></td>
+    <td><img src="docs/assets/readme-gallery/schedule.webp" width="150" alt="Schedule with the current performance highlighted and a shortcut above the dock that jumps to it"></td>
     <td><img src="docs/assets/readme-gallery/voting.webp" width="150" alt="Voting: a nomination's participants with vote counts and the user's own choice marked"></td>
     <td><img src="docs/assets/readme-gallery/notifications.webp" width="150" alt="Notifications: a subscription reminder, an on-stage announcement and organizer broadcasts"></td>
-    <td><img src="docs/assets/readme-gallery/map.webp" width="150" alt="Map: a floor plan, then «Что где», the posters' numbered legend as a searchable list"></td>
+    <td><img src="docs/assets/readme-gallery/map.webp" width="150" alt="Festival floor plan with the main entrance highlighted and a searchable list of places below"></td>
     <td><img src="docs/assets/readme-gallery/profile.webp" width="150" alt="Profile: the account, the quest balance, a linked ticket, notification status and the theme switch"></td>
     <td><img src="docs/assets/readme-gallery/quest.webp" width="150" alt="Quest: the player's QR code for volunteers with their @username under it, their points and place, and the top of the leaderboard"></td>
   </tr>

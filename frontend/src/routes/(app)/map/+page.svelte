@@ -215,10 +215,7 @@
 							data-point={zone.point}
 							data-selected={isSelected || undefined}
 							onclick={() => selectFromPlan(zone.point)}
-							class={[
-								'cursor-pointer transition-opacity motion-reduce:transition-none',
-								selectedNumber !== null && !isSelected && 'opacity-40'
-							]}
+							class="cursor-pointer"
 						>
 							<rect
 								x={zone.x}
@@ -226,8 +223,8 @@
 								width={zone.w}
 								height={zone.h}
 								rx="4"
-								stroke-width="1.5"
-								class={[isSelected ? 'fill-primary stroke-primary' : 'fill-card stroke-border']}
+								stroke-width={isSelected ? 2.5 : 1.5}
+								class={[isSelected ? 'fill-primary stroke-foreground' : 'fill-card stroke-border']}
 							/>
 							<text
 								x={zone.x + zone.w / 2}

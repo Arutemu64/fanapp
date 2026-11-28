@@ -742,6 +742,7 @@
 	"schedule_empty_title": "Программа пока пуста",
 	"schedule_filter_label": "Какие выступления показать",
 	"schedule_load_failed": "Не удалось загрузить программу",
+	"schedule_jump_to_current": "Сейчас на сцене: {title}. Перейти к выступлению",
 	"schedule_loading": "Загружаем программу…",
 	"schedule_my_subscriptions": "Мои подписки",
 	"schedule_notifications_button": "Настроить уведомления",

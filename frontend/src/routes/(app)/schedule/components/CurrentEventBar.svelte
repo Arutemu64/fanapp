@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Play from '@lucide/svelte/icons/play';
+	import LocateFixed from '@lucide/svelte/icons/locate-fixed';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
@@ -9,19 +9,20 @@
 
 	interface Props {
 		event: ScheduleEventWithSubscription;
-		hidden: boolean;
 		onjump: () => void;
 	}
 
-	let { event, hidden, onjump }: Props = $props();
+	let { event, onjump }: Props = $props();
 
 	let eventNumber = $derived(formatEventNumber(event.number));
+	let title = $derived(eventNumber === null ? event.title : `${eventNumber} · ${event.title}`);
 
 	let barHeight = $state(0);
+	let titleViewportWidth = $state(0);
+	let titleWidth = $state(0);
+	let titleOverflow = $derived(Math.max(0, titleWidth - titleViewportWidth));
 
 	$effect(() => {
-		if (hidden) return;
-
 		const root = document.documentElement;
 		root.style.setProperty('--bottom-accessory-clearance', `calc(${barHeight}px + 0.5rem)`);
 
@@ -30,32 +31,93 @@
 </script>
 
 <div
-	class={[
-		'pointer-events-none sticky bottom-[calc(var(--bottom-nav-clearance)+0.5rem)] z-30 transition-[opacity,translate] duration-200 ease-out md:bottom-[calc(1rem+env(safe-area-inset-bottom))]',
-		hidden && 'translate-y-2 opacity-0'
-	]}
-	inert={hidden}
+	class="@container pointer-events-none fixed inset-x-0 bottom-[calc(var(--bottom-nav-clearance)+0.5rem)] z-30 bottom-nav-insets md:sticky md:inset-x-auto md:bottom-6 md:mt-auto md:px-0 lg:bottom-8"
 	bind:clientHeight={barHeight}
 >
 	<Button
 		variant="floating"
 		onclick={onjump}
-		class="pointer-events-auto mx-auto flex h-14 w-full max-w-md justify-start gap-3 rounded-full py-2 pr-5 pl-2 text-left active:not-aria-[haspopup]:rounded-full"
+		aria-label={m.schedule_jump_to_current({ title })}
+		class="pointer-events-auto mx-auto flex h-auto min-h-12 w-full max-w-md justify-start gap-2.5 rounded-full px-3.5 py-1.5 text-left whitespace-normal active:not-aria-[haspopup]:rounded-full md:min-h-14 md:max-w-lg md:px-5"
 	>
-		<span
-			class="flex size-10 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"
-			aria-hidden="true"
-		>
-			<Play class="size-4 fill-current" />
+		<span class="relative size-2 shrink-0 rounded-full bg-success" aria-hidden="true">
+			{#key event.id}
+				<span data-live-pulse class="absolute inset-0 rounded-full bg-success opacity-0"></span>
+			{/key}
 		</span>
-		<span class="flex min-w-0 flex-col">
-			<span class="text-xs font-medium text-success">{m.home_on_stage()}</span>
-			<span class="truncate text-sm font-semibold text-foreground">
-				{#if eventNumber !== null}
-					<span class="tabular-nums">{eventNumber}</span> ·
-				{/if}
-				{event.title}
+
+		<span class="flex min-w-0 flex-1 flex-col gap-0.5">
+			<span
+				data-title-viewport
+				data-title-overflow={titleOverflow > 1 ? true : undefined}
+				class="block text-sm leading-tight font-semibold text-foreground"
+				style:--title-overflow={`${titleOverflow}px`}
+				bind:clientWidth={titleViewportWidth}
+			>
+				{#key title}
+					<span data-title-track class="block" bind:clientWidth={titleWidth}>{title}</span>
+				{/key}
+			</span>
+			<span class="text-xs leading-tight font-medium text-muted-foreground">
+				{m.home_on_stage()}
 			</span>
 		</span>
+
+		<LocateFixed data-icon="inline-end" class="text-primary" aria-hidden="true" />
 	</Button>
 </div>
+
+<style>
+	[data-title-track] {
+		overflow-wrap: anywhere;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		[data-live-pulse] {
+			animation: live-pulse 600ms ease-out;
+		}
+
+		@container (width >= 13em) {
+			[data-title-viewport] {
+				overflow: hidden;
+			}
+
+			[data-title-track] {
+				width: max-content;
+				white-space: nowrap;
+			}
+
+			[data-title-overflow] {
+				mask-image: linear-gradient(to right, black calc(100% - 0.5rem), transparent);
+			}
+
+			[data-title-overflow] [data-title-track] {
+				animation: scroll-title 4.8s ease-in-out;
+			}
+		}
+	}
+
+	@keyframes live-pulse {
+		from {
+			scale: 1;
+			opacity: 0.55;
+		}
+
+		to {
+			scale: 2.5;
+			opacity: 0;
+		}
+	}
+
+	@keyframes scroll-title {
+		0%,
+		18% {
+			translate: 0;
+		}
+
+		78%,
+		100% {
+			translate: calc(-1 * (var(--title-overflow) + 0.5rem));
+		}
+	}
+</style>

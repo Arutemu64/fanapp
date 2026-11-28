@@ -68,21 +68,32 @@ test.describe('schedule', { tag: '@critical' }, () => {
 		const search = page.getByRole('searchbox', { name: 'Поиск по программе' });
 		const currentEvent = page.getByRole('heading', { name: 'Выступление 1', exact: true });
 		const jump = page.getByRole('button', {
-			name: /Сейчас на сцене.*Выступление 1/,
-			includeHidden: true
+			name: /Сейчас на сцене.*Выступление 1/
 		});
-		const bar = jump.locator('..');
 
 		await expect(currentEvent).toBeInViewport();
-		await expect(bar).toHaveCSS('opacity', '0');
+		await expect(jump).toBeInViewport({ ratio: 1 });
 		await search.fill('Выступление 2');
 		await expect(currentEvent).toHaveCount(0);
-		await expect(bar).toHaveCSS('opacity', '1');
+
+		const dock = page.getByRole('navigation', { name: 'Разделы' }).locator(':scope > div');
+		await expect
+			.poll(async () => {
+				const barBounds = await jump.boundingBox();
+				const dockBounds = await dock.boundingBox();
+				assert(barBounds && dockBounds, 'The live bar and dock must be visible');
+				return {
+					gap: Math.round(dockBounds.y - barBounds.y - barBounds.height),
+					left: Math.round(barBounds.x - dockBounds.x),
+					width: Math.round(barBounds.width - dockBounds.width)
+				};
+			})
+			.toEqual({ gap: 8, left: 0, width: 0 });
 
 		await jump.click();
 		await expect(search).toHaveValue('');
 		await expect(currentEvent).toBeInViewport();
-		await expect(bar).toHaveCSS('opacity', '0');
+		await expect(jump).toBeInViewport({ ratio: 1 });
 	});
 
 	test('scrolls to the current event when its row is off-screen', async ({ page, api }) => {
@@ -93,22 +104,19 @@ test.describe('schedule', { tag: '@critical' }, () => {
 
 		const currentEvent = page.getByRole('heading', { name: 'Выступление 12', exact: true });
 		const jump = page.getByRole('button', {
-			name: /Сейчас на сцене.*Выступление 12/,
-			includeHidden: true
+			name: /Сейчас на сцене.*Выступление 12/
 		});
-		const bar = jump.locator('..');
 
 		await expect(currentEvent).toBeAttached();
 		await expect(currentEvent).not.toBeInViewport();
 		await expect(jump).toBeInViewport({ ratio: 1 });
-		await expect(bar).toHaveCSS('opacity', '1');
 
 		// Tap without Playwright scrolling the sticky button into view first.
 		const bounds = await jump.boundingBox();
 		assert(bounds, 'The current-event jump button has no bounding box');
 		await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
 		await expect(currentEvent).toBeInViewport();
-		await expect(bar).toHaveCSS('opacity', '0');
+		await expect(jump).toBeInViewport({ ratio: 1 });
 	});
 
 	test('keeps the scope selected when the pressed option is tapped again', async ({

@@ -99,6 +99,29 @@ test.describe('native feel', () => {
 		await expect(home).toHaveAttribute('aria-current', 'page');
 	});
 
+	test('keeps the selection fill under the full tab after a dock switch', async ({ page, api }) => {
+		api.use({ 'GET /voting/nominations': json({ nominations: [] }) });
+		await page.setViewportSize({ width: 320, height: 700 });
+		await page.emulateMedia({ reducedMotion: 'reduce' });
+		await page.goto('/schedule');
+		const nav = page.getByRole('navigation', { name: 'Разделы' });
+		const voting = nav.getByRole('link', { name: 'Голосование' });
+		await expect(voting).toBeVisible();
+		await page.evaluate(() => document.fonts.ready);
+		await voting.click();
+		await expect(voting).toHaveAttribute('aria-current', 'page');
+
+		const fill = nav.locator('[data-bottom-nav-indicator]');
+		await expect
+			.poll(async () => {
+				const tabBox = await voting.boundingBox();
+				const fillBox = await fill.boundingBox();
+				if (!tabBox || !fillBox) return Infinity;
+				return Math.max(Math.abs(tabBox.x - fillBox.x), Math.abs(tabBox.width - fillBox.width));
+			})
+			.toBeLessThan(1);
+	});
+
 	test('keeps the navigation icon and visible label within its tab at 200% text size', async ({
 		page
 	}) => {
