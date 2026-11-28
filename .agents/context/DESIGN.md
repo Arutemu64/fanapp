@@ -41,7 +41,7 @@ Spring 2027 uses forest green for actions and headings and blossom pink for seco
 
 - **Ink** and **Muted** use green-tinted neutrals on white. Page titles use forest green.
 - **Surface** and **App Background** share white in light mode. In dark mode, cards sit one tonal step above the page.
-- **Border** separates cards, rows and the sidebar. The top header has no divider at rest or on scroll.
+- **Border** separates cards, rows and the sidebar. The desktop header shows a divider only after scrolling.
 
 ### Named Rules
 
@@ -131,8 +131,8 @@ shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component sub
 
 ### Navigation
 
-- **Mobile — Bottom Nav:** A floating glass pill with five links with 24px icons and visible labels in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges and above the home indicator. The active icon and semibold label use `primary-800` in light mode and `primary-300` in dark mode. A `primary/12` fill (`/20` in dark mode) encloses the active icon and label. The capsule leaves room around the label and slides between tabs in 300ms, with instant movement under reduced motion. The bar uses `background/85` and 16px blur, with an opaque surface under reduced transparency. Floating controls offset from `--bottom-nav-clearance` in `app.css`.
-- **Desktop — Sidebar + Navbar:** At `md:` and up, the primary links sit in a compact 104px dock inset from the top and left edges. The dock stays in place during page scroll, and its links scroll within it on short viewports. The sidebar uses the mobile dock’s glass treatment and stacks each 24px icon above an 11px label. A vertical pill highlights the full active link with the same 300ms transition as the bottom bar. It moves instantly under reduced motion. The borderless top navbar carries the tab title and notification bell. On nested pages, the title starts the scrolling content and a leading back arrow appears in the navbar on phones and desktops.
+- **Mobile — Bottom Nav:** A floating glass pill with five links with 24px icons and visible 12px labels in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges and above the home indicator. The active icon and semibold label use `primary-800` in light mode and `primary-300` in dark mode. A `primary/12` fill (`/20` in dark mode) encloses the active icon and label. The capsule leaves room around the label and slides between tabs in 300ms, with instant movement under reduced motion. The bar uses `background/85` and 16px blur, with an opaque surface under reduced transparency. Floating controls offset from `--bottom-nav-clearance` in `app.css`.
+- **Desktop — Sidebar + Navbar:** At `md:` and up, the primary links sit in a compact 104px dock inset from the top and left edges. The dock stays in place during page scroll, and its links scroll within it on short viewports. The sidebar uses an opaque card surface with an 18px radius, an inset outline, and an 8px gutter on the content side. Each 24px icon sits above a 12px label. The active and hover fills have 10px corners. The active highlight slides in 300ms and moves instantly under reduced motion. The sticky navbar carries the tab title and notification bell. Its desktop divider appears once content scrolls beneath it. The desktop connection notice sits below the navbar and aligns with the content column. On nested pages, the title starts the scrolling content and a leading back arrow appears in the navbar on phones and desktops.
 
 ### Icons
 

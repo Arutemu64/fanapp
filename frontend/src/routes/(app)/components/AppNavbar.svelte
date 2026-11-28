@@ -23,7 +23,7 @@
 </script>
 
 <header
-	class="flex items-center justify-between gap-2 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] select-none [-webkit-touch-callout:none] sm:px-6 reduced-transparency:bg-background"
+	class="flex items-center justify-between gap-2 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] select-none [-webkit-touch-callout:none] sm:px-6 md:px-0 reduced-transparency:bg-background"
 >
 	<div class="flex min-h-11 min-w-0 flex-1 items-center gap-1">
 		{#if back}

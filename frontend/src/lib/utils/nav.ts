@@ -31,6 +31,8 @@ export function handleNavItemClick(
 	href: Path,
 	scrollToTop: () => void
 ): void {
+	if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+		return;
 	if (activeUrl !== resolvePath(href)) return;
 	event.preventDefault();
 	scrollToTop();
